@@ -1,23 +1,19 @@
 <script setup lang="ts">
-const route = useRoute()
-
 const items = computed(() => [{
-  label: 'Docs',
-  to: '/docs',
-  active: route.path.startsWith('/docs')
+  label: 'Explorer',
+  to: '/explorer'
 }, {
-  label: 'Pricing',
-  to: '/pricing'
+  label: 'Ranking',
+  to: '/ranking'
 }, {
-  label: 'Blog',
-  to: '/blog'
+  label: 'Sources',
+  to: '/sources'
 }, {
-  label: 'Changelog',
-  to: '/changelog',
-  badge: {
-    label: 'New',
-    color: 'primary' as const
-  }
+  label: 'About',
+  to: '/about'
+}, {
+  label: 'Donate',
+  to: '/donate'
 }])
 </script>
 
@@ -25,9 +21,8 @@ const items = computed(() => [{
   <UHeader>
     <template #left>
       <NuxtLink to="/">
-        <LogoPro class="w-auto h-6 shrink-0" />
+        <Logo class="w-auto h-6 shrink-0" />
       </NuxtLink>
-      <TemplateMenu />
     </template>
 
     <UNavigationMenu
@@ -38,29 +33,7 @@ const items = computed(() => [{
     <template #right>
       <UColorModeButton />
 
-      <UButton
-        icon="i-lucide-log-in"
-        color="neutral"
-        variant="ghost"
-        to="/login"
-        class="lg:hidden"
-      />
-
-      <UButton
-        label="Sign in"
-        color="neutral"
-        variant="outline"
-        to="/login"
-        class="hidden lg:inline-flex"
-      />
-
-      <UButton
-        label="Sign up"
-        color="neutral"
-        trailing-icon="i-lucide-arrow-right"
-        class="hidden lg:inline-flex"
-        to="/signup"
-      />
+      <!-- Authentication buttons removed -->
     </template>
 
     <template #body>
@@ -68,23 +41,6 @@ const items = computed(() => [{
         :items="items"
         orientation="vertical"
         class="-mx-2.5"
-      />
-
-      <USeparator class="my-6" />
-
-      <UButton
-        label="Sign in"
-        color="neutral"
-        variant="subtle"
-        to="/login"
-        block
-        class="mb-3"
-      />
-      <UButton
-        label="Sign up"
-        color="neutral"
-        to="/signup"
-        block
       />
     </template>
   </UHeader>
