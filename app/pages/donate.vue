@@ -48,7 +48,12 @@
             </h3>
           </template>
           <div class="flex justify-center">
-            <img width="176" height="211" src="/stripe_donate.png" alt="Stripe donation QR code" />
+            <img
+              width="176"
+              height="211"
+              src="/stripe_donate.png"
+              alt="Stripe donation QR code"
+            >
           </div>
         </UCard>
 
@@ -96,9 +101,9 @@
                 fill="currentColor"
                 xmlns="http://www.w3.org/2000/svg"
               >
-                <path d="M16 4H0V6H16V4Z"></path>
-                <path d="M0 8V18L7.9993 13.534L16 18V8H0Z"></path>
-                <path d="M16 0H0V2H16V0Z"></path>
+                <path d="M16 4H0V6H16V4Z" />
+                <path d="M0 8V18L7.9993 13.534L16 18V8H0Z" />
+                <path d="M16 0H0V2H16V0Z" />
               </svg>
             </UButton>
 
