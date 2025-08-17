@@ -8,9 +8,6 @@
       <p class="text-center text-lg">
         Showcase content coming soon
       </p>
-      <div class="bg-blue-500">
-        <UButton>Explore</UButton>
-      </div>
     </div>
   </div>
 </template>

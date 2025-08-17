@@ -9,6 +9,8 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "eslint . --fix",
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
