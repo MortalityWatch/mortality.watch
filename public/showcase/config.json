@@ -1,0 +1,121 @@
+[
+  {
+    "title": "Excess Mortality in Western Europe during COVID-19",
+    "description": "Using a three-year average pre-pandemic baseline.",
+    "url": "explorer/?c=FRA&c=BEL&c=NLD&c=CHE&c=DEU&c=AUT&c=LUX&e=1&df=2020&ce=1&st=1&pi=0&p=1",
+    "width": 1860,
+    "height": 962
+  },
+  {
+    "title": "Excess Mortality in Northern Europe during COVID-19",
+    "description": "Using a three-year average pre-pandemic baseline.",
+    "url": "explorer/?c=ISL&c=GBR_NIR&c=GBRTENW&c=GBR_SCO&c=DNK&c=NOR&c=FIN&c=SWE&c=LTU&c=EST&c=LVA&e=1&df=2020&ce=1&st=1&pi=0&p=1",
+    "width": 1860,
+    "height": 962
+  },
+  {
+    "title": "Excess Mortality in Southern Europe during COVID-19",
+    "description": "Using a three-year average pre-pandemic baseline.",
+    "url": "explorer/?c=ALB&c=HRV&c=GRC&c=ITA&c=MLT&c=MNE&c=PRT&c=SRB&c=SVN&c=ESP&e=1&df=2020&ce=1&st=1&pi=0&p=1",
+    "width": 1860,
+    "height": 962
+  },
+  {
+    "title": "Excess Mortality in Eastern Europe during COVID-19",
+    "description": "Using a three-year average pre-pandemic baseline.",
+    "url": "explorer/?c=BGR&c=CZE&c=HUN&c=POL&c=RUS&c=SVK&e=1&df=2020&ce=1&st=1&pi=0&p=1",
+    "width": 1860,
+    "height": 962
+  },
+  {
+    "title": "Excess Mortality in the EU during COVID-19",
+    "description": "With a three-year average pre-pandemic baseline, Sweden saw the lowest excess mortality in the European Union.",
+    "url": "explorer/?c=AUT&c=BEL&c=BGR&c=CZE&c=DEU&c=DNK&c=ESP&c=EST&c=FIN&c=FRA&c=GRC&c=HRV&c=HUN&c=ITA&c=LTU&c=LUX&c=LVA&c=NLD&c=POL&c=PRT&c=SVK&c=SVN&c=SWE&ct=yearly&e=1&df=2020&dt=2023&bf=2017&bt=2019&ce=1&st=1&m=1&pi=0&sl=0&p=1",
+    "width": 1860,
+    "height": 962
+  },
+  {
+    "title": "Mortality in the USA & Sweden since 2000/'01",
+    "description": "Age-standardized mortality by midyear seasons (July-June) shows no significant mortality increase in Sweden, in contrast to the USA.",
+    "url": "explorer/?df=2000%2F01&bm=exp&uc=%23d81b43&uc=%23fcc02e",
+    "width": 1860,
+    "height": 962
+  },
+  {
+    "title": "Mortality in Germany since 2001",
+    "description": "Yearly age-standardized mortality shows no significant increase in Germany during 2020, in contrast to the following two years of 2021/'22.",
+    "url": "explorer/?c=DEU&df=2000%2F01&bm=exp",
+    "width": 1860,
+    "height": 962
+  },
+  {
+    "title": "Excess Deaths in the USA during COVID-19",
+    "description": "During the COVID-19 Pandemic, the USA recorded over a million more deaths than projected.",
+    "url": "explorer/?c=USA&t=deaths&ct=yearly&e=1&df=2010&bm=mean&ce=1&m=1&pi=0&p=0&uc=%23d81b43",
+    "width": 1860,
+    "height": 962
+  },
+  {
+    "title": "Florida vs California during COVID-19",
+    "description": "Florida and California had very different public health approaches, but no significant difference in excess mortality.",
+    "url": "explorer/?c=USA-CA&c=USA-FL&ct=yearly&e=1&df=2020&dt=2023&ce=1&st=1&m=1&pi=0&uc=%231f87e8&uc=%2305a045",
+    "width": 1860,
+    "height": 962
+  },
+  {
+    "title": "Excess Mortality by Age Group in the USA during COVID-19",
+    "description": "Contrary to the risk profile of COVID-19, the USA recorded the highest relative increase in excess mortality in the working age population.",
+    "url": "explorer/?c=USA&t=cmr&ct=quarterly&e=1&cs=matrix&df=2020+Q1&dt=2024+Q2&ag=0-9&ag=10-19&ag=20-29&ag=30-39&ag=40-49&ag=50-59&ag=60-69&ag=70-79&ag=80%2B",
+    "width": 1860,
+    "height": 962
+  },
+  {
+    "title": "Excess Mortality in Scandinavia during COVID-19",
+    "description": "While Sweden saw most of its excess mortality during 2020, its two Scandinavian neighbors saw much larger excess mortality later on.",
+    "url": "explorer/?c=DNK&c=NOR&c=SWE&ct=weekly&e=1&cs=line&df=2020+W13&bm=mean&ce=1&st=1&m=1&pi=0&p=0&uc=%23c8102e&uc=%235dac20&uc=%235992fc",
+    "width": 1860,
+    "height": 962
+  },
+  {
+    "title": "North vs South Dakota during COVID-19",
+    "description": "Despite North Dakota's strict lockdowns and mask mandates, and South Dakota's lack thereof, both states saw similar COVID-19 outcomes.",
+    "url": "explorer/?c=USA-ND&c=USA-SD&ct=yearly&e=1&df=2020&bm=exp&ce=1&st=1&m=1&pi=0",
+    "width": 1860,
+    "height": 962
+  },
+  {
+    "title": "Weekly Age-Standardized Mortality in the US during COVID-19",
+    "description": "The initial winter & summer peaks of 2020 were followed by larger peaks in 2021 and winter of 2022. Mortality remains elevated throughout 2023.",
+    "url": "explorer/?c=USA&ct=weekly&df=2020+W01&dt=2024+W52",
+    "width": 1860,
+    "height": 962
+  },
+  {
+    "title": "Weekly Age-Standardized Mortality in Germany since 2015",
+    "description": "Germany did not record much different excess mortality during the COVID-19 pandemic compared to previous years.",
+    "url": "explorer/?c=DEU&ct=weekly&df=2015+W01",
+    "width": 1860,
+    "height": 962
+  },
+  {
+    "title": "Excess Mortality Ranking in the EU during COVID-19",
+    "description": "With a three-year average pre-pandemic baseline, only 11 of 23 countries recorded statistical significant excess mortality cumulatively during the pandemic years.",
+    "url": "ranking?j=eu27&bm=mean&pi=1",
+    "width": 1860,
+    "height": 1918
+  },
+  {
+    "title": "Excess Mortality Ranking in the US during COVID-19",
+    "description": "The US recorded large amounts of excess mortality during the pandemic. Generally, a north to south & rich to poor trend can be observed.",
+    "url": "ranking?j=us&bm=mean&pi=1",
+    "width": 1860,
+    "height": 3904
+  },
+  {
+    "title": "Life Expectancy in Sweden and California",
+    "description": "Life expectancy dropped by more than two years in California, while Sweden saw no significant decrease.",
+    "url": "explorer/?c=SWE&c=USA-CA&t=le&ct=yearly&df=2001&bf=2001&sb=0&bm=exp&pi=0&uc=%231f87e8&uc=%23d81b43",
+    "width": 1860,
+    "height": 962
+  }
+]
