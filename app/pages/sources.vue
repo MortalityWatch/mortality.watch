@@ -274,8 +274,8 @@ useSeoMeta({
                 </div>
                 <UPagination
                   v-model="currentPage"
-                  :page-count="rowsPerPage"
                   :total="products.length"
+                  :page-count="Math.ceil(products.length / rowsPerPage)"
                 />
               </div>
             </div>

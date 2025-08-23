@@ -1,13 +1,23 @@
 import chroma from 'chroma-js'
 import type { DatasetRaw } from './model'
-import { isDarkTheme } from './composables/darkTheme'
+
+// Helper function to safely get dark theme state
+const getIsDarkTheme = () => {
+  if (import.meta.server) return false
+  try {
+    const colorMode = useColorMode()
+    return colorMode.value === 'dark'
+  } catch {
+    return false
+  }
+}
 
 export const isLightColor = (color: string) =>
-  hexToHsl(color)[2] >= (!isDarkTheme.value ? 0.3 : 0.7)
+  hexToHsl(color)[2] >= (!getIsDarkTheme() ? 0.3 : 0.7)
 
 export const getColorPalette = (count: number) =>
   chroma
-    .scale((!isDarkTheme.value ? colors : colors_dark).slice(0, count))
+    .scale((!getIsDarkTheme() ? colors : colors_dark).slice(0, count))
     .mode('rgb')
     .colors(count)
 
@@ -22,17 +32,17 @@ export const getColorsForDataset = (dataset: DatasetRaw): string[] => {
 }
 
 export const backgroundColor = () =>
-  !isDarkTheme.value ? '#ffffff' : '#202020'
-export const textColor = (light = !isDarkTheme.value) =>
+  !getIsDarkTheme() ? '#ffffff' : '#202020'
+export const textColor = (light = !getIsDarkTheme()) =>
   light ? '#25304a' : '#dddfe6'
-export const textSoftColor = () => (!isDarkTheme.value ? '#434a5d' : '#b9bbc3')
+export const textSoftColor = () => (!getIsDarkTheme() ? '#434a5d' : '#b9bbc3')
 export const textStrongColor = () =>
-  !isDarkTheme.value ? '#4a4a4a' : '#bbbbbb'
-export const borderColor = () => (!isDarkTheme.value ? '#e0e6fb' : '#2a3041')
-export const grayColor = () => (!isDarkTheme.value ? '#f8f9fe' : '#22242b')
+  !getIsDarkTheme() ? '#4a4a4a' : '#bbbbbb'
+export const borderColor = () => (!getIsDarkTheme() ? '#e0e6fb' : '#2a3041')
+export const grayColor = () => (!getIsDarkTheme() ? '#f8f9fe' : '#22242b')
 
-export const specialColor = () => (!isDarkTheme.value ? '#1a82fb' : '#5189ec')
-export const greenColor = () => (!isDarkTheme.value ? '#44781d' : '#5f8b3e')
+export const specialColor = () => (!getIsDarkTheme() ? '#1a82fb' : '#5189ec')
+export const greenColor = () => (!getIsDarkTheme() ? '#44781d' : '#5f8b3e')
 
 export const colors = [
   '#ff5393',
@@ -76,7 +86,7 @@ const color_scale_dark = [
   '#d42026'
 ]
 export const color_scale = () =>
-  !isDarkTheme.value ? color_scale_light : color_scale_dark
+  !getIsDarkTheme() ? color_scale_light : color_scale_dark
 
 const color_scale_diverging_light = [
   '#5992fc',
@@ -102,7 +112,7 @@ const color_scale_diverging_dark = [
   '#d42026'
 ]
 export const color_scale_diverging = () =>
-  !isDarkTheme.value ? color_scale_diverging_light : color_scale_diverging_dark
+  !getIsDarkTheme() ? color_scale_diverging_light : color_scale_diverging_dark
 
 export const color_scale_diverging_css = () => [
   'color-scale-1',
