@@ -56,7 +56,7 @@ export const postfillUndefined = <T>(ds: T[], n: number): (T | undefined)[] => {
 export const getFirstIndexOf = (needle: string, haystack: string[]) => {
   let result = -1
   for (let i = 0; i < haystack.length; i++) {
-    if (haystack[i].includes(needle)) {
+    if (haystack[i]?.includes(needle)) {
       result = i
       break
     }
@@ -116,10 +116,10 @@ export const openNewWindowWithBase64Url = (base64: string) => {
   if (!win) throw new Error('Cannot open new window')
   win.document.write(
     '<iframe src="'
-      + base64
-      + '" frameborder="0" style="border:0; '
-      + 'top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" '
-      + 'allowfullscreen></iframe>'
+    + base64
+    + '" frameborder="0" style="border:0; '
+    + 'top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" '
+    + 'allowfullscreen></iframe>'
   )
 }
 
@@ -262,7 +262,7 @@ export const shuffleArray = (array: unknown[]) => {
 }
 
 export const removeMetaTag = (name: string) =>
-  new Promise<void>(resolve => {
+  new Promise<void>((resolve) => {
     const tag = document.querySelector(`meta[name="${name}"]`)
     if (tag) {
       tag.remove()
