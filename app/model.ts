@@ -137,7 +137,7 @@ export const datasetEntryKeys = [...stringKeys, ...numberKeys]
 export type DatasetEntry = StringEntryFields & NumberEntryFields
 export type Dataset = Record<string, Record<string, DatasetEntry>>
 
-export type ListType = { name: string; value: string }
+export type ListType = { name: string, value: string }
 
 export const types: ListType[] = [
   { name: 'Life Expectancy (LE)', value: 'le' },
@@ -167,7 +167,7 @@ export const getChartTypeOrdinal = (chartType: string): number => {
 }
 
 export const getChartTypeFromOrdinal = (ordinal: number): string =>
-  ['yearly', 'monthly', 'weekly'][ordinal - 1]
+  ['yearly', 'monthly', 'weekly'][ordinal - 1] || 'yearly'
 
 export const chartStyles: ListType[] = [
   { name: 'Line', value: 'line' },
@@ -207,7 +207,7 @@ export const baselineMethods: ListType[] = [
 export const settingsModel = {
   chartStyle: chartStyles.map(v => v.value),
   chartType: chartTypes.map(v => v.value),
-  type: types.map((v) => v.value)
+  type: types.map(v => v.value)
 }
 
 export interface CountryRaw {
@@ -243,7 +243,7 @@ class CountryMetaData {
   max_date: string
   constructor(obj: CountryRaw) {
     this.age_groups = new Set(obj.age_groups.split(', '))
-    this.type = ['yearly', 'monthly', 'weekly'][parseInt(obj.type, 10) - 1]
+    this.type = ['yearly', 'monthly', 'weekly'][parseInt(obj.type, 10) - 1] || 'yearly'
     this.source = obj.source
     this.min_date = obj.min_date
     this.max_date = obj.max_date
@@ -334,8 +334,8 @@ export class CountryData {
   constructor(obj: CountryDataRaw, age_group: string, chartType: string) {
     this.iso3c = obj.iso3c
     this.age_group = age_group
-    this.population =
-      obj.population === '' ? undefined : parseInt(obj.population)
+    this.population
+      = obj.population === '' ? undefined : parseInt(obj.population)
     this.date = maybeTransformFluSeason(obj.date)
     this.type = obj.type
     this.source = obj.source
@@ -743,11 +743,11 @@ export const getKeyForType = (
       } else {
         return showBaseline
           ? ([
-            'deaths',
-            'deaths_baseline',
-            'deaths_baseline_lower',
-            'deaths_baseline_upper'
-          ] as (keyof NumberEntryFields)[])
+              'deaths',
+              'deaths_baseline',
+              'deaths_baseline_lower',
+              'deaths_baseline_upper'
+            ] as (keyof NumberEntryFields)[])
           : (['deaths'] as (keyof NumberEntryFields)[])
       }
     case 'cmr':
@@ -762,11 +762,11 @@ export const getKeyForType = (
       } else {
         return showBaseline
           ? ([
-            'cmr',
-            'cmr_baseline',
-            'cmr_baseline_lower',
-            'cmr_baseline_upper'
-          ] as (keyof NumberEntryFields)[])
+              'cmr',
+              'cmr_baseline',
+              'cmr_baseline_lower',
+              'cmr_baseline_upper'
+            ] as (keyof NumberEntryFields)[])
           : (['cmr'] as (keyof NumberEntryFields)[])
       }
     case 'asmr':
