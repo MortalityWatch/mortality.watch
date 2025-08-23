@@ -54,8 +54,8 @@ export class MyRouter {
     // Handle Back / Forward Browser button click
     watch(this.router.currentRoute, async () => {
       if (
-        this.programmatic ||
-        !this.router.currentRoute.value.path.includes('explorer')
+        this.programmatic
+        || !this.router.currentRoute.value.path.includes('explorer')
       )
         return
       // const savedState = this.savedState()

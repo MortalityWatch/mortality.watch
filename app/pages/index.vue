@@ -38,7 +38,10 @@
     </div>
 
     <!-- Showcase Gallery -->
-    <div v-if="images.length > 0" class="mb-12">
+    <div
+      v-if="images.length > 0"
+      class="mb-12"
+    >
       <div class="text-center mb-8">
         <h2 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
           Featured Visualizations
@@ -66,13 +69,16 @@
             class="overflow-hidden rounded-md"
             :style="{ aspectRatio: image.width / image.height }"
           >
-            <NuxtLink :to="`/${image.url}`" class="block">
+            <NuxtLink
+              :to="`/${image.url}`"
+              class="block"
+            >
               <img
                 class="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
                 :src="`/showcase/${getFilename(image.title)}_${colorMode.value}.webp`"
                 :alt="image.title"
                 loading="lazy"
-              />
+              >
             </NuxtLink>
           </div>
         </UCard>
@@ -133,7 +139,10 @@
 
     <!-- Donation Section -->
     <div class="mb-8">
-      <UCard id="donate" class="max-w-lg mx-auto text-center">
+      <UCard
+        id="donate"
+        class="max-w-lg mx-auto text-center"
+      >
         <template #header>
           <h2 class="text-xl font-bold">
             Keep MortalityWatch Free for Everyone

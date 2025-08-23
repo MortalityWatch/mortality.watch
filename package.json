@@ -22,8 +22,10 @@
     "@vueuse/nuxt": "^13.5.0",
     "better-sqlite3": "^12.2.0",
     "chart.js": "^4.5.0",
+    "chroma-js": "^3.1.2",
     "nuxt": "^4.0.3",
     "nuxt-og-image": "^5.1.9",
+    "papaparse": "^5.5.3",
     "zod": "^4.0.17"
   },
   "devDependencies": {

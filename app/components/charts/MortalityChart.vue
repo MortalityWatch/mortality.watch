@@ -1,23 +1,23 @@
 <script lang="ts" setup>
 import { Chart, registerables } from 'chart.js'
-import { createTypedChart } from 'vue-chartjs'
+import { createTypedChart, Line, Bar } from 'vue-chartjs'
 import { getLogoPlugin } from '@/logoPlugin'
-import { Line, Bar } from 'vue-chartjs'
 import {
   BarWithErrorBar,
   BarWithErrorBarsController
 } from 'chartjs-chart-error-bars'
 import ChartDataLabels from 'chartjs-plugin-datalabels'
+import type {
+  MatrixDataPoint } from 'chartjs-chart-matrix'
 import {
   MatrixController,
-  MatrixDataPoint,
   MatrixElement
 } from 'chartjs-chart-matrix'
 import {
   makeBarLineChartConfig,
   makeMatrixChartConfig
 } from '@/lib/chart/chartConfig'
-import {
+import type {
   ChartJSConfig,
   ChartStyle,
   MortalityChartData
@@ -93,22 +93,22 @@ switch (props.chartStyle) {
 <template>
   <Line
     v-if="lineConfig"
-    ref="wrapper"
     id="chart"
+    ref="wrapper"
     :data="lineConfig.data"
     :options="lineConfig.options"
   />
   <Bar
     v-if="barConfig"
-    ref="wrapper"
     id="chart"
+    ref="wrapper"
     :data="barConfig.data"
     :options="barConfig.options"
   />
   <Matrix
     v-if="matrixConfig"
-    ref="wrapper"
     id="chart"
+    ref="wrapper"
     :data="matrixConfig.data"
     :options="matrixConfig.options"
   />

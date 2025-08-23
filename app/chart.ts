@@ -1,4 +1,4 @@
-import { type ChartErrorDataPoint, type MortalityChartData } from './lib/chart/chartTypes'
+import type { ChartErrorDataPoint, MortalityChartData } from './lib/chart/chartTypes'
 import {
   getChartTypeOrdinal,
   type ChartLabels,
@@ -91,9 +91,9 @@ const getBorderDash = (key: string) => {
 const getBorderWidth = (key: string, isBarChartStyle: boolean) => {
   if (isPredictionIntervalKey(key)) return 0
   if (
-    isBarChartStyle &&
-    !key.endsWith('_baseline') &&
-    !isPredictionIntervalKey(key)
+    isBarChartStyle
+    && !key.endsWith('_baseline')
+    && !isPredictionIntervalKey(key)
   )
     return 0
   return 1.2
@@ -262,12 +262,12 @@ export const getDatasets = (
       if (!country) throw new Error(`No country found for iso3c ${iso3c}`)
       keys.forEach((key) => {
         if (
-          isErrorBarType &&
-          (key.endsWith('_lower') || key.endsWith('_upper'))
+          isErrorBarType
+          && (key.endsWith('_lower') || key.endsWith('_upper'))
         )
           return
-        const offset =
-          keys.length * countryIndex + 1 + (key.includes('_prediction') ? 1 : 0)
+        const offset
+          = keys.length * countryIndex + 1 + (key.includes('_prediction') ? 1 : 0)
         const color: string = colors[countryIndex]
         const ag_str = ags.length === 1 ? '' : ` [${getCamelCase(ag)}]`
         const label = getLabel(
@@ -281,29 +281,29 @@ export const getDatasets = (
           getSource(ds, key)
             .join(', ')
             .split(', ')
-            .forEach((x) => sources.add(x))
+            .forEach(x => sources.add(x))
         }
         datasets.push({
           label,
           data:
             isErrorBarType && showPredictionInterval
               ? getBarExcessData(
-                showPercentage,
-                cumulative,
-                showTotal,
-                showCumPi,
-                isAsmrType,
-                ds as Record<string, number[]>,
-                key
-              )
+                  showPercentage,
+                  cumulative,
+                  showTotal,
+                  showCumPi,
+                  isAsmrType,
+                  ds as Record<string, number[]>,
+                  key
+                )
               : getData(
-                showPercentage,
-                cumulative,
-                showTotal,
-                isAsmrType,
-                ds as Record<string, number[]>,
-                key
-              ),
+                  showPercentage,
+                  cumulative,
+                  showTotal,
+                  isAsmrType,
+                  ds as Record<string, number[]>,
+                  key
+                ),
           borderColor: colors[countryIndex],
           backgroundColor: getBackgroundColor(key, color),
           fill: isPredictionIntervalKey(key) ? offset : undefined,
@@ -350,7 +350,7 @@ const getASMRTitle = (countries: string[], standardPopulation: string) => {
 }
 
 const getMethodDescription = (baselineMethod: string) =>
-  baselineMethods.filter((x) => x.value === baselineMethod)[0].name
+  baselineMethods.filter(x => x.value === baselineMethod)[0].name
 
 export const blDescription = (
   baselineMethod: string,
@@ -402,7 +402,7 @@ export const getChartLabels = (
         break
       case 'asmr':
         title.push('Age-Standardized', 'Excess Mortality')
-        subtitle = [asmrTitle].filter((x) => x).join(' · ')
+        subtitle = [asmrTitle].filter(x => x).join(' · ')
         ytitle = 'Excess Deaths per 100k'
         break
       case 'le':
@@ -427,7 +427,7 @@ export const getChartLabels = (
       case 'asmr':
         title.push('Age-Standardized', 'Mortality Rate')
         subtitle = showBaseline
-          ? [asmrTitle].filter((x) => x).join(' · ')
+          ? [asmrTitle].filter(x => x).join(' · ')
           : asmrTitle
         break
       case 'le':
@@ -444,11 +444,11 @@ export const getChartLabels = (
       ? blDescription(baselineMethod, baselineDateFrom, baselineDateTo)
       : ''
   ]
-    .filter((x) => x)
+    .filter(x => x)
     .join(' · ')
 
   if (showBaseline && showPredictionInterval) {
-    subtitle = [subtitle, pi].filter((x) => x).join(' · ')
+    subtitle = [subtitle, pi].filter(x => x).join(' · ')
   }
 
   if (showTotal) {
@@ -458,34 +458,34 @@ export const getChartLabels = (
     switch (chartType) {
       case 'weekly_104w_sma':
         subtitle = ['104 week moving average (SMA)', subtitle]
-          .filter((x) => x)
+          .filter(x => x)
           .join(' · ')
         xtitle = 'Week of Year'
         break
       case 'weekly_52w_sma':
         subtitle = ['52 week moving average (SMA)', subtitle]
-          .filter((x) => x)
+          .filter(x => x)
           .join(' · ')
         xtitle = 'Week of Year'
         break
       case 'weekly_26w_sma':
         subtitle = ['26 week moving average (SMA)', subtitle]
-          .filter((x) => x)
+          .filter(x => x)
           .join(' · ')
         xtitle = 'Week of Year'
         break
       case 'weekly_13w_sma':
         subtitle = ['13 week moving average (SMA)', subtitle]
-          .filter((x) => x)
+          .filter(x => x)
           .join(' · ')
         xtitle = 'Week of Year'
         break
       case 'midyear':
-        subtitle = ['7/1-6/30', subtitle].filter((x) => x).join(' · ')
+        subtitle = ['7/1-6/30', subtitle].filter(x => x).join(' · ')
         xtitle = 'Year'
         break
       case 'fluseason':
-        subtitle = ['10/1-9/30', subtitle].filter((x) => x).join(' · ')
+        subtitle = ['10/1-9/30', subtitle].filter(x => x).join(' · ')
         xtitle = 'Year'
         break
       case 'weekly':
@@ -498,7 +498,7 @@ export const getChartLabels = (
         xtitle = 'Quarter of Year'
         break
       case 'yearly':
-        subtitle = [subtitle].filter((x) => x).join(' · ')
+        subtitle = [subtitle].filter(x => x).join(' · ')
         xtitle = 'Year'
         break
     }
@@ -535,12 +535,12 @@ export const getFilteredLabelAndData = (
       const types = new Set(
         (data[ag][iso3c]['type'] as string[])
           .flatMap((str: undefined | string) => str?.split(', '))
-          .map((x) => (x ? parseInt(x, 10) : 0))
+          .map(x => (x ? parseInt(x, 10) : 0))
       )
-      const lowerRes = Array.from(types).filter((x) => x < chartTypeOrdinal)
+      const lowerRes = Array.from(types).filter(x => x < chartTypeOrdinal)
       if (lowerRes.length) {
         disaggregatedData[iso3c] = Array.from(types).filter(
-          (x) => x < chartTypeOrdinal
+          x => x < chartTypeOrdinal
         )
       }
     }
@@ -605,8 +605,8 @@ export const getFilteredChartData = async (
     allChartData
   )
 
-  const labels =
-    cumulative && showTotal && isBarChartStyle
+  const labels
+    = cumulative && showTotal && isBarChartStyle
       ? getLabels(dateFrom, dateTo)
       : filteredData.labels
 

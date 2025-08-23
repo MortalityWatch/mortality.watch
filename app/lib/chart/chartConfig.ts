@@ -27,7 +27,7 @@ import {
   textStrongColor
 } from './chartColors'
 import { asPercentage, numberWithCommas, round } from './chartUtils'
-import {
+import type {
   ChartErrorDataPoint,
   ChartJSConfig,
   ChartStyle,
@@ -36,8 +36,8 @@ import {
   MortalityChartData,
   MortalityMatrixDataPoint
 } from './chartTypes'
-import { Context } from 'chartjs-plugin-datalabels'
-import { MatrixDataPoint } from 'chartjs-chart-matrix'
+import type { Context } from 'chartjs-plugin-datalabels'
+import type { MatrixDataPoint } from 'chartjs-chart-matrix'
 
 // Public API
 export const makeChartConfig = (
@@ -95,13 +95,13 @@ export const makeBarLineChartConfig = (
         ;(
           chart.options.scales!.x! as ScaleOptionsByType<'radialLinear'>
         ).ticks.font! = getTicksFont()
-        ;(chart.options.scales!.x! as CartesianScaleOptions).title.font =
-          getScaleTitleFont()
+        ;(chart.options.scales!.x! as CartesianScaleOptions).title.font
+          = getScaleTitleFont()
         ;(
           chart.options.scales!.y! as ScaleOptionsByType<'radialLinear'>
         ).ticks.font! = getTicksFont()
-        ;(chart.options.scales!.y! as CartesianScaleOptions).title.font =
-          getScaleTitleFont()
+        ;(chart.options.scales!.y! as CartesianScaleOptions).title.font
+          = getScaleTitleFont()
         chart.options.plugins!.datalabels!.font! = getDatalabelsFont()
       },
       plugins: {
@@ -156,9 +156,9 @@ export const makeBarLineChartConfig = (
               : false
             const x = context.dataset.data[context.dataIndex]
             if (
-              x &&
-              typeof x === 'object' &&
-              isNaN((x as ChartErrorDataPoint).y)
+              x
+              && typeof x === 'object'
+              && isNaN((x as ChartErrorDataPoint).y)
             )
               return false
             const isErrorPoint = typeof x === 'object'
@@ -334,8 +334,8 @@ export const makeMatrixChartConfig = (
   }
   config.options!.plugins!.datalabels = {
     display: (context: Context): boolean =>
-      showLabels &&
-      !isNaN((context.dataset.data[context.dataIndex] as MatrixDatapoint).v),
+      showLabels
+      && !isNaN((context.dataset.data[context.dataIndex] as MatrixDatapoint).v),
     color: (context: Context) => {
       const color = tileBackgroundColor(context)
       const isLight = isLightColor(color)
@@ -365,8 +365,8 @@ export const makeMatrixChartConfig = (
         width: ({ chart }: { chart: Chart }) =>
           (chart.chartArea || {}).width / data.labels.length,
         height: ({ chart }: { chart: Chart }) =>
-          (chart.chartArea || {}).height /
-          data.datasets.filter((a) => a.label && a.label?.length > 0).length
+          (chart.chartArea || {}).height
+          / data.datasets.filter(a => a.label && a.label?.length > 0).length
       }
     ]
   }
@@ -393,7 +393,7 @@ const getMaxDecimals = (y: number, short: boolean, showDecimals: boolean) =>
 const getLabelText = (
   label: string,
   y: number,
-  pi: { min: number; max: number } | undefined,
+  pi: { min: number, max: number } | undefined,
   short: boolean,
   isExcess: boolean,
   isPercentage: boolean,
@@ -412,7 +412,7 @@ const getLabelText = (
     )
     result += `${prefix}${yText}`
     if (pi)
-      result += formatCI(short, pi.min, pi.max, (n) =>
+      result += formatCI(short, pi.min, pi.max, n =>
         asPercentage(n, getMaxDecimals(y * 100, short, showDecimals), plusSign)
       )
   } else {
@@ -421,7 +421,7 @@ const getLabelText = (
     result += `${prefix}${yText}`
 
     if (pi) {
-      const piText = formatCI(short, pi.min, pi.max, (n) =>
+      const piText = formatCI(short, pi.min, pi.max, n =>
         numberWithCommas(n, isExcess, maxDecimals)
       )
       result += isExcess ? `${piText}` : `${piText}`
@@ -435,7 +435,7 @@ const makeMatrixData = (chartData: MortalityChartData): MatrixData => {
   const data: MortalityMatrixDataPoint[] = []
   let min = Number.MAX_SAFE_INTEGER
   let max = Number.MIN_SAFE_INTEGER
-  const localMinMax: Record<string, { min: number; max: number }> = {}
+  const localMinMax: Record<string, { min: number, max: number }> = {}
 
   for (const ds of chartData.datasets) {
     let i = 0

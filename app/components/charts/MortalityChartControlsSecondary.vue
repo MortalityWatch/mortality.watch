@@ -77,20 +77,20 @@ const emit = defineEmits([
 
 // Computed
 const selectedType = computed({
-  get: () => types.filter((v) => v.value === props.type)[0],
+  get: () => types.filter(v => v.value === props.type)[0],
   set: (v: ListType) => emit('typeChanged', v.value)
 })
 const selectedChartType = computed({
-  get: () => chartTypes.filter((v) => v.value === props.chartType)[0],
+  get: () => chartTypes.filter(v => v.value === props.chartType)[0],
   set: (v: ListType) => emit('chartTypeChanged', v.value)
 })
 const selectedChartStyle = computed({
-  get: () => chartStyles.filter((v) => v.value === props.chartStyle)[0],
+  get: () => chartStyles.filter(v => v.value === props.chartStyle)[0],
   set: (v: ListType) => emit('chartStyleChanged', v.value)
 })
 const selectedStandardPopulation = computed({
   get: () =>
-    standardPopulations.filter((v) => v.value === props.standardPopulation)[0],
+    standardPopulations.filter(v => v.value === props.standardPopulation)[0],
   set: (v: ListType) => emit('standardPopulationChanged', v.value)
 })
 const selectedBaselineMethod = computed({
@@ -139,7 +139,7 @@ const sliderStart = computed({
 })
 
 const baselineMethodEntry = (): ListType =>
-  baselineMethods.filter((v) => v.value === props.baselineMethod)[0]
+  baselineMethods.filter(v => v.value === props.baselineMethod)[0]
 const baselineSliderChanged = () => emit('baselineSliderValueChanged')
 const showBaselineOption = computed(
   () => !props.isPopulationType && !props.isExcess
@@ -147,12 +147,26 @@ const showBaselineOption = computed(
 </script>
 
 <template>
-  <Tabs value="0" class="secondary-controls-tabs">
+  <Tabs
+    value="0"
+    class="secondary-controls-tabs"
+  >
     <TabList>
-      <Tab value="0">Data</Tab>
-      <Tab value="1">Display</Tab>
-      <Tab value="2" v-if="props.showBaseline">Baseline</Tab>
-      <Tab value="3">Style</Tab>
+      <Tab value="0">
+        Data
+      </Tab>
+      <Tab value="1">
+        Display
+      </Tab>
+      <Tab
+        v-if="props.showBaseline"
+        value="2"
+      >
+        Baseline
+      </Tab>
+      <Tab value="3">
+        Style
+      </Tab>
     </TabList>
     <TabPanels>
       <!-- Data Tab: Chart configuration and data selection -->
@@ -162,7 +176,7 @@ const showBaselineOption = computed(
             <Select
               v-model="selectedType"
               :options="types"
-              optionLabel="name"
+              option-label="name"
               placeholder="Select the metric"
               class="w-full"
               :disabled="props.isUpdating"
@@ -174,7 +188,7 @@ const showBaselineOption = computed(
             <Select
               v-model="selectedChartType"
               :options="chartTypes"
-              optionLabel="name"
+              option-label="name"
               placeholder="Select the period of time"
               class="w-full"
               :disabled="props.isUpdating"
@@ -193,11 +207,14 @@ const showBaselineOption = computed(
             <label for="startingPeriod">Start Period</label>
           </IftaLabel>
 
-          <IftaLabel v-if="props.type.includes('asmr') || props.type === 'le'" class="w-full">
+          <IftaLabel
+            v-if="props.type.includes('asmr') || props.type === 'le'"
+            class="w-full"
+          >
             <Select
               v-model="selectedStandardPopulation"
               :options="standardPopulations"
-              optionLabel="name"
+              option-label="name"
               placeholder="Select the standard population"
               class="w-full"
               :disabled="props.isUpdating"
@@ -214,104 +231,141 @@ const showBaselineOption = computed(
             :disabled="props.isPopulationType"
             class="border-1 flex items-center gap-2 rounded border-slate-300 p-4 hover:border-slate-400 dark:border-zinc-600 dark:bg-zinc-950 dark:hover:border-zinc-500"
           >
-            <ToggleSwitch v-model="isExcess" inputId="isExcessToggle" />
-            <label for="isExcessToggle" class="mb-0">Excess</label>
+            <ToggleSwitch
+              v-model="isExcess"
+              input-id="isExcessToggle"
+            />
+            <label
+              for="isExcessToggle"
+              class="mb-0"
+            >Excess</label>
           </div>
           <div
             class="border-1 flex items-center gap-2 rounded border-slate-300 p-4 hover:border-slate-400 dark:border-zinc-600 dark:bg-zinc-950 dark:hover:border-zinc-500"
           >
             <ToggleSwitch
               v-model="showBaseline"
-              inputId="toggle-showBaseline"
+              input-id="toggle-showBaseline"
               :disabled="showBaselineOption"
             />
-            <label for="toggle-showBaseline" class="mb-0">Baseline</label>
+            <label
+              for="toggle-showBaseline"
+              class="mb-0"
+            >Baseline</label>
           </div>
 
           <div
-            class="border-1 flex items-center gap-2 rounded border-slate-300 p-4 hover:border-slate-400 dark:border-zinc-600 dark:bg-zinc-950 dark:hover:border-zinc-500"
             v-show="props.showPredictionIntervalOption"
+            class="border-1 flex items-center gap-2 rounded border-slate-300 p-4 hover:border-slate-400 dark:border-zinc-600 dark:bg-zinc-950 dark:hover:border-zinc-500"
           >
             <ToggleSwitch
-              :disabled="props.showPredictionIntervalOptionDisabled"
               v-model="showPredictionInterval"
-              inputId="toggle-showPredictionInterval"
+              :disabled="props.showPredictionIntervalOptionDisabled"
+              input-id="toggle-showPredictionInterval"
             />
-            <label for="toggle-showPredictionInterval" class="mb-0"
-              >95% PI</label
-            >
+            <label
+              for="toggle-showPredictionInterval"
+              class="mb-0"
+            >95% PI</label>
           </div>
 
           <div
             class="border-1 flex items-center gap-2 rounded border-slate-300 p-4 hover:border-slate-400 dark:border-zinc-600 dark:bg-zinc-950 dark:hover:border-zinc-500"
           >
-            <ToggleSwitch v-model="showLabels" inputId="toggle-showLabels" />
-            <label for="toggle-showLabels" class="mb-0">Show Labels</label>
+            <ToggleSwitch
+              v-model="showLabels"
+              input-id="toggle-showLabels"
+            />
+            <label
+              for="toggle-showLabels"
+              class="mb-0"
+            >Show Labels</label>
           </div>
 
           <div
-            class="border-1 flex items-center gap-2 rounded border-slate-300 p-4 hover:border-slate-400 dark:border-zinc-600 dark:bg-zinc-950 dark:hover:border-zinc-500"
             v-show="props.showMaximizeOption"
+            class="border-1 flex items-center gap-2 rounded border-slate-300 p-4 hover:border-slate-400 dark:border-zinc-600 dark:bg-zinc-950 dark:hover:border-zinc-500"
           >
             <ToggleSwitch
-              :disabled="props.showMaximizeOptionDisabled"
               v-model="maximize"
-              inputId="toggle-maximize"
+              :disabled="props.showMaximizeOptionDisabled"
+              input-id="toggle-maximize"
             />
-            <label for="toggle-maximize" class="mb-0">Maximize</label>
+            <label
+              for="toggle-maximize"
+              class="mb-0"
+            >Maximize</label>
           </div>
 
           <div
-            class="border-1 flex items-center gap-2 rounded border-slate-300 p-4 hover:border-slate-400 dark:border-zinc-600 dark:bg-zinc-950 dark:hover:border-zinc-500"
             v-show="props.showLogarithmicOption"
+            class="border-1 flex items-center gap-2 rounded border-slate-300 p-4 hover:border-slate-400 dark:border-zinc-600 dark:bg-zinc-950 dark:hover:border-zinc-500"
           >
             <ToggleSwitch
-              :disabled="!props.showLogarithmicOption"
               v-model="isLogarithmic"
-              inputId="toggle-isLogarithmic"
+              :disabled="!props.showLogarithmicOption"
+              input-id="toggle-isLogarithmic"
             />
-            <label for="toggle-isLogarithmic" class="mb-0">Log Scale</label>
+            <label
+              for="toggle-isLogarithmic"
+              class="mb-0"
+            >Log Scale</label>
           </div>
 
           <div
-            class="border-1 flex items-center gap-2 rounded border-slate-300 p-4 hover:border-slate-400 dark:border-zinc-600 dark:bg-zinc-950 dark:hover:border-zinc-500"
             v-show="props.showPercentageOption"
+            class="border-1 flex items-center gap-2 rounded border-slate-300 p-4 hover:border-slate-400 dark:border-zinc-600 dark:bg-zinc-950 dark:hover:border-zinc-500"
           >
             <ToggleSwitch
               v-model="showPercentage"
-              inputId="toggle-showPercentage"
+              input-id="toggle-showPercentage"
             />
-            <label for="toggle-showPercentage" class="mb-0">Percentage</label>
+            <label
+              for="toggle-showPercentage"
+              class="mb-0"
+            >Percentage</label>
           </div>
           <div
-            class="border-1 flex items-center gap-2 rounded border-slate-300 p-4 hover:border-slate-400 dark:border-zinc-600 dark:bg-zinc-950 dark:hover:border-zinc-500"
             v-show="props.showCumulativeOption"
-          >
-            <ToggleSwitch v-model="cumulative" inputId="toggle-cumulative" />
-            <label for="toggle-cumulative" class="mb-0">Cumulative</label>
-          </div>
-          <div
             class="border-1 flex items-center gap-2 rounded border-slate-300 p-4 hover:border-slate-400 dark:border-zinc-600 dark:bg-zinc-950 dark:hover:border-zinc-500"
-            v-show="props.showTotalOption"
           >
             <ToggleSwitch
-              :disabled="props.showTotalOptionDisabled"
-              v-model="showTotal"
-              inputId="toggle-showTotal"
+              v-model="cumulative"
+              input-id="toggle-cumulative"
             />
-            <label for="toggle-showTotal" class="mb-0">Total</label>
+            <label
+              for="toggle-cumulative"
+              class="mb-0"
+            >Cumulative</label>
+          </div>
+          <div
+            v-show="props.showTotalOption"
+            class="border-1 flex items-center gap-2 rounded border-slate-300 p-4 hover:border-slate-400 dark:border-zinc-600 dark:bg-zinc-950 dark:hover:border-zinc-500"
+          >
+            <ToggleSwitch
+              v-model="showTotal"
+              :disabled="props.showTotalOptionDisabled"
+              input-id="toggle-showTotal"
+            />
+            <label
+              for="toggle-showTotal"
+              class="mb-0"
+            >Total</label>
           </div>
         </div>
       </TabPanel>
 
       <!-- Baseline Tab: Baseline configuration (conditional) -->
-      <TabPanel value="2" v-if="props.showBaseline">
+      <TabPanel
+        v-if="props.showBaseline"
+        value="2"
+      >
         <div class="flex flex-col gap-4">
           <IftaLabel class="w-full">
             <Select
               v-model="selectedBaselineMethod"
               :options="baselineMethods"
-              optionLabel="name"
+              option-label="name"
               placeholder="Select Baseline Method"
               class="w-full"
               :disabled="props.isUpdating"
@@ -325,14 +379,13 @@ const showBaselineOption = computed(
           >
             <span
               class="relative -left-4 -top-8 float-left text-xs text-slate-500 dark:text-zinc-400"
-              >Baseline Period</span
-            >
+            >Baseline Period</span>
             <DateSlider
-              @slider-changed="baselineSliderChanged"
-              :sliderValue="props.baselineSliderValue"
+              :slider-value="props.baselineSliderValue"
               :labels="props.labels"
               :color="specialColor()"
               :min-range="baselineMinRange(props.baselineMethod)"
+              @slider-changed="baselineSliderChanged"
             />
           </div>
         </div>
@@ -345,7 +398,7 @@ const showBaselineOption = computed(
             <Select
               v-model="selectedChartStyle"
               :options="chartStyles"
-              optionLabel="name"
+              option-label="name"
               placeholder="Select the chart type"
               class="w-full"
               :disabled="props.isUpdating"

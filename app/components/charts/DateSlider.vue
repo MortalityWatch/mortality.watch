@@ -39,12 +39,12 @@ const sliderValueLocal = computed({
 
 <template>
   <vue-slider
+    v-model="sliderValueLocal"
     :style="{
       '--slider-main-color': props.color,
       '--slider-tooltip-color': props.color
     }"
     class="w-full"
-    v-model="sliderValueLocal"
     :data="labels"
     :min="0"
     :max="labels.length - 1"
@@ -54,8 +54,11 @@ const sliderValueLocal = computed({
     :min-range="minRange"
     :tooltip="showMergeTooltip ? 'none' : 'always'"
   >
-    <template v-slot:process="{ style }">
-      <div class="vue-slider-process" :style="style">
+    <template #process="{ style }">
+      <div
+        class="vue-slider-process"
+        :style="style"
+      >
         <div
           v-if="showMergeTooltip"
           :class="[
@@ -67,9 +70,7 @@ const sliderValueLocal = computed({
           <span v-if="sliderValueLocal[0] === sliderValueLocal[1]">{{
             sliderValueLocal[0]
           }}</span>
-          <span v-if="sliderValueLocal[0] !== sliderValueLocal[1]"
-            >{{ sliderValueLocal[0] }} - {{ sliderValueLocal[1] }}</span
-          >
+          <span v-if="sliderValueLocal[0] !== sliderValueLocal[1]">{{ sliderValueLocal[0] }} - {{ sliderValueLocal[1] }}</span>
         </div>
       </div>
     </template>

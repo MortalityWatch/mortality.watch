@@ -9,15 +9,23 @@ const reset = () => emit('colorsChanged', undefined)
 </script>
 
 <template>
-  <span v-for="(_, index) of colors" :key="index">
+  <span
+    v-for="(_, index) of colors"
+    :key="index"
+  >
     <color-picker
+      v-model:pure-color="colors[index]"
       format="hex"
-      v-model:pureColor="colors[index]"
       shape="circle"
-      v-on:update:pureColor="handleColorUpdate()"
+      @update:pure-color="handleColorUpdate()"
     />
   </span>
-  <button class="chartButton" @click="reset">↻&nbsp;&nbsp;Reset</button>
+  <button
+    class="chartButton"
+    @click="reset"
+  >
+    ↻&nbsp;&nbsp;Reset
+  </button>
 </template>
 
 <style scoped>

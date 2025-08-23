@@ -20,8 +20,8 @@ export const numberWithCommas = (
   const num = typeof x === 'number' ? x : parseFloat(x)
   const rounded = Number(num.toFixed(decimals))
   return (
-    (forcePlusSign && num > 0 ? '+' : '') +
-    rounded.toLocaleString(undefined, {
+    (forcePlusSign && num > 0 ? '+' : '')
+    + rounded.toLocaleString(undefined, {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals
     })

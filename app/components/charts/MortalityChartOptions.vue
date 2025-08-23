@@ -65,9 +65,9 @@ const copyToClipboard = async () => {
     :model="speedDialItems"
     direction="up"
     :style="{ position: 'fixed', bottom: '1rem', right: '1rem', zIndex: 1000 }"
-    buttonClass="p-button-sm p-button-rounded"
-    showIcon="pi pi-bars"
-    hideIcon="pi pi-times"
-    :tooltipOptions="{ position: 'left', event: 'hover' }"
+    button-class="p-button-sm p-button-rounded"
+    show-icon="pi pi-bars"
+    hide-icon="pi pi-times"
+    :tooltip-options="{ position: 'left', event: 'hover' }"
   />
 </template>

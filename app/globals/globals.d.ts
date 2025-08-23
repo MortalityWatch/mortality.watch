@@ -1,4 +1,4 @@
-import { ToastServiceMethods } from 'primevue'
+import type { ToastServiceMethods } from 'primevue'
 
 export {}
 

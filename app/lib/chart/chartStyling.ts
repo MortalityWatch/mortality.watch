@@ -1,4 +1,4 @@
-import { Context } from 'chartjs-plugin-datalabels'
+import type { Context } from 'chartjs-plugin-datalabels'
 
 export const getFont = (
   size: number,

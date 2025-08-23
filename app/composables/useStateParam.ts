@@ -1,6 +1,7 @@
-// useStateParam.ts
-import { LocationQueryValue, useRoute, useRouter } from 'vue-router'
-import { computed, ComputedRef } from 'vue'
+import type { LocationQueryValue } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import type { ComputedRef } from 'vue'
+import { computed } from 'vue'
 import { encodeBool, encodeString } from '@/lib/state/stateSerializer'
 
 type InputTypes = string | string[] | boolean | number | undefined
@@ -23,7 +24,7 @@ export const useQueryParam = <T extends InputTypes>(
   const route = useRoute()
 
   const parseQueryValue = (
-    raw: LocationQueryValue | LocationQueryValue[]
+    raw: LocationQueryValue | LocationQueryValue[] | undefined
   ): T => {
     // If no raw value exists, return fallback
     if (!raw) return fallback
@@ -40,18 +41,18 @@ export const useQueryParam = <T extends InputTypes>(
   const param = computed<T>({
     get: () => {
       const raw = route.query[key]
-      return parseQueryValue(raw)
+      return parseQueryValue(raw ?? undefined)
     },
     set: (val) => {
       const newQuery = { ...route.query }
 
       // If value is undefined, delete the key
       if (val === undefined) {
-        delete newQuery[key]
+        Reflect.deleteProperty(newQuery, key)
       } else {
         // Use maybeEncode for value conversion
-        newQuery[key] =
-          val === null
+        newQuery[key]
+          = val === null
             ? null
             : Array.isArray(val)
               ? val.map(String)

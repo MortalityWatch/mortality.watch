@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type ListType, Country } from '@/model'
+import type { Country, type ListType } from '@/model'
 import { getByValue } from '@/utils'
 import { computed, toRaw } from 'vue'
 import { showToast } from '../../toast'
@@ -32,12 +32,12 @@ const getCountryList = (
   const result: CountryOption[] = []
   for (const country of Object.values(allCountries)) {
     const countryAgs = country.age_groups()
-    const allInSet = ageGroups.every((ag) => countryAgs.has(ag))
+    const allInSet = ageGroups.every(ag => countryAgs.has(ag))
     result.push({
       title: country.jurisdiction,
       hasAsmr: country.age_groups().size > 1,
       ageGroups: !props.isAsmrType
-        ? Array.from(countryAgs).filter((x) => x !== 'all')
+        ? Array.from(countryAgs).filter(x => x !== 'all')
         : undefined,
       $isDisabled: !allInSet
     })
@@ -47,7 +47,7 @@ const getCountryList = (
 
 const selectedCountries = computed({
   get: () => {
-    return options.value.filter((opt) =>
+    return options.value.filter(opt =>
       Object.entries(props.allCountries).some(
         ([iso3c, country]) =>
           country.jurisdiction === opt.title && props.countries.includes(iso3c)
@@ -71,12 +71,12 @@ const selectedCountries = computed({
 const selectedAgeGroups = computed({
   get: () =>
     ageGroups.value
-      .filter((v) => props.ageGroups.includes(v))
-      .map((v) => ({ name: v, value: v })),
+      .filter(v => props.ageGroups.includes(v))
+      .map(v => ({ name: v, value: v })),
   set: (val: ListType[]) => {
     emit(
       'ageGroupsChanged',
-      val.map((v) => v.value)
+      val.map(v => v.value)
     )
   }
 })
@@ -97,11 +97,11 @@ const ageGroupSelected = (c: ListType) => {
   if (countriesToRemove.length) {
     emit(
       'countriesChanged',
-      selectedCountries.filter((x) => !countriesToRemove.includes(x))
+      selectedCountries.filter(x => !countriesToRemove.includes(x))
     )
     showToast(
-      `Due to missing data for selected age groups, ` +
-        `some jurisdictions have been automatically unselected.`
+      `Due to missing data for selected age groups, `
+      + `some jurisdictions have been automatically unselected.`
     )
   }
 }
@@ -121,51 +121,49 @@ const options = computed(() => {
 <template>
   <IftaLabel class="mb-0">
     <MultiSelect
+      v-model="selectedCountries"
       display="chip"
       filter
-      v-model="selectedCountries"
       :options="options"
-      optionLabel="title"
+      option-label="title"
       placeholder="Select Jurisdictions"
-      :maxSelectedLabels="props.maxCountriesAllowed"
+      :max-selected-labels="props.maxCountriesAllowed"
       class="w-full pt-5"
       :disabled="props.isUpdating"
       @change="(e) => countrySelected(e.value?.[0])"
     >
       <template #dropdownicon="{ class: iconClass }">
-        <i :class="['pi pi-chevron-down', iconClass]"></i>
+        <i :class="['pi pi-chevron-down', iconClass]" />
       </template>
 
-      <template v-slot:option="{ option }">
+      <template #option="{ option }">
         <span>{{ option.title }}</span>
         <span
+          v-if="option.hasAsmr"
           class="ml-2 inline-block rounded bg-green-600 px-2 py-0.5 text-xs font-semibold text-white"
-          v-if="option.hasAsmr"
-          >ASMR</span
-        >
+        >ASMR</span>
         <span
-          class="ml-1 inline-block rounded bg-blue-600 px-2 py-0.5 text-xs font-semibold text-white"
           v-if="option.hasAsmr"
-          >LE</span
-        >
+          class="ml-1 inline-block rounded bg-blue-600 px-2 py-0.5 text-xs font-semibold text-white"
+        >LE</span>
       </template>
     </MultiSelect>
     <label for="ms_cities">Jurisdictions</label>
   </IftaLabel>
 
   <div
+    v-show="!props.isAsmrType && !props.isLifeExpectancyType"
     id="age-group-select"
     class="column mt-4"
-    v-show="!props.isAsmrType && !props.isLifeExpectancyType"
   >
     <IftaLabel class="mb-0">
       <MultiSelect
         id="ageGroup"
+        v-model="selectedAgeGroups"
         class="w-full"
         placeholder="Select the age group"
-        v-model="selectedAgeGroups"
         :options="ageGroups"
-        optionLabel="name"
+        option-label="name"
         :multiple="true"
         :allow-empty="false"
         display="chip"

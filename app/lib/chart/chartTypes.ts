@@ -1,11 +1,11 @@
-import {
+import type {
   ChartData,
   ChartDataset,
   ChartOptions,
   ChartType,
   DefaultDataPoint
 } from 'chart.js'
-import { MatrixDataPoint } from 'chartjs-chart-matrix'
+import type { MatrixDataPoint } from 'chartjs-chart-matrix'
 
 export type ChartStyle = 'line' | 'bar' | 'matrix'
 

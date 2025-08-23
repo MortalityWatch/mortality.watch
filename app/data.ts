@@ -4,15 +4,15 @@ import {
   Country,
   type CountryRaw,
   type Dataset,
-  DatasetEntry,
-  AllChartData,
-  NumberArray,
-  NumberEntryFields,
-  DatasetRaw,
+  type DatasetEntry,
+  type AllChartData,
+  type NumberArray,
+  type NumberEntryFields,
+  type DatasetRaw,
   stringKeys,
-  StringArray,
+  type StringArray,
   numberKeys,
-  DataVector
+  type DataVector
 } from './model'
 import {
   getObjectOfArrays,
@@ -27,116 +27,108 @@ const endpoint = USE_STAGING ? 'mortality-staging' : 'mortality'
 
 const errHandler = (err: string) => console.error(err)
 
-const fetchMetadata = () =>
-  new Promise<string>((resolve, reject) => {
-    fetch(`https://s3.mortality.watch/data/${endpoint}/world_meta.csv`, {
-      method: 'GET'
-    })
-      .then((response) => response.text())
-      .then((text: string) => resolve(text))
-      .catch((error) => reject(error))
+const fetchMetadata = async (): Promise<string> => {
+  const response = await fetch(`https://s3.mortality.watch/data/${endpoint}/world_meta.csv`, {
+    method: 'GET'
   })
+  return response.text()
+}
 
-export const loadCountryMetadataFlat = () =>
-  new Promise<CountryRaw[]>((resolve, reject) => {
-    fetchMetadata()
-      .then((text: string) => {
-        const rawObjects = Papa.parse(text, {
-          header: true,
-          skipEmptyLines: true
-        }).data
-        resolve(rawObjects)
-      })
-      .catch((error) => reject(error))
-  })
+export const loadCountryMetadataFlat = async (): Promise<CountryRaw[]> => {
+  const text = await fetchMetadata()
+  const rawObjects = Papa.parse(text, {
+    header: true,
+    skipEmptyLines: true
+  }).data
+  return rawObjects as CountryRaw[]
+}
 
-export const loadCountryMetadata = () =>
-  new Promise<Record<string, Country>>((resolve, reject) => {
-    fetchMetadata()
-      .then((text: string) => {
-        const rawObjects = Papa.parse(text, { header: true }).data
-        const data: Record<string, Country> = {}
-        for (const rawObj of rawObjects) {
-          if (!rawObj.iso3c) continue
-          const parsedObj = new Country(rawObj)
-          const iso = parsedObj.iso3c
-          if (!data[iso]) data[iso] = parsedObj
-          else
-            data[iso].data_source = [
-              ...data[iso].data_source,
-              ...parsedObj.data_source
-            ]
-        }
-        resolve(data)
-      })
-      .catch((error) => reject(error))
-  })
+export const loadCountryMetadata = async (): Promise<Record<string, Country>> => {
+  const text = await fetchMetadata()
+  const rawObjects = Papa.parse(text, { header: true }).data as unknown[]
+  const data: Record<string, Country> = {}
+  for (const rawObj of rawObjects) {
+    const typedObj = rawObj as Record<string, unknown>
+    if (!typedObj.iso3c) continue
+    const parsedObj = new Country(rawObj as CountryRaw)
+    const iso = parsedObj.iso3c
+    if (!data[iso]) data[iso] = parsedObj
+    else
+      data[iso].data_source = [
+        ...data[iso].data_source,
+        ...parsedObj.data_source
+      ]
+  }
+  return data
+}
 
 const getAgeGroup = (ag: string) => {
   if (ag == 'all') return ''
   else return '_' + ag
 }
 
-const fetchData = (
+const fetchData = async (
   chartType: string,
   country: string,
   ageGroup: string
-): Promise<CountryData[]> =>
-  new Promise<CountryData[]>((resolve) => {
+): Promise<CountryData[]> => {
+  try {
     const ag = getAgeGroup(ageGroup)
-    fetch(
+    const response = await fetch(
       `https://s3.mortality.watch/data/${endpoint}/${country}/${chartType}${ag}.csv`,
       {
         method: 'GET'
       }
     )
-      .then((response) => response.text(), errHandler)
-      .then(async (rawData) => {
-        const rawObjects = Papa.parse(rawData, {
-          header: true,
-          delimiter: ',',
-          newline: '\n'
-        }).data
-        const data: CountryData[] = []
-        for (const rawObj of rawObjects) {
-          const parsedObj = new CountryData(rawObj, ageGroup, chartType)
-          if (!parsedObj.iso3c) continue
-          data.push(parsedObj)
-        }
-        resolve(data)
-      }, errHandler)
-      .catch(errHandler)
-  })
+    const rawData = await response.text()
+    const rawObjects = Papa.parse(rawData, {
+      header: true,
+      delimiter: ',',
+      newline: '\n'
+    }).data
+    const data: CountryData[] = []
+    for (const rawObj of rawObjects) {
+      const parsedObj = new CountryData(rawObj, ageGroup, chartType)
+      if (!parsedObj.iso3c) continue
+      data.push(parsedObj)
+    }
+    return data
+  } catch (error) {
+    errHandler(error as string)
+    return []
+  }
+}
 
-export const updateDataset = (
+export const updateDataset = async (
   chartType: string,
   countryCodes: string[],
   ageGroups: string[]
-): Promise<DatasetRaw> =>
-  new Promise((resolve) => {
-    ;(async () => {
-      const operations: Promise<CountryData[]>[] = []
-      // Call fetchData in parallel for all combinations
-      countryCodes.forEach((country) => {
-        ageGroups.forEach((ag) => {
-          operations.push(fetchData(chartType, country, ag))
-        })
+): Promise<DatasetRaw> => {
+  try {
+    const operations: Promise<CountryData[]>[] = []
+    // Call fetchData in parallel for all combinations
+    countryCodes.forEach((country) => {
+      ageGroups.forEach((ag) => {
+        operations.push(fetchData(chartType, country, ag))
       })
-      Promise.all(operations)
-        .then((results) => results.flat())
-        .then((rows) => {
-          const data: DatasetRaw = {}
-          rows.forEach((row) => {
-            const { age_group, iso3c } = row
-            data[age_group] = data[age_group] || {}
-            data[age_group][iso3c] = data[age_group][iso3c] || []
-            data[age_group][iso3c].push(row)
-          })
-          resolve(data)
-        })
-        .catch((error) => console.error(error))
-    })()
-  })
+    })
+    const results = await Promise.all(operations)
+    const rows = results.flat()
+    const data: DatasetRaw = {}
+    rows.forEach((row) => {
+      const { age_group, iso3c } = row
+      data[age_group] = data[age_group]
+        || {}
+      data[age_group][iso3c] = data[age_group][iso3c]
+        || []
+      data[age_group][iso3c].push(row)
+    })
+    return data
+  } catch (error) {
+    console.error(error)
+    return {}
+  }
+}
 
 export const getLabels = (chartType: string, labels: string[]): string[] => {
   let labelsArr: string[]
@@ -274,14 +266,14 @@ const calculateBaseline = async (
   const trend = method === 'lin_reg' || method === 'exp'
   const s = getSeasonType(chartType)
 
-  if (bl_data.every((x) => x == null || isNaN(x as number))) return
+  if (bl_data.every(x => x == null || isNaN(x as number))) return
 
   try {
     const baseUrl = 'https://rstats.mortality.watch/'
-    const dataParam =
-      cumulative && s === 1 ? all_data.join(',') : bl_data.join(',')
-    const url =
-      cumulative && s === 1
+    const dataParam
+      = cumulative && s === 1 ? all_data.join(',') : bl_data.join(',')
+    const url
+      = cumulative && s === 1
         ? `${baseUrl}cum?y=${dataParam}&h=${h}&t=${trend ? 1 : 0}`
         : `${baseUrl}?y=${dataParam}&h=${h}&s=${s}&t=${trend ? 1 : 0}&m=${method}`
 
@@ -290,10 +282,10 @@ const calculateBaseline = async (
     const json = JSON.parse(text)
 
     // Update NA to undefined
-    json.lower = (json.lower as string[]).map((x) =>
+    json.lower = (json.lower as string[]).map(x =>
       x === 'NA' ? undefined : x
     )
-    json.upper = (json.upper as string[]).map((x) =>
+    json.upper = (json.upper as string[]).map(x =>
       x === 'NA' ? undefined : x
     )
 
@@ -389,8 +381,8 @@ export const getAllChartData = async (
       )
       if (!data[ag]) data[ag] = {}
       if (
-        !cd ||
-        (!baselineMethod && cd[dataKey].filter((x) => x).length == 0)
+        !cd
+        || (!baselineMethod && cd[dataKey].filter(x => x).length == 0)
       ) {
         if (dataKey.startsWith('asmr')) {
           noAsmr.add(iso3c)
@@ -439,11 +431,11 @@ export const getAllChartData = async (
   }
 
   if (
-    baselineDateFrom &&
-    baselineDateTo &&
-    keys &&
-    baselineMethod &&
-    dataKey !== 'population'
+    baselineDateFrom
+    && baselineDateTo
+    && keys
+    && baselineMethod
+    && dataKey !== 'population'
   ) {
     await calculateBaselines(
       data,
