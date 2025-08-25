@@ -7,25 +7,24 @@ import {
 import { getFilteredChartData } from '@/chart'
 import { getAllChartData, updateDataset } from '@/data'
 import { getCamelCase, isMobile } from '@/utils'
-import { compress, decompress } from '../lib/compression/compress.browser'
+import { decompress } from '../lib/compression/compress.browser'
 import { showToast } from '../toast'
 import { isRef, reactive, ref, toRaw, unref, type Ref } from 'vue'
 import {
   decodeBool,
   decodeString,
-  encodeBool,
-  encodeString,
   type Serializable
 } from './serializable'
-import {
+import type {
+  DatasetRaw,
+  NumberEntryFields,
+  AllChartData,
   getChartTypeFromOrdinal,
   type Country,
   type ListType,
   baselineMethods,
-  getKeyForType,
-  DatasetRaw,
-  NumberEntryFields,
-  AllChartData
+  getKeyForType
+
 } from '@/model'
 import type { LocationQuery } from 'vue-router'
 import {
@@ -34,7 +33,7 @@ import {
   getSeasonString
 } from './baseline'
 import { getColorsForDataset } from '@/colors'
-import { MortalityChartData } from '@/lib/chart/chartTypes.ts'
+import type { MortalityChartData } from '@/lib/chart/chartTypes.ts'
 
 export class State implements Serializable {
   // Core Settings
@@ -131,7 +130,7 @@ export class State implements Serializable {
     ) as string[]
     if (countries && countries.length) {
       const validCountryCodes = Object.keys(this.allCountries)
-      let validCountries = countries.filter((x) =>
+      let validCountries = countries.filter(x =>
         validCountryCodes.includes(x)
       )
       if (!validCountries || !validCountries.length)
@@ -150,7 +149,7 @@ export class State implements Serializable {
       for (const iso3c of this.countries) {
         for (const ds of this.allCountries[iso3c].data_source) {
           validAgeGroups.push(
-            ...Array.from(ds.age_groups).filter((value) =>
+            ...Array.from(ds.age_groups).filter(value =>
               ageGroups.includes(value)
             )
           )
@@ -171,8 +170,8 @@ export class State implements Serializable {
     }
     this.setValue(
       '_isExcess',
-      decodeBool(encodedState.e as string) ??
-        encodedState.t?.includes('_excess')
+      decodeBool(encodedState.e as string)
+      ?? encodedState.t?.includes('_excess')
     )
     this.setValue('_chartStyle', encodedState.cs)
     this.setValue('_dateFrom', decodeString(encodedState.df as string))
@@ -212,23 +211,23 @@ export class State implements Serializable {
   private configureOptions = () => {
     this.chartOptions.showTotalOption = this.isExcess && this.isBarChartStyle()
     this.chartOptions.showTotalOptionDisabled = !this.cumulative
-    this.chartOptions.showMaximizeOption =
-      !(this.isExcess && this.isLineChartStyle()) && !this.isMatrixChartStyle()
-    this.chartOptions.showMaximizeOptionDisabled =
-      this.isLogarithmic ||
-      (this.isExcess && !this.chartOptions.showTotalOption)
-    this.chartOptions.showBaselineOption =
-      this.hasBaseline() && !this.isMatrixChartStyle()
-    this.chartOptions.showPredictionIntervalOption =
-      this.chartOptions.showBaselineOption ||
-      (this.isExcess && !this.isMatrixChartStyle())
-    this.chartOptions.showPredictionIntervalOptionDisabled =
-      (!this.isExcess && !this.showBaseline) ||
-      (this.cumulative && !this.showCumPi())
+    this.chartOptions.showMaximizeOption
+      = !(this.isExcess && this.isLineChartStyle()) && !this.isMatrixChartStyle()
+    this.chartOptions.showMaximizeOptionDisabled
+      = this.isLogarithmic
+        || (this.isExcess && !this.chartOptions.showTotalOption)
+    this.chartOptions.showBaselineOption
+      = this.hasBaseline() && !this.isMatrixChartStyle()
+    this.chartOptions.showPredictionIntervalOption
+      = this.chartOptions.showBaselineOption
+        || (this.isExcess && !this.isMatrixChartStyle())
+    this.chartOptions.showPredictionIntervalOptionDisabled
+      = (!this.isExcess && !this.showBaseline)
+        || (this.cumulative && !this.showCumPi())
     this.chartOptions.showCumulativeOption = this.isExcess
     this.chartOptions.showPercentageOption = this.isExcess
-    this.chartOptions.showLogarithmicOption =
-      !this.isMatrixChartStyle() && !this.isExcess
+    this.chartOptions.showLogarithmicOption
+      = !this.isMatrixChartStyle() && !this.isExcess
   }
 
   set countries(val: string[]) {
@@ -319,8 +318,8 @@ export class State implements Serializable {
 
   get standardPopulation(): string {
     return (
-      unref(this._standardPopulation) ??
-      (this.countries.length > 1 ? Defaults.standardPopulation : 'country')
+      unref(this._standardPopulation)
+      ?? (this.countries.length > 1 ? Defaults.standardPopulation : 'country')
     )
   }
 
@@ -365,9 +364,9 @@ export class State implements Serializable {
 
   get showPredictionInterval(): boolean {
     if (
-      (!this.isExcess && !this.showBaseline) ||
-      this.isMatrixChartStyle() ||
-      (this.cumulative && !this.showCumPi())
+      (!this.isExcess && !this.showBaseline)
+      || this.isMatrixChartStyle()
+      || (this.cumulative && !this.showCumPi())
     )
       return false
 
@@ -385,17 +384,18 @@ export class State implements Serializable {
   get showLabels(): boolean {
     const val = unref(this._showLabels)
 
-    const result =
-      val ??
-      (Defaults.showLabels &&
-        this.allChartData &&
-        this.dateToIndex() - this.dateFromIndex() + 1 <= (isMobile() ? 20 : 60))
+    const result
+      = val
+        ?? (Defaults.showLabels
+          && this.allChartData
+          && this.dateToIndex() - this.dateFromIndex() + 1 <= (isMobile() ? 20 : 60))
     return result
   }
 
   get sliderValue(): string[] {
     return [this.dateFrom!, this.dateTo!]
   }
+
   set sliderValue(sliderValue: string[]) {
     if (this.dateFrom !== sliderValue[0]) {
       this.dateFrom = sliderValue[0]
@@ -408,6 +408,7 @@ export class State implements Serializable {
   get baselineSliderValue(): string[] {
     return [this.baselineDateFrom, this.baselineDateTo]
   }
+
   set baselineSliderValue(sliderValue: string[]) {
     if (this.baselineDateFrom !== sliderValue[0])
       this.baselineDateFrom = sliderValue[0]
@@ -496,7 +497,7 @@ export class State implements Serializable {
   }
 
   baselineMethodEntry = (): ListType =>
-    baselineMethods.filter((v) => v.value === this.baselineMethod)[0]
+    baselineMethods.filter(v => v.value === this.baselineMethod)[0]
 
   // Helper Functions
   isAsmrType = () => this.type.includes('asmr')
@@ -522,9 +523,9 @@ export class State implements Serializable {
   isMonthlyChartType = () => this.chartType.includes('monthly')
 
   isYearlyChartType = () =>
-    this.chartType.includes('year') ||
-    this.chartType.includes('fluseason') ||
-    this.chartType.includes('midyear')
+    this.chartType.includes('year')
+    || this.chartType.includes('fluseason')
+    || this.chartType.includes('midyear')
 
   dateFromIndex = () => this.getLabels().indexOf(this.dateFrom)
 
@@ -633,18 +634,18 @@ export class State implements Serializable {
   // Backwards compatability
   isIsoKey = (str: string) => {
     return (
-      str === str.toUpperCase() &&
-      (str.length === 3 ||
-        /^(USA-\w{2})$/.test(str) ||
-        /^(DEU-\w{2})$/.test(str) ||
-        /^(GBR\w{4})$/.test(str))
+      str === str.toUpperCase()
+      && (str.length === 3
+        || /^(USA-\w{2})$/.test(str)
+        || /^(DEU-\w{2})$/.test(str)
+        || /^(GBR\w{4})$/.test(str))
     )
   }
 
   showCumPi = (): boolean =>
-    this.cumulative &&
-    this.isYearlyChartType() &&
-    ['lin_reg', 'mean'].includes(this.baselineMethod)
+    this.cumulative
+    && this.isYearlyChartType()
+    && ['lin_reg', 'mean'].includes(this.baselineMethod)
 
   updateData = async (
     shouldDownloadDataset: boolean,
@@ -671,15 +672,15 @@ export class State implements Serializable {
 
       if (this.chartType === 'yearly') {
         this.allYearlyChartLabels.value = this.allChartLabels.value
-        this.allYearlyChartLabelsUnique.value =
-          this.allChartLabels.value.filter((x) => parseInt(x) <= 2017)
+        this.allYearlyChartLabelsUnique.value
+          = this.allChartLabels.value.filter(x => parseInt(x) <= 2017)
       } else {
         this.allYearlyChartLabels.value = Array.from(
-          this.allChartLabels.value.map((v) => v.substring(0, 4))
+          this.allChartLabels.value.map(v => v.substring(0, 4))
         )
         this.allYearlyChartLabelsUnique.value = Array.from(
           new Set(this.allYearlyChartLabels.value)
-        ).filter((x) => parseInt(x) <= 2017)
+        ).filter(x => parseInt(x) <= 2017)
       }
     }
 
@@ -763,8 +764,8 @@ export class State implements Serializable {
           '_baselineDateFrom',
           '_baselineDateTo',
           '_sliderStart'
-        ].includes(key) ||
-          (this.baselineMethod !== 'auto' && key == '_cumulative')
+        ].includes(key)
+        || (this.baselineMethod !== 'auto' && key == '_cumulative')
       )
     }
 
