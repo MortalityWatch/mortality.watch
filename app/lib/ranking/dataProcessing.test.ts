@@ -5,7 +5,8 @@ import {
   visibleCountryCodesForExplorer
 } from './dataProcessing'
 import type { ProcessCountryRowOptions } from './types'
-import type { DatasetEntry, Country } from '@/model'
+import type { DatasetEntry } from '@/model'
+import { Country } from '@/model'
 
 describe('ranking/dataProcessing', () => {
   describe('calculateRelativeExcessArrays', () => {
@@ -124,12 +125,15 @@ describe('ranking/dataProcessing', () => {
   describe('processCountryRow', () => {
     // Helper to create mock metadata
     const createMockMetadata = (iso3c: string): Record<string, Country> => ({
-      [iso3c]: {
+      [iso3c]: new Country({
+        iso3c,
         jurisdiction: `Country ${iso3c}`,
-        iso_3166_1_alpha_2: iso3c.substring(0, 2).toLowerCase(),
-        iso_3166_1_alpha_3: iso3c,
-        name: `Country ${iso3c}`
-      } as Country
+        min_date: '2020-01-01',
+        max_date: '2024-12-31',
+        type: 'all',
+        age_groups: 'all',
+        source: 'test'
+      })
     })
 
     // Helper to create mock country data

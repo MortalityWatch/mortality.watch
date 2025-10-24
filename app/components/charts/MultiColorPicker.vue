@@ -38,7 +38,7 @@ const reset = () => emit('colorsChanged', undefined)
     <UButton
       icon="i-lucide-rotate-ccw"
       size="sm"
-      color="gray"
+      color="neutral"
       variant="ghost"
       @click="reset"
     >

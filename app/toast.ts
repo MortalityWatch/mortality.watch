@@ -10,15 +10,14 @@ export const showToast = (message: string, type: 'success' | 'error' | 'warning'
   }
 
   const colorMap = {
-    success: 'green',
-    error: 'red',
-    warning: 'orange',
-    info: 'blue'
+    success: 'success',
+    error: 'error',
+    warning: 'warning',
+    info: 'info'
   }
 
   toast.add({
     title: message,
-    color: colorMap[type] as 'green' | 'red' | 'orange' | 'blue',
-    timeout: 2000
+    color: colorMap[type] as 'success' | 'error' | 'warning' | 'info'
   })
 }

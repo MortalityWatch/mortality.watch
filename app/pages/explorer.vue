@@ -396,8 +396,7 @@ const updateData = async (
     )
     console.log('[Explorer] newData from getAllChartData:', newData)
     console.log('[Explorer] newData.data keys:', newData.data ? Object.keys(newData.data) : 'undefined')
-    if (allChartData) Object.assign(allChartData, newData)
-    else allChartData = newData
+    Object.assign(allChartData, newData)
     console.log('[Explorer] allChartData after update:', allChartData)
     console.log('[Explorer] allChartData.data keys:', allChartData.data ? Object.keys(allChartData.data) : 'undefined')
 
@@ -571,7 +570,7 @@ const allCountries = ref<Record<string, Country>>({})
 const isDataLoaded = ref(false)
 const allAgeGroups = computed(() => {
   const result = new Set<string>()
-  countries.value.forEach((countryCode) => {
+  countries.value.forEach((countryCode: string) => {
     const country = allCountries.value[countryCode]
     if (country) {
       country.age_groups().forEach((ag: string) => result.add(ag))
@@ -1055,7 +1054,7 @@ const saveChart = async () => {
           <UCard
             class="chart-card"
             :class="{ 'chart-card-resizable': !isMobile(), 'chart-card-resized': hasBeenResized }"
-            :ui="{ body: { padding: '0' } }"
+            :ui="{ body: 'p-0' }"
           >
             <div
               ref="chartContainer"
@@ -1176,7 +1175,7 @@ const saveChart = async () => {
           <!-- Chart Options Card -->
           <UCard
             class="mt-3"
-            :ui="{ body: { padding: 'p-0' } }"
+            :ui="{ body: 'p-0' }"
           >
             <template #header>
               <h2 class="text-xl font-semibold">

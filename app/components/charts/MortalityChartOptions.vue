@@ -75,7 +75,7 @@ const copyToClipboard = async () => {
         size="lg"
         color="primary"
         variant="solid"
-        :ui="{ rounded: 'rounded-full' }"
+        class="rounded-full"
         aria-label="Chart options"
       />
     </UDropdown>
