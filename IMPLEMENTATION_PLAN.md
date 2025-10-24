@@ -6,17 +6,20 @@ This document outlines the implementation plan for addressing critical issues, r
 
 ---
 
-## ⚠️ Critical Decisions Required Before Starting
+## ✅ Resolved Critical Decisions
 
-**Answer these questions BEFORE beginning Phase 4:**
+**These decisions have been finalized:**
 
-1. **Auth library:** Lucia vs @nuxt/auth vs custom implementation?
-2. **Database migrations:** Kysely, Drizzle, or manual SQL scripts?
-3. **Stripe pricing:** Confirm monthly amount and annual discount
-4. **Email provider:** Resend free tier (100/day) or Nodemailer + Gmail?
-5. **Refund policy:** 30-day refund window?
-
-**See full list of open questions at the end of this document.**
+1. **Auth library:** @sidebase/nuxt-auth (Lucia is being deprecated by March 2025)
+2. **Database migrations:** Drizzle ORM
+3. **Stripe pricing:** $9.99/month and $99/year (saves ~$20, approx 2 months free)
+4. **Email provider:** Resend free tier (100 emails/day, 3,000/month)
+5. **Refund policy:** 30-day refund window
+6. **Cache strategy:** Start with no cache, add filesystem cache when implementing Phase 1 server-side rendering
+7. **Testing framework:** Continue with Vitest (already working with 376 tests passing)
+8. **Admin panel:** Build custom admin panel using Nuxt UI components
+9. **E2E tests:** Set up GitHub Actions for both npm run check and Playwright UI tests
+10. **CI/CD:** GitHub Actions for automated testing and quality checks
 
 ---
 
@@ -176,7 +179,7 @@ docs: update CHANGELOG for Phase 0 completion
 **Setting up remote:**
 
 ```bash
-git remote add origin git@github.com:yourusername/mortality.watch.git
+git remote add origin git@github.com:MortalityWatch/mortality.watch.git
 ```
 
 **Keeping branch updated:**
@@ -196,11 +199,153 @@ git branch -d <feature-branch>
 
 ---
 
+## Phase -1: CI/CD Pipeline Setup (Do First)
+
+### Overview
+
+Set up automated testing and quality checks to catch issues early. This infrastructure will support all future development phases.
+
+### 1. GitHub Actions for Code Quality
+
+**File:** `.github/workflows/ci.yml`
+
+- [ ] Update existing CI workflow or create new one
+- [ ] Configure workflow to run on push and pull requests to master
+- [ ] Add job for `npm run check` (lint + typecheck + vitest)
+- [ ] Set up Node.js caching for faster builds
+- [ ] Add test coverage reporting (upload to Codecov or similar)
+- [ ] Configure job timeout (e.g., 10 minutes max)
+
+**Example workflow structure:**
+
+```yaml
+name: CI
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - run: npm run check
+      - run: npm run test:coverage
+      - uses: codecov/codecov-action@v3
+```
+
+### 2. Playwright E2E Testing Setup
+
+**Installation:**
+
+- [ ] Install Playwright: `npm install -D @playwright/test`
+- [ ] Initialize Playwright: `npx playwright install`
+- [ ] Create `playwright.config.ts` configuration
+- [ ] Add `test:e2e` script to package.json
+
+**Configuration (`playwright.config.ts`):**
+
+- [ ] Configure base URL (http://localhost:3000)
+- [ ] Set up multiple browsers (chromium, firefox, webkit)
+- [ ] Configure test directory: `tests/e2e/`
+- [ ] Set up screenshots on failure
+- [ ] Configure video recording for failed tests
+- [ ] Set up HTML reporter
+
+**Test files to create:**
+
+- [ ] `tests/e2e/homepage.spec.ts` - Test homepage loads and features work
+- [ ] `tests/e2e/explorer.spec.ts` - Test explorer page basic functionality
+- [ ] `tests/e2e/ranking.spec.ts` - Test ranking page and sorting
+- [ ] `tests/e2e/navigation.spec.ts` - Test navigation between pages
+- [ ] `tests/e2e/chart-interactions.spec.ts` - Test chart controls and interactions
+- [ ] `tests/e2e/url-state.spec.ts` - Test URL state persistence and sharing
+
+### 3. GitHub Actions for E2E Tests
+
+**File:** `.github/workflows/e2e.yml` or add to main CI workflow
+
+- [ ] Set up job to run Playwright tests
+- [ ] Start Nuxt dev server before tests
+- [ ] Run Playwright tests against local server
+- [ ] Upload test artifacts (screenshots, videos) on failure
+- [ ] Configure retry logic for flaky tests
+- [ ] Set appropriate timeout (e.g., 15 minutes)
+
+**Example E2E job:**
+
+```yaml
+e2e:
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+        cache: "npm"
+    - run: npm ci
+    - run: npx playwright install --with-deps
+    - run: npm run build
+    - run: npm run preview &
+    - run: npx wait-on http://localhost:3000
+    - run: npm run test:e2e
+    - uses: actions/upload-artifact@v3
+      if: failure()
+      with:
+        name: playwright-report
+        path: playwright-report/
+```
+
+### 4. Branch Protection Rules
+
+**Configure on GitHub repository settings:**
+
+- [ ] Require status checks to pass before merging
+- [ ] Require `npm run check` to pass
+- [ ] Require E2E tests to pass
+- [ ] Require branches to be up to date before merging
+- [ ] Require linear history (optional)
+- [ ] Require code review (optional, if working with team)
+
+### 5. Documentation
+
+- [ ] Document CI/CD setup in README.md
+- [ ] Add badge for CI status to README
+- [ ] Document how to run E2E tests locally
+- [ ] Document how to debug failed CI runs
+- [ ] Add CONTRIBUTING.md with testing guidelines
+
+### 6. Local Development Scripts
+
+**Update `package.json` scripts:**
+
+- [ ] Verify `check` script exists: `"check": "npm run lint && npm run typecheck && npm run test"`
+- [ ] Add `test:e2e` script: `"test:e2e": "playwright test"`
+- [ ] Add `test:e2e:ui` script: `"test:e2e:ui": "playwright test --ui"`
+- [ ] Add `test:e2e:debug` script: `"test:e2e:debug": "playwright test --debug"`
+
+### Success Criteria
+
+- [ ] All CI checks pass on master branch
+- [ ] Pull requests automatically run checks
+- [ ] E2E tests cover critical user flows
+- [ ] Failed tests provide useful debugging information
+- [ ] CI runs complete in reasonable time (< 10 minutes for unit tests, < 15 minutes for E2E)
+- [ ] Team can run all tests locally before pushing
+
+---
+
 ## Phase 0: UI Fixes (Fix First)
 
 ### Overview
 
-These UI issues should be addressed before starting Phase 1. They affect user experience and core functionality.
+These UI issues should be addressed after CI/CD is set up. They affect user experience and core functionality.
 
 ### UI Issues Checklist
 
@@ -388,15 +533,15 @@ This task has been moved to Phase 0: UI Fixes (UI-11) to be addressed with other
 - [ ] Design schema for saved_charts table (user_id, chart_config, name, created_at, is_featured)
 - [ ] Design schema for subscriptions table (user_id, stripe_customer_id, status, plan, etc.)
 - [ ] Design schema for feature_flags table (optional, or hardcode initially)
-- [ ] Add migration system (consider using Kysely or Drizzle)
+- [ ] Install Drizzle ORM and set up migration system
 - [ ] Write migration scripts
 
 ### 4.2 Authentication System
 
 **Setup:**
 
-- [ ] Choose auth library (recommend: lucia-auth or @nuxt/auth)
-- [ ] Install and configure auth module
+- [ ] Install @sidebase/nuxt-auth module
+- [ ] Configure @sidebase/nuxt-auth (choose provider: authjs or local)
 - [ ] Set up session management (cookies vs JWT)
 - [ ] Configure secure password hashing (bcrypt/argon2)
 
@@ -431,13 +576,14 @@ This task has been moved to Phase 0: UI Fixes (UI-11) to be addressed with other
 - [ ] Environment variable for admin credentials
 - [ ] Script to create/reset admin password
 
-### 4.3 Email Service (Keep it Simple)
+### 4.3 Email Service
 
-**Setup (use Nodemailer + Gmail for now, can upgrade later):**
+**Setup (using Resend):**
 
-- [ ] Install nodemailer
-- [ ] Configure Gmail app password or use Resend free tier (100 emails/day)
-- [ ] Create basic email templates (plain text is fine initially)
+- [ ] Install Resend SDK: `npm install resend`
+- [ ] Sign up for Resend account and get API key
+- [ ] Configure Resend API key in environment variables
+- [ ] Create basic email templates (plain text is fine initially, can upgrade to React Email later)
 
 **Required emails only:**
 
@@ -517,11 +663,6 @@ This task has been moved to Phase 0: UI Fixes (UI-11) to be addressed with other
 - [ ] `app/lib/chart/logoPlugin.ts` - Conditional rendering based on tier
 - [ ] `app/lib/chart/qrCodePlugin.ts` - Conditional rendering based on tier
 
-### 5.2 Improve Suggestions
-
-- [ ] Clarify what "suggestions" means (chart recommendations? baseline method suggestions?)
-- [ ] Implement based on clarification
-
 ---
 
 ## Phase 6: Stripe Integration (Week 6-7)
@@ -536,11 +677,10 @@ This task has been moved to Phase 0: UI Fixes (UI-11) to be addressed with other
 - [ ] Configure webhook endpoint URL
 - [ ] Set up Stripe products and pricing
 
-**Recommended pricing:**
+**Confirmed pricing:**
 
 - Monthly subscription: $9.99/month
-- Annual subscription: $99/year (2 months free)
-- Optional: One-time payment for lifetime access
+- Annual subscription: $99/year (saves ~$20, approx 2 months free)
 
 **Backend API routes:**
 
@@ -764,25 +904,19 @@ This task has been moved to Phase 0: UI Fixes (UI-11) to be addressed with other
 
 ---
 
-## Open Questions / Decisions Needed
+## ✅ All Questions Resolved
 
-1. **Auth library:** Lucia vs @nuxt/auth vs custom implementation?
-2. **Database migrations:** Kysely, Drizzle, or manual SQL scripts?
-3. **Stripe pricing:** Confirm monthly amount and annual discount
-4. **Feature suggestions:** What does "improve suggestions" mean specifically?
-5. **Cache strategy:** Redis for server-rendered charts, or filesystem cache?
-6. **Testing framework preference:** Current setup uses Vitest - continue with it?
-7. **Admin panel:** Build custom or use existing admin framework?
-8. **Email:** Use Resend free tier (100/day) or Nodemailer + Gmail?
-9. **Refund policy:** 30-day refund window?
-10. **E2E tests:** Run in CI or just locally?
+All critical decisions have been made and documented at the top of this plan. See the **"Resolved Critical Decisions"** section for the complete list.
 
 ---
 
 ## Next Steps
 
-1. Review and approve this plan
-2. Clarify open questions
-3. Set up project tracking (GitHub Projects, Linear, etc.)
-4. **Begin Phase 0: UI Fixes (Priority - complete all 11 UI issues first)**
-5. Begin Phase 1: Critical Fixes & Infrastructure
+1. ✅ Review and finalize all implementation decisions (COMPLETED)
+2. **Begin Phase -1: CI/CD Pipeline Setup**
+   - Set up GitHub Actions for automated testing
+   - Install and configure Playwright for E2E tests
+   - Configure branch protection rules
+   - Document CI/CD processes
+3. **Proceed to Phase 0: UI Fixes** after CI/CD is operational
+4. Continue through phases sequentially as outlined in this plan
