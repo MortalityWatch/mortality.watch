@@ -4,16 +4,22 @@ test.describe('Homepage', () => {
   test('should load successfully', async ({ page }) => {
     await page.goto('/')
 
-    // Check that the page loaded
-    await expect(page).toHaveTitle(/Mortality Watch/i)
+    // Check that the page loaded (title is "MortalityWatch" - one word)
+    await expect(page).toHaveTitle(/MortalityWatch/i)
   })
 
   test('should display showcase images', async ({ page }) => {
     await page.goto('/')
 
-    // Check for showcase gallery
-    const showcaseImages = page.locator('img[alt*="mortality"], img[alt*="chart"]')
-    await expect(showcaseImages.first()).toBeVisible()
+    // Wait for page to be fully loaded
+    await page.waitForLoadState('networkidle')
+
+    // Check for showcase section header
+    await expect(page.getByRole('heading', { name: /Featured Visualizations/i })).toBeVisible()
+
+    // Check for showcase images (may take time to load)
+    const showcaseImages = page.locator('.grid img[alt]')
+    await expect(showcaseImages.first()).toBeVisible({ timeout: 10000 })
   })
 
   test('should have navigation links', async ({ page }) => {
