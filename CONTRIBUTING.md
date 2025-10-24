@@ -49,9 +49,28 @@ Submit pull requests for:
 
 ### Prerequisites
 
-- **Node.js** 18+ and npm
-- **R** 4.0+ (for data processing pipelines)
-- Git
+- **Node.js** 22+ (LTS recommended)
+- **npm** 10+
+- **Git** for version control
+
+### Canvas Dependencies
+
+Server-side chart rendering requires native dependencies:
+
+**macOS:**
+
+```bash
+brew install pkg-config cairo pango libpng jpeg giflib librsvg pixman
+```
+
+**Ubuntu/Debian:**
+
+```bash
+sudo apt-get install -y build-essential libcairo2-dev libpango1.0-dev \
+  libjpeg-dev libgif-dev librsvg2-dev libpixman-1-dev
+```
+
+**Windows:** See [node-canvas documentation](https://github.com/Automattic/node-canvas#windows)
 
 ### Setup Development Environment
 
@@ -68,7 +87,29 @@ Submit pull requests for:
    npm install
    ```
 
-3. **Start development server**
+3. **Set up environment** (optional for offline development)
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Edit `.env` to configure offline development:
+
+   ```bash
+   # Download only these countries for faster dev
+   NUXT_PUBLIC_DEV_COUNTRIES=USA,GBR,DEU
+   NUXT_PUBLIC_USE_LOCAL_CACHE=true
+   ```
+
+4. **Download test data** (optional for offline development)
+
+   ```bash
+   npm run download-data
+   ```
+
+   Now you can develop completely offline!
+
+5. **Start development server**
 
    ```bash
    npm run dev
@@ -76,16 +117,10 @@ Submit pull requests for:
 
    The app will be available at `http://localhost:3000`
 
-4. **Run type checking**
+6. **Run all checks**
 
    ```bash
-   npm run typecheck
-   ```
-
-5. **Run linting**
-   ```bash
-   npm run lint
-   npm run lint:fix  # Auto-fix issues
+   npm run check  # Runs lint + typecheck + tests
    ```
 
 ### Project Structure
@@ -146,9 +181,9 @@ test: add tests for date range validation
 3. **Test your changes**
 
    ```bash
-   npm run typecheck
-   npm run lint
-   npm run build  # Ensure production build works
+   npm run check           # Lint + typecheck + tests
+   npm run test:e2e        # E2E tests
+   npm run build           # Ensure production build works
    ```
 
 4. **Commit your changes**
@@ -157,6 +192,13 @@ test: add tests for date range validation
    git add .
    git commit -m "feat: your descriptive message"
    ```
+
+   **Pre-commit hooks** will automatically:
+   - Lint and fix code (ESLint)
+   - Format code (Prettier)
+   - Check types (TypeScript)
+
+   If hooks fail, fix issues and commit again.
 
 5. **Push to your fork**
 
@@ -172,27 +214,108 @@ test: add tests for date range validation
 
 ### Code Review
 
+- **CI checks must pass** (lint, typecheck, tests, build, E2E)
 - All PRs require review before merging
 - Address review feedback promptly
 - Keep PRs focused and reasonably sized
 - Be respectful and constructive in discussions
 
+### CI/CD Pipeline
+
+Every PR triggers automated checks:
+
+1. **Lint & Format** - ESLint with caching
+2. **Type Check** - TypeScript strict mode
+3. **Unit Tests** - 376 Vitest tests
+4. **Build Verification** - Production build
+5. **E2E Tests** - Playwright on Chromium
+
+View CI status: [![CI](https://github.com/MortalityWatch/mortality.watch/actions/workflows/ci.yml/badge.svg)](https://github.com/MortalityWatch/mortality.watch/actions/workflows/ci.yml)
+
 ---
 
 ## 🧪 Testing
 
-### Running Tests
+### Unit Tests (Vitest)
+
+**376 unit tests** covering data processing, state management, calculations, and utilities.
 
 ```bash
-npm test
+npm test                # Run all unit tests
+npm run test:ui         # Interactive test UI
+npm run test:coverage   # Coverage report
 ```
 
-### Writing Tests
+**Writing Unit Tests:**
 
 - Place tests next to the code they test (e.g., `useUrlState.test.ts`)
 - Use Vitest for unit tests
 - Test edge cases and error conditions
 - Aim for meaningful test coverage, not 100% coverage
+
+Example:
+
+```typescript
+import { describe, it, expect } from "vitest";
+import { myFunction } from "./myFunction";
+
+describe("myFunction", () => {
+  it("should handle expected input", () => {
+    expect(myFunction("input")).toBe("expected");
+  });
+
+  it("should handle edge cases", () => {
+    expect(myFunction("")).toBe("");
+  });
+});
+```
+
+### E2E Tests (Playwright)
+
+**32+ E2E tests** covering user flows, page interactions, and responsive behavior.
+
+```bash
+npm run test:e2e        # Run E2E tests (chromium)
+npm run test:e2e:ui     # Interactive E2E UI
+npm run test:e2e:debug  # Debug tests with Playwright Inspector
+npm run test:e2e:report # View HTML test report
+```
+
+**Writing E2E Tests:**
+
+- Place tests in `tests/e2e/`
+- Test user-facing features and flows
+- Use descriptive test names
+- Test on chromium (CI runs chromium only)
+
+Example:
+
+```typescript
+import { test, expect } from "@playwright/test";
+
+test.describe("Feature Name", () => {
+  test("should perform user action", async ({ page }) => {
+    await page.goto("/page");
+    await page.getByRole("button", { name: /click me/i }).click();
+    await expect(page).toHaveURL(/\/success/);
+  });
+});
+```
+
+**E2E Test Tips:**
+
+- Wait for `networkidle` before interactions
+- Use semantic locators (roles, labels) over CSS selectors
+- Test responsive behavior with `isMobile` fixture
+- Add timeouts for slow operations
+
+### Running All Tests
+
+```bash
+npm run check           # Unit tests + lint + typecheck
+npm run test:e2e        # E2E tests
+npm run build           # Build verification
+```
 
 ---
 
