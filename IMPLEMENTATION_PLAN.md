@@ -700,6 +700,12 @@ This task has been moved to Phase 0: UI Fixes (UI-11) to be addressed with other
 ### 6.2 Subscription Pages
 
 - [ ] `/pricing` - Pricing page with tier comparison
+- [ ] `/pro` - Dedicated Pro features showcase and benefits page
+  - Detailed feature comparison (Free vs Pro)
+  - Visual examples of Pro features (before/after)
+  - Use cases and testimonials
+  - FAQ section (billing, refunds, cancellation)
+  - Prominent "Start Free Trial" or "Upgrade Now" CTA
 - [ ] `/subscribe` - Subscription checkout flow
 - [ ] `/subscription/success` - Post-purchase confirmation
 - [ ] `/subscription/manage` - Subscription management (uses Stripe portal)
@@ -708,8 +714,10 @@ This task has been moved to Phase 0: UI Fixes (UI-11) to be addressed with other
 **UI Components:**
 
 - [ ] `PricingCard.vue` - Tier comparison cards
+- [ ] `FeatureComparisonTable.vue` - Side-by-side Free vs Pro comparison
 - [ ] `SubscriptionStatus.vue` - Show current plan
 - [ ] `UpgradePrompt.vue` - Reusable upgrade CTA
+- [ ] `UpgradeCard.vue` - Marketing card for homepage
 
 ---
 
@@ -776,6 +784,29 @@ This task has been moved to Phase 0: UI Fixes (UI-11) to be addressed with other
 - [ ] Drag-and-drop ordering of featured charts
 - [ ] Preview before publishing
 - [ ] Set max number of featured charts (e.g., 3-6)
+
+### 8.2 Homepage Marketing & Upgrade Prompts
+
+**Add marketing elements to homepage:**
+
+- [ ] Create `UpgradeCard.vue` component for homepage
+- [ ] Design marketing card highlighting Pro features:
+  - Remove watermarks and QR codes
+  - Advanced mortality calculations
+  - Save unlimited charts
+  - Z-score analysis
+- [ ] Add prominent "Sign Up" / "Upgrade to Pro" CTA button
+- [ ] Display pricing summary (e.g., "Starting at $9.99/month")
+- [ ] Link to `/pro` page for detailed feature comparison
+- [ ] Position card strategically on homepage (above or below featured charts)
+- [ ] Add testimonial section (optional, for future)
+- [ ] A/B test different messaging (optional, for future)
+
+**Free vs Pro indicators:**
+
+- [ ] Add subtle "Pro" badges on features requiring subscription
+- [ ] Show sample watermarked charts with note: "Remove with Pro"
+- [ ] Add hover tooltips explaining Pro benefits
 
 ---
 
