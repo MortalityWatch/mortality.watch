@@ -17,11 +17,46 @@
   --color-green-800: #016538;
   --color-green-900: #0A5331;
   --color-green-950: #052E16;
+
+  --ui-fg: var(--ui-color-neutral-800);
 }
 
 .dark {
   --ui-bg: var(--ui-color-neutral-950);
+  --ui-fg: var(--ui-color-neutral-100);
   --ui-bg-muted: var(--ui-color-neutral-900);
   --ui-bg-elevated: var(--ui-color-neutral-900);
   --ui-bg-accented: var(--ui-color-neutral-800);
 }
+
+.incognito-mode h1 {
+  color: #f5f5f5 !important;
+  transition: color 300ms;
+}
+
+.dark .incognito-mode h1 {
+  color: #1a1a1a !important;
+}
+
+/* Color scale for ranking table cells */
+.color-scale-1 { background-color: #5992fc; color: white; }
+.color-scale-2 { background-color: #81adfd; color: white; }
+.color-scale-3 { background-color: #a9c8fe; color: #111; }
+.color-scale-4 { background-color: #d1e3fe; color: #111; }
+.color-scale-5 { background-color: #f9fdff; color: #111; }
+.color-scale-6 { background-color: #ffc5c1; color: #111; }
+.color-scale-7 { background-color: #ffa19c; color: #111; }
+.color-scale-8 { background-color: #ff7c78; color: white; }
+.color-scale-9 { background-color: #ff5853; color: white; }
+.color-scale-na { background-color: transparent; }
+
+.dark .color-scale-1 { background-color: #226ed3; color: white; }
+.dark .color-scale-2 { background-color: #1e58a6; color: white; }
+.dark .color-scale-3 { background-color: #1a427a; color: white; }
+.dark .color-scale-4 { background-color: #152b4d; color: white; }
+.dark .color-scale-5 { background-color: #111520; color: white; }
+.dark .color-scale-6 { background-color: #4f1310; color: white; }
+.dark .color-scale-7 { background-color: #7c1818; color: white; }
+.dark .color-scale-8 { background-color: #a81c1f; color: white; }
+.dark .color-scale-9 { background-color: #d42026; color: white; }
+.dark .color-scale-na { background-color: transparent; }

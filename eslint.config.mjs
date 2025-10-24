@@ -1,6 +1,26 @@
 // @ts-check
 import withNuxt from './.nuxt/eslint.config.mjs'
+import vueA11y from 'eslint-plugin-vuejs-accessibility'
 
 export default withNuxt({
-  // Your custom configs here
+  rules: {
+    '@typescript-eslint/no-unused-expressions': [
+      'error',
+      {
+        allowShortCircuit: false,
+        allowTernary: false,
+        allowTaggedTemplates: false
+      }
+    ],
+    'vue/no-v-html': 'off'
+  }
+}).append({
+  plugins: {
+    'vuejs-accessibility': vueA11y
+  },
+  rules: {
+    ...vueA11y.configs.recommended.rules,
+    // Disable label-has-for for Nuxt UI components which handle accessibility internally
+    'vuejs-accessibility/label-has-for': 'off'
+  }
 })

@@ -1,0 +1,14 @@
+{
+  "tailwindCSS.experimental.configFile": "app/assets/css/main.css",
+  "tailwindCSS.includeLanguages": {
+    "vue": "html",
+    "vue-html": "html"
+  },
+  "tailwindCSS.classAttributes": ["class", "className", "ngClass", "ui"],
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  "editor.quickSuggestions": {
+    "strings": "on"
+  }
+}

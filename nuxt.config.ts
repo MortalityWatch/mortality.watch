@@ -1,13 +1,15 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  // Enable SSR globally
+
   modules: [
     '@nuxt/eslint',
     '@nuxt/image',
     '@nuxt/ui',
-    '@nuxt/content',
     '@vueuse/nuxt',
     'nuxt-og-image'
   ],
+  ssr: true,
 
   devtools: {
     enabled: true
@@ -15,18 +17,56 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/main.css'],
 
-  routeRules: {
-    '/docs': { redirect: '/docs/getting-started', prerender: false }
+  vue: {
+    compilerOptions: {
+      isCustomElement: tag => tag === 'stripe-buy-button'
+    }
   },
 
-  compatibilityDate: '2024-07-11',
+  runtimeConfig: {
+    public: {
+      incognitoMode: process.env.NUXT_PUBLIC_INCOGNITO_MODE || '0',
+      useLocalCache: process.env.NUXT_PUBLIC_USE_LOCAL_CACHE || 'false',
+      devCountries: process.env.NUXT_PUBLIC_DEV_COUNTRIES || '',
+      dataCachePath: '.data/cache/mortality',
+      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://www.mortality.watch'
+    }
+  },
 
+  // Route-specific rendering rules
+  routeRules: {
+    '/explorer': { ssr: false }, // Client-only (interactive)
+    '/': { prerender: true }, // Pre-rendered (SEO)
+    '/about': { prerender: true },
+    '/sources': { prerender: true },
+    '/donate': { prerender: true },
+    '/ranking': { ssr: true } // Server-rendered (fresh data)
+  },
+
+  compatibilityDate: '2025-08-16',
+
+  // Security headers
   nitro: {
-    prerender: {
-      routes: [
-        '/'
-      ],
-      crawlLinks: true
+    routeRules: {
+      '/**': {
+        headers: {
+          'X-Content-Type-Options': 'nosniff',
+          'X-Frame-Options': 'DENY',
+          'X-XSS-Protection': '1; mode=block',
+          'Referrer-Policy': 'strict-origin-when-cross-origin',
+          'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+          'Content-Security-Policy': [
+            'default-src \'self\'',
+            'script-src \'self\' \'unsafe-inline\' \'unsafe-eval\' https://s3.mortality.watch https://rstats.mortality.watch https://js.stripe.com',
+            'style-src \'self\' \'unsafe-inline\'',
+            'img-src \'self\' data: https:',
+            'font-src \'self\' data:',
+            'connect-src \'self\' https://s3.mortality.watch https://rstats.mortality.watch https://api.stripe.com',
+            'frame-src https://js.stripe.com',
+            'child-src https://js.stripe.com'
+          ].join('; ')
+        }
+      }
     }
   },
 
