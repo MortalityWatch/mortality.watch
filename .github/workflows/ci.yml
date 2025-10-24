@@ -24,8 +24,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint
-        run: npm run lint
+      - name: Run all checks (lint + typecheck + test)
+        run: npm run check
+        timeout-minutes: 10
 
-      - name: Typecheck
-        run: npm run typecheck
+      - name: Build verification
+        run: npm run build
+        timeout-minutes: 5
