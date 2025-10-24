@@ -8,6 +8,14 @@ This document outlines the implementation plan for addressing critical issues, r
 
 ## ✅ Resolved Critical Decisions
 
+**Tier Structure:**
+
+The application uses a **3-tier access model**:
+
+- **Tier 0 (Public/Free):** Anonymous users with basic features
+- **Tier 1 (Registered/Power User):** Free registration unlocks extended features (save charts, custom colors, export data)
+- **Tier 2 (Pro/Paid):** $9.99/month subscription for advanced features (no watermarks, advanced calculations, z-scores)
+
 **These decisions have been finalized:**
 
 1. **Auth library:** @sidebase/nuxt-auth (Lucia is being deprecated by March 2025)
@@ -699,25 +707,30 @@ This task has been moved to Phase 0: UI Fixes (UI-11) to be addressed with other
 
 ### 6.2 Subscription Pages
 
-- [ ] `/pricing` - Pricing page with tier comparison
-- [ ] `/pro` - Dedicated Pro features showcase and benefits page
-  - Detailed feature comparison (Free vs Pro)
-  - Visual examples of Pro features (before/after)
+- [ ] `/pricing` - Pricing page with 3-tier comparison
+  - Show all three tiers: Public (Free), Registered (Free), Pro (Paid)
+  - Emphasize that Registered tier is FREE (just sign up!)
+  - Clear feature breakdown for each tier
+- [ ] `/pro` - Dedicated Pro tier showcase and benefits page
+  - Detailed 3-tier feature comparison (Public vs Registered vs Pro)
+  - Visual examples of Pro features (before/after with watermarks)
+  - Highlight what you get FREE with registration (Tier 1)
+  - Highlight what requires paid Pro subscription (Tier 2)
   - Use cases and testimonials
   - FAQ section (billing, refunds, cancellation)
-  - Prominent "Start Free Trial" or "Upgrade Now" CTA
-- [ ] `/subscribe` - Subscription checkout flow
+  - Dual CTAs: "Sign Up Free" (for unregistered) and "Upgrade to Pro" (for registered)
+- [ ] `/subscribe` - Subscription checkout flow (Pro tier only)
 - [ ] `/subscription/success` - Post-purchase confirmation
 - [ ] `/subscription/manage` - Subscription management (uses Stripe portal)
-- [ ] Update `/profile` to show subscription status
+- [ ] Update `/profile` to show subscription status and tier
 
 **UI Components:**
 
-- [ ] `PricingCard.vue` - Tier comparison cards
-- [ ] `FeatureComparisonTable.vue` - Side-by-side Free vs Pro comparison
-- [ ] `SubscriptionStatus.vue` - Show current plan
-- [ ] `UpgradePrompt.vue` - Reusable upgrade CTA
-- [ ] `UpgradeCard.vue` - Marketing card for homepage
+- [ ] `PricingCard.vue` - Tier comparison cards (supports 3 tiers)
+- [ ] `FeatureComparisonTable.vue` - 3-column comparison: Public | Registered | Pro
+- [ ] `SubscriptionStatus.vue` - Show current tier (Public/Registered/Pro)
+- [ ] `UpgradePrompt.vue` - Context-aware upgrade CTA (shows "Sign Up" for public, "Upgrade to Pro" for registered)
+- [ ] `UpgradeCard.vue` - Marketing card for homepage (dual messaging)
 
 ---
 
@@ -789,24 +802,37 @@ This task has been moved to Phase 0: UI Fixes (UI-11) to be addressed with other
 
 **Add marketing elements to homepage:**
 
-- [ ] Create `UpgradeCard.vue` component for homepage
-- [ ] Design marketing card highlighting Pro features:
+- [ ] Create `UpgradeCard.vue` component for homepage with dual messaging
+- [ ] For **Public (Tier 0)** users - emphasize FREE registration benefits:
+  - "Sign up FREE to unlock:"
+  - Save charts to "My Charts"
+  - Extended time period options
+  - Multiple baseline methods
+  - Custom color schemes
+  - Export chart data (CSV)
+  - CTA: "Sign Up Free" → links to registration
+- [ ] For **Registered (Tier 1)** users - emphasize Pro upgrade:
+  - "Upgrade to Pro for advanced features:"
   - Remove watermarks and QR codes
-  - Advanced mortality calculations
-  - Save unlimited charts
-  - Z-score analysis
-- [ ] Add prominent "Sign Up" / "Upgrade to Pro" CTA button
-- [ ] Display pricing summary (e.g., "Starting at $9.99/month")
-- [ ] Link to `/pro` page for detailed feature comparison
+  - Single age group LE calculations
+  - Age Standardized Deaths (Levitt method)
+  - Z-score calculations
+  - Priority support
+  - Display pricing: "$9.99/month or $99/year"
+  - CTA: "Upgrade to Pro" → links to `/pro` or `/subscribe`
 - [ ] Position card strategically on homepage (above or below featured charts)
+- [ ] Link to `/pricing` for full tier comparison
 - [ ] Add testimonial section (optional, for future)
 - [ ] A/B test different messaging (optional, for future)
 
-**Free vs Pro indicators:**
+**Tier indicators throughout the app:**
 
-- [ ] Add subtle "Pro" badges on features requiring subscription
-- [ ] Show sample watermarked charts with note: "Remove with Pro"
-- [ ] Add hover tooltips explaining Pro benefits
+- [ ] Add tier badges on features:
+  - "FREE with sign up" badge for Registered features
+  - "PRO" badge for Pro features
+- [ ] Show sample watermarked charts with note: "Remove watermark with Pro"
+- [ ] Add hover tooltips explaining which tier unlocks each feature
+- [ ] Context-aware CTAs based on current user tier
 
 ---
 
