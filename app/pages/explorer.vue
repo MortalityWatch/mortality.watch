@@ -25,7 +25,7 @@ import {
   loadCountryMetadata,
   updateDataset
 } from '@/data'
-import MortalityChartControlsSecondary from '@/components/charts/MortalityChartControlsSecondaryCustom.vue'
+import MortalityChartControlsSecondary from '@/components/charts/MortalityChartControlsSecondary.vue'
 import MortalityChartControlsPrimary from '@/components/charts/MortalityChartControlsPrimary.vue'
 import { colors, specialColor } from '@/colors'
 import DateSlider from '@/components/charts/DateSlider.vue'
