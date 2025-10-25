@@ -4,7 +4,7 @@ import DateSlider from './DateSlider.vue'
 import MultiColorPicker from './MultiColorPicker.vue'
 import { specialColor } from '@/colors'
 import { CHART_PRESETS } from '@/lib/constants'
-import { types, chartTypes, chartStyles, standardPopulations, baselineMethods } from '@/model'
+import { types, chartTypes, chartStyles, standardPopulations, baselineMethods, decimalPrecisions } from '@/model'
 import { useChartUIState } from '@/composables/useChartUIState'
 import type { ChartStyle } from '@/lib/chart/chartTypes'
 
@@ -46,6 +46,7 @@ const props = defineProps<{
   chartPreset?: string
   showLogo: boolean
   showQrCode: boolean
+  decimals: string
 }>()
 
 // Emits
@@ -70,6 +71,7 @@ const emit = defineEmits<{
   chartPresetChanged: [value: string]
   showLogoChanged: [value: boolean]
   showQrCodeChanged: [value: boolean]
+  decimalsChanged: [value: string]
 }>()
 
 // Initialize chart UI state configuration
@@ -92,6 +94,7 @@ const chartTypesWithLabels = chartTypes.map(t => ({ ...t, label: t.name }))
 const chartStylesWithLabels = chartStyles.map(t => ({ ...t, label: t.name }))
 const standardPopulationsWithLabels = standardPopulations.map(t => ({ ...t, label: t.name }))
 const baselineMethodsWithLabels = baselineMethods.map(t => ({ ...t, label: t.name }))
+const decimalPrecisionsWithLabels = decimalPrecisions.map(t => ({ ...t, label: t.name }))
 
 // Computed v-models
 const selectedType = computed({
@@ -187,6 +190,11 @@ const showLogo = computed({
 const showQrCode = computed({
   get: () => props.showQrCode,
   set: (v: boolean) => emit('showQrCodeChanged', v)
+})
+
+const selectedDecimals = computed({
+  get: () => decimalPrecisionsWithLabels.find(t => t.value === props.decimals) || decimalPrecisionsWithLabels[0],
+  set: (v: { name: string, value: string, label: string }) => emit('decimalsChanged', v.value)
 })
 
 const baselineSliderChanged = (values: string[]) => emit('baselineSliderValueChanged', values)
@@ -559,6 +567,18 @@ const activeTab = ref('data')
               v-model="selectedChartStyle"
               :items="chartStylesWithLabels"
               placeholder="Select the chart type"
+              :disabled="props.isUpdating"
+              size="sm"
+              class="flex-1"
+            />
+          </div>
+
+          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+            <label class="text-sm font-medium whitespace-nowrap">Number Precision</label>
+            <USelectMenu
+              v-model="selectedDecimals"
+              :items="decimalPrecisionsWithLabels"
+              placeholder="Select decimal precision"
               :disabled="props.isUpdating"
               size="sm"
               class="flex-1"

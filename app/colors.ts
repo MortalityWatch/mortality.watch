@@ -1,13 +1,17 @@
 import chroma from 'chroma-js'
 import type { DatasetRaw } from './model'
+import { toDarkTheme } from './lib/colorTransform'
 
 // Helper function to safely get dark theme state
 const getIsDarkTheme = () => {
   if (import.meta.server) return false
   try {
     const colorMode = useColorMode()
-    return colorMode.value === 'dark'
-  } catch {
+    const isDark = colorMode.value === 'dark'
+    console.log('[colors.ts] getIsDarkTheme():', isDark, 'colorMode:', colorMode.value)
+    return isDark
+  } catch (e) {
+    console.error('[colors.ts] Error getting dark theme:', e)
     return false
   }
 }
@@ -36,16 +40,17 @@ export const getColorsForDataset = (dataset: DatasetRaw): string[] => {
 export const backgroundColor = () =>
   !getIsDarkTheme() ? '#ffffff' : '#202020'
 export const textColor = (light = !getIsDarkTheme()) =>
-  light ? '#25304a' : '#dddfe6'
-export const textSoftColor = () => (!getIsDarkTheme() ? '#434a5d' : '#b9bbc3')
+  light ? '#25304a' : '#ffffff'
+export const textSoftColor = () => (!getIsDarkTheme() ? '#434a5d' : '#ffffff')
 export const textStrongColor = () =>
-  !getIsDarkTheme() ? '#4a4a4a' : '#bbbbbb'
+  !getIsDarkTheme() ? '#4a4a4a' : '#ffffff'
 export const borderColor = () => (!getIsDarkTheme() ? '#e0e6fb' : '#2a3041')
 export const grayColor = () => (!getIsDarkTheme() ? '#f8f9fe' : '#22242b')
 
 export const specialColor = () => (!getIsDarkTheme() ? '#1a82fb' : '#5189ec')
 export const greenColor = () => (!getIsDarkTheme() ? '#44781d' : '#5f8b3e')
 
+// Main chart colors (light theme - defined manually)
 export const colors = [
   '#ff5393',
   '#5dac20',
@@ -55,16 +60,18 @@ export const colors = [
   '#23b9d3',
   '#bad31f'
 ]
-export const colors_dark = [
-  '#d4206e',
-  '#3b641b',
-  '#226ed3',
-  '#895219',
-  '#882283',
-  '#257787',
-  '#5a641c'
-]
 
+// Function to get colors based on current theme
+// Dark colors are computed on-demand to ensure reactivity
+export const getChartColors = () => {
+  const isDark = getIsDarkTheme()
+  return isDark ? colors.map(toDarkTheme) : colors
+}
+
+// Legacy export for backwards compatibility (not reactive)
+export const colors_dark = colors.map(toDarkTheme)
+
+// Sequential red scale (for heatmaps)
 const color_scale_light = [
   '#fff7f3',
   '#ffe3df',
@@ -76,20 +83,12 @@ const color_scale_light = [
   '#ff6c67',
   '#ff5853'
 ]
-const color_scale_dark = [
-  '#230f09',
-  '#39110d',
-  '#4f1310',
-  '#651514',
-  '#7c1818',
-  '#921a1b',
-  '#a81c1f',
-  '#be1e22',
-  '#d42026'
-]
-export const color_scale = () =>
-  !getIsDarkTheme() ? color_scale_light : color_scale_dark
+export const color_scale = () => {
+  const isDark = getIsDarkTheme()
+  return isDark ? color_scale_light.map(toDarkTheme) : color_scale_light
+}
 
+// Diverging blue-to-red scale (for heatmaps with positive/negative values)
 const color_scale_diverging_light = [
   '#5992fc',
   '#81adfd',
@@ -101,20 +100,10 @@ const color_scale_diverging_light = [
   '#ff7c78',
   '#ff5853'
 ]
-
-const color_scale_diverging_dark = [
-  '#226ed3',
-  '#1e58a6',
-  '#1a427a',
-  '#152b4d',
-  '#111520',
-  '#4f1310',
-  '#7c1818',
-  '#a81c1f',
-  '#d42026'
-]
-export const color_scale_diverging = () =>
-  !getIsDarkTheme() ? color_scale_diverging_light : color_scale_diverging_dark
+export const color_scale_diverging = () => {
+  const isDark = getIsDarkTheme()
+  return isDark ? color_scale_diverging_light.map(toDarkTheme) : color_scale_diverging_light
+}
 
 export const color_scale_diverging_css = () => [
   'color-scale-1',

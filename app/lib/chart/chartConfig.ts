@@ -181,8 +181,12 @@ export const makeBarLineChartConfig = (
             return showLabels && hasLabels && (isErrorPoint || hasValue)
           },
           backgroundColor: bgColor,
-          color: (context: Context) =>
-            textColor(isLightColor(bgColor(context))),
+          color: (context: Context) => {
+            // In dark mode, use white text for better visibility
+            const isDark = textColor() === '#ffffff'
+            if (isDark) return '#ffffff'
+            return textColor(isLightColor(bgColor(context)))
+          },
           formatter: (x: number | ChartErrorDataPoint) => {
             let label = ''
             const value = typeof x == 'number' ? x : x.y
@@ -357,6 +361,9 @@ export const makeMatrixChartConfig = (
       showLabels
       && !isNaN((context.dataset.data[context.dataIndex] as MatrixDatapoint).v),
     color: (context: Context) => {
+      // In dark mode, use white text for better visibility
+      const isDark = textColor() === '#ffffff'
+      if (isDark) return '#ffffff'
       const color = tileBackgroundColor(context)
       const isLight = isLightColor(color)
       return textColor(isLight)

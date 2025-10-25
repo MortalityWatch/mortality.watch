@@ -72,7 +72,8 @@ export const Defaults = {
   chartWidth: undefined as unknown as number,
   chartHeight: undefined as unknown as number,
   showLogo: true,
-  showQrCode: true
+  showQrCode: true,
+  decimals: 'auto'
 }
 
 export type ChartStateInput = typeof Defaults
@@ -100,6 +101,7 @@ export const stateFieldEncoders = {
   showPercentage: { key: 'p', encode: encodeBool, decode: decodeBool },
   isLogarithmic: { key: 'lg', encode: encodeBool, decode: decodeBool },
   userColors: { key: 'uc' },
+  decimals: { key: 'dec' },
   chartPreset: { key: 'preset', encode: encodePreset, decode: decodePreset },
   chartWidth: { key: 'cw' },
   chartHeight: { key: 'ch' },

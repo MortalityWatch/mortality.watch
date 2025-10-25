@@ -27,7 +27,7 @@ import {
 } from '@/data'
 import MortalityChartControlsSecondary from '@/components/charts/MortalityChartControlsSecondary.vue'
 import MortalityChartControlsPrimary from '@/components/charts/MortalityChartControlsPrimary.vue'
-import { colors, specialColor } from '@/colors'
+import { getChartColors, specialColor } from '@/colors'
 import { getColorScale } from '@/lib/chart/chartColors'
 import DateSlider from '@/components/charts/DateSlider.vue'
 import type { ChartStyle, MortalityChartData } from '@/lib/chart/chartTypes'
@@ -251,8 +251,14 @@ const showPredictionIntervalDisabled = computed(() =>
   (!isExcess.value && !showBaseline.value) || (cumulative.value && !showCumPi())
 )
 
+// Get color mode for theme reactivity
+const colorMode = useColorMode()
+
 // Color picker should only show colors for selected jurisdictions
 const displayColors = computed(() => {
+  // Add colorMode.value as dependency to make this reactive to theme changes
+  const _theme = colorMode.value
+
   const numCountries = countries.value.length
   if (numCountries === 0) return []
 
@@ -265,14 +271,15 @@ const displayColors = computed(() => {
     return getColorScale(userColors.value, numCountries)
   }
 
-  // Use default colors
-  if (colors.length >= numCountries) {
+  // Use default colors (theme-aware)
+  const themeColors = getChartColors()
+  if (themeColors.length >= numCountries) {
     // We have enough colors, just slice
-    return colors.slice(0, numCountries)
+    return themeColors.slice(0, numCountries)
   }
 
   // Need more colors than we have, use chroma to generate
-  return getColorScale(colors, numCountries)
+  return getColorScale(themeColors, numCountries)
 })
 
 // Data
