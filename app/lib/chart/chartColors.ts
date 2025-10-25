@@ -5,7 +5,11 @@ import { toDarkTheme } from '../colorTransform'
 const getIsDarkTheme = () => {
   if (import.meta.server) return false
   try {
-    const colorMode = useColorMode()
+    // useColorMode is a Nuxt auto-import, only available on client
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const useColorModeFunc = (globalThis as any).useColorMode
+    if (!useColorModeFunc) return false
+    const colorMode = useColorModeFunc()
     const isDark = colorMode.value === 'dark'
     console.log('[chartColors.ts] getIsDarkTheme():', isDark, 'colorMode:', colorMode.value)
     return isDark

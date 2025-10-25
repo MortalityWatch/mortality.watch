@@ -2,7 +2,8 @@ import Papa from 'papaparse'
 import {
   CountryData,
   Country,
-  type CountryRaw
+  type CountryRaw,
+  type CountryDataRaw
 } from '~/model'
 import { dataLoader } from '../dataLoader'
 
@@ -85,7 +86,7 @@ export const fetchData = async (
     }).data
     const data: CountryData[] = []
     for (const rawObj of rawObjects) {
-      const parsedObj = new CountryData(rawObj, ageGroup, chartType)
+      const parsedObj = new CountryData(rawObj as CountryDataRaw, ageGroup, chartType)
       if (!parsedObj.iso3c) continue
       data.push(parsedObj)
     }
