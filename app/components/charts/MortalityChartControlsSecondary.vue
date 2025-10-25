@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, toRef } from 'vue'
 import DateSlider from './DateSlider.vue'
 import MultiColorPicker from './MultiColorPicker.vue'
 import { specialColor } from '@/colors'
 import { CHART_PRESETS } from '@/lib/constants'
 import { types, chartTypes, chartStyles, standardPopulations, baselineMethods } from '@/model'
+import { useChartUIState } from '@/composables/useChartUIState'
+import type { ChartStyle } from '@/lib/chart/chartTypes'
 
 // Props
 const props = defineProps<{
@@ -69,6 +71,19 @@ const emit = defineEmits<{
   showLogoChanged: [value: boolean]
   showQrCodeChanged: [value: boolean]
 }>()
+
+// Initialize chart UI state configuration
+const chartUIState = useChartUIState(
+  toRef(props, 'type'),
+  toRef(props, 'chartType'),
+  computed(() => props.chartStyle as ChartStyle),
+  toRef(props, 'isExcess'),
+  toRef(props, 'standardPopulation'),
+  computed(() => props.countries.length),
+  toRef(props, 'showBaseline'),
+  toRef(props, 'cumulative'),
+  toRef(props, 'baselineMethod')
+)
 
 // Options imported from @/model
 // Add 'label' property for USelectMenu compatibility
@@ -175,9 +190,8 @@ const showQrCode = computed({
 })
 
 const baselineSliderChanged = (values: string[]) => emit('baselineSliderValueChanged', values)
-const showBaselineOption = computed(
-  () => !props.isPopulationType && !props.isExcess
-)
+// Use configuration-based baseline option visibility (kept for backward compatibility)
+const showBaselineOption = chartUIState.showBaselineOption
 
 const baselineMinRange = (method: string) => method === 'mean' ? 0 : 2
 
@@ -294,7 +308,7 @@ const activeTab = ref('data')
           </div>
 
           <div
-            v-if="props.type.includes('asmr') || props.type === 'le'"
+            v-if="chartUIState.showStandardPopulation.value"
             class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
           >
             <label class="text-sm font-medium whitespace-nowrap">Standard Population</label>
