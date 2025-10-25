@@ -19,6 +19,12 @@ const sliderIndices = ref<number[]>(
 )
 const isUpdatingFromProp = ref(false)
 
+// Handler for single value slider updates
+const handleSingleValueUpdate = (val: unknown) => {
+  const numVal = val as number
+  sliderIndices.value = [numVal, numVal]
+}
+
 // Watch for label changes (e.g., when sliderStart changes)
 watch(() => props.labels, (newLabels) => {
   if (!newLabels || newLabels.length === 0) return
@@ -150,7 +156,7 @@ const currentRange = computed(() => {
       :max="labels.length - 1"
       :step="1"
       :disabled="disabled"
-      @update:model-value="(val) => sliderIndices = [val, val]"
+      @update:model-value="handleSingleValueUpdate"
     />
     <USlider
       v-else

@@ -182,7 +182,7 @@ const chartPreset = computed({
     // If no match, check if it's in dimensional format (e.g., "1000x625")
     if (!preset) {
       const match = props.chartPreset.match(/^(\d+)x(\d+)$/)
-      if (match) {
+      if (match && match[1] && match[2]) {
         const width = parseInt(match[1])
         const height = parseInt(match[2])
         // Find preset by dimensions from CHART_PRESETS
