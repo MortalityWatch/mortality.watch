@@ -175,7 +175,9 @@ const _sliderStart = computed({
 const chartPreset = computed({
   get: () => {
     if (!props.chartPreset) return undefined
-    return chartPresetOptions.find(p => p.value === props.chartPreset)
+    // Check if it's a preset option (includes "Custom" and "Auto")
+    const preset = chartPresetOptions.find(p => p.value === props.chartPreset)
+    return preset
   },
   set: (v: { name: string, value: string, label: string, category: string } | undefined) => {
     if (v) emit('chartPresetChanged', v.value)

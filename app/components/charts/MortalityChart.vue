@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, ref, watch, nextTick } from 'vue'
+import { computed, ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import { Chart, registerables } from 'chart.js'
 import { createTypedChart, Line, Bar } from 'vue-chartjs'
 import {
@@ -115,6 +115,10 @@ const lineChart = ref()
 const barChart = ref()
 const matrixChart = ref()
 
+// Helper to get active chart
+const getActiveChart = () => lineChart.value || barChart.value || matrixChart.value
+
+// Watch for dark mode changes and update chart plugins
 watch(() => colorMode.value, async (newValue, oldValue) => {
   console.log('[MortalityChart] Color mode changed:', { oldValue, newValue })
 
@@ -128,8 +132,7 @@ watch(() => colorMode.value, async (newValue, oldValue) => {
   console.log('[MortalityChart] QR code cache cleared')
 
   // Force chart update to re-render plugins with new theme
-  // Check which chart type is currently active and update it
-  const activeChart = lineChart.value || barChart.value || matrixChart.value
+  const activeChart = getActiveChart()
   if (activeChart?.chart) {
     console.log('[MortalityChart] Updating chart...')
     activeChart.chart.update()
@@ -137,6 +140,37 @@ watch(() => colorMode.value, async (newValue, oldValue) => {
   } else {
     console.log('[MortalityChart] No active chart found!')
   }
+})
+
+// Setup ResizeObserver to force chart updates when container resizes
+onMounted(() => {
+  // Get the chart canvas container
+  const chartCanvas = document.querySelector('#chart')
+  if (!chartCanvas || !chartCanvas.parentElement) {
+    return
+  }
+
+  const parentContainer = chartCanvas.parentElement
+
+  let resizeTimeout: ReturnType<typeof setTimeout> | null = null
+  const resizeObserver = new ResizeObserver(() => {
+    // Debounce to avoid excessive updates
+    if (resizeTimeout) clearTimeout(resizeTimeout)
+    resizeTimeout = setTimeout(() => {
+      const activeChart = getActiveChart()
+      if (activeChart?.chart) {
+        activeChart.chart.resize()
+      }
+    }, 50)
+  })
+
+  resizeObserver.observe(parentContainer)
+
+  // Cleanup
+  onBeforeUnmount(() => {
+    resizeObserver.disconnect()
+    if (resizeTimeout) clearTimeout(resizeTimeout)
+  })
 })
 </script>
 

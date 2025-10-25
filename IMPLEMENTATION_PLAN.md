@@ -456,17 +456,13 @@ These UI issues should be addressed after CI/CD is set up. They affect user expe
   - **Step 4:** Keep only `MortalityChartControlsSecondaryCustom.vue` (currently in use)
   - **Step 5:** Run tests to verify nothing broke: `npm run check`
 
-- [ ] **Remove or document test pages:**
+- [ ] **Remove test pages:**
   - **Step 1:** Check if any links point to test pages: `grep -r "test-ranking\|test-data\|test-fetch" app/`
-  - **Step 2:** Decide: delete or exclude from production
-  - **Step 3a (if deleting):**
+  - **Step 2:**
     - Delete `/pages/test-ranking.vue`
     - Delete `/pages/test-data.vue`
     - Delete `/pages/test-fetch.vue`
-  - **Step 3b (if keeping for development):**
-    - Add to `.nuxtignore` or exclude in `nuxt.config.ts` for production builds
-    - Document purpose in code comments
-  - **Step 4:** Verify build succeeds: `npm run build`
+  - **Step 3:** Verify build succeeds: `npm run build`
 
 - [ ] **Document data scripts:**
   - Add README section for `npm run download-data`
