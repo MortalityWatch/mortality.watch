@@ -2,7 +2,7 @@ import { decodeChartState } from '../../app/lib/chartState'
 import { renderPlaceholderChart, renderChart } from '../utils/chartRenderer'
 import { makeChartConfig } from '../../app/lib/chart/chartConfig'
 import type { ChartStyle } from '../../app/lib/chart/chartTypes'
-import { getAllChartData, loadCountryMetadata, updateDataset, getAllChartLabels } from '../../app/data'
+import { getAllChartData, loadCountryMetadata, updateDataset, getAllChartLabels } from '../../app/lib/data'
 import type { AllChartData, CountryData } from '../../app/model'
 
 export default defineEventHandler(async (event) => {

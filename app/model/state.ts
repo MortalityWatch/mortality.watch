@@ -4,8 +4,8 @@ import {
   getStartIndex,
   loadCountryMetadata
 } from './../data'
-import { getFilteredChartData } from '@/chart'
-import { getAllChartData, updateDataset } from '@/data'
+import { getFilteredChartData } from '@/lib/chart'
+import { getAllChartData, updateDataset } from '@/lib/data'
 import { getCamelCase, isMobile } from '@/utils'
 import { decompress, base64ToArrayBuffer } from '../lib/compression/compress.browser'
 import { showToast } from '../toast'

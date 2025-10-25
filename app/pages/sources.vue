@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { loadCountryMetadataFlat, getSourceDescription } from '~/data'
+import { loadCountryMetadataFlat, getSourceDescription } from '~/lib/data'
 import { getDataTypeDescription } from '~/utils'
 import { usePagination } from '~/composables/usePagination'
 import {

@@ -24,7 +24,7 @@ import {
   getStartIndex,
   loadCountryMetadata,
   updateDataset
-} from '@/data'
+} from '@/lib/data'
 import MortalityChartControlsSecondary from '@/components/charts/MortalityChartControlsSecondary.vue'
 import MortalityChartControlsPrimary from '@/components/charts/MortalityChartControlsPrimary.vue'
 import { getChartColors, specialColor } from '@/colors'
@@ -34,7 +34,7 @@ import type { ChartStyle, MortalityChartData } from '@/lib/chart/chartTypes'
 import { useRoute, useRouter } from 'vue-router'
 import MortalityChart from '@/components/charts/MortalityChart.vue'
 import { getSeasonString } from '@/model/baseline'
-import { getFilteredChartData } from '@/chart'
+import { getFilteredChartData } from '@/lib/chart'
 import {
   arrayBufferToBase64,
   compress
