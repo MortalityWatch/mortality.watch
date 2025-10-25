@@ -37,6 +37,7 @@ const props = defineProps<{
   isPopulationType: boolean
   showLogo: boolean
   showQrCode: boolean
+  decimals?: string
 }>()
 
 Chart.register(
@@ -68,7 +69,8 @@ const lineConfig = computed(() => {
     props.isDeathsType,
     props.isPopulationType,
     props.showQrCode,
-    props.showLogo
+    props.showLogo,
+    props.decimals
   ) as unknown as ChartJSConfig<'line', (number | null)[]>
 })
 
@@ -84,7 +86,8 @@ const barConfig = computed(() => {
     props.isDeathsType,
     props.isPopulationType,
     props.showQrCode,
-    props.showLogo
+    props.showLogo,
+    props.decimals
   ) as unknown as ChartJSConfig<'bar', (number | null)[]>
 })
 
@@ -102,7 +105,8 @@ const matrixConfig = computed(() => {
     props.isDeathsType,
     props.isPopulationType,
     props.showQrCode,
-    props.showLogo
+    props.showLogo,
+    props.decimals
   ) as unknown as ChartJSConfig<'matrix', MatrixDataPoint[]>
 })
 

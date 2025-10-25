@@ -185,6 +185,10 @@ const showQrCode = useUrlState<boolean>(
   stateFieldEncoders.showQrCode.encode,
   stateFieldEncoders.showQrCode.decode
 )
+const decimals = useUrlState<string>(
+  stateFieldEncoders.decimals.key,
+  Defaults.decimals
+)
 
 // Router
 const _router = useRouter()
@@ -858,6 +862,10 @@ const handleShowQrCodeChanged = async (v: boolean) => {
   showQrCode.value = v
   await nextTick()
 }
+const handleDecimalsChanged = async (v: string) => {
+  decimals.value = v
+  await nextTick()
+}
 
 // Setup ResizeObserver cleanup before any async operations
 let resizeObserver: ResizeObserver | null = null
@@ -1123,6 +1131,7 @@ const saveChart = async () => {
                 :is-population-type="isPopulationType()"
                 :show-logo="showLogo"
                 :show-qr-code="showQrCode"
+                :decimals="decimals"
               />
             </div>
           </UCard>
@@ -1181,6 +1190,7 @@ const saveChart = async () => {
               :chart-preset="chartPreset"
               :show-logo="showLogo"
               :show-qr-code="showQrCode"
+              :decimals="decimals"
               @type-changed="handleTypeChanged"
               @chart-type-changed="handleChartTypeChanged"
               @chart-style-changed="handleChartStyleChanged"
@@ -1201,6 +1211,7 @@ const saveChart = async () => {
               @chart-preset-changed="handleChartPresetChanged"
               @show-logo-changed="handleShowLogoChanged"
               @show-qr-code-changed="handleShowQrCodeChanged"
+              @decimals-changed="handleDecimalsChanged"
             />
           </UCard>
 
