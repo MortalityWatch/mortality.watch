@@ -47,6 +47,13 @@ jobs:
         run: npm run build
         timeout-minutes: 5
 
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: .output
+          retention-days: 1
+
   e2e:
     runs-on: ${{ matrix.os }}
     needs: ci
@@ -68,6 +75,23 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-output
+          path: .output
+
+      - name: Cache Nuxt Build
+        uses: actions/cache@v4
+        with:
+          path: |
+            .nuxt
+            node_modules/.cache
+          key: ${{ runner.os }}-nuxt-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.ts', '**/*.vue', '**/*.js') }}
+          restore-keys: |
+            ${{ runner.os }}-nuxt-${{ hashFiles('**/package-lock.json') }}-
+            ${{ runner.os }}-nuxt-
 
       - name: Cache Playwright Browsers
         uses: actions/cache@v4
