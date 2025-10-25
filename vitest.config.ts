@@ -7,6 +7,12 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/tests/e2e/**', // Exclude Playwright E2E tests
+      '**/.{idea,git,cache,output,temp}/**'
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

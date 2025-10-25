@@ -1,5 +1,7 @@
 # MortalityWatch
 
+[![CI](https://github.com/MortalityWatch/mortality.watch/actions/workflows/ci.yml/badge.svg)](https://github.com/MortalityWatch/mortality.watch/actions/workflows/ci.yml)
+
 **Global mortality data visualization and analysis platform**
 
 A Nuxt 4 web application for exploring and analyzing mortality data across 320+ countries and territories. Features interactive charts, real-time data visualization, and comprehensive mortality statistics from multiple international sources.
@@ -94,9 +96,11 @@ Visit http://localhost:3000
 - **Zod** - Data validation
 - **S3** - Data storage and CDN
 
-### Development
+### Development & Testing
 
-- **Vitest** - Unit testing (138 tests)
+- **Vitest** - Unit testing (376 tests)
+- **Playwright** - E2E testing (32+ tests)
+- **GitHub Actions** - CI/CD pipeline
 - **ESLint** - Code linting with accessibility rules
 - **Prettier** - Code formatting
 - **Husky** - Git hooks
@@ -239,10 +243,19 @@ npm run lint             # Check linting
 npm run lint:fix         # Auto-fix linting issues
 npm run format           # Format code with Prettier
 npm run typecheck        # TypeScript type checking
+npm run check            # Run all checks (lint + typecheck + test)
+```
+
+#### Testing
+
+```bash
 npm run test             # Run unit tests
 npm run test:ui          # Test UI with Vitest
 npm run test:coverage    # Test coverage report
-npm run check            # Run all checks (lint + typecheck + test)
+npm run test:e2e         # Run E2E tests
+npm run test:e2e:ui      # E2E test UI (interactive)
+npm run test:e2e:debug   # Debug E2E tests
+npm run test:e2e:report  # View E2E test report
 ```
 
 ### Development Server
@@ -271,23 +284,64 @@ Pages:
 
 ## 🧪 Testing
 
-### Run Tests
+### Unit Tests (Vitest)
 
 ```bash
-npm test                 # Run all tests
+npm test                 # Run all unit tests
 npm run test:ui          # Interactive test UI
 npm run test:coverage    # Coverage report
 ```
 
-### Test Files
+**376 unit tests passing** ✅
 
-- `app/lib/dataLoader.test.ts` - Data loading (8 tests)
-- `app/lib/chartState.test.ts` - Chart state (13 tests)
-- `app/lib/mortality/dataValidation.test.ts` - Data validation (38 tests)
-- `app/composables/useUrlState.test.ts` - URL state (23 tests)
-- `app/utils.test.ts` - Utilities (56 tests)
+Coverage includes:
 
-**Total: 138 tests passing** ✅
+- Data loading and processing
+- Chart state management
+- Data validation
+- URL state encoding/decoding
+- Mortality calculations
+- Utility functions
+- Composables
+
+### E2E Tests (Playwright)
+
+```bash
+npm run test:e2e         # Run E2E tests (chromium)
+npm run test:e2e:ui      # Interactive E2E test UI
+npm run test:e2e:debug   # Debug E2E tests
+npm run test:e2e:report  # View test report
+```
+
+**32+ E2E tests passing** ✅
+
+Test coverage:
+
+- Homepage and navigation
+- Explorer page interactions
+- Ranking page functionality
+- Chart rendering and controls
+- Responsive layout
+- URL state persistence
+
+E2E tests run on:
+
+- **Chromium** (CI and local)
+- **Firefox** (local only)
+- **WebKit/Safari** (local only)
+- **Mobile viewports** (Chrome & Safari)
+
+### CI/CD Pipeline
+
+Every push triggers automated checks:
+
+1. **Lint & Format** - ESLint with auto-fix
+2. **Type Check** - TypeScript strict mode
+3. **Unit Tests** - 376 Vitest tests
+4. **Build Verification** - Production build check
+5. **E2E Tests** - Playwright on Chromium
+
+All checks must pass before merge. View CI status: [![CI](https://github.com/MortalityWatch/mortality.watch/actions/workflows/ci.yml/badge.svg)](https://github.com/MortalityWatch/mortality.watch/actions/workflows/ci.yml)
 
 ### Pre-commit Checks
 
@@ -562,7 +616,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 - [ ] Redis caching for chart images
 - [ ] CDN integration for global distribution
 - [ ] Automated data updates from sources
-- [ ] CI/CD pipeline
+- [x] CI/CD pipeline (GitHub Actions)
 - [ ] Error tracking (Sentry)
 - [ ] Analytics (privacy-first)
 
