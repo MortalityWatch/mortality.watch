@@ -200,6 +200,7 @@ export const jurisdictionTypes: ListType[] = [
 export const baselineMethods: ListType[] = [
   { name: 'Last Value', value: 'naive' },
   { name: 'Average', value: 'mean' },
+  { name: 'Median', value: 'median' },
   { name: 'Linear Regression', value: 'lin_reg' },
   { name: 'Exponential Smoothing (ETS)', value: 'exp' }
 ]
