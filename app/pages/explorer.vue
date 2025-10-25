@@ -28,6 +28,7 @@ import {
 import MortalityChartControlsSecondary from '@/components/charts/MortalityChartControlsSecondary.vue'
 import MortalityChartControlsPrimary from '@/components/charts/MortalityChartControlsPrimary.vue'
 import { colors, specialColor } from '@/colors'
+import { getColorScale } from '@/lib/chart/chartColors'
 import DateSlider from '@/components/charts/DateSlider.vue'
 import type { ChartStyle, MortalityChartData } from '@/lib/chart/chartTypes'
 import { useRoute, useRouter } from 'vue-router'
@@ -249,6 +250,30 @@ const baselineSliderValue = computed(() => [baselineDateFrom.value, baselineDate
 const showPredictionIntervalDisabled = computed(() =>
   (!isExcess.value && !showBaseline.value) || (cumulative.value && !showCumPi())
 )
+
+// Color picker should only show colors for selected jurisdictions
+const displayColors = computed(() => {
+  const numCountries = countries.value.length
+  if (numCountries === 0) return []
+
+  // If user has custom colors, use them (extending if needed)
+  if (userColors.value) {
+    if (userColors.value.length >= numCountries) {
+      return userColors.value.slice(0, numCountries)
+    }
+    // If user colors are fewer than countries, extend using color scale
+    return getColorScale(userColors.value, numCountries)
+  }
+
+  // Use default colors
+  if (colors.length >= numCountries) {
+    // We have enough colors, just slice
+    return colors.slice(0, numCountries)
+  }
+
+  // Need more colors than we have, use chroma to generate
+  return getColorScale(colors, numCountries)
+})
 
 // Data
 const isUpdating = ref<boolean>(false)
@@ -500,7 +525,7 @@ const updateFilteredData = async () => {
     isBarChartStyle(),
     allCountries.value, // This is the country metadata, not the selected countries
     isErrorBarType(),
-    userColors.value ?? colors,
+    displayColors.value, // Use displayColors which handles 8+ countries
     isMatrixChartStyle(),
     showPercentage.value,
     showCumPi(),
@@ -1145,7 +1170,7 @@ const saveChart = async () => {
               "
               :show-prediction-interval-option-disabled="showPredictionIntervalDisabled"
               :is-matrix-chart-style="isMatrixChartStyle()"
-              :colors="userColors ?? colors"
+              :colors="displayColors"
               :chart-preset="chartPreset"
               :show-logo="showLogo"
               :show-qr-code="showQrCode"
