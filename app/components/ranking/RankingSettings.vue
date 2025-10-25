@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, toRef } from 'vue'
 import { standardPopulationItems, baselineMethodItems, decimalPrecisionItems } from '@/model'
-import { baselineMinRange } from '@/chart'
+import { baselineMinRange } from '@/lib/chart'
 import DateSlider from '@/components/charts/DateSlider.vue'
 import { useRankingUIState } from '@/composables/useRankingUIState'
 

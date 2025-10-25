@@ -1,10 +1,9 @@
 import { decodeChartState } from '../../app/lib/chartState'
-import { renderPlaceholderChart } from '../utils/chartRenderer'
-// TODO: These imports will be needed for full chart rendering implementation
-// import { renderChart } from '../utils/chartRenderer'
-// import { makeChartConfig } from '../../app/lib/chart/chartConfig'
-// import type { ChartStyle } from '../../app/lib/chart/chartTypes'
-// import { getAllChartData, loadCountryMetadata, updateDataset } from '../../app/data'
+import { renderPlaceholderChart, renderChart } from '../utils/chartRenderer'
+import { makeChartConfig } from '../../app/lib/chart/chartConfig'
+import type { ChartStyle } from '../../app/lib/chart/chartTypes'
+import { getAllChartData, loadCountryMetadata, updateDataset, getAllChartLabels } from '../../app/lib/data'
+import type { AllChartData, CountryData } from '../../app/model'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -24,42 +23,74 @@ export default defineEventHandler(async (event) => {
 
     let buffer: Buffer
 
-    // TODO: Implement full data fetching pipeline
-    // This requires:
-    // 1. Loading metadata with loadCountryMetadata()
-    // 2. Loading raw dataset with updateDataset()
-    // 3. Fetching chart data with getAllChartData()
-    // 4. Generating config with makeChartConfig()
-    //
-    // For now, use placeholder until data pipeline is set up
     try {
-      // const metadata = await loadCountryMetadata()
-      // const rawData = await updateDataset(...)
-      // const chartData = await getAllChartData(...)
-      //
-      // const config = makeChartConfig(
-      //   state.chartStyle as ChartStyle,
-      //   chartData as unknown as Array<Record<string, unknown>>,
-      //   state.type === 'deaths',
-      //   state.isExcess,
-      //   state.type === 'le',
-      //   state.type === 'population',
-      //   state.showLabels,
-      //   state.showPercentage ?? false,
-      //   state.showPredictionInterval
-      // )
-      //
-      // // Add the chart URL for QR code
-      // const siteUrl = process.env.NUXT_PUBLIC_SITE_URL || 'https://www.mortality.watch'
-      // const chartUrl = `${siteUrl}/explorer?${new URLSearchParams(query as Record<string, string>).toString()}`
-      // const configOptions = config.options as Record<string, unknown> || {}
-      // const plugins = configOptions.plugins as Record<string, unknown> || {}
-      // plugins.qrCodeUrl = chartUrl
-      //
-      // buffer = await renderChart(width, height, config, state.chartStyle as ChartStyle)
+      // 1. Load country metadata (ensures metadata is cached for data fetching)
+      await loadCountryMetadata({ filterCountries: state.countries })
 
-      // Temporary: Use placeholder
-      buffer = await renderPlaceholderChart(width, height, title)
+      // 2. Load raw dataset with all necessary parameters
+      const rawData = await updateDataset(
+        state.chartType,
+        state.countries,
+        state.ageGroups
+      )
+
+      // 3. Get all chart labels
+      const isAsmrType = state.type.startsWith('asmr')
+      const allLabels = getAllChartLabels(
+        rawData,
+        isAsmrType,
+        state.ageGroups,
+        state.countries,
+        state.chartType
+      )
+
+      // 4. Fetch chart data
+      const dataKey = state.type === 'cmr'
+        ? 'cmr'
+        : state.type === 'asmr'
+          ? `asmr_${state.standardPopulation}`
+          : state.type === 'le'
+            ? 'le'
+            : state.type === 'deaths'
+              ? 'deaths'
+              : 'population'
+
+      const chartData: AllChartData = await getAllChartData(
+        dataKey as keyof CountryData,
+        state.chartType,
+        rawData,
+        allLabels,
+        0, // startDateIndex - full range for OG images
+        state.cumulative,
+        state.ageGroups,
+        state.countries,
+        state.showBaseline ? state.baselineMethod : undefined,
+        state.baselineDateFrom,
+        state.baselineDateTo
+      )
+
+      // 5. Generate chart config
+      const config = makeChartConfig(
+        state.chartStyle as ChartStyle,
+        chartData as unknown as Array<Record<string, unknown>>,
+        state.type === 'deaths',
+        state.isExcess,
+        state.type === 'le',
+        state.type === 'population',
+        state.showLabels,
+        state.showPercentage ?? false,
+        state.showPredictionInterval
+      )
+
+      // 6. Add the chart URL for QR code
+      const siteUrl = process.env.NUXT_PUBLIC_SITE_URL || 'https://www.mortality.watch'
+      const chartUrl = `${siteUrl}/explorer?${new URLSearchParams(query as Record<string, string>).toString()}`
+      const configOptions = config.options as Record<string, unknown> || {}
+      const plugins = configOptions.plugins as Record<string, unknown> || {}
+      plugins.qrCodeUrl = chartUrl
+
+      // 7. Render the chart
+      buffer = await renderChart(width, height, config, state.chartStyle as ChartStyle)
     } catch (dataError) {
       console.error('Error fetching/rendering chart data:', dataError)
       // Fall back to placeholder on data errors

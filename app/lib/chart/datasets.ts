@@ -1,26 +1,19 @@
-import type { ChartErrorDataPoint, MortalityChartData } from './lib/chart/chartTypes'
+/**
+ * Chart dataset builders
+ */
+
+import type { ChartDataset, ChartType, DefaultDataPoint } from 'chart.js'
+import type { ChartErrorDataPoint } from './chartTypes'
 import {
-  getChartTypeOrdinal,
-  type ChartLabels,
-  baselineMethods,
   getKeyForType,
   type Country,
   type DatasetReturn,
-  type Dataset,
-  type DatasetEntry,
-  datasetEntryKeys,
-  type FilteredChartData,
-  type DataVector
-} from './model'
-import { cumulativeSum, sum, getCamelCase, repeat, isMobile } from './utils'
-import type { ChartDataset, ChartType, DefaultDataPoint } from 'chart.js'
+  type Dataset
+} from '~/model'
+import { cumulativeSum, sum, getCamelCase } from '~/utils'
+import { isBl, isPredictionIntervalKey } from './predicates'
 
 const SUBREGION_SEPERATOR = ' - '
-
-export const isBl = (key: string) => key.includes('_baseline')
-
-export const isPredictionIntervalKey = (key: string) =>
-  key.includes('_lower') || key.includes('_upper')
 
 const getLabel = (key: string, country: string, ageGroup: string) => {
   if (isBl(key) || isPredictionIntervalKey(key)) return ''
@@ -28,10 +21,6 @@ const getLabel = (key: string, country: string, ageGroup: string) => {
   if (idx > -1) return `${country.substring(idx + 3)}${ageGroup}`
   return `${country}${ageGroup}`
 }
-
-const getLabels = (dateFrom: string, dateTo: string): string[] => [
-  (dateFrom ?? 'n/a') + ' - ' + (dateTo ?? 'n/a')
-]
 
 const getBLForKey = (isAsmr: boolean, key: string) => {
   if (isAsmr) return `${key.split('_')[0]}_${key.split('_')[1]}_baseline`
@@ -130,6 +119,10 @@ const makeErrorBarData = (
     })
   }
   return result
+}
+
+const repeat = <T>(value: T, length: number): T[] => {
+  return new Array(length).fill(value)
 }
 
 const getBarExcessData = (
@@ -338,336 +331,4 @@ export const getDatasets = (
     }
   }
   return { datasets, sources: Array.from(sources) } as DatasetReturn
-}
-
-const getASMRTitle = (countries: string[], standardPopulation: string) => {
-  const result = 'Standard Population'
-  switch (standardPopulation) {
-    case 'who':
-      return `WHO ${result}`
-    case 'esp':
-      return `European ${result}`
-    case 'usa':
-      return `U.S. ${result}`
-    case 'country':
-      return `${countries.join(',')} 2020 ${result}`
-    default:
-      throw new Error('Uncrecognized standard population key.')
-  }
-}
-
-const getMethodDescription = (baselineMethod: string) =>
-  baselineMethods.filter(x => x.value === baselineMethod)[0]?.name ?? baselineMethod
-
-export const blDescription = (
-  baselineMethod: string,
-  baselineDateFrom: string,
-  baselineDateTo: string
-) =>
-  baselineMethod === 'naive'
-    ? `Baseline: ${getMethodDescription(baselineMethod)} ${baselineDateTo}`
-    : `Baseline: ${getMethodDescription(baselineMethod)} ${baselineDateFrom}-${baselineDateTo}`
-
-export const getChartLabels = (
-  countries: string[],
-  standardPopulation: string,
-  ageGroups: string[],
-  showPredictionInterval: boolean,
-  isExcess: boolean,
-  type: string,
-  cumulative: boolean,
-  showBaseline: boolean,
-  baselineMethod: string,
-  baselineDateFrom: string,
-  baselineDateTo: string,
-  showTotal: boolean,
-  chartType: string
-): ChartLabels => {
-  const title = []
-  let subtitle = ''
-  let xtitle = ''
-  let ytitle = 'Deaths per 100k'
-  const asmrTitle = getASMRTitle(countries, standardPopulation)
-
-  // Display age group in title, if single age group and multiple countries.
-  let ag = ''
-  if (ageGroups.length === 1 && ageGroups[0] !== 'all') {
-    ag = ` [${ageGroups[0]}]`
-  }
-
-  const pi = showPredictionInterval ? '95% Prediction Interval' : ''
-
-  if (cumulative) title.push('Cumulative')
-
-  if (isExcess) {
-    switch (type) {
-      case 'deaths':
-        title.push(`Excess Deaths${ag}`)
-        ytitle = cumulative ? 'Cum. Excess Deaths' : 'Excess Deaths'
-        break
-      case 'cmr':
-        title.push(`Crude Excess`, `Mortality${ag}`)
-        ytitle = 'Excess Deaths per 100k'
-        break
-      case 'asmr':
-        title.push('Age-Standardized', 'Excess Mortality')
-        subtitle = [asmrTitle].filter(x => x).join(' · ')
-        ytitle = 'Excess Deaths per 100k'
-        break
-      case 'le':
-        title.push('Change in', 'Life Expectancy')
-        subtitle = 'Based on WHO2015 Std. Pop.'
-        ytitle = 'Years'
-        break
-    }
-  } else {
-    switch (type) {
-      case 'population':
-        title.push(`Population${ag}`)
-        ytitle = 'People'
-        break
-      case 'deaths':
-        title.push(`Deaths${ag}`)
-        ytitle = 'Deaths'
-        break
-      case 'cmr':
-        title.push(`Crude`, `Mortality Rate${ag}`)
-        break
-      case 'asmr':
-        title.push('Age-Standardized', 'Mortality Rate')
-        subtitle = showBaseline
-          ? [asmrTitle].filter(x => x).join(' · ')
-          : asmrTitle
-        break
-      case 'le':
-        title.push('Life Expectancy')
-        ytitle = 'Years'
-        subtitle = 'Based on WHO2015 Std. Pop.'
-        break
-    }
-  }
-
-  subtitle = [
-    subtitle,
-    showBaseline
-      ? blDescription(baselineMethod, baselineDateFrom, baselineDateTo)
-      : ''
-  ]
-    .filter(x => x)
-    .join(' · ')
-
-  if (showBaseline && showPredictionInterval) {
-    subtitle = [subtitle, pi].filter(x => x).join(' · ')
-  }
-
-  if (showTotal) {
-    // Cumulative Total
-    xtitle = ''
-  } else {
-    switch (chartType) {
-      case 'weekly_104w_sma':
-        subtitle = ['104 week moving average (SMA)', subtitle]
-          .filter(x => x)
-          .join(' · ')
-        xtitle = 'Week of Year'
-        break
-      case 'weekly_52w_sma':
-        subtitle = ['52 week moving average (SMA)', subtitle]
-          .filter(x => x)
-          .join(' · ')
-        xtitle = 'Week of Year'
-        break
-      case 'weekly_26w_sma':
-        subtitle = ['26 week moving average (SMA)', subtitle]
-          .filter(x => x)
-          .join(' · ')
-        xtitle = 'Week of Year'
-        break
-      case 'weekly_13w_sma':
-        subtitle = ['13 week moving average (SMA)', subtitle]
-          .filter(x => x)
-          .join(' · ')
-        xtitle = 'Week of Year'
-        break
-      case 'midyear':
-        subtitle = ['7/1-6/30', subtitle].filter(x => x).join(' · ')
-        xtitle = 'Year'
-        break
-      case 'fluseason':
-        subtitle = ['10/1-9/30', subtitle].filter(x => x).join(' · ')
-        xtitle = 'Year'
-        break
-      case 'weekly':
-        xtitle = 'Week of Year'
-        break
-      case 'monthly':
-        xtitle = 'Month of Year'
-        break
-      case 'quarterly':
-        xtitle = 'Quarter of Year'
-        break
-      case 'yearly':
-        subtitle = [subtitle].filter(x => x).join(' · ')
-        xtitle = 'Year'
-        break
-    }
-  }
-  if (isMobile()) {
-    return { title, subtitle, xtitle, ytitle }
-  } else {
-    return { title: [title.join(' ')], subtitle, xtitle, ytitle }
-  }
-}
-
-export const getFilteredLabelAndData = (
-  allLabels: string[],
-  dateFrom: string,
-  dateTo: string,
-  chartTypeOrdinal: number,
-  allChartData: Dataset
-): FilteredChartData => {
-  // Filter Labels and Data based on selected dates.
-  const from = allLabels.indexOf(dateFrom)
-  const to = allLabels.indexOf(dateTo)
-  const labels = allLabels.slice(from, to + 1)
-  const disaggregatedData: Record<string, number[]> = {}
-
-  const data: Dataset = {}
-  for (const ag in allChartData) {
-    data[ag] = {}
-    for (const iso3c in allChartData[ag]) {
-      data[ag][iso3c] = {} as DatasetEntry
-      for (const key of datasetEntryKeys) {
-        const agData = allChartData[ag]
-        if (!agData) continue
-        const countryData = agData[iso3c]
-        if (!countryData) continue
-        const dataRow = countryData[key] ?? []
-        data[ag][iso3c][key] = dataRow.slice(from, to + 1) as DataVector
-      }
-      const types = new Set(
-        (data[ag][iso3c]['type'] as string[])
-          .flatMap((str: undefined | string) => str?.split(', '))
-          .map(x => (x ? parseInt(x, 10) : 0))
-      )
-      const lowerRes = Array.from(types).filter(x => x < chartTypeOrdinal)
-      if (lowerRes.length) {
-        disaggregatedData[iso3c] = Array.from(types).filter(
-          x => x < chartTypeOrdinal
-        )
-      }
-    }
-  }
-  return { labels, data, notes: { disaggregatedData } }
-}
-
-export const getFilteredChartData = async (
-  countries: string[],
-  standardPopulation: string,
-  ageGroups: string[],
-  showPredictionInterval: boolean,
-  isExcess: boolean,
-  type: string,
-  cumulative: boolean,
-  showBaseline: boolean,
-  baselineMethod: string,
-  baselineDateFrom: string,
-  baselineDateTo: string,
-  showTotal: boolean,
-  chartType: string,
-  dateFrom: string,
-  dateTo: string,
-  isBarChartStyle: boolean,
-  allCountries: Record<string, Country>,
-  isErrorBarType: boolean,
-  colors: string[],
-  isMatrixChartStyle: boolean,
-  showPercentage: boolean,
-  showCumPi: boolean,
-  isAsmrType: boolean,
-  maximize: boolean,
-  showLabels: boolean,
-  url: string,
-  isLogarithmic: boolean,
-  isPopulationType: boolean,
-  isDeathsType: boolean,
-  allLabels: string[],
-  allChartData: Dataset
-): Promise<MortalityChartData> => {
-  const chartLabels = getChartLabels(
-    countries,
-    standardPopulation,
-    ageGroups,
-    showPredictionInterval,
-    isExcess,
-    type,
-    cumulative,
-    showBaseline,
-    baselineMethod,
-    baselineDateFrom,
-    baselineDateTo,
-    showTotal,
-    chartType
-  )
-
-  const filteredData = getFilteredLabelAndData(
-    allLabels,
-    dateFrom,
-    dateTo,
-    getChartTypeOrdinal(chartType),
-    allChartData
-  )
-
-  const labels
-    = cumulative && showTotal && isBarChartStyle
-      ? getLabels(dateFrom, dateTo)
-      : filteredData.labels
-
-  const ds = getDatasets(
-    type,
-    showBaseline,
-    standardPopulation,
-    isExcess,
-    allCountries,
-    isErrorBarType,
-    colors,
-    isMatrixChartStyle,
-    countries,
-    showPercentage,
-    cumulative,
-    showTotal,
-    showCumPi,
-    isAsmrType,
-    showPredictionInterval,
-    chartType,
-    isBarChartStyle,
-    filteredData.data
-  )
-
-  return {
-    labels,
-    datasets: ds.datasets,
-    title: chartLabels.title,
-    subtitle: chartLabels.subtitle,
-    xtitle: chartLabels.xtitle,
-    ytitle: chartLabels.ytitle,
-    isMaximized: maximize,
-    showLabels: showLabels,
-    url,
-    showPercentage,
-    isLogarithmic,
-    showXOffset: isBarChartStyle || isPopulationType || isDeathsType,
-    sources: ds.sources
-  }
-}
-
-export const baselineMinRange = (baselineMethod: string) => {
-  switch (baselineMethod) {
-    case 'lin_reg':
-      return 2
-    case 'exp':
-      return 6
-    default:
-      return 1
-  }
 }

@@ -7,6 +7,13 @@ import {
 } from './model'
 import { color_scale_diverging_css } from './colors'
 
+// Extend Array prototype with last() method
+declare global {
+  interface Array<T> {
+    last(): T | undefined
+  }
+}
+
 export const maybeTransformFluSeason = (x: string) => {
   if (/^\d{4}-\d{4}$/.test(x)) {
     return `${x.substring(0, 4)}/${x.substring(7, 9)}`
@@ -112,7 +119,10 @@ export const getObjectOfArrays = (rows: CountryData[]): DatasetEntry => {
  * Display a base64 URL inside an iframe in another window.
  */
 export const openNewWindowWithBase64Url = (base64: string) => {
-  const win = window.open()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (typeof (globalThis as any).window === 'undefined') throw new Error('Window not available')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const win = (globalThis as any).window.open()
   if (!win) throw new Error('Cannot open new window')
   win.document.write(
     '<iframe src="'
@@ -123,10 +133,14 @@ export const openNewWindowWithBase64Url = (base64: string) => {
   )
 }
 
-export const appearanceChanged = (cb: () => void) =>
-  window
+export const appearanceChanged = (cb: () => void) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (typeof (globalThis as any).window === 'undefined') return
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (globalThis as any).window
     .matchMedia('(prefers-color-scheme: dark)')
     .addEventListener('change', cb)
+}
 
 export const round = (num: number, decimals = 0): number => {
   return Math.round(num * Math.pow(10, decimals)) / Math.pow(10, decimals)
@@ -158,11 +172,19 @@ export const numberWithCommas = (
       maximumFractionDigits: decimals
     })
 }
-export const isMobile = () =>
-  typeof window !== 'undefined' && window.innerWidth < 640
+export const isMobile = () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (typeof (globalThis as any).window === 'undefined') return false
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (globalThis as any).window.innerWidth < 640
+}
 
-export const isDesktop = () =>
-  typeof window !== 'undefined' && window.innerWidth >= 1024
+export const isDesktop = () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (typeof (globalThis as any).window === 'undefined') return false
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (globalThis as any).window.innerWidth >= 1024
+}
 
 export const abbrev = (str: string, n = 20) => {
   if (str.length <= n - 2) return str
@@ -262,7 +284,13 @@ export const shuffleArray = (array: unknown[]) => {
 
 export const removeMetaTag = (name: string) =>
   new Promise<void>((resolve) => {
-    const tag = document.querySelector(`meta[name="${name}"]`)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (typeof (globalThis as any).document === 'undefined') {
+      resolve()
+      return
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tag = (globalThis as any).document.querySelector(`meta[name="${name}"]`)
     if (tag) {
       tag.remove()
     }

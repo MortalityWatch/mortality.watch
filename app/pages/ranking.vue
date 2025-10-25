@@ -4,7 +4,7 @@ import {
   getAllChartLabels,
   loadCountryMetadata,
   updateDataset
-} from '@/data'
+} from '@/lib/data'
 import {
   type AllChartData,
   type CountryData,
@@ -34,7 +34,7 @@ import {
   defaultBaselineToDate,
   getSeasonString
 } from '@/model/baseline'
-import { blDescription } from '@/chart'
+import { blDescription } from '@/lib/chart'
 import { showToast } from '../toast'
 import { decodeBool, encodeBool } from '@/lib/state/stateSerializer'
 import {

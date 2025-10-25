@@ -6,7 +6,7 @@ import {
   getStartIndex,
   loadCountryMetadata,
   updateDataset
-} from '@/data'
+} from '@/lib/data'
 import { getKeyForType } from '@/model'
 import { DEFAULT_BASELINE_YEAR } from '@/lib/constants'
 
