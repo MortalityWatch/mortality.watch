@@ -39,8 +39,46 @@ watch(() => props.labels, (newLabels) => {
       })
     }
   } else if (from && to) {
-    const fromIdx = newLabels.indexOf(from)
-    const toIdx = newLabels.indexOf(to)
+    let fromIdx = newLabels.indexOf(from)
+    let toIdx = newLabels.indexOf(to)
+
+    // If exact values not found, try to find closest match by year to preserve user selection
+    if (fromIdx === -1 && from) {
+      const fromYear = from.substring(0, 4)
+      // First try exact year match
+      const yearMatch = newLabels.find(l => l.startsWith(fromYear))
+      if (yearMatch) {
+        fromIdx = newLabels.indexOf(yearMatch)
+      } else {
+        // Find closest year
+        const targetYear = parseInt(fromYear)
+        const availableYears = Array.from(new Set(newLabels.map(l => parseInt(l.substring(0, 4)))))
+        const closestYear = availableYears.reduce((prev, curr) =>
+          Math.abs(curr - targetYear) < Math.abs(prev - targetYear) ? curr : prev
+        )
+        const closestLabel = newLabels.find(l => l.startsWith(closestYear.toString()))
+        fromIdx = closestLabel ? newLabels.indexOf(closestLabel) : 0
+      }
+    }
+
+    if (toIdx === -1 && to) {
+      const toYear = to.substring(0, 4)
+      // First try exact year match (prefer last label of that year)
+      const yearMatches = newLabels.filter(l => l.startsWith(toYear))
+      if (yearMatches.length > 0) {
+        toIdx = newLabels.indexOf(yearMatches[yearMatches.length - 1]!)
+      } else {
+        // Find closest year
+        const targetYear = parseInt(toYear)
+        const availableYears = Array.from(new Set(newLabels.map(l => parseInt(l.substring(0, 4)))))
+        const closestYear = availableYears.reduce((prev, curr) =>
+          Math.abs(curr - targetYear) < Math.abs(prev - targetYear) ? curr : prev
+        )
+        const closestLabels = newLabels.filter(l => l.startsWith(closestYear.toString()))
+        toIdx = closestLabels.length > 0 ? newLabels.indexOf(closestLabels[closestLabels.length - 1]!) : newLabels.length - 1
+      }
+    }
+
     if (fromIdx !== -1 && toIdx !== -1) {
       // Only update if indices actually changed
       if (sliderIndices.value[0] !== fromIdx || sliderIndices.value[1] !== toIdx) {
@@ -50,13 +88,6 @@ watch(() => props.labels, (newLabels) => {
           isUpdatingFromProp.value = false
         })
       }
-    } else {
-      // If current values aren't in new labels, reset to full range
-      isUpdatingFromProp.value = true
-      sliderIndices.value = [0, newLabels.length - 1]
-      nextTick(() => {
-        isUpdatingFromProp.value = false
-      })
     }
   }
 }, { immediate: true })
@@ -89,15 +120,18 @@ watch(sliderIndices, (newIndices) => {
   }
 })
 
-// Display current values
+// Display current values based on slider indices, not props
+// This ensures the display matches what the slider is actually pointing to
 const currentRange = computed(() => {
   if (props.singleValue) {
-    // For single value mode, just show the selected date
-    return props.sliderValue[1] || props.sliderValue[0] || ''
+    const idx = sliderIndices.value[0]
+    return (idx !== undefined && props.labels[idx]) ? props.labels[idx] : ''
   }
-  const from = props.sliderValue[0]
-  const to = props.sliderValue[1]
-  return `${from} - ${to}`
+  const fromIdx = sliderIndices.value[0]
+  const toIdx = sliderIndices.value[1]
+  const from = (fromIdx !== undefined && props.labels[fromIdx]) ? props.labels[fromIdx] : ''
+  const to = (toIdx !== undefined && props.labels[toIdx]) ? props.labels[toIdx] : ''
+  return from && to ? `${from} - ${to}` : ''
 })
 </script>
 

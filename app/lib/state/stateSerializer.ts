@@ -20,26 +20,6 @@ export const decodeString = (str: string | undefined): string | undefined => {
   return decodeURIComponent(str)
 }
 
-// Encode chart preset name to short form
-export const encodePreset = (name: string | undefined): string | undefined => {
-  if (name === undefined) return undefined
-  if (name === 'Auto' || name === 'Fit to Page') return 'auto'
-  if (name === 'Custom') return 'custom'
-  // Extract dimensions like "1000×625" from preset names like "Medium (1000×625)"
-  const match = name.match(/\((\d+)×(\d+)\)/)
-  if (match) return `${match[1]}x${match[2]}`
-  return name
-}
-
-export const decodePreset = (str: string | undefined): string | undefined => {
-  if (str === undefined) return undefined
-  if (str === 'auto' || str === 'fit') return 'Auto'
-  if (str === 'custom') return 'Custom'
-  // If it's dimensions like "1000x625" (legacy or preset encoding), keep as is
-  // This will be matched to a preset in the component
-  return str
-}
-
 export const Defaults = {
   countries: ['USA', 'SWE'],
   type: 'asmr',
@@ -63,9 +43,6 @@ export const Defaults = {
   isLogarithmic: false,
   sliderStart: undefined as unknown as string,
   userColors: undefined as unknown as string[],
-  chartPreset: 'Auto',
-  chartWidth: undefined as unknown as number,
-  chartHeight: undefined as unknown as number,
   showLogo: true,
   showQrCode: true,
   decimals: 'auto'
@@ -97,9 +74,6 @@ export const stateFieldEncoders = {
   isLogarithmic: { key: 'lg', encode: encodeBool, decode: decodeBool },
   userColors: { key: 'uc' },
   decimals: { key: 'dec' },
-  chartPreset: { key: 'cp', encode: encodePreset, decode: decodePreset },
-  chartWidth: { key: 'cw' },
-  chartHeight: { key: 'ch' },
   showLogo: { key: 'l', encode: encodeBool, decode: decodeBool },
   showQrCode: { key: 'qr', encode: encodeBool, decode: decodeBool }
 }

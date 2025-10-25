@@ -175,8 +175,24 @@ const _sliderStart = computed({
 const chartPreset = computed({
   get: () => {
     if (!props.chartPreset) return undefined
-    // Check if it's a preset option (includes "Custom" and "Auto")
-    const preset = chartPresetOptions.find(p => p.value === props.chartPreset)
+
+    // First try exact match
+    let preset = chartPresetOptions.find(p => p.value === props.chartPreset)
+
+    // If no match, check if it's in dimensional format (e.g., "1000x625")
+    if (!preset) {
+      const match = props.chartPreset.match(/^(\d+)x(\d+)$/)
+      if (match) {
+        const width = parseInt(match[1])
+        const height = parseInt(match[2])
+        // Find preset by dimensions from CHART_PRESETS
+        const dimensionPreset = CHART_PRESETS.find(p => p.width === width && p.height === height)
+        if (dimensionPreset) {
+          preset = chartPresetOptions.find(p => p.value === dimensionPreset.name)
+        }
+      }
+    }
+
     return preset
   },
   set: (v: { name: string, value: string, label: string, category: string } | undefined) => {

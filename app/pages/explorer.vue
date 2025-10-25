@@ -159,20 +159,10 @@ const userColors = useUrlState<string[] | undefined>(
   stateFieldEncoders.userColors.key,
   undefined
 )
-const chartPreset = useUrlState<string | undefined>(
-  stateFieldEncoders.chartPreset.key,
-  undefined,
-  stateFieldEncoders.chartPreset.encode,
-  stateFieldEncoders.chartPreset.decode
-)
-const chartWidth = useUrlState<number | undefined>(
-  stateFieldEncoders.chartWidth.key,
-  undefined
-)
-const chartHeight = useUrlState<number | undefined>(
-  stateFieldEncoders.chartHeight.key,
-  undefined
-)
+// Chart size preferences are local state (not stored in URL)
+const chartPreset = ref<string>('Auto')
+const chartWidth = ref<number | undefined>(undefined)
+const chartHeight = ref<number | undefined>(undefined)
 const showLogo = useUrlState<boolean>(
   stateFieldEncoders.showLogo.key,
   true,
@@ -320,17 +310,12 @@ const isCustomMode = computed(() => chartPreset.value === 'Custom')
 const applyPresetSize = (presetName: string) => {
   if (!chartContainer.value) return
 
-  // Try to find preset by name first
+  // Try to find preset by name
   let preset = CHART_PRESETS.find(p => p.name === presetName)
 
-  // If not found, try to match by dimensions (e.g., "1000x625" from URL)
+  // If not found, default to Custom (for unknown/legacy values)
   if (!preset) {
-    const match = presetName.match(/^(\d+)x(\d+)$/)
-    if (match) {
-      const width = parseInt(match[1])
-      const height = parseInt(match[2])
-      preset = CHART_PRESETS.find(p => p.width === width && p.height === height)
-    }
+    preset = CHART_PRESETS.find(p => p.name === 'Custom')
   }
 
   if (!preset) {
@@ -367,7 +352,7 @@ const applyPresetSize = (presetName: string) => {
     containerSize.value = 'Auto'
     showSizeLabel.value = true
 
-    // Clear dimensions from URL
+    // Clear dimensions from local state
     chartWidth.value = undefined
     chartHeight.value = undefined
 
@@ -384,7 +369,7 @@ const applyPresetSize = (presetName: string) => {
   chartContainer.value.style.width = `${preset.width}px`
   chartContainer.value.style.height = `${preset.height}px`
 
-  // Save dimensions to URL
+  // Save dimensions to local state (session-only)
   chartWidth.value = preset.width
   chartHeight.value = preset.height
 
@@ -526,13 +511,55 @@ const resetDates = () => {
   const labels = allChartData.labels
   if (labels.length === 0) return
 
+  // Only reset if values are missing or don't match
+  // Don't reset if user has manually selected a different range
+  if (dateFrom.value && dateTo.value && labels.includes(dateFrom.value) && labels.includes(dateTo.value)) {
+    // Values are valid, don't change them
+    return
+  }
+
   // Date Slider - validate and correct range
   const sliderStartStr = sliderStartPeriod()
   const defaultFrom = labels.includes(sliderStartStr) ? sliderStartStr : labels[0]!
   const defaultTo = labels[labels.length - 1]!
 
+  // Try to preserve user's selection by finding matching labels based on year
+  let currentFrom = dateFrom.value
+  let currentTo = dateTo.value
+
+  // Helper function to find closest year in labels
+  const findClosestYear = (targetYear: string, preferLast: boolean = false): string => {
+    const targetYearNum = parseInt(targetYear)
+    const availableYears = Array.from(new Set(labels.map(l => parseInt(l.substring(0, 4)))))
+
+    // Find the closest year
+    const closestYear = availableYears.reduce((prev, curr) =>
+      Math.abs(curr - targetYearNum) < Math.abs(prev - targetYearNum) ? curr : prev
+    )
+
+    // Find labels for that year
+    const yearLabels = labels.filter(l => l.startsWith(closestYear.toString()))
+    return preferLast ? yearLabels[yearLabels.length - 1]! : yearLabels[0]!
+  }
+
+  // If current values don't exist in new labels, try to find closest match by year
+  if (currentFrom && !labels.includes(currentFrom)) {
+    const fromYear = currentFrom.substring(0, 4)
+    const matchingLabel = labels.find(l => l.startsWith(fromYear))
+    // If exact year doesn't exist, find closest year instead of falling back to default
+    currentFrom = matchingLabel || findClosestYear(fromYear, false)
+  }
+
+  if (currentTo && !labels.includes(currentTo)) {
+    const toYear = currentTo.substring(0, 4)
+    // Find the last label that starts with the year (to prefer end of year)
+    const matchingLabels = labels.filter(l => l.startsWith(toYear))
+    // If exact year doesn't exist, find closest year instead of falling back to default
+    currentTo = (matchingLabels.length > 0 ? matchingLabels[matchingLabels.length - 1] : findClosestYear(toYear, true))!
+  }
+
   const validatedRange = getValidatedRange(
-    { from: dateFrom.value ?? defaultFrom, to: dateTo.value ?? defaultTo },
+    { from: currentFrom ?? defaultFrom, to: currentTo ?? defaultTo },
     labels,
     { from: defaultFrom, to: defaultTo }
   )
@@ -881,22 +908,9 @@ const handleUserColorsChanged = async (v: string[]) => {
   await nextTick()
   update('_userColors')
 }
-const handleChartPresetChanged = async (v: string) => {
-  // Decode preset if it's in short form (dimensions)
-  const match = v.match(/^(\d+)x(\d+)$/)
-  if (match && match[1] && match[2]) {
-    const width = parseInt(match[1])
-    const height = parseInt(match[2])
-    const preset = CHART_PRESETS.find(p => p.width === width && p.height === height)
-    if (preset) {
-      chartPreset.value = preset.name
-      await nextTick()
-      applyPresetSize(preset.name)
-      return
-    }
-  }
+const handleChartPresetChanged = (v: string) => {
+  // Chart preset is now local state, no URL sync needed
   chartPreset.value = v
-  await nextTick()
   applyPresetSize(v)
 }
 const handleShowLogoChanged = async (v: boolean) => {
@@ -965,7 +979,7 @@ const setupResizeObserver = () => {
     const currentWidth = chartContainer.value?.offsetWidth || 0
     const currentHeight = chartContainer.value?.offsetHeight || 0
 
-    // Save dimensions to URL
+    // Save dimensions to local state (session-only)
     chartWidth.value = currentWidth
     chartHeight.value = currentHeight
 
@@ -1020,12 +1034,8 @@ onMounted(async () => {
   isDataLoaded.value = true
   await update('dateFrom')
 
-  // Restore saved dimensions from URL
-  if (!isMobile() && chartContainer.value && chartWidth.value && chartHeight.value) {
-    hasBeenResized.value = true
-    chartContainer.value.style.width = `${chartWidth.value}px`
-    chartContainer.value.style.height = `${chartHeight.value}px`
-  }
+  // Chart dimensions are session-only now (not restored from URL)
+  // They'll be set if user resizes during the session
 
   // Setup resize observer for drag resizing (only if not in Auto mode)
   setupResizeObserver()
@@ -1169,10 +1179,10 @@ const saveChart = async () => {
       <!-- Main content area with responsive layout -->
       <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:gap-4">
         <!-- Chart section - takes up available space on large screens -->
-        <div class="flex-1 min-w-0">
+        <div class="flex-1 min-w-0 flex-shrink-0">
           <UCard
             class="chart-card"
-            :class="{ 'chart-card-resizable': !isMobile(), 'chart-card-resized': hasBeenResized }"
+            :class="{ 'chart-card-resizable': !isMobile(), 'chart-card-resized': hasBeenResized, 'chart-card-custom': isCustomMode }"
             :ui="{ body: 'p-0' }"
           >
             <div
@@ -1395,7 +1405,12 @@ const saveChart = async () => {
 .chart-card.chart-card-resizable {
   aspect-ratio: unset;
   height: 100%;
-  overflow: visible; /* Allow chart to overflow when resizable */
+  overflow: hidden; /* Default to hidden */
+}
+
+/* In Custom mode, allow overflow so resize handle is visible */
+.chart-card.chart-card-custom {
+  overflow: visible !important;
 }
 
 @media (min-width: 1024px) {
@@ -1445,8 +1460,17 @@ const saveChart = async () => {
 .chart-wrapper.resizable.custom-mode {
   height: 55vh;
   width: 100%;
-  overflow: auto; /* Show scrollbars when needed for manual resize */
+  overflow: auto; /* Enable resize handle without forcing scrollbars */
   resize: both; /* Show resize handle only in Custom mode */
+}
+
+/* Hide scrollbars in custom mode - they're not needed, just the resize handle */
+.chart-wrapper.resizable.custom-mode::-webkit-scrollbar {
+  display: none;
+}
+.chart-wrapper.resizable.custom-mode {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
 }
 
 /* Auto mode - responsive with aspect ratio, no resize handle */
