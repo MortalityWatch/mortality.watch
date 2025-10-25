@@ -7,31 +7,63 @@ import { getObjectOfArrays } from '~/utils'
 import { fetchData } from './queries'
 
 /**
+ * Concurrency limiter for controlled parallel execution
+ * @param concurrency Maximum number of parallel operations
+ */
+function createConcurrencyLimiter(concurrency: number) {
+  const queue: (() => void)[] = []
+  let activeCount = 0
+
+  return async <T>(fn: () => Promise<T>): Promise<T> => {
+    while (activeCount >= concurrency) {
+      await new Promise<void>(resolve => queue.push(resolve))
+    }
+
+    activeCount++
+    try {
+      return await fn()
+    } finally {
+      activeCount--
+      const next = queue.shift()
+      if (next) next()
+    }
+  }
+}
+
+/**
  * Update dataset by fetching data for all country/ageGroup combinations
- * WARNING: This creates unbounded parallel requests - should be throttled
+ * Uses controlled concurrency to avoid overwhelming the server
  */
 export const updateDataset = async (
   chartType: string,
   countryCodes: string[],
-  ageGroups: string[]
+  ageGroups: string[],
+  maxConcurrency: number = 10 // Default to 10 concurrent requests
 ): Promise<DatasetRaw> => {
   try {
+    const limit = createConcurrencyLimiter(maxConcurrency)
     const operations: Promise<CountryData[]>[] = []
-    // Call fetchData in parallel for all combinations
+
+    // Call fetchData with controlled concurrency for all combinations
     countryCodes.forEach((country) => {
       ageGroups.forEach((ag) => {
-        operations.push(fetchData(chartType, country, ag))
+        operations.push(
+          limit(() => fetchData(chartType, country, ag))
+        )
       })
     })
+
     const results = await Promise.all(operations)
     const rows = results.flat()
     const data: DatasetRaw = {}
+
     rows.forEach((row) => {
       const { age_group, iso3c } = row
       data[age_group] = data[age_group] || {}
       data[age_group][iso3c] = data[age_group][iso3c] || []
       data[age_group][iso3c].push(row)
     })
+
     return data
   } catch (error) {
     console.error(error)
