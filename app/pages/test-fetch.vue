@@ -1,3 +1,9 @@
+<!--
+  DEV-ONLY TEST PAGE: Data Fetching Test
+  Interactive test page for metadata and data fetching functionality.
+  Not included in production build (see nuxt.config.ts routeRules).
+  Access in dev: http://localhost:3000/test-fetch
+-->
 <template>
   <div class="p-8">
     <h1 class="text-2xl mb-4">

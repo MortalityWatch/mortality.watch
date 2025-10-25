@@ -40,7 +40,11 @@ export default defineNuxtConfig({
     '/about': { prerender: true },
     '/sources': { prerender: true },
     '/donate': { prerender: true },
-    '/ranking': { ssr: true } // Server-rendered (fresh data)
+    '/ranking': { ssr: true }, // Server-rendered (fresh data)
+    // Exclude test pages from production prerendering (dev-only)
+    '/test-data': { prerender: false },
+    '/test-fetch': { prerender: false },
+    '/test-ranking': { prerender: false }
   },
 
   compatibilityDate: '2025-08-16',

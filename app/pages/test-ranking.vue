@@ -1,3 +1,9 @@
+<!--
+  DEV-ONLY TEST PAGE: Ranking Test
+  Tests country metadata loading for ranking functionality.
+  Not included in production build (see nuxt.config.ts routeRules).
+  Access in dev: http://localhost:3000/test-ranking
+-->
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { loadCountryMetadata } from '../data'

@@ -1,3 +1,9 @@
+<!--
+  DEV-ONLY TEST PAGE: Data Loading Test
+  Tests mortality data loading, country metadata, and chart labels.
+  Not included in production build (see nuxt.config.ts routeRules).
+  Access in dev: http://localhost:3000/test-data
+-->
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { loadCountryMetadata, updateDataset, getAllChartLabels } from '../data'
