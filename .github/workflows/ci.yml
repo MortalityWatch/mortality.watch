@@ -33,20 +33,25 @@ jobs:
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: npm ci --prefer-offline
 
-      - name: Cache Build Artifacts
+      - name: Cache ESLint
+        uses: actions/cache@v4
+        with:
+          path: .eslintcache
+          key: ${{ runner.os }}-eslint-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.ts', '**/*.vue', '**/*.js', '.eslintrc.*') }}
+          restore-keys: |
+            ${{ runner.os }}-eslint-${{ hashFiles('**/package-lock.json') }}-
+            ${{ runner.os }}-eslint-
+
+      - name: Cache Nuxt Build
         uses: actions/cache@v4
         with:
           path: |
             .nuxt
             .output
             node_modules/.cache
-            node_modules/.vitest
-            .eslintcache
-            **/*.tsbuildinfo
-          key: ${{ runner.os }}-build-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.ts', '**/*.vue', '**/*.js') }}
+          key: ${{ runner.os }}-nuxt-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-build-${{ hashFiles('**/package-lock.json') }}-
-            ${{ runner.os }}-build-
+            ${{ runner.os }}-nuxt-
 
       - name: Run all checks (lint + typecheck + test)
         run: npm run check
@@ -87,17 +92,16 @@ jobs:
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: npm ci --prefer-offline
 
-      - name: Cache Build Artifacts
+      - name: Cache Nuxt Build
         uses: actions/cache@v4
         with:
           path: |
             .nuxt
             .output
             node_modules/.cache
-          key: ${{ runner.os }}-build-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.ts', '**/*.vue', '**/*.js') }}
+          key: ${{ runner.os }}-nuxt-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-build-${{ hashFiles('**/package-lock.json') }}-
-            ${{ runner.os }}-build-
+            ${{ runner.os }}-nuxt-
 
       - name: Cache Playwright Browsers
         uses: actions/cache@v4
