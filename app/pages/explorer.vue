@@ -1177,7 +1177,7 @@ const saveChart = async () => {
       </UCard>
 
       <!-- Main content area with responsive layout -->
-      <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:gap-4">
+      <div class="flex flex-col gap-3 xl:flex-row xl:items-start xl:gap-4">
         <!-- Chart section - takes up available space on large screens -->
         <div class="flex-1 min-w-0 flex-shrink-0">
           <UCard
@@ -1227,7 +1227,7 @@ const saveChart = async () => {
         </div>
 
         <!-- Settings section - fixed width on large screens -->
-        <div class="w-full lg:w-[420px] flex-shrink-0">
+        <div class="w-full xl:w-[420px] flex-shrink-0">
           <UCard class="tab-card">
             <template #header>
               <h2 class="text-xl font-semibold">
@@ -1381,7 +1381,7 @@ const saveChart = async () => {
 
 <style>
 /* Override UMain min-height for explorer page on desktop only */
-@media (min-width: 1024px) {
+@media (min-width: 1280px) {
   main {
     min-height: 0 !important;
   }
@@ -1413,7 +1413,7 @@ const saveChart = async () => {
   overflow: visible !important;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1280px) {
   .chart-card.chart-card-resizable {
     max-height: none; /* Remove max-height to prevent clipping */
   }
@@ -1499,8 +1499,8 @@ const saveChart = async () => {
   }
 }
 
-/* lg: desktop - ultra-wide for time series */
-@media (min-width: 1024px) {
+/* xl: desktop - ultra-wide for time series */
+@media (min-width: 1280px) {
   .chart-wrapper.resizable.auto-mode {
     aspect-ratio: 21 / 9;
   }
