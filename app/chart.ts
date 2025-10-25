@@ -364,7 +364,7 @@ export const blDescription = (
   baselineDateFrom: string,
   baselineDateTo: string
 ) =>
-  `Baseline: ${getMethodDescription(baselineMethod)} ${baselineDateFrom}-${baselineDateTo}`
+  `Baseline: ${getMethodDescription(baselineMethod)} ${baselineDateTo}`
 
 export const getChartLabels = (
   countries: string[],
