@@ -3,7 +3,7 @@ import { renderPlaceholderChart, renderChart } from '../utils/chartRenderer'
 import { makeChartConfig } from '../../app/lib/chart/chartConfig'
 import type { ChartStyle } from '../../app/lib/chart/chartTypes'
 import { getAllChartData, loadCountryMetadata, updateDataset, getAllChartLabels } from '../../app/data'
-import type { AllChartData } from '../../app/model'
+import type { AllChartData, CountryData } from '../../app/model'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -25,18 +25,24 @@ export default defineEventHandler(async (event) => {
 
     try {
       // 1. Load country metadata (ensures metadata is cached for data fetching)
-      await loadCountryMetadata({ allowCache: true })
+      await loadCountryMetadata({ filterCountries: state.countries })
 
       // 2. Load raw dataset with all necessary parameters
       const rawData = await updateDataset(
         state.chartType,
-        state.ageGroupFilter,
         state.countries,
-        { allowCache: true }
+        state.ageGroups
       )
 
       // 3. Get all chart labels
-      const allLabels = getAllChartLabels(state.chartType, rawData)
+      const isAsmrType = state.type.startsWith('asmr')
+      const allLabels = getAllChartLabels(
+        rawData,
+        isAsmrType,
+        state.ageGroups,
+        state.countries,
+        state.chartType
+      )
 
       // 4. Fetch chart data
       const dataKey = state.type === 'cmr'
@@ -50,13 +56,13 @@ export default defineEventHandler(async (event) => {
               : 'population'
 
       const chartData: AllChartData = await getAllChartData(
-        dataKey as keyof typeof rawData.all,
+        dataKey as keyof CountryData,
         state.chartType,
         rawData,
         allLabels,
         0, // startDateIndex - full range for OG images
         state.cumulative,
-        state.ageGroupFilter,
+        state.ageGroups,
         state.countries,
         state.showBaseline ? state.baselineMethod : undefined,
         state.baselineDateFrom,
