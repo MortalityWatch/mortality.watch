@@ -1273,11 +1273,12 @@ const saveChart = async () => {
 .chart-card.chart-card-resizable {
   aspect-ratio: unset;
   height: 100%;
+  overflow: visible; /* Allow chart to overflow when resizable */
 }
 
 @media (min-width: 1024px) {
   .chart-card.chart-card-resizable {
-    max-height: 55vh;
+    max-height: none; /* Remove max-height to prevent clipping */
   }
 }
 
@@ -1289,12 +1290,12 @@ const saveChart = async () => {
   width: 100%;
   height: 100%;
   position: relative;
-  margin: -0.25rem;
+  /* Removed negative margin for proper resize handle alignment */
 }
 
 .chart-wrapper.resizable {
   resize: both;
-  overflow: hidden;
+  overflow: auto; /* Changed from hidden to auto for better resize handle visibility */
   height: 55vh;
   width: 100%;
   min-width: v-bind('CHART_RESIZE.MIN_WIDTH + "px"');
