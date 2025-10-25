@@ -551,6 +551,7 @@ const activeTab = ref('data')
                 :labels="props.labels"
                 :color="specialColor()"
                 :min-range="baselineMinRange(props.baselineMethod)"
+                :single-value="props.baselineMethod === 'naive'"
                 @slider-changed="baselineSliderChanged"
               />
             </div>
