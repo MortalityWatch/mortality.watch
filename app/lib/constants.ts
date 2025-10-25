@@ -27,8 +27,11 @@ export interface ChartPreset {
 }
 
 export const CHART_PRESETS: ChartPreset[] = [
-  // Default
-  { name: 'Fit to Page', width: 0, height: 0, category: 'Default' },
+  // Default - Responsive sizing
+  { name: 'Auto', width: 0, height: 0, category: 'Default' },
+
+  // Custom - User-resizable
+  { name: 'Custom', width: -1, height: -1, category: 'Default' },
 
   // Standard Chart Sizes
   { name: 'Small (800×600)', width: 800, height: 600, category: 'Standard' },

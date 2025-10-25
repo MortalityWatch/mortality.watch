@@ -3,9 +3,7 @@ import {
   encodeBool,
   decodeBool,
   encodeString,
-  decodeString,
-  encodePreset,
-  decodePreset
+  decodeString
 } from './stateSerializer'
 
 describe('stateSerializer', () => {
@@ -83,53 +81,6 @@ describe('stateSerializer', () => {
     })
   })
 
-  describe('encodePreset', () => {
-    it('should encode "Fit to Page" as "fit"', () => {
-      expect(encodePreset('Fit to Page')).toBe('fit')
-    })
-
-    it('should extract dimensions from preset name', () => {
-      expect(encodePreset('Medium (1000×625)')).toBe('1000x625')
-      expect(encodePreset('Large (1920×1080)')).toBe('1920x1080')
-    })
-
-    it('should return undefined for undefined', () => {
-      expect(encodePreset(undefined)).toBeUndefined()
-    })
-
-    it('should return original string if no dimensions found', () => {
-      expect(encodePreset('Custom')).toBe('Custom')
-    })
-
-    it('should handle preset with different formats', () => {
-      expect(encodePreset('Small (800×600)')).toBe('800x600')
-    })
-  })
-
-  describe('decodePreset', () => {
-    it('should decode "fit" as "Fit to Page"', () => {
-      expect(decodePreset('fit')).toBe('Fit to Page')
-    })
-
-    it('should handle dimension format', () => {
-      expect(decodePreset('1000x625')).toBe('1000x625')
-      expect(decodePreset('1920x1080')).toBe('1920x1080')
-    })
-
-    it('should return undefined for undefined', () => {
-      expect(decodePreset(undefined)).toBeUndefined()
-    })
-
-    it('should return original string if not special format', () => {
-      expect(decodePreset('Custom')).toBe('Custom')
-    })
-
-    it('should handle invalid dimension format', () => {
-      expect(decodePreset('1000')).toBe('1000')
-      expect(decodePreset('abc')).toBe('abc')
-    })
-  })
-
   describe('round-trip encoding/decoding', () => {
     it('should preserve boolean through encode/decode', () => {
       expect(decodeBool(encodeBool(true))).toBe(true)
@@ -141,16 +92,6 @@ describe('stateSerializer', () => {
       testStrings.forEach((str) => {
         expect(decodeString(encodeString(str))).toBe(str)
       })
-    })
-
-    it('should preserve "Fit to Page" preset through encode/decode', () => {
-      expect(decodePreset(encodePreset('Fit to Page'))).toBe('Fit to Page')
-    })
-
-    it('should preserve dimension presets through encode/decode', () => {
-      const dimensions = encodePreset('Medium (1000×625)')
-      expect(dimensions).toBe('1000x625')
-      expect(decodePreset(dimensions)).toBe('1000x625')
     })
   })
 })

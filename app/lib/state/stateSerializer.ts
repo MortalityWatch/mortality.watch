@@ -20,31 +20,6 @@ export const decodeString = (str: string | undefined): string | undefined => {
   return decodeURIComponent(str)
 }
 
-// Encode chart preset name to short form (dimensions like "1000x625")
-export const encodePreset = (name: string | undefined): string | undefined => {
-  if (name === undefined) return undefined
-  if (name === 'Fit to Page') return 'fit'
-  // Extract dimensions like "1000×625" from name like "Medium (1000×625)"
-  const match = name.match(/\((\d+)×(\d+)\)/)
-  if (match) return `${match[1]}x${match[2]}`
-  return name
-}
-
-export const decodePreset = (str: string | undefined): string | undefined => {
-  if (str === undefined) return undefined
-  if (str === 'fit') return 'Fit to Page'
-  // If it's dimensions like "1000x625", find the matching preset
-  const match = str.match(/^(\d+)x(\d+)$/)
-  if (match && match[1] && match[2]) {
-    const _width = parseInt(match[1])
-    const _height = parseInt(match[2])
-    // We'll need to import CHART_PRESETS to find the matching one
-    // For now, just return the dimensions format that will be matched
-    return str // This will be handled in the component
-  }
-  return str
-}
-
 export const Defaults = {
   countries: ['USA', 'SWE'],
   type: 'asmr',
@@ -68,11 +43,9 @@ export const Defaults = {
   isLogarithmic: false,
   sliderStart: undefined as unknown as string,
   userColors: undefined as unknown as string[],
-  chartPreset: undefined as unknown as string,
-  chartWidth: undefined as unknown as number,
-  chartHeight: undefined as unknown as number,
   showLogo: true,
-  showQrCode: true
+  showQrCode: true,
+  decimals: 'auto'
 }
 
 export type ChartStateInput = typeof Defaults
@@ -100,9 +73,7 @@ export const stateFieldEncoders = {
   showPercentage: { key: 'p', encode: encodeBool, decode: decodeBool },
   isLogarithmic: { key: 'lg', encode: encodeBool, decode: decodeBool },
   userColors: { key: 'uc' },
-  chartPreset: { key: 'preset', encode: encodePreset, decode: decodePreset },
-  chartWidth: { key: 'cw' },
-  chartHeight: { key: 'ch' },
+  decimals: { key: 'dec' },
   showLogo: { key: 'l', encode: encodeBool, decode: decodeBool },
   showQrCode: { key: 'qr', encode: encodeBool, decode: decodeBool }
 }

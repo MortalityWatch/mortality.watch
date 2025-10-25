@@ -268,7 +268,7 @@ const calculateBaseline = async (
   const all_data = firstKey ? (data[firstKey]?.slice(startIdx, n) || []) : []
   const bl_data = firstKey ? (data[firstKey]?.slice(startIdx, endIdx + 1) || []) : []
   const h = all_data.length - bl_data.length
-  const trend = method === 'lin_reg' || method === 'exp'
+  const trend = method === 'lin_reg' // Only linear regression uses trend mode (t=1)
   const s = getSeasonType(chartType)
 
   if (bl_data.every(x => x == null || isNaN(x as number))) return

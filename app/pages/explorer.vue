@@ -25,9 +25,10 @@ import {
   loadCountryMetadata,
   updateDataset
 } from '@/data'
-import MortalityChartControlsSecondary from '@/components/charts/MortalityChartControlsSecondaryCustom.vue'
+import MortalityChartControlsSecondary from '@/components/charts/MortalityChartControlsSecondary.vue'
 import MortalityChartControlsPrimary from '@/components/charts/MortalityChartControlsPrimary.vue'
-import { colors, specialColor } from '@/colors'
+import { getChartColors, specialColor } from '@/colors'
+import { getColorScale } from '@/lib/chart/chartColors'
 import DateSlider from '@/components/charts/DateSlider.vue'
 import type { ChartStyle, MortalityChartData } from '@/lib/chart/chartTypes'
 import { useRoute, useRouter } from 'vue-router'
@@ -158,20 +159,10 @@ const userColors = useUrlState<string[] | undefined>(
   stateFieldEncoders.userColors.key,
   undefined
 )
-const chartPreset = useUrlState<string | undefined>(
-  stateFieldEncoders.chartPreset.key,
-  undefined,
-  stateFieldEncoders.chartPreset.encode,
-  stateFieldEncoders.chartPreset.decode
-)
-const chartWidth = useUrlState<number | undefined>(
-  stateFieldEncoders.chartWidth.key,
-  undefined
-)
-const chartHeight = useUrlState<number | undefined>(
-  stateFieldEncoders.chartHeight.key,
-  undefined
-)
+// Chart size preferences are local state (not stored in URL)
+const chartPreset = ref<string>('Auto')
+const chartWidth = ref<number | undefined>(undefined)
+const chartHeight = ref<number | undefined>(undefined)
 const showLogo = useUrlState<boolean>(
   stateFieldEncoders.showLogo.key,
   true,
@@ -183,6 +174,10 @@ const showQrCode = useUrlState<boolean>(
   true,
   stateFieldEncoders.showQrCode.encode,
   stateFieldEncoders.showQrCode.decode
+)
+const decimals = useUrlState<string>(
+  stateFieldEncoders.decimals.key,
+  Defaults.decimals
 )
 
 // Router
@@ -250,6 +245,37 @@ const showPredictionIntervalDisabled = computed(() =>
   (!isExcess.value && !showBaseline.value) || (cumulative.value && !showCumPi())
 )
 
+// Get color mode for theme reactivity
+const colorMode = useColorMode()
+
+// Color picker should only show colors for selected jurisdictions
+const displayColors = computed(() => {
+  // Add colorMode.value as dependency to make this reactive to theme changes
+  const _theme = colorMode.value
+
+  const numCountries = countries.value.length
+  if (numCountries === 0) return []
+
+  // If user has custom colors, use them (extending if needed)
+  if (userColors.value) {
+    if (userColors.value.length >= numCountries) {
+      return userColors.value.slice(0, numCountries)
+    }
+    // If user colors are fewer than countries, extend using color scale
+    return getColorScale(userColors.value, numCountries)
+  }
+
+  // Use default colors (theme-aware)
+  const themeColors = getChartColors()
+  if (themeColors.length >= numCountries) {
+    // We have enough colors, just slice
+    return themeColors.slice(0, numCountries)
+  }
+
+  // Need more colors than we have, use chroma to generate
+  return getColorScale(themeColors, numCountries)
+})
+
 // Data
 const isUpdating = ref<boolean>(false)
 const showLoadingOverlay = ref<boolean>(false)
@@ -274,22 +300,59 @@ const hasBeenResized = ref<boolean>(false)
 let sizeTimeout: ReturnType<typeof setTimeout> | null = null
 const containerSize = ref('100x100')
 
+// Check if chart is in Auto (responsive) mode
+const isAutoMode = computed(() => !hasBeenResized.value && !chartWidth.value && !chartHeight.value)
+
+// Check if chart is in Custom mode (user has selected Custom or dragged to resize)
+const isCustomMode = computed(() => chartPreset.value === 'Custom')
+
 // Apply preset size to chart
 const applyPresetSize = (presetName: string) => {
   if (!chartContainer.value) return
 
-  const preset = CHART_PRESETS.find(p => p.name === presetName)
-  if (!preset) return
+  // Try to find preset by name
+  let preset = CHART_PRESETS.find(p => p.name === presetName)
 
-  // Special case: "Fit to Page" resets to default
+  // If not found, default to Custom (for unknown/legacy values)
+  if (!preset) {
+    preset = CHART_PRESETS.find(p => p.name === 'Custom')
+  }
+
+  if (!preset) {
+    return
+  }
+
+  // Special case: "Custom" enables resize handle with current or default dimensions
+  if (preset.width === -1 && preset.height === -1) {
+    hasBeenResized.value = true
+    // Keep current dimensions if they exist, otherwise use container's current size
+    if (!chartWidth.value || !chartHeight.value) {
+      const currentWidth = chartContainer.value.offsetWidth
+      const currentHeight = chartContainer.value.offsetHeight
+      chartWidth.value = currentWidth
+      chartHeight.value = currentHeight
+      chartContainer.value.style.width = `${currentWidth}px`
+      chartContainer.value.style.height = `${currentHeight}px`
+    } else {
+      chartContainer.value.style.width = `${chartWidth.value}px`
+      chartContainer.value.style.height = `${chartHeight.value}px`
+    }
+    containerSize.value = 'Custom'
+    showSizeLabel.value = true
+    if (sizeTimeout) clearTimeout(sizeTimeout)
+    sizeTimeout = setTimeout(() => (showSizeLabel.value = false), CHART_RESIZE.SIZE_LABEL_TIMEOUT)
+    return
+  }
+
+  // Special case: "Auto" enables responsive sizing
   if (preset.width === 0 && preset.height === 0) {
     hasBeenResized.value = false
     chartContainer.value.style.width = ''
     chartContainer.value.style.height = ''
-    containerSize.value = 'Fit to Page'
+    containerSize.value = 'Auto'
     showSizeLabel.value = true
 
-    // Clear dimensions from URL
+    // Clear dimensions from local state
     chartWidth.value = undefined
     chartHeight.value = undefined
 
@@ -306,13 +369,16 @@ const applyPresetSize = (presetName: string) => {
   chartContainer.value.style.width = `${preset.width}px`
   chartContainer.value.style.height = `${preset.height}px`
 
-  // Save dimensions to URL
+  // Save dimensions to local state (session-only)
   chartWidth.value = preset.width
   chartHeight.value = preset.height
 
   // Update the size label to show preset name
   containerSize.value = preset.name
   showSizeLabel.value = true
+
+  // Setup resize observer for manual dragging
+  setupResizeObserver()
 
   // Trigger resize event
   window.dispatchEvent(new Event('resize'))
@@ -445,13 +511,55 @@ const resetDates = () => {
   const labels = allChartData.labels
   if (labels.length === 0) return
 
+  // Only reset if values are missing or don't match
+  // Don't reset if user has manually selected a different range
+  if (dateFrom.value && dateTo.value && labels.includes(dateFrom.value) && labels.includes(dateTo.value)) {
+    // Values are valid, don't change them
+    return
+  }
+
   // Date Slider - validate and correct range
   const sliderStartStr = sliderStartPeriod()
   const defaultFrom = labels.includes(sliderStartStr) ? sliderStartStr : labels[0]!
   const defaultTo = labels[labels.length - 1]!
 
+  // Try to preserve user's selection by finding matching labels based on year
+  let currentFrom = dateFrom.value
+  let currentTo = dateTo.value
+
+  // Helper function to find closest year in labels
+  const findClosestYear = (targetYear: string, preferLast: boolean = false): string => {
+    const targetYearNum = parseInt(targetYear)
+    const availableYears = Array.from(new Set(labels.map(l => parseInt(l.substring(0, 4)))))
+
+    // Find the closest year
+    const closestYear = availableYears.reduce((prev, curr) =>
+      Math.abs(curr - targetYearNum) < Math.abs(prev - targetYearNum) ? curr : prev
+    )
+
+    // Find labels for that year
+    const yearLabels = labels.filter(l => l.startsWith(closestYear.toString()))
+    return preferLast ? yearLabels[yearLabels.length - 1]! : yearLabels[0]!
+  }
+
+  // If current values don't exist in new labels, try to find closest match by year
+  if (currentFrom && !labels.includes(currentFrom)) {
+    const fromYear = currentFrom.substring(0, 4)
+    const matchingLabel = labels.find(l => l.startsWith(fromYear))
+    // If exact year doesn't exist, find closest year instead of falling back to default
+    currentFrom = matchingLabel || findClosestYear(fromYear, false)
+  }
+
+  if (currentTo && !labels.includes(currentTo)) {
+    const toYear = currentTo.substring(0, 4)
+    // Find the last label that starts with the year (to prefer end of year)
+    const matchingLabels = labels.filter(l => l.startsWith(toYear))
+    // If exact year doesn't exist, find closest year instead of falling back to default
+    currentTo = (matchingLabels.length > 0 ? matchingLabels[matchingLabels.length - 1] : findClosestYear(toYear, true))!
+  }
+
   const validatedRange = getValidatedRange(
-    { from: dateFrom.value ?? defaultFrom, to: dateTo.value ?? defaultTo },
+    { from: currentFrom ?? defaultFrom, to: currentTo ?? defaultTo },
     labels,
     { from: defaultFrom, to: defaultTo }
   )
@@ -500,7 +608,7 @@ const updateFilteredData = async () => {
     isBarChartStyle(),
     allCountries.value, // This is the country metadata, not the selected countries
     isErrorBarType(),
-    userColors.value ?? colors,
+    displayColors.value, // Use displayColors which handles 8+ countries
     isMatrixChartStyle(),
     showPercentage.value,
     showCumPi(),
@@ -800,22 +908,9 @@ const handleUserColorsChanged = async (v: string[]) => {
   await nextTick()
   update('_userColors')
 }
-const handleChartPresetChanged = async (v: string) => {
-  // Decode preset if it's in short form (dimensions)
-  const match = v.match(/^(\d+)x(\d+)$/)
-  if (match && match[1] && match[2]) {
-    const width = parseInt(match[1])
-    const height = parseInt(match[2])
-    const preset = CHART_PRESETS.find(p => p.width === width && p.height === height)
-    if (preset) {
-      chartPreset.value = preset.name
-      await nextTick()
-      applyPresetSize(preset.name)
-      return
-    }
-  }
+const handleChartPresetChanged = (v: string) => {
+  // Chart preset is now local state, no URL sync needed
   chartPreset.value = v
-  await nextTick()
   applyPresetSize(v)
 }
 const handleShowLogoChanged = async (v: boolean) => {
@@ -826,9 +921,87 @@ const handleShowQrCodeChanged = async (v: boolean) => {
   showQrCode.value = v
   await nextTick()
 }
+const handleDecimalsChanged = async (v: string) => {
+  decimals.value = v
+  await nextTick()
+}
 
 // Setup ResizeObserver cleanup before any async operations
 let resizeObserver: ResizeObserver | null = null
+
+// Helper function to setup ResizeObserver for drag resizing
+const setupResizeObserver = () => {
+  // Disconnect existing observer
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
+
+  // Only observe if NOT on mobile
+  if (!chartContainer.value || isMobile()) {
+    return
+  }
+
+  let isFirstResize = true
+
+  resizeObserver = new ResizeObserver(() => {
+    if (isFirstResize) {
+      isFirstResize = false
+      return
+    }
+
+    // In Auto mode, only switch to Custom if user manually set inline styles (dragged handle)
+    if (isAutoMode.value) {
+      const hasInlineWidth = chartContainer.value?.style.width && chartContainer.value?.style.width !== ''
+      const hasInlineHeight = chartContainer.value?.style.height && chartContainer.value?.style.height !== ''
+
+      // If no inline styles, this is just window resize - ignore it
+      if (!hasInlineWidth && !hasInlineHeight) {
+        return
+      }
+
+      // User dragged the handle - switch to Custom mode
+      hasBeenResized.value = true
+      chartPreset.value = 'Custom'
+    }
+
+    // In Preset mode (not Auto, not Custom), ignore resize events
+    // User selected a fixed preset - don't let ResizeObserver interfere
+    if (!isAutoMode.value && !isCustomMode.value) {
+      return
+    }
+
+    // Only update dimensions in Custom mode (user is actively resizing)
+    if (!isCustomMode.value) {
+      return
+    }
+
+    const currentWidth = chartContainer.value?.offsetWidth || 0
+    const currentHeight = chartContainer.value?.offsetHeight || 0
+
+    // Save dimensions to local state (session-only)
+    chartWidth.value = currentWidth
+    chartHeight.value = currentHeight
+
+    // Update size label with dimensions
+    const displayWidth = currentWidth - 2
+    const displayHeight = currentHeight - 2
+    containerSize.value = `Custom (${displayWidth}×${displayHeight})`
+    // Keep chartPreset as 'Custom', don't change it to 'Custom (WxH)'
+    if (chartPreset.value !== 'Custom') {
+      chartPreset.value = 'Custom'
+    }
+
+    showSizeLabel.value = true
+    window.dispatchEvent(new Event('resize'))
+    requestAnimationFrame(() => (showSizeLabel.value = true))
+    if (sizeTimeout) clearTimeout(sizeTimeout)
+    sizeTimeout = setTimeout(() => (showSizeLabel.value = false), CHART_RESIZE.SIZE_LABEL_TIMEOUT)
+  })
+
+  resizeObserver.observe(chartContainer.value)
+}
+
 onBeforeUnmount(() => {
   if (resizeObserver) {
     resizeObserver.disconnect()
@@ -861,55 +1034,11 @@ onMounted(async () => {
   isDataLoaded.value = true
   await update('dateFrom')
 
-  if (!isMobile() && chartContainer.value) {
-    let isFirstResize = true
+  // Chart dimensions are session-only now (not restored from URL)
+  // They'll be set if user resizes during the session
 
-    // Restore saved dimensions from URL
-    if (chartWidth.value && chartHeight.value) {
-      hasBeenResized.value = true
-      chartContainer.value.style.width = `${chartWidth.value}px`
-      chartContainer.value.style.height = `${chartHeight.value}px`
-    }
-
-    resizeObserver = new ResizeObserver(() => {
-      if (isFirstResize) {
-        isFirstResize = false
-        return
-      }
-
-      hasBeenResized.value = true
-
-      const currentWidth = chartContainer.value?.offsetWidth || 0
-      const currentHeight = chartContainer.value?.offsetHeight || 0
-
-      // Save dimensions to URL
-      chartWidth.value = currentWidth
-      chartHeight.value = currentHeight
-
-      // Check if current size matches a preset
-      const matchedPreset = CHART_PRESETS.find(
-        p => Math.abs(p.width - currentWidth) < 5 && Math.abs(p.height - currentHeight) < 5
-      )
-
-      if (matchedPreset) {
-        containerSize.value = matchedPreset.name
-        // Update preset in URL when it matches
-        if (chartPreset.value !== matchedPreset.name) {
-          chartPreset.value = matchedPreset.name
-        }
-      } else {
-        containerSize.value = `${currentWidth - 2}×${currentHeight - 2}`
-      }
-
-      showSizeLabel.value = true
-      window.dispatchEvent(new Event('resize'))
-      requestAnimationFrame(() => (showSizeLabel.value = true))
-      if (sizeTimeout) clearTimeout(sizeTimeout)
-      sizeTimeout = setTimeout(() => (showSizeLabel.value = false), CHART_RESIZE.SIZE_LABEL_TIMEOUT)
-    })
-
-    resizeObserver.observe(chartContainer.value)
-  }
+  // Setup resize observer for drag resizing (only if not in Auto mode)
+  setupResizeObserver()
 })
 
 // Chart action functions
@@ -1048,18 +1177,18 @@ const saveChart = async () => {
       </UCard>
 
       <!-- Main content area with responsive layout -->
-      <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:gap-4">
+      <div class="flex flex-col gap-3 xl:flex-row xl:items-start xl:gap-4">
         <!-- Chart section - takes up available space on large screens -->
-        <div class="flex-1">
+        <div class="flex-1 min-w-0 flex-shrink-0">
           <UCard
             class="chart-card"
-            :class="{ 'chart-card-resizable': !isMobile(), 'chart-card-resized': hasBeenResized }"
+            :class="{ 'chart-card-resizable': !isMobile(), 'chart-card-resized': hasBeenResized, 'chart-card-custom': isCustomMode }"
             :ui="{ body: 'p-0' }"
           >
             <div
               ref="chartContainer"
               class="chart-wrapper relative"
-              :class="{ resizable: !isMobile() }"
+              :class="{ 'resizable': !isMobile(), 'auto-mode': isAutoMode, 'custom-mode': isCustomMode }"
             >
               <!-- Glass overlay for loading (only shown after 500ms delay) -->
               <GlassOverlay
@@ -1091,13 +1220,14 @@ const saveChart = async () => {
                 :is-population-type="isPopulationType()"
                 :show-logo="showLogo"
                 :show-qr-code="showQrCode"
+                :decimals="decimals"
               />
             </div>
           </UCard>
         </div>
 
         <!-- Settings section - fixed width on large screens -->
-        <div class="w-full lg:w-[420px] flex-shrink-0">
+        <div class="w-full xl:w-[420px] flex-shrink-0">
           <UCard class="tab-card">
             <template #header>
               <h2 class="text-xl font-semibold">
@@ -1145,10 +1275,11 @@ const saveChart = async () => {
               "
               :show-prediction-interval-option-disabled="showPredictionIntervalDisabled"
               :is-matrix-chart-style="isMatrixChartStyle()"
-              :colors="userColors ?? colors"
+              :colors="displayColors"
               :chart-preset="chartPreset"
               :show-logo="showLogo"
               :show-qr-code="showQrCode"
+              :decimals="decimals"
               @type-changed="handleTypeChanged"
               @chart-type-changed="handleChartTypeChanged"
               @chart-style-changed="handleChartStyleChanged"
@@ -1169,6 +1300,7 @@ const saveChart = async () => {
               @chart-preset-changed="handleChartPresetChanged"
               @show-logo-changed="handleShowLogoChanged"
               @show-qr-code-changed="handleShowQrCodeChanged"
+              @decimals-changed="handleDecimalsChanged"
             />
           </UCard>
 
@@ -1249,7 +1381,7 @@ const saveChart = async () => {
 
 <style>
 /* Override UMain min-height for explorer page on desktop only */
-@media (min-width: 1024px) {
+@media (min-width: 1280px) {
   main {
     min-height: 0 !important;
   }
@@ -1273,32 +1405,105 @@ const saveChart = async () => {
 .chart-card.chart-card-resizable {
   aspect-ratio: unset;
   height: 100%;
+  overflow: hidden; /* Default to hidden */
 }
 
-@media (min-width: 1024px) {
+/* In Custom mode, allow overflow so resize handle is visible */
+.chart-card.chart-card-custom {
+  overflow: visible !important;
+}
+
+@media (min-width: 1280px) {
   .chart-card.chart-card-resizable {
-    max-height: 55vh;
+    max-height: none; /* Remove max-height to prevent clipping */
   }
 }
 
 .chart-card.chart-card-resizable.chart-card-resized {
   width: fit-content;
+  min-width: 0; /* Allow shrinking */
+}
+
+/* In Auto mode, chart card should be flexible */
+.chart-card.chart-card-resizable:not(.chart-card-resized) {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%; /* Ensure it doesn't exceed parent */
+}
+
+/* Ensure UCard body can shrink */
+.chart-card :deep(.overflow-hidden) {
+  min-width: 0;
 }
 
 .chart-wrapper {
   width: 100%;
   height: 100%;
   position: relative;
-  margin: -0.25rem;
+  /* Removed negative margin for proper resize handle alignment */
 }
 
 .chart-wrapper.resizable {
-  resize: both;
-  overflow: hidden;
-  height: 55vh;
-  width: 100%;
   min-width: v-bind('CHART_RESIZE.MIN_WIDTH + "px"');
   min-height: v-bind('CHART_RESIZE.MIN_HEIGHT + "px"');
+}
+
+/* Preset mode - fixed height, no resize handle */
+.chart-wrapper.resizable:not(.auto-mode):not(.custom-mode) {
+  height: 55vh;
+  width: 100%;
+  overflow: hidden; /* No scrollbars for presets */
+  resize: none; /* No resize handle for presets */
+}
+
+/* Custom mode - allow resizing */
+.chart-wrapper.resizable.custom-mode {
+  height: 55vh;
+  width: 100%;
+  overflow: auto; /* Enable resize handle without forcing scrollbars */
+  resize: both; /* Show resize handle only in Custom mode */
+}
+
+/* Hide scrollbars in custom mode - they're not needed, just the resize handle */
+.chart-wrapper.resizable.custom-mode::-webkit-scrollbar {
+  display: none;
+}
+.chart-wrapper.resizable.custom-mode {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+/* Auto mode - responsive with aspect ratio, no resize handle */
+.chart-wrapper.resizable.auto-mode {
+  width: 100%;
+  max-width: 100%;
+  height: auto; /* Override fixed height */
+  min-width: 0; /* Allow shrinking below default min-width */
+  min-height: 0; /* Allow shrinking below default min-height */
+  aspect-ratio: 1 / 1; /* Mobile: square for vertical space */
+  overflow: hidden; /* No scrollbars or resize handle in Auto mode */
+  resize: none; /* Hide resize handle in Auto mode */
+}
+
+/* sm: tablet portrait - slightly wider */
+@media (min-width: 640px) {
+  .chart-wrapper.resizable.auto-mode {
+    aspect-ratio: 16 / 10;
+  }
+}
+
+/* md: tablet landscape - standard widescreen */
+@media (min-width: 768px) {
+  .chart-wrapper.resizable.auto-mode {
+    aspect-ratio: 16 / 9;
+  }
+}
+
+/* xl: desktop - ultra-wide for time series */
+@media (min-width: 1280px) {
+  .chart-wrapper.resizable.auto-mode {
+    aspect-ratio: 21 / 9;
+  }
 }
 
 .tab-card :deep(.divide-y) {

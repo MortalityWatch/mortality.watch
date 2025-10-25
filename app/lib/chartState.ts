@@ -30,6 +30,7 @@ export interface ChartState {
   isLogarithmic: boolean
   sliderStart?: string
   userColors?: string[]
+  decimals?: string
 }
 
 /**

@@ -149,6 +149,7 @@ const options = computed(() => {
           class="flex-1"
           delete-icon="i-lucide-x"
           :disabled="props.isUpdating"
+          option-icon="icon"
           @update:model-value="handleCountryChange"
         />
         <UPopover>

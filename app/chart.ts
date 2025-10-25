@@ -364,7 +364,9 @@ export const blDescription = (
   baselineDateFrom: string,
   baselineDateTo: string
 ) =>
-  `Baseline: ${getMethodDescription(baselineMethod)} ${baselineDateFrom}-${baselineDateTo}`
+  baselineMethod === 'naive'
+    ? `Baseline: ${getMethodDescription(baselineMethod)} ${baselineDateTo}`
+    : `Baseline: ${getMethodDescription(baselineMethod)} ${baselineDateFrom}-${baselineDateTo}`
 
 export const getChartLabels = (
   countries: string[],

@@ -200,11 +200,13 @@ export const jurisdictionTypes: ListType[] = [
 export const baselineMethods: ListType[] = [
   { name: 'Last Value', value: 'naive' },
   { name: 'Average', value: 'mean' },
+  { name: 'Median', value: 'median' },
   { name: 'Linear Regression', value: 'lin_reg' },
   { name: 'Exponential Smoothing (ETS)', value: 'exp' }
 ]
 
 export const decimalPrecisions: ListType[] = [
+  { name: 'Auto', value: 'auto' },
   { name: '0', value: '0' },
   { name: '1', value: '1' },
   { name: '2', value: '2' },

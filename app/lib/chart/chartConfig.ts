@@ -82,7 +82,8 @@ export const makeBarLineChartConfig = (
   isDeathsType: boolean,
   isPopulationType: boolean,
   showQrCode: boolean = true,
-  showLogo: boolean = true
+  showLogo: boolean = true,
+  decimals: string = 'auto'
 ) => {
   const showDecimals = !isDeathsType && !isPopulationType
   return {
@@ -155,7 +156,8 @@ export const makeBarLineChartConfig = (
                 false,
                 isExcess,
                 showPercentage,
-                showDecimals
+                showDecimals,
+                decimals
               )
               return label
             }
@@ -181,8 +183,12 @@ export const makeBarLineChartConfig = (
             return showLabels && hasLabels && (isErrorPoint || hasValue)
           },
           backgroundColor: bgColor,
-          color: (context: Context) =>
-            textColor(isLightColor(bgColor(context))),
+          color: (context: Context) => {
+            // In dark mode, use white text for better visibility
+            const isDark = textColor() === '#ffffff'
+            if (isDark) return '#ffffff'
+            return textColor(isLightColor(bgColor(context)))
+          },
           formatter: (x: number | ChartErrorDataPoint) => {
             let label = ''
             const value = typeof x == 'number' ? x : x.y
@@ -197,7 +203,8 @@ export const makeBarLineChartConfig = (
               true,
               isExcess,
               showPercentage,
-              showDecimals
+              showDecimals,
+              decimals
             )
             return label
           },
@@ -255,7 +262,8 @@ export const makeBarLineChartConfig = (
                 true,
                 isExcess,
                 showPercentage,
-                showDecimals
+                showDecimals,
+                decimals
               )
             }
           }
@@ -279,7 +287,8 @@ export const makeMatrixChartConfig = (
   isDeathsType: boolean,
   isPopulationType: boolean,
   showQrCode: boolean = true,
-  showLogo: boolean = true
+  showLogo: boolean = true,
+  decimals: string = 'auto'
 ) => {
   const config = makeBarLineChartConfig(
     data,
@@ -289,7 +298,8 @@ export const makeMatrixChartConfig = (
     isDeathsType,
     isPopulationType,
     showQrCode,
-    showLogo
+    showLogo,
+    decimals
   ) as unknown as ChartJSConfig<'matrix', MortalityMatrixDataPoint[]>
 
   config.options!.scales = {
@@ -357,6 +367,9 @@ export const makeMatrixChartConfig = (
       showLabels
       && !isNaN((context.dataset.data[context.dataIndex] as MatrixDatapoint).v),
     color: (context: Context) => {
+      // In dark mode, use white text for better visibility
+      const isDark = textColor() === '#ffffff'
+      if (isDark) return '#ffffff'
       const color = tileBackgroundColor(context)
       const isLight = isLightColor(color)
       return textColor(isLight)
@@ -403,12 +416,23 @@ const formatCI = (
     ? ` (${formatFn(min)}, ${formatFn(max)})`
     : ` [95% PI: ${formatFn(min)}, ${formatFn(max)}]`
 
-const getMaxDecimals = (y: number, short: boolean, showDecimals: boolean) =>
-  short
+const getMaxDecimals = (
+  y: number,
+  short: boolean,
+  showDecimals: boolean,
+  decimals: string = 'auto'
+) => {
+  // If user specified a fixed precision, use it
+  if (decimals !== 'auto') {
+    return parseInt(decimals)
+  }
+  // Otherwise use auto logic
+  return short
     ? Math.max(0, 3 - Math.min(3, round(y).toString().length))
     : showDecimals
       ? 1
       : 0
+}
 
 const getLabelText = (
   label: string,
@@ -417,7 +441,8 @@ const getLabelText = (
   short: boolean,
   isExcess: boolean,
   isPercentage: boolean,
-  showDecimals: boolean
+  showDecimals: boolean,
+  decimals: string = 'auto'
 ) => {
   let result = label
   const prefix = label.length ? ': ' : ''
@@ -427,16 +452,16 @@ const getLabelText = (
   if (isPercentage) {
     const yText = asPercentage(
       y,
-      getMaxDecimals(y * 100, short, showDecimals),
+      getMaxDecimals(y * 100, short, showDecimals, decimals),
       plusSign
     )
     result += `${prefix}${yText}`
     if (pi)
       result += formatCI(short, pi.min, pi.max, n =>
-        asPercentage(n, getMaxDecimals(y * 100, short, showDecimals), plusSign)
+        asPercentage(n, getMaxDecimals(y * 100, short, showDecimals, decimals), plusSign)
       )
   } else {
-    const maxDecimals = getMaxDecimals(y, short, showDecimals)
+    const maxDecimals = getMaxDecimals(y, short, showDecimals, decimals)
     const yText = numberWithCommas(y, isExcess, maxDecimals)
     result += `${prefix}${yText}`
 

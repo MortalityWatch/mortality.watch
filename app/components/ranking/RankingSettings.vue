@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, toRef } from 'vue'
 import { standardPopulationItems, baselineMethodItems, decimalPrecisionItems } from '@/model'
 import { baselineMinRange } from '@/chart'
 import DateSlider from '@/components/charts/DateSlider.vue'
+import { useRankingUIState } from '@/composables/useRankingUIState'
 
 // Props
 interface Props {
@@ -91,6 +92,14 @@ const selectedDecimalPrecisionLocal = computed({
   set: val => emit('update:selectedDecimalPrecision', val)
 })
 
+// Initialize ranking UI state configuration
+const rankingUIState = useRankingUIState(
+  toRef(props, 'showASMR'),
+  toRef(props, 'showTotals'),
+  toRef(props, 'cumulative'),
+  toRef(props, 'showTotalsOnly')
+)
+
 // Tab state
 const activeTab = ref('metric')
 </script>
@@ -152,7 +161,7 @@ const activeTab = ref('metric')
 
         <div
           class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-          :class="{ 'opacity-50 pointer-events-none': !showASMR }"
+          :class="{ 'opacity-50 pointer-events-none': rankingUIState.standardPopulationDisabled.value }"
         >
           <label
             class="text-sm font-medium whitespace-nowrap"
@@ -184,7 +193,7 @@ const activeTab = ref('metric')
           <label class="text-sm font-medium whitespace-nowrap">Totals Only</label>
           <USwitch
             v-model="showTotalsOnlyLocal"
-            :disabled="!showTotals"
+            :disabled="rankingUIState.totalsOnlyDisabled.value"
           />
         </div>
 
@@ -207,7 +216,7 @@ const activeTab = ref('metric')
           <label class="text-sm font-medium whitespace-nowrap">Show 95% PI</label>
           <USwitch
             v-model="showPILocal"
-            :disabled="cumulative || showTotalsOnly"
+            :disabled="rankingUIState.predictionIntervalDisabled.value"
           />
         </div>
 

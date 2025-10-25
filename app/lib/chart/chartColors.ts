@@ -1,28 +1,37 @@
 import chroma from 'chroma-js'
+import { toDarkTheme } from '../colorTransform'
 
-let currentThemeIsDark = false
-
-export const setDarkTheme = (value: boolean) => {
-  currentThemeIsDark = value
+// Helper function to safely get dark theme state
+const getIsDarkTheme = () => {
+  if (import.meta.server) return false
+  try {
+    const colorMode = useColorMode()
+    const isDark = colorMode.value === 'dark'
+    console.log('[chartColors.ts] getIsDarkTheme():', isDark, 'colorMode:', colorMode.value)
+    return isDark
+  } catch (e) {
+    console.error('[chartColors.ts] Error getting dark theme:', e)
+    return false
+  }
 }
 
-export const textColor = (light = !currentThemeIsDark) =>
-  light ? '#25304a' : '#dddfe6'
+export const textColor = (light = !getIsDarkTheme()) =>
+  light ? '#25304a' : '#ffffff'
 
-export const textSoftColor = () => (!currentThemeIsDark ? '#434a5d' : '#b9bbc3')
+export const textSoftColor = () => (!getIsDarkTheme() ? '#434a5d' : '#ffffff')
 
 export const textStrongColor = () =>
-  !currentThemeIsDark ? '#4a4a4a' : '#bbbbbb'
+  !getIsDarkTheme() ? '#4a4a4a' : '#ffffff'
 
 export const isLightColor = (color: string) => {
   const hsl = hexToHsl(color)
-  return (hsl[2] || 0) >= (!currentThemeIsDark ? 0.3 : 0.7)
+  return (hsl[2] || 0) >= (!getIsDarkTheme() ? 0.3 : 0.7)
 }
 
-export const borderColor = () => (!currentThemeIsDark ? '#e0e6fb' : '#2a3041')
+export const borderColor = () => (!getIsDarkTheme() ? '#e0e6fb' : '#2a3041')
 
 export const backgroundColor = () =>
-  !currentThemeIsDark ? '#ffffff' : '#111827'
+  !getIsDarkTheme() ? '#ffffff' : '#111827'
 
 export const getColorPalette = (
   isPopulationType: boolean,
@@ -79,6 +88,7 @@ const hexToHsl = (color: string): number[] => {
   return [h, s, l]
 }
 
+// Population type scale (blue sequential)
 const color_scale_pop_light = [
   '#ebefff',
   '#d9e3ff',
@@ -90,29 +100,23 @@ const color_scale_pop_light = [
   '#6b9efc',
   '#5992fc'
 ]
-const color_scale_pop_dark = [
-  '#111520',
-  '#132036',
-  '#152b4d',
-  '#173663',
-  '#1a427a',
-  '#1c4d90',
-  '#1e58a6',
-  '#2063bd',
-  '#226ed3'
-]
-export const color_scale_pop = () =>
-  !currentThemeIsDark ? color_scale_pop_light : color_scale_pop_dark
+export const color_scale_pop = () => {
+  const isDark = getIsDarkTheme()
+  return isDark ? color_scale_pop_light.map(toDarkTheme) : color_scale_pop_light
+}
 
 export const getColorScale = (colors: string[], count: number) =>
   chroma.scale(colors).mode('rgb').colors(count)
 
-export const color_scale_bad_good = () =>
-  !currentThemeIsDark ? color_scale_bad_good_light : color_scale_bad_good_dark
-
+// Life expectancy scale (bad red to good green)
 const color_scale_bad_good_light = getColorScale(['#ff5393', '#5dac20'], 9)
-const color_scale_bad_good_dark = getColorScale(['#d4206e', '#3b641b'], 9)
 
+export const color_scale_bad_good = () => {
+  const isDark = getIsDarkTheme()
+  return isDark ? color_scale_bad_good_light.map(toDarkTheme) : color_scale_bad_good_light
+}
+
+// Diverging blue-to-red scale (for excess mortality)
 const color_scale_diverging_light = [
   '#5992fc',
   '#81adfd',
@@ -124,21 +128,12 @@ const color_scale_diverging_light = [
   '#ff7c78',
   '#ff5853'
 ]
+export const color_scale_diverging = () => {
+  const isDark = getIsDarkTheme()
+  return isDark ? color_scale_diverging_light.map(toDarkTheme) : color_scale_diverging_light
+}
 
-const color_scale_diverging_dark = [
-  '#226ed3',
-  '#1e58a6',
-  '#1a427a',
-  '#152b4d',
-  '#111520',
-  '#4f1310',
-  '#7c1818',
-  '#a81c1f',
-  '#d42026'
-]
-export const color_scale_diverging = () =>
-  !currentThemeIsDark ? color_scale_diverging_light : color_scale_diverging_dark
-
+// Sequential red scale (for general heatmaps)
 const color_scale_light = [
   '#fff7f3',
   '#ffe3df',
@@ -150,16 +145,7 @@ const color_scale_light = [
   '#ff6c67',
   '#ff5853'
 ]
-const color_scale_dark = [
-  '#230f09',
-  '#39110d',
-  '#4f1310',
-  '#651514',
-  '#7c1818',
-  '#921a1b',
-  '#a81c1f',
-  '#be1e22',
-  '#d42026'
-]
-export const color_scale = () =>
-  !currentThemeIsDark ? color_scale_light : color_scale_dark
+export const color_scale = () => {
+  const isDark = getIsDarkTheme()
+  return isDark ? color_scale_light.map(toDarkTheme) : color_scale_light
+}
