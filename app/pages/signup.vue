@@ -47,10 +47,12 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   try {
     await signUp(event.data.email, event.data.password, event.data.name)
     toast.add({
-      title: 'Account created!',
-      description: 'Welcome to Mortality Watch',
+      title: 'Welcome to Mortality Watch!',
+      description: `Your account has been created, ${event.data.name}. You're now signed in.`,
       color: 'success'
     })
+    // Small delay to let user see they're signed in
+    await new Promise(resolve => setTimeout(resolve, 500))
     await router.push('/')
   } catch (error: unknown) {
     toast.add({

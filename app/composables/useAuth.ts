@@ -154,17 +154,20 @@ export function useAuth(): UseAuthReturn {
         authenticated: boolean
       }>('/api/auth/session')
       user.value = response.user
+    } catch {
+      // Session check failed, user is not authenticated
+      user.value = null
     } finally {
       loading.value = false
     }
   }
 
   // Auto-refresh session on mount (only on client side)
-  if (import.meta.client) {
-    onMounted(() => {
+  onMounted(() => {
+    if (import.meta.client) {
       refreshSession()
-    })
-  }
+    }
+  })
 
   return {
     user,
