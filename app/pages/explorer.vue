@@ -1075,7 +1075,7 @@ const screenshotChart = () => {
 }
 
 const saveChart = async () => {
-  const base = 'https://mortality.watch/?qr='
+  const base = `${window.location.origin}/?qr=`
   const query = JSON.stringify(window.location)
   const encodedQuery = arrayBufferToBase64(await compress(query))
   const url = base + encodeURIComponent(encodedQuery)
