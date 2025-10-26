@@ -54,7 +54,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   } catch (error: unknown) {
     toast.add({
       title: 'Password reset failed',
-      description: (error instanceof Error ? error.message : (error as { data?: { message?: string } })?.data?.message) || 'Invalid or expired reset token',
+      description: getErrorMessage(error),
       color: 'error'
     })
   }

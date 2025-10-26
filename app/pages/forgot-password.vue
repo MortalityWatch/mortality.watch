@@ -44,7 +44,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   } catch (error: unknown) {
     toast.add({
       title: 'Request failed',
-      description: (error instanceof Error ? error.message : (error as { data?: { message?: string } })?.data?.message) || 'An error occurred',
+      description: getErrorMessage(error),
       color: 'error'
     })
   }

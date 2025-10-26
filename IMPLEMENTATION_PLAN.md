@@ -18,18 +18,34 @@ The application uses a **3-tier access model**:
 
 **These decisions have been finalized:**
 
-1. **Auth library:** @sidebase/nuxt-auth (Lucia is being deprecated by March 2025)
+1. **Auth library:** @sidebase/nuxt-auth with AuthJS provider (supports credentials + OAuth)
 2. **Database migrations:** Drizzle ORM
 3. **Stripe pricing:** $9.99/month and $99/year (saves ~$20, approx 2 months free)
 4. **Email provider:** Resend free tier (100 emails/day, 3,000/month)
 5. **Refund policy:** 30-day refund window
-6. **Cache strategy:** Start with no cache, add filesystem cache when implementing server-side rendering
-7. **Testing framework:** Continue with Vitest (already working with 376 tests passing)
+6. **Cache strategy:** Filesystem + HTTP headers + CDN caching (7-day TTL for chart PNGs)
+7. **Testing framework:** Continue with Vitest (466 tests passing)
 8. **Admin panel:** Build custom admin panel using Nuxt UI components
-9. **E2E tests:** Set up GitHub Actions for both npm run check and Playwright UI tests
+9. **E2E tests:** Comprehensive Playwright coverage (~20+ critical flows)
 10. **CI/CD:** GitHub Actions for automated testing and quality checks
 11. **Test writing strategy:** Write tests after each feature works (not TDD, not end-of-phase batching)
-12. **Email verification:** Not required for MVP, may be needed for payment processing
+12. **Email verification:** Required from day 1 (fraud prevention + Stripe requirement)
+13. **Password hashing:** bcrypt (industry standard)
+14. **Session management:** Cookie-based, 90-day duration with "Remember me" option
+15. **Admin user:** Created via `npm run create-admin` script
+16. **Analytics platform:** Self-hosted Umami on Dokku (privacy-friendly, cookieless)
+17. **Error tracking:** Reuse existing Bugsink instance at sentry.mortality.watch
+18. **Uptime monitoring:** UptimeRobot free tier (50 monitors, 5-min checks)
+19. **Database backups:** Dokku persistent storage with host-level backups
+20. **Deployment migrations:** Run in pre-deploy.sh hook (before code deployment)
+21. **Homepage charts:** Dynamic rendering via /chart.png?state=... (not build-time)
+22. **Featured charts config:** Stored in database (admin can update without deploy)
+23. **Data validation failures:** Use cached data if available, else show error + alert admin
+24. **Stripe testing:** Basic smoke test (1-2 transactions) before production
+25. **Webhook signature failures:** Return 400 + trigger alert immediately
+26. **Feature gate UI:** Lock icon that forwards to signup/upgrade page
+27. **Anonymous users:** Treated as Tier 0 (no database records)
+28. **Launch criteria:** Through Phase 10 (homepage + featured charts + payment flow working)
 
 ---
 
@@ -1777,58 +1793,58 @@ STRIPE_PUBLISHABLE_KEY=pk_test_xxx  # for frontend
 
 **Current:** Homepage loads static images from `public/showcase/`
 
-**Problem with direct server rendering:**
+**Approved Approach: Dynamic rendering with multi-layer caching**
 
-- Cold start latency (5-10 seconds for first render)
-- Blocks homepage load time
-- Increased server load
-- Poor Core Web Vitals
+Use the existing `/server/routes/chart.png.ts` route for on-demand generation with aggressive caching strategy.
 
-**Recommended Approach: Build-time pre-rendering with on-demand refresh**
+#### 10.1.1 Dynamic Chart Rendering
 
-This provides instant page loads while maintaining flexibility for admin updates.
+- [ ] Update homepage to use `/chart.png?state=...` for featured charts
+- [ ] Featured chart configurations stored in database table `featured_charts`
+- [ ] Load chart state from database, encode as URL param
+- [ ] Leverage existing server-side rendering infrastructure
 
-#### 10.1.1 Build-Time Pre-Rendering
+#### 10.1.2 Multi-Layer Caching Strategy
 
-- [ ] Create build script: `scripts/generate-featured-charts.ts`
-- [ ] Run during `nuxt generate` to create featured chart images
-- [ ] Store generated images in `public/showcase/featured/`
-- [ ] Default configuration for featured charts (if no database config exists)
-- [ ] Generate multiple sizes (1200x630 for OG, 800x400 for thumbnail)
+**7-day TTL across all layers:**
 
-#### 10.1.2 Runtime On-Demand Regeneration
+- [ ] **Filesystem cache:** Save rendered PNGs to `.data/cache/charts/`
+  - Cache key: hash of chart state
+  - Check filesystem before re-rendering
+  - Clear on admin request or TTL expiry
 
-- [ ] Admin trigger: "Regenerate Featured Charts" button
-- [ ] API endpoint: `POST /api/admin/regenerate-featured`
-- [ ] Queue-based generation (don't block admin UI)
-- [ ] Progress indicator for admin
-- [ ] Update homepage cache after generation complete
+- [ ] **HTTP headers:** Set proper Cache-Control headers
 
-#### 10.1.3 Homepage Implementation
+  ```
+  Cache-Control: public, max-age=604800, immutable
+  ```
 
-- [ ] Update homepage to use pre-rendered images from `public/showcase/featured/`
-- [ ] Fetch featured chart list from database (or use defaults)
-- [ ] Fallback to server rendering if pre-rendered image missing
-- [ ] Add "last updated" timestamp to homepage
-- [ ] Cache-Control headers for images (1 week)
+  - Browsers cache for 7 days
+  - Include ETag for conditional requests
+
+- [ ] **CDN/Cloudflare:** Edge caching at Cloudflare
+  - Cloudflare caches based on Cache-Control headers
+  - 7-day edge cache reduces origin hits
+  - Purge API integration for manual invalidation
+
+#### 10.1.3 Admin Configuration
+
+- [ ] Admin page: `/admin/featured-charts`
+- [ ] CRUD interface for featured charts
+- [ ] Store chart state JSON in database
+- [ ] Drag-and-drop ordering
+- [ ] Preview charts before publishing
+- [ ] "Clear Cache" button for immediate updates
+- [ ] Set max featured charts (e.g., 3-6)
 
 #### 10.1.4 Benefits of This Approach
 
-- ✅ Instant homepage load (no server rendering delay)
-- ✅ Reduced server load (images served statically)
-- ✅ Better SEO and Core Web Vitals (LCP <1s)
-- ✅ Offline availability (PWA-ready)
-- ✅ Admin can update featured charts without deploy
-- ✅ Fallback to runtime rendering if needed
-
-**Admin configuration:**
-
-- [ ] Admin page to select featured charts from "My Charts"
-- [ ] Drag-and-drop ordering of featured charts
-- [ ] Preview before publishing
-- [ ] "Regenerate Previews" button with progress
-- [ ] Set max number of featured charts (e.g., 3-6)
-- [ ] Auto-regenerate on schedule (optional: daily cron)
+- ✅ Simpler implementation (reuse existing /chart.png route)
+- ✅ No build-time generation required
+- ✅ Admin can update without deployment
+- ✅ Multi-layer caching ensures fast loads
+- ✅ Automatic cache invalidation after 7 days
+- ✅ Manual cache clear for immediate updates
 
 ### 10.2 Homepage Marketing & Upgrade Prompts
 
@@ -2009,6 +2025,17 @@ This provides instant page loads while maintaining flexibility for admin updates
 
 ### Dokku Setup
 
+**Configuration complete:** ✅ SQLite storage mount added to `~/dev/co/deployments/config.json`
+
+```json
+"www_mortality": {
+  "source_dir": "www.mortality.watch",
+  "storage_mounts": [
+    "/var/lib/dokku/data/storage/www-mortality-watch:/app/.data"
+  ]
+}
+```
+
 **Staging environment:**
 
 - [ ] Create staging.mortality.watch Dokku app
@@ -2018,17 +2045,53 @@ This provides instant page loads while maintaining flexibility for admin updates
 
 **Production environment:**
 
-- [ ] Verify production Dokku configuration
-- [ ] Configure production environment variables
+- [ ] Verify production Dokku configuration (uses `~/dev/co/deploy.sh`)
+- [ ] Configure production environment variables in `~/dev/co/deployments/.env/www.mortality.watch`
 - [ ] Set up Stripe production keys
-- [ ] Document deployment process
+- [ ] Ensure storage mount is created: `ssh co "mkdir -p /var/lib/dokku/data/storage/www-mortality-watch"`
+
+### Deployment Hooks & Migrations
+
+**Migration strategy:** Run in pre-deploy hook (before new code deploys)
+
+- [ ] Create `pre-deploy.sh` in project root:
+
+  ```bash
+  #!/usr/bin/env bash
+  set -e
+
+  echo "Running database migrations..."
+  npm run db:migrate
+
+  echo "Migrations complete"
+  ```
+
+- [ ] Make script executable: `chmod +x pre-deploy.sh`
+
+- [ ] Test migration hook in staging before production
+
+**How it works:**
+
+- `~/dev/co/deploy.sh` runs automatically on git push
+- Pre-deploy hook runs BEFORE code deployment
+- If migrations fail, deployment aborts (safe)
+- Migrations run with old code still active (zero downtime)
+
+**Rollback procedure:**
+
+- SSH to server: `ssh co`
+- Restore database backup
+- Rollback Dokku deploy: `dokku ps:rebuild www-mortality-watch`
 
 ### Database Backups
 
-- [ ] Configure automated SQLite backups (daily cron or Dokku plugin)
-- [ ] Store backups off-server (S3, Dropbox, etc.)
+**Strategy:** Dokku persistent storage with host-level backups
+
+- [ ] Ensure storage mount is persistent (already configured in Dokku)
+- [ ] Set up host-level backups via cron or backup service
+- [ ] Backup location: `/var/lib/dokku/data/storage/www-mortality-watch/`
 - [ ] Test restore procedure once
-- [ ] Document backup/restore in README
+- [ ] Document backup/restore in `OPERATIONS.md` (Phase 17)
 
 ---
 
@@ -2092,25 +2155,29 @@ This phase establishes processes for maintaining data quality and keeping mortal
 
 ### 13.1 Data Update Strategy
 
+**Note:** Data updates happen on `cron.mortality.watch` which updates S3 daily. The main app (`www.mortality.watch`) fetches from S3 on-demand.
+
 - [ ] **Document data source update frequency**
   - Identify update cadence for each data source
   - Document expected data freshness (weekly, monthly, etc.)
   - Create update schedule documentation
 
-- [ ] **Create automated data update system**
-  - Extend `npm run download-data` script with scheduling
-  - Add data comparison (detect new data vs existing)
-  - Implement incremental updates (only fetch changed files)
-  - Add logging for data update operations
+- [ ] **Runtime data validation (when charts are requested)**
+  - When CSV from S3 fails Zod validation at runtime:
+    - **Primary:** Use cached/previous version if available
+    - **Fallback:** Show error to user: "Data temporarily unavailable"
+    - **Always:** Alert admin about validation failure
+  - Implement graceful degradation
+  - Log validation errors with stack traces
 
-- [ ] **Data versioning and changelog**
+- [ ] **Data versioning and changelog** (on cron.mortality.watch)
   - Track data file versions in database or metadata file
   - Generate changelog when data updates
   - Store historical snapshots (at least last 3 versions)
   - Add API endpoint to view data update history
 
-- [ ] **Data validation on updates**
-  - Run Zod validation on all new data
+- [ ] **Data validation on updates** (on cron.mortality.watch)
+  - Run Zod validation on all new data before uploading to S3
   - Check for outliers and anomalies
   - Verify data completeness (no unexpected gaps)
   - Compare with previous version (flag major changes)
@@ -2278,13 +2345,15 @@ Improve first-time user experience, feature discovery, and user retention throug
 
 Implement comprehensive monitoring, error tracking, and business metrics to maintain system health and inform product decisions.
 
-### 15.1 Error Tracking (Sentry)
+### 15.1 Error Tracking (Bugsink)
 
-**Note:** Sentry installation is mentioned in Phase 3 but needs full implementation.
+**Chosen:** Reuse existing Bugsink instance at `sentry.mortality.watch` (self-hosted Sentry-compatible error tracker)
 
-- [ ] **Install and configure Sentry**
+**Status:** Already deployed and working (Phase 3.4 ✅ Complete)
+
+- [x] **Install and configure Sentry SDK** (compatible with Bugsink)
   - Install `@sentry/nuxt`
-  - Configure DSN in environment variables
+  - Configure DSN: `https://sentry.mortality.watch`
   - Add to `nuxt.config.ts`
   - Set up source maps upload
   - Configure sampling rate (100% for errors, 10% for performance)
@@ -2378,32 +2447,37 @@ Implement comprehensive monitoring, error tracking, and business metrics to main
 
 ### 15.3.5 User Analytics (Privacy-Friendly)
 
-**Analytics Platform:**
+**Analytics Platform: Umami (Self-Hosted)**
 
-- [ ] Choose analytics platform:
-  - **Option 1: Plausible Analytics** (recommended for privacy)
-    - Privacy-friendly, GDPR compliant by default
-    - No cookie consent banner needed
-    - Simple, lightweight script
-    - Self-hosted option available
-    - ~$9/month for 10k pageviews
-  - **Option 2: Google Analytics 4**
-    - Free tier available
-    - More features and integrations
-    - Requires cookie consent (already in Phase 16)
-    - More complex setup
+**Chosen:** Umami Analytics - Self-hosted on Dokku (same infrastructure as Bugsink)
 
-**Implementation (using Plausible as example):**
+**Benefits:**
 
-- [ ] Sign up for Plausible account (or self-host)
-- [ ] Install `@nuxtjs/plausible` module
+- Privacy-friendly, GDPR compliant by default (no cookie consent needed)
+- Lightweight and fast
+- Free (self-hosted)
+- Clean, simple dashboard
+- Event tracking support
+- No external dependencies
+
+**Implementation:**
+
+- [ ] Deploy Umami to Dokku (add to `deployments/config.json`)
+  - Domain: `analytics.mortality.watch` or similar
+  - PostgreSQL database for Umami data
+  - Storage mount not needed (uses DB only)
+
+- [ ] Install `@nuxtjs/umami` or use direct script
 - [ ] Configure in `nuxt.config.ts`:
   ```typescript
-  plausible: {
-    domain: "mortality.watch";
+  umami: {
+    host: "https://analytics.mortality.watch",
+    id: "website-id", // from Umami dashboard
+    version: 2
   }
   ```
-- [ ] Add script to head (automatic with module)
+- [ ] Add website in Umami dashboard
+- [ ] Test tracking in dev environment
 
 **Tracking Implementation:**
 
@@ -2462,9 +2536,8 @@ Implement comprehensive monitoring, error tracking, and business metrics to main
 
 **Privacy Compliance:**
 
-- [ ] If using Plausible: No cookie consent needed (cookieless)
-- [ ] If using GA4: Cookie consent already in Phase 16 GDPR section
-- [ ] Add analytics info to Privacy Policy
+- [ ] No cookie consent needed (Umami is cookieless)
+- [ ] Add Umami analytics info to Privacy Policy
 - [ ] Respect DNT (Do Not Track) headers
 - [ ] Allow users to opt-out via privacy settings
 
@@ -2472,11 +2545,16 @@ Implement comprehensive monitoring, error tracking, and business metrics to main
 
 ### 15.4 Uptime & Alerting
 
-- [ ] **Uptime monitoring**
-  - External uptime service (UptimeRobot, Pingdom)
-  - Monitor homepage, API endpoints
-  - 5-minute check intervals
-  - Email/SMS alerts on downtime
+**Chosen:** UptimeRobot Free Tier (50 monitors, 5-minute checks)
+
+- [ ] **Uptime monitoring with UptimeRobot**
+  - Sign up for UptimeRobot free account
+  - Monitor homepage: `https://www.mortality.watch`
+  - Monitor API health: `https://www.mortality.watch/api/health`
+  - Monitor chart rendering: `https://www.mortality.watch/chart.png?state=...` (sample chart)
+  - 5-minute check intervals (free tier)
+  - Email alerts on downtime
+  - Set up status page (optional)
 
 - [ ] **Application health checks**
   - Endpoint: `GET /api/health`
@@ -2673,3 +2751,138 @@ Ensure the application is accessible to all users and complies with legal requir
   - Session management approach
   - Data encryption at rest/transit
   - Backup and recovery procedures
+
+---
+
+## Phase 17: Documentation Consolidation
+
+### Overview
+
+Consolidate all documentation efforts from previous phases into comprehensive, user-friendly documentation.
+
+### 17.1 Developer Documentation
+
+- [ ] **README.md updates**
+  - Installation instructions
+  - Development setup guide
+  - Environment variables reference
+  - Database setup and migrations
+  - Running tests
+  - Deployment instructions
+  - Contributing guidelines
+
+- [ ] **Architecture documentation**
+  - Create `ARCHITECTURE.md`
+  - Document data flow (S3 → cache → app)
+  - Document authentication flow
+  - Document subscription/payment flow
+  - Document chart rendering pipeline
+  - Include diagrams where helpful
+
+- [ ] **API documentation**
+  - Document all API routes
+  - Request/response examples
+  - Authentication requirements
+  - Error responses
+  - Rate limiting details
+  - Consider using tool like Scalar or Swagger
+
+- [ ] **Database documentation**
+  - Schema documentation (auto-generated from Drizzle)
+  - Migration strategy
+  - Backup/restore procedures
+  - Data retention policies
+
+### 17.2 Deployment Documentation
+
+- [ ] **Deployment guide**
+  - Create `DEPLOYMENT.md`
+  - Document Dokku setup
+  - Document environment variable configuration
+  - Document storage mounts setup
+  - Pre-deploy and post-deploy hooks
+  - Rollback procedures
+
+- [ ] **Operations runbook**
+  - Create `OPERATIONS.md`
+  - Database backup/restore procedures
+  - Common troubleshooting steps
+  - Monitoring and alerting setup
+  - Incident response procedures
+  - Manual intervention procedures (refunds, user support)
+
+- [ ] **Environment setup guide**
+  - Document `.env` file structure
+  - Create comprehensive `.env.example`
+  - Document required vs optional variables
+  - Document third-party service setup (Stripe, Resend, etc.)
+
+### 17.3 User-Facing Documentation
+
+- [ ] **User guide / Help center**
+  - Getting started guide
+  - Feature documentation
+  - FAQ page (already in Phase 14.2)
+  - Video tutorials (optional)
+  - Common workflows and examples
+
+- [ ] **API documentation for Pro users**
+  - REST API endpoints (if implemented)
+  - Authentication with API keys
+  - Rate limits for API access
+  - Code examples in multiple languages
+
+### 17.4 Code Documentation
+
+- [ ] **JSDoc/TSDoc comments**
+  - Add comprehensive comments to complex functions
+  - Document function parameters and return types
+  - Document edge cases and gotchas
+  - Use TypeScript types for documentation
+
+- [ ] **Component documentation**
+  - Document Vue component props
+  - Document emitted events
+  - Document slots
+  - Usage examples in comments
+
+### 17.5 Changelog & Release Notes
+
+- [ ] **CHANGELOG.md**
+  - Create and maintain changelog
+  - Follow semantic versioning
+  - Document breaking changes
+  - Document new features
+  - Document bug fixes
+  - Link to relevant PRs/issues
+
+- [ ] **Release process documentation**
+  - Version bumping strategy
+  - Release checklist
+  - Announcement strategy
+  - Rollback plan
+
+### 17.6 Legal & Compliance Documentation
+
+- [ ] **Consolidate legal docs** (from Phase 16)
+  - Terms of Service
+  - Privacy Policy
+  - Refund Policy
+  - Acceptable Use Policy
+  - Cookie Policy (if needed)
+
+- [ ] **Compliance documentation** (from Phase 16.5)
+  - GDPR compliance measures
+  - CCPA compliance measures
+  - WCAG 2.1 AA compliance efforts
+  - Data processing agreements
+
+---
+
+## Summary
+
+This implementation plan provides a comprehensive roadmap for enhancing Mortality Watch with user management, subscriptions, and advanced features. The plan has been updated with all finalized technical decisions and is ready for execution.
+
+**Current Status:** Phase 6 (Database & Auth) in progress
+
+**Launch Target:** Complete through Phase 10 (Homepage + Payment Flow)

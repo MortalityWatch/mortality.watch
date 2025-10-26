@@ -44,7 +44,7 @@ async function saveProfile() {
   } catch (error: unknown) {
     toast.add({
       title: 'Update failed',
-      description: (error instanceof Error ? error.message : (error as { data?: { message?: string } })?.data?.message) || 'Failed to update profile',
+      description: getErrorMessage(error),
       color: 'error'
     })
   } finally {
@@ -72,7 +72,7 @@ async function deleteAccount() {
   } catch (error: unknown) {
     toast.add({
       title: 'Deletion failed',
-      description: (error instanceof Error ? error.message : (error as { data?: { message?: string } })?.data?.message) || 'Failed to delete account',
+      description: getErrorMessage(error),
       color: 'error'
     })
   } finally {
@@ -108,7 +108,7 @@ async function changePassword() {
   } catch (error: unknown) {
     toast.add({
       title: 'Password change failed',
-      description: (error instanceof Error ? error.message : (error as { data?: { message?: string } })?.data?.message) || 'Failed to change password',
+      description: getErrorMessage(error),
       color: 'error'
     })
   } finally {
@@ -160,12 +160,18 @@ const tierLabel = computed(() => {
       <UCard>
         <template #header>
           <div class="flex items-center justify-between">
-            <h2 class="text-xl font-semibold">
-              Account Information
-            </h2>
+            <div>
+              <h2 class="text-xl font-semibold">
+                Account Information
+              </h2>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                View your account details
+              </p>
+            </div>
             <UBadge
               :color="tierBadgeColor"
               variant="subtle"
+              size="lg"
             >
               {{ tierLabel }}
             </UBadge>
@@ -173,35 +179,37 @@ const tierLabel = computed(() => {
         </template>
 
         <div class="space-y-4">
-          <div>
-            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-            <p class="text-gray-900 dark:text-gray-100 mt-1">
+          <UFormGroup label="Email Address">
+            <p class="text-gray-900 dark:text-gray-100">
               {{ user.email }}
             </p>
-          </div>
+          </UFormGroup>
 
-          <div>
-            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Role</label>
-            <p class="text-gray-900 dark:text-gray-100 mt-1">
+          <UFormGroup label="Account Type">
+            <p class="text-gray-900 dark:text-gray-100">
               {{ user.role === 'admin' ? 'Administrator' : 'User' }}
             </p>
-          </div>
+          </UFormGroup>
 
-          <div>
-            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Member Since</label>
-            <p class="text-gray-900 dark:text-gray-100 mt-1">
-              {{ new Date(user.createdAt).toLocaleDateString() }}
+          <UFormGroup label="Member Since">
+            <p class="text-gray-900 dark:text-gray-100">
+              {{ new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}
             </p>
-          </div>
+          </UFormGroup>
         </div>
       </UCard>
 
       <!-- Profile Form -->
       <UCard>
         <template #header>
-          <h2 class="text-xl font-semibold">
-            Profile
-          </h2>
+          <div>
+            <h2 class="text-xl font-semibold">
+              Personal Information
+            </h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Update your personal details
+            </p>
+          </div>
         </template>
 
         <form
@@ -245,9 +253,14 @@ const tierLabel = computed(() => {
       <!-- Change Password -->
       <UCard>
         <template #header>
-          <h2 class="text-xl font-semibold">
-            Change Password
-          </h2>
+          <div>
+            <h2 class="text-xl font-semibold">
+              Security
+            </h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Manage your password and security settings
+            </p>
+          </div>
         </template>
 
         <form
@@ -257,52 +270,51 @@ const tierLabel = computed(() => {
           <UFormGroup
             label="Current Password"
             name="currentPassword"
+            description="Enter your current password to verify your identity"
           >
             <UInput
               v-model="passwordState.currentPassword"
               type="password"
-              placeholder="••••••••"
+              placeholder="Enter current password"
               autocomplete="current-password"
             />
           </UFormGroup>
 
+          <UDivider />
+
           <UFormGroup
             label="New Password"
             name="newPassword"
+            description="Choose a strong password with at least 8 characters"
           >
             <UInput
               v-model="passwordState.newPassword"
               type="password"
-              placeholder="••••••••"
+              placeholder="Enter new password"
               autocomplete="new-password"
             />
-            <template #hint>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                Minimum 8 characters
-              </p>
-            </template>
           </UFormGroup>
 
           <UFormGroup
             label="Confirm New Password"
             name="confirmPassword"
+            description="Re-enter your new password to confirm"
           >
             <UInput
               v-model="passwordState.confirmPassword"
               type="password"
-              placeholder="••••••••"
+              placeholder="Confirm new password"
               autocomplete="new-password"
             />
           </UFormGroup>
 
-          <div class="flex justify-end">
+          <div class="flex justify-end pt-2">
             <UButton
               type="submit"
-              color="primary"
               :loading="savingPassword"
-              :disabled="savingPassword || loading"
+              :disabled="savingPassword || loading || !passwordState.currentPassword || !passwordState.newPassword || !passwordState.confirmPassword"
             >
-              Change Password
+              Update Password
             </UButton>
           </div>
         </form>
@@ -311,45 +323,48 @@ const tierLabel = computed(() => {
       <!-- Danger Zone -->
       <UCard>
         <template #header>
-          <h2 class="text-xl font-semibold text-red-600 dark:text-red-400">
-            Danger Zone
-          </h2>
+          <div>
+            <h2 class="text-xl font-semibold text-red-600 dark:text-red-400">
+              Danger Zone
+            </h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Irreversible account actions
+            </p>
+          </div>
         </template>
 
-        <div class="space-y-4">
+        <div class="space-y-6">
           <div>
-            <h3 class="font-medium mb-2">
-              Sign Out
-            </h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
-              Sign out of your account on this device.
-            </p>
-            <UButton
-              color="error"
-              variant="soft"
-              @click="signOut"
+            <UFormGroup
+              label="Sign Out"
+              description="End your current session on this device"
             >
-              Sign Out
-            </UButton>
+              <UButton
+                color="error"
+                variant="soft"
+                @click="signOut"
+              >
+                Sign Out
+              </UButton>
+            </UFormGroup>
           </div>
 
           <UDivider />
 
           <div>
-            <h3 class="font-medium mb-2 text-red-600 dark:text-red-400">
-              Delete Account
-            </h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
-              Permanently delete your account and all associated data. This action cannot be undone.
-            </p>
-            <UButton
-              color="error"
-              :loading="deletingAccount"
-              :disabled="deletingAccount"
-              @click="deleteAccount"
+            <UFormGroup
+              label="Delete Account"
+              description="Permanently delete your account and all associated data. This action cannot be undone and you will lose all saved charts, preferences, and account history."
             >
-              Delete Account
-            </UButton>
+              <UButton
+                color="error"
+                :loading="deletingAccount"
+                :disabled="deletingAccount"
+                @click="deleteAccount"
+              >
+                Delete Account Permanently
+              </UButton>
+            </UFormGroup>
           </div>
         </div>
       </UCard>

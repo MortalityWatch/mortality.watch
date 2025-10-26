@@ -22,7 +22,7 @@ async function resendVerification() {
   } catch (error: unknown) {
     toast.add({
       title: 'Failed to send email',
-      description: (error instanceof Error ? error.message : (error as { data?: { message?: string } })?.data?.message) || 'Please try again later',
+      description: getErrorMessage(error),
       color: 'error'
     })
   } finally {

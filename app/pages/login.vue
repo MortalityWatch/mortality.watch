@@ -55,7 +55,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   } catch (error: unknown) {
     toast.add({
       title: 'Sign in failed',
-      description: (error instanceof Error ? error.message : (error as { data?: { message?: string } })?.data?.message) || 'Invalid email or password',
+      description: getErrorMessage(error),
       color: 'error'
     })
   }

@@ -22,6 +22,8 @@ const items = computed(() => [{
 const { isIncognito } = useIncognitoMode()
 const { user, isAuthenticated, signOut } = useAuth()
 
+const router = useRouter()
+
 const userMenuItems = computed(() => {
   if (!user.value) return []
   return [[{
@@ -31,7 +33,7 @@ const userMenuItems = computed(() => {
   }], [{
     label: 'Profile',
     icon: 'i-lucide-user',
-    to: '/profile'
+    onClick: () => router.push('/profile')
   }], [{
     label: 'Sign Out',
     icon: 'i-lucide-log-out',
