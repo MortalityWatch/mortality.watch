@@ -7,6 +7,7 @@ import {
   setAuthToken,
   generateRandomToken
 } from '../../utils/auth'
+import { sendVerificationEmail } from '../../utils/email'
 
 const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -86,6 +87,12 @@ export default defineEventHandler(async (event) => {
 
   // Set cookie
   setAuthToken(event, token)
+
+  // Send verification email (don't await - send in background)
+  sendVerificationEmail(newUser.email, verificationToken).catch((error) => {
+    console.error('Failed to send verification email:', error)
+    // Don't throw error - user is already created and signed in
+  })
 
   // Return user without password hash
   const { passwordHash: _passwordHash, ...userWithoutPassword } = newUser

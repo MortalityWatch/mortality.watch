@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { db, users } from '#db'
 import { eq } from 'drizzle-orm'
 import { generateRandomToken } from '../../utils/auth'
+import { sendPasswordResetEmail } from '../../utils/email'
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email address')
@@ -50,14 +51,14 @@ export default defineEventHandler(async (event) => {
     })
     .where(eq(users.id, user.id))
 
-  // TODO: Send password reset email
-  // For now, we'll just log the token (remove this in production)
-  console.log(`Password reset token for ${email}: ${resetToken}`)
+  // Send password reset email (don't await - send in background)
+  sendPasswordResetEmail(user.email, resetToken).catch((error) => {
+    console.error('Failed to send password reset email:', error)
+    // Don't throw error - we don't want to reveal if user exists
+  })
 
   return {
     success: true,
-    message: 'If an account exists, a password reset email will be sent',
-    // TODO: Remove this in production - only for testing
-    ...(process.env.NODE_ENV === 'development' && { resetToken })
+    message: 'If an account exists, a password reset email will be sent'
   }
 })
