@@ -47,7 +47,7 @@ const makeUrl = async () => {
 
 const getImage = async () => {
   const url = await makeUrl()
-  window.open(url.replaceAll('/?qr', '/chart?qr'), '_blank')
+  window.open(url.replaceAll('/?qr', '/chart.png?qr'), '_blank')
   isOpen.value = false
 }
 
