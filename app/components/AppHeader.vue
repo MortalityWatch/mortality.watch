@@ -87,12 +87,12 @@ const userMenuItems = computed(() => {
       </template>
       <template v-else>
         <UButton
-          to="/auth/signin"
+          to="/login"
           variant="ghost"
           label="Sign In"
         />
         <UButton
-          to="/auth/register"
+          to="/signup"
           label="Sign Up"
         />
       </template>

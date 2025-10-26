@@ -6,10 +6,10 @@ export default defineNuxtRouteMiddleware(async (to, _from) => {
     await refreshSession()
   }
 
-  // If not authenticated, redirect to signin
+  // If not authenticated, redirect to login
   if (!user.value) {
     return navigateTo({
-      path: '/auth/signin',
+      path: '/login',
       query: { redirect: to.fullPath }
     })
   }
