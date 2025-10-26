@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import type { H3Event } from 'h3'
-import { db, users } from '../../../db'
+import { db, users } from '#db'
 import { eq } from 'drizzle-orm'
 
 /**

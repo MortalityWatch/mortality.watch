@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { db, users } from '../../../../db'
+import { db, users } from '#db'
 import { eq } from 'drizzle-orm'
 import { hashPassword, generateToken, setAuthToken } from '../../utils/auth'
 

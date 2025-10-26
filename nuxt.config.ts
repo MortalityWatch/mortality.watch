@@ -1,4 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import { fileURLToPath } from 'node:url'
+
 export default defineNuxtConfig({
   // Enable SSR globally
 
@@ -31,6 +33,11 @@ export default defineNuxtConfig({
       dataCachePath: '.data/cache/mortality',
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://www.mortality.watch'
     }
+  },
+
+  // Module aliases for db imports
+  alias: {
+    '#db': fileURLToPath(new URL('./db', import.meta.url))
   },
 
   // Route-specific rendering rules

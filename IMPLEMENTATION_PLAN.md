@@ -973,6 +973,33 @@ CREATE INDEX idx_sessions_expires ON sessions(expires_at);
 
 ---
 
+## Phase 6.6: Customer Support Setup
+
+### Support Infrastructure
+
+- [ ] Configure support@mortality.watch email (forward to personal email or use email client)
+- [ ] Create `/contact` page with contact form
+  - Name, email, subject, message fields
+  - Option to include chart URL for bug reports
+  - Send to support@mortality.watch
+- [ ] Add "Contact Support" link in footer and profile page
+- [ ] For Pro users, show "Priority Support" badge and faster response time commitment
+
+### Refund Process
+
+- [ ] Document refund request procedure:
+  - User emails support@mortality.watch with request
+  - Admin processes refund through Stripe dashboard
+  - Subscription is canceled
+  - User tier downgraded to Free
+- [ ] Add refund request instructions to `/legal/refund` page
+- [ ] Create internal checklist for processing refunds
+- [ ] Track refund reasons for product improvement
+
+**Timeline:** 0.5 days
+
+---
+
 ## Phase 7: Feature Flags & Access Control
 
 ### 7.1 Feature Flag System
@@ -1552,6 +1579,35 @@ STRIPE_PUBLISHABLE_KEY=pk_test_xxx  # for frontend
 - [ ] Create runbook for webhook debugging
 - [ ] Add webhook monitoring to ops dashboard
 
+### 8.1.6 Tax & International Payments
+
+**Good news:** Stripe Tax handles most of this automatically!
+
+**Configuration:**
+
+- [ ] Enable Stripe Tax in Stripe Dashboard
+- [ ] Configure tax collection settings:
+  - Enable automatic tax calculation
+  - Select regions for tax collection (EU VAT, UK VAT, etc.)
+  - Stripe automatically determines tax rates
+- [ ] Test checkout with different countries to verify tax calculation
+- [ ] Verify tax amounts appear on invoices (Stripe handles this)
+
+**Currency:**
+
+- [ ] Start with USD only (simplest)
+- [ ] Optional: Enable multi-currency via Stripe (automatic conversion)
+- [ ] Test payment flow with international test cards
+
+**What Stripe Tax does automatically:**
+
+- ✅ Calculates correct tax rate based on customer location
+- ✅ Adds tax to invoices
+- ✅ Handles tax registration thresholds
+- ✅ Files tax returns (with Stripe Tax Premium, if needed later)
+
+**Timeline:** 0.5 days (mostly just enabling features in Stripe Dashboard)
+
 ### 8.2 Subscription Pages
 
 - [ ] `/pricing` - Pricing page with 3-tier comparison
@@ -1622,6 +1678,103 @@ STRIPE_PUBLISHABLE_KEY=pk_test_xxx  # for frontend
 - [ ] Checkbox to mark charts as "featured"
 - [ ] Featured charts appear on homepage
 - [ ] Admin-only "Featured Charts" management page
+
+### 9.3 Public Chart Sharing & Discovery
+
+**Leverages existing `saved_charts.is_public` field**
+
+**Public chart pages:**
+
+- [ ] Create `/charts` - Public chart gallery/discovery page
+  - Grid layout of public charts
+  - Filter by chart type, country, metric
+  - Sort by views, date created, featured
+  - Search functionality
+- [ ] Create `/charts/:slug` - Individual public chart page
+  - Full chart display with chart state restored
+  - Chart metadata (title, description, author, created date)
+  - View counter increment
+  - Social sharing buttons (Twitter, Facebook, LinkedIn)
+  - "Remix this chart" button (loads in explorer)
+  - Proper SEO meta tags and OG images
+
+**Embedding:**
+
+- [ ] Chart embedding code generator
+  - Embed button on public chart pages
+  - Generate iframe code with customizable width/height
+  - Responsive embed option
+- [ ] Create `/charts/:slug/embed` route for iframe content
+  - Minimal UI, just chart
+  - Proper iframe-safe headers
+
+**Social sharing:**
+
+- [ ] Add social sharing buttons to public charts
+  - Twitter with pre-filled text
+  - Facebook share
+  - LinkedIn share
+  - Copy link button
+- [ ] Track share events (analytics)
+
+**SEO for public charts:**
+
+- [ ] Individual meta descriptions for each chart
+- [ ] Structured data (Schema.org Dataset/Chart)
+- [ ] Canonical URLs for public charts
+- [ ] Sitemap includes public charts
+
+**Timeline:** 2 days
+
+### 9.4 Data Export (Pro Feature)
+
+**Export formats:**
+
+- [ ] **Export chart data as CSV**
+  - Include all data points shown in current chart
+  - Column headers: Date, Country, Metric, Value, etc.
+  - Download as `mortality-data-{countries}-{date}.csv`
+
+- [ ] **Export chart data as JSON**
+  - Full structured data with metadata
+  - Include chart configuration
+  - Download as `mortality-data-{countries}-{date}.json`
+
+- [ ] **Export chart as PNG**
+  - Use server-side renderer (already exists!)
+  - High-resolution option (2x, 3x)
+  - Download as `mortality-chart-{countries}-{date}.png`
+
+- [ ] **Export chart as SVG** (optional, nice-to-have)
+  - Vector format for publications
+  - Download as `mortality-chart-{countries}-{date}.svg`
+
+**Batch export:**
+
+- [ ] Export all saved charts at once
+  - Zip file with all chart data
+  - Include chart configurations
+  - Pro feature only
+
+**UI Implementation:**
+
+- [ ] Add "Export" dropdown button to charts
+  - Show available formats based on tier (Pro vs Free)
+  - CSV/JSON/PNG for Pro users
+  - Free users see upgrade prompt
+- [ ] Feature gate using `FeatureGate` component
+  - `feature="EXPORT_DATA"` (Tier 1 - Free registered)
+  - Show format options for registered users
+  - Premium formats (SVG, batch) for Pro users
+
+**Backend API:**
+
+- [ ] `GET /api/charts/:id/export?format=csv|json|png|svg`
+  - Check user tier
+  - Generate export in requested format
+  - Return file with proper headers
+
+**Timeline:** 1.5 days
 
 ---
 
@@ -1719,6 +1872,95 @@ This provides instant page loads while maintaining flexibility for admin updates
 - [ ] Show sample watermarked charts with note: "Remove watermark with Pro"
 - [ ] Add hover tooltips explaining which tier unlocks each feature
 - [ ] Context-aware CTAs based on current user tier
+
+---
+
+## Phase 10.5: SEO & Discoverability
+
+### 10.5.1 Technical SEO
+
+**Sitemap & Robots:**
+
+- [ ] Install `@nuxtjs/sitemap` module
+- [ ] Generate sitemap.xml automatically
+  - Include all static pages
+  - Include public charts from `/charts/:slug`
+  - Update frequency and priority settings
+- [ ] Create `robots.txt` in public folder
+  - Allow all crawlers for public pages
+  - Disallow `/admin`, `/my-charts`, `/profile`
+  - Link to sitemap
+
+**Structured Data:**
+
+- [ ] Add Schema.org structured data to pages
+  - Homepage: Organization/WebSite schema
+  - Charts: Dataset/Chart/VisualArtwork schema
+  - About page: AboutPage schema
+  - Pricing: Product/Offer schema
+- [ ] Use JSON-LD format in page head
+- [ ] Test with Google Rich Results Test
+
+**Meta Tags:**
+
+- [ ] Add unique meta descriptions to all pages (50-160 chars)
+  - Homepage: "Visualize and analyze mortality data..."
+  - Explorer: "Create interactive mortality charts..."
+  - Ranking: "Compare mortality rates across countries..."
+  - About: "Learn about Mortality Watch and our mission..."
+  - Each page gets custom description
+- [ ] Verify canonical URLs are set correctly
+- [ ] Ensure OG tags already implemented are working
+
+**Performance for SEO:**
+
+- [ ] Verify Core Web Vitals meet thresholds (already in Phase 5)
+- [ ] Ensure mobile responsiveness (already done)
+- [ ] Test page speed with PageSpeed Insights
+- [ ] Optimize images with proper alt text
+
+### 10.5.2 Content SEO
+
+**Page Titles:**
+
+- [ ] Optimize page titles for search (50-60 chars)
+  - Include primary keywords
+  - Format: "Primary Keyword | Mortality Watch"
+  - Homepage: "Mortality Data Visualization & Analysis | Mortality Watch"
+  - Explorer: "Interactive Mortality Chart Explorer | Mortality Watch"
+
+**Image Optimization:**
+
+- [ ] Add alt text to all images
+  - Descriptive alt text for charts
+  - Alt text for logos and icons
+  - Empty alt for decorative images
+
+**Internal Linking:**
+
+- [ ] Create logical internal linking structure
+  - Homepage links to Explorer, Ranking, About
+  - Footer links to all major pages
+  - Breadcrumbs on deep pages
+  - Related charts in public gallery
+
+**Landing Pages (Optional - Future):**
+
+- [ ] Create topic-specific landing pages
+  - `/covid-mortality` - COVID-19 mortality analysis
+  - `/excess-deaths` - Excess death statistics
+  - `/country-comparisons` - Compare mortality by country
+- [ ] Optimize for long-tail keywords
+- [ ] Each page has unique, valuable content
+
+**Content Guidelines:**
+
+- [ ] Use clear, descriptive headings (H1, H2, H3 hierarchy)
+- [ ] Write for humans first, search engines second
+- [ ] Include relevant keywords naturally
+- [ ] Keep content updated and accurate
+
+**Timeline:** 1 day
 
 ---
 
@@ -2140,6 +2382,100 @@ Implement comprehensive monitoring, error tracking, and business metrics to main
   - Chart shares (URL copies)
   - View count for saved charts
   - Most popular featured charts
+
+### 15.3.5 User Analytics (Privacy-Friendly)
+
+**Analytics Platform:**
+
+- [ ] Choose analytics platform:
+  - **Option 1: Plausible Analytics** (recommended for privacy)
+    - Privacy-friendly, GDPR compliant by default
+    - No cookie consent banner needed
+    - Simple, lightweight script
+    - Self-hosted option available
+    - ~$9/month for 10k pageviews
+  - **Option 2: Google Analytics 4**
+    - Free tier available
+    - More features and integrations
+    - Requires cookie consent (already in Phase 16)
+    - More complex setup
+
+**Implementation (using Plausible as example):**
+
+- [ ] Sign up for Plausible account (or self-host)
+- [ ] Install `@nuxtjs/plausible` module
+- [ ] Configure in `nuxt.config.ts`:
+  ```typescript
+  plausible: {
+    domain: "mortality.watch";
+  }
+  ```
+- [ ] Add script to head (automatic with module)
+
+**Tracking Implementation:**
+
+- [ ] **Page view tracking** (automatic)
+  - Track all page views
+  - Track referrers
+  - Track entry/exit pages
+
+- [ ] **Event tracking** (custom events)
+  - Registration funnel:
+    - `registration_started`
+    - `registration_completed`
+  - Checkout funnel:
+    - `checkout_started`
+    - `checkout_completed`
+    - `checkout_abandoned`
+  - Chart interactions:
+    - `chart_created`
+    - `chart_saved`
+    - `chart_shared`
+    - `chart_exported`
+  - Feature usage:
+    - `baseline_method_changed`
+    - `country_selected`
+    - `metric_type_changed`
+
+- [ ] **Goal tracking**
+  - Goal: User registration (conversion from visitor)
+  - Goal: Pro subscription (conversion from free user)
+  - Goal: Chart creation
+  - Goal: Chart sharing
+
+**Dashboard Setup:**
+
+- [ ] Create custom Plausible dashboard
+- [ ] Track key metrics:
+  - Unique visitors (daily, weekly, monthly)
+  - Page views
+  - Top pages
+  - Conversion funnels
+  - Custom events
+- [ ] Set up email reports (weekly summary)
+
+**Integration with Business Metrics:**
+
+- [ ] Combine analytics data with database metrics
+- [ ] Build internal admin dashboard showing:
+  - MRR (Monthly Recurring Revenue) from Stripe
+  - User count by tier (from database)
+  - Page views and visitors (from analytics)
+  - Conversion rates (analytics + database)
+  - Churn rate (from Stripe + database)
+- [ ] Create simple analytics API:
+  - `GET /api/admin/metrics` - Returns combined metrics
+  - Requires admin authentication
+
+**Privacy Compliance:**
+
+- [ ] If using Plausible: No cookie consent needed (cookieless)
+- [ ] If using GA4: Cookie consent already in Phase 16 GDPR section
+- [ ] Add analytics info to Privacy Policy
+- [ ] Respect DNT (Do Not Track) headers
+- [ ] Allow users to opt-out via privacy settings
+
+**Timeline:** 0.5-1 day
 
 ### 15.4 Uptime & Alerting
 
