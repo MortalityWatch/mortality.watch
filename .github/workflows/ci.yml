@@ -58,25 +58,8 @@ jobs:
         timeout-minutes: 10
 
       - name: Build verification
-        run: |
-          # Run build in background and get PID
-          npm run build &
-          BUILD_PID=$!
-
-          # Wait for build with timeout (9 minutes = 540 seconds)
-          timeout 540 tail --pid=$BUILD_PID -f /dev/null || true
-
-          # Kill the build process tree if still running
-          pkill -P $BUILD_PID 2>/dev/null || true
-          kill -9 $BUILD_PID 2>/dev/null || true
-
-          # Verify build output exists
-          if [ ! -d ".output" ] || [ ! -f ".output/server/index.mjs" ]; then
-            echo "Build failed - output directory not found"
-            exit 1
-          fi
-          echo "Build completed successfully"
-        timeout-minutes: 10
+        run: npm run build
+        timeout-minutes: 5
 
   e2e:
     runs-on: ${{ matrix.os }}
