@@ -1,12 +1,12 @@
-import type { User } from '~/db/schema'
+import type { User } from '#db/schema'
 
 type AuthUser = Omit<User, 'passwordHash'>
 
 interface UseAuthReturn {
   user: Ref<AuthUser | null>
-  isAuthenticated: Computed<boolean>
-  isAdmin: Computed<boolean>
-  tier: Computed<0 | 1 | 2>
+  isAuthenticated: ComputedRef<boolean>
+  isAdmin: ComputedRef<boolean>
+  tier: ComputedRef<0 | 1 | 2>
   loading: Ref<boolean>
   signIn: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string, name: string) => Promise<void>
