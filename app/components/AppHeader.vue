@@ -33,13 +33,29 @@ const userMenuItems = computed(() => {
   }], [{
     label: 'Profile',
     icon: 'i-lucide-user',
-    onClick: () => router.push('/profile')
+    id: 'profile'
   }], [{
     label: 'Sign Out',
     icon: 'i-lucide-log-out',
-    onClick: () => signOut()
+    id: 'signout'
   }]]
 })
+
+interface DropdownItem {
+  id?: string
+  label: string
+  icon?: string
+  slot?: string
+  disabled?: boolean
+}
+
+function handleDropdownSelect(item: DropdownItem) {
+  if (item.id === 'profile') {
+    router.push('/profile')
+  } else if (item.id === 'signout') {
+    signOut()
+  }
+}
 </script>
 
 <template>
@@ -68,6 +84,7 @@ const userMenuItems = computed(() => {
         <UDropdown
           :items="userMenuItems"
           mode="click"
+          @select="handleDropdownSelect"
         >
           <UAvatar
             :alt="user?.name || user?.email"
