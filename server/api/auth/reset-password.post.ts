@@ -53,13 +53,18 @@ export default defineEventHandler(async (event) => {
   // Hash new password
   const passwordHash = await hashPassword(password)
 
-  // Update user password and clear reset token
+  // Update user password, clear reset token, and verify email
+  // If they can reset password via email, they control the email address
   await db
     .update(users)
     .set({
       passwordHash,
       passwordResetToken: null,
-      passwordResetTokenExpires: null
+      passwordResetTokenExpires: null,
+      emailVerified: true,
+      verificationToken: null,
+      verificationTokenExpires: null,
+      updatedAt: new Date()
     })
     .where(eq(users.id, user.id))
 
