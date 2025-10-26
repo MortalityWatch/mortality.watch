@@ -29,9 +29,9 @@ The application uses a **3-tier access model**:
 9. **E2E tests:** Comprehensive Playwright coverage (~20+ critical flows)
 10. **CI/CD:** GitHub Actions for automated testing and quality checks
 11. **Test writing strategy:** Write tests after each feature works (not TDD, not end-of-phase batching)
-12. **Email verification:** ⚠️ Currently optional (users can login without verifying) - needs to be made required
+12. **Email verification:** Required (users must verify email before login) (✅ implemented)
 13. **Password hashing:** bcryptjs with 12 rounds (✅ implemented)
-14. **Session management:** ⚠️ Currently 7-day fixed - needs "Remember me" option for 90-day duration
+14. **Session management:** Cookie-based with "Remember me" option - 7 days default, 90 days with remember (✅ implemented)
 15. **Admin user:** Created via `npm run db:seed` script (✅ implemented)
 16. **Analytics platform:** Self-hosted Umami on Dokku (privacy-friendly, cookieless)
 17. **Error tracking:** Reuse existing Bugsink instance at sentry.mortality.watch
