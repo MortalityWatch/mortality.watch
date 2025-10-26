@@ -1,5 +1,6 @@
 import { readFileSync, existsSync } from 'fs'
 import { join } from 'path'
+import { filesystemCache } from '../../utils/cache'
 
 const S3_BASE = 'https://s3.mortality.watch/data/mortality'
 const CACHE_DIR = '.data/cache/mortality'
@@ -18,7 +19,7 @@ export default defineEventHandler(async (event) => {
   const isDev = process.env.NODE_ENV === 'development'
   const useLocalCacheOnly = config.public.useLocalCache === 'true'
 
-  // Dev: Check local cache first
+  // Dev: Check local dev cache first (for downloaded data)
   if (isDev || useLocalCacheOnly) {
     const localPath = join(CACHE_DIR, path)
     if (existsSync(localPath)) {
@@ -47,7 +48,40 @@ export default defineEventHandler(async (event) => {
     console.warn(`Local file not found: ${localPath}, fetching from S3`)
   }
 
-  // Prod or cache miss: Fetch from S3
+  // Production: Check TTL-based cache first
+  if (!isDev && path === 'world_meta.csv') {
+    const cached = await filesystemCache.getMetadata()
+    if (cached) {
+      setResponseHeaders(event, {
+        'Content-Type': 'text/csv',
+        'Cache-Control': 'public, max-age=3600'
+      })
+      return cached
+    }
+  } else if (!isDev) {
+    // Parse path to extract country, chartType, ageGroup
+    const parts = path.split('/')
+    if (parts.length === 2 && parts[0] && parts[1]) {
+      const country = parts[0]
+      const filename = parts[1].replace('.csv', '')
+      const ageParts = filename.split('_')
+      const chartType = ageParts[0]
+      const ageGroup = ageParts[1] || 'all'
+
+      if (chartType) {
+        const cached = await filesystemCache.getMortalityData(country, chartType, ageGroup)
+        if (cached) {
+          setResponseHeaders(event, {
+            'Content-Type': 'text/csv',
+            'Cache-Control': 'public, max-age=86400'
+          })
+          return cached
+        }
+      }
+    }
+  }
+
+  // Cache miss: Fetch from S3
   const s3Url = `${S3_BASE}/${path}`
 
   try {
@@ -63,6 +97,25 @@ export default defineEventHandler(async (event) => {
     }
 
     const data = await response.text()
+
+    // Write to production cache
+    if (!isDev) {
+      if (path === 'world_meta.csv') {
+        await filesystemCache.setMetadata(data)
+      } else {
+        const parts = path.split('/')
+        if (parts.length === 2 && parts[0] && parts[1]) {
+          const country = parts[0]
+          const filename = parts[1].replace('.csv', '')
+          const ageParts = filename.split('_')
+          const chartType = ageParts[0]
+          const ageGroup = ageParts[1] || 'all'
+          if (chartType) {
+            await filesystemCache.setMortalityData(country, chartType, ageGroup, data)
+          }
+        }
+      }
+    }
 
     setResponseHeaders(event, {
       'Content-Type': 'text/csv',

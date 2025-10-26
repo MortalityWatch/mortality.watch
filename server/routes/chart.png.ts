@@ -7,9 +7,25 @@ import type { AllChartData, CountryData } from '../../app/model'
 import { getFilteredChartData } from '../../app/lib/chart/filtering'
 import { getChartColors } from '../../app/colors'
 import { decompress, base64ToArrayBuffer } from '../../app/lib/compression/compress.node'
+import { chartRenderQueue, chartRenderThrottle } from '../utils/requestQueue'
 
 export default defineEventHandler(async (event) => {
   try {
+    // Get client IP for throttling
+    const clientIp = getRequestHeader(event, 'x-forwarded-for')
+      || getRequestHeader(event, 'x-real-ip')
+      || event.node.req.socket.remoteAddress
+      || 'unknown'
+
+    // Check throttle limit
+    if (!chartRenderThrottle.check(clientIp)) {
+      const remaining = chartRenderThrottle.getRemaining(clientIp)
+      throw createError({
+        statusCode: 429,
+        message: 'Too many requests. Please try again later.',
+        data: { remaining, resetIn: 60 }
+      })
+    }
     // Get query parameters
     const query = getQuery(event)
 
@@ -42,128 +58,129 @@ export default defineEventHandler(async (event) => {
     const countries = state.countries.join(', ')
     const title = `${state.type} - ${countries} (${state.chartType})`
 
-    let buffer: Buffer
-
-    try {
+    // Queue the chart rendering to limit concurrency
+    const buffer = await chartRenderQueue.enqueue(async () => {
+      try {
       // 1. Load country metadata (ensures metadata is cached for data fetching)
-      const allCountries = await loadCountryMetadata({ filterCountries: state.countries })
+        const allCountries = await loadCountryMetadata({ filterCountries: state.countries })
 
-      // 2. Load raw dataset with all necessary parameters
-      const rawData = await updateDataset(
-        state.chartType,
-        state.countries,
-        state.ageGroups
-      )
+        // 2. Load raw dataset with all necessary parameters
+        const rawData = await updateDataset(
+          state.chartType,
+          state.countries,
+          state.ageGroups
+        )
 
-      // 3. Get all chart labels
-      const isAsmrType = state.type.startsWith('asmr')
-      const allLabels = getAllChartLabels(
-        rawData,
-        isAsmrType,
-        state.ageGroups,
-        state.countries,
-        state.chartType
-      )
+        // 3. Get all chart labels
+        const isAsmrType = state.type.startsWith('asmr')
+        const allLabels = getAllChartLabels(
+          rawData,
+          isAsmrType,
+          state.ageGroups,
+          state.countries,
+          state.chartType
+        )
 
-      // 4. Fetch raw chart data
-      const dataKey = state.type === 'cmr'
-        ? 'cmr'
-        : state.type === 'asmr'
-          ? `asmr_${state.standardPopulation}`
-          : state.type === 'le'
-            ? 'le'
-            : state.type === 'deaths'
-              ? 'deaths'
-              : 'population'
+        // 4. Fetch raw chart data
+        const dataKey = state.type === 'cmr'
+          ? 'cmr'
+          : state.type === 'asmr'
+            ? `asmr_${state.standardPopulation}`
+            : state.type === 'le'
+              ? 'le'
+              : state.type === 'deaths'
+                ? 'deaths'
+                : 'population'
 
-      const allChartData: AllChartData = await getAllChartData(
-        dataKey as keyof CountryData,
-        state.chartType,
-        rawData,
-        allLabels,
-        0, // startDateIndex - full range for OG images
-        state.cumulative,
-        state.ageGroups,
-        state.countries,
-        state.showBaseline ? state.baselineMethod : undefined,
-        state.baselineDateFrom,
-        state.baselineDateTo
-      )
+        const allChartData: AllChartData = await getAllChartData(
+          dataKey as keyof CountryData,
+          state.chartType,
+          rawData,
+          allLabels,
+          0, // startDateIndex - full range for OG images
+          state.cumulative,
+          state.ageGroups,
+          state.countries,
+          state.showBaseline ? state.baselineMethod : undefined,
+          state.baselineDateFrom,
+          state.baselineDateTo
+        )
 
-      // 5. Get chart colors
-      const colors = getChartColors()
+        // 5. Get chart colors
+        const colors = getChartColors()
 
-      // 6. Transform raw data to chart-ready format with titles, datasets, etc.
-      const siteUrl = process.env.NUXT_PUBLIC_SITE_URL || 'https://www.mortality.watch'
-      const chartUrl = `${siteUrl}/explorer?${new URLSearchParams(query as Record<string, string>).toString()}`
+        // 6. Transform raw data to chart-ready format with titles, datasets, etc.
+        const siteUrl = process.env.NUXT_PUBLIC_SITE_URL || 'https://www.mortality.watch'
+        const chartUrl = `${siteUrl}/explorer?${new URLSearchParams(query as Record<string, string>).toString()}`
 
-      const isBarChartStyle = state.chartStyle === 'bar'
-      const isErrorBarType = state.chartType === 'yearly' && state.showPredictionInterval
-      const isMatrixChartStyle = state.chartStyle === 'matrix'
-      const showCumPi = state.cumulative && state.showPredictionInterval
-      const isDeathsType = state.type === 'deaths'
-      const isPopulationType = state.type === 'population'
-      const isLE = state.type === 'le'
+        const isBarChartStyle = state.chartStyle === 'bar'
+        const isErrorBarType = state.chartType === 'yearly' && state.showPredictionInterval
+        const isMatrixChartStyle = state.chartStyle === 'matrix'
+        const showCumPi = state.cumulative && state.showPredictionInterval
+        const isDeathsType = state.type === 'deaths'
+        const isPopulationType = state.type === 'population'
+        const isLE = state.type === 'le'
 
-      const chartData = await getFilteredChartData(
-        state.countries,
-        state.standardPopulation,
-        state.ageGroups,
-        state.showPredictionInterval,
-        state.isExcess,
-        state.type,
-        state.cumulative,
-        state.showBaseline,
-        state.baselineMethod,
-        state.baselineDateFrom || '',
-        state.baselineDateTo || '',
-        state.showTotal,
-        state.chartType,
-        allLabels[0] || '', // dateFrom - full range
-        allLabels[allLabels.length - 1] || '', // dateTo - full range
-        isBarChartStyle,
-        allCountries,
-        isErrorBarType,
-        colors,
-        isMatrixChartStyle,
-        state.showPercentage ?? false,
-        showCumPi,
-        isAsmrType,
-        state.maximize,
-        state.showLabels,
-        chartUrl,
-        state.isLogarithmic,
-        isPopulationType,
-        isDeathsType,
-        allLabels,
-        allChartData.data
-      )
+        const chartData = await getFilteredChartData(
+          state.countries,
+          state.standardPopulation,
+          state.ageGroups,
+          state.showPredictionInterval,
+          state.isExcess,
+          state.type,
+          state.cumulative,
+          state.showBaseline,
+          state.baselineMethod,
+          state.baselineDateFrom || '',
+          state.baselineDateTo || '',
+          state.showTotal,
+          state.chartType,
+          allLabels[0] || '', // dateFrom - full range
+          allLabels[allLabels.length - 1] || '', // dateTo - full range
+          isBarChartStyle,
+          allCountries,
+          isErrorBarType,
+          colors,
+          isMatrixChartStyle,
+          state.showPercentage ?? false,
+          showCumPi,
+          isAsmrType,
+          state.maximize,
+          state.showLabels,
+          chartUrl,
+          state.isLogarithmic,
+          isPopulationType,
+          isDeathsType,
+          allLabels,
+          allChartData.data
+        )
 
-      // 7. Generate chart config
-      const config = makeChartConfig(
-        state.chartStyle as ChartStyle,
-        chartData as unknown as Array<Record<string, unknown>>,
-        isDeathsType,
-        state.isExcess,
-        isLE,
-        isPopulationType,
-        state.showLabels,
-        state.showPercentage ?? false,
-        state.showPredictionInterval
-      )
+        // 7. Generate chart config
+        const config = makeChartConfig(
+          state.chartStyle as ChartStyle,
+          chartData as unknown as Array<Record<string, unknown>>,
+          isDeathsType,
+          state.isExcess,
+          isLE,
+          isPopulationType,
+          state.showLabels,
+          state.showPercentage ?? false,
+          state.showPredictionInterval
+        )
 
-      // 8. Add the chart URL for QR code
-      const configOptions = config.options as Record<string, unknown> || {}
-      const plugins = configOptions.plugins as Record<string, unknown> || {}
-      plugins.qrCodeUrl = chartUrl
+        // 8. Add the chart URL for QR code
+        const configOptions = config.options as Record<string, unknown> || {}
+        const plugins = configOptions.plugins as Record<string, unknown> || {}
+        plugins.qrCodeUrl = chartUrl
 
-      // 9. Render the chart
-      buffer = await renderChart(width, height, config, state.chartStyle as ChartStyle)
-    } catch (dataError) {
-      console.error('Error fetching/rendering chart data:', dataError)
-      // Fall back to placeholder on data errors
-      buffer = await renderPlaceholderChart(width, height, title)
-    }
+        // 9. Render the chart
+        return await renderChart(width, height, config, state.chartStyle as ChartStyle)
+      } catch (dataError) {
+        console.error('Error fetching/rendering chart data:', dataError)
+        // Fall back to placeholder on data errors
+        return await renderPlaceholderChart(width, height, title)
+      }
+    })
 
     // Set response headers
     setResponseHeaders(event, {

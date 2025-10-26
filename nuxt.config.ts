@@ -36,10 +36,11 @@ export default defineNuxtConfig({
   // Route-specific rendering rules
   routeRules: {
     '/explorer': { ssr: false }, // Client-only (interactive)
-    '/': { prerender: true }, // Pre-rendered (SEO)
-    '/about': { prerender: true },
-    '/sources': { prerender: true },
-    '/donate': { prerender: true },
+    // Disable prerendering in CI to avoid build hangs
+    '/': { prerender: process.env.CI !== 'true' }, // Pre-rendered (SEO)
+    '/about': { prerender: process.env.CI !== 'true' },
+    '/sources': { prerender: process.env.CI !== 'true' },
+    '/donate': { prerender: process.env.CI !== 'true' },
     '/ranking': { ssr: true }, // Server-rendered (fresh data)
     // Exclude test pages from production prerendering (dev-only)
     '/test-data': { prerender: false },
