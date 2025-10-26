@@ -1079,7 +1079,7 @@ const saveChart = async () => {
   const query = JSON.stringify(window.location)
   const encodedQuery = arrayBufferToBase64(await compress(query))
   const url = base + encodeURIComponent(encodedQuery)
-  window.open(url.replaceAll('/?qr', '/chart?qr'), '_blank')
+  window.open(url.replaceAll('/?qr', '/chart.png?qr'), '_blank')
 }
 </script>
 
