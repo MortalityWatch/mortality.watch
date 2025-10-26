@@ -20,7 +20,7 @@ const items = computed(() => [{
 }])
 
 const { isIncognito } = useIncognitoMode()
-const { user, isAuthenticated } = useAuth()
+const { isAuthenticated } = useAuth()
 </script>
 
 <template>
@@ -47,17 +47,11 @@ const { user, isAuthenticated } = useAuth()
       <!-- Authentication buttons -->
       <template v-if="isAuthenticated">
         <UButton
-          variant="ghost"
-          square
-          :padded="false"
           to="/profile"
+          variant="ghost"
+          icon="i-lucide-user"
           aria-label="Go to profile"
-        >
-          <UAvatar
-            :alt="user?.firstName || user?.email"
-            size="sm"
-          />
-        </UButton>
+        />
       </template>
       <template v-else>
         <UButton

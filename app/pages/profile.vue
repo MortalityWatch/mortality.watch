@@ -178,24 +178,45 @@ const tierLabel = computed(() => {
           </div>
         </template>
 
-        <div class="space-y-4">
-          <UFormGroup label="Email Address">
-            <p class="text-gray-900 dark:text-gray-100">
+        <div class="space-y-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              Email Address
+            </label>
+            <p class="text-base text-gray-900 dark:text-gray-100">
               {{ user.email }}
             </p>
-          </UFormGroup>
+          </div>
 
-          <UFormGroup label="Account Type">
-            <p class="text-gray-900 dark:text-gray-100">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              Account Type
+            </label>
+            <p class="text-base text-gray-900 dark:text-gray-100">
               {{ user.role === 'admin' ? 'Administrator' : 'User' }}
             </p>
-          </UFormGroup>
+          </div>
 
-          <UFormGroup label="Member Since">
-            <p class="text-gray-900 dark:text-gray-100">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              Member Since
+            </label>
+            <p class="text-base text-gray-900 dark:text-gray-100">
               {{ new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}
             </p>
-          </UFormGroup>
+          </div>
+
+          <div v-if="!user.emailVerified">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              Email Status
+            </label>
+            <UBadge
+              color="warning"
+              variant="subtle"
+            >
+              Not Verified
+            </UBadge>
+          </div>
         </div>
       </UCard>
 
@@ -333,38 +354,62 @@ const tierLabel = computed(() => {
           </div>
         </template>
 
-        <div class="space-y-6">
-          <div>
-            <UFormGroup
-              label="Sign Out"
-              description="End your current session on this device"
+        <div class="space-y-8">
+          <div class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-2">
+              Sign Out
+            </h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              End your current session on this device. You'll need to sign in again to access your account.
+              This does not affect your account or data.
+            </p>
+            <UButton
+              color="error"
+              variant="soft"
+              icon="i-lucide-log-out"
+              @click="signOut"
             >
-              <UButton
-                color="error"
-                variant="soft"
-                @click="signOut"
-              >
-                Sign Out
-              </UButton>
-            </UFormGroup>
+              Sign Out
+            </UButton>
           </div>
 
           <UDivider />
 
-          <div>
-            <UFormGroup
-              label="Delete Account"
-              description="Permanently delete your account and all associated data. This action cannot be undone and you will lose all saved charts, preferences, and account history."
+          <div class="p-4 bg-red-50 dark:bg-red-900/10 rounded-lg border border-red-200 dark:border-red-800">
+            <div class="flex items-start gap-3 mb-3">
+              <UIcon
+                name="i-lucide-alert-triangle"
+                class="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 shrink-0"
+              />
+              <div>
+                <h3 class="text-base font-semibold text-red-900 dark:text-red-200 mb-2">
+                  Delete Account
+                </h3>
+                <div class="text-sm text-red-800 dark:text-red-300 space-y-2">
+                  <p>
+                    Permanently delete your account and all associated data. This action <strong>cannot be undone</strong>.
+                  </p>
+                  <p class="font-medium">
+                    You will lose:
+                  </p>
+                  <ul class="list-disc list-inside space-y-1 ml-2">
+                    <li>All saved charts and visualizations</li>
+                    <li>Account preferences and settings</li>
+                    <li>Account history and activity</li>
+                    <li>Any subscription or payment history</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <UButton
+              color="error"
+              icon="i-lucide-trash-2"
+              :loading="deletingAccount"
+              :disabled="deletingAccount"
+              @click="deleteAccount"
             >
-              <UButton
-                color="error"
-                :loading="deletingAccount"
-                :disabled="deletingAccount"
-                @click="deleteAccount"
-              >
-                Delete Account Permanently
-              </UButton>
-            </UFormGroup>
+              Delete Account Permanently
+            </UButton>
           </div>
         </div>
       </UCard>
