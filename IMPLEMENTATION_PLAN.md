@@ -875,22 +875,15 @@ CREATE INDEX idx_sessions_expires ON sessions(expires_at);
 
 #### 6.1.2 Migration Implementation Tasks
 
-- [ ] Install Drizzle ORM: `npm install drizzle-orm drizzle-kit`
-- [ ] Create `db/schema.ts` with Drizzle schema definitions
-- [ ] Create `drizzle.config.ts` configuration file
-- [ ] Create initial migration: `npm run db:generate`
-- [ ] Apply migration: `npm run db:migrate`
-- [ ] Add migration scripts to package.json:
-  ```json
-  {
-    "db:generate": "drizzle-kit generate:sqlite",
-    "db:migrate": "drizzle-kit push:sqlite",
-    "db:studio": "drizzle-kit studio"
-  }
-  ```
-- [ ] Create `db/index.ts` for database connection and queries
-- [ ] Test database operations with seed data
-- [ ] Document database setup in README
+- [x] Install Drizzle ORM: `npm install drizzle-orm drizzle-kit`
+- [x] Create `db/schema.ts` with Drizzle schema definitions
+- [x] Create `drizzle.config.ts` configuration file
+- [x] Create initial migration: `npm run db:generate`
+- [x] Apply migration: `npm run db:migrate`
+- [x] Add migration scripts to package.json
+- [x] Create `db/index.ts` for database connection and queries
+- [x] Test database operations with seed data (admin user created)
+- [ ] Document database setup in README (UI pages still pending)
 
 ### 6.2 Authentication System
 
