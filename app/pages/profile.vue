@@ -206,15 +206,15 @@ const tierLabel = computed(() => {
             </p>
           </div>
 
-          <div v-if="!user.emailVerified">
+          <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
               Email Status
             </label>
             <UBadge
-              color="warning"
+              :color="user.emailVerified ? 'success' : 'warning'"
               variant="subtle"
             >
-              Not Verified
+              {{ user.emailVerified ? 'Verified' : 'Not Verified' }}
             </UBadge>
           </div>
         </div>
