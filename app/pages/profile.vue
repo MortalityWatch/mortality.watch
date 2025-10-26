@@ -7,7 +7,8 @@ const { user, updateProfile, signOut, loading } = useAuth()
 const toast = useToast()
 
 const profileState = reactive({
-  name: ''
+  firstName: '',
+  lastName: ''
 })
 
 const passwordState = reactive({
@@ -18,18 +19,23 @@ const passwordState = reactive({
 
 const savingProfile = ref(false)
 const savingPassword = ref(false)
+const deletingAccount = ref(false)
 
 // Initialize profile form with user data
 watch(user, (newUser) => {
   if (newUser) {
-    profileState.name = newUser.name || ''
+    profileState.firstName = newUser.firstName || ''
+    profileState.lastName = newUser.lastName || ''
   }
 }, { immediate: true })
 
 async function saveProfile() {
   savingProfile.value = true
   try {
-    await updateProfile({ name: profileState.name })
+    await updateProfile({
+      firstName: profileState.firstName,
+      lastName: profileState.lastName
+    })
     toast.add({
       title: 'Profile updated',
       description: 'Your profile has been saved',
@@ -43,6 +49,34 @@ async function saveProfile() {
     })
   } finally {
     savingProfile.value = false
+  }
+}
+
+async function deleteAccount() {
+  if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+    return
+  }
+
+  deletingAccount.value = true
+  try {
+    await $fetch('/api/user/account', {
+      method: 'DELETE'
+    })
+    toast.add({
+      title: 'Account deleted',
+      description: 'Your account has been permanently deleted',
+      color: 'success'
+    })
+    // Sign out and redirect
+    await signOut()
+  } catch (error: unknown) {
+    toast.add({
+      title: 'Deletion failed',
+      description: (error instanceof Error ? error.message : (error as { data?: { message?: string } })?.data?.message) || 'Failed to delete account',
+      color: 'error'
+    })
+  } finally {
+    deletingAccount.value = false
   }
 }
 
@@ -175,13 +209,24 @@ const tierLabel = computed(() => {
           @submit.prevent="saveProfile"
         >
           <UFormGroup
-            label="Name"
-            name="name"
+            label="First Name"
+            name="firstName"
           >
             <UInput
-              v-model="profileState.name"
+              v-model="profileState.firstName"
               type="text"
-              placeholder="Your name"
+              placeholder="Your first name"
+            />
+          </UFormGroup>
+
+          <UFormGroup
+            label="Last Name"
+            name="lastName"
+          >
+            <UInput
+              v-model="profileState.lastName"
+              type="text"
+              placeholder="Your last name"
             />
           </UFormGroup>
 
@@ -285,6 +330,25 @@ const tierLabel = computed(() => {
               @click="signOut"
             >
               Sign Out
+            </UButton>
+          </div>
+
+          <UDivider />
+
+          <div>
+            <h3 class="font-medium mb-2 text-red-600 dark:text-red-400">
+              Delete Account
+            </h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+              Permanently delete your account and all associated data. This action cannot be undone.
+            </p>
+            <UButton
+              color="error"
+              :loading="deletingAccount"
+              :disabled="deletingAccount"
+              @click="deleteAccount"
+            >
+              Delete Account
             </UButton>
           </div>
         </div>

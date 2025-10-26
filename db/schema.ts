@@ -13,7 +13,9 @@ export const users = sqliteTable(
     id: integer('id').primaryKey({ autoIncrement: true }),
     email: text('email').notNull().unique(),
     passwordHash: text('password_hash').notNull(),
-    name: text('name'),
+    firstName: text('first_name'),
+    lastName: text('last_name'),
+    name: text('name'), // Legacy field, kept for backward compatibility
     role: text('role', { enum: ['user', 'admin'] })
       .notNull()
       .default('user'),

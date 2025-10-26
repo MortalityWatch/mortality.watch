@@ -4,7 +4,8 @@ import { eq } from 'drizzle-orm'
 import { requireAuth, hashPassword } from '../../utils/auth'
 
 const updateProfileSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(100, 'Name is too long').optional(),
+  firstName: z.string().min(1, 'First name is required').max(50, 'First name is too long').optional(),
+  lastName: z.string().min(1, 'Last name is required').max(50, 'Last name is too long').optional(),
   currentPassword: z.string().optional(),
   newPassword: z
     .string()
@@ -28,20 +29,52 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const { name, currentPassword, newPassword } = result.data
+  const { firstName, lastName, currentPassword, newPassword } = result.data
 
   // Prepare update object
   const updates: {
     updatedAt: Date
+    firstName?: string
+    lastName?: string
     name?: string
     passwordHash?: string
   } = {
     updatedAt: new Date()
   }
 
-  // Update name if provided
-  if (name) {
-    updates.name = name
+  // Update firstName if provided
+  if (firstName) {
+    updates.firstName = firstName
+  }
+
+  // Update lastName if provided
+  if (lastName) {
+    updates.lastName = lastName
+  }
+
+  // Update legacy name field for backward compatibility
+  if (firstName && lastName) {
+    updates.name = `${firstName} ${lastName}`
+  } else if (firstName) {
+    // If only firstName is provided, keep existing lastName
+    const existingUser = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, currentUser.id))
+      .get()
+    if (existingUser?.lastName) {
+      updates.name = `${firstName} ${existingUser.lastName}`
+    }
+  } else if (lastName) {
+    // If only lastName is provided, keep existing firstName
+    const existingUser = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, currentUser.id))
+      .get()
+    if (existingUser?.firstName) {
+      updates.name = `${existingUser.firstName} ${lastName}`
+    }
   }
 
   // Update password if provided

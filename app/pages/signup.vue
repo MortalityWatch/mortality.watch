@@ -16,10 +16,16 @@ const router = useRouter()
 const toast = useToast()
 
 const fields = [{
-  name: 'name',
+  name: 'firstName',
   type: 'text' as const,
-  label: 'Name',
-  placeholder: 'Enter your name',
+  label: 'First Name',
+  placeholder: 'Enter your first name',
+  required: true
+}, {
+  name: 'lastName',
+  type: 'text' as const,
+  label: 'Last Name',
+  placeholder: 'Enter your last name',
   required: true
 }, {
   name: 'email',
@@ -36,7 +42,8 @@ const fields = [{
 }]
 
 const schema = z.object({
-  name: z.string().min(1, 'Name is required'),
+  firstName: z.string().min(1, 'First name is required').max(50, 'First name is too long'),
+  lastName: z.string().min(1, 'Last name is required').max(50, 'Last name is too long'),
   email: z.string().email('Invalid email'),
   password: z.string().min(8, 'Must be at least 8 characters')
 })
@@ -45,10 +52,10 @@ type Schema = z.output<typeof schema>
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   try {
-    await signUp(event.data.email, event.data.password, event.data.name)
+    await signUp(event.data.email, event.data.password, event.data.firstName, event.data.lastName)
     toast.add({
       title: 'Welcome to Mortality Watch!',
-      description: `Your account has been created, ${event.data.name}. You're now signed in.`,
+      description: `Your account has been created, ${event.data.firstName}. You're now signed in.`,
       color: 'success'
     })
     // Small delay to let user see they're signed in

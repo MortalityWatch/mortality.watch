@@ -14,7 +14,8 @@ const registerSchema = z.object({
     .string()
     .min(8, 'Password must be at least 8 characters')
     .max(100, 'Password is too long'),
-  name: z.string().min(1, 'Name is required').max(100, 'Name is too long')
+  firstName: z.string().min(1, 'First name is required').max(50, 'First name is too long'),
+  lastName: z.string().min(1, 'Last name is required').max(50, 'Last name is too long')
 })
 
 export default defineEventHandler(async (event) => {
@@ -29,7 +30,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const { email, password, name } = result.data
+  const { email, password, firstName, lastName } = result.data
 
   // Check if user already exists
   const existingUser = await db
@@ -54,13 +55,18 @@ export default defineEventHandler(async (event) => {
     Date.now() + 24 * 60 * 60 * 1000
   ) // 24 hours
 
+  // Create full name for legacy compatibility
+  const fullName = `${firstName} ${lastName}`
+
   // Create user with tier 1 (registered, free)
   const newUser = await db
     .insert(users)
     .values({
       email: email.toLowerCase(),
       passwordHash,
-      name,
+      firstName,
+      lastName,
+      name: fullName, // Legacy field for backward compatibility
       role: 'user',
       tier: 1, // Default to tier 1 (registered, free)
       emailVerified: false,
