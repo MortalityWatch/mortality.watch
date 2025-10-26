@@ -280,161 +280,6 @@ git branch -d <feature-branch>
 
 ---
 
-## Phase 1: CI/CD Pipeline Setup
-
-### Overview
-
-**Current Status:** Basic CI exists (lint + typecheck) but **376 passing unit tests are not running in CI!**
-
-⚠️ **CRITICAL:** This is a high-priority issue. Tests passing locally but not in CI creates a false sense of security and could hide breaking changes in production.
-
-Set up automated testing and quality checks to catch issues early. This infrastructure will support all future development phases.
-
-### 1. GitHub Actions for Code Quality
-
-**File:** `.github/workflows/ci.yml`
-
-**Current CI jobs:**
-
-- ✅ Lint (`npm run lint`)
-- ✅ Typecheck (`npm run typecheck`)
-- ❌ Tests (376 tests NOT running in CI!) **← FIX IMMEDIATELY**
-- ❌ Build verification (should catch build-time errors)
-
-**Tasks:**
-
-- [ ] **URGENT:** Update CI to use `npm run check` instead of individual commands
-- [ ] Add build verification: `npm run build`
-- [ ] Add test coverage job: `npm run test:coverage`
-- [ ] Add test coverage reporting (upload to Codecov or similar)
-- [ ] Verify `npm run check` command runs all three: lint + typecheck + test
-- [ ] Configure job timeout (e.g., 10 minutes max for unit tests, 5 minutes for build)
-
-**Example workflow structure:**
-
-```yaml
-name: CI
-on:
-  push:
-    branches: [master]
-  pull_request:
-    branches: [master]
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-      - run: npm ci
-      - run: npm run check
-      - run: npm run test:coverage
-      - uses: codecov/codecov-action@v3
-```
-
-### 2. Playwright E2E Testing Setup
-
-**Installation:**
-
-- [ ] Install Playwright: `npm install -D @playwright/test`
-- [ ] Initialize Playwright: `npx playwright install`
-- [ ] Create `playwright.config.ts` configuration
-- [ ] Add `test:e2e` script to package.json
-
-**Configuration (`playwright.config.ts`):**
-
-- [ ] Configure base URL (http://localhost:3000)
-- [ ] Set up multiple browsers (chromium, firefox, webkit)
-- [ ] Configure test directory: `tests/e2e/`
-- [ ] Set up screenshots on failure
-- [ ] Configure video recording for failed tests
-- [ ] Set up HTML reporter
-
-**Test files to create:**
-
-- [ ] `tests/e2e/homepage.spec.ts` - Test homepage loads and features work
-- [ ] `tests/e2e/explorer.spec.ts` - Test explorer page basic functionality
-- [ ] `tests/e2e/ranking.spec.ts` - Test ranking page and sorting
-- [ ] `tests/e2e/navigation.spec.ts` - Test navigation between pages
-- [ ] `tests/e2e/chart-interactions.spec.ts` - Test chart controls and interactions
-- [ ] `tests/e2e/url-state.spec.ts` - Test URL state persistence and sharing
-
-### 3. GitHub Actions for E2E Tests
-
-**File:** `.github/workflows/e2e.yml` or add to main CI workflow
-
-- [ ] Set up job to run Playwright tests
-- [ ] Start Nuxt dev server before tests
-- [ ] Run Playwright tests against local server
-- [ ] Upload test artifacts (screenshots, videos) on failure
-- [ ] Configure retry logic for flaky tests
-- [ ] Set appropriate timeout (e.g., 15 minutes)
-
-**Example E2E job:**
-
-```yaml
-e2e:
-  runs-on: ubuntu-latest
-  steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: "20"
-        cache: "npm"
-    - run: npm ci
-    - run: npx playwright install --with-deps
-    - run: npm run build
-    - run: npm run preview &
-    - run: npx wait-on http://localhost:3000
-    - run: npm run test:e2e
-    - uses: actions/upload-artifact@v3
-      if: failure()
-      with:
-        name: playwright-report
-        path: playwright-report/
-```
-
-### 4. Branch Protection Rules
-
-**Configure on GitHub repository settings:**
-
-- [ ] Require status checks to pass before merging
-- [ ] Require `npm run check` to pass
-- [ ] Require E2E tests to pass
-- [ ] Require branches to be up to date before merging
-- [ ] Require linear history (optional)
-- [ ] Require code review (optional, if working with team)
-
-### 5. Documentation
-
-- [ ] Document CI/CD setup in README.md
-- [ ] Add badge for CI status to README
-- [ ] Document how to run E2E tests locally
-- [ ] Document how to debug failed CI runs
-- [ ] Add CONTRIBUTING.md with testing guidelines
-
-### 6. Local Development Scripts
-
-**Update `package.json` scripts:**
-
-- [ ] Verify `check` script exists: `"check": "npm run lint && npm run typecheck && npm run test"`
-- [ ] Add `test:e2e` script: `"test:e2e": "playwright test"`
-- [ ] Add `test:e2e:ui` script: `"test:e2e:ui": "playwright test --ui"`
-- [ ] Add `test:e2e:debug` script: `"test:e2e:debug": "playwright test --debug"`
-
-### Success Criteria
-
-- [ ] All CI checks pass on master branch
-- [ ] Pull requests automatically run checks
-- [ ] E2E tests cover critical user flows
-- [ ] Failed tests provide useful debugging information
-- [ ] CI runs complete in reasonable time (< 10 minutes for unit tests, < 15 minutes for E2E)
-- [ ] Team can run all tests locally before pushing
-
----
-
 ## Phase 2: UI Fixes & Cleanup
 
 ### Overview
@@ -589,12 +434,16 @@ This task has been moved to Phase 2: UI Fixes (UI-11) to be addressed with other
 
 ### 3.4 Error Tracking & Rate Limiting
 
-**Error tracking (use Sentry free tier):**
+**Error tracking (self-hosted Bugsink instead of Sentry free tier):**
 
-- [ ] Install @sentry/nuxt
-- [ ] Configure Sentry DSN
-- [ ] Add to nuxt.config.ts
-- [ ] Test error reporting
+- [x] ✅ Install @sentry/node (completed Oct 26, 2025)
+- [x] ✅ Configure Sentry DSN (self-hosted: https://sentry.mortality.watch)
+- [x] ✅ Integrate with errorTracking.ts (production-only mode)
+- [x] ✅ Test error reporting (2 test events successfully captured)
+- [x] ✅ Deploy Bugsink to sentry.mortality.watch (Dokku)
+- [x] ✅ Configure Resend SMTP for email notifications
+- [x] ✅ Set up Cloudflare HTTPS proxy (no Let's Encrypt needed)
+- [x] ✅ Automated deployment with pre/post-deploy hooks
 
 **Rate limiting:**
 
@@ -1094,14 +943,20 @@ CREATE INDEX idx_sessions_expires ON sessions(expires_at);
 
 **Setup (using Resend):**
 
-- [ ] Install Resend SDK: `npm install resend`
-- [ ] Sign up for Resend account and get API key
-- [ ] Configure Resend API key in environment variables
+- [x] ✅ Sign up for Resend account and get API key (completed Oct 26, 2025)
+- [x] ✅ Configure Resend SMTP for Bugsink (sentry.mortality.watch)
+- [x] ✅ Verify domain: mortality.watch
+- [x] ✅ Test email sending (working for Bugsink password resets)
+- [ ] Install Resend SDK for main app: `npm install resend`
+- [ ] Configure Resend API key in www.mortality.watch environment variables
 - [ ] Create basic email templates (plain text is fine initially, can upgrade to React Email later)
+
+**Note:** Same Resend account will be used for both Bugsink and www.mortality.watch
 
 **Required emails only:**
 
-- [ ] Password reset email
+- [x] ✅ Password reset email (working for Bugsink)
+- [ ] Password reset email (for www.mortality.watch users)
 - [ ] Email verification (optional for MVP)
 - [ ] Payment receipt (Stripe can handle this initially)
 

@@ -68,15 +68,17 @@ export function useUrlState<T>(
       // Handle array types (no decoder for arrays, return as-is)
       if (isArrayType) {
         const arrayValue = Array.isArray(raw) ? raw : [raw]
-        return arrayValue as unknown as T
+        // Safe cast: T is constrained to be an array type when isArrayType is true
+        return arrayValue as T
       }
 
       // Handle single values
       const value = raw as string
-      const decoded = decoder ? decoder(value) : (value as unknown as T)
+      // If no decoder provided, assume T is string and cast directly
+      // If decoder is provided, it's responsible for returning correct type
+      const decoded = decoder ? decoder(value) : (value as T)
       // If decoder returns undefined, fall back to default
-      // Type assertion is safe because we guarantee a value via ?? operator
-      return (decoded ?? defaultValue) as T
+      return decoded ?? defaultValue
     },
     set: (val: T) => {
       // Store pending value for immediate reads

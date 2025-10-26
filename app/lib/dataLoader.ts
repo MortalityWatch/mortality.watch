@@ -3,35 +3,13 @@
  *
  * Abstraction layer for fetching mortality data.
  * Handles environment-aware data loading:
- * - Dev: Uses local cache via API route (client) or direct file read (server)
- * - Production: Uses S3 directly or via API proxy
+ * - Client: Uses API route (goes through server proxy with caching)
+ * - Server: Direct S3 access (caching handled by API routes)
  */
 
 const S3_BASE = 'https://s3.mortality.watch/data/mortality'
-const CACHE_DIR = '.data/cache/mortality'
 
 export class DataLoader {
-  /**
-   * Read from local cache (server-side only)
-   */
-  private async readLocalCache(path: string): Promise<string | null> {
-    if (!import.meta.server) return null
-
-    try {
-      const { readFileSync, existsSync } = await import('fs')
-      const { join } = await import('path')
-      const localPath = join(CACHE_DIR, path)
-
-      if (existsSync(localPath)) {
-        return readFileSync(localPath, 'utf-8')
-      }
-    } catch (error) {
-      console.warn(`Error reading local cache for ${path}:`, error)
-    }
-
-    return null
-  }
-
   /**
    * Get the appropriate URL for data fetching based on environment
    */
@@ -50,12 +28,6 @@ export class DataLoader {
    * Fetch metadata CSV
    */
   async fetchMetadata(): Promise<string> {
-    // Server-side in dev: try local cache first
-    if (import.meta.server && import.meta.dev) {
-      const cached = await this.readLocalCache('world_meta.csv')
-      if (cached) return cached
-    }
-
     const url = this.getUrl('world_meta.csv')
     const response = await fetch(url)
     if (!response.ok) {
@@ -74,13 +46,6 @@ export class DataLoader {
   ): Promise<string> {
     const ageSuffix = ageGroup === 'all' ? '' : `_${ageGroup}`
     const path = `${country}/${chartType}${ageSuffix}.csv`
-
-    // Server-side in dev: try local cache first
-    if (import.meta.server && import.meta.dev) {
-      const cached = await this.readLocalCache(path)
-      if (cached) return cached
-    }
-
     const url = this.getUrl(path)
 
     const response = await fetch(url, {

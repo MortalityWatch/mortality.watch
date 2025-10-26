@@ -204,14 +204,14 @@ export const hashCode = (str: string) => {
   return hash
 }
 
-const timeoutIds: Record<number, number | undefined> = {}
+const timeoutIds: Record<number, ReturnType<typeof setTimeout> | undefined> = {}
 export const delay = (fun: () => void, time: number = 333) => {
   const hash = hashCode(fun.toString())
   if (timeoutIds[hash]) clearTimeout(timeoutIds[hash])
   timeoutIds[hash] = setTimeout(async () => {
     fun()
     timeoutIds[hashCode(fun.toString())] = undefined
-  }, time) as unknown as number
+  }, time)
 }
 
 export const getByValue = (

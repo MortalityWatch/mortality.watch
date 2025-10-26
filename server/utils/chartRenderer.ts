@@ -16,7 +16,8 @@ import {
   Tooltip,
   Legend,
   LineController,
-  BarController
+  BarController,
+  Filler
 } from 'chart.js'
 import { createCanvas, loadImage } from 'canvas'
 import {
@@ -26,6 +27,7 @@ import {
 import ChartDataLabels from 'chartjs-plugin-datalabels'
 import { MatrixController, MatrixElement } from 'chartjs-chart-matrix'
 import QRCode from 'qrcode'
+import { withTimeout, cleanupCanvas } from './memoryManager'
 
 // Register Chart.js components and plugins
 Chart.register(
@@ -40,6 +42,7 @@ Chart.register(
   Legend,
   LineController,
   BarController,
+  Filler,
   BarWithErrorBar,
   BarWithErrorBarsController,
   MatrixController,
@@ -54,10 +57,22 @@ const LOGO_SVG = `<svg height="3000" width="3000" viewBox="0 0 3000 3000" fill="
 const LOGO_SRC_LIGHT = 'data:image/svg+xml;base64,' + Buffer.from(LOGO_SVG).toString('base64')
 
 /**
- * Full logo plugin for server-side rendering
- * Includes logo and QR code
+ * Pre-load logo image for synchronous drawing
  */
-const createLogoPlugin = () => {
+type LoadedImage = Awaited<ReturnType<typeof loadImage>>
+let cachedLogoImage: LoadedImage | null = null
+async function preloadLogo() {
+  if (!cachedLogoImage) {
+    cachedLogoImage = await loadImage(LOGO_SRC_LIGHT)
+  }
+  return cachedLogoImage
+}
+
+/**
+ * Full logo plugin for server-side rendering
+ * Includes logo and QR code (drawn after images are pre-loaded)
+ */
+const createLogoPlugin = (logoImage: LoadedImage, qrImage: LoadedImage | null) => {
   return {
     id: 'LogoPlugin',
     beforeDraw: (chart: Chart) => {
@@ -70,51 +85,42 @@ const createLogoPlugin = () => {
       ctx.fillRect(0, 0, chart.width, chart.height)
       ctx.restore()
     },
-    afterDraw: async (chart: Chart) => {
+    afterDraw: (chart: Chart) => {
       const { ctx } = chart
       if (!ctx) return
 
       // Draw logo (always light theme for server-side OG images)
-      try {
-        const logo = await loadImage(LOGO_SRC_LIGHT)
-        const w = 60
-        const h = w // Square logo
+      if (logoImage) {
+        try {
+          const w = 60
+          const h = w // Square logo
 
-        ctx.save()
-        ctx.fillStyle = '#ffffff'
-        ctx.fillRect(10, 10, w, h)
-        ctx.restore()
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore - node-canvas Image is compatible with CanvasImageSource
-        ctx.drawImage(logo, 10, 10, w, h)
-      } catch (err) {
-        console.error('Failed to load logo:', err)
+          ctx.save()
+          ctx.fillStyle = '#ffffff'
+          ctx.fillRect(10, 10, w, h)
+          ctx.restore()
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore - node-canvas Image is compatible with CanvasImageSource
+          ctx.drawImage(logoImage, 10, 10, w, h)
+        } catch (err) {
+          console.error('Failed to draw logo:', err)
+        }
       }
 
-      // Draw QR code if URL provided
-      const qrCodeUrl = (chart.options.plugins as Record<string, unknown>)?.qrCodeUrl
-      if (qrCodeUrl) {
+      // Draw QR code if provided
+      if (qrImage) {
         try {
-          const qrSrc = await QRCode.toDataURL(qrCodeUrl as string, {
-            color: {
-              dark: '#000000',
-              light: '#ffffff'
-            }
-          })
-          const qrLogo = await loadImage(qrSrc)
           const s = 60
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore - node-canvas Image is compatible with CanvasImageSource
-          ctx.drawImage(qrLogo, chart.width - s, 0, s, s)
+          ctx.drawImage(qrImage, chart.width - s, 0, s, s)
         } catch (err) {
-          console.error('Failed to generate QR code:', err)
+          console.error('Failed to draw QR code:', err)
         }
       }
     }
   }
 }
-
-Chart.register(createLogoPlugin())
 
 /**
  * Create a Chart.js instance with canvas
@@ -136,28 +142,90 @@ export async function renderChart(
   chartType: 'line' | 'bar' | 'matrix' = 'line'
 ): Promise<Buffer> {
   const { canvas, ctx } = createChartCanvas(width, height)
+  let chart: Chart | null = null
+  let logoPlugin: { id: string } | null = null
 
-  // Merge config with server-specific overrides
-  const serverConfig = {
-    ...chartConfig,
-    type: chartType,
-    options: {
-      ...((chartConfig.options as Record<string, unknown>) || {}),
-      responsive: false,
-      animation: false,
-      devicePixelRatio: 2
+  try {
+    // Wrap entire rendering in timeout (10 seconds)
+    return await withTimeout(
+      (async () => {
+        // Pre-load logo
+        const logoImage = await preloadLogo()
+
+        // Pre-load QR code if URL provided
+        let qrImage: LoadedImage | null = null
+        const qrCodeUrl = ((chartConfig.options as Record<string, unknown>)?.plugins as Record<string, unknown>)?.qrCodeUrl
+        if (qrCodeUrl) {
+          try {
+            const qrSrc = await QRCode.toDataURL(qrCodeUrl as string, {
+              color: {
+                dark: '#000000',
+                light: '#ffffff'
+              },
+              width: 120
+            })
+            qrImage = await loadImage(qrSrc)
+          } catch (err) {
+            console.error('Failed to generate QR code:', err)
+          }
+        }
+
+        // Register logo plugin with pre-loaded images
+        logoPlugin = createLogoPlugin(logoImage, qrImage)
+        Chart.register(logoPlugin)
+
+        // Merge config with server-specific overrides
+        const serverConfig = {
+          ...chartConfig,
+          type: chartType,
+          options: {
+            ...((chartConfig.options as Record<string, unknown>) || {}),
+            responsive: false,
+            animation: false,
+            devicePixelRatio: 2
+          }
+        }
+
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore - node-canvas context is compatible but has different type
+        chart = new Chart(ctx, serverConfig)
+
+        // Wait for chart to complete rendering (now synchronous)
+        await new Promise(resolve => setTimeout(resolve, 100))
+        if (chart) {
+          chart.update()
+        }
+
+        return canvas.toBuffer('image/png')
+      })(),
+      10000, // 10 second timeout
+      'Chart rendering'
+    )
+  } finally {
+    // Cleanup: destroy chart and unregister plugin
+    if (chart) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore - Chart.js destroy method exists at runtime
+        chart.destroy()
+      } catch (err) {
+        console.warn('Error destroying chart:', err)
+      }
     }
+
+    if (logoPlugin) {
+      try {
+        Chart.unregister(logoPlugin)
+      } catch (err) {
+        console.warn('Error unregistering logo plugin:', err)
+      }
+    }
+
+    // Cleanup canvas
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore - node-canvas Canvas type is compatible
+    cleanupCanvas(canvas)
   }
-
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore - node-canvas context is compatible but has different type
-  const chart = new Chart(ctx, serverConfig)
-
-  // Wait for chart to complete rendering
-  await new Promise(resolve => setTimeout(resolve, 100))
-  chart.update()
-
-  return canvas.toBuffer('image/png')
 }
 
 /**
