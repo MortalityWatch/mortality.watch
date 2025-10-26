@@ -434,12 +434,16 @@ This task has been moved to Phase 2: UI Fixes (UI-11) to be addressed with other
 
 ### 3.4 Error Tracking & Rate Limiting
 
-**Error tracking (use Sentry free tier):**
+**Error tracking (self-hosted Bugsink instead of Sentry free tier):**
 
-- [ ] Install @sentry/nuxt
-- [ ] Configure Sentry DSN
-- [ ] Add to nuxt.config.ts
-- [ ] Test error reporting
+- [x] ✅ Install @sentry/node (completed Oct 26, 2025)
+- [x] ✅ Configure Sentry DSN (self-hosted: https://sentry.mortality.watch)
+- [x] ✅ Integrate with errorTracking.ts (production-only mode)
+- [x] ✅ Test error reporting (2 test events successfully captured)
+- [x] ✅ Deploy Bugsink to sentry.mortality.watch (Dokku)
+- [x] ✅ Configure Resend SMTP for email notifications
+- [x] ✅ Set up Cloudflare HTTPS proxy (no Let's Encrypt needed)
+- [x] ✅ Automated deployment with pre/post-deploy hooks
 
 **Rate limiting:**
 
@@ -939,14 +943,20 @@ CREATE INDEX idx_sessions_expires ON sessions(expires_at);
 
 **Setup (using Resend):**
 
-- [ ] Install Resend SDK: `npm install resend`
-- [ ] Sign up for Resend account and get API key
-- [ ] Configure Resend API key in environment variables
+- [x] ✅ Sign up for Resend account and get API key (completed Oct 26, 2025)
+- [x] ✅ Configure Resend SMTP for Bugsink (sentry.mortality.watch)
+- [x] ✅ Verify domain: mortality.watch
+- [x] ✅ Test email sending (working for Bugsink password resets)
+- [ ] Install Resend SDK for main app: `npm install resend`
+- [ ] Configure Resend API key in www.mortality.watch environment variables
 - [ ] Create basic email templates (plain text is fine initially, can upgrade to React Email later)
+
+**Note:** Same Resend account will be used for both Bugsink and www.mortality.watch
 
 **Required emails only:**
 
-- [ ] Password reset email
+- [x] ✅ Password reset email (working for Bugsink)
+- [ ] Password reset email (for www.mortality.watch users)
 - [ ] Email verification (optional for MVP)
 - [ ] Payment receipt (Stripe can handle this initially)
 
