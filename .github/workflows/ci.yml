@@ -59,7 +59,7 @@ jobs:
 
       - name: Build verification
         run: npm run build
-        timeout-minutes: 5
+        timeout-minutes: 10
 
   e2e:
     runs-on: ${{ matrix.os }}
