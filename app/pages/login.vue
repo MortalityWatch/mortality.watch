@@ -36,14 +36,15 @@ const fields = [{
 
 const schema = z.object({
   email: z.string().email('Invalid email'),
-  password: z.string().min(8, 'Must be at least 8 characters')
+  password: z.string().min(8, 'Must be at least 8 characters'),
+  remember: z.boolean().optional()
 })
 
 type Schema = z.output<typeof schema>
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   try {
-    await signIn(event.data.email, event.data.password)
+    await signIn(event.data.email, event.data.password, event.data.remember || false)
     toast.add({
       title: 'Welcome back!',
       description: 'Signed in successfully',

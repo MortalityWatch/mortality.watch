@@ -44,11 +44,13 @@ export async function verifyPassword(
 
 /**
  * Generate a JWT token for a user
+ * @param payload - User data to encode
+ * @param expiresIn - Token expiry (default: 7 days, with remember: 90 days)
  */
-export function generateToken(payload: JwtPayload): string {
+export function generateToken(payload: JwtPayload, expiresIn: string | number = '7d'): string {
   return jwt.sign(payload, getJwtSecret(), {
-    expiresIn: '7d'
-  })
+    expiresIn
+  } as jwt.SignOptions)
 }
 
 /**
@@ -158,13 +160,14 @@ export function generateRandomToken(): string {
 
 /**
  * Set auth token cookie
+ * @param maxAge - Cookie expiry in seconds (default: 7 days, with remember: 90 days)
  */
-export function setAuthToken(event: H3Event, token: string) {
+export function setAuthToken(event: H3Event, token: string, maxAge: number = 60 * 60 * 24 * 7) {
   setCookie(event, 'auth_token', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 7, // 7 days
+    maxAge,
     path: '/'
   })
 }

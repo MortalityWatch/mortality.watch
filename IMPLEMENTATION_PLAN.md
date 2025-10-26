@@ -18,7 +18,7 @@ The application uses a **3-tier access model**:
 
 **These decisions have been finalized:**
 
-1. **Auth library:** @sidebase/nuxt-auth with AuthJS provider (supports credentials + OAuth)
+1. **Auth library:** Custom JWT authentication with jsonwebtoken and bcryptjs (✅ implemented)
 2. **Database migrations:** Drizzle ORM
 3. **Stripe pricing:** $9.99/month and $99/year (saves ~$20, approx 2 months free)
 4. **Email provider:** Resend free tier (100 emails/day, 3,000/month)
@@ -29,10 +29,10 @@ The application uses a **3-tier access model**:
 9. **E2E tests:** Comprehensive Playwright coverage (~20+ critical flows)
 10. **CI/CD:** GitHub Actions for automated testing and quality checks
 11. **Test writing strategy:** Write tests after each feature works (not TDD, not end-of-phase batching)
-12. **Email verification:** Required from day 1 (fraud prevention + Stripe requirement)
-13. **Password hashing:** bcrypt (industry standard)
-14. **Session management:** Cookie-based, 90-day duration with "Remember me" option
-15. **Admin user:** Created via `npm run create-admin` script
+12. **Email verification:** ⚠️ Currently optional (users can login without verifying) - needs to be made required
+13. **Password hashing:** bcryptjs with 12 rounds (✅ implemented)
+14. **Session management:** ⚠️ Currently 7-day fixed - needs "Remember me" option for 90-day duration
+15. **Admin user:** Created via `npm run db:seed` script (✅ implemented)
 16. **Analytics platform:** Self-hosted Umami on Dokku (privacy-friendly, cookieless)
 17. **Error tracking:** Reuse existing Bugsink instance at sentry.mortality.watch
 18. **Uptime monitoring:** UptimeRobot free tier (50 monitors, 5-min checks)
@@ -874,6 +874,24 @@ CREATE INDEX idx_webhook_events_processed ON webhook_events(processed);
 CREATE INDEX idx_webhook_events_created ON webhook_events(created_at DESC);
 ```
 
+**Featured Charts Table:**
+
+```sql
+CREATE TABLE featured_charts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  chart_state TEXT NOT NULL, -- JSON-encoded chart state
+  display_order INTEGER NOT NULL DEFAULT 0, -- Order on homepage
+  title TEXT,
+  description TEXT,
+  is_active BOOLEAN DEFAULT 1, -- Allow temporarily hiding
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_featured_charts_order ON featured_charts(display_order);
+CREATE INDEX idx_featured_charts_active ON featured_charts(is_active);
+```
+
 **Sessions Table (if not using JWT):**
 
 ```sql
@@ -1020,7 +1038,7 @@ CREATE INDEX idx_sessions_expires ON sessions(expires_at);
 - Core chart visualization
 - Basic country selection
 - Standard time periods
-- Conservative baseline methods (5-year mean)
+- Conservative baseline methods (3-year mean)
 - Watermark/logo visible
 - QR code visible
 
@@ -2678,12 +2696,12 @@ Ensure the application is accessible to all users and complies with legal requir
   - Explain data retention policies
   - Link from footer
 
-- [ ] **Cookie consent**
-  - Cookie banner for EU users
-  - Explain cookies used (session, analytics, preferences)
-  - Allow opt-out of non-essential cookies
-  - Store consent in localStorage
-  - Respect Do Not Track setting
+- [ ] **Cookie usage (no consent banner needed)**
+  - Session cookies are necessary for authentication (GDPR exemption)
+  - Analytics uses Umami (cookieless, no tracking)
+  - Document cookie usage in Privacy Policy
+  - No consent banner required
+  - Respect Do Not Track setting for analytics
 
 - [ ] **Data retention policies**
   - Document data retention for each data type

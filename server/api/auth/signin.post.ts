@@ -9,7 +9,8 @@ import {
 
 const signinSchema = z.object({
   email: z.string().email('Invalid email address'),
-  password: z.string().min(1, 'Password is required')
+  password: z.string().min(1, 'Password is required'),
+  remember: z.boolean().optional()
 })
 
 export default defineEventHandler(async (event) => {
@@ -24,7 +25,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const { email, password } = result.data
+  const { email, password, remember = false } = result.data
 
   // Find user by email
   const user = await db
@@ -50,22 +51,33 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // Check if email is verified
+  if (!user.emailVerified) {
+    throw createError({
+      statusCode: 403,
+      message: 'Please verify your email address before signing in. Check your inbox for the verification link.'
+    })
+  }
+
   // Update last login
   await db
     .update(users)
     .set({ lastLogin: new Date() })
     .where(eq(users.id, user.id))
 
-  // Generate JWT token
+  // Generate JWT token with appropriate expiry
+  // Remember me: 90 days, otherwise: 7 days
+  const expiresIn = remember ? '90d' : '7d'
   const token = generateToken({
     userId: user.id,
     email: user.email,
     tier: user.tier,
     role: user.role
-  })
+  }, expiresIn)
 
-  // Set cookie
-  setAuthToken(event, token)
+  // Set cookie with matching maxAge (in seconds)
+  const maxAge = remember ? (60 * 60 * 24 * 90) : (60 * 60 * 24 * 7)
+  setAuthToken(event, token, maxAge)
 
   // Return user without password hash
   const { passwordHash: _passwordHash, ...userWithoutPassword } = user

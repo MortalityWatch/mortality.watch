@@ -8,7 +8,7 @@ interface UseAuthReturn {
   isAdmin: ComputedRef<boolean>
   tier: ComputedRef<0 | 1 | 2>
   loading: Ref<boolean>
-  signIn: (email: string, password: string) => Promise<void>
+  signIn: (email: string, password: string, remember?: boolean) => Promise<void>
   signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<void>
   signOut: () => Promise<void>
   updateProfile: (data: {
@@ -39,14 +39,14 @@ export function useAuth(): UseAuthReturn {
   /**
    * Sign in with email and password
    */
-  async function signIn(email: string, password: string) {
+  async function signIn(email: string, password: string, remember: boolean = false) {
     loading.value = true
     try {
       const response = await $fetch<{ success: boolean, user: AuthUser }>(
         '/api/auth/signin',
         {
           method: 'POST',
-          body: { email, password }
+          body: { email, password, remember }
         }
       )
       user.value = response.user
