@@ -34,7 +34,7 @@ onMounted(async () => {
     }, 3000)
   } catch (err: unknown) {
     success.value = false
-    error.value = (err instanceof Error ? err.message : (err as { data?: { message?: string } })?.data?.message) || 'Failed to verify email'
+    error.value = getErrorMessage(err)
   } finally {
     verifying.value = false
   }
