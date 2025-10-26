@@ -30,6 +30,7 @@
     "@iconify-json/simple-icons": "^1.2.55",
     "@nuxt/image": "^1.10.0",
     "@nuxt/ui": "^v4.0.0-alpha.0",
+    "@sentry/node": "^10.22.0",
     "@standard-schema/spec": "^1.0.0",
     "@types/qrcode": "^1.5.6",
     "@vueform/slider": "^2.1.10",

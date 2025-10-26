@@ -12,7 +12,7 @@
  */
 
 // Uncomment when Sentry is set up:
-// import * as Sentry from '@sentry/node'
+import * as Sentry from '@sentry/node'
 
 interface ErrorContext {
   user?: string
@@ -40,7 +40,6 @@ class ErrorTracker {
 
     try {
       // Uncomment when @sentry/node is installed:
-      /*
       Sentry.init({
         dsn: sentryDsn,
         environment: process.env.NODE_ENV || 'development',
@@ -58,7 +57,6 @@ class ErrorTracker {
           return event
         }
       })
-      */
 
       this.initialized = true
       console.log('[ErrorTracking] Sentry initialized')
@@ -81,7 +79,6 @@ class ErrorTracker {
     }
 
     // Uncomment when @sentry/node is installed:
-    /*
     if (context?.tags) {
       Sentry.setTags(context.tags)
     }
@@ -95,7 +92,6 @@ class ErrorTracker {
     }
 
     Sentry.captureException(errorObj)
-    */
   }
 
   /**
@@ -109,7 +105,6 @@ class ErrorTracker {
     }
 
     // Uncomment when @sentry/node is installed:
-    /*
     if (context?.tags) {
       Sentry.setTags(context.tags)
     }
@@ -119,21 +114,18 @@ class ErrorTracker {
     }
 
     Sentry.captureMessage(message, level)
-    */
   }
 
   /**
    * Set user context for error tracking
    */
-  setUser(_userId: string) {
+  setUser(userId: string) {
     if (!this.initialized) {
       return
     }
 
     // Uncomment when @sentry/node is installed:
-    /*
-    Sentry.setUser({ id: _userId })
-    */
+    Sentry.setUser({ id: userId })
   }
 
   /**
@@ -145,9 +137,7 @@ class ErrorTracker {
     }
 
     // Uncomment when @sentry/node is installed:
-    /*
     Sentry.setUser(null)
-    */
   }
 }
 
