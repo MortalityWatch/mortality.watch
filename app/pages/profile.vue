@@ -315,7 +315,7 @@ const tierLabel = computed(() => {
             </p>
           </div>
 
-          <UDivider />
+          <div class="border-t border-gray-200 dark:border-gray-800" />
 
           <div>
             <label
@@ -401,7 +401,7 @@ const tierLabel = computed(() => {
             </UButton>
           </div>
 
-          <UDivider />
+          <div class="border-t border-gray-200 dark:border-gray-800" />
 
           <div class="p-4 bg-red-50 dark:bg-red-900/10 rounded-lg border border-red-200 dark:border-red-800">
             <div class="flex items-start gap-3 mb-3">
