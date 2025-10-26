@@ -889,41 +889,41 @@ CREATE INDEX idx_sessions_expires ON sessions(expires_at);
 
 **Setup:**
 
-- [ ] Install @sidebase/nuxt-auth module
-- [ ] Configure @sidebase/nuxt-auth (choose provider: authjs or local)
-- [ ] Set up session management (cookies vs JWT)
-- [ ] Configure secure password hashing (bcrypt/argon2)
+- [x] ~~Install @sidebase/nuxt-auth module~~ (using custom JWT auth instead)
+- [x] Configure custom JWT authentication with httpOnly cookies
+- [x] Set up session management (JWT tokens with 7-day expiration)
+- [x] Configure secure password hashing (bcryptjs with 12 rounds)
 
 **Pages to create:**
 
-- [ ] `/auth/register` - Registration page
-- [ ] `/auth/signin` - Sign in page
-- [ ] `/auth/forgot-password` - Password reset request
-- [ ] `/auth/reset-password/[token]` - Password reset form
-- [ ] `/profile` - User profile page
-- [ ] `/admin` - Admin dashboard (basic)
+- [x] `/signup` - Registration page (using UAuthForm)
+- [x] `/login` - Sign in page (using UAuthForm)
+- [x] `/forgot-password` - Password reset request
+- [x] `/reset-password/[token]` - Password reset form
+- [x] `/profile` - User profile page
+- [x] `/admin` - Admin dashboard (basic)
 
 **Backend:**
 
-- [ ] API route: `POST /api/auth/register`
-- [ ] API route: `POST /api/auth/signin`
-- [ ] API route: `POST /api/auth/signout`
-- [ ] API route: `POST /api/auth/forgot-password`
-- [ ] API route: `POST /api/auth/reset-password`
-- [ ] API route: `GET /api/auth/session`
-- [ ] API route: `PATCH /api/user/profile`
+- [x] API route: `POST /api/auth/register`
+- [x] API route: `POST /api/auth/signin`
+- [x] API route: `POST /api/auth/signout`
+- [x] API route: `POST /api/auth/forgot-password`
+- [x] API route: `POST /api/auth/reset-password`
+- [x] API route: `GET /api/auth/session`
+- [x] API route: `PATCH /api/user/profile`
 
 **Middleware:**
 
-- [ ] Auth middleware for protected routes
-- [ ] Admin-only middleware
-- [ ] Paid user middleware (for premium features)
+- [x] Auth middleware for protected routes
+- [x] Admin-only middleware
+- [x] Paid user middleware (helper function `requireTier()` available)
 
 **Setup admin user:**
 
-- [ ] Create admin user seeding script
-- [ ] Environment variable for admin credentials
-- [ ] Script to create/reset admin password
+- [x] Create admin user seeding script
+- [x] Environment variable for admin credentials (ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_NAME)
+- [x] Script to create/reset admin password (`npm run db:seed`)
 
 ### 6.3 Email Service
 
