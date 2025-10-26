@@ -237,29 +237,39 @@ const tierLabel = computed(() => {
           class="space-y-4"
           @submit.prevent="saveProfile"
         >
-          <UFormGroup
-            label="First Name"
-            name="firstName"
-          >
+          <div>
+            <label
+              for="firstName"
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
+              First Name
+            </label>
             <UInput
+              id="firstName"
               v-model="profileState.firstName"
               type="text"
               placeholder="Your first name"
+              name="firstName"
             />
-          </UFormGroup>
+          </div>
 
-          <UFormGroup
-            label="Last Name"
-            name="lastName"
-          >
+          <div>
+            <label
+              for="lastName"
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
+              Last Name
+            </label>
             <UInput
+              id="lastName"
               v-model="profileState.lastName"
               type="text"
               placeholder="Your last name"
+              name="lastName"
             />
-          </UFormGroup>
+          </div>
 
-          <div class="flex justify-end">
+          <div class="flex justify-end pt-2">
             <UButton
               type="submit"
               :loading="savingProfile"
@@ -285,49 +295,70 @@ const tierLabel = computed(() => {
         </template>
 
         <form
-          class="space-y-4"
+          class="space-y-6"
           @submit.prevent="changePassword"
         >
-          <UFormGroup
-            label="Current Password"
-            name="currentPassword"
-            description="Enter your current password to verify your identity"
-          >
+          <div>
+            <label
+              for="currentPassword"
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
+              Current Password
+            </label>
             <UInput
+              id="currentPassword"
               v-model="passwordState.currentPassword"
               type="password"
               placeholder="Enter current password"
               autocomplete="current-password"
+              name="currentPassword"
             />
-          </UFormGroup>
+            <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+              Enter your current password to verify your identity
+            </p>
+          </div>
 
           <UDivider />
 
-          <UFormGroup
-            label="New Password"
-            name="newPassword"
-            description="Choose a strong password with at least 8 characters"
-          >
+          <div>
+            <label
+              for="newPassword"
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
+              New Password
+            </label>
             <UInput
+              id="newPassword"
               v-model="passwordState.newPassword"
               type="password"
               placeholder="Enter new password"
               autocomplete="new-password"
+              name="newPassword"
             />
-          </UFormGroup>
+            <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+              Choose a strong password with at least 8 characters
+            </p>
+          </div>
 
-          <UFormGroup
-            label="Confirm New Password"
-            name="confirmPassword"
-            description="Re-enter your new password to confirm"
-          >
+          <div>
+            <label
+              for="confirmPassword"
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
+              Confirm New Password
+            </label>
             <UInput
+              id="confirmPassword"
               v-model="passwordState.confirmPassword"
               type="password"
               placeholder="Confirm new password"
               autocomplete="new-password"
+              name="confirmPassword"
             />
-          </UFormGroup>
+            <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+              Re-enter your new password to confirm
+            </p>
+          </div>
 
           <div class="flex justify-end pt-2">
             <UButton
