@@ -58,7 +58,8 @@ const LOGO_SRC_LIGHT = 'data:image/svg+xml;base64,' + Buffer.from(LOGO_SVG).toSt
 /**
  * Pre-load logo image for synchronous drawing
  */
-let cachedLogoImage: Image | null = null
+type LoadedImage = Awaited<ReturnType<typeof loadImage>>
+let cachedLogoImage: LoadedImage | null = null
 async function preloadLogo() {
   if (!cachedLogoImage) {
     cachedLogoImage = await loadImage(LOGO_SRC_LIGHT)
@@ -70,7 +71,7 @@ async function preloadLogo() {
  * Full logo plugin for server-side rendering
  * Includes logo and QR code (drawn after images are pre-loaded)
  */
-const createLogoPlugin = (logoImage: Image, qrImage: Image | null) => {
+const createLogoPlugin = (logoImage: LoadedImage, qrImage: LoadedImage | null) => {
   return {
     id: 'LogoPlugin',
     beforeDraw: (chart: Chart) => {
@@ -145,7 +146,7 @@ export async function renderChart(
   const logoImage = await preloadLogo()
 
   // Pre-load QR code if URL provided
-  let qrImage: Image | null = null
+  let qrImage: LoadedImage | null = null
   const qrCodeUrl = ((chartConfig.options as Record<string, unknown>)?.plugins as Record<string, unknown>)?.qrCodeUrl
   if (qrCodeUrl) {
     try {
