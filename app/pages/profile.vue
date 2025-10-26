@@ -183,9 +183,18 @@ const tierLabel = computed(() => {
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
               Email Address
             </label>
-            <p class="text-base text-gray-900 dark:text-gray-100">
-              {{ user.email }}
-            </p>
+            <div class="flex items-center gap-2">
+              <p class="text-base text-gray-900 dark:text-gray-100">
+                {{ user.email }}
+              </p>
+              <UBadge
+                :color="user.emailVerified ? 'success' : 'warning'"
+                variant="subtle"
+                size="xs"
+              >
+                {{ user.emailVerified ? 'Verified' : 'Not Verified' }}
+              </UBadge>
+            </div>
           </div>
 
           <div>
@@ -204,18 +213,6 @@ const tierLabel = computed(() => {
             <p class="text-base text-gray-900 dark:text-gray-100">
               {{ new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}
             </p>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              Email Status
-            </label>
-            <UBadge
-              :color="user.emailVerified ? 'success' : 'warning'"
-              variant="subtle"
-            >
-              {{ user.emailVerified ? 'Verified' : 'Not Verified' }}
-            </UBadge>
           </div>
         </div>
       </UCard>

@@ -1,13 +1,9 @@
-export default defineNuxtRouteMiddleware(async (to, _from) => {
-  const { user, refreshSession } = useAuth()
+export default defineNuxtRouteMiddleware((to, _from) => {
+  const { isAuthenticated } = useAuth()
 
-  // Refresh session if not already loaded
-  if (!user.value) {
-    await refreshSession()
-  }
-
-  // If still not authenticated, redirect to login
-  if (!user.value) {
+  // If not authenticated, redirect to login
+  // Session is already loaded by the auth plugin
+  if (!isAuthenticated.value) {
     return navigateTo({
       path: '/login',
       query: { redirect: to.fullPath }

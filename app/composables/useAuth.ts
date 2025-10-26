@@ -163,13 +163,6 @@ export function useAuth(): UseAuthReturn {
     }
   }
 
-  // Auto-refresh session on mount (only on client side)
-  onMounted(() => {
-    if (import.meta.client) {
-      refreshSession()
-    }
-  })
-
   return {
     user,
     isAuthenticated,
