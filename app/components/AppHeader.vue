@@ -20,42 +20,7 @@ const items = computed(() => [{
 }])
 
 const { isIncognito } = useIncognitoMode()
-const { user, isAuthenticated, signOut } = useAuth()
-
-const router = useRouter()
-
-const userMenuItems = computed(() => {
-  if (!user.value) return []
-  return [[{
-    label: user.value.email,
-    slot: 'account',
-    disabled: true
-  }], [{
-    label: 'Profile',
-    icon: 'i-lucide-user',
-    id: 'profile'
-  }], [{
-    label: 'Sign Out',
-    icon: 'i-lucide-log-out',
-    id: 'signout'
-  }]]
-})
-
-interface DropdownItem {
-  id?: string
-  label: string
-  icon?: string
-  slot?: string
-  disabled?: boolean
-}
-
-function handleDropdownSelect(item: DropdownItem) {
-  if (item.id === 'profile') {
-    router.push('/profile')
-  } else if (item.id === 'signout') {
-    signOut()
-  }
-}
+const { user, isAuthenticated } = useAuth()
 </script>
 
 <template>
@@ -81,28 +46,18 @@ function handleDropdownSelect(item: DropdownItem) {
 
       <!-- Authentication buttons -->
       <template v-if="isAuthenticated">
-        <UDropdown
-          :items="userMenuItems"
-          mode="click"
-          @select="handleDropdownSelect"
+        <UButton
+          variant="ghost"
+          square
+          :padded="false"
+          to="/profile"
+          aria-label="Go to profile"
         >
           <UAvatar
-            :alt="user?.name || user?.email"
+            :alt="user?.firstName || user?.email"
             size="sm"
-            class="cursor-pointer"
           />
-
-          <template #account="{ item }">
-            <div class="text-left">
-              <p class="truncate font-medium text-gray-900 dark:text-white">
-                {{ user?.name }}
-              </p>
-              <p class="truncate text-sm text-gray-500 dark:text-gray-400">
-                {{ item.label }}
-              </p>
-            </div>
-          </template>
-        </UDropdown>
+        </UButton>
       </template>
       <template v-else>
         <UButton
