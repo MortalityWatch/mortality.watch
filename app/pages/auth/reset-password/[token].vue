@@ -22,7 +22,7 @@ async function onSubmit() {
     toast.add({
       title: 'Passwords do not match',
       description: 'Please make sure both passwords are identical',
-      color: 'red'
+      color: 'error'
     })
     return
   }
@@ -33,14 +33,14 @@ async function onSubmit() {
     toast.add({
       title: 'Password reset successful',
       description: 'You have been signed in with your new password',
-      color: 'green'
+      color: 'success'
     })
     await router.push('/')
   } catch (error: unknown) {
     toast.add({
       title: 'Password reset failed',
-      description: error.data?.message || 'Invalid or expired reset token',
-      color: 'red'
+      description: (error instanceof Error ? error.message : (error as { data?: { message?: string } })?.data?.message) || 'Invalid or expired reset token',
+      color: 'error'
     })
   } finally {
     loading.value = false
@@ -59,7 +59,7 @@ async function onSubmit() {
           <UButton
             to="/"
             variant="ghost"
-            color="gray"
+            color="neutral"
             icon="i-lucide-x"
             size="sm"
           />

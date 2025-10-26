@@ -21,13 +21,13 @@ async function onSubmit() {
     toast.add({
       title: 'Check your email',
       description: 'If an account exists, you will receive a password reset link',
-      color: 'green'
+      color: 'success'
     })
   } catch (error: unknown) {
     toast.add({
       title: 'Request failed',
-      description: error.data?.message || 'An error occurred',
-      color: 'red'
+      description: (error instanceof Error ? error.message : (error as { data?: { message?: string } })?.data?.message) || 'An error occurred',
+      color: 'error'
     })
   } finally {
     loading.value = false
@@ -46,7 +46,7 @@ async function onSubmit() {
           <UButton
             to="/auth/signin"
             variant="ghost"
-            color="gray"
+            color="neutral"
             icon="i-lucide-x"
             size="sm"
           />

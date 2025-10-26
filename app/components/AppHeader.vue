@@ -20,6 +20,24 @@ const items = computed(() => [{
 }])
 
 const { isIncognito } = useIncognitoMode()
+const { user, isAuthenticated, signOut } = useAuth()
+
+const userMenuItems = computed(() => {
+  if (!user.value) return []
+  return [[{
+    label: user.value.email,
+    slot: 'account',
+    disabled: true
+  }], [{
+    label: 'Profile',
+    icon: 'i-lucide-user',
+    to: '/profile'
+  }], [{
+    label: 'Sign Out',
+    icon: 'i-lucide-log-out',
+    click: signOut
+  }]]
+})
 </script>
 
 <template>
@@ -43,7 +61,41 @@ const { isIncognito } = useIncognitoMode()
     <template #right>
       <UColorModeButton />
 
-      <!-- Authentication buttons removed -->
+      <!-- Authentication buttons -->
+      <template v-if="isAuthenticated">
+        <UDropdown
+          :items="userMenuItems"
+          mode="click"
+        >
+          <UAvatar
+            :alt="user?.name || user?.email"
+            size="sm"
+            class="cursor-pointer"
+          />
+
+          <template #account="{ item }">
+            <div class="text-left">
+              <p class="truncate font-medium text-gray-900 dark:text-white">
+                {{ user?.name }}
+              </p>
+              <p class="truncate text-sm text-gray-500 dark:text-gray-400">
+                {{ item.label }}
+              </p>
+            </div>
+          </template>
+        </UDropdown>
+      </template>
+      <template v-else>
+        <UButton
+          to="/auth/signin"
+          variant="ghost"
+          label="Sign In"
+        />
+        <UButton
+          to="/auth/register"
+          label="Sign Up"
+        />
+      </template>
     </template>
 
     <template #body>

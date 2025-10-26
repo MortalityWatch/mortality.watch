@@ -22,14 +22,14 @@ async function onSubmit() {
     toast.add({
       title: 'Account created!',
       description: 'Welcome to Mortality Watch',
-      color: 'green'
+      color: 'success'
     })
     await router.push('/')
   } catch (error: unknown) {
     toast.add({
       title: 'Registration failed',
-      description: error.data?.message || 'An error occurred',
-      color: 'red'
+      description: (error instanceof Error ? error.message : (error as { data?: { message?: string } })?.data?.message) || 'An error occurred',
+      color: 'error'
     })
   } finally {
     loading.value = false
@@ -48,7 +48,7 @@ async function onSubmit() {
           <UButton
             to="/"
             variant="ghost"
-            color="gray"
+            color="neutral"
             icon="i-lucide-x"
             size="sm"
           />

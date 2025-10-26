@@ -33,13 +33,13 @@ async function saveProfile() {
     toast.add({
       title: 'Profile updated',
       description: 'Your profile has been saved',
-      color: 'green'
+      color: 'success'
     })
   } catch (error: unknown) {
     toast.add({
       title: 'Update failed',
-      description: error.data?.message || 'Failed to update profile',
-      color: 'red'
+      description: (error instanceof Error ? error.message : (error as { data?: { message?: string } })?.data?.message) || 'Failed to update profile',
+      color: 'error'
     })
   } finally {
     savingProfile.value = false
@@ -51,7 +51,7 @@ async function changePassword() {
     toast.add({
       title: 'Passwords do not match',
       description: 'Please make sure both passwords are identical',
-      color: 'red'
+      color: 'error'
     })
     return
   }
@@ -65,7 +65,7 @@ async function changePassword() {
     toast.add({
       title: 'Password changed',
       description: 'Your password has been updated',
-      color: 'green'
+      color: 'success'
     })
     // Clear password fields
     passwordState.currentPassword = ''
@@ -74,8 +74,8 @@ async function changePassword() {
   } catch (error: unknown) {
     toast.add({
       title: 'Password change failed',
-      description: error.data?.message || 'Failed to change password',
-      color: 'red'
+      description: (error instanceof Error ? error.message : (error as { data?: { message?: string } })?.data?.message) || 'Failed to change password',
+      color: 'error'
     })
   } finally {
     savingPassword.value = false
@@ -83,14 +83,14 @@ async function changePassword() {
 }
 
 const tierBadgeColor = computed(() => {
-  if (!user.value) return 'gray'
+  if (!user.value) return 'neutral'
   switch (user.value.tier) {
     case 2:
-      return 'yellow'
+      return 'warning'
     case 1:
-      return 'blue'
+      return 'info'
     default:
-      return 'gray'
+      return 'neutral'
   }
 })
 
@@ -280,7 +280,7 @@ const tierLabel = computed(() => {
               Sign out of your account on this device.
             </p>
             <UButton
-              color="red"
+              color="error"
               variant="soft"
               @click="signOut"
             >

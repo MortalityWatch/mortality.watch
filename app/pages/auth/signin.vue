@@ -22,7 +22,7 @@ async function onSubmit() {
     toast.add({
       title: 'Welcome back!',
       description: 'Signed in successfully',
-      color: 'green'
+      color: 'success'
     })
     // Redirect to where they came from or home
     const redirect = route.query.redirect as string || '/'
@@ -30,8 +30,8 @@ async function onSubmit() {
   } catch (error: unknown) {
     toast.add({
       title: 'Sign in failed',
-      description: error.data?.message || 'Invalid email or password',
-      color: 'red'
+      description: (error instanceof Error ? error.message : (error as { data?: { message?: string } })?.data?.message) || 'Invalid email or password',
+      color: 'error'
     })
   } finally {
     loading.value = false
@@ -50,7 +50,7 @@ async function onSubmit() {
           <UButton
             to="/"
             variant="ghost"
-            color="gray"
+            color="neutral"
             icon="i-lucide-x"
             size="sm"
           />
