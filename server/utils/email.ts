@@ -13,21 +13,29 @@ interface EmailOptions {
  */
 export async function sendEmail({ to, subject, html }: EmailOptions) {
   try {
+    // Use Resend test email in development if domain not verified
+    const fromEmail = process.env.EMAIL_FROM || 'Mortality Watch <onboarding@resend.dev>'
+
+    console.log(`[Email] Sending to: ${to}`)
+    console.log(`[Email] From: ${fromEmail}`)
+    console.log(`[Email] Subject: ${subject}`)
+
     const { data, error } = await resend.emails.send({
-      from: 'Mortality Watch <noreply@mortality.watch>',
+      from: fromEmail,
       to,
       subject,
       html
     })
 
     if (error) {
-      console.error('Email sending failed:', error)
-      throw new Error('Failed to send email')
+      console.error('[Email] Sending failed:', JSON.stringify(error, null, 2))
+      throw new Error(`Failed to send email: ${error.message || JSON.stringify(error)}`)
     }
 
+    console.log('[Email] Sent successfully:', data)
     return data
   } catch (error) {
-    console.error('Email error:', error)
+    console.error('[Email] Error:', error)
     throw error
   }
 }
