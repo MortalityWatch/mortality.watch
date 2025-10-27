@@ -115,7 +115,9 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Setup database for E2E tests
-        run: npm run db:migrate
+        run: |
+          mkdir -p .data
+          npm run db:migrate
 
       - name: Run E2E tests
         run: npm run test:e2e -- --project=chromium
