@@ -3,6 +3,12 @@ import { getStripe, getStripeWebhookSecret, mapStripeStatus } from '../../utils/
 import { db, subscriptions, webhookEvents, users } from '#db'
 import { eq } from 'drizzle-orm'
 
+// User tier constants
+const USER_TIER = {
+  FREE: 1,
+  PRO: 2
+} as const
+
 /**
  * Stripe webhook endpoint
  * Handles all Stripe subscription events with:
@@ -180,9 +186,13 @@ async function handleCheckoutSessionCompleted(
  * Updates subscription status, plan, and billing period
  */
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
-  const customerId = subscription.customer as string
-  const userId = await getUserIdByCustomerId(customerId)
+  const customerId = getCustomerIdFromSubscription(subscription)
+  if (!customerId) {
+    console.error('No customer ID in subscription')
+    return
+  }
 
+  const userId = await getUserIdByCustomerId(customerId)
   if (!userId) {
     console.error(`No user found for customer ${customerId}`)
     return
@@ -196,9 +206,13 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
  * Marks subscription as canceled and downgrades user tier
  */
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
-  const customerId = subscription.customer as string
-  const userId = await getUserIdByCustomerId(customerId)
+  const customerId = getCustomerIdFromSubscription(subscription)
+  if (!customerId) {
+    console.error('No customer ID in subscription')
+    return
+  }
 
+  const userId = await getUserIdByCustomerId(customerId)
   if (!userId) {
     console.error(`No user found for customer ${customerId}`)
     return
@@ -215,7 +229,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     .where(eq(subscriptions.userId, userId))
 
   // Downgrade user tier to free
-  await db.update(users).set({ tier: 1 }).where(eq(users.id, userId))
+  await db.update(users).set({ tier: USER_TIER.FREE }).where(eq(users.id, userId))
 
   console.log(`Subscription canceled for user ${userId}`)
 }
@@ -225,14 +239,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
  * Confirms successful payment and extends subscription period
  */
 async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
-  // Invoice subscription can be string, Subscription object, or null
-  interface InvoiceSubscription {
-    subscription?: string | Stripe.Subscription
-  }
-  const invoiceWithSub = invoice as Stripe.Invoice & InvoiceSubscription
-  const subscriptionId = typeof invoiceWithSub.subscription === 'string'
-    ? invoiceWithSub.subscription
-    : invoiceWithSub.subscription?.id
+  const subscriptionId = getSubscriptionIdFromInvoice(invoice)
   if (!subscriptionId) {
     return
   }
@@ -240,9 +247,13 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
   const stripe = getStripe()
   const subscription = await stripe.subscriptions.retrieve(subscriptionId)
 
-  const customerId = subscription.customer as string
-  const userId = await getUserIdByCustomerId(customerId)
+  const customerId = getCustomerIdFromSubscription(subscription)
+  if (!customerId) {
+    console.error('No customer ID in subscription')
+    return
+  }
 
+  const userId = await getUserIdByCustomerId(customerId)
   if (!userId) {
     console.error(`No user found for customer ${customerId}`)
     return
@@ -257,14 +268,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
  * Marks subscription as past_due
  */
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
-  // Invoice subscription can be string, Subscription object, or null
-  interface InvoiceSubscription {
-    subscription?: string | Stripe.Subscription
-  }
-  const invoiceWithSub = invoice as Stripe.Invoice & InvoiceSubscription
-  const subscriptionId = typeof invoiceWithSub.subscription === 'string'
-    ? invoiceWithSub.subscription
-    : invoiceWithSub.subscription?.id
+  const subscriptionId = getSubscriptionIdFromInvoice(invoice)
   if (!subscriptionId) {
     return
   }
@@ -272,9 +276,13 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   const stripe = getStripe()
   const subscription = await stripe.subscriptions.retrieve(subscriptionId)
 
-  const customerId = subscription.customer as string
-  const userId = await getUserIdByCustomerId(customerId)
+  const customerId = getCustomerIdFromSubscription(subscription)
+  if (!customerId) {
+    console.error('No customer ID in subscription')
+    return
+  }
 
+  const userId = await getUserIdByCustomerId(customerId)
   if (!userId) {
     console.error(`No user found for customer ${customerId}`)
     return
@@ -298,17 +306,11 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
  */
 async function upsertSubscription(userId: number, subscription: Stripe.Subscription) {
   const status = mapStripeStatus(subscription.status)
-  const customerId = subscription.customer as string
+  const customerId = getCustomerIdFromSubscription(subscription)
 
-  // Stripe API uses snake_case for these properties
-  interface SubscriptionTimestamps {
-    current_period_start?: number
-    current_period_end?: number
-    cancel_at_period_end?: boolean
-    canceled_at?: number | null
-    trial_end?: number | null
+  if (!customerId) {
+    throw new Error('Customer ID is required for subscription upsert')
   }
-  const subWithTimestamps = subscription as Stripe.Subscription & SubscriptionTimestamps
 
   // Determine plan type from price ID
   const priceId = subscription.items.data[0]?.price.id
@@ -326,6 +328,21 @@ async function upsertSubscription(userId: number, subscription: Stripe.Subscript
     .where(eq(subscriptions.userId, userId))
     .get()
 
+  // Access Stripe properties with proper typing
+  // These properties use snake_case in the Stripe API
+  const sub = subscription as unknown as {
+    current_period_start?: number
+    current_period_end?: number
+    cancel_at_period_end?: boolean
+    canceled_at?: number | null
+    trial_end?: number | null
+  }
+  const currentPeriodStart = sub.current_period_start
+  const currentPeriodEnd = sub.current_period_end
+  const cancelAtPeriodEnd = sub.cancel_at_period_end
+  const canceledAt = sub.canceled_at
+  const trialEnd = sub.trial_end
+
   const subscriptionData = {
     userId,
     stripeCustomerId: customerId,
@@ -333,18 +350,18 @@ async function upsertSubscription(userId: number, subscription: Stripe.Subscript
     status,
     plan,
     planPriceId: priceId || null,
-    currentPeriodStart: subWithTimestamps.current_period_start
-      ? new Date(subWithTimestamps.current_period_start * 1000)
+    currentPeriodStart: currentPeriodStart
+      ? new Date(currentPeriodStart * 1000)
       : null,
-    currentPeriodEnd: subWithTimestamps.current_period_end
-      ? new Date(subWithTimestamps.current_period_end * 1000)
+    currentPeriodEnd: currentPeriodEnd
+      ? new Date(currentPeriodEnd * 1000)
       : null,
-    cancelAtPeriodEnd: subWithTimestamps.cancel_at_period_end,
-    canceledAt: subWithTimestamps.canceled_at
-      ? new Date(subWithTimestamps.canceled_at * 1000)
+    cancelAtPeriodEnd: cancelAtPeriodEnd || false,
+    canceledAt: canceledAt
+      ? new Date(canceledAt * 1000)
       : null,
-    trialEnd: subWithTimestamps.trial_end
-      ? new Date(subWithTimestamps.trial_end * 1000)
+    trialEnd: trialEnd
+      ? new Date(trialEnd * 1000)
       : null,
     updatedAt: new Date()
   }
@@ -361,7 +378,7 @@ async function upsertSubscription(userId: number, subscription: Stripe.Subscript
   }
 
   // Update user tier based on subscription status
-  const tier: 0 | 1 | 2 = status === 'active' || status === 'trialing' ? 2 : 1
+  const tier: 0 | 1 | 2 = status === 'active' || status === 'trialing' ? USER_TIER.PRO : USER_TIER.FREE
   await db.update(users).set({ tier }).where(eq(users.id, userId))
 
   console.log(
@@ -380,4 +397,38 @@ async function getUserIdByCustomerId(customerId: string): Promise<number | null>
     .get()
 
   return subscription?.userId || null
+}
+
+/**
+ * Type guard to extract subscription ID from invoice
+ * Handles Stripe's polymorphic subscription field
+ */
+function getSubscriptionIdFromInvoice(invoice: Stripe.Invoice): string | null {
+  // Stripe Invoice subscription field is not properly typed in the SDK
+  // It can be string | Subscription | null
+  const sub = (invoice as unknown as { subscription?: string | Stripe.Subscription | null }).subscription
+  if (!sub) {
+    return null
+  }
+
+  if (typeof sub === 'string') {
+    return sub
+  }
+
+  return sub.id || null
+}
+
+/**
+ * Type guard to extract customer ID from subscription
+ */
+function getCustomerIdFromSubscription(subscription: Stripe.Subscription): string | null {
+  if (!subscription.customer) {
+    return null
+  }
+
+  if (typeof subscription.customer === 'string') {
+    return subscription.customer
+  }
+
+  return subscription.customer.id || null
 }
