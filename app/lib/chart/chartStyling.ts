@@ -13,7 +13,7 @@ export const getFont = (
 })
 
 export const getTitleFont = () => getFont(20, 'bold')
-export const getSubtitleFont = () => getFont(14, 'lighter')
+export const getSubtitleFont = () => getFont(14, 'normal')
 export const getLegendFont = () => getFont(12, 'bold')
 export const getTicksFont = () => getFont(12)
 export const getScaleTitleFont = () => getFont(12, 'bold')

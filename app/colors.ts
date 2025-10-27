@@ -1,23 +1,14 @@
 import chroma from 'chroma-js'
 import type { DatasetRaw } from './model'
 import { toDarkTheme } from './lib/colorTransform'
+import { getIsDark } from './composables/useTheme'
 
 // Helper function to safely get dark theme state
+// Returns boolean value for use in non-reactive contexts
 const getIsDarkTheme = () => {
-  if (import.meta.server) return false
-  try {
-    // useColorMode is a Nuxt auto-import, only available on client
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const useColorModeFunc = (globalThis as any).useColorMode
-    if (!useColorModeFunc) return false
-    const colorMode = useColorModeFunc()
-    const isDark = colorMode.value === 'dark'
-    console.log('[colors.ts] getIsDarkTheme():', isDark, 'colorMode:', colorMode.value)
-    return isDark
-  } catch (e) {
-    console.error('[colors.ts] Error getting dark theme:', e)
-    return false
-  }
+  const value = getIsDark()
+  console.log('[colors.ts] getIsDarkTheme():', value)
+  return value
 }
 
 export const isLightColor = (color: string) => {

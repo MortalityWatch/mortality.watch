@@ -159,8 +159,8 @@ export async function renderChart(
           try {
             const qrSrc = await QRCode.toDataURL(qrCodeUrl as string, {
               color: {
-                dark: '#000000',
-                light: '#ffffff'
+                dark: '#000000', // Black for server-side rendering (default)
+                light: '#00000000' // Transparent background
               },
               width: 120
             })

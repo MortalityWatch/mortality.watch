@@ -1,41 +1,44 @@
 import chroma from 'chroma-js'
 import { toDarkTheme } from '../colorTransform'
+import { getIsDark } from '~/composables/useTheme'
 
 // Helper function to safely get dark theme state
-const getIsDarkTheme = () => {
-  if (import.meta.server) return false
-  try {
-    // useColorMode is a Nuxt auto-import, only available on client
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const useColorModeFunc = (globalThis as any).useColorMode
-    if (!useColorModeFunc) return false
-    const colorMode = useColorModeFunc()
-    const isDark = colorMode.value === 'dark'
-    console.log('[chartColors.ts] getIsDarkTheme():', isDark, 'colorMode:', colorMode.value)
-    return isDark
-  } catch (e) {
-    console.error('[chartColors.ts] Error getting dark theme:', e)
-    return false
-  }
+// Returns boolean value for use in non-reactive contexts
+export const getIsDarkTheme = () => {
+  const value = getIsDark()
+  console.log('[chartColors.ts] getIsDarkTheme():', value)
+  return value
 }
 
-export const textColor = (light = !getIsDarkTheme()) =>
-  light ? '#25304a' : '#ffffff'
+export const textColor = (isDark?: boolean) => {
+  const dark = isDark !== undefined ? isDark : getIsDarkTheme()
+  return dark ? '#ffffff' : '#25304a'
+}
 
-export const textSoftColor = () => (!getIsDarkTheme() ? '#434a5d' : '#ffffff')
+export const textSoftColor = (isDark?: boolean) => {
+  const dark = isDark !== undefined ? isDark : getIsDarkTheme()
+  return dark ? '#9ca3af' : '#6b7280' // light gray in dark mode, dark gray in light mode
+}
 
-export const textStrongColor = () =>
-  !getIsDarkTheme() ? '#4a4a4a' : '#ffffff'
+export const textStrongColor = (isDark?: boolean) => {
+  const dark = isDark !== undefined ? isDark : getIsDarkTheme()
+  return dark ? '#ffffff' : '#000000'
+}
 
 export const isLightColor = (color: string) => {
   const hsl = hexToHsl(color)
   return (hsl[2] || 0) >= (!getIsDarkTheme() ? 0.3 : 0.7)
 }
 
-export const borderColor = () => (!getIsDarkTheme() ? '#e0e6fb' : '#2a3041')
+export const borderColor = (isDark?: boolean) => {
+  const dark = isDark !== undefined ? isDark : getIsDarkTheme()
+  return dark ? '#2a3041' : '#e0e6fb'
+}
 
-export const backgroundColor = () =>
-  !getIsDarkTheme() ? '#ffffff' : '#111827'
+export const backgroundColor = (isDark?: boolean) => {
+  const dark = isDark !== undefined ? isDark : getIsDarkTheme()
+  return dark ? '#111827' : '#ffffff'
+}
 
 export const getColorPalette = (
   isPopulationType: boolean,

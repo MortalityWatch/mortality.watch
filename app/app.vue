@@ -37,6 +37,6 @@ useSeoMeta({
       <NuxtPage />
     </NuxtLayout>
 
-    <UNotifications />
+    <!-- Toast notifications are handled by useToast() composable in Nuxt UI v4 -->
   </UApp>
 </template>

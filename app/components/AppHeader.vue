@@ -20,6 +20,7 @@ const items = computed(() => [{
 }])
 
 const { isIncognito } = useIncognitoMode()
+const { isAuthenticated } = useAuth()
 </script>
 
 <template>
@@ -43,7 +44,26 @@ const { isIncognito } = useIncognitoMode()
     <template #right>
       <UColorModeButton />
 
-      <!-- Authentication buttons removed -->
+      <!-- Authentication buttons -->
+      <template v-if="isAuthenticated">
+        <UButton
+          to="/profile"
+          variant="ghost"
+          icon="i-lucide-user"
+          aria-label="Go to profile"
+        />
+      </template>
+      <template v-else>
+        <UButton
+          to="/login"
+          variant="ghost"
+          label="Sign In"
+        />
+        <UButton
+          to="/signup"
+          label="Sign Up"
+        />
+      </template>
     </template>
 
     <template #body>

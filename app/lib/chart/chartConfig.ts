@@ -21,7 +21,6 @@ import {
   borderColor,
   getColorPalette,
   getGradientColor,
-  isLightColor,
   textColor,
   textSoftColor,
   textStrongColor
@@ -83,7 +82,8 @@ export const makeBarLineChartConfig = (
   isPopulationType: boolean,
   showQrCode: boolean = true,
   showLogo: boolean = true,
-  decimals: string = 'auto'
+  decimals: string = 'auto',
+  isDark?: boolean
 ) => {
   const showDecimals = !isDeathsType && !isPopulationType
   return {
@@ -93,7 +93,7 @@ export const makeBarLineChartConfig = (
         beforeDraw: (chart: Chart) => {
           const { ctx } = chart
           ctx.save()
-          ctx.fillStyle = backgroundColor()
+          ctx.fillStyle = backgroundColor(isDark)
           ctx.fillRect(0, 0, chart.width, chart.height)
           ctx.restore()
         }
@@ -124,19 +124,19 @@ export const makeBarLineChartConfig = (
         title: {
           display: true,
           text: data.title,
-          color: textColor(),
+          color: textColor(isDark),
           font: getTitleFont()
         },
         subtitle: {
           display: true,
           text: data.subtitle,
-          color: textStrongColor(),
+          color: textSoftColor(isDark),
           font: getSubtitleFont(),
           position: 'bottom'
         },
         legend: {
           labels: {
-            color: textColor(),
+            color: textColor(isDark),
             filter: (item: LegendItem): boolean => item.text.length > 0,
             font: getLegendFont()
           }
@@ -183,11 +183,9 @@ export const makeBarLineChartConfig = (
             return showLabels && hasLabels && (isErrorPoint || hasValue)
           },
           backgroundColor: bgColor,
-          color: (context: Context) => {
-            // In dark mode, use white text for better visibility
-            const isDark = textColor() === '#ffffff'
-            if (isDark) return '#ffffff'
-            return textColor(isLightColor(bgColor(context)))
+          color: () => {
+            // White in dark mode, black in light mode
+            return isDark ? '#ffffff' : '#000000'
           },
           formatter: (x: number | ChartErrorDataPoint) => {
             let label = ''
@@ -222,14 +220,14 @@ export const makeBarLineChartConfig = (
           title: {
             display: true,
             text: data.xtitle,
-            color: textStrongColor(),
+            color: textStrongColor(isDark),
             font: getScaleTitleFont()
           },
           grid: {
-            color: borderColor()
+            color: borderColor(isDark)
           },
           ticks: {
-            color: textSoftColor(),
+            color: textSoftColor(isDark),
             font: getTicksFont()
           }
         },
@@ -239,17 +237,17 @@ export const makeBarLineChartConfig = (
           title: {
             display: true,
             text: data.ytitle,
-            color: textStrongColor(),
+            color: textStrongColor(isDark),
             font: getScaleTitleFont()
           },
           grid: {
             lineWidth: (context: { tick: string }) => {
               return context.tick ? 2 : 1
             },
-            color: borderColor()
+            color: borderColor(isDark)
           },
           ticks: {
-            color: textSoftColor(),
+            color: textSoftColor(isDark),
             font: getTicksFont(),
             callback: function (
               this: Scale,
@@ -288,6 +286,7 @@ export const makeMatrixChartConfig = (
   isPopulationType: boolean,
   showQrCode: boolean = true,
   showLogo: boolean = true,
+  isDark?: boolean,
   decimals: string = 'auto'
 ) => {
   const config = makeBarLineChartConfig(
@@ -299,7 +298,8 @@ export const makeMatrixChartConfig = (
     isPopulationType,
     showQrCode,
     showLogo,
-    decimals
+    decimals,
+    isDark
   ) as unknown as ChartJSConfig<'matrix', MortalityMatrixDataPoint[]>
 
   config.options!.scales = {
@@ -307,13 +307,13 @@ export const makeMatrixChartConfig = (
       title: {
         display: true,
         text: data.xtitle,
-        color: textStrongColor(),
+        color: textStrongColor(isDark),
         font: getScaleTitleFont()
       },
       type: 'category',
       labels: data.labels,
       ticks: {
-        color: textSoftColor(),
+        color: textSoftColor(isDark),
         font: getTicksFont()
       },
       grid: { display: false }
@@ -322,19 +322,21 @@ export const makeMatrixChartConfig = (
       title: {
         display: true,
         text: 'Jurisdiction',
-        color: textStrongColor(),
+        color: textStrongColor(isDark),
         font: getScaleTitleFont()
       },
       type: 'category',
       offset: true,
       ticks: {
-        color: textSoftColor(),
+        color: textSoftColor(isDark),
         font: getTicksFont()
       },
       grid: { display: false }
     }
   }
   const matrixData = makeMatrixData(data)
+  // Capture isDark in closure for callbacks
+  const bgColor = backgroundColor(isDark)
   const tileBackgroundColor = (context: Context) => {
     const datapoint = context.dataset.data[
       context.dataIndex
@@ -355,7 +357,7 @@ export const makeMatrixChartConfig = (
     if (isExcess && showPercentage) {
       value = Math.min(1, Math.max(-1, value))
     }
-    if (isNaN(value)) return backgroundColor()
+    if (isNaN(value)) return bgColor
     else
       return getGradientColor(
         getColorPalette(isPopulationType, isLE, isExcess),
@@ -366,13 +368,9 @@ export const makeMatrixChartConfig = (
     display: (context: Context): boolean =>
       showLabels
       && !isNaN((context.dataset.data[context.dataIndex] as MatrixDatapoint).v),
-    color: (context: Context) => {
-      // In dark mode, use white text for better visibility
-      const isDark = textColor() === '#ffffff'
-      if (isDark) return '#ffffff'
-      const color = tileBackgroundColor(context)
-      const isLight = isLightColor(color)
-      return textColor(isLight)
+    color: () => {
+      // White in dark mode, black in light mode
+      return isDark ? '#ffffff' : '#000000'
     },
     formatter: (x: { v: number }) => {
       if (showPercentage) {
