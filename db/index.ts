@@ -22,8 +22,9 @@ function initDb() {
 
 // Export lazy-loaded db instance via getter
 export const db = new Proxy({} as BetterSQLite3Database<typeof schema>, {
-  get(target, prop) {
-    return (initDb() as any)[prop]
+  get(_target, prop) {
+    const db = initDb()
+    return db[prop as keyof BetterSQLite3Database<typeof schema>]
   }
 })
 
