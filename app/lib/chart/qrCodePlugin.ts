@@ -1,4 +1,3 @@
-import { textColor } from './chartColors'
 import type { Chart } from 'chart.js'
 import QRCode from 'qrcode'
 
@@ -9,6 +8,17 @@ const newImage = (src: string): Promise<HTMLImageElement> => {
     img.onerror = reject
     img.src = src
   })
+}
+
+// Helper function to safely get dark theme state
+const getIsDarkTheme = () => {
+  if (import.meta.server) return false
+  try {
+    const colorMode = useColorMode()
+    return colorMode.value === 'dark'
+  } catch {
+    return false
+  }
 }
 
 // Cache for QR code images to prevent flickering
@@ -23,11 +33,12 @@ const drawQRCode = async (chart: Chart, url: string) => {
   const { ctx } = chart
   if (!ctx) return
 
-  // Create cache key based on URL and current text color (theme-aware)
-  const dark = textColor() // Will be white in dark mode, dark blue in light mode
-  const cacheKey = `${url}|${dark}`
+  // QR code should be white in dark mode, black in light mode
+  const isDarkMode = getIsDarkTheme()
+  const qrColor = isDarkMode ? '#ffffff' : '#000000'
+  const cacheKey = `${url}|${qrColor}`
 
-  console.log('[QRCodePlugin] Drawing QR code:', { dark, cacheKey })
+  console.log('[QRCodePlugin] Drawing QR code:', { isDarkMode, qrColor, cacheKey })
 
   // Get or generate QR code
   let qrLogo = qrCodeCache.get(cacheKey)
@@ -35,7 +46,7 @@ const drawQRCode = async (chart: Chart, url: string) => {
     console.log('[QRCodePlugin] Cache miss, generating new QR code')
     const qrSrc = await QRCode.toDataURL(url, {
       color: {
-        dark,
+        dark: qrColor,
         light: '#00000000' // Transparent background
       }
     })

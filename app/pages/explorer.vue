@@ -1488,7 +1488,7 @@ const saveChart = async () => {
 /* sm: tablet portrait - slightly wider */
 @media (min-width: 640px) {
   .chart-wrapper.resizable.auto-mode {
-    aspect-ratio: 16 / 10;
+    aspect-ratio: 4 / 3;
   }
 }
 
@@ -1499,8 +1499,22 @@ const saveChart = async () => {
   }
 }
 
-/* xl: desktop - ultra-wide for time series */
+/* lg: desktop - 16:10 aspect ratio */
+@media (min-width: 1024px) {
+  .chart-wrapper.resizable.auto-mode {
+    aspect-ratio: 16 / 10;
+  }
+}
+
+/* xl: large desktop - 2:1 aspect ratio */
 @media (min-width: 1280px) {
+  .chart-wrapper.resizable.auto-mode {
+    aspect-ratio: 2 / 1;
+  }
+}
+
+/* 2xl: ultra-wide desktop - 21:9 for time series */
+@media (min-width: 1536px) {
   .chart-wrapper.resizable.auto-mode {
     aspect-ratio: 21 / 9;
   }

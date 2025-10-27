@@ -2,7 +2,7 @@ import chroma from 'chroma-js'
 import { toDarkTheme } from '../colorTransform'
 
 // Helper function to safely get dark theme state
-const getIsDarkTheme = () => {
+export const getIsDarkTheme = () => {
   if (import.meta.server) return false
   try {
     // useColorMode is a Nuxt auto-import, only available on client
@@ -26,12 +26,12 @@ export const textColor = (isDark?: boolean) => {
 
 export const textSoftColor = (isDark?: boolean) => {
   const dark = isDark !== undefined ? isDark : getIsDarkTheme()
-  return dark ? '#ffffff' : '#434a5d'
+  return dark ? '#9ca3af' : '#6b7280' // light gray in dark mode, dark gray in light mode
 }
 
 export const textStrongColor = (isDark?: boolean) => {
   const dark = isDark !== undefined ? isDark : getIsDarkTheme()
-  return dark ? '#ffffff' : '#4a4a4a'
+  return dark ? '#ffffff' : '#000000'
 }
 
 export const isLightColor = (color: string) => {

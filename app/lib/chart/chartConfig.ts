@@ -21,7 +21,6 @@ import {
   borderColor,
   getColorPalette,
   getGradientColor,
-  isLightColor,
   textColor,
   textSoftColor,
   textStrongColor
@@ -131,7 +130,7 @@ export const makeBarLineChartConfig = (
         subtitle: {
           display: true,
           text: data.subtitle,
-          color: textStrongColor(isDark),
+          color: textSoftColor(isDark),
           font: getSubtitleFont(),
           position: 'bottom'
         },
@@ -184,11 +183,9 @@ export const makeBarLineChartConfig = (
             return showLabels && hasLabels && (isErrorPoint || hasValue)
           },
           backgroundColor: bgColor,
-          color: (context: Context) => {
-            // In dark mode, use white text for better visibility
-            const isDark = textColor() === '#ffffff'
-            if (isDark) return '#ffffff'
-            return textColor(isLightColor(bgColor(context)))
+          color: () => {
+            // White in dark mode, black in light mode
+            return isDark ? '#ffffff' : '#000000'
           },
           formatter: (x: number | ChartErrorDataPoint) => {
             let label = ''
@@ -371,13 +368,9 @@ export const makeMatrixChartConfig = (
     display: (context: Context): boolean =>
       showLabels
       && !isNaN((context.dataset.data[context.dataIndex] as MatrixDatapoint).v),
-    color: (context: Context) => {
-      // In dark mode, use white text for better visibility
-      const isDark = textColor() === '#ffffff'
-      if (isDark) return '#ffffff'
-      const color = tileBackgroundColor(context)
-      const isLight = isLightColor(color)
-      return textColor(isLight)
+    color: () => {
+      // White in dark mode, black in light mode
+      return isDark ? '#ffffff' : '#000000'
     },
     formatter: (x: { v: number }) => {
       if (showPercentage) {
