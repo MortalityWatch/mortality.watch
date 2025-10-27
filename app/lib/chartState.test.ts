@@ -34,7 +34,7 @@ describe('chartState', () => {
 
       expect(state.countries).toEqual(['USA'])
       expect(state.type).toBe('asmr') // default
-      expect(state.chartType).toBe('yearly') // default
+      expect(state.chartType).toBe('fluseason') // default
       expect(state.isExcess).toBe(false) // default
     })
 
@@ -84,7 +84,7 @@ describe('chartState', () => {
       const state: Partial<ChartState> = {
         countries: ['USA', 'SWE'], // default
         type: 'asmr', // default
-        chartType: 'yearly' // default
+        chartType: 'fluseason' // default
       }
 
       const query = encodeChartState(state)
