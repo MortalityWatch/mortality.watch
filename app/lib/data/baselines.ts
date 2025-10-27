@@ -117,7 +117,7 @@ const calculateBaseline = async (
   }
 
   try {
-    const baseUrl = 'https://rstats.mortality.watch/'
+    const baseUrl = 'https://stats.mortality.watch/'
     const dataParam
       = cumulative && s === 1 ? (all_data as (string | number)[]).join(',') : (bl_data as (string | number)[]).join(',')
     const url

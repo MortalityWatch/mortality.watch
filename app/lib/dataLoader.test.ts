@@ -108,7 +108,7 @@ describe('DataLoader', () => {
         text: async () => mockResponse
       })
 
-      const url = 'https://rstats.mortality.watch/?y=1,2,3&h=5'
+      const url = 'https://stats.mortality.watch/?y=1,2,3&h=5'
       const result = await loader.fetchBaseline(url)
 
       expect(result).toBe(mockResponse)
@@ -126,7 +126,7 @@ describe('DataLoader', () => {
       })
 
       // Implementation throws "HTTP ${status}: ${statusText}"
-      await expect(loader.fetchBaseline('https://rstats.mortality.watch/?y=1,2,3'))
+      await expect(loader.fetchBaseline('https://stats.mortality.watch/?y=1,2,3'))
         .rejects.toThrow('HTTP 503: Service Unavailable')
     })
 
@@ -136,7 +136,7 @@ describe('DataLoader', () => {
 
       global.fetch = vi.fn().mockRejectedValue(abortError)
 
-      await expect(loader.fetchBaseline('https://rstats.mortality.watch/?y=1,2,3'))
+      await expect(loader.fetchBaseline('https://stats.mortality.watch/?y=1,2,3'))
         .rejects.toThrow('Baseline calculation timeout after 10s')
     })
 
@@ -152,7 +152,7 @@ describe('DataLoader', () => {
           text: async () => '{"result":"success"}'
         })
 
-      const result = await loader.fetchBaseline('https://rstats.mortality.watch/?y=1,2,3')
+      const result = await loader.fetchBaseline('https://stats.mortality.watch/?y=1,2,3')
 
       expect(result).toBe('{"result":"success"}')
       expect(global.fetch).toHaveBeenCalledTimes(3)
@@ -162,7 +162,7 @@ describe('DataLoader', () => {
       const networkError = new Error('Network error')
       global.fetch = vi.fn().mockRejectedValue(networkError)
 
-      await expect(loader.fetchBaseline('https://rstats.mortality.watch/?y=1,2,3'))
+      await expect(loader.fetchBaseline('https://stats.mortality.watch/?y=1,2,3'))
         .rejects.toThrow('Network error')
 
       // Should try 3 times (initial + 2 retries)
@@ -173,7 +173,7 @@ describe('DataLoader', () => {
       const networkError = new Error('Network error')
       global.fetch = vi.fn().mockRejectedValue(networkError)
 
-      await expect(loader.fetchBaseline('https://rstats.mortality.watch/?y=1,2,3', 0))
+      await expect(loader.fetchBaseline('https://stats.mortality.watch/?y=1,2,3', 0))
         .rejects.toThrow('Network error')
 
       // Should only try once (no retries)
