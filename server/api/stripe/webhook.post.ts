@@ -226,10 +226,13 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
  */
 async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
   // Invoice subscription can be string, Subscription object, or null
-  const invoiceAny = invoice as any
-  const subscriptionId = typeof invoiceAny.subscription === 'string'
-    ? invoiceAny.subscription
-    : invoiceAny.subscription?.id
+  interface InvoiceSubscription {
+    subscription?: string | Stripe.Subscription
+  }
+  const invoiceWithSub = invoice as Stripe.Invoice & InvoiceSubscription
+  const subscriptionId = typeof invoiceWithSub.subscription === 'string'
+    ? invoiceWithSub.subscription
+    : invoiceWithSub.subscription?.id
   if (!subscriptionId) {
     return
   }
@@ -255,10 +258,13 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
  */
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   // Invoice subscription can be string, Subscription object, or null
-  const invoiceAny = invoice as any
-  const subscriptionId = typeof invoiceAny.subscription === 'string'
-    ? invoiceAny.subscription
-    : invoiceAny.subscription?.id
+  interface InvoiceSubscription {
+    subscription?: string | Stripe.Subscription
+  }
+  const invoiceWithSub = invoice as Stripe.Invoice & InvoiceSubscription
+  const subscriptionId = typeof invoiceWithSub.subscription === 'string'
+    ? invoiceWithSub.subscription
+    : invoiceWithSub.subscription?.id
   if (!subscriptionId) {
     return
   }
@@ -294,8 +300,15 @@ async function upsertSubscription(userId: number, subscription: Stripe.Subscript
   const status = mapStripeStatus(subscription.status)
   const customerId = subscription.customer as string
 
-  // Cast to any to access properties (Stripe types may vary)
-  const subAny = subscription as any
+  // Stripe API uses snake_case for these properties
+  interface SubscriptionTimestamps {
+    current_period_start?: number
+    current_period_end?: number
+    cancel_at_period_end?: boolean
+    canceled_at?: number | null
+    trial_end?: number | null
+  }
+  const subWithTimestamps = subscription as Stripe.Subscription & SubscriptionTimestamps
 
   // Determine plan type from price ID
   const priceId = subscription.items.data[0]?.price.id
@@ -320,18 +333,18 @@ async function upsertSubscription(userId: number, subscription: Stripe.Subscript
     status,
     plan,
     planPriceId: priceId || null,
-    currentPeriodStart: subAny.current_period_start
-      ? new Date(subAny.current_period_start * 1000)
+    currentPeriodStart: subWithTimestamps.current_period_start
+      ? new Date(subWithTimestamps.current_period_start * 1000)
       : null,
-    currentPeriodEnd: subAny.current_period_end
-      ? new Date(subAny.current_period_end * 1000)
+    currentPeriodEnd: subWithTimestamps.current_period_end
+      ? new Date(subWithTimestamps.current_period_end * 1000)
       : null,
-    cancelAtPeriodEnd: subAny.cancel_at_period_end,
-    canceledAt: subAny.canceled_at
-      ? new Date(subAny.canceled_at * 1000)
+    cancelAtPeriodEnd: subWithTimestamps.cancel_at_period_end,
+    canceledAt: subWithTimestamps.canceled_at
+      ? new Date(subWithTimestamps.canceled_at * 1000)
       : null,
-    trialEnd: subAny.trial_end
-      ? new Date(subAny.trial_end * 1000)
+    trialEnd: subWithTimestamps.trial_end
+      ? new Date(subWithTimestamps.trial_end * 1000)
       : null,
     updatedAt: new Date()
   }

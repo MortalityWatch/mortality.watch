@@ -23,8 +23,8 @@ export default defineEventHandler(async (event) => {
     }
 
     // Check if subscription is active or trialing
-    const isActive =
-      subscription.status === 'active' || subscription.status === 'trialing'
+    const isActive
+      = subscription.status === 'active' || subscription.status === 'trialing'
 
     // Calculate days remaining if active
     let daysRemaining: number | null = null
