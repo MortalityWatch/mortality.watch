@@ -6,7 +6,7 @@
     <!-- Show upgrade prompt if locked and showUpgradePrompt is true -->
     <div
       v-else-if="showUpgradePrompt"
-      class="feature-locked"
+      class="flex flex-col items-center gap-4 p-6 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900"
     >
       <UIcon
         name="i-heroicons-lock-closed"
@@ -29,7 +29,7 @@
     <!-- Show disabled state with optional custom slot -->
     <div
       v-else
-      class="feature-disabled"
+      class="relative"
     >
       <slot
         name="disabled"
@@ -68,13 +68,3 @@ const {
   getFeatureUpgradeCTA
 } = useFeatureAccess()
 </script>
-
-<style scoped>
-.feature-locked {
-  @apply flex flex-col items-center gap-3 p-6 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900;
-}
-
-.feature-disabled {
-  @apply relative;
-}
-</style>
