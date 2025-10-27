@@ -1,4 +1,4 @@
-import { textColor } from '../../colors'
+import { textColor } from './chartColors'
 import type { Chart } from 'chart.js'
 import QRCode from 'qrcode'
 
@@ -23,8 +23,8 @@ const drawQRCode = async (chart: Chart, url: string) => {
   const { ctx } = chart
   if (!ctx) return
 
-  // Create cache key based on URL and current dark color (background is transparent)
-  const dark = textColor()
+  // Create cache key based on URL and current text color (theme-aware)
+  const dark = textColor() // Will be white in dark mode, dark blue in light mode
   const cacheKey = `${url}|${dark}`
 
   console.log('[QRCodePlugin] Drawing QR code:', { dark, cacheKey })
