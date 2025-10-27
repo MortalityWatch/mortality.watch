@@ -48,6 +48,13 @@ const drawLogo = async (chart: Chart) => {
   ctx.drawImage(logo, 10, 10, w, h)
 }
 
+/**
+ * Chart.js plugin to display the site logo as a watermark
+ *
+ * Feature Gate: Controlled by `showLogo` option in chart config
+ * - HIDE_WATERMARK feature (Tier 2 - Pro) allows hiding the logo
+ * - Non-Pro users always see the logo (enforced in makeBarLineChartConfig)
+ */
 export const getLogoPlugin = () => {
   return {
     id: 'LogoPlugin',

@@ -83,8 +83,15 @@ export const makeBarLineChartConfig = (
   showQrCode: boolean = true,
   showLogo: boolean = true,
   decimals: string = 'auto',
-  isDark?: boolean
+  isDark?: boolean,
+  userTier?: number
 ) => {
+  // Feature gating: Only Pro users (tier 2) can hide the watermark/QR code
+  // If user is not Pro, force showLogo and showQrCode to true
+  if (userTier !== undefined && userTier < 2) {
+    showLogo = true
+    showQrCode = true
+  }
   const showDecimals = !isDeathsType && !isPopulationType
   return {
     plugins: [
@@ -287,7 +294,8 @@ export const makeMatrixChartConfig = (
   showQrCode: boolean = true,
   showLogo: boolean = true,
   isDark?: boolean,
-  decimals: string = 'auto'
+  decimals: string = 'auto',
+  userTier?: number
 ) => {
   const config = makeBarLineChartConfig(
     data,
@@ -299,7 +307,8 @@ export const makeMatrixChartConfig = (
     showQrCode,
     showLogo,
     decimals,
-    isDark
+    isDark,
+    userTier
   ) as unknown as ChartJSConfig<'matrix', MortalityMatrixDataPoint[]>
 
   config.options!.scales = {

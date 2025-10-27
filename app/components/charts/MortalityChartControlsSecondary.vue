@@ -8,6 +8,9 @@ import { types, chartTypes, chartStyles, standardPopulations, baselineMethods, d
 import { useChartUIState } from '@/composables/useChartUIState'
 import type { ChartStyle } from '@/lib/chart/chartTypes'
 
+// Feature access for tier-based features
+const { can } = useFeatureAccess()
+
 // Props
 const props = defineProps<{
   countries: string[]
@@ -93,7 +96,18 @@ const typesWithLabels = types.map(t => ({ ...t, label: t.name }))
 const chartTypesWithLabels = chartTypes.map(t => ({ ...t, label: t.name }))
 const chartStylesWithLabels = chartStyles.map(t => ({ ...t, label: t.name }))
 const standardPopulationsWithLabels = standardPopulations.map(t => ({ ...t, label: t.name }))
-const baselineMethodsWithLabels = baselineMethods.map(t => ({ ...t, label: t.name }))
+
+// Feature gate: Only registered users (Tier 1+) get access to all baseline methods
+// Public users (Tier 0) only get conservative baseline (mean)
+const baselineMethodsWithLabels = computed(() => {
+  const allMethods = baselineMethods.map(t => ({ ...t, label: t.name }))
+  if (can('ALL_BASELINES')) {
+    return allMethods
+  }
+  // Only show 'mean' method for non-registered users
+  return allMethods.filter(m => m.value === 'mean')
+})
+
 const decimalPrecisionsWithLabels = decimalPrecisions.map(t => ({ ...t, label: t.name }))
 
 // Computed v-models
@@ -118,7 +132,7 @@ const selectedStandardPopulation = computed({
 })
 
 const selectedBaselineMethod = computed({
-  get: () => baselineMethodsWithLabels.find(t => t.value === props.baselineMethod) || baselineMethodsWithLabels[0],
+  get: () => baselineMethodsWithLabels.value.find(t => t.value === props.baselineMethod) || baselineMethodsWithLabels.value[0],
   set: (v: { name: string, value: string, label: string }) => emit('baselineMethodChanged', v.value)
 })
 
@@ -498,15 +512,27 @@ const activeTab = ref('data')
             />
           </div>
 
-          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <label class="text-sm font-medium whitespace-nowrap">Show Logo</label>
-            <USwitch v-model="showLogo" />
-          </div>
+          <!-- Feature gate: Only Pro users can hide watermark -->
+          <FeatureGate
+            feature="HIDE_WATERMARK"
+            silent
+          >
+            <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+              <label class="text-sm font-medium whitespace-nowrap">Show Logo</label>
+              <USwitch v-model="showLogo" />
+            </div>
+          </FeatureGate>
 
-          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <label class="text-sm font-medium whitespace-nowrap">Show QR Code</label>
-            <USwitch v-model="showQrCode" />
-          </div>
+          <!-- Feature gate: Only Pro users can hide QR code -->
+          <FeatureGate
+            feature="HIDE_QR"
+            silent
+          >
+            <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+              <label class="text-sm font-medium whitespace-nowrap">Show QR Code</label>
+              <USwitch v-model="showQrCode" />
+            </div>
+          </FeatureGate>
         </div>
 
         <!-- Chart Options Section -->
@@ -604,18 +630,38 @@ const activeTab = ref('data')
             />
           </div>
 
-          <div
-            v-if="!props.isMatrixChartStyle"
-            class="px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-          >
-            <label class="block mb-2 text-sm font-medium">Colors</label>
-            <div class="overflow-x-auto">
-              <MultiColorPicker
-                :colors="props.colors || []"
-                @colors-changed="(val) => emit('userColorsChanged', val)"
-              />
+          <!-- Feature gate: Only registered users can customize colors -->
+          <FeatureGate feature="CUSTOM_COLORS">
+            <div
+              v-if="!props.isMatrixChartStyle"
+              class="px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+            >
+              <label class="block mb-2 text-sm font-medium">Colors</label>
+              <div class="overflow-x-auto">
+                <MultiColorPicker
+                  :colors="props.colors || []"
+                  @colors-changed="(val) => emit('userColorsChanged', val)"
+                />
+              </div>
             </div>
-          </div>
+            <template #disabled="{ message }">
+              <div
+                v-if="!props.isMatrixChartStyle"
+                class="px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 opacity-50"
+              >
+                <label class="block mb-2 text-sm font-medium">
+                  Colors
+                  <UIcon
+                    name="i-heroicons-lock-closed"
+                    class="text-gray-400 ml-1 inline size-3"
+                  />
+                </label>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  {{ message }}
+                </p>
+              </div>
+            </template>
+          </FeatureGate>
         </div>
       </div>
     </div>
