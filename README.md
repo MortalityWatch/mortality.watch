@@ -35,6 +35,7 @@ Visit http://localhost:3000
   - [Offline Development](#offline-development)
   - [Available Scripts](#available-scripts)
 - [Testing](#-testing)
+- [Stripe Subscription Setup](#-stripe-subscription-setup)
 - [Deployment](#-deployment)
 - [Project Structure](#-project-structure)
 - [Documentation](#-documentation)
@@ -167,7 +168,23 @@ NUXT_PUBLIC_USE_LOCAL_CACHE=true
 
 # Development countries (subset for offline work)
 NUXT_PUBLIC_DEV_COUNTRIES=USA,SWE,DEU
+
+# Email (Resend)
+EMAIL_HOST_PASSWORD=your_resend_api_key
+EMAIL_FROM=Mortality Watch <noreply@mortality.watch>
+
+# Error tracking (optional)
+SENTRY_DSN=your_sentry_dsn
+
+# Stripe (for subscriptions)
+STRIPE_PUBLISHABLE_KEY=pk_test_... # or pk_live_... for production
+STRIPE_SECRET_KEY=sk_test_...      # or sk_live_... for production
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PRICE_MONTHLY=price_...     # Monthly plan price ID
+STRIPE_PRICE_YEARLY=price_...      # Annual plan price ID
 ```
+
+See [Stripe Setup](#stripe-subscription-setup) below for detailed configuration instructions.
 
 ### Offline Development
 
@@ -352,6 +369,145 @@ Git hooks automatically run on commit:
 - TypeScript type checking
 
 Powered by **husky** + **lint-staged**.
+
+---
+
+## 💳 Stripe Subscription Setup
+
+MortalityWatch uses Stripe for subscription payments. Follow these steps to configure Stripe for your deployment:
+
+### 1. Get API Keys
+
+In your [Stripe Dashboard](https://dashboard.stripe.com/):
+
+1. Go to **Developers → API keys**
+2. Copy your **Publishable key** (starts with `pk_live_...` or `pk_test_...`)
+3. Reveal and copy your **Secret key** (starts with `sk_live_...` or `sk_test_...`)
+
+Add to `.env`:
+```bash
+STRIPE_PUBLISHABLE_KEY=pk_live_...
+STRIPE_SECRET_KEY=sk_live_...
+```
+
+### 2. Create Subscription Products
+
+In your [Stripe Dashboard](https://dashboard.stripe.com/products):
+
+1. Click **Add product**
+2. Create **Monthly Plan**:
+   - Name: `Pro Monthly`
+   - Price: `$9.99/month`
+   - Billing period: `Monthly`
+   - Copy the **Price ID** (starts with `price_...`)
+3. Create **Annual Plan**:
+   - Name: `Pro Annual`
+   - Price: `$99/year`
+   - Billing period: `Yearly`
+   - Copy the **Price ID** (starts with `price_...`)
+
+Add to `.env`:
+```bash
+STRIPE_PRICE_MONTHLY=price_...
+STRIPE_PRICE_YEARLY=price_...
+```
+
+### 3. Set Up Webhook Endpoint
+
+In your [Stripe Dashboard](https://dashboard.stripe.com/webhooks):
+
+1. Click **Add endpoint**
+2. Enter your endpoint URL: `https://mortality.watch/api/stripe/webhook`
+3. Select events to listen for:
+   - `checkout.session.completed`
+   - `customer.subscription.created`
+   - `customer.subscription.updated`
+   - `customer.subscription.deleted`
+   - `invoice.payment_succeeded`
+   - `invoice.payment_failed`
+4. Click **Add endpoint**
+5. Reveal and copy the **Signing secret** (starts with `whsec_...`)
+
+Add to `.env`:
+```bash
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+### 4. Local Development with Stripe
+
+For local testing, use the [Stripe CLI](https://stripe.com/docs/stripe-cli):
+
+```bash
+# Install Stripe CLI
+brew install stripe/stripe-brew/stripe  # macOS
+# or download from https://github.com/stripe/stripe-cli/releases
+
+# Login to your Stripe account
+stripe login
+
+# Forward webhooks to your local server
+stripe listen --forward-to localhost:3000/api/stripe/webhook
+
+# The CLI will output a webhook signing secret
+# Use this secret in your local .env file:
+# STRIPE_WEBHOOK_SECRET=whsec_...
+
+# In another terminal, start your dev server
+npm run dev
+
+# Test a webhook event
+stripe trigger checkout.session.completed
+```
+
+### 5. Test Mode vs Live Mode
+
+Stripe has two modes:
+
+**Test Mode** (for development):
+- Keys start with `pk_test_...` and `sk_test_...`
+- Use test card: `4242 4242 4242 4242`
+- No real charges are made
+
+**Live Mode** (for production):
+- Keys start with `pk_live_...` and `sk_live_...`
+- Real payments are processed
+- Requires activated Stripe account
+
+Toggle between modes in the Stripe Dashboard (top-left corner).
+
+### 6. Verify Setup
+
+After configuration:
+
+1. Start your server: `npm run dev` or deploy to production
+2. Visit `/profile` (requires login)
+3. Click on a subscription plan
+4. Complete test checkout (use test card in test mode)
+5. Verify webhook events in Stripe Dashboard → Developers → Events
+
+### Subscription Features
+
+The Stripe integration includes:
+
+- ✅ **Monthly Plan**: $9.99/month
+- ✅ **Annual Plan**: $99/year (save $20)
+- ✅ **Secure Checkout**: Stripe-hosted checkout page
+- ✅ **Customer Portal**: Self-service subscription management
+- ✅ **Webhook Events**: Automatic subscription status updates
+- ✅ **Idempotency**: Prevents duplicate charges
+- ✅ **Error Recovery**: Failed webhook retry mechanism
+- ✅ **Security**: Webhook signature verification
+
+### API Endpoints
+
+The following Stripe endpoints are available:
+
+- `POST /api/stripe/create-checkout-session` - Start subscription checkout
+- `POST /api/stripe/create-portal-session` - Open customer portal
+- `GET /api/stripe/subscription-status` - Check subscription status
+- `POST /api/stripe/webhook` - Process Stripe webhooks
+- `GET /api/stripe/failed-webhooks` - View failed webhook events (admin)
+- `POST /api/stripe/retry-failed-webhooks` - Retry failed webhooks (admin)
 
 ---
 
