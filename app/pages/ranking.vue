@@ -47,6 +47,11 @@ definePageMeta({
   ssr: false
 })
 
+// Feature access for tier-based features
+// Note: Save ranking functionality will be implemented in Phase 9
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const { can } = useFeatureAccess()
+
 const router = useRouter()
 const route = useRoute()
 

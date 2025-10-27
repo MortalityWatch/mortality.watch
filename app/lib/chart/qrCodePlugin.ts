@@ -54,6 +54,13 @@ const drawQRCode = async (chart: Chart, url: string) => {
   ctx.drawImage(qrLogo, chart.width - s, 0, s, s)
 }
 
+/**
+ * Chart.js plugin to display a QR code linking to the chart
+ *
+ * Feature Gate: Controlled by `qrCodeUrl` option in chart config
+ * - HIDE_QR feature (Tier 2 - Pro) allows hiding the QR code
+ * - Non-Pro users always see the QR code (enforced in makeBarLineChartConfig)
+ */
 export const getQRCodePlugin = () => {
   return {
     id: 'QRCodePlugin',

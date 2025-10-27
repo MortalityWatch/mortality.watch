@@ -89,11 +89,17 @@ describe('app/lib/data/transformations', () => {
     })
 
     it('should handle fetch errors gracefully', async () => {
+      // Suppress console.error for this test
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
       vi.mocked(fetchData).mockRejectedValue(new Error('Network error'))
 
       const result = await updateDataset('weekly', ['USA'], ['0-14'])
 
       expect(result).toEqual({})
+      expect(consoleErrorSpy).toHaveBeenCalled()
+
+      consoleErrorSpy.mockRestore()
     })
 
     it('should respect concurrency limit', async () => {

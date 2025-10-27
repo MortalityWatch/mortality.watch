@@ -8,6 +8,9 @@ import { types, chartTypes, chartStyles, standardPopulations, baselineMethods, d
 import { useChartUIState } from '@/composables/useChartUIState'
 import type { ChartStyle } from '@/lib/chart/chartTypes'
 
+// Feature access for tier-based features
+const { can } = useFeatureAccess()
+
 // Props
 const props = defineProps<{
   countries: string[]
@@ -93,7 +96,18 @@ const typesWithLabels = types.map(t => ({ ...t, label: t.name }))
 const chartTypesWithLabels = chartTypes.map(t => ({ ...t, label: t.name }))
 const chartStylesWithLabels = chartStyles.map(t => ({ ...t, label: t.name }))
 const standardPopulationsWithLabels = standardPopulations.map(t => ({ ...t, label: t.name }))
-const baselineMethodsWithLabels = baselineMethods.map(t => ({ ...t, label: t.name }))
+
+// Feature gate: Only registered users (Tier 1+) get access to all baseline methods
+// Public users (Tier 0) get last value, average, and median methods
+const baselineMethodsWithLabels = computed(() => {
+  const allMethods = baselineMethods.map(t => ({ ...t, label: t.name }))
+  if (can('ALL_BASELINES')) {
+    return allMethods
+  }
+  // Only show 'naive', 'mean' and 'median' methods for non-registered users
+  return allMethods.filter(m => m.value === 'naive' || m.value === 'mean' || m.value === 'median')
+})
+
 const decimalPrecisionsWithLabels = decimalPrecisions.map(t => ({ ...t, label: t.name }))
 
 // Computed v-models
@@ -118,7 +132,7 @@ const selectedStandardPopulation = computed({
 })
 
 const selectedBaselineMethod = computed({
-  get: () => baselineMethodsWithLabels.find(t => t.value === props.baselineMethod) || baselineMethodsWithLabels[0],
+  get: () => baselineMethodsWithLabels.value.find(t => t.value === props.baselineMethod) || baselineMethodsWithLabels.value[0],
   set: (v: { name: string, value: string, label: string }) => emit('baselineMethodChanged', v.value)
 })
 
@@ -221,6 +235,17 @@ const showBaselineOption = chartUIState.showBaselineOption
 
 const baselineMinRange = (method: string) => method === 'mean' ? 0 : 2
 
+// Period length management
+const periodLengthOptions = [
+  { label: '2 years', value: 2 },
+  { label: '3 years', value: 3 },
+  { label: '5 years', value: 5 },
+  { label: '10 years', value: 10 },
+  { label: 'Custom', value: 0 }
+]
+
+const selectedPeriodLength = ref(periodLengthOptions.find(o => o.value === 3) || periodLengthOptions[0])
+
 // Chart presets for dropdown
 const chartPresetOptions = CHART_PRESETS.map(preset => ({
   name: preset.name,
@@ -291,7 +316,7 @@ const activeTab = ref('data')
         <div class="flex flex-col gap-4">
           <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
             <label class="text-sm font-medium whitespace-nowrap">Metric</label>
-            <USelectMenu
+            <UInputMenu
               v-model="selectedType"
               :items="typesWithLabels"
               placeholder="Select the metric"
@@ -323,7 +348,7 @@ const activeTab = ref('data')
 
           <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
             <label class="text-sm font-medium whitespace-nowrap">Period of Time</label>
-            <USelectMenu
+            <UInputMenu
               v-model="selectedChartType"
               :items="chartTypesWithLabels"
               placeholder="Select the period of time"
@@ -338,7 +363,7 @@ const activeTab = ref('data')
             class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
           >
             <label class="text-sm font-medium whitespace-nowrap">Standard Population</label>
-            <USelectMenu
+            <UInputMenu
               v-model="selectedStandardPopulation"
               :items="standardPopulationsWithLabels"
               placeholder="Select the standard population"
@@ -498,29 +523,97 @@ const activeTab = ref('data')
             />
           </div>
 
-          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <label class="text-sm font-medium whitespace-nowrap">Show Logo</label>
-            <USwitch v-model="showLogo" />
-          </div>
+          <!-- Feature gate: Only Pro users can hide watermark -->
+          <FeatureGate feature="HIDE_WATERMARK">
+            <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+              <label class="text-sm font-medium whitespace-nowrap">
+                Show Logo
+              </label>
+              <USwitch v-model="showLogo" />
+            </div>
+            <template #disabled>
+              <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 opacity-50">
+                <label class="text-sm font-medium whitespace-nowrap">
+                  Show Logo
+                  <FeatureBadge
+                    feature="HIDE_WATERMARK"
+                    class="ml-2"
+                  />
+                </label>
+                <USwitch
+                  v-model="showLogo"
+                  disabled
+                />
+              </div>
+            </template>
+          </FeatureGate>
 
-          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <label class="text-sm font-medium whitespace-nowrap">Show QR Code</label>
-            <USwitch v-model="showQrCode" />
-          </div>
+          <!-- Feature gate: Only Pro users can hide QR code -->
+          <FeatureGate feature="HIDE_QR">
+            <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+              <label class="text-sm font-medium whitespace-nowrap">
+                Show QR Code
+              </label>
+              <USwitch v-model="showQrCode" />
+            </div>
+            <template #disabled>
+              <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 opacity-50">
+                <label class="text-sm font-medium whitespace-nowrap">
+                  Show QR Code
+                  <FeatureBadge
+                    feature="HIDE_QR"
+                    class="ml-2"
+                  />
+                </label>
+                <USwitch
+                  v-model="showQrCode"
+                  disabled
+                />
+              </div>
+            </template>
+          </FeatureGate>
         </div>
 
         <!-- Chart Options Section -->
         <div class="mt-6 flex flex-col gap-4">
-          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <label class="text-sm font-medium whitespace-nowrap">Chart Size</label>
-            <USelectMenu
-              v-model="chartPreset"
-              :items="chartPresetOptions"
-              placeholder="Select a size"
-              size="sm"
-              class="flex-1"
-            />
-          </div>
+          <!-- Feature gate: Only Pro users can customize chart size -->
+          <FeatureGate feature="CUSTOM_CHART_SIZE">
+            <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+              <label class="text-sm font-medium whitespace-nowrap">
+                Chart Size
+                <FeatureBadge
+                  feature="CUSTOM_CHART_SIZE"
+                  class="ml-2"
+                />
+              </label>
+              <UInputMenu
+                v-model="chartPreset"
+                :items="chartPresetOptions"
+                placeholder="Select a size"
+                size="sm"
+                class="flex-1"
+              />
+            </div>
+            <template #disabled>
+              <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 opacity-50">
+                <label class="text-sm font-medium whitespace-nowrap">
+                  Chart Size
+                  <FeatureBadge
+                    feature="CUSTOM_CHART_SIZE"
+                    class="ml-2"
+                  />
+                </label>
+                <UInputMenu
+                  v-model="chartPreset"
+                  :items="chartPresetOptions"
+                  placeholder="Select a size"
+                  size="sm"
+                  class="flex-1"
+                  disabled
+                />
+              </div>
+            </template>
+          </FeatureGate>
         </div>
       </div>
 
@@ -528,8 +621,10 @@ const activeTab = ref('data')
       <div v-if="activeTab === 'baseline'">
         <div class="flex flex-col gap-4">
           <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <label class="text-sm font-medium whitespace-nowrap">Method</label>
-            <USelectMenu
+            <label class="text-sm font-medium whitespace-nowrap">
+              Method
+            </label>
+            <UInputMenu
               v-model="selectedBaselineMethod"
               :items="baselineMethodsWithLabels"
               placeholder="Select Baseline Method"
@@ -550,26 +645,60 @@ const activeTab = ref('data')
                   <div class="text-xs text-gray-700 dark:text-gray-300">
                     <strong>Last Value:</strong> Uses the final value from baseline period<br>
                     <strong>Average:</strong> Mean of baseline period<br>
-                    <strong>Linear Regression:</strong> Linear trend projection<br>
-                    <strong>Exponential Smoothing (ETS):</strong> Adaptive trend and seasonality
+                    <strong>Median:</strong> Median of baseline period<br>
+                    <strong>Linear Regression:</strong> Linear trend projection <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">Free</span><br>
+                    <strong>Exponential Smoothing (ETS):</strong> Adaptive trend and seasonality <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">Free</span>
                   </div>
                 </div>
               </template>
             </UPopover>
           </div>
 
+          <!-- Feature upgrade hint for baseline methods -->
+          <div
+            v-if="!can('ALL_BASELINES')"
+            class="px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
+          >
+            <p class="text-xs text-blue-700 dark:text-blue-300">
+              <UIcon
+                name="i-heroicons-information-circle"
+                class="inline-block mr-1 size-3"
+              />
+              Register for free to unlock advanced baseline methods.
+            </p>
+          </div>
+
           <div
             v-if="selectedBaselineMethod"
             class="px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
           >
-            <label class="text-sm font-medium">Period</label>
-            <div class="mt-2">
+            <div class="flex items-center justify-between mb-3">
+              <label class="text-sm font-medium">Period</label>
+              <!-- Period Length Selection -->
+              <div
+                v-if="props.baselineMethod !== 'naive'"
+                class="flex items-center gap-2"
+              >
+                <label class="text-xs text-gray-600 dark:text-gray-400">Length:</label>
+                <UInputMenu
+                  v-model="selectedPeriodLength"
+                  :items="periodLengthOptions"
+                  placeholder="Select period length"
+                  size="xs"
+                  class="w-28"
+                />
+              </div>
+            </div>
+            <div>
               <DateSlider
+                :key="`${props.baselineMethod}-${selectedPeriodLength?.value ?? 3}`"
                 :slider-value="props.baselineSliderValue"
                 :labels="props.labels"
                 :color="specialColor()"
                 :min-range="baselineMinRange(props.baselineMethod)"
                 :single-value="props.baselineMethod === 'naive'"
+                :period-length="selectedPeriodLength?.value ?? 3"
+                :delay-emit="true"
                 @slider-changed="baselineSliderChanged"
               />
             </div>
@@ -582,7 +711,7 @@ const activeTab = ref('data')
         <div class="flex flex-col gap-4">
           <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
             <label class="text-sm font-medium whitespace-nowrap">Chart Type</label>
-            <USelectMenu
+            <UInputMenu
               v-model="selectedChartStyle"
               :items="chartStylesWithLabels"
               placeholder="Select the chart type"
@@ -592,30 +721,84 @@ const activeTab = ref('data')
             />
           </div>
 
-          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <label class="text-sm font-medium whitespace-nowrap">Number Precision</label>
-            <USelectMenu
-              v-model="selectedDecimals"
-              :items="decimalPrecisionsWithLabels"
-              placeholder="Select decimal precision"
-              :disabled="props.isUpdating"
-              size="sm"
-              class="flex-1"
-            />
-          </div>
-
-          <div
-            v-if="!props.isMatrixChartStyle"
-            class="px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-          >
-            <label class="block mb-2 text-sm font-medium">Colors</label>
-            <div class="overflow-x-auto">
-              <MultiColorPicker
-                :colors="props.colors || []"
-                @colors-changed="(val) => emit('userColorsChanged', val)"
+          <!-- Feature gate: Only Pro users can customize number precision -->
+          <FeatureGate feature="CUSTOM_DECIMALS">
+            <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+              <label class="text-sm font-medium whitespace-nowrap">
+                Number Precision
+                <FeatureBadge
+                  feature="CUSTOM_DECIMALS"
+                  class="ml-2"
+                />
+              </label>
+              <UInputMenu
+                v-model="selectedDecimals"
+                :items="decimalPrecisionsWithLabels"
+                placeholder="Select decimal precision"
+                :disabled="props.isUpdating"
+                size="sm"
+                class="flex-1"
               />
             </div>
-          </div>
+            <template #disabled>
+              <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 opacity-50">
+                <label class="text-sm font-medium whitespace-nowrap">
+                  Number Precision
+                  <FeatureBadge
+                    feature="CUSTOM_DECIMALS"
+                    class="ml-2"
+                  />
+                </label>
+                <UInputMenu
+                  v-model="selectedDecimals"
+                  :items="decimalPrecisionsWithLabels"
+                  placeholder="Select decimal precision"
+                  size="sm"
+                  class="flex-1"
+                  disabled
+                />
+              </div>
+            </template>
+          </FeatureGate>
+
+          <!-- Feature gate: Only registered users can customize colors -->
+          <FeatureGate feature="CUSTOM_COLORS">
+            <div
+              v-if="!props.isMatrixChartStyle"
+              class="px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+            >
+              <label class="block mb-2 text-sm font-medium">
+                Colors
+                <FeatureBadge
+                  feature="CUSTOM_COLORS"
+                  class="ml-2"
+                />
+              </label>
+              <div class="overflow-x-auto">
+                <MultiColorPicker
+                  :colors="props.colors || []"
+                  @colors-changed="(val) => emit('userColorsChanged', val)"
+                />
+              </div>
+            </div>
+            <template #disabled="{ message }">
+              <div
+                v-if="!props.isMatrixChartStyle"
+                class="px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 opacity-50"
+              >
+                <label class="block mb-2 text-sm font-medium">
+                  Colors
+                  <FeatureBadge
+                    feature="CUSTOM_COLORS"
+                    class="ml-2"
+                  />
+                </label>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  {{ message }}
+                </p>
+              </div>
+            </template>
+          </FeatureGate>
         </div>
       </div>
     </div>

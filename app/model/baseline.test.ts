@@ -50,24 +50,24 @@ describe('baseline', () => {
 
   describe('defaultBaselineFromDate', () => {
     describe('with naive baseline method', () => {
-      it('should return 2015 W01 for weekly', () => {
-        const labels = ['2010 W01', '2015 W01', '2020 W01']
-        expect(defaultBaselineFromDate('weekly', labels, 'naive')).toBe('2015 W01')
+      it('should return 2019 W01 for weekly', () => {
+        const labels = ['2010 W01', '2019 W01', '2020 W01']
+        expect(defaultBaselineFromDate('weekly', labels, 'naive')).toBe('2019 W01')
       })
 
-      it('should return first label if 2015 format not in labels', () => {
+      it('should return first label if 2019 format not in labels', () => {
         const labels = ['2010 W01', '2011 W01']
         expect(defaultBaselineFromDate('weekly', labels, 'naive')).toBe('2010 W01')
       })
     })
 
     describe('with mean baseline method', () => {
-      it('should return 2017 Jan for monthly', () => {
-        const labels = ['2010 Jan', '2017 Jan', '2020 Jan']
-        expect(defaultBaselineFromDate('monthly', labels, 'mean')).toBe('2017 Jan')
+      it('should return 2016 Jan for monthly', () => {
+        const labels = ['2010 Jan', '2016 Jan', '2020 Jan']
+        expect(defaultBaselineFromDate('monthly', labels, 'mean')).toBe('2016 Jan')
       })
 
-      it('should return first label if 2017 format not in labels', () => {
+      it('should return first label if 2016 format not in labels', () => {
         const labels = ['2010 Jan', '2012 Jan']
         expect(defaultBaselineFromDate('monthly', labels, 'mean')).toBe('2010 Jan')
       })
@@ -109,13 +109,13 @@ describe('baseline', () => {
 
     describe('chart type specific formats', () => {
       it('should handle weekly charts', () => {
-        const labels = ['2017 W01', '2017 W02']
-        expect(defaultBaselineFromDate('weekly', labels, 'mean')).toBe('2017 W01')
+        const labels = ['2016 W01', '2016 W02']
+        expect(defaultBaselineFromDate('weekly', labels, 'mean')).toBe('2016 W01')
       })
 
       it('should handle monthly charts', () => {
-        const labels = ['2017 Jan', '2017 Feb']
-        expect(defaultBaselineFromDate('monthly', labels, 'mean')).toBe('2017 Jan')
+        const labels = ['2016 Jan', '2016 Feb']
+        expect(defaultBaselineFromDate('monthly', labels, 'mean')).toBe('2016 Jan')
       })
 
       it('should handle quarterly charts', () => {
@@ -125,12 +125,12 @@ describe('baseline', () => {
 
       it('should handle midyear charts', () => {
         const labels = ['2014/15', '2015/16', '2016/17']
-        expect(defaultBaselineFromDate('midyear', labels, 'mean')).toBe('2016/17')
+        expect(defaultBaselineFromDate('midyear', labels, 'mean')).toBe('2015/16')
       })
 
       it('should handle fluseason charts', () => {
         const labels = ['2014/15', '2015/16', '2016/17']
-        expect(defaultBaselineFromDate('fluseason', labels, 'mean')).toBe('2016/17')
+        expect(defaultBaselineFromDate('fluseason', labels, 'mean')).toBe('2015/16')
       })
     })
   })
@@ -190,8 +190,8 @@ describe('baseline', () => {
     })
 
     it('should return calculated baseline when it exists in labels', () => {
-      const labels = ['2010 W01', '2015 W01', '2020 W01']
-      expect(defaultBaselineFromDate('weekly', labels, 'naive')).toBe('2015 W01')
+      const labels = ['2010 W01', '2019 W01', '2020 W01']
+      expect(defaultBaselineFromDate('weekly', labels, 'naive')).toBe('2019 W01')
     })
   })
 })

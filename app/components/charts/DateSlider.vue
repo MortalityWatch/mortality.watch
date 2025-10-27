@@ -8,15 +8,35 @@ const props = defineProps<{
   minRange: number
   disabled?: boolean
   singleValue?: boolean // For baseline methods that only need one date (e.g., "Last Value")
+  periodLength?: number // Fixed period length in years (0 = custom/independent sliders)
+  delayEmit?: boolean // If true, only emit on mouse release. If false, emit immediately
 }>()
-const emit = defineEmits(['sliderChanged'])
+const emit = defineEmits(['sliderChanged', 'periodLengthChanged'])
 
-// For single value mode, use the second value (end date) as the selected value
-const sliderIndices = ref<number[]>(
-  props.singleValue
-    ? [props.labels.length - 1, props.labels.length - 1]
-    : [0, props.labels.length - 1]
-)
+// Track if user is actively dragging the slider (only used when delayEmit is true)
+const isDragging = ref(false)
+const pendingEmitValues = ref<string[] | null>(null)
+
+// Initialize slider indices from sliderValue prop
+const getInitialIndices = (): number[] => {
+  if (props.singleValue) {
+    const toIdx = props.labels.indexOf(props.sliderValue[1] ?? '')
+    return [
+      toIdx !== -1 ? toIdx : props.labels.length - 1,
+      toIdx !== -1 ? toIdx : props.labels.length - 1
+    ]
+  }
+
+  const fromIdx = props.labels.indexOf(props.sliderValue[0] ?? '')
+  const toIdx = props.labels.indexOf(props.sliderValue[1] ?? '')
+
+  return [
+    fromIdx !== -1 ? fromIdx : 0,
+    toIdx !== -1 ? toIdx : props.labels.length - 1
+  ]
+}
+
+const sliderIndices = ref<number[]>(getInitialIndices())
 const isUpdatingFromProp = ref(false)
 
 // Handler for single value slider updates
@@ -25,9 +45,63 @@ const handleSingleValueUpdate = (val: unknown) => {
   sliderIndices.value = [numVal, numVal]
 }
 
+// Watch for sliderValue prop changes to sync indices
+watch(() => props.sliderValue, (newValue) => {
+  if (!newValue || newValue.length !== 2) return
+
+  // Don't sync from props while user is actively dragging (prevents jumping)
+  if (props.delayEmit && isDragging.value) {
+    return
+  }
+
+  const fromIdx = props.labels.indexOf(newValue[0] ?? '')
+  const toIdx = props.labels.indexOf(newValue[1] ?? '')
+
+  if (fromIdx !== -1 && toIdx !== -1) {
+    // Only update if indices are different from current
+    if (sliderIndices.value[0] !== fromIdx || sliderIndices.value[1] !== toIdx) {
+      isUpdatingFromProp.value = true
+      sliderIndices.value = [fromIdx, toIdx]
+      prevIndices.value = [fromIdx, toIdx]
+      nextTick(() => {
+        isUpdatingFromProp.value = false
+      })
+    }
+  }
+})
+
+// Watch for periodLength changes to enforce fixed period
+watch(() => props.periodLength, (newPeriodLength) => {
+  if (!newPeriodLength || newPeriodLength === 0 || props.singleValue) return
+
+  // Don't adjust period while user is actively dragging (prevents jumping)
+  if (props.delayEmit && isDragging.value) {
+    return
+  }
+
+  const periodIndices = calculatePeriodIndices(newPeriodLength)
+  const currentSpan = (sliderIndices.value[1] ?? 0) - (sliderIndices.value[0] ?? 0)
+
+  // If current span doesn't match desired period, adjust
+  if (Math.abs(currentSpan - periodIndices) > 1) {
+    isUpdatingFromProp.value = true
+    const newEndIdx = Math.min((sliderIndices.value[0] ?? 0) + periodIndices, props.labels.length - 1)
+    sliderIndices.value = [sliderIndices.value[0] ?? 0, newEndIdx]
+    prevIndices.value = [...sliderIndices.value]
+    nextTick(() => {
+      isUpdatingFromProp.value = false
+    })
+  }
+})
+
 // Watch for label changes (e.g., when sliderStart changes)
 watch(() => props.labels, (newLabels) => {
   if (!newLabels || newLabels.length === 0) return
+
+  // Don't sync from props while user is actively dragging (prevents jumping)
+  if (props.delayEmit && isDragging.value) {
+    return
+  }
 
   // Update slider indices based on current sliderValue
   const from = props.sliderValue[0]
@@ -104,6 +178,20 @@ watch(() => props.labels, (newLabels) => {
 // communicates changes outward via the sliderChanged emit.
 // We only sync from props during initial mount (handled by labels watcher)
 
+// Calculate period length in indices based on labels
+const calculatePeriodIndices = (years: number): number => {
+  if (years === 0 || !props.labels.length) return 0
+
+  // Count unique years in labels
+  const uniqueYears = Array.from(new Set(props.labels.map(l => l.substring(0, 4))))
+  const labelsPerYear = Math.round(props.labels.length / uniqueYears.length)
+
+  return years * labelsPerYear
+}
+
+// Previous indices to detect which handle moved
+const prevIndices = ref<number[]>([...sliderIndices.value])
+
 // Convert indices back to string values when user changes slider
 watch(sliderIndices, (newIndices) => {
   if (isUpdatingFromProp.value) {
@@ -114,17 +202,79 @@ watch(sliderIndices, (newIndices) => {
     // For single value mode, use the first index for both values
     const idx = newIndices[0]
     const value = (idx !== undefined ? props.labels[idx] : undefined) || props.labels[props.labels.length - 1] || ''
-    emit('sliderChanged', [value, value])
+
+    // Store pending values but don't emit yet if dragging (only when delayEmit is true)
+    if (props.delayEmit && isDragging.value) {
+      pendingEmitValues.value = [value, value]
+    } else {
+      emit('sliderChanged', [value, value])
+    }
   } else {
-    const idx0 = newIndices[0]
-    const idx1 = newIndices[1]
+    let idx0 = newIndices[0] ?? 0
+    let idx1 = newIndices[1] ?? props.labels.length - 1
+
+    // Handle fixed period length mode
+    if (props.periodLength && props.periodLength > 0) {
+      const periodIndices = calculatePeriodIndices(props.periodLength)
+
+      // Determine which handle moved
+      const startMoved = idx0 !== prevIndices.value[0]
+      const endMoved = idx1 !== prevIndices.value[1]
+
+      if (startMoved && !endMoved) {
+        // Start handle moved - adjust end handle
+        idx1 = Math.min(idx0 + periodIndices, props.labels.length - 1)
+      } else if (endMoved && !startMoved) {
+        // End handle moved - adjust start handle
+        idx0 = Math.max(idx1 - periodIndices, 0)
+      }
+
+      // Update indices if they changed
+      if (idx0 !== newIndices[0] || idx1 !== newIndices[1]) {
+        isUpdatingFromProp.value = true
+        sliderIndices.value = [idx0, idx1]
+        nextTick(() => {
+          isUpdatingFromProp.value = false
+        })
+        prevIndices.value = [idx0, idx1]
+        return
+      }
+    }
+
+    // Update previous indices
+    prevIndices.value = [idx0, idx1]
+
+    // Ensure indices are sorted before emitting
+    const minIdx = Math.min(idx0 ?? 0, idx1 ?? 0)
+    const maxIdx = Math.max(idx0 ?? 0, idx1 ?? 0)
     const values = [
-      (idx0 !== undefined ? props.labels[idx0] : undefined) || props.labels[0] || '',
-      (idx1 !== undefined ? props.labels[idx1] : undefined) || props.labels[props.labels.length - 1] || ''
+      (minIdx !== undefined ? props.labels[minIdx] : undefined) || props.labels[0] || '',
+      (maxIdx !== undefined ? props.labels[maxIdx] : undefined) || props.labels[props.labels.length - 1] || ''
     ]
-    emit('sliderChanged', values)
+
+    // Store pending values but don't emit yet if dragging (only when delayEmit is true)
+    if (props.delayEmit && isDragging.value) {
+      pendingEmitValues.value = values
+    } else {
+      emit('sliderChanged', values)
+    }
   }
 })
+
+// Handle mouse/touch events to detect when user finishes dragging
+const handlePointerDown = () => {
+  isDragging.value = true
+  pendingEmitValues.value = null
+}
+
+const handlePointerUp = () => {
+  isDragging.value = false
+  // Emit pending values if any
+  if (pendingEmitValues.value) {
+    emit('sliderChanged', pendingEmitValues.value)
+    pendingEmitValues.value = null
+  }
+}
 
 // Display current values based on slider indices, not props
 // This ensures the display matches what the slider is actually pointing to
@@ -135,8 +285,11 @@ const currentRange = computed(() => {
   }
   const fromIdx = sliderIndices.value[0]
   const toIdx = sliderIndices.value[1]
-  const from = (fromIdx !== undefined && props.labels[fromIdx]) ? props.labels[fromIdx] : ''
-  const to = (toIdx !== undefined && props.labels[toIdx]) ? props.labels[toIdx] : ''
+  // Ensure indices are sorted to always display in chronological order
+  const minIdx = Math.min(fromIdx ?? 0, toIdx ?? 0)
+  const maxIdx = Math.max(fromIdx ?? 0, toIdx ?? 0)
+  const from = (minIdx !== undefined && props.labels[minIdx]) ? props.labels[minIdx] : ''
+  const to = (maxIdx !== undefined && props.labels[maxIdx]) ? props.labels[maxIdx] : ''
   return from && to ? `${from} - ${to}` : ''
 })
 </script>
@@ -145,6 +298,9 @@ const currentRange = computed(() => {
   <div
     class="date-slider-container"
     :class="{ 'opacity-50 pointer-events-none': disabled }"
+    @pointerdown="handlePointerDown"
+    @pointerup="handlePointerUp"
+    @pointercancel="handlePointerUp"
   >
     <div class="mb-2 text-center text-sm font-medium">
       {{ currentRange }}

@@ -42,6 +42,9 @@ import {
 import { DEFAULT_BASELINE_YEAR, CHART_RESIZE, CHART_PRESETS } from '@/lib/constants'
 import { showToast } from '@/toast'
 
+// Feature access for tier-based features (currently unused but may be needed in the future)
+// const { can, getFeatureUpgradeUrl } = useFeatureAccess()
+
 // State stored in URL params
 const countries = useUrlState(
   stateFieldEncoders.countries.key,
@@ -1354,6 +1357,7 @@ const saveChart = async () => {
 
                 <div class="border-t border-gray-200 dark:border-gray-700" />
 
+                <!-- Save chart (always available) -->
                 <button
                   class="chart-option-button"
                   @click="saveChart"

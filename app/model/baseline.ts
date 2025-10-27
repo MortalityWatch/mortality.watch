@@ -34,15 +34,16 @@ export const defaultBaselineFromDate = (
 
 const baselineStartYear = (
   allChartLabels: string[],
-  baselineMethod: string
+  baselineMethod: 'naive' | 'mean' | 'median' | 'lin_reg' | 'exp' | string
 ): number => {
   if (!allChartLabels || !allChartLabels.length) return 2015
   const val = parseFourDigitNumber(allChartLabels[0] || '')
   switch (baselineMethod) {
     case 'naive':
-      return 2015
+      return 2019 // Last value before COVID
     case 'mean':
-      return 2017
+    case 'median':
+      return 2016 // 2016/17-2018/19 for fluseason (3 seasons)
     case 'lin_reg':
       return 2010
     case 'exp': {
