@@ -220,6 +220,9 @@ const tierLabel = computed(() => {
         </div>
       </UCard>
 
+      <!-- Subscription -->
+      <SubscriptionCard />
+
       <!-- Profile Form -->
       <UCard>
         <template #header>

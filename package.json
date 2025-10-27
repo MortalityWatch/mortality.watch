@@ -38,6 +38,7 @@
     "@nuxt/ui": "^v4.0.0-alpha.0",
     "@sentry/node": "^10.22.0",
     "@standard-schema/spec": "^1.0.0",
+    "@stripe/stripe-js": "^8.1.0",
     "@types/qrcode": "^1.5.6",
     "@vueform/slider": "^2.1.10",
     "@vueuse/nuxt": "^14.0.0",
@@ -58,6 +59,7 @@
     "polished": "^4.3.1",
     "qrcode": "^1.5.4",
     "resend": "^6.2.2",
+    "stripe": "^19.1.0",
     "vue-chartjs": "^5.3.2",
     "zod": "^4.1.12"
   },
