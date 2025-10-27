@@ -119,6 +119,10 @@ jobs:
           mkdir -p .data
           npm run db:migrate
 
+      - name: Build for E2E tests
+        run: npm run build
+        timeout-minutes: 5
+
       - name: Run E2E tests
         run: npm run test:e2e -- --project=chromium
         timeout-minutes: 15
