@@ -118,9 +118,12 @@ watch(sliderIndices, (newIndices) => {
   } else {
     const idx0 = newIndices[0]
     const idx1 = newIndices[1]
+    // Ensure indices are sorted before emitting
+    const minIdx = Math.min(idx0 ?? 0, idx1 ?? 0)
+    const maxIdx = Math.max(idx0 ?? 0, idx1 ?? 0)
     const values = [
-      (idx0 !== undefined ? props.labels[idx0] : undefined) || props.labels[0] || '',
-      (idx1 !== undefined ? props.labels[idx1] : undefined) || props.labels[props.labels.length - 1] || ''
+      (minIdx !== undefined ? props.labels[minIdx] : undefined) || props.labels[0] || '',
+      (maxIdx !== undefined ? props.labels[maxIdx] : undefined) || props.labels[props.labels.length - 1] || ''
     ]
     emit('sliderChanged', values)
   }
@@ -135,8 +138,11 @@ const currentRange = computed(() => {
   }
   const fromIdx = sliderIndices.value[0]
   const toIdx = sliderIndices.value[1]
-  const from = (fromIdx !== undefined && props.labels[fromIdx]) ? props.labels[fromIdx] : ''
-  const to = (toIdx !== undefined && props.labels[toIdx]) ? props.labels[toIdx] : ''
+  // Ensure indices are sorted to always display in chronological order
+  const minIdx = Math.min(fromIdx ?? 0, toIdx ?? 0)
+  const maxIdx = Math.max(fromIdx ?? 0, toIdx ?? 0)
+  const from = (minIdx !== undefined && props.labels[minIdx]) ? props.labels[minIdx] : ''
+  const to = (maxIdx !== undefined && props.labels[maxIdx]) ? props.labels[maxIdx] : ''
   return from && to ? `${from} - ${to}` : ''
 })
 </script>

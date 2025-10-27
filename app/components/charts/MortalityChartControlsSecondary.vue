@@ -98,14 +98,14 @@ const chartStylesWithLabels = chartStyles.map(t => ({ ...t, label: t.name }))
 const standardPopulationsWithLabels = standardPopulations.map(t => ({ ...t, label: t.name }))
 
 // Feature gate: Only registered users (Tier 1+) get access to all baseline methods
-// Public users (Tier 0) only get conservative baseline (mean)
+// Public users (Tier 0) get average and median methods
 const baselineMethodsWithLabels = computed(() => {
   const allMethods = baselineMethods.map(t => ({ ...t, label: t.name }))
   if (can('ALL_BASELINES')) {
     return allMethods
   }
-  // Only show 'mean' method for non-registered users
-  return allMethods.filter(m => m.value === 'mean')
+  // Only show 'mean' and 'median' methods for non-registered users
+  return allMethods.filter(m => m.value === 'mean' || m.value === 'median')
 })
 
 const decimalPrecisionsWithLabels = decimalPrecisions.map(t => ({ ...t, label: t.name }))
@@ -576,12 +576,27 @@ const activeTab = ref('data')
                   <div class="text-xs text-gray-700 dark:text-gray-300">
                     <strong>Last Value:</strong> Uses the final value from baseline period<br>
                     <strong>Average:</strong> Mean of baseline period<br>
+                    <strong>Median:</strong> Median of baseline period<br>
                     <strong>Linear Regression:</strong> Linear trend projection<br>
                     <strong>Exponential Smoothing (ETS):</strong> Adaptive trend and seasonality
                   </div>
                 </div>
               </template>
             </UPopover>
+          </div>
+
+          <!-- Feature upgrade hint for baseline methods -->
+          <div
+            v-if="!can('ALL_BASELINES')"
+            class="px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
+          >
+            <p class="text-xs text-blue-700 dark:text-blue-300">
+              <UIcon
+                name="i-heroicons-information-circle"
+                class="inline-block mr-1 size-3"
+              />
+              Register for free to unlock Last Value, Linear Regression, and Exponential Smoothing baseline methods.
+            </p>
           </div>
 
           <div
