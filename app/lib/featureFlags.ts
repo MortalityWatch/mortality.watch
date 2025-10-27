@@ -82,17 +82,17 @@ export function getUpgradeUrl(
     const requiredTier = FEATURES[feature].tier
 
     if (requiredTier === TIERS.REGISTERED && userTier === TIERS.PUBLIC) {
-      return '/auth/register'
+      return '/signup'
     }
 
     if (requiredTier === TIERS.PRO) {
-      return userTier === TIERS.PUBLIC ? '/auth/register' : '/pro'
+      return userTier === TIERS.PUBLIC ? '/signup' : '/pro'
     }
   }
 
   // Default upgrade path
   if (userTier === TIERS.PUBLIC) {
-    return '/auth/register'
+    return '/signup'
   }
 
   return '/pro'

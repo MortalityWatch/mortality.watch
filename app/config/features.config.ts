@@ -93,13 +93,6 @@ export const FEATURES = {
   // TIER 1 (REGISTERED - FREE) - Extended features
   // ==========================================
 
-  SAVE_CHARTS: {
-    tier: TIERS.REGISTERED,
-    name: 'Save Charts',
-    description: 'Save charts to "My Charts"',
-    category: 'storage'
-  },
-
   CUSTOM_COLORS: {
     tier: TIERS.REGISTERED,
     name: 'Custom Colors',
@@ -138,6 +131,20 @@ export const FEATURES = {
   // ==========================================
   // TIER 2 (PRO - PAID) - Advanced features
   // ==========================================
+
+  CUSTOM_CHART_SIZE: {
+    tier: TIERS.PRO,
+    name: 'Custom Chart Size',
+    description: 'Customize chart dimensions and aspect ratios',
+    category: 'customization'
+  },
+
+  CUSTOM_DECIMALS: {
+    tier: TIERS.PRO,
+    name: 'Custom Number Precision',
+    description: 'Control decimal places in chart values',
+    category: 'customization'
+  },
 
   HIDE_WATERMARK: {
     tier: TIERS.PRO,

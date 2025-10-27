@@ -42,8 +42,8 @@ import {
 import { DEFAULT_BASELINE_YEAR, CHART_RESIZE, CHART_PRESETS } from '@/lib/constants'
 import { showToast } from '@/toast'
 
-// Feature access for tier-based features
-const { can, getFeatureUpgradeUrl } = useFeatureAccess()
+// Feature access for tier-based features (currently unused but may be needed in the future)
+// const { can, getFeatureUpgradeUrl } = useFeatureAccess()
 
 // State stored in URL params
 const countries = useUrlState(
@@ -1357,9 +1357,8 @@ const saveChart = async () => {
 
                 <div class="border-t border-gray-200 dark:border-gray-700" />
 
-                <!-- Feature gate: Saving charts requires registration (Tier 1) -->
+                <!-- Save chart (always available) -->
                 <button
-                  v-if="can('SAVE_CHARTS')"
                   class="chart-option-button"
                   @click="saveChart"
                 >
@@ -1369,28 +1368,6 @@ const saveChart = async () => {
                   />
                   <div class="flex-1 text-left text-sm">
                     Save Chart
-                  </div>
-                  <UIcon
-                    name="i-lucide-chevron-right"
-                    class="w-3 h-3 text-gray-400"
-                  />
-                </button>
-                <button
-                  v-else
-                  class="chart-option-button opacity-60"
-                  @click="navigateTo(getFeatureUpgradeUrl('SAVE_CHARTS'))"
-                >
-                  <UIcon
-                    name="i-lucide-lock-closed"
-                    class="w-4 h-4 flex-shrink-0 text-gray-400"
-                  />
-                  <div class="flex-1 text-left">
-                    <div class="text-sm">
-                      Save Chart
-                    </div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400">
-                      Sign up free to save
-                    </div>
                   </div>
                   <UIcon
                     name="i-lucide-chevron-right"

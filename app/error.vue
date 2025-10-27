@@ -23,7 +23,9 @@ useSeoMeta({
     <UMain>
       <UContainer>
         <UPage>
-          <UError :error="error" />
+          <div class="flex items-center justify-center min-h-[600px]">
+            <UError :error="error" />
+          </div>
         </UPage>
       </UContainer>
     </UMain>
