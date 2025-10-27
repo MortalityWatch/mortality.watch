@@ -15,6 +15,7 @@ export const users = sqliteTable(
     passwordHash: text('password_hash').notNull(),
     firstName: text('first_name'),
     lastName: text('last_name'),
+    displayName: text('display_name'), // User-customizable display name
     name: text('name'), // Legacy field, kept for backward compatibility
     role: text('role', { enum: ['user', 'admin'] })
       .notNull()

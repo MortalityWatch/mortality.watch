@@ -8,7 +8,8 @@ const toast = useToast()
 
 const profileState = reactive({
   firstName: '',
-  lastName: ''
+  lastName: '',
+  displayName: ''
 })
 
 const passwordState = reactive({
@@ -26,6 +27,7 @@ watch(user, (newUser) => {
   if (newUser) {
     profileState.firstName = newUser.firstName || ''
     profileState.lastName = newUser.lastName || ''
+    profileState.displayName = newUser.displayName || ''
   }
 }, { immediate: true })
 
@@ -34,7 +36,8 @@ async function saveProfile() {
   try {
     await updateProfile({
       firstName: profileState.firstName,
-      lastName: profileState.lastName
+      lastName: profileState.lastName,
+      displayName: profileState.displayName
     })
     toast.add({
       title: 'Profile updated',
@@ -234,6 +237,25 @@ const tierLabel = computed(() => {
           class="space-y-4"
           @submit.prevent="saveProfile"
         >
+          <div>
+            <label
+              for="displayName"
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+            >
+              Display Name
+            </label>
+            <UInput
+              id="displayName"
+              v-model="profileState.displayName"
+              type="text"
+              placeholder="Your Display Name"
+              name="displayName"
+            />
+            <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+              This name will be shown on charts you create. If not set, we'll use your first name.
+            </p>
+          </div>
+
           <div>
             <label
               for="firstName"

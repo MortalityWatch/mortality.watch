@@ -1,5 +1,6 @@
 import type { Chart } from 'chart.js'
 import QRCode from 'qrcode'
+import { getIsDark } from '~/composables/useTheme'
 
 const newImage = (src: string): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {
@@ -11,15 +12,7 @@ const newImage = (src: string): Promise<HTMLImageElement> => {
 }
 
 // Helper function to safely get dark theme state
-const getIsDarkTheme = () => {
-  if (import.meta.server) return false
-  try {
-    const colorMode = useColorMode()
-    return colorMode.value === 'dark'
-  } catch {
-    return false
-  }
-}
+const getIsDarkTheme = () => getIsDark()
 
 // Cache for QR code images to prevent flickering
 const qrCodeCache = new Map<string, HTMLImageElement>()

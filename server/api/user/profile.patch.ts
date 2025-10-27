@@ -6,6 +6,7 @@ import { requireAuth, hashPassword } from '../../utils/auth'
 const updateProfileSchema = z.object({
   firstName: z.string().min(1, 'First name is required').max(50, 'First name is too long').optional(),
   lastName: z.string().min(1, 'Last name is required').max(50, 'Last name is too long').optional(),
+  displayName: z.string().max(50, 'Display name is too long').optional(),
   currentPassword: z.string().optional(),
   newPassword: z
     .string()
@@ -29,13 +30,14 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const { firstName, lastName, currentPassword, newPassword } = result.data
+  const { firstName, lastName, displayName, currentPassword, newPassword } = result.data
 
   // Prepare update object
   const updates: {
     updatedAt: Date
     firstName?: string
     lastName?: string
+    displayName?: string | null
     name?: string
     passwordHash?: string
   } = {
@@ -43,13 +45,18 @@ export default defineEventHandler(async (event) => {
   }
 
   // Update firstName if provided
-  if (firstName) {
+  if (firstName !== undefined) {
     updates.firstName = firstName
   }
 
   // Update lastName if provided
-  if (lastName) {
+  if (lastName !== undefined) {
     updates.lastName = lastName
+  }
+
+  // Update displayName if provided (allow empty string to clear it)
+  if (displayName !== undefined) {
+    updates.displayName = displayName || null
   }
 
   // Update legacy name field for backward compatibility

@@ -14,6 +14,7 @@ interface UseAuthReturn {
   updateProfile: (data: {
     firstName?: string
     lastName?: string
+    displayName?: string
     currentPassword?: string
     newPassword?: string
   }) => Promise<void>
@@ -93,7 +94,9 @@ export function useAuth(): UseAuthReturn {
    * Update user profile
    */
   async function updateProfile(data: {
-    name?: string
+    firstName?: string
+    lastName?: string
+    displayName?: string
     currentPassword?: string
     newPassword?: string
   }) {
