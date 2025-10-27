@@ -19,13 +19,20 @@ const getIsDarkTheme = () => {
   }
 }
 
-export const textColor = (light = !getIsDarkTheme()) =>
-  light ? '#25304a' : '#ffffff'
+export const textColor = (isDark?: boolean) => {
+  const dark = isDark !== undefined ? isDark : getIsDarkTheme()
+  return dark ? '#ffffff' : '#25304a'
+}
 
-export const textSoftColor = () => (!getIsDarkTheme() ? '#434a5d' : '#ffffff')
+export const textSoftColor = (isDark?: boolean) => {
+  const dark = isDark !== undefined ? isDark : getIsDarkTheme()
+  return dark ? '#ffffff' : '#434a5d'
+}
 
-export const textStrongColor = () =>
-  !getIsDarkTheme() ? '#4a4a4a' : '#ffffff'
+export const textStrongColor = (isDark?: boolean) => {
+  const dark = isDark !== undefined ? isDark : getIsDarkTheme()
+  return dark ? '#ffffff' : '#4a4a4a'
+}
 
 export const isLightColor = (color: string) => {
   const hsl = hexToHsl(color)

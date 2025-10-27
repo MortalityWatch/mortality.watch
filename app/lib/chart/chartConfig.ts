@@ -83,7 +83,8 @@ export const makeBarLineChartConfig = (
   isPopulationType: boolean,
   showQrCode: boolean = true,
   showLogo: boolean = true,
-  decimals: string = 'auto'
+  decimals: string = 'auto',
+  isDark?: boolean
 ) => {
   const showDecimals = !isDeathsType && !isPopulationType
   return {
@@ -124,19 +125,19 @@ export const makeBarLineChartConfig = (
         title: {
           display: true,
           text: data.title,
-          color: textColor(),
+          color: textColor(isDark),
           font: getTitleFont()
         },
         subtitle: {
           display: true,
           text: data.subtitle,
-          color: textStrongColor(),
+          color: textStrongColor(isDark),
           font: getSubtitleFont(),
           position: 'bottom'
         },
         legend: {
           labels: {
-            color: textColor(),
+            color: textColor(isDark),
             filter: (item: LegendItem): boolean => item.text.length > 0,
             font: getLegendFont()
           }
@@ -222,14 +223,14 @@ export const makeBarLineChartConfig = (
           title: {
             display: true,
             text: data.xtitle,
-            color: textStrongColor(),
+            color: textStrongColor(isDark),
             font: getScaleTitleFont()
           },
           grid: {
             color: borderColor()
           },
           ticks: {
-            color: textSoftColor(),
+            color: textSoftColor(isDark),
             font: getTicksFont()
           }
         },
@@ -239,7 +240,7 @@ export const makeBarLineChartConfig = (
           title: {
             display: true,
             text: data.ytitle,
-            color: textStrongColor(),
+            color: textStrongColor(isDark),
             font: getScaleTitleFont()
           },
           grid: {
@@ -249,7 +250,7 @@ export const makeBarLineChartConfig = (
             color: borderColor()
           },
           ticks: {
-            color: textSoftColor(),
+            color: textSoftColor(isDark),
             font: getTicksFont(),
             callback: function (
               this: Scale,
@@ -288,6 +289,7 @@ export const makeMatrixChartConfig = (
   isPopulationType: boolean,
   showQrCode: boolean = true,
   showLogo: boolean = true,
+  isDark?: boolean,
   decimals: string = 'auto'
 ) => {
   const config = makeBarLineChartConfig(
@@ -299,7 +301,8 @@ export const makeMatrixChartConfig = (
     isPopulationType,
     showQrCode,
     showLogo,
-    decimals
+    decimals,
+    isDark
   ) as unknown as ChartJSConfig<'matrix', MortalityMatrixDataPoint[]>
 
   config.options!.scales = {
@@ -307,13 +310,13 @@ export const makeMatrixChartConfig = (
       title: {
         display: true,
         text: data.xtitle,
-        color: textStrongColor(),
+        color: textStrongColor(isDark),
         font: getScaleTitleFont()
       },
       type: 'category',
       labels: data.labels,
       ticks: {
-        color: textSoftColor(),
+        color: textSoftColor(isDark),
         font: getTicksFont()
       },
       grid: { display: false }
@@ -322,13 +325,13 @@ export const makeMatrixChartConfig = (
       title: {
         display: true,
         text: 'Jurisdiction',
-        color: textStrongColor(),
+        color: textStrongColor(isDark),
         font: getScaleTitleFont()
       },
       type: 'category',
       offset: true,
       ticks: {
-        color: textSoftColor(),
+        color: textSoftColor(isDark),
         font: getTicksFont()
       },
       grid: { display: false }

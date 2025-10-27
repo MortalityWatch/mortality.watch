@@ -58,8 +58,9 @@ const colorMode = useColorMode()
 
 // Make configs reactive so they update when props OR theme changes
 const lineConfig = computed(() => {
-  // Add colorMode.value as dependency to make this reactive to theme changes
-  const _theme = colorMode.value
+  // Pass isDark to config so text colors update with theme
+  const isDark = colorMode.value === 'dark'
+  console.log('[MortalityChart] lineConfig - colorMode.value:', colorMode.value, 'isDark:', isDark)
   if (props.chartStyle !== 'line') return undefined
   return makeBarLineChartConfig(
     props.data,
@@ -70,13 +71,14 @@ const lineConfig = computed(() => {
     props.isPopulationType,
     props.showQrCode,
     props.showLogo,
-    props.decimals
+    props.decimals,
+    isDark
   ) as unknown as ChartJSConfig<'line', (number | null)[]>
 })
 
 const barConfig = computed(() => {
-  // Add colorMode.value as dependency to make this reactive to theme changes
-  const _theme = colorMode.value
+  // Pass isDark to config so text colors update with theme
+  const isDark = colorMode.value === 'dark'
   if (props.chartStyle !== 'bar') return undefined
   return makeBarLineChartConfig(
     props.data,
@@ -87,13 +89,14 @@ const barConfig = computed(() => {
     props.isPopulationType,
     props.showQrCode,
     props.showLogo,
-    props.decimals
+    props.decimals,
+    isDark
   ) as unknown as ChartJSConfig<'bar', (number | null)[]>
 })
 
 const matrixConfig = computed(() => {
-  // Add colorMode.value as dependency to make this reactive to theme changes
-  const _theme = colorMode.value
+  // Pass isDark to config so text colors update with theme
+  const isDark = colorMode.value === 'dark'
   if (props.chartStyle !== 'matrix') return undefined
   return makeMatrixChartConfig(
     props.data,
@@ -106,6 +109,7 @@ const matrixConfig = computed(() => {
     props.isPopulationType,
     props.showQrCode,
     props.showLogo,
+    isDark,
     props.decimals
   ) as unknown as ChartJSConfig<'matrix', MatrixDataPoint[]>
 })
