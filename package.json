@@ -29,7 +29,7 @@
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx scripts/seed-admin.ts",
     "db:reset": "bash scripts/reset-db.sh",
-    "prepare": "husky"
+    "prepare": "node -e \"try{require('husky')}catch{}\""
   },
   "dependencies": {
     "@iconify-json/lucide": "^1.2.70",
