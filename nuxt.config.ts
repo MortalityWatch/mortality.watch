@@ -55,6 +55,12 @@ export default defineNuxtConfig({
     '/test-ranking': { prerender: false }
   },
 
+  // Disable source maps in production to reduce memory usage during build
+  sourcemap: {
+    server: false,
+    client: false
+  },
+
   compatibilityDate: '2025-08-16',
 
   // Security headers

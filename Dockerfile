@@ -1,8 +1,10 @@
 # Dockerfile for Nuxt 4 + Canvas (Server-Side Chart Rendering)
-FROM node:22-alpine
+# Multi-stage build for smaller final image and better caching
 
-# Install canvas native dependencies
-# Required for node-canvas to work in production
+# Build stage
+FROM node:22-alpine AS builder
+
+# Install canvas native dependencies (needed for build)
 RUN apk add --no-cache \
   build-base \
   cairo-dev \
@@ -12,34 +14,48 @@ RUN apk add --no-cache \
   librsvg-dev \
   pixman-dev
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files
+# Copy package files and install dependencies
 COPY package*.json ./
-
-# Install ALL dependencies (needed for build)
 RUN npm ci
 
 # Copy application code
 COPY . .
 
 # Build Nuxt application
-# This creates the .output directory with the Nitro server
-RUN npm run build
+# Set CI=true to skip prerendering during build (pages will be SSR'd at runtime)
+ENV NODE_ENV=production
+RUN CI=true npm run build
 
-# Remove dev dependencies to reduce image size
-RUN npm prune --production
+# Production stage
+FROM node:22-alpine
 
-# Expose port 3000 (default Nuxt port)
-EXPOSE 3000
+# Install only runtime dependencies for canvas
+RUN apk add --no-cache \
+  cairo \
+  pango \
+  jpeg \
+  giflib \
+  librsvg \
+  pixman
+
+WORKDIR /app
+
+# Copy built application and node_modules from builder
+COPY --from=builder /app/.output /app/.output
+COPY --from=builder /app/node_modules /app/node_modules
+COPY --from=builder /app/package*.json ./
 
 # Set environment to production
 ENV NODE_ENV=production
 
-# Health check
+# Default port (can be overridden with -e PORT=xxxx)
+ENV PORT=5000
+
+# Health check (uses PORT env var)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s \
-  CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => r.statusCode === 200 ? process.exit(0) : process.exit(1))"
+  CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 5000) + '/api/health', (r) => r.statusCode === 200 ? process.exit(0) : process.exit(1))"
 
 # Start Nuxt server
 CMD ["node", ".output/server/index.mjs"]
