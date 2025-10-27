@@ -6,7 +6,7 @@ import {
   updateDataset
 } from '@/lib/data'
 import { getFilteredChartData } from '@/lib/chart'
-import { getKeyForType, type NumberEntryFields, type AllChartData, type DatasetRaw } from '@/model'
+import { getKeyForType, type NumberEntryFields, type AllChartData, type DatasetRaw, type Country } from '@/model'
 import type { MortalityChartData } from '@/lib/chart/chartTypes'
 import { DEFAULT_BASELINE_YEAR } from '@/lib/constants'
 import {
@@ -59,7 +59,7 @@ export function useExplorerDataUpdate(
   setDataset: (dataset: DatasetRaw) => void,
   // Other refs
   displayColors: Ref<string[]>,
-  allCountries: Ref<Record<string, unknown>>
+  allCountries: Ref<Record<string, Country>>
 ) {
   const isUpdating = ref<boolean>(false)
   const showLoadingOverlay = ref<boolean>(false)
