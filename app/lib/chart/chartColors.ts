@@ -39,10 +39,15 @@ export const isLightColor = (color: string) => {
   return (hsl[2] || 0) >= (!getIsDarkTheme() ? 0.3 : 0.7)
 }
 
-export const borderColor = () => (!getIsDarkTheme() ? '#e0e6fb' : '#2a3041')
+export const borderColor = (isDark?: boolean) => {
+  const dark = isDark !== undefined ? isDark : getIsDarkTheme()
+  return dark ? '#2a3041' : '#e0e6fb'
+}
 
-export const backgroundColor = () =>
-  !getIsDarkTheme() ? '#ffffff' : '#111827'
+export const backgroundColor = (isDark?: boolean) => {
+  const dark = isDark !== undefined ? isDark : getIsDarkTheme()
+  return dark ? '#111827' : '#ffffff'
+}
 
 export const getColorPalette = (
   isPopulationType: boolean,

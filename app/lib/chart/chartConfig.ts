@@ -94,7 +94,7 @@ export const makeBarLineChartConfig = (
         beforeDraw: (chart: Chart) => {
           const { ctx } = chart
           ctx.save()
-          ctx.fillStyle = backgroundColor()
+          ctx.fillStyle = backgroundColor(isDark)
           ctx.fillRect(0, 0, chart.width, chart.height)
           ctx.restore()
         }
@@ -227,7 +227,7 @@ export const makeBarLineChartConfig = (
             font: getScaleTitleFont()
           },
           grid: {
-            color: borderColor()
+            color: borderColor(isDark)
           },
           ticks: {
             color: textSoftColor(isDark),
@@ -247,7 +247,7 @@ export const makeBarLineChartConfig = (
             lineWidth: (context: { tick: string }) => {
               return context.tick ? 2 : 1
             },
-            color: borderColor()
+            color: borderColor(isDark)
           },
           ticks: {
             color: textSoftColor(isDark),
@@ -338,6 +338,8 @@ export const makeMatrixChartConfig = (
     }
   }
   const matrixData = makeMatrixData(data)
+  // Capture isDark in closure for callbacks
+  const bgColor = backgroundColor(isDark)
   const tileBackgroundColor = (context: Context) => {
     const datapoint = context.dataset.data[
       context.dataIndex
@@ -358,7 +360,7 @@ export const makeMatrixChartConfig = (
     if (isExcess && showPercentage) {
       value = Math.min(1, Math.max(-1, value))
     }
-    if (isNaN(value)) return backgroundColor()
+    if (isNaN(value)) return bgColor
     else
       return getGradientColor(
         getColorPalette(isPopulationType, isLE, isExcess),
