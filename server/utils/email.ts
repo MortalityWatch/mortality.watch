@@ -1,6 +1,18 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.EMAIL_HOST_PASSWORD)
+let resendInstance: Resend | null = null
+
+// Lazy initialization - only create when needed
+function getResend() {
+  if (!resendInstance) {
+    const apiKey = process.env.EMAIL_HOST_PASSWORD
+    if (!apiKey) {
+      throw new Error('EMAIL_HOST_PASSWORD environment variable is not set')
+    }
+    resendInstance = new Resend(apiKey)
+  }
+  return resendInstance
+}
 
 interface EmailOptions {
   to: string
@@ -20,6 +32,7 @@ export async function sendEmail({ to, subject, html }: EmailOptions) {
     console.log(`[Email] From: ${fromEmail}`)
     console.log(`[Email] Subject: ${subject}`)
 
+    const resend = getResend()
     const { data, error } = await resend.emails.send({
       from: fromEmail,
       to,
