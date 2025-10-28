@@ -1,50 +1,351 @@
 import {
-  getAllChartLabels,
   getSourceDescription,
   getStartIndex,
-  loadCountryMetadata, getAllChartData, updateDataset
+  loadCountryMetadata
 } from '@/lib/data'
-import { getFilteredChartData } from '@/lib/chart'
 import { getCamelCase, isMobile } from '@/utils'
 import { reactive, ref, toRaw, unref } from 'vue'
 import type { Serializable } from './serializable'
 import type {
   DatasetRaw,
-  NumberEntryFields,
   AllChartData,
   Country,
   ListType
 } from '@/model'
-import { getChartTypeFromOrdinal, getKeyForType } from '@/model'
+import { getChartTypeFromOrdinal, baselineMethods } from '@/model'
 import { ChartPeriod, type ChartType } from './period'
 import type { LocationQuery } from 'vue-router'
 import { getSeasonString, defaultBaselineFromDate, defaultBaselineToDate } from './baseline'
 import { getColorsForDataset } from '@/colors'
 import type { MortalityChartData } from '@/lib/chart/chartTypes'
-import { StateCore } from './state/StateCore'
 import { StateHelpers } from './state/StateHelpers'
 import { StateSerialization } from './state/StateSerialization'
 import { Defaults } from '@/lib/state/stateSerializer'
+import { createStateProperties, type StateProperties } from './state/stateProperties'
+import { DataService } from '@/services/dataService'
 
-export class State extends StateCore implements Serializable {
-  // Use StateHelpers for all helper methods
-  private _helpers = new StateHelpers()
+/**
+ * State class - Manages chart/explorer state
+ *
+ * Phase 9.3: Simplified architecture using composition over inheritance
+ * - Replaced StateCore's 35+ getter/setter pairs with reactive StateProperties
+ * - Extracted data fetching to DataService
+ * - Improved type safety (no more @ts-expect-error)
+ */
+export class State implements Serializable {
+  // Composition: reactive state properties
+  private _props: StateProperties
 
-  // Use StateSerialization for URL state management
-  private _serializer = new StateSerialization()
+  // Composition: helpers and services
+  private _helpers: StateHelpers
+  private _serializer: StateSerialization
+  private _dataService: DataService
 
   constructor() {
-    super()
-    // Setup helpers with access to state properties
-    Object.defineProperty(this._helpers, 'type', { get: () => this.type })
-    Object.defineProperty(this._helpers, 'chartStyle', { get: () => this.chartStyle })
-    Object.defineProperty(this._helpers, 'chartType', { get: () => this.chartType })
-    Object.defineProperty(this._helpers, 'isExcess', { get: () => this.isExcess })
-    Object.defineProperty(this._helpers, 'cumulative', { get: () => this.cumulative })
-    Object.defineProperty(this._helpers, 'baselineMethod', { get: () => this.baselineMethod })
-    Object.defineProperty(this._helpers, 'showBaseline', { get: () => this.showBaseline })
-    Object.defineProperty(this._helpers, 'standardPopulation', { get: () => this.standardPopulation })
+    // Create reactive state with defaults
+    this._props = createStateProperties(Defaults as Partial<StateProperties>)
+
+    // Initialize helpers with state properties
+    this._helpers = new StateHelpers(this._props)
+
+    // Data service
+    this._dataService = new DataService()
+
+    // Serializer will be initialized in initFromSavedState with allCountries
+    // Use a placeholder that will be replaced
+    this._serializer = {} as StateSerialization
   }
+
+  // ============================================================================
+  // PUBLIC API - Property Accessors (for backward compatibility)
+  // ============================================================================
+
+  // Countries
+  get countries(): string[] {
+    return this._props.countries
+  }
+
+  set countries(val: string[]) {
+    this._props.countries = val
+  }
+
+  // Chart Type
+  get chartType(): string {
+    return this._props.chartType
+  }
+
+  set chartType(val: string) {
+    this._props.chartType = val
+  }
+
+  // Type
+  get type(): string {
+    return this._props.type
+  }
+
+  set type(val: string) {
+    // Side effect: reset age groups for certain types
+    if (val.startsWith('asmr') || val.startsWith('le')) {
+      this._props.ageGroups = ['all']
+    }
+    if (val === 'population') {
+      this._props.isExcess = false
+      this._props.baselineMethod = Defaults.baselineMethod
+    }
+    this._props.type = val
+  }
+
+  // Chart Style
+  get chartStyle(): string {
+    return this._props.chartStyle || (this._props.isExcess ? 'bar' : 'line')
+  }
+
+  set chartStyle(val: string) {
+    this._props.chartStyle = val
+  }
+
+  // Is Excess
+  get isExcess(): boolean {
+    return this._props.isExcess
+  }
+
+  set isExcess(val: boolean) {
+    this._props.isExcess = val
+  }
+
+  // Age Groups
+  get ageGroups(): string[] {
+    if (this.isAsmrType()) return ['all']
+    return this._props.ageGroups
+  }
+
+  set ageGroups(val: string[]) {
+    this._props.ageGroups = val
+  }
+
+  // Standard Population
+  get standardPopulation(): string {
+    return this._props.standardPopulation || (this.countries.length > 1 ? Defaults.standardPopulation : 'country')
+  }
+
+  set standardPopulation(val: string) {
+    this._props.standardPopulation = val
+  }
+
+  // Show Baseline
+  get showBaseline(): boolean {
+    return this._props.showBaseline
+  }
+
+  set showBaseline(val: boolean) {
+    this._props.showBaseline = val
+  }
+
+  // Baseline Method
+  get baselineMethod(): string {
+    if (this._props.baselineMethod) return this._props.baselineMethod
+    // Default logic
+    switch (this.type) {
+      case 'cmr':
+      case 'deaths':
+        return 'lin_reg'
+      default:
+        return Defaults.baselineMethod
+    }
+  }
+
+  set baselineMethod(val: string) {
+    this._props.baselineMethod = val
+  }
+
+  // Cumulative
+  get cumulative(): boolean {
+    if (!this.isExcess) return false
+    return this._props.cumulative
+  }
+
+  set cumulative(val: boolean) {
+    this._props.cumulative = val
+  }
+
+  // Show Total
+  get showTotal(): boolean {
+    if (!this.isBarChartStyle() || !this.cumulative) return false
+    return this._props.showTotal
+  }
+
+  set showTotal(val: boolean) {
+    this._props.showTotal = val
+  }
+
+  // Maximize
+  get maximize(): boolean {
+    if (this.isLogarithmic) return false
+    return this._props.maximize
+  }
+
+  set maximize(val: boolean) {
+    this._props.maximize = val
+  }
+
+  // Show Prediction Interval
+  get showPredictionInterval(): boolean {
+    if (
+      (!this.isExcess && !this.showBaseline)
+      || this.isMatrixChartStyle()
+      || (this.cumulative && !this._helpers.showCumPi())
+    )
+      return false
+
+    if (this._props.showPredictionInterval !== undefined) {
+      return this._props.showPredictionInterval
+    }
+    return this.isExcess ? !Defaults.showPredictionInterval : Defaults.showPredictionInterval
+  }
+
+  set showPredictionInterval(val: boolean) {
+    this._props.showPredictionInterval = val
+  }
+
+  // Show Percentage
+  get showPercentage(): boolean {
+    if (!this.isExcess) return false
+    return this._props.showPercentage ?? (this.isExcess && !this.cumulative)
+  }
+
+  set showPercentage(val: boolean) {
+    this._props.showPercentage = val
+  }
+
+  // Is Logarithmic
+  get isLogarithmic(): boolean {
+    if (this.isMatrixChartStyle() || this.isExcess) return false
+    return this._props.isLogarithmic
+  }
+
+  set isLogarithmic(val: boolean) {
+    this._props.isLogarithmic = val
+  }
+
+  // User Colors
+  get userColors(): string[] | undefined {
+    return this._props.userColors
+  }
+
+  set userColors(val: string[] | undefined) {
+    this._props.userColors = val
+  }
+
+  // Date From (with default logic)
+  get dateFrom(): string {
+    return this._props.dateFrom ?? this._defaultFromDate() ?? ''
+  }
+
+  set dateFrom(val: string | undefined) {
+    this._props.dateFrom = val
+  }
+
+  // Date To (with default logic)
+  get dateTo(): string {
+    return this._props.dateTo ?? this._defaultToDate() ?? ''
+  }
+
+  set dateTo(val: string | undefined) {
+    this._props.dateTo = val
+  }
+
+  // Slider Start (with default logic)
+  get sliderStart(): string {
+    return this._props.sliderStart ?? this._defaultSliderStart() ?? ''
+  }
+
+  set sliderStart(val: string | undefined) {
+    this._props.sliderStart = val
+  }
+
+  // Baseline Date From (with default logic)
+  get baselineDateFrom(): string {
+    if (this._props.baselineDateFrom) return this._props.baselineDateFrom
+    const labels = unref(this.allChartLabels)!
+    return defaultBaselineFromDate(this.chartType as ChartType, labels, this.baselineMethod) ?? ''
+  }
+
+  set baselineDateFrom(val: string | undefined) {
+    this._props.baselineDateFrom = val
+  }
+
+  // Baseline Date To (with default logic)
+  get baselineDateTo(): string {
+    return this._props.baselineDateTo ?? defaultBaselineToDate(this.chartType as ChartType)
+  }
+
+  set baselineDateTo(val: string | undefined) {
+    this._props.baselineDateTo = val
+  }
+
+  // Show Labels (with custom logic)
+  get showLabels(): boolean {
+    const val = this._props.showLabels
+    if (val !== undefined) return val
+    return (
+      Defaults.showLabels
+      && this.allChartData
+      && this.dateToIndex() - this.dateFromIndex() + 1 <= (isMobile() ? 20 : 60)
+    )
+  }
+
+  set showLabels(val: boolean) {
+    this._props.showLabels = val
+  }
+
+  // Computed properties
+  get sliderValue(): string[] {
+    return [this.dateFrom, this.dateTo]
+  }
+
+  set sliderValue(sliderValue: string[]) {
+    if (this.dateFrom !== sliderValue[0]) {
+      this.dateFrom = sliderValue[0]
+    }
+    if (this.dateTo !== sliderValue[1]) {
+      this.dateTo = sliderValue[1]
+    }
+  }
+
+  get baselineSliderValue(): string[] {
+    return [this.baselineDateFrom, this.baselineDateTo]
+  }
+
+  set baselineSliderValue(sliderValue: string[]) {
+    if (this.baselineDateFrom !== sliderValue[0])
+      this.baselineDateFrom = sliderValue[0]
+    if (this.baselineDateTo !== sliderValue[1])
+      this.baselineDateTo = sliderValue[1]
+  }
+
+  // Custom colors getter with normalization logic
+  get colors(): string[] {
+    const defaultColors = getColorsForDataset(this.dataset)
+    if (!this.userColors) return defaultColors
+    if (this.userColors.length > defaultColors.length) {
+      this._props.userColors = this.userColors.slice(0, defaultColors.length)
+    }
+    if (this.userColors.length < defaultColors.length) {
+      this._props.userColors = [
+        ...this.userColors,
+        ...defaultColors.slice(this.userColors.length)
+      ]
+    }
+    return this.userColors
+  }
+
+  // Baseline method entry helper
+  baselineMethodEntry = (): ListType =>
+    baselineMethods.filter(v => v.value === this.baselineMethod)[0] ?? { name: '', value: '' }
+
+  // ============================================================================
+  // DATA PROPERTIES
+  // ============================================================================
 
   // Transitory
   chartOptions = reactive({
@@ -73,27 +374,14 @@ export class State extends StateCore implements Serializable {
   isUpdating = ref(false)
 
   async initFromSavedState(locationQuery: LocationQuery): Promise<void> {
-    // Delegate to StateSerialization module
+    // Load country metadata if needed
     if (!this.allCountries) this.allCountries = await loadCountryMetadata()
 
-    // Setup serializer with access to this instance
-    this._serializer.allCountries = this.allCountries
-    Object.defineProperty(this._serializer, 'countries', { get: () => this.countries })
-    this._serializer.setValue = this.setValue.bind(this)
+    // Initialize serializer with state properties and countries
+    this._serializer = new StateSerialization(this._props, this.allCountries)
 
     // Use the serializer to load state
     await this._serializer.initFromSavedState(locationQuery)
-  }
-
-  override async setValue(prop: string, val: unknown) {
-    const key = prop as keyof State
-    if (isRef(this[key])) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (this[key] as any).value = val
-    } else {
-      // @ts-expect-error - TypeScript can't guarantee this is safe but we know it is
-      this[key] = val
-    }
   }
 
   private configureOptions = () => {
@@ -118,108 +406,14 @@ export class State extends StateCore implements Serializable {
       = !this.isMatrixChartStyle() && !this.isExcess
   }
 
-  // Override dateFrom/dateTo/sliderStart with custom defaults
-  override set dateFrom(val: string | undefined) {
-    this.setValue('_dateFrom', val)
-  }
-
-  override get dateFrom(): string {
-    return unref(this._dateFrom) ?? this._defaultFromDate() ?? ''
-  }
-
-  override set dateTo(val: string | undefined) {
-    this.setValue('_dateTo', val)
-  }
-
-  override get dateTo(): string {
-    return unref(this._dateTo) ?? this._defaultToDate() ?? ''
-  }
-
-  override set sliderStart(val: string | undefined) {
-    this.setValue('_sliderStart', val)
-  }
-
-  override get sliderStart(): string {
-    return unref(this._sliderStart) ?? this._defaultSliderStart() ?? ''
-  }
-
   sliderStartPeriod = () =>
-    getSeasonString(this.chartType, Number(this.sliderStart))
+    getSeasonString(this.chartType as ChartType, Number(this.sliderStart))
 
-  // Override showLabels with custom logic
-  override get showLabels(): boolean {
-    const val = unref(this._showLabels)
-    return val
-      ?? (Defaults.showLabels
-        && this.allChartData
-        && this.dateToIndex() - this.dateFromIndex() + 1 <= (isMobile() ? 20 : 60))
-  }
+  // ============================================================================
+  // HELPER METHODS - Delegate to StateHelpers
+  // ============================================================================
 
-  get sliderValue(): string[] {
-    return [this.dateFrom!, this.dateTo!]
-  }
-
-  set sliderValue(sliderValue: string[]) {
-    if (this.dateFrom !== sliderValue[0]) {
-      this.dateFrom = sliderValue[0]
-    }
-    if (this.dateTo !== sliderValue[1]) {
-      this.dateTo = sliderValue[1]
-    }
-  }
-
-  get baselineSliderValue(): string[] {
-    return [this.baselineDateFrom, this.baselineDateTo]
-  }
-
-  set baselineSliderValue(sliderValue: string[]) {
-    if (this.baselineDateFrom !== sliderValue[0])
-      this.baselineDateFrom = sliderValue[0]
-    if (this.baselineDateTo !== sliderValue[1])
-      this.baselineDateTo = sliderValue[1]
-  }
-
-  // Override baselineDateFrom with custom default
-  override set baselineDateFrom(val: string | undefined) {
-    this.setValue('_baselineDateFrom', val)
-  }
-
-  override get baselineDateFrom(): string {
-    if (this._baselineDateFrom) {
-      const df = unref(this._baselineDateFrom)
-      if (df) return df
-    }
-    const labels = unref(this.allChartLabels)!
-    return defaultBaselineFromDate(this.chartType, labels, this.baselineMethod) ?? ''
-  }
-
-  // Override baselineDateTo with custom default
-  override set baselineDateTo(val: string | undefined) {
-    this.setValue('_baselineDateTo', val)
-  }
-
-  override get baselineDateTo(): string {
-    return unref(this._baselineDateTo) ?? defaultBaselineToDate(this.chartType)
-  }
-
-  // Custom colors getter with normalization logic
-  get colors(): string[] {
-    const defaultColors = getColorsForDataset(this.dataset)
-    if (!this.userColors) return defaultColors
-    if (this.userColors.length > defaultColors.length) {
-      this._userColors.value = this.userColors.slice(0, defaultColors.length)
-    }
-    if (this.userColors.length < defaultColors.length) {
-      this._userColors.value = [
-        ...this.userColors,
-        ...defaultColors.slice(this.userColors.length)
-      ]
-    }
-    return this.userColors
-  }
-
-  // Helper Functions - delegate to StateHelpers and override protected methods
-  protected override isAsmrType = () => this._helpers.isAsmrType()
+  isAsmrType = () => this._helpers.isAsmrType()
 
   isPopulationType = () => this._helpers.isPopulationType()
 
@@ -233,9 +427,9 @@ export class State extends StateCore implements Serializable {
 
   isLineChartStyle = () => this._helpers.isLineChartStyle()
 
-  protected override isBarChartStyle = () => this._helpers.isBarChartStyle()
+  isBarChartStyle = () => this._helpers.isBarChartStyle()
 
-  protected override isMatrixChartStyle = () => this._helpers.isMatrixChartStyle()
+  isMatrixChartStyle = () => this._helpers.isMatrixChartStyle()
 
   isWeeklyChartType = () => this._helpers.isWeeklyChartType()
 
@@ -272,12 +466,16 @@ export class State extends StateCore implements Serializable {
     return this.allChartData.labels.slice(startIdx)
   }
 
-  getBaseKeysForType = (): (keyof NumberEntryFields)[] =>
-    this._helpers.getBaseKeysForType()
+  getBaseKeysForType = () => this._helpers.getBaseKeysForType()
 
   getMaxDateType = () => this._helpers.getMaxDateType()
 
   periodMultiplicatorForType = () => this._helpers.periodMultiplicatorForType()
+
+  // Backwards compatibility check
+  isIsoKey = (str: string) => this._helpers.isIsoKey(str)
+
+  showCumPi = (): boolean => this._helpers.showCumPi()
 
   _defaultFromDate = () => {
     const labels = this.allChartLabels.value!
@@ -339,69 +537,37 @@ export class State extends StateCore implements Serializable {
     if (!labels.includes(this.dateTo)) this.dateTo = undefined
   }
 
-  // Backwards compatibility - delegate to StateHelpers
-  isIsoKey = (str: string) => this._helpers.isIsoKey(str)
-
-  protected override showCumPi = (): boolean => this._helpers.showCumPi()
+  // ============================================================================
+  // DATA UPDATE METHODS
+  // ============================================================================
 
   updateData = async (
     shouldDownloadDataset: boolean,
     shouldUpdateDataset: boolean
   ) => {
     this.isUpdating.value = true
-    if (!this.allCountries) this.allCountries = await loadCountryMetadata()
+    if (!this.allCountries) this.allCountries = await this._dataService.loadCountries()
 
-    if (shouldDownloadDataset) {
-      this.dataset = await updateDataset(
-        this.chartType,
-        this.countries,
-        this.isAsmrType() ? ['all'] : this.ageGroups
-      )
-
-      // All Labels
-      this.allChartLabels.value = getAllChartLabels(
-        this.dataset,
-        this.isAsmrType(),
-        this.ageGroups,
-        this.countries,
-        this.chartType
-      )
-
-      if (this.chartType === 'yearly') {
-        this.allYearlyChartLabels.value = this.allChartLabels.value
-        this.allYearlyChartLabelsUnique.value
-          = this.allChartLabels.value.filter(x => parseInt(x) <= 2017)
-      } else {
-        this.allYearlyChartLabels.value = Array.from(
-          this.allChartLabels.value.map(v => v.substring(0, 4))
-        )
-        this.allYearlyChartLabelsUnique.value = Array.from(
-          new Set(this.allYearlyChartLabels.value)
-        ).filter(x => parseInt(x) <= 2017)
+    // Use DataService to update dataset and chart data
+    this.dataset = await this._dataService.updateData(
+      this._props,
+      this.allCountries,
+      this.dataset,
+      this.allChartLabels,
+      this.allYearlyChartLabels,
+      this.allYearlyChartLabelsUnique,
+      this.allChartData,
+      shouldDownloadDataset,
+      shouldUpdateDataset,
+      {
+        isAsmrType: this.isAsmrType.bind(this),
+        showCumPi: this.showCumPi.bind(this),
+        getBaseKeysForType: this.getBaseKeysForType.bind(this)
       }
-    }
+    )
 
     if (shouldDownloadDataset || shouldUpdateDataset) {
       this.resetBaselineDates()
-
-      // Update all chart specific data
-      const newData = await getAllChartData(
-        getKeyForType(this.type, this.showBaseline, this.standardPopulation)[0] ?? 'deaths',
-        this.chartType,
-        this.dataset,
-        this.allChartLabels.value!,
-        getStartIndex(this.allYearlyChartLabels.value!, this.sliderStart),
-        this.showCumPi(),
-        this.ageGroups,
-        this.countries,
-        this.baselineMethod,
-        this.baselineDateFrom,
-        this.baselineDateTo,
-        this.getBaseKeysForType()
-      )
-      if (this.allChartData) Object.assign(this.allChartData, newData)
-      else this.allChartData = reactive(newData)
-
       this.resetDates()
     }
 
@@ -419,38 +585,21 @@ export class State extends StateCore implements Serializable {
   }
 
   updateFilteredData = async () =>
-    await getFilteredChartData(
-      this.countries,
-      this.standardPopulation,
-      this.ageGroups,
-      this.showPredictionInterval,
-      this.isExcess,
-      this.type,
-      this.cumulative,
-      this.showBaseline,
-      this.baselineMethod,
-      this.baselineDateFrom,
-      this.baselineDateTo,
-      this.showTotal,
-      this.chartType,
-      this.dateFrom,
-      this.dateTo,
-      this.isBarChartStyle(),
+    await this._dataService.getFilteredData(
+      this._props,
       this.allCountries,
-      this.isErrorBarType(),
       this.colors,
-      this.isMatrixChartStyle(),
-      this.showPercentage,
-      this.showCumPi(),
-      this.isAsmrType(),
-      this.maximize,
-      this.showLabels,
-      '', // URL generation placeholder
-      this.isLogarithmic,
-      this.isPopulationType(),
-      this.isDeathsType(),
       this.allChartData.labels!,
-      this.allChartData.data!
+      this.allChartData.data!,
+      {
+        isAsmrType: this.isAsmrType.bind(this),
+        isBarChartStyle: this.isBarChartStyle.bind(this),
+        isMatrixChartStyle: this.isMatrixChartStyle.bind(this),
+        isPopulationType: this.isPopulationType.bind(this),
+        isDeathsType: this.isDeathsType.bind(this),
+        isErrorBarType: this.isErrorBarType.bind(this),
+        showCumPi: this.showCumPi.bind(this)
+      }
     )
 
   handleUpdate = async (key: string) => {
