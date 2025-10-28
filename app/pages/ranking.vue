@@ -16,6 +16,7 @@ import {
   decimalPrecisionItems,
   getKeyForType
 } from '@/model'
+import { ChartPeriod, type ChartType } from '@/model/period'
 import {
   isMobile
 } from '@/utils'
@@ -145,9 +146,12 @@ const { getValidatedRange } = useDateRangeValidation()
 
 // Date Slider
 const sliderValues = computed(() => {
-  const start = getSeasonString(selectedPeriodOfTime.value?.value || 'yearly', parseInt(sliderStart.value))
-  const startIdx = allLabels.value.indexOf(start || '')
-  return startIdx === -1 ? allLabels.value : allLabels.value.slice(startIdx)
+  const chartType = selectedPeriodOfTime.value?.value || 'yearly'
+  const start = getSeasonString(chartType, parseInt(sliderStart.value))
+  // Use ChartPeriod for smart index lookup
+  const period = new ChartPeriod(allLabels.value, chartType as ChartType)
+  const startIdx = period.indexOf(start || '')
+  return allLabels.value.slice(startIdx)
 })
 
 const sliderValue = computed({
@@ -171,9 +175,11 @@ const sliderValue = computed({
     }
 
     // Validate and correct the range if needed
+    const chartType = selectedPeriodOfTime.value?.value || 'yearly'
+    const period = new ChartPeriod(sliderValues.value, chartType as ChartType)
     const validatedRange = getValidatedRange(
       urlRange,
-      sliderValues.value,
+      period,
       { from: defaultFrom, to: defaultTo }
     )
 
@@ -195,8 +201,11 @@ const sliderValue = computed({
 // Baseline
 const baselineSliderValues = () => {
   const labels = allLabels.value
-  const idx = labels.indexOf(sliderStart.value)
-  return idx === -1 ? labels : labels.slice(idx)
+  const chartType = selectedPeriodOfTime.value?.value || 'yearly'
+  // Use ChartPeriod for smart index lookup
+  const period = new ChartPeriod(labels, chartType as ChartType)
+  const idx = period.indexOf(sliderStart.value)
+  return labels.slice(idx)
 }
 
 const selectedBaselineMethod = useUrlObjectState('bm', baselineMethodItems[2] || baselineMethodItems[0]!, baselineMethodItems)
@@ -223,9 +232,11 @@ const baselineSliderValue = computed({
     }
 
     // Validate and correct the range if needed (with minimum span for baseline)
+    const chartType = selectedPeriodOfTime.value?.value || 'yearly'
+    const period = new ChartPeriod(allLabels.value, chartType as ChartType)
     const validatedRange = getValidatedRange(
       urlRange,
-      allLabels.value,
+      period,
       { from: defaultFrom, to: defaultTo },
       MIN_BASELINE_SPAN
     )
@@ -360,7 +371,9 @@ const fetchChartData = async () => {
     baselineTo = defaultBaselineToDate(periodOfTime) || ''
   }
 
-  const baselineStartIdx = allLabels.value.indexOf(baselineFrom)
+  // Use ChartPeriod for smart index lookup
+  const period = new ChartPeriod(allLabels.value, periodOfTime as ChartType)
+  const baselineStartIdx = period.indexOf(baselineFrom)
 
   return await getAllChartData(
     dataKey,
@@ -393,11 +406,13 @@ const loadData = async () => {
   allChartData.value = chartData
   updateProgress.value = 0
 
-  // Calculate date range indices
+  // Calculate date range indices using ChartPeriod
   const dateFrom = sliderValue.value[0]
   const dateTo = sliderValue.value[1]
-  const startIndex = allChartData.value?.labels.indexOf(dateFrom || '') || 0
-  const endIndex = (allChartData.value?.labels.indexOf(dateTo || '') || 0) + 1
+  const chartType = selectedPeriodOfTime.value?.value || 'yearly'
+  const period = new ChartPeriod(allChartData.value?.labels || [], chartType as ChartType)
+  const startIndex = period.indexOf(dateFrom || '')
+  const endIndex = period.indexOf(dateTo || '') + 1
 
   // Prepare labels
   const dataLabels = [...(allChartData.value?.labels.slice(startIndex, endIndex) || [])]
@@ -699,6 +714,7 @@ watch(
                     <DateSlider
                       :slider-value="sliderValue"
                       :labels="sliderValues"
+                      :chart-type="(selectedPeriodOfTime?.value || 'yearly') as ChartType"
                       :color="specialColor()"
                       :min-range="0"
                       @slider-changed="sliderChanged"
@@ -816,6 +832,7 @@ watch(
                     <DateSlider
                       :slider-value="sliderValue"
                       :labels="sliderValues"
+                      :chart-type="(selectedPeriodOfTime?.value || 'yearly') as ChartType"
                       :color="specialColor()"
                       :min-range="0"
                       @slider-changed="sliderChanged"
@@ -842,6 +859,7 @@ watch(
             :baseline-slider-value="baselineSliderValue"
             :baseline-slider-values="baselineSliderValues"
             :green-color="greenColor"
+            :chart-type="(selectedPeriodOfTime?.value || 'yearly') as ChartType"
             @baseline-slider-changed="baselineSliderChanged"
           />
         </div>
@@ -864,6 +882,7 @@ watch(
             :baseline-slider-value="baselineSliderValue"
             :baseline-slider-values="baselineSliderValues"
             :green-color="greenColor"
+            :chart-type="(selectedPeriodOfTime?.value || 'yearly') as ChartType"
             @baseline-slider-changed="baselineSliderChanged"
           />
         </div>

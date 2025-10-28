@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, toRef } from 'vue'
 import { standardPopulationItems, baselineMethodItems, decimalPrecisionItems } from '@/model'
+import type { ChartType } from '@/model/period'
 import { baselineMinRange } from '@/lib/chart'
 import DateSlider from '@/components/charts/DateSlider.vue'
 import { useRankingUIState } from '@/composables/useRankingUIState'
@@ -22,6 +23,7 @@ interface Props {
   baselineSliderValue: string[]
   baselineSliderValues: () => string[]
   greenColor: () => string
+  chartType: ChartType
 }
 
 const props = defineProps<Props>()
@@ -272,6 +274,7 @@ const activeTab = ref('metric')
               <DateSlider
                 :slider-value="baselineSliderValue"
                 :labels="baselineSliderValues()"
+                :chart-type="chartType"
                 :color="greenColor()"
                 :min-range="baselineMinRange(selectedBaselineMethod.value || 'mean')"
                 @slider-changed="(val: string[]) => emit('baselineSliderChanged', val)"

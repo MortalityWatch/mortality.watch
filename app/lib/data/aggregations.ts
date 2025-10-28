@@ -8,6 +8,7 @@ import type {
   StringArray
 } from '~/model'
 import { stringKeys, numberKeys } from '~/model'
+import { ChartPeriod, type ChartType } from '~/model/period'
 import { prefillUndefined } from '~/utils'
 import { getDataForCountry } from './transformations'
 import { getLabels } from './labels'
@@ -108,11 +109,13 @@ export const getAllChartData = async (
     && baselineMethod
     && dataKey !== 'population'
   ) {
+    // Use ChartPeriod for smart date index lookup
+    const period = new ChartPeriod(labels, chartType as ChartType)
     await calculateBaselines(
       data,
       labels,
-      labels.indexOf(baselineDateFrom),
-      labels.indexOf(baselineDateTo),
+      period.indexOf(baselineDateFrom),
+      period.indexOf(baselineDateTo),
       keys,
       baselineMethod,
       chartType,

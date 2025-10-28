@@ -1,4 +1,5 @@
 import type { CountryData, DatasetRaw } from '~/model'
+import { ChartPeriod } from '~/model/period'
 import { fromYearMonthString, left, right } from '~/utils'
 
 /**
@@ -77,17 +78,15 @@ export const getAllChartLabels = (
 }
 
 /**
- * Get start index from labels array
+ * Get start index from labels array using ChartPeriod
+ * Note: Assumes yearly chart type for slider labels
  */
 export const getStartIndex = (
   allYearlyChartLabels: string[],
   sliderStart: string
 ): number => {
-  if (!allYearlyChartLabels) return 0
-  let i = 0
-  for (const value of allYearlyChartLabels) {
-    if (value === sliderStart) return i
-    i++
-  }
-  return 0
+  if (!allYearlyChartLabels || allYearlyChartLabels.length === 0) return 0
+  // Use ChartPeriod for smart index lookup with fallback
+  const period = new ChartPeriod(allYearlyChartLabels, 'yearly')
+  return period.indexOf(sliderStart)
 }

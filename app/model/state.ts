@@ -16,6 +16,7 @@ import type {
   ListType
 } from '@/model'
 import { getChartTypeFromOrdinal, getKeyForType } from '@/model'
+import { ChartPeriod, type ChartType } from './period'
 import type { LocationQuery } from 'vue-router'
 import { getSeasonString, defaultBaselineFromDate, defaultBaselineToDate } from './baseline'
 import { getColorsForDataset } from '@/colors'
@@ -242,13 +243,21 @@ export class State extends StateCore implements Serializable {
 
   isYearlyChartType = () => this._helpers.isYearlyChartType()
 
-  dateFromIndex = () => this.getLabels().indexOf(this.dateFrom)
+  /**
+   * Get ChartPeriod instance for current labels
+   * Helper method to enable ChartPeriod API usage throughout the state
+   */
+  private getChartPeriod = (): ChartPeriod => {
+    return new ChartPeriod(this.getLabels(), this.chartType as ChartType)
+  }
 
-  dateToIndex = () => this.getLabels().indexOf(this.dateTo)
+  dateFromIndex = () => this.getChartPeriod().indexOf(this.dateFrom)
 
-  baselineDateFromIndex = () => this.getLabels().indexOf(this.baselineDateFrom)
+  dateToIndex = () => this.getChartPeriod().indexOf(this.dateTo)
 
-  baselineDateToIndex = () => this.getLabels().indexOf(this.baselineDateTo)
+  baselineDateFromIndex = () => this.getChartPeriod().indexOf(this.baselineDateFrom)
+
+  baselineDateToIndex = () => this.getChartPeriod().indexOf(this.baselineDateTo)
 
   indexToDate = (index: number) => this.getLabels()[index]
 
@@ -257,8 +266,10 @@ export class State extends StateCore implements Serializable {
   getLabels = () => {
     if (!this.showSliderStartSelect()) return this.allChartData.labels
 
-    const startIdx = this.allChartData.labels.indexOf(this.sliderStartPeriod())
-    return this.allChartData.labels.slice(startIdx === -1 ? 0 : startIdx)
+    // Use ChartPeriod for smart index lookup
+    const period = new ChartPeriod(this.allChartData.labels, this.chartType as ChartType)
+    const startIdx = period.indexOf(this.sliderStartPeriod())
+    return this.allChartData.labels.slice(startIdx)
   }
 
   getBaseKeysForType = (): (keyof NumberEntryFields)[] =>

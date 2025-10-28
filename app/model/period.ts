@@ -7,7 +7,12 @@
  * for handling date ranges across different chart types (yearly/monthly/weekly).
  */
 
-export type ChartType = 'yearly' | 'monthly' | 'weekly'
+export type ChartType
+  = | 'yearly' | 'midyear' | 'fluseason' // Yearly variants (Jan-Dec, Jul-Jun, Oct-Sep)
+    | 'monthly' // Monthly
+    | 'quarterly' // Quarterly
+    | 'weekly' // Weekly
+    | 'weekly_13w_sma' | 'weekly_26w_sma' | 'weekly_52w_sma' | 'weekly_104w_sma' // Weekly SMAs
 
 /**
  * Represents a time period for a specific chart type
@@ -51,7 +56,8 @@ export class ChartPeriod {
     const yearMatches = this.labels.filter(l => l.startsWith(year))
 
     if (yearMatches.length > 0) {
-      return this.labels.indexOf(yearMatches[0])
+      const firstMatch = yearMatches[0]
+      return firstMatch ? this.labels.indexOf(firstMatch) : 0
     }
 
     // Find nearest year
@@ -72,7 +78,7 @@ export class ChartPeriod {
    */
   findClosestDate(date: string): string {
     const idx = this.findClosestDateIndex(date)
-    return this.labels[idx] || this.labels[0]
+    return this.labels[idx] || this.labels[0] || ''
   }
 
   /**

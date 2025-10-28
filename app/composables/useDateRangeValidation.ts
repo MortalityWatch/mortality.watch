@@ -1,3 +1,5 @@
+import type { ChartPeriod } from '~/model/period'
+
 export interface DateRange {
   from: string
   to: string
@@ -16,35 +18,28 @@ export function useDateRangeValidation() {
   /**
    * Validate a date range against available labels
    * @param range - The date range to validate
-   * @param availableLabels - Array of valid labels for the current period type
+   * @param period - ChartPeriod containing valid labels for the current period type
    * @param minSpan - Minimum number of periods required (optional, for baseline validation)
    * @returns Validation result with corrected values if invalid
    */
   function validateRange(
     range: DateRange,
-    availableLabels: string[],
+    period: ChartPeriod,
     defaultRange: DateRange,
     minSpan?: number
   ): ValidationResult {
-    if (availableLabels.length === 0) {
+    if (period.length === 0) {
       return {
         isValid: false,
         correctedRange: defaultRange
       }
     }
 
-    const fromIdx = availableLabels.indexOf(range.from)
-    const toIdx = availableLabels.indexOf(range.to)
-
-    // Check if dates exist in labels
-    if (fromIdx === -1 || toIdx === -1) {
-      return {
-        isValid: false,
-        correctedRange: defaultRange
-      }
-    }
+    const fromIdx = period.indexOf(range.from)
+    const toIdx = period.indexOf(range.to)
 
     // Check if range is valid (to >= from)
+    // Note: ChartPeriod.indexOf() returns valid index with fallback, so no -1 check needed
     if (toIdx < fromIdx) {
       return {
         isValid: false,
@@ -71,11 +66,11 @@ export function useDateRangeValidation() {
    */
   function getValidatedRange(
     range: DateRange,
-    availableLabels: string[],
+    period: ChartPeriod,
     defaultRange: DateRange,
     minSpan?: number
   ): DateRange {
-    const result = validateRange(range, availableLabels, defaultRange, minSpan)
+    const result = validateRange(range, period, defaultRange, minSpan)
     return result.correctedRange
   }
 

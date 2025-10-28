@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref, watch, computed, nextTick } from 'vue'
+import { ChartPeriod, type ChartType } from '~/model/period'
 
 const props = defineProps<{
   sliderValue: string[]
   labels: string[]
+  chartType: ChartType
   color: string
   minRange: number
   disabled?: boolean
@@ -19,21 +21,17 @@ const pendingEmitValues = ref<string[] | null>(null)
 
 // Initialize slider indices from sliderValue prop
 const getInitialIndices = (): number[] => {
+  const period = new ChartPeriod(props.labels, props.chartType)
+
   if (props.singleValue) {
-    const toIdx = props.labels.indexOf(props.sliderValue[1] ?? '')
-    return [
-      toIdx !== -1 ? toIdx : props.labels.length - 1,
-      toIdx !== -1 ? toIdx : props.labels.length - 1
-    ]
+    const toIdx = period.indexOf(props.sliderValue[1] ?? '')
+    return [toIdx, toIdx]
   }
 
-  const fromIdx = props.labels.indexOf(props.sliderValue[0] ?? '')
-  const toIdx = props.labels.indexOf(props.sliderValue[1] ?? '')
+  const fromIdx = period.indexOf(props.sliderValue[0] ?? '')
+  const toIdx = period.indexOf(props.sliderValue[1] ?? '')
 
-  return [
-    fromIdx !== -1 ? fromIdx : 0,
-    toIdx !== -1 ? toIdx : props.labels.length - 1
-  ]
+  return [fromIdx, toIdx]
 }
 
 const sliderIndices = ref<number[]>(getInitialIndices())
@@ -54,19 +52,18 @@ watch(() => props.sliderValue, (newValue) => {
     return
   }
 
-  const fromIdx = props.labels.indexOf(newValue[0] ?? '')
-  const toIdx = props.labels.indexOf(newValue[1] ?? '')
+  const period = new ChartPeriod(props.labels, props.chartType)
+  const fromIdx = period.indexOf(newValue[0] ?? '')
+  const toIdx = period.indexOf(newValue[1] ?? '')
 
-  if (fromIdx !== -1 && toIdx !== -1) {
-    // Only update if indices are different from current
-    if (sliderIndices.value[0] !== fromIdx || sliderIndices.value[1] !== toIdx) {
-      isUpdatingFromProp.value = true
-      sliderIndices.value = [fromIdx, toIdx]
-      prevIndices.value = [fromIdx, toIdx]
-      nextTick(() => {
-        isUpdatingFromProp.value = false
-      })
-    }
+  // Only update if indices are different from current
+  if (sliderIndices.value[0] !== fromIdx || sliderIndices.value[1] !== toIdx) {
+    isUpdatingFromProp.value = true
+    sliderIndices.value = [fromIdx, toIdx]
+    prevIndices.value = [fromIdx, toIdx]
+    nextTick(() => {
+      isUpdatingFromProp.value = false
+    })
   }
 })
 
@@ -103,14 +100,16 @@ watch(() => props.labels, (newLabels) => {
     return
   }
 
+  // Use ChartPeriod for smart index lookup with automatic fallback
+  const period = new ChartPeriod(newLabels, props.chartType)
+
   // Update slider indices based on current sliderValue
   const from = props.sliderValue[0]
   const to = props.sliderValue[1]
 
   if (props.singleValue) {
     // For single value mode, use the end date
-    const toIdx = to ? newLabels.indexOf(to) : newLabels.length - 1
-    const validIdx = toIdx !== -1 ? toIdx : newLabels.length - 1
+    const validIdx = to ? period.indexOf(to) : newLabels.length - 1
     if (sliderIndices.value[0] !== validIdx || sliderIndices.value[1] !== validIdx) {
       isUpdatingFromProp.value = true
       sliderIndices.value = [validIdx, validIdx]
@@ -119,55 +118,17 @@ watch(() => props.labels, (newLabels) => {
       })
     }
   } else if (from && to) {
-    let fromIdx = newLabels.indexOf(from)
-    let toIdx = newLabels.indexOf(to)
+    // ChartPeriod.indexOf() handles exact match and smart fallback automatically
+    const fromIdx = period.indexOf(from)
+    const toIdx = period.indexOf(to)
 
-    // If exact values not found, try to find closest match by year to preserve user selection
-    if (fromIdx === -1 && from) {
-      const fromYear = from.substring(0, 4)
-      // First try exact year match
-      const yearMatch = newLabels.find(l => l.startsWith(fromYear))
-      if (yearMatch) {
-        fromIdx = newLabels.indexOf(yearMatch)
-      } else {
-        // Find closest year
-        const targetYear = parseInt(fromYear)
-        const availableYears = Array.from(new Set(newLabels.map(l => parseInt(l.substring(0, 4)))))
-        const closestYear = availableYears.reduce((prev, curr) =>
-          Math.abs(curr - targetYear) < Math.abs(prev - targetYear) ? curr : prev
-        )
-        const closestLabel = newLabels.find(l => l.startsWith(closestYear.toString()))
-        fromIdx = closestLabel ? newLabels.indexOf(closestLabel) : 0
-      }
-    }
-
-    if (toIdx === -1 && to) {
-      const toYear = to.substring(0, 4)
-      // First try exact year match (prefer last label of that year)
-      const yearMatches = newLabels.filter(l => l.startsWith(toYear))
-      if (yearMatches.length > 0) {
-        toIdx = newLabels.indexOf(yearMatches[yearMatches.length - 1]!)
-      } else {
-        // Find closest year
-        const targetYear = parseInt(toYear)
-        const availableYears = Array.from(new Set(newLabels.map(l => parseInt(l.substring(0, 4)))))
-        const closestYear = availableYears.reduce((prev, curr) =>
-          Math.abs(curr - targetYear) < Math.abs(prev - targetYear) ? curr : prev
-        )
-        const closestLabels = newLabels.filter(l => l.startsWith(closestYear.toString()))
-        toIdx = closestLabels.length > 0 ? newLabels.indexOf(closestLabels[closestLabels.length - 1]!) : newLabels.length - 1
-      }
-    }
-
-    if (fromIdx !== -1 && toIdx !== -1) {
-      // Only update if indices actually changed
-      if (sliderIndices.value[0] !== fromIdx || sliderIndices.value[1] !== toIdx) {
-        isUpdatingFromProp.value = true
-        sliderIndices.value = [fromIdx, toIdx]
-        nextTick(() => {
-          isUpdatingFromProp.value = false
-        })
-      }
+    // Only update if indices actually changed
+    if (sliderIndices.value[0] !== fromIdx || sliderIndices.value[1] !== toIdx) {
+      isUpdatingFromProp.value = true
+      sliderIndices.value = [fromIdx, toIdx]
+      nextTick(() => {
+        isUpdatingFromProp.value = false
+      })
     }
   }
 }, { immediate: true })
