@@ -172,19 +172,8 @@ export const numberWithCommas = (
       maximumFractionDigits: decimals
     })
 }
-export const isMobile = () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if (typeof (globalThis as any).window === 'undefined') return false
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (globalThis as any).window.innerWidth < 640
-}
-
-export const isDesktop = () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if (typeof (globalThis as any).window === 'undefined') return false
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (globalThis as any).window.innerWidth >= 1024
-}
+// Re-export viewport helpers from constants
+export { isMobile, isTablet, isDesktop, BREAKPOINTS } from './lib/constants'
 
 export const abbrev = (str: string, n = 20) => {
   if (str.length <= n - 2) return str
@@ -308,15 +297,12 @@ export const isStringArray = (
 ): value is (string | undefined)[] =>
   value.every(v => typeof v === 'string' || v === undefined)
 
+const DATA_TYPE_MAP: Record<string, string> = {
+  1: 'yearly',
+  2: 'monthly',
+  3: 'weekly'
+} as const
+
 export const getDataTypeDescription = (type: string): string => {
-  switch (type) {
-    case '1':
-      return 'yearly'
-    case '2':
-      return 'monthly'
-    case '3':
-      return 'weekly'
-    default:
-      return type
-  }
+  return DATA_TYPE_MAP[type] ?? type
 }

@@ -43,10 +43,6 @@ export const loadCountryMetadata = async (options?: {
   // Get dev countries filter from options
   const filterCountries = options?.filterCountries || []
 
-  if (import.meta.dev && filterCountries.length > 0) {
-    console.log('[loadCountryMetadata] Filtering to countries:', filterCountries)
-  }
-
   for (const rawObj of rawObjects) {
     const typedObj = rawObj as Record<string, unknown>
     if (!typedObj.iso3c) continue

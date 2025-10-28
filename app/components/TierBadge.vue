@@ -31,16 +31,13 @@ const badgeClasses = computed(() => {
   return `${baseClasses} ${sizeClasses[props.size]} ${colorClasses[props.tier]}`
 })
 
-const tierLabel = computed(() => {
-  switch (props.tier) {
-    case 2:
-      return 'Pro'
-    case 1:
-      return 'Registered'
-    default:
-      return 'Free'
-  }
-})
+const tierLabels: Record<number, string> = {
+  2: 'Pro',
+  1: 'Registered',
+  0: 'Free'
+}
+
+const tierLabel = computed(() => tierLabels[props.tier] ?? 'Free')
 </script>
 
 <template>

@@ -60,7 +60,6 @@ const colorMode = useColorMode()
 const lineConfig = computed(() => {
   // Pass isDark to config so text colors update with theme
   const isDark = colorMode.value === 'dark'
-  console.log('[MortalityChart] lineConfig - colorMode.value:', colorMode.value, 'isDark:', isDark)
   if (props.chartStyle !== 'line') return undefined
   return makeBarLineChartConfig(
     props.data,
@@ -123,26 +122,17 @@ const matrixChart = ref()
 const getActiveChart = () => lineChart.value || barChart.value || matrixChart.value
 
 // Watch for dark mode changes and update chart plugins
-watch(() => colorMode.value, async (newValue, oldValue) => {
-  console.log('[MortalityChart] Color mode changed:', { oldValue, newValue })
-
+watch(() => colorMode.value, async () => {
   // Wait for next tick to ensure theme state has fully updated
   await nextTick()
 
-  console.log('[MortalityChart] After nextTick, colorMode.value:', colorMode.value)
-
   // Clear QR code cache to force regeneration with new theme colors
   clearQRCodeCache()
-  console.log('[MortalityChart] QR code cache cleared')
 
   // Force chart update to re-render plugins with new theme
   const activeChart = getActiveChart()
   if (activeChart?.chart) {
-    console.log('[MortalityChart] Updating chart...')
     activeChart.chart.update()
-    console.log('[MortalityChart] Chart updated')
-  } else {
-    console.log('[MortalityChart] No active chart found!')
   }
 })
 

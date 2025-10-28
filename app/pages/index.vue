@@ -179,6 +179,7 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
+import { BREAKPOINTS } from '~/lib/constants'
 
 // Type definition for showcase images
 interface ShowcaseImage {
@@ -198,8 +199,8 @@ const getFilename = (title: string): string => {
 }
 
 // Check if mobile or desktop
-const isMobile = () => window.innerWidth < 768
-const isDesktop = () => window.innerWidth >= 1024
+const isMobile = () => window.innerWidth < BREAKPOINTS.TABLET
+const isDesktop = () => window.innerWidth >= BREAKPOINTS.DESKTOP
 
 // Reactive state for images
 const images = ref<ShowcaseImage[]>([])

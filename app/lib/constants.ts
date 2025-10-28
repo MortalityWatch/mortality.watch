@@ -8,6 +8,47 @@
 export const DEFAULT_BASELINE_YEAR = 2017
 
 /**
+ * Viewport breakpoints for responsive design
+ * Matches Tailwind CSS breakpoints
+ */
+export const BREAKPOINTS = {
+  MOBILE: 640,
+  TABLET: 768,
+  DESKTOP: 1024,
+  XL: 1280
+} as const
+
+/**
+ * Check if current viewport is mobile
+ */
+export const isMobile = () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (typeof (globalThis as any).window === 'undefined') return false
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (globalThis as any).window.innerWidth < BREAKPOINTS.MOBILE
+}
+
+/**
+ * Check if current viewport is tablet or larger
+ */
+export const isTablet = () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (typeof (globalThis as any).window === 'undefined') return false
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (globalThis as any).window.innerWidth >= BREAKPOINTS.TABLET
+}
+
+/**
+ * Check if current viewport is desktop or larger
+ */
+export const isDesktop = () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (typeof (globalThis as any).window === 'undefined') return false
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (globalThis as any).window.innerWidth >= BREAKPOINTS.DESKTOP
+}
+
+/**
  * Chart resizing configuration
  */
 export const CHART_RESIZE = {
