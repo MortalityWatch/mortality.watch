@@ -34,6 +34,54 @@ export const blDescription = (
     ? `Baseline: ${getMethodDescription(baselineMethod)} ${baselineDateTo}`
     : `Baseline: ${getMethodDescription(baselineMethod)} ${baselineDateFrom}-${baselineDateTo}`
 
+/**
+ * Label configuration for different metric types
+ */
+interface LabelConfig {
+  getTitleParts: (ag: string, isExcess: boolean) => string[]
+  getYTitle: (isExcess: boolean, cumulative: boolean) => string
+  getSubtitle?: (asmrTitle: string, showBaseline: boolean) => string
+}
+
+const LABEL_CONFIGS: Record<string, LabelConfig> = {
+  population: {
+    getTitleParts: ag => [`Population${ag}`],
+    getYTitle: () => 'People'
+  },
+  deaths: {
+    getTitleParts: (ag, isExcess) =>
+      isExcess ? [`Excess Deaths${ag}`] : [`Deaths${ag}`],
+    getYTitle: (isExcess, cumulative) =>
+      isExcess
+        ? cumulative ? 'Cum. Excess Deaths' : 'Excess Deaths'
+        : 'Deaths'
+  },
+  cmr: {
+    getTitleParts: (ag, isExcess) =>
+      isExcess
+        ? ['Crude Excess', `Mortality${ag}`]
+        : ['Crude', `Mortality Rate${ag}`],
+    getYTitle: isExcess =>
+      isExcess ? 'Excess Deaths per 100k' : 'Deaths per 100k'
+  },
+  asmr: {
+    getTitleParts: (_, isExcess) =>
+      isExcess
+        ? ['Age-Standardized', 'Excess Mortality']
+        : ['Age-Standardized', 'Mortality Rate'],
+    getYTitle: isExcess =>
+      isExcess ? 'Excess Deaths per 100k' : 'Deaths per 100k',
+    getSubtitle: (asmrTitle, showBaseline) =>
+      showBaseline ? [asmrTitle].filter(x => x).join(' · ') : asmrTitle
+  },
+  le: {
+    getTitleParts: (_, isExcess) =>
+      isExcess ? ['Change in', 'Life Expectancy'] : ['Life Expectancy'],
+    getYTitle: () => 'Years',
+    getSubtitle: () => 'Based on WHO2015 Std. Pop.'
+  }
+}
+
 export const getChartLabels = (
   countries: string[],
   standardPopulation: string,
@@ -65,51 +113,13 @@ export const getChartLabels = (
 
   if (cumulative) title.push('Cumulative')
 
-  if (isExcess) {
-    switch (type) {
-      case 'deaths':
-        title.push(`Excess Deaths${ag}`)
-        ytitle = cumulative ? 'Cum. Excess Deaths' : 'Excess Deaths'
-        break
-      case 'cmr':
-        title.push(`Crude Excess`, `Mortality${ag}`)
-        ytitle = 'Excess Deaths per 100k'
-        break
-      case 'asmr':
-        title.push('Age-Standardized', 'Excess Mortality')
-        subtitle = [asmrTitle].filter(x => x).join(' · ')
-        ytitle = 'Excess Deaths per 100k'
-        break
-      case 'le':
-        title.push('Change in', 'Life Expectancy')
-        subtitle = 'Based on WHO2015 Std. Pop.'
-        ytitle = 'Years'
-        break
-    }
-  } else {
-    switch (type) {
-      case 'population':
-        title.push(`Population${ag}`)
-        ytitle = 'People'
-        break
-      case 'deaths':
-        title.push(`Deaths${ag}`)
-        ytitle = 'Deaths'
-        break
-      case 'cmr':
-        title.push(`Crude`, `Mortality Rate${ag}`)
-        break
-      case 'asmr':
-        title.push('Age-Standardized', 'Mortality Rate')
-        subtitle = showBaseline
-          ? [asmrTitle].filter(x => x).join(' · ')
-          : asmrTitle
-        break
-      case 'le':
-        title.push('Life Expectancy')
-        ytitle = 'Years'
-        subtitle = 'Based on WHO2015 Std. Pop.'
-        break
+  // Get label configuration for the metric type
+  const config = LABEL_CONFIGS[type]
+  if (config) {
+    title.push(...config.getTitleParts(ag, isExcess))
+    ytitle = config.getYTitle(isExcess, cumulative)
+    if (config.getSubtitle) {
+      subtitle = config.getSubtitle(asmrTitle, showBaseline)
     }
   }
 

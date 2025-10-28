@@ -13,6 +13,83 @@ export const getChartTypeOrdinal = (chartType: string): number => {
 export const getChartTypeFromOrdinal = (ordinal: number): string =>
   ['yearly', 'monthly', 'weekly'][ordinal - 1] || 'yearly'
 
+/**
+ * Configuration for metric field name generation
+ */
+interface MetricConfig {
+  baseFieldName: (standardPopulation?: string) => string
+  supportsBaseline: boolean
+  supportsExcess: boolean
+}
+
+/**
+ * Metric configurations defining how field names are constructed
+ */
+const METRIC_CONFIGS: Record<string, MetricConfig> = {
+  population: {
+    baseFieldName: () => 'population',
+    supportsBaseline: false,
+    supportsExcess: false
+  },
+  deaths: {
+    baseFieldName: () => 'deaths',
+    supportsBaseline: true,
+    supportsExcess: true
+  },
+  cmr: {
+    baseFieldName: () => 'cmr',
+    supportsBaseline: true,
+    supportsExcess: true
+  },
+  asmr: {
+    baseFieldName: (standardPopulation = 'who') => `asmr_${standardPopulation}`,
+    supportsBaseline: true,
+    supportsExcess: true
+  },
+  le: {
+    baseFieldName: () => 'le',
+    supportsBaseline: true,
+    supportsExcess: true
+  }
+}
+
+/**
+ * Generate field names based on configuration
+ */
+const buildFieldKeys = (
+  baseField: string,
+  showBaseline: boolean,
+  isExcess: boolean,
+  includePi: boolean
+): string[] => {
+  // Population is a special case - always return just the base field
+  if (baseField === 'population') {
+    return [baseField]
+  }
+
+  // Excess mode (showBaseline is ignored when isExcess is true)
+  if (isExcess) {
+    const excessField = `${baseField}_excess`
+    if (includePi) {
+      return [excessField, `${excessField}_lower`, `${excessField}_upper`]
+    }
+    return [excessField]
+  }
+
+  // Normal mode with baseline
+  if (showBaseline) {
+    return [
+      baseField,
+      `${baseField}_baseline`,
+      `${baseField}_baseline_lower`,
+      `${baseField}_baseline_upper`
+    ]
+  }
+
+  // Normal mode without baseline
+  return [baseField]
+}
+
 export const getKeyForType = (
   type: string,
   showBaseline: boolean,
@@ -20,96 +97,19 @@ export const getKeyForType = (
   isExcess = false,
   includePi = false
 ): (keyof NumberEntryFields)[] => {
-  switch (type) {
-    case 'population':
-      return ['population'] as (keyof NumberEntryFields)[]
-    case 'deaths':
-      if (isExcess) {
-        if (includePi)
-          return [
-            'deaths_excess',
-            'deaths_excess_lower',
-            'deaths_excess_upper'
-          ] as (keyof NumberEntryFields)[]
-        else return ['deaths_excess'] as (keyof NumberEntryFields)[]
-      } else {
-        return showBaseline
-          ? ([
-              'deaths',
-              'deaths_baseline',
-              'deaths_baseline_lower',
-              'deaths_baseline_upper'
-            ] as (keyof NumberEntryFields)[])
-          : (['deaths'] as (keyof NumberEntryFields)[])
-      }
-    case 'cmr':
-      if (isExcess) {
-        if (includePi)
-          return [
-            'cmr_excess',
-            'cmr_excess_lower',
-            'cmr_excess_upper'
-          ] as (keyof NumberEntryFields)[]
-        else return ['cmr_excess'] as (keyof NumberEntryFields)[]
-      } else {
-        return showBaseline
-          ? ([
-              'cmr',
-              'cmr_baseline',
-              'cmr_baseline_lower',
-              'cmr_baseline_upper'
-            ] as (keyof NumberEntryFields)[])
-          : (['cmr'] as (keyof NumberEntryFields)[])
-      }
-    case 'asmr':
-      if (isExcess) {
-        if (includePi)
-          return [
-            `asmr_${standardPopulation}_excess`,
-            `asmr_${standardPopulation}_excess_lower`,
-            `asmr_${standardPopulation}_excess_upper`
-          ] as (keyof NumberEntryFields)[]
-        else
-          return [
-            `asmr_${standardPopulation}_excess`
-          ] as (keyof NumberEntryFields)[]
-      } else {
-        if (showBaseline) {
-          return [
-            `asmr_${standardPopulation}`,
-            `asmr_${standardPopulation}_baseline`,
-            `asmr_${standardPopulation}_baseline_lower`,
-            `asmr_${standardPopulation}_baseline_upper`
-          ] as (keyof NumberEntryFields)[]
-        } else {
-          return [`asmr_${standardPopulation}`] as (keyof NumberEntryFields)[]
-        }
-      }
-    case 'le':
-      if (isExcess) {
-        if (includePi)
-          return [
-            'le_excess',
-            'le_excess_lower',
-            'le_excess_upper'
-          ] as (keyof NumberEntryFields)[]
-        else return ['le_excess'] as (keyof NumberEntryFields)[]
-      } else {
-        if (showBaseline) {
-          return [
-            'le',
-            'le_baseline',
-            'le_baseline_lower',
-            'le_baseline_upper'
-          ] as (keyof NumberEntryFields)[]
-        } else {
-          return ['le'] as (keyof NumberEntryFields)[]
-        }
-      }
+  const config = METRIC_CONFIGS[type]
 
-    default:
-      throw new Error('Unknown type key provided.')
+  if (!config) {
+    throw new Error('Unknown type key provided.')
   }
+
+  // Get base field name (e.g., 'deaths', 'asmr_who', 'le')
+  const baseField = config.baseFieldName(standardPopulation)
+
+  // Build field keys based on configuration
+  const keys = buildFieldKeys(baseField, showBaseline, isExcess, includePi)
+
+  return keys as (keyof NumberEntryFields)[]
 }
 
 export const getBaseKeysForType = (
