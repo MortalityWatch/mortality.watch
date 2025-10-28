@@ -16,6 +16,20 @@ import {
 
 /**
  * Manages data updates for the explorer page
+ *
+ * NOTE: This composable cannot be integrated into explorer.vue yet due to TypeScript limitations.
+ *
+ * ISSUE: TypeScript "Type instantiation is excessively deep and possibly infinite" error
+ * - This composable requires 30+ parameters
+ * - TypeScript's type inference system cannot handle this level of complexity
+ * - This is a known limitation of the TypeScript compiler
+ *
+ * SOLUTION: Refactor to use a configuration object instead of individual parameters
+ * - Group related parameters into logical config objects (state, data, helpers, etc.)
+ * - This will fix the TypeScript limitation AND improve readability
+ * - See FUTURE_REFACTORING.md for details
+ *
+ * TODO: Refactor to use config object pattern (Phase 2)
  */
 export function useExplorerDataUpdate(
   // State refs

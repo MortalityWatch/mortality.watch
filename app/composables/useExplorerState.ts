@@ -6,6 +6,26 @@ import type { MortalityChartData } from '@/lib/chart/chartTypes'
 
 /**
  * Manages all URL-synchronized state for the explorer page
+ *
+ * NOTE: This composable cannot be integrated into explorer.vue due to architectural mismatch.
+ *
+ * ISSUE: Different state management patterns
+ * - This composable creates individual `ref` objects using `useUrlState` for each state property
+ * - explorer.vue currently uses `useUrlState` composables directly inline for each property
+ * - The patterns are incompatible without major refactoring
+ *
+ * INTEGRATION CHALLENGES:
+ * - Would require rewriting all state management in explorer.vue
+ * - Would need to change how URL synchronization works
+ * - High risk of introducing bugs
+ * - Current inline pattern is actually clean and working well
+ *
+ * RECOMMENDATION: Keep current implementation
+ * - The current useUrlState pattern in explorer.vue is clear and maintainable
+ * - This composable serves as an alternative/reference implementation
+ * - No compelling benefit to justify the integration risk
+ *
+ * NOTE: This file is kept as a reference implementation for alternative state management patterns.
  */
 export function useExplorerState() {
   // URL State - Core Settings
