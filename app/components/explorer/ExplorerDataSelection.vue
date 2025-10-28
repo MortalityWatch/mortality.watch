@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Country } from '@/model'
+import type { ChartType } from '@/model/period'
 import MortalityChartControlsPrimary from '@/components/charts/MortalityChartControlsPrimary.vue'
 import DateSlider from '@/components/charts/DateSlider.vue'
 import { specialColor } from '@/colors'
@@ -17,6 +18,7 @@ const props = defineProps<{
   labels: string[]
   sliderStart: string
   allYearlyChartLabelsUnique: string[]
+  chartType: ChartType
 }>()
 
 const emit = defineEmits<{
@@ -95,6 +97,7 @@ const emit = defineEmits<{
               <DateSlider
                 :slider-value="props.sliderValue"
                 :labels="props.labels"
+                :chart-type="props.chartType"
                 :color="specialColor()"
                 :min-range="0"
                 :disabled="false"

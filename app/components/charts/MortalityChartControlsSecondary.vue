@@ -6,6 +6,7 @@ import DataTab from './controls/DataTab.vue'
 import { specialColor } from '@/colors'
 import { CHART_PRESETS } from '@/lib/constants'
 import { types, chartTypes, chartStyles, standardPopulations, baselineMethods, decimalPrecisions } from '@/model'
+import type { ChartType } from '@/model/period'
 import { useChartUIState } from '@/composables/useChartUIState'
 import type { ChartStyle } from '@/lib/chart/chartTypes'
 
@@ -628,6 +629,7 @@ const activeTab = ref('data')
                 :key="`${props.baselineMethod}-${selectedPeriodLength?.value ?? 3}`"
                 :slider-value="props.baselineSliderValue"
                 :labels="props.labels"
+                :chart-type="props.chartType as ChartType"
                 :color="specialColor()"
                 :min-range="baselineMinRange(props.baselineMethod)"
                 :single-value="props.baselineMethod === 'naive'"

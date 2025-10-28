@@ -17,6 +17,7 @@ import type {
   DatasetRaw
 } from '@/model'
 import { getKeyForType } from '@/model'
+import { ChartPeriod, type ChartType } from '@/model/period'
 import {
   getAllChartData,
   getAllChartLabels,
@@ -475,9 +476,10 @@ const resetDates = () => {
     currentTo = (matchingLabels.length > 0 ? matchingLabels[matchingLabels.length - 1] : findClosestYear(toYear, true))!
   }
 
+  const period = new ChartPeriod(labels, chartType.value as ChartType)
   const validatedRange = getValidatedRange(
     { from: currentFrom ?? defaultFrom, to: currentTo ?? defaultTo },
-    labels,
+    period,
     { from: defaultFrom, to: defaultTo }
   )
 
@@ -570,9 +572,10 @@ const resetBaselineDates = () => {
   const defaultToIndex = Math.min(labels.length - 1, MIN_BASELINE_SPAN)
   const defaultTo = labels[defaultToIndex]!
 
+  const period = new ChartPeriod(labels, chartType.value as ChartType)
   const validatedRange = getValidatedRange(
     { from: baselineDateFrom.value ?? defaultFrom, to: baselineDateTo.value ?? defaultTo },
-    labels,
+    period,
     { from: defaultFrom, to: defaultTo },
     MIN_BASELINE_SPAN
   )
@@ -945,6 +948,7 @@ const saveChart = async () => {
         :labels="labels"
         :slider-start="sliderStart"
         :all-yearly-chart-labels-unique="allYearlyChartLabelsUnique"
+        :chart-type="chartType.value as ChartType"
         @countries-changed="handleCountriesChanged"
         @age-groups-changed="handleAgeGroupsChanged"
         @slider-start-changed="handleSliderStartChanged"

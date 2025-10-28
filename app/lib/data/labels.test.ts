@@ -206,9 +206,10 @@ describe('app/lib/data/labels', () => {
       expect(getStartIndex(labels, '2024')).toBe(4)
     })
 
-    it('should return 0 for non-matching label', () => {
-      expect(getStartIndex(labels, '2030')).toBe(0)
-      expect(getStartIndex(labels, '1990')).toBe(0)
+    it('should use smart fallback for non-matching labels', () => {
+      // ChartPeriod finds closest year: 2030 -> 2024 (last), 1990 -> 2020 (first)
+      expect(getStartIndex(labels, '2030')).toBe(4) // closest to last year
+      expect(getStartIndex(labels, '1990')).toBe(0) // closest to first year
     })
 
     it('should return 0 for empty string', () => {

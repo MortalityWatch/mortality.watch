@@ -11,6 +11,7 @@ import {
   type FilteredChartData,
   type DataVector
 } from '~/model'
+import { ChartPeriod, type ChartType } from '~/model/period'
 import type { MortalityChartData } from './chartTypes'
 import { getDatasets } from './datasets'
 import { getChartLabels } from './labels'
@@ -20,11 +21,13 @@ export const getFilteredLabelAndData = (
   dateFrom: string,
   dateTo: string,
   chartTypeOrdinal: number,
+  chartType: ChartType,
   allChartData: Dataset
 ): FilteredChartData => {
-  // Filter Labels and Data based on selected dates.
-  const from = allLabels.indexOf(dateFrom)
-  const to = allLabels.indexOf(dateTo)
+  // Filter Labels and Data based on selected dates using ChartPeriod
+  const period = new ChartPeriod(allLabels, chartType)
+  const from = period.indexOf(dateFrom)
+  const to = period.indexOf(dateTo)
   const labels = allLabels.slice(from, to + 1)
   const disaggregatedData: Record<string, number[]> = {}
 
@@ -115,6 +118,7 @@ export const getFilteredChartData = async (
     dateFrom,
     dateTo,
     getChartTypeOrdinal(chartType),
+    chartType as ChartType,
     allChartData
   )
 
