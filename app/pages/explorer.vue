@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { Defaults, stateFieldEncoders } from '@/lib/state/stateSerializer'
-import { useUrlState } from '@/composables/useUrlState'
 import {
   computed,
   nextTick,
@@ -11,6 +9,7 @@ import {
 import { useDateRangeValidation } from '@/composables/useDateRangeValidation'
 import { useChartResize } from '@/composables/useChartResize'
 import { useExplorerHelpers } from '@/composables/useExplorerHelpers'
+import { useExplorerState } from '@/composables/useExplorerState'
 import type {
   AllChartData,
   Country,
@@ -45,141 +44,8 @@ import { showToast } from '@/toast'
 // Feature access for tier-based features (currently unused but may be needed in the future)
 // const { can, getFeatureUpgradeUrl } = useFeatureAccess()
 
-// State stored in URL params
-const countries = useUrlState(
-  stateFieldEncoders.countries.key,
-  Defaults.countries
-)
-const chartType = useUrlState(
-  stateFieldEncoders.chartType.key,
-  Defaults.chartType
-)
-const ageGroups = useUrlState<string[]>(
-  stateFieldEncoders.ageGroups.key,
-  ['all']
-)
-const standardPopulation = useUrlState(
-  stateFieldEncoders.standardPopulation.key,
-  Defaults.standardPopulation
-)
-const isExcess = useUrlState<boolean>(
-  stateFieldEncoders.isExcess.key,
-  false,
-  stateFieldEncoders.isExcess.encode,
-  stateFieldEncoders.isExcess.decode
-)
-const type = useUrlState(
-  stateFieldEncoders.type.key,
-  Defaults.type
-)
-const chartStyle = useUrlState(
-  stateFieldEncoders.chartStyle.key,
-  Defaults.chartStyle
-)
-const dateFrom = useUrlState<string>(
-  stateFieldEncoders.dateFrom.key,
-  '2017',
-  stateFieldEncoders.dateFrom.encode,
-  stateFieldEncoders.dateFrom.decode,
-  { debounce: 300 }
-)
-const dateTo = useUrlState<string>(
-  stateFieldEncoders.dateTo.key,
-  '2023',
-  stateFieldEncoders.dateTo.encode,
-  stateFieldEncoders.dateTo.decode,
-  { debounce: 300 }
-)
-const baselineDateFrom = useUrlState<string>(
-  stateFieldEncoders.baselineDateFrom.key,
-  '2017',
-  stateFieldEncoders.baselineDateFrom.encode,
-  stateFieldEncoders.baselineDateFrom.decode
-)
-const baselineDateTo = useUrlState<string>(
-  stateFieldEncoders.baselineDateTo.key,
-  '2019',
-  stateFieldEncoders.baselineDateTo.encode,
-  stateFieldEncoders.baselineDateTo.decode
-)
-const showBaseline = useUrlState<boolean>(
-  stateFieldEncoders.showBaseline.key,
-  true,
-  stateFieldEncoders.showBaseline.encode,
-  stateFieldEncoders.showBaseline.decode
-)
-const baselineMethod = useUrlState(
-  stateFieldEncoders.baselineMethod.key,
-  Defaults.baselineMethod
-)
-const cumulative = useUrlState<boolean>(
-  stateFieldEncoders.cumulative.key,
-  false,
-  stateFieldEncoders.cumulative.encode,
-  stateFieldEncoders.cumulative.decode
-)
-const showTotal = useUrlState<boolean>(
-  stateFieldEncoders.showTotal.key,
-  false,
-  stateFieldEncoders.showTotal.encode,
-  stateFieldEncoders.showTotal.decode
-)
-const maximize = useUrlState<boolean>(
-  stateFieldEncoders.maximize.key,
-  false,
-  stateFieldEncoders.maximize.encode,
-  stateFieldEncoders.maximize.decode
-)
-const showPredictionInterval = useUrlState<boolean>(
-  stateFieldEncoders.showPredictionInterval.key,
-  true,
-  stateFieldEncoders.showPredictionInterval.encode,
-  stateFieldEncoders.showPredictionInterval.decode
-)
-const showLabels = useUrlState<boolean>(
-  stateFieldEncoders.showLabels.key,
-  true,
-  stateFieldEncoders.showLabels.encode,
-  stateFieldEncoders.showLabels.decode
-)
-const showPercentage = useUrlState<boolean>(
-  stateFieldEncoders.showPercentage.key,
-  false,
-  stateFieldEncoders.showPercentage.encode,
-  stateFieldEncoders.showPercentage.decode
-)
-const isLogarithmic = useUrlState<boolean>(
-  stateFieldEncoders.isLogarithmic.key,
-  false,
-  stateFieldEncoders.isLogarithmic.encode,
-  stateFieldEncoders.isLogarithmic.decode
-)
-const sliderStart = useUrlState(
-  stateFieldEncoders.sliderStart.key,
-  Defaults.sliderStart ?? '2010'
-)
-const userColors = useUrlState<string[] | undefined>(
-  stateFieldEncoders.userColors.key,
-  undefined
-)
-// Chart size preferences are local state (not stored in URL)
-// Note: These are now provided by useChartResize composable below
-const showLogo = useUrlState<boolean>(
-  stateFieldEncoders.showLogo.key,
-  true,
-  stateFieldEncoders.showLogo.encode,
-  stateFieldEncoders.showLogo.decode
-)
-const showQrCode = useUrlState<boolean>(
-  stateFieldEncoders.showQrCode.key,
-  true,
-  stateFieldEncoders.showQrCode.encode,
-  stateFieldEncoders.showQrCode.decode
-)
-const decimals = useUrlState<string>(
-  stateFieldEncoders.decimals.key,
-  Defaults.decimals
-)
+// Phase 9.2: Centralized state management with validation
+const state = useExplorerState()
 
 // Router
 const _router = useRouter()
@@ -191,12 +57,12 @@ const { getValidatedRange } = useDateRangeValidation()
 
 // Dynamic OG images based on current chart state
 const chartState = computed(() => ({
-  countries: countries.value,
-  type: type.value,
-  chartType: chartType.value,
-  isExcess: isExcess.value,
-  ageGroups: ageGroups.value,
-  chartStyle: chartStyle.value
+  countries: state.countries.value,
+  type: state.type.value,
+  chartType: state.chartType.value,
+  isExcess: state.isExcess.value,
+  ageGroups: state.ageGroups.value,
+  chartStyle: state.chartStyle.value
 }))
 
 const { ogImageUrl, ogTitle, ogDescription } = useChartOgImage(chartState)
@@ -239,20 +105,20 @@ const {
   getBaseKeysForType,
   showPredictionIntervalDisabled
 } = useExplorerHelpers(
-  type,
-  chartStyle,
-  isExcess,
-  standardPopulation,
-  countries,
-  cumulative,
-  baselineMethod,
-  showBaseline,
-  chartType
+  state.type,
+  state.chartStyle,
+  state.isExcess,
+  state.standardPopulation,
+  state.countries,
+  state.cumulative,
+  state.baselineMethod,
+  state.showBaseline,
+  state.chartType
 )
 
 // Computed
-const sliderValue = computed(() => [dateFrom.value, dateTo.value])
-const baselineSliderValue = computed(() => [baselineDateFrom.value, baselineDateTo.value])
+const sliderValue = computed(() => [state.dateFrom.value, state.dateTo.value])
+const baselineSliderValue = computed(() => [state.baselineDateFrom.value, state.baselineDateTo.value])
 
 // Get color mode for theme reactivity
 const colorMode = useColorMode()
@@ -262,16 +128,16 @@ const displayColors = computed(() => {
   // Add colorMode.value as dependency to make this reactive to theme changes
   const _theme = colorMode.value
 
-  const numCountries = countries.value.length
+  const numCountries = state.countries.value.length
   if (numCountries === 0) return []
 
   // If user has custom colors, use them (extending if needed)
-  if (userColors.value) {
-    if (userColors.value.length >= numCountries) {
-      return userColors.value.slice(0, numCountries)
+  if (state.userColors.value) {
+    if (state.userColors.value.length >= numCountries) {
+      return state.userColors.value.slice(0, numCountries)
     }
     // If user colors are fewer than countries, extend using color scale
-    return getColorScale(userColors.value, numCountries)
+    return getColorScale(state.userColors.value, numCountries)
   }
 
   // Use default colors (theme-aware)
@@ -292,8 +158,8 @@ let loadingTimeout: ReturnType<typeof setTimeout> | null = null
 
 const dateSliderChanged = async (val: string[]) => {
   // Update URL state - useUrlState now handles optimistic updates internally
-  dateFrom.value = val[0]!
-  dateTo.value = val[1]!
+  state.dateFrom.value = val[0]!
+  state.dateTo.value = val[1]!
 
   update('dateRange')
 }
@@ -307,7 +173,7 @@ const {
   hasBeenResized,
   chartWidth: _chartWidth,
   chartHeight: _chartHeight,
-  chartPreset,
+  chartPreset: _chartPreset,
   containerSize,
   isAutoMode: _isAutoMode,
   isCustomMode,
@@ -328,21 +194,21 @@ const updateData = async (
 
   if (shouldDownloadDataset) {
     dataset = await updateDataset(
-      chartType.value,
-      countries.value,
-      isAsmrType() ? ['all'] : ageGroups.value
+      state.chartType.value,
+      state.countries.value,
+      isAsmrType() ? ['all'] : state.ageGroups.value
     )
 
     // All Labels
     allChartLabels.value = getAllChartLabels(
       dataset,
       isAsmrType(),
-      ageGroups.value,
-      countries.value,
-      chartType.value
+      state.ageGroups.value,
+      state.countries.value,
+      state.chartType.value
     )
 
-    if (chartType.value === 'yearly') {
+    if (state.chartType.value === 'yearly') {
       allYearlyChartLabels.value = allChartLabels.value
       allYearlyChartLabelsUnique.value = allChartLabels.value.filter(
         x => parseInt(x) <= DEFAULT_BASELINE_YEAR
@@ -362,24 +228,24 @@ const updateData = async (
 
     // Update all chart specific data
     const key = getKeyForType(
-      type.value,
-      showBaseline.value,
-      standardPopulation.value
+      state.type.value,
+      state.showBaseline.value,
+      state.standardPopulation.value
     )[0]
     if (!key) return
 
     const newData = await getAllChartData(
       key,
-      chartType.value,
+      state.chartType.value,
       dataset,
       allChartLabels.value || [],
-      getStartIndex(allYearlyChartLabels.value || [], sliderStart.value),
+      getStartIndex(allYearlyChartLabels.value || [], state.sliderStart.value),
       showCumPi(),
-      ageGroups.value,
-      countries.value,
-      baselineMethod.value,
-      baselineDateFrom.value,
-      baselineDateTo.value,
+      state.ageGroups.value,
+      state.countries.value,
+      state.baselineMethod.value,
+      state.baselineDateFrom.value,
+      state.baselineDateTo.value,
       getBaseKeysForType()
     )
     Object.assign(allChartData, newData)
@@ -412,7 +278,7 @@ const resetDates = () => {
 
   // Only reset if values are missing or don't match
   // Don't reset if user has manually selected a different range
-  if (dateFrom.value && dateTo.value && labels.includes(dateFrom.value) && labels.includes(dateTo.value)) {
+  if (state.dateFrom.value && state.dateTo.value && labels.includes(state.dateFrom.value) && labels.includes(state.dateTo.value)) {
     // Values are valid, don't change them
     return
   }
@@ -423,8 +289,8 @@ const resetDates = () => {
   const defaultTo = labels[labels.length - 1]!
 
   // Try to preserve user's selection by finding matching labels based on year
-  let currentFrom = dateFrom.value
-  let currentTo = dateTo.value
+  let currentFrom = state.dateFrom.value
+  let currentTo = state.dateTo.value
 
   // Helper function to find closest year in labels
   const findClosestYear = (targetYear: string, preferLast: boolean = false): string => {
@@ -457,23 +323,23 @@ const resetDates = () => {
     currentTo = (matchingLabels.length > 0 ? matchingLabels[matchingLabels.length - 1] : findClosestYear(toYear, true))!
   }
 
-  const period = new ChartPeriod(labels, chartType.value as ChartType)
+  const period = new ChartPeriod(labels, state.chartType.value as ChartType)
   const validatedRange = getValidatedRange(
     { from: currentFrom ?? defaultFrom, to: currentTo ?? defaultTo },
     period,
     { from: defaultFrom, to: defaultTo }
   )
 
-  if (validatedRange.from !== dateFrom.value || !dateFrom.value) {
-    dateFrom.value = validatedRange.from
+  if (validatedRange.from !== state.dateFrom.value || !state.dateFrom.value) {
+    state.dateFrom.value = validatedRange.from
   }
-  if (validatedRange.to !== dateTo.value || !dateTo.value) {
-    dateTo.value = validatedRange.to
+  if (validatedRange.to !== state.dateTo.value || !state.dateTo.value) {
+    state.dateTo.value = validatedRange.to
   }
 }
 
 const sliderStartPeriod = () =>
-  getSeasonString(chartType.value, Number(sliderStart.value))
+  getSeasonString(state.chartType.value, Number(state.sliderStart.value))
 
 const makeUrl = async () => {
   const base = 'https://mortality.watch/?qr='
@@ -488,33 +354,33 @@ const updateFilteredData = async () => {
   }
 
   return await getFilteredChartData(
-    countries.value,
-    standardPopulation.value,
-    ageGroups.value,
-    showPredictionInterval.value,
-    isExcess.value,
-    type.value,
-    cumulative.value,
-    showBaseline.value,
-    baselineMethod.value,
-    baselineDateFrom.value,
-    baselineDateTo.value,
-    showTotal.value,
-    chartType.value,
-    dateFrom.value,
-    dateTo.value,
+    state.countries.value,
+    state.standardPopulation.value,
+    state.ageGroups.value,
+    state.showPredictionInterval.value,
+    state.isExcess.value,
+    state.type.value,
+    state.cumulative.value,
+    state.showBaseline.value,
+    state.baselineMethod.value,
+    state.baselineDateFrom.value,
+    state.baselineDateTo.value,
+    state.showTotal.value,
+    state.chartType.value,
+    state.dateFrom.value,
+    state.dateTo.value,
     isBarChartStyle(),
     allCountries.value, // This is the country metadata, not the selected countries
     isErrorBarType(),
     displayColors.value, // Use displayColors which handles 8+ countries
     isMatrixChartStyle(),
-    showPercentage.value,
+    state.showPercentage.value,
     showCumPi(),
     isAsmrType(),
-    maximize.value,
-    showLabels.value,
+    state.maximize.value,
+    state.showLabels.value,
     await makeUrl(),
-    isLogarithmic.value,
+    state.isLogarithmic.value,
     isPopulationType(),
     isDeathsType(),
     allChartData.labels,
@@ -523,26 +389,26 @@ const updateFilteredData = async () => {
 }
 
 const configureOptions = () => {
-  chartOptions.showTotalOption = isExcess && isBarChartStyle()
-  chartOptions.showTotalOptionDisabled = !cumulative
+  chartOptions.showTotalOption = state.isExcess.value && isBarChartStyle()
+  chartOptions.showTotalOptionDisabled = !state.cumulative.value
   chartOptions.showMaximizeOption
-    = !(isExcess && isLineChartStyle()) && !isMatrixChartStyle()
+    = !(state.isExcess.value && isLineChartStyle()) && !isMatrixChartStyle()
   chartOptions.showMaximizeOptionDisabled
-    = isLogarithmic.value || (isExcess.value && !chartOptions.showTotalOption)
+    = state.isLogarithmic.value || (state.isExcess.value && !chartOptions.showTotalOption)
   chartOptions.showBaselineOption = hasBaseline() && !isMatrixChartStyle()
   chartOptions.showPredictionIntervalOption
-    = chartOptions.showBaselineOption || (isExcess && !isMatrixChartStyle())
+    = chartOptions.showBaselineOption || (state.isExcess.value && !isMatrixChartStyle())
   chartOptions.showPredictionIntervalOptionDisabled
-    = (!isExcess && !showBaseline) || (cumulative && !showCumPi())
-  chartOptions.showCumulativeOption = isExcess.value
-  chartOptions.showPercentageOption = isExcess.value
-  chartOptions.showLogarithmicOption = !isMatrixChartStyle() && !isExcess
+    = (!state.isExcess.value && !state.showBaseline.value) || (state.cumulative.value && !showCumPi())
+  chartOptions.showCumulativeOption = state.isExcess.value
+  chartOptions.showPercentageOption = state.isExcess.value
+  chartOptions.showLogarithmicOption = !isMatrixChartStyle() && !state.isExcess.value
 }
 
 const resetBaselineDates = () => {
   if (!allChartLabels.value || !allYearlyChartLabels.value) return
   const labels = allChartLabels.value.slice(
-    getStartIndex(allYearlyChartLabels.value, sliderStart.value)
+    getStartIndex(allYearlyChartLabels.value, state.sliderStart.value)
   )
   if (labels.length === 0) return
 
@@ -551,24 +417,24 @@ const resetBaselineDates = () => {
   const defaultToIndex = Math.min(labels.length - 1, MIN_BASELINE_SPAN)
   const defaultTo = labels[defaultToIndex]!
 
-  const period = new ChartPeriod(labels, chartType.value as ChartType)
+  const period = new ChartPeriod(labels, state.chartType.value as ChartType)
   const validatedRange = getValidatedRange(
-    { from: baselineDateFrom.value ?? defaultFrom, to: baselineDateTo.value ?? defaultTo },
+    { from: state.baselineDateFrom.value ?? defaultFrom, to: state.baselineDateTo.value ?? defaultTo },
     period,
     { from: defaultFrom, to: defaultTo },
     MIN_BASELINE_SPAN
   )
 
-  if (validatedRange.from !== baselineDateFrom.value || !baselineDateFrom.value) {
-    baselineDateFrom.value = validatedRange.from
+  if (validatedRange.from !== state.baselineDateFrom.value || !state.baselineDateFrom.value) {
+    state.baselineDateFrom.value = validatedRange.from
   }
-  if (validatedRange.to !== baselineDateTo.value || !baselineDateTo.value) {
-    baselineDateTo.value = validatedRange.to
+  if (validatedRange.to !== state.baselineDateTo.value || !state.baselineDateTo.value) {
+    state.baselineDateTo.value = validatedRange.to
   }
 
   // Start Select - reset to default if current value is invalid
-  if (sliderStart.value && !allYearlyChartLabelsUnique.value?.includes(sliderStart.value)) {
-    sliderStart.value = Defaults.sliderStart ?? '2010'
+  if (state.sliderStart.value && !allYearlyChartLabelsUnique.value?.includes(state.sliderStart.value)) {
+    state.sliderStart.value = '2010'
   }
 }
 
@@ -577,7 +443,7 @@ const allCountries = ref<Record<string, Country>>({})
 const isDataLoaded = ref(false)
 const allAgeGroups = computed(() => {
   const result = new Set<string>()
-  countries.value.forEach((countryCode: string) => {
+  state.countries.value.forEach((countryCode: string) => {
     const country = allCountries.value[countryCode]
     if (country) {
       country.age_groups().forEach((ag: string) => result.add(ag))
@@ -601,7 +467,7 @@ const allChartData = reactive<AllChartData>({
 const chartData = ref<MortalityChartData | undefined>(undefined)
 
 const handleUpdate = async (key: string) => {
-  if (countries.value.length) {
+  if (state.countries.value.length) {
     const shouldDownloadDataset = ['_countries', '_type', '_chartType', '_ageGroups'].includes(key)
     const shouldUpdateDataset = [
       '_baselineMethod',
@@ -610,7 +476,7 @@ const handleUpdate = async (key: string) => {
       '_baselineDateTo',
       '_sliderStart'
     ].includes(key)
-    || (baselineMethod.value !== 'auto' && key === '_cumulative')
+    || (state.baselineMethod.value !== 'auto' && key === '_cumulative')
 
     // Options that affect chart rendering but don't need data redownload
     const needsFilterUpdate = [
@@ -635,8 +501,8 @@ const handleUpdate = async (key: string) => {
   }
 
   if (chartData.value) {
-    if (key === '_maximize') chartData.value.isMaximized = maximize.value
-    if (key === '_showLabels') chartData.value.showLabels = showLabels.value
+    if (key === '_maximize') chartData.value.isMaximized = state.maximize.value
+    if (key === '_showLabels') chartData.value.showLabels = state.showLabels.value
   }
 }
 
@@ -666,121 +532,18 @@ const update = async (key: string) => {
   }
 }
 
-// Event handlers for URL state updates
-const handleCountriesChanged = async (v: string[]) => {
-  // useUrlState now handles optimistic updates internally
-  countries.value = v
+// Phase 9.2: Event handlers replaced with direct state updates
+// Helper function for state updates with nextTick
+const updateStateAndRefresh = async (updateFn: () => void, key: string) => {
+  updateFn()
   await nextTick()
-  update('_countries')
+  update(key)
 }
-const handleAgeGroupsChanged = async (v: string[]) => {
-  ageGroups.value = v
-  await nextTick()
-  update('_ageGroups')
-}
-const handleTypeChanged = async (v: string) => {
-  type.value = v
-  await nextTick()
-  update('_type')
-}
-const handleChartTypeChanged = async (v: string) => {
-  chartType.value = v
-  await nextTick()
-  update('_chartType')
-}
-const handleChartStyleChanged = async (v: string) => {
-  chartStyle.value = v
-  await nextTick()
-  update('_chartStyle')
-}
-const handleStandardPopulationChanged = async (v: string) => {
-  standardPopulation.value = v
-  await nextTick()
-  update('_standardPopulation')
-}
-const handleIsExcessChanged = async (v: boolean) => {
-  isExcess.value = v
-  await nextTick()
-  update('_isExcess')
-}
-const handleShowBaselineChanged = async (v: boolean) => {
-  showBaseline.value = v
-  await nextTick()
-  update('_showBaseline')
-}
-const handleBaselineMethodChanged = async (v: string) => {
-  baselineMethod.value = v
-  await nextTick()
-  update('_baselineMethod')
-}
-const handleBaselineSliderValueChanged = async (v: string[]) => {
-  baselineDateFrom.value = v[0]!
-  baselineDateTo.value = v[1]!
-  await nextTick()
-  update('_baselineDateFrom')
-}
-const handleShowPredictionIntervalChanged = async (v: boolean) => {
-  showPredictionInterval.value = v
-  await nextTick()
-  update('_showPredictionInterval')
-}
-const handleShowLabelsChanged = async (v: boolean) => {
-  showLabels.value = v
-  await nextTick()
-  update('_showLabels')
-}
-const handleMaximizeChanged = async (v: boolean) => {
-  maximize.value = v
-  await nextTick()
-  update('_maximize')
-}
-const handleIsLogarithmicChanged = async (v: boolean) => {
-  isLogarithmic.value = v
-  await nextTick()
-  update('_isLogarithmic')
-}
-const handleShowPercentageChanged = async (v: boolean) => {
-  showPercentage.value = v
-  await nextTick()
-  update('_showPercentage')
-}
-const handleCumulativeChanged = async (v: boolean) => {
-  cumulative.value = v
-  await nextTick()
-  update('_cumulative')
-}
-const handleShowTotalChanged = async (v: boolean) => {
-  showTotal.value = v
-  await nextTick()
-  update('_showTotal')
-}
-const handleSliderStartChanged = async (v: string) => {
-  // useUrlState now handles optimistic updates internally
-  sliderStart.value = v
-  await nextTick()
-  update('_sliderStart')
-}
-const handleUserColorsChanged = async (v: string[]) => {
-  userColors.value = v
-  await nextTick()
-  update('_userColors')
-}
+
+// Special handler for chart preset (local state, not URL)
 const handleChartPresetChanged = (v: string) => {
-  // Chart preset is now local state, no URL sync needed
-  chartPreset.value = v
+  state.chartPreset.value = v
   applyPresetSize(v)
-}
-const handleShowLogoChanged = async (v: boolean) => {
-  showLogo.value = v
-  await nextTick()
-}
-const handleShowQrCodeChanged = async (v: boolean) => {
-  showQrCode.value = v
-  await nextTick()
-}
-const handleDecimalsChanged = async (v: string) => {
-  decimals.value = v
-  await nextTick()
 }
 
 onMounted(async () => {
@@ -802,7 +565,7 @@ onMounted(async () => {
   }
 
   // Only update data if we have countries selected
-  if (countries.value && countries.value.length > 0) {
+  if (state.countries.value && state.countries.value.length > 0) {
     await updateData(true, true)
   }
 
@@ -872,20 +635,20 @@ const saveChart = async () => {
       <ExplorerDataSelection
         :all-countries="allCountries"
         :all-age-groups="allAgeGroups"
-        :countries="countries"
-        :age-groups="ageGroups"
+        :countries="state.countries.value"
+        :age-groups="state.ageGroups.value"
         :is-asmr-type="isAsmrType()"
         :is-life-expectancy-type="isLifeExpectancyType()"
         :is-updating="false"
         :max-countries-allowed="getMaxCountriesAllowed()"
         :slider-value="sliderValue"
         :labels="labels"
-        :slider-start="sliderStart"
+        :slider-start="state.sliderStart.value"
         :all-yearly-chart-labels-unique="allYearlyChartLabelsUnique"
-        :chart-type="chartType.value as ChartType"
-        @countries-changed="handleCountriesChanged"
-        @age-groups-changed="handleAgeGroupsChanged"
-        @slider-start-changed="handleSliderStartChanged"
+        :chart-type="state.chartType.value as ChartType"
+        @countries-changed="(v) => updateStateAndRefresh(() => state.countries.value = v, '_countries')"
+        @age-groups-changed="(v) => updateStateAndRefresh(() => state.ageGroups.value = v, '_ageGroups')"
+        @slider-start-changed="(v) => updateStateAndRefresh(() => state.sliderStart.value = v, '_sliderStart')"
         @date-slider-changed="dateSliderChanged"
       />
 
@@ -895,19 +658,19 @@ const saveChart = async () => {
         <div class="flex-1 min-w-0 flex-shrink-0">
           <ExplorerChartContainer
             ref="chartContainer"
-            :countries="countries"
+            :countries="state.countries.value"
             :chart-data="chartData"
-            :chart-style="chartStyle"
-            :is-excess="isExcess"
+            :chart-style="state.chartStyle.value"
+            :is-excess="state.isExcess.value"
             :is-life-expectancy-type="isLifeExpectancyType()"
-            :show-prediction-interval="showPredictionInterval"
-            :show-percentage="showPercentage"
-            :show-labels="showLabels"
+            :show-prediction-interval="state.showPredictionInterval.value"
+            :show-percentage="state.showPercentage.value"
+            :show-labels="state.showLabels.value"
             :is-deaths-type="isDeathsType()"
             :is-population-type="isPopulationType()"
-            :show-logo="showLogo"
-            :show-qr-code="showQrCode"
-            :decimals="decimals"
+            :show-logo="state.showLogo.value"
+            :show-qr-code="state.showQrCode.value"
+            :decimals="state.decimals.value"
             :show-loading-overlay="showLoadingOverlay"
             :show-size-label="showSizeLabel"
             :container-size="containerSize"
@@ -919,64 +682,64 @@ const saveChart = async () => {
         <!-- Settings section - fixed width on large screens -->
         <div class="w-full xl:w-[420px] flex-shrink-0">
           <ExplorerSettings
-            :countries="countries"
+            :countries="state.countries.value"
             :labels="labels"
             :all-yearly-chart-labels-unique="allYearlyChartLabelsUnique || []"
-            :type="type"
-            :chart-type="chartType"
-            :chart-style="chartStyle"
-            :standard-population="standardPopulation"
+            :type="state.type.value"
+            :chart-type="state.chartType.value"
+            :chart-style="state.chartStyle.value"
+            :standard-population="state.standardPopulation.value"
             :is-updating="false"
             :is-population-type="isPopulationType()"
-            :is-excess="isExcess"
-            :baseline-method="baselineMethod"
+            :is-excess="state.isExcess.value"
+            :baseline-method="state.baselineMethod.value"
             :baseline-slider-value="baselineSliderValue"
-            :show-baseline="showBaseline"
-            :slider-start="sliderStart"
-            :show-prediction-interval="showPredictionInterval"
+            :show-baseline="state.showBaseline.value"
+            :slider-start="state.sliderStart.value"
+            :show-prediction-interval="state.showPredictionInterval.value"
             :show-prediction-interval-disabled="showPredictionIntervalDisabled"
-            :show-labels="showLabels"
-            :maximize="maximize"
-            :is-logarithmic="isLogarithmic"
-            :show-percentage="showPercentage || false"
-            :cumulative="cumulative"
-            :show-total="showTotal"
-            :show-logarithmic-option="!isMatrixChartStyle() && !isExcess"
-            :show-maximize-option="!(isExcess && isLineChartStyle()) && !isMatrixChartStyle()"
-            :show-maximize-option-disabled="isLogarithmic || (isExcess && !chartOptions.showTotalOption)"
-            :show-percentage-option="isExcess"
-            :show-cumulative-option="isExcess"
-            :show-total-option="isExcess && isBarChartStyle()"
-            :show-total-option-disabled="!cumulative"
-            :show-prediction-interval-option="chartOptions.showBaselineOption || (isExcess && !isMatrixChartStyle())"
+            :show-labels="state.showLabels.value"
+            :maximize="state.maximize.value"
+            :is-logarithmic="state.isLogarithmic.value"
+            :show-percentage="state.showPercentage.value || false"
+            :cumulative="state.cumulative.value"
+            :show-total="state.showTotal.value"
+            :show-logarithmic-option="!isMatrixChartStyle() && !state.isExcess.value"
+            :show-maximize-option="!(state.isExcess.value && isLineChartStyle()) && !isMatrixChartStyle()"
+            :show-maximize-option-disabled="state.isLogarithmic.value || (state.isExcess.value && !chartOptions.showTotalOption)"
+            :show-percentage-option="state.isExcess.value"
+            :show-cumulative-option="state.isExcess.value"
+            :show-total-option="state.isExcess.value && isBarChartStyle()"
+            :show-total-option-disabled="!state.cumulative.value"
+            :show-prediction-interval-option="chartOptions.showBaselineOption || (state.isExcess.value && !isMatrixChartStyle())"
             :show-prediction-interval-option-disabled="showPredictionIntervalDisabled"
             :is-matrix-chart-style="isMatrixChartStyle()"
             :colors="displayColors"
-            :chart-preset="chartPreset"
-            :show-logo="showLogo"
-            :show-qr-code="showQrCode"
-            :decimals="decimals"
-            @type-changed="handleTypeChanged"
-            @chart-type-changed="handleChartTypeChanged"
-            @chart-style-changed="handleChartStyleChanged"
-            @standard-population-changed="handleStandardPopulationChanged"
-            @is-excess-changed="handleIsExcessChanged"
-            @show-baseline-changed="handleShowBaselineChanged"
-            @baseline-method-changed="handleBaselineMethodChanged"
-            @baseline-slider-value-changed="handleBaselineSliderValueChanged"
-            @show-prediction-interval-changed="handleShowPredictionIntervalChanged"
-            @show-labels-changed="handleShowLabelsChanged"
-            @maximize-changed="handleMaximizeChanged"
-            @is-logarithmic-changed="handleIsLogarithmicChanged"
-            @show-percentage-changed="handleShowPercentageChanged"
-            @cumulative-changed="handleCumulativeChanged"
-            @show-total-changed="handleShowTotalChanged"
-            @slider-start-changed="handleSliderStartChanged"
-            @user-colors-changed="handleUserColorsChanged"
+            :chart-preset="state.chartPreset.value"
+            :show-logo="state.showLogo.value"
+            :show-qr-code="state.showQrCode.value"
+            :decimals="state.decimals.value"
+            @type-changed="(v) => updateStateAndRefresh(() => state.type.value = v, '_type')"
+            @chart-type-changed="(v) => updateStateAndRefresh(() => state.chartType.value = v, '_chartType')"
+            @chart-style-changed="(v) => updateStateAndRefresh(() => state.chartStyle.value = v, '_chartStyle')"
+            @standard-population-changed="(v) => updateStateAndRefresh(() => state.standardPopulation.value = v, '_standardPopulation')"
+            @is-excess-changed="(v) => updateStateAndRefresh(() => state.isExcess.value = v, '_isExcess')"
+            @show-baseline-changed="(v) => updateStateAndRefresh(() => state.showBaseline.value = v, '_showBaseline')"
+            @baseline-method-changed="(v) => updateStateAndRefresh(() => state.baselineMethod.value = v, '_baselineMethod')"
+            @baseline-slider-value-changed="(v) => updateStateAndRefresh(() => { state.baselineDateFrom.value = v[0]!; state.baselineDateTo.value = v[1]! }, '_baselineDateFrom')"
+            @show-prediction-interval-changed="(v) => updateStateAndRefresh(() => state.showPredictionInterval.value = v, '_showPredictionInterval')"
+            @show-labels-changed="(v) => updateStateAndRefresh(() => state.showLabels.value = v, '_showLabels')"
+            @maximize-changed="(v) => updateStateAndRefresh(() => state.maximize.value = v, '_maximize')"
+            @is-logarithmic-changed="(v) => updateStateAndRefresh(() => state.isLogarithmic.value = v, '_isLogarithmic')"
+            @show-percentage-changed="(v) => updateStateAndRefresh(() => state.showPercentage.value = v, '_showPercentage')"
+            @cumulative-changed="(v) => updateStateAndRefresh(() => state.cumulative.value = v, '_cumulative')"
+            @show-total-changed="(v) => updateStateAndRefresh(() => state.showTotal.value = v, '_showTotal')"
+            @slider-start-changed="(v) => updateStateAndRefresh(() => state.sliderStart.value = v, '_sliderStart')"
+            @user-colors-changed="(v) => updateStateAndRefresh(() => state.userColors.value = v, '_userColors')"
             @chart-preset-changed="handleChartPresetChanged"
-            @show-logo-changed="handleShowLogoChanged"
-            @show-qr-code-changed="handleShowQrCodeChanged"
-            @decimals-changed="handleDecimalsChanged"
+            @show-logo-changed="(v) => { state.showLogo.value = v; nextTick() }"
+            @show-qr-code-changed="(v) => { state.showQrCode.value = v; nextTick() }"
+            @decimals-changed="(v) => { state.decimals.value = v; nextTick() }"
           />
 
           <ExplorerChartActions
