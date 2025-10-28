@@ -2,6 +2,59 @@
 
 This document outlines refactoring opportunities identified during the module integration project. These are separated into distinct phases for manageable implementation.
 
+## Status of Non-Integrated Composables
+
+During Phase 1, two composables were created but could not be integrated:
+
+### 1. `useExplorerDataUpdate.ts` - TypeScript Limitation ❌
+
+**Status**: Cannot integrate due to TypeScript compiler limitation
+
+**Location**: `app/composables/useExplorerDataUpdate.ts` (223 lines)
+
+**Issue**: Takes 30+ individual parameters which causes TypeScript's "Type instantiation is excessively deep and possibly infinite" error. This is a known limitation of the TypeScript compiler's type inference algorithm.
+
+**Solution**: Refactor to use config object pattern (see Phase 2 below)
+
+**Decision**: Keep file as-is for now, integrate after Phase 2 refactoring
+
+### 2. `useExplorerState.ts` - Architectural Mismatch ❌
+
+**Status**: Cannot integrate due to architectural incompatibility
+
+**Location**: `app/composables/useExplorerState.ts` (255 lines)
+
+**Issue**: This composable creates a centralized state management pattern using individual `ref` objects via `useUrlState` for each property. However, `explorer.vue` currently uses `useUrlState` composables directly inline for each property. These patterns are fundamentally incompatible.
+
+**Why it can't integrate**:
+- Would require complete rewrite of `explorer.vue`'s state management
+- Would change URL synchronization approach throughout the file
+- High risk of introducing bugs
+- Current inline pattern is actually clean and working well
+
+**Example of the pattern mismatch**:
+
+```typescript
+// useExplorerState.ts approach (centralized)
+export function useExplorerState() {
+  const countries = useUrlState('c', Defaults.countries)
+  const chartType = useUrlState('ct', Defaults.chartType)
+  // ... 20+ more state properties
+  return { countries, chartType, ... }
+}
+
+// explorer.vue current approach (inline)
+const countries = useUrlState('c', Defaults.countries)
+const chartType = useUrlState('ct', Defaults.chartType)
+// ... used directly in the same file
+```
+
+Both approaches work fine, but switching between them requires major refactoring with unclear benefits.
+
+**Decision**: Keep file as reference implementation. The current inline pattern in `explorer.vue` is maintainable and doesn't justify the integration risk.
+
+---
+
 ## Phase 2: Config Object Pattern for useExplorerDataUpdate
 
 ### Problem
