@@ -5,6 +5,40 @@
 import { hashCode } from './strings'
 
 /**
+ * Minimal Window interface for type safety
+ */
+interface BrowserWindow {
+  innerWidth: number
+  innerHeight: number
+  open: () => BrowserWindow | null
+  document: BrowserDocument
+  matchMedia: (query: string) => { addEventListener: (event: string, callback: () => void) => void }
+}
+
+/**
+ * Minimal Document interface for type safety
+ */
+interface BrowserDocument {
+  write: (content: string) => void
+  querySelector: (selector: string) => { remove: () => void } | null
+}
+
+/**
+ * Type-safe interface for globalThis in browser context
+ */
+interface GlobalWithBrowser {
+  window?: BrowserWindow
+  document?: BrowserDocument
+}
+
+/**
+ * Get globalThis with proper typing for browser APIs
+ */
+function getGlobal(): GlobalWithBrowser {
+  return globalThis as GlobalWithBrowser
+}
+
+/**
  * Check if code is running in browser environment
  */
 export const isBrowser = (): boolean => typeof globalThis !== 'undefined' && 'window' in globalThis
@@ -12,10 +46,9 @@ export const isBrowser = (): boolean => typeof globalThis !== 'undefined' && 'wi
 /**
  * Safely get window object (returns undefined in SSR)
  */
-export const getWindow = (): Window | undefined => {
+export const getWindow = (): BrowserWindow | undefined => {
   if (isBrowser()) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (globalThis as any).window as Window
+    return getGlobal().window
   }
   return undefined
 }
@@ -24,12 +57,11 @@ export const getWindow = (): Window | undefined => {
  * Display a base64 URL inside an iframe in another window.
  */
 export const openNewWindowWithBase64Url = (base64: string) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if (typeof (globalThis as any).window === 'undefined') throw new Error('Window not available')
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const win = (globalThis as any).window.open()
-  if (!win) throw new Error('Cannot open new window')
-  win.document.write(
+  const win = getGlobal().window
+  if (!win) throw new Error('Window not available')
+  const newWin = win.open()
+  if (!newWin) throw new Error('Cannot open new window')
+  newWin.document.write(
     '<iframe src="'
     + base64
     + '" frameborder="0" style="border:0; '
@@ -39,11 +71,9 @@ export const openNewWindowWithBase64Url = (base64: string) => {
 }
 
 export const appearanceChanged = (cb: () => void) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if (typeof (globalThis as any).window === 'undefined') return
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (globalThis as any).window
-    .matchMedia('(prefers-color-scheme: dark)')
+  const win = getGlobal().window
+  if (!win) return
+  win.matchMedia('(prefers-color-scheme: dark)')
     .addEventListener('change', cb)
 }
 
@@ -59,13 +89,12 @@ export const delay = (fun: () => void, time: number = 333) => {
 
 export const removeMetaTag = (name: string) =>
   new Promise<void>((resolve) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (typeof (globalThis as any).document === 'undefined') {
+    const doc = getGlobal().document
+    if (!doc) {
       resolve()
       return
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const tag = (globalThis as any).document.querySelector(`meta[name="${name}"]`)
+    const tag = doc.querySelector(`meta[name="${name}"]`)
     if (tag) {
       tag.remove()
     }

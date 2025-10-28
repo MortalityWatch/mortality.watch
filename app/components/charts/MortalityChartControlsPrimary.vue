@@ -137,7 +137,7 @@ const options = computed(() => {
         <label class="text-sm font-medium whitespace-nowrap">Jurisdictions</label>
         <UInputMenu
           v-model="selectedCountries"
-          :items="options as any"
+          :items="options"
           :icon="selectedCountries.length === 1 ? selectedCountries[0]?.icon : undefined"
           multiple
           searchable
