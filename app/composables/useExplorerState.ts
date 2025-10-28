@@ -1,31 +1,27 @@
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useUrlState } from '@/composables/useUrlState'
 import { Defaults, stateFieldEncoders } from '@/lib/state/stateSerializer'
 import type { AllChartData, DatasetRaw } from '@/model'
 import type { MortalityChartData } from '@/lib/chart/chartTypes'
+import {
+  explorerStateSchema,
+  type ExplorerState
+} from '@/model/explorerSchema'
+import { showToast } from '@/toast'
 
 /**
- * Manages all URL-synchronized state for the explorer page
+ * Explorer State Management Composable
  *
- * NOTE: This composable cannot be integrated into explorer.vue due to architectural mismatch.
+ * Phase 9.1: Centralized state management with validation
  *
- * ISSUE: Different state management patterns
- * - This composable creates individual `ref` objects using `useUrlState` for each state property
- * - explorer.vue currently uses `useUrlState` composables directly inline for each property
- * - The patterns are incompatible without major refactoring
+ * Provides:
+ * - All URL state refs (maintaining URL-first architecture)
+ * - Real-time validation using Zod schema
+ * - Auto-fix for incompatible state combinations
+ * - User notifications for invalid states
  *
- * INTEGRATION CHALLENGES:
- * - Would require rewriting all state management in explorer.vue
- * - Would need to change how URL synchronization works
- * - High risk of introducing bugs
- * - Current inline pattern is actually clean and working well
- *
- * RECOMMENDATION: Keep current implementation
- * - The current useUrlState pattern in explorer.vue is clear and maintainable
- * - This composable serves as an alternative/reference implementation
- * - No compelling benefit to justify the integration risk
- *
- * NOTE: This file is kept as a reference implementation for alternative state management patterns.
+ * This consolidates state management and eliminates the need for
+ * scattered business logic across the codebase.
  */
 export function useExplorerState() {
   // URL State - Core Settings
@@ -175,6 +171,122 @@ export function useExplorerState() {
   const chartWidth = ref<number | undefined>(undefined)
   const chartHeight = ref<number | undefined>(undefined)
 
+  // ============================================================================
+  // VALIDATION - Gather complete state and validate
+  // ============================================================================
+
+  const currentState = computed<ExplorerState>(() => ({
+    countries: countries.value,
+    chartType: chartType.value,
+    ageGroups: ageGroups.value,
+    type: type.value,
+    standardPopulation: standardPopulation.value,
+    chartStyle: chartStyle.value,
+    dateFrom: dateFrom.value,
+    dateTo: dateTo.value,
+    sliderStart: sliderStart.value,
+    showBaseline: showBaseline.value,
+    baselineMethod: baselineMethod.value,
+    baselineDateFrom: baselineDateFrom.value,
+    baselineDateTo: baselineDateTo.value,
+    isExcess: isExcess.value,
+    cumulative: cumulative.value,
+    showPredictionInterval: showPredictionInterval.value,
+    showTotal: showTotal.value,
+    showPercentage: showPercentage.value,
+    maximize: maximize.value,
+    showLabels: showLabels.value,
+    isLogarithmic: isLogarithmic.value,
+    decimals: decimals.value
+  }))
+
+  const validationResult = computed(() =>
+    explorerStateSchema.safeParse(currentState.value)
+  )
+
+  const isValid = computed(() => validationResult.value.success)
+
+  const errors = computed(() =>
+    validationResult.value.success ? [] : validationResult.value.error.issues
+  )
+
+  // ============================================================================
+  // AUTO-FIX - Automatically correct incompatible state combinations
+  // ============================================================================
+
+  // Track if we've already shown a toast to avoid spamming
+  let lastErrorMessage = ''
+
+  watch(
+    errors,
+    (newErrors) => {
+      if (newErrors.length === 0) {
+        lastErrorMessage = ''
+        return
+      }
+
+      // Log validation errors for debugging
+      console.warn('[useExplorerState] Validation errors:', newErrors)
+
+      // Auto-fix: Can't show baseline in excess mode
+      const excessBaselineError = newErrors.find(e =>
+        e.message.includes('Cannot show baseline in excess')
+      )
+      if (excessBaselineError) {
+        showBaseline.value = false
+        return // Exit early after auto-fix
+      }
+
+      // Auto-fix: Prediction intervals require baseline
+      const predictionIntervalError = newErrors.find(e =>
+        e.message.includes('require baseline')
+      )
+      if (predictionIntervalError) {
+        showPredictionInterval.value = false
+        return // Exit early after auto-fix
+      }
+
+      // Auto-fix: Population doesn't support baseline
+      const populationBaselineError = newErrors.find(e =>
+        e.message.includes('Population metric does not support baseline')
+      )
+      if (populationBaselineError) {
+        showBaseline.value = false
+        return // Exit early after auto-fix
+      }
+
+      // Auto-fix: Population doesn't support excess
+      const populationExcessError = newErrors.find(e =>
+        e.message.includes('Population metric does not support excess')
+      )
+      if (populationExcessError) {
+        isExcess.value = false
+        return // Exit early after auto-fix
+      }
+
+      // For errors that can't be auto-fixed, notify user
+      // Only show if error message has changed to avoid spam
+      const firstError = newErrors[0]
+      if (firstError && firstError.message !== lastErrorMessage) {
+        lastErrorMessage = firstError.message
+        showToast(firstError.message, 'warning')
+      }
+    },
+    { immediate: false }
+  )
+
+  // ============================================================================
+  // HELPER - Get validated state or throw
+  // ============================================================================
+
+  const getValidatedState = (): ExplorerState => {
+    const result = explorerStateSchema.safeParse(currentState.value)
+    if (!result.success) {
+      throw new Error(`Invalid state: ${result.error.issues[0]?.message}`)
+    }
+    return result.data
+  }
+
   return {
     // Core settings
     countries,
@@ -214,7 +326,13 @@ export function useExplorerState() {
     // Local state
     chartPreset,
     chartWidth,
-    chartHeight
+    chartHeight,
+
+    // Validation API
+    currentState,
+    isValid,
+    errors,
+    getValidatedState
   }
 }
 
