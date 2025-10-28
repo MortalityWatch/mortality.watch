@@ -3,13 +3,40 @@ definePageMeta({
   middleware: 'auth'
 })
 
-const { user, updateProfile, signOut, loading } = useAuth()
+const { user, updateProfile, signOut, loading, refreshSession } = useAuth()
 const toast = useToast()
+const route = useRoute()
 
 const profileState = reactive({
   firstName: '',
   lastName: '',
   displayName: ''
+})
+
+// Show success message after checkout
+onMounted(async () => {
+  if (route.query.success === 'true') {
+    // Refresh user session to get updated tier from database
+    await refreshSession()
+
+    toast.add({
+      title: 'Subscription activated!',
+      description: 'Your payment was successful. Welcome to Pro! 🎉',
+      color: 'success'
+    })
+    // Clean up the URL
+    const router = useRouter()
+    router.replace({ query: {} })
+  } else if (route.query.canceled === 'true') {
+    toast.add({
+      title: 'Checkout canceled',
+      description: 'You can subscribe anytime from your profile.',
+      color: 'info'
+    })
+    // Clean up the URL
+    const router = useRouter()
+    router.replace({ query: {} })
+  }
 })
 
 const passwordState = reactive({
@@ -119,29 +146,7 @@ async function changePassword() {
   }
 }
 
-const tierBadgeColor = computed(() => {
-  if (!user.value) return 'neutral'
-  switch (user.value.tier) {
-    case 2:
-      return 'warning'
-    case 1:
-      return 'info'
-    default:
-      return 'neutral'
-  }
-})
-
-const tierLabel = computed(() => {
-  if (!user.value) return 'Free'
-  switch (user.value.tier) {
-    case 2:
-      return 'Pro'
-    case 1:
-      return 'Registered'
-    default:
-      return 'Free'
-  }
-})
+// Tier badge is now handled by the TierBadge component
 </script>
 
 <template>
@@ -171,13 +176,10 @@ const tierLabel = computed(() => {
                 View your account details
               </p>
             </div>
-            <UBadge
-              :color="tierBadgeColor"
-              variant="subtle"
+            <TierBadge
+              :tier="user.tier"
               size="lg"
-            >
-              {{ tierLabel }}
-            </UBadge>
+            />
           </div>
         </template>
 
@@ -219,6 +221,9 @@ const tierLabel = computed(() => {
           </div>
         </div>
       </UCard>
+
+      <!-- Subscription -->
+      <SubscriptionCard />
 
       <!-- Profile Form -->
       <UCard>

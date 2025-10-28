@@ -31,7 +31,8 @@ export default defineNuxtConfig({
       useLocalCache: process.env.NUXT_PUBLIC_USE_LOCAL_CACHE || 'false',
       devCountries: process.env.NUXT_PUBLIC_DEV_COUNTRIES || '',
       dataCachePath: '.data/cache/mortality',
-      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://www.mortality.watch'
+      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://www.mortality.watch',
+      stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY || ''
     }
   },
 
