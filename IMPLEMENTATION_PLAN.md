@@ -1664,6 +1664,243 @@ STRIPE_PUBLISHABLE_KEY=pk_test_xxx  # for frontend
 
 ---
 
+## Phase 8.5: Component Refactoring & Modularization
+
+**Status:** Phase 1 Complete (83% integration), Phases 2-3 Planned
+
+**Goal:** Break up large monolithic components into smaller, maintainable modules
+
+**Context:** After Phase 8, the codebase had several large component files that had grown organically:
+- `explorer.vue` (1,582 lines)
+- `model/state.ts` (870 lines)
+- `components/charts/MortalityChartControlsSecondary.vue` (809 lines)
+
+These files became difficult to maintain and onboard new developers.
+
+---
+
+### 8.5.1 Phase 1: Module Integration (✅ Complete)
+
+**Branch:** `refactor/split-large-files`
+**PR:** #10
+
+#### Successfully Integrated (10/12 modules - 83%)
+
+**Explorer Components (4/4):**
+- [x] `ExplorerDataSelection.vue` - Data selection UI
+- [x] `ExplorerChartContainer.vue` - Chart display with loading states
+- [x] `ExplorerSettings.vue` - Settings panel wrapper
+- [x] `ExplorerChartActions.vue` - Chart action buttons
+- **Impact:** Reduced explorer.vue by 158 lines (-10%)
+
+**State Modules (3/3):**
+- [x] `StateCore.ts` - Core state properties and getters/setters
+- [x] `StateHelpers.ts` - Helper utilities and type predicates
+- [x] `StateSerialization.ts` - URL state serialization/deserialization
+- **Impact:** Clean inheritance and delegation pattern
+
+**Chart Control Component (1/1):**
+- [x] `DataTab.vue` - Data settings tab
+- **Impact:** Replaced 77 lines of inline template
+
+**Composables (2/4):**
+- [x] `useChartResize.ts` - Chart resizing functionality
+- [x] `useExplorerHelpers.ts` - Helper functions and type predicates
+- **Impact:** Eliminated 108 lines from explorer.vue
+
+**Total Impact:**
+- explorer.vue: -276 lines total (~18% reduction)
+- All 466 tests passing ✅
+- TypeScript compilation successful ✅
+
+#### Non-Integrated Composables (2/12)
+
+**1. `useExplorerDataUpdate.ts` (223 lines)**
+- ❌ Cannot integrate due to TypeScript limitation
+- Takes 30+ parameters → "Type instantiation excessively deep" error
+- Solution: Phase 2 config object refactor
+- File kept for Phase 2 integration
+
+**2. `useExplorerState.ts` (255 lines)**
+- ❌ Cannot integrate due to architectural mismatch
+- Centralized state pattern incompatible with current inline pattern
+- Decision: Keep as reference implementation
+- No integration planned
+
+**Documentation:**
+- `REFACTORING_SUMMARY.md` - Complete Phase 1 results (in git history)
+- `FUTURE_REFACTORING.md` - Phases 2 & 3 roadmap
+
+---
+
+### 8.5.2 Phase 2: Config Object Pattern (Planned)
+
+**Goal:** Enable integration of `useExplorerDataUpdate` composable
+
+**Problem:** TypeScript cannot handle 30+ individual function parameters
+
+**Solution:** Group parameters into logical configuration objects
+
+```typescript
+interface UseExplorerDataUpdateConfig {
+  state: ExplorerStateRefs     // 20 parameters
+  data: ExplorerDataRefs        // 5 parameters
+  helpers: ExplorerHelpers      // 8 parameters
+  dataset: ExplorerDataset      // 2 parameters
+  config: ExplorerConfig        // 2 parameters
+}
+
+export function useExplorerDataUpdate(config: UseExplorerDataUpdateConfig)
+```
+
+**Benefits:**
+- ✅ Fixes TypeScript limitation
+- ✅ Improved readability and maintainability
+- ✅ Better testability
+- ✅ Self-documenting interface names
+
+**Tasks:**
+- [ ] Define configuration interfaces
+- [ ] Update `useExplorerDataUpdate.ts` to accept config object
+- [ ] Update `explorer.vue` to pass config object
+- [ ] Test integration thoroughly
+
+**Impact:** 2-3 files, Low-Medium risk
+
+---
+
+### 8.5.3 Phase 3: Date/Period Type Model (Planned)
+
+**Goal:** Eliminate brittle string array + indexOf pattern
+
+**Problem:** Date handling scattered across 8+ files with extensive edge case handling
+
+**Current Pattern (Problematic):**
+```typescript
+// Scattered across multiple files
+const toIdx = props.labels.indexOf(props.sliderValue[1] ?? '')
+if (toIdx === -1) { /* handle error */ }
+
+const startIndex = allChartData.value?.labels.indexOf(dateFrom || '') || 0
+const endIndex = (allChartData.value?.labels.indexOf(dateTo || '') || 0) + 1
+```
+
+**Proposed Solution:** Create domain model for chart periods
+
+```typescript
+class ChartPeriod {
+  constructor(labels: string[], chartType: string) {}
+
+  indexOf(date: string): number          // Smart fallback, no -1
+  labelAt(index: number): string | undefined
+  findClosestDate(date: string): number
+  createRange(from: string, to: string): DateRange
+  isValidRange(from: string, to: string): boolean
+}
+
+class DateRange {
+  constructor(period: ChartPeriod, from: string, to: string) {}
+
+  get fromIndex(): number
+  get toIndex(): number
+  get labels(): string[]
+  contains(date: string): boolean
+}
+```
+
+**Usage After:**
+```typescript
+const period = new ChartPeriod(props.labels, chartType)
+const range = period.createRange(dateFrom, dateTo)
+const dataLabels = range.labels  // Clean and simple
+```
+
+**Benefits:**
+- ✅ Centralizes date logic in one place
+- ✅ Handles chart type differences (yearly/monthly/weekly)
+- ✅ Smart fallback logic (no -1 handling everywhere)
+- ✅ Type-safe and testable
+- ✅ Better utilization of metadata (min_date/max_date from world_meta.csv)
+
+**Files Affected (8+):**
+- `app/components/charts/DateSlider.vue`
+- `app/pages/ranking.vue`
+- `app/model/state.ts`
+- `app/lib/data/labels.ts`
+- `app/lib/data/aggregations.ts`
+- `app/lib/chart/filtering.ts`
+- `app/lib/chart/datasets.ts`
+- `app/composables/useDateRangeValidation.ts`
+
+**Tasks:**
+- [ ] Create `app/model/period.ts` with ChartPeriod and DateRange classes
+- [ ] Update `getAllChartLabels` to return ChartPeriod instead of string[]
+- [ ] Replace all `labels.indexOf` calls with `period.indexOf`
+- [ ] Update components/composables to use ChartPeriod API
+- [ ] Comprehensive testing of date ranges and sliders
+- [ ] Validate all date handling still works correctly
+
+**Impact:** 8-10 files, Medium-High risk (requires comprehensive testing)
+
+**Metadata Enhancement Opportunity:**
+
+The `world_meta.csv` contains date ranges per country/source:
+```csv
+iso3c,jurisdiction,type,source,min_date,max_date,age_groups
+ALB,Albania,3,eurostat,2014-12-29,2021-09-13,"0-9, 10-19, ..., all"
+```
+
+Could enhance `ChartPeriod` to validate dates against metadata BEFORE loading data:
+```typescript
+class ChartPeriod {
+  isDateAvailable(date: string): boolean {
+    return date >= this.metadata.minDate && date <= this.metadata.maxDate
+  }
+}
+```
+
+---
+
+### 8.5.4 Timeline & Order
+
+**Recommended Implementation Order:**
+
+1. ✅ **Phase 1** (Complete) - Module integration, low-hanging fruit
+2. **Phase 2** (Next) - Config object pattern, focused change, low risk
+3. **Phase 3** (After) - Date model, larger change, needs careful testing
+
+**Each phase as separate PR for:**
+- Easier code review
+- Independent rollback if needed
+- Incremental progress
+- Reduced risk
+
+---
+
+### 8.5.5 Success Criteria
+
+**Phase 1:** ✅
+- [x] 10/12 modules integrated
+- [x] explorer.vue reduced by 276 lines
+- [x] All tests passing
+- [x] TypeScript compilation successful
+- [x] Documentation complete
+
+**Phase 2:**
+- [ ] useExplorerDataUpdate successfully integrated
+- [ ] TypeScript compilation without deep instantiation errors
+- [ ] All tests passing
+- [ ] Code is more readable than before
+
+**Phase 3:**
+- [ ] All indexOf calls replaced with ChartPeriod API
+- [ ] Date handling centralized in one place
+- [ ] All tests passing (especially date/slider tests)
+- [ ] Manual testing of all date ranges and sliders
+- [ ] No regression in date handling functionality
+
+---
+
 ## Phase 9: Saved Charts & My Charts Page
 
 ### 9.1 Save Chart Functionality

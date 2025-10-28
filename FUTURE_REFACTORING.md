@@ -1,6 +1,8 @@
 # Future Refactoring Opportunities
 
-This document outlines refactoring opportunities identified during the module integration project. These are separated into distinct phases for manageable implementation.
+This document outlines refactoring opportunities identified during the module integration project (Phase 8.5 in IMPLEMENTATION_PLAN.md). These are separated into distinct phases for manageable implementation.
+
+**Note:** This document provides detailed technical analysis for Phase 8.5.2 and Phase 8.5.3. See IMPLEMENTATION_PLAN.md for the complete project roadmap and Phase 8.5.1 completion status.
 
 ## Status of Non-Integrated Composables
 
@@ -518,3 +520,17 @@ This would enable validation BEFORE loading data, improving UX.
 2. **Phase 3 after** - Larger architectural change that improves date handling throughout the app
 
 Both phases are valuable and should be implemented, but as separate PRs for easier review and rollback if needed.
+
+---
+
+## Related Documentation
+
+- **IMPLEMENTATION_PLAN.md** - Main project roadmap (see Phase 8.5 for this refactoring work)
+- **REFACTORING_SUMMARY.md** - Phase 1 completion summary (in git history at commit 1e6ebce)
+- **PR #10** - Phase 1 implementation (`refactor/split-large-files` branch)
+
+## Current Status
+
+- ✅ **Phase 8.5.1 (Phase 1)** - Complete and merged
+- ⏳ **Phase 8.5.2 (Phase 2)** - Next priority after Phase 8 completion
+- ⏳ **Phase 8.5.3 (Phase 3)** - Follows Phase 2
