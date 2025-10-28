@@ -8,6 +8,7 @@ import {
 import { useChartResize } from '@/composables/useChartResize'
 import { useExplorerHelpers } from '@/composables/useExplorerHelpers'
 import { useExplorerState } from '@/composables/useExplorerState'
+import { useDataAvailability } from '@/composables/useDataAvailability'
 import { useExplorerDataOrchestration } from '@/composables/useExplorerDataOrchestration'
 import type {
   Country
@@ -35,6 +36,9 @@ import { showToast } from '@/toast'
 
 // Phase 9.2: Centralized state management with validation
 const state = useExplorerState()
+
+// Phase 9.4: Data availability checks with auto-correction
+const _availability = useDataAvailability(state)
 
 // Router
 const _router = useRouter()
