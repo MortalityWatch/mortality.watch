@@ -93,7 +93,6 @@ const {
 
 // Computed
 const sliderValue = computed(() => [state.dateFrom.value, state.dateTo.value])
-const baselineSliderValue = computed(() => [state.baselineDateFrom.value, state.baselineDateTo.value])
 
 // Get color mode for theme reactivity
 const colorMode = useColorMode()
@@ -417,43 +416,12 @@ const saveChart = async () => {
         <!-- Settings section - fixed width on large screens -->
         <div class="w-full xl:w-[420px] flex-shrink-0">
           <ExplorerSettings
-            :countries="state.countries.value"
+            :state="state"
             :labels="labels"
             :all-yearly-chart-labels-unique="dataOrchestration.allYearlyChartLabelsUnique.value || []"
-            :type="state.type.value"
-            :chart-type="state.chartType.value"
-            :chart-style="state.chartStyle.value"
-            :standard-population="state.standardPopulation.value"
-            :is-updating="false"
-            :is-population-type="isPopulationType()"
-            :is-excess="state.isExcess.value"
-            :baseline-method="state.baselineMethod.value"
-            :baseline-slider-value="baselineSliderValue"
-            :show-baseline="state.showBaseline.value"
-            :slider-start="state.sliderStart.value"
-            :show-prediction-interval="state.showPredictionInterval.value"
-            :show-prediction-interval-disabled="showPredictionIntervalDisabled"
-            :show-labels="state.showLabels.value"
-            :maximize="state.maximize.value"
-            :is-logarithmic="state.isLogarithmic.value"
-            :show-percentage="state.showPercentage.value || false"
-            :cumulative="state.cumulative.value"
-            :show-total="state.showTotal.value"
-            :show-logarithmic-option="!isMatrixChartStyle() && !state.isExcess.value"
-            :show-maximize-option="!(state.isExcess.value && isLineChartStyle()) && !isMatrixChartStyle()"
-            :show-maximize-option-disabled="state.isLogarithmic.value || (state.isExcess.value && !dataOrchestration.chartOptions.showTotalOption)"
-            :show-percentage-option="state.isExcess.value"
-            :show-cumulative-option="state.isExcess.value"
-            :show-total-option="state.isExcess.value && isBarChartStyle()"
-            :show-total-option-disabled="!state.cumulative.value"
-            :show-prediction-interval-option="dataOrchestration.chartOptions.showBaselineOption || (state.isExcess.value && !isMatrixChartStyle())"
-            :show-prediction-interval-option-disabled="showPredictionIntervalDisabled"
-            :is-matrix-chart-style="isMatrixChartStyle()"
             :colors="displayColors"
-            :chart-preset="state.chartPreset.value"
-            :show-logo="state.showLogo.value"
-            :show-qr-code="state.showQrCode.value"
-            :decimals="state.decimals.value"
+            :show-prediction-interval-disabled="showPredictionIntervalDisabled"
+            :show-total-option="dataOrchestration.chartOptions.showTotalOption"
             @type-changed="(v) => updateStateAndRefresh(() => state.type.value = v, '_type')"
             @chart-type-changed="(v) => updateStateAndRefresh(() => state.chartType.value = v, '_chartType')"
             @chart-style-changed="(v) => updateStateAndRefresh(() => state.chartStyle.value = v, '_chartStyle')"
