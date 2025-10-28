@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { computed, ref, toRef } from 'vue'
-import DateSlider from './DateSlider.vue'
-import MultiColorPicker from './MultiColorPicker.vue'
 import DataTab from './controls/DataTab.vue'
-import { specialColor } from '@/colors'
+import DisplayTab from './controls/DisplayTab.vue'
+import BaselineTab from './controls/BaselineTab.vue'
+import StyleTab from './controls/StyleTab.vue'
 import { CHART_PRESETS } from '@/lib/constants'
 import { types, chartTypes, chartStyles, standardPopulations, baselineMethods, decimalPrecisions } from '@/model'
-import type { ChartType } from '@/model/period'
 import { useChartUIState } from '@/composables/useChartUIState'
 import type { ChartStyle } from '@/lib/chart/chartTypes'
 
@@ -235,19 +234,6 @@ const baselineSliderChanged = (values: string[]) => emit('baselineSliderValueCha
 // Use configuration-based baseline option visibility (kept for backward compatibility)
 const showBaselineOption = chartUIState.showBaselineOption
 
-const baselineMinRange = (method: string) => method === 'mean' ? 0 : 2
-
-// Period length management
-const periodLengthOptions = [
-  { label: '2 years', value: 2 },
-  { label: '3 years', value: 3 },
-  { label: '5 years', value: 5 },
-  { label: '10 years', value: 10 },
-  { label: 'Custom', value: 0 }
-]
-
-const selectedPeriodLength = ref(periodLengthOptions.find(o => o.value === 3) || periodLengthOptions[0])
-
 // Chart presets for dropdown
 const chartPresetOptions = CHART_PRESETS.map(preset => ({
   name: preset.name,
@@ -327,416 +313,74 @@ const activeTab = ref('data')
       />
 
       <!-- Display Tab -->
-      <div v-if="activeTab === 'display'">
-        <div class="flex flex-wrap gap-4">
-          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <label class="text-sm font-medium whitespace-nowrap">Excess</label>
-            <USwitch
-              v-model="isExcess"
-              :disabled="props.isPopulationType"
-            />
-            <UPopover>
-              <UButton
-                icon="i-lucide-info"
-                color="neutral"
-                variant="ghost"
-                size="xs"
-                aria-label="Excess mortality information"
-              />
-              <template #content>
-                <div class="p-3 space-y-2 max-w-xs">
-                  <div class="text-xs text-gray-700 dark:text-gray-300">
-                    Compares observed mortality to expected baseline. Positive values indicate more deaths than expected, negative values indicate fewer deaths.
-                  </div>
-                </div>
-              </template>
-            </UPopover>
-          </div>
-
-          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <label class="text-sm font-medium whitespace-nowrap">Baseline</label>
-            <USwitch
-              v-model="showBaseline"
-              :disabled="!showBaselineOption"
-            />
-            <UPopover>
-              <UButton
-                icon="i-lucide-info"
-                color="neutral"
-                variant="ghost"
-                size="xs"
-                aria-label="Baseline information"
-              />
-              <template #content>
-                <div class="p-3 space-y-2 max-w-xs">
-                  <div class="text-xs text-gray-700 dark:text-gray-300">
-                    Shows the expected mortality level used for comparison. Configure baseline period and method in the Baseline tab.
-                  </div>
-                </div>
-              </template>
-            </UPopover>
-          </div>
-
-          <div
-            v-if="props.showPredictionIntervalOption"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-          >
-            <label class="text-sm font-medium whitespace-nowrap">95% PI</label>
-            <USwitch
-              v-model="showPredictionInterval"
-              :disabled="props.showPredictionIntervalOptionDisabled"
-            />
-            <UPopover>
-              <UButton
-                icon="i-lucide-info"
-                color="neutral"
-                variant="ghost"
-                size="xs"
-                aria-label="Prediction interval information"
-              />
-              <template #content>
-                <div class="p-3 space-y-2 max-w-xs">
-                  <div class="text-xs text-gray-700 dark:text-gray-300">
-                    95% Prediction Interval shows the range of uncertainty around expected values. Values outside this range are statistically significant.
-                  </div>
-                </div>
-              </template>
-            </UPopover>
-          </div>
-
-          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <label class="text-sm font-medium whitespace-nowrap">Show Labels</label>
-            <USwitch v-model="showLabels" />
-          </div>
-
-          <div
-            v-if="props.showMaximizeOption"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-          >
-            <label class="text-sm font-medium whitespace-nowrap">Maximize</label>
-            <USwitch
-              v-model="maximize"
-              :disabled="props.showMaximizeOptionDisabled"
-            />
-          </div>
-
-          <div
-            v-if="props.showLogarithmicOption"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-          >
-            <label class="text-sm font-medium whitespace-nowrap">Log Scale</label>
-            <USwitch
-              v-model="isLogarithmic"
-              :disabled="!props.showLogarithmicOption"
-            />
-          </div>
-
-          <div
-            v-if="props.showPercentageOption"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-          >
-            <label class="text-sm font-medium whitespace-nowrap">Percentage</label>
-            <USwitch v-model="showPercentage" />
-          </div>
-
-          <div
-            v-if="props.showCumulativeOption"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-          >
-            <label class="text-sm font-medium whitespace-nowrap">Cumulative</label>
-            <USwitch v-model="cumulative" />
-          </div>
-
-          <div
-            v-if="props.showTotalOption"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-          >
-            <label class="text-sm font-medium whitespace-nowrap">Total</label>
-            <USwitch
-              v-model="showTotal"
-              :disabled="props.showTotalOptionDisabled"
-            />
-          </div>
-
-          <!-- Feature gate: Only Pro users can hide watermark -->
-          <FeatureGate feature="HIDE_WATERMARK">
-            <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-              <label class="text-sm font-medium whitespace-nowrap">
-                Show Logo
-              </label>
-              <USwitch v-model="showLogo" />
-            </div>
-            <template #disabled>
-              <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 opacity-50">
-                <label class="text-sm font-medium whitespace-nowrap">
-                  Show Logo
-                  <FeatureBadge
-                    feature="HIDE_WATERMARK"
-                    class="ml-2"
-                  />
-                </label>
-                <USwitch
-                  v-model="showLogo"
-                  disabled
-                />
-              </div>
-            </template>
-          </FeatureGate>
-
-          <!-- Feature gate: Only Pro users can hide QR code -->
-          <FeatureGate feature="HIDE_QR">
-            <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-              <label class="text-sm font-medium whitespace-nowrap">
-                Show QR Code
-              </label>
-              <USwitch v-model="showQrCode" />
-            </div>
-            <template #disabled>
-              <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 opacity-50">
-                <label class="text-sm font-medium whitespace-nowrap">
-                  Show QR Code
-                  <FeatureBadge
-                    feature="HIDE_QR"
-                    class="ml-2"
-                  />
-                </label>
-                <USwitch
-                  v-model="showQrCode"
-                  disabled
-                />
-              </div>
-            </template>
-          </FeatureGate>
-        </div>
-
-        <!-- Chart Options Section -->
-        <div class="mt-6 flex flex-col gap-4">
-          <!-- Feature gate: Only Pro users can customize chart size -->
-          <FeatureGate feature="CUSTOM_CHART_SIZE">
-            <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-              <label class="text-sm font-medium whitespace-nowrap">
-                Chart Size
-                <FeatureBadge
-                  feature="CUSTOM_CHART_SIZE"
-                  class="ml-2"
-                />
-              </label>
-              <UInputMenu
-                v-model="chartPreset"
-                :items="chartPresetOptions"
-                placeholder="Select a size"
-                size="sm"
-                class="flex-1"
-              />
-            </div>
-            <template #disabled>
-              <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 opacity-50">
-                <label class="text-sm font-medium whitespace-nowrap">
-                  Chart Size
-                  <FeatureBadge
-                    feature="CUSTOM_CHART_SIZE"
-                    class="ml-2"
-                  />
-                </label>
-                <UInputMenu
-                  v-model="chartPreset"
-                  :items="chartPresetOptions"
-                  placeholder="Select a size"
-                  size="sm"
-                  class="flex-1"
-                  disabled
-                />
-              </div>
-            </template>
-          </FeatureGate>
-        </div>
-      </div>
+      <DisplayTab
+        v-if="activeTab === 'display'"
+        :is-excess="props.isExcess"
+        :show-baseline="props.showBaseline"
+        :show-prediction-interval="props.showPredictionInterval"
+        :show-labels="props.showLabels"
+        :maximize="props.maximize"
+        :is-logarithmic="props.isLogarithmic"
+        :show-percentage="props.showPercentage || false"
+        :cumulative="props.cumulative"
+        :show-total="props.showTotal"
+        :show-logo="props.showLogo"
+        :show-qr-code="props.showQrCode"
+        :is-population-type="props.isPopulationType"
+        :show-baseline-option="showBaselineOption"
+        :show-prediction-interval-option-disabled="props.showPredictionIntervalOptionDisabled"
+        :show-maximize-option-disabled="props.showMaximizeOptionDisabled"
+        :show-total-option-disabled="props.showTotalOptionDisabled"
+        :show-prediction-interval-option="props.showPredictionIntervalOption"
+        :show-maximize-option="props.showMaximizeOption"
+        :show-logarithmic-option="props.showLogarithmicOption"
+        :show-percentage-option="props.showPercentageOption"
+        :show-cumulative-option="props.showCumulativeOption"
+        :show-total-option="props.showTotalOption"
+        :chart-preset="chartPreset"
+        :chart-preset-options="chartPresetOptions"
+        @update:is-excess="isExcess = $event"
+        @update:show-baseline="showBaseline = $event"
+        @update:show-prediction-interval="showPredictionInterval = $event"
+        @update:show-labels="showLabels = $event"
+        @update:maximize="maximize = $event"
+        @update:is-logarithmic="isLogarithmic = $event"
+        @update:show-percentage="showPercentage = $event"
+        @update:cumulative="cumulative = $event"
+        @update:show-total="showTotal = $event"
+        @update:show-logo="showLogo = $event"
+        @update:show-qr-code="showQrCode = $event"
+        @update:chart-preset="chartPreset = $event"
+      />
 
       <!-- Baseline Tab -->
-      <div v-if="activeTab === 'baseline'">
-        <div class="flex flex-col gap-4">
-          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <label class="text-sm font-medium whitespace-nowrap">
-              Method
-            </label>
-            <UInputMenu
-              v-model="selectedBaselineMethod"
-              :items="baselineMethodsWithLabels"
-              placeholder="Select Baseline Method"
-              :disabled="props.isUpdating"
-              size="sm"
-              class="flex-1"
-            />
-            <UPopover>
-              <UButton
-                icon="i-lucide-info"
-                color="neutral"
-                variant="ghost"
-                size="xs"
-                aria-label="Baseline method information"
-              />
-              <template #content>
-                <div class="p-3 space-y-2 max-w-xs">
-                  <div class="text-xs text-gray-700 dark:text-gray-300">
-                    <strong>Last Value:</strong> Uses the final value from baseline period<br>
-                    <strong>Average:</strong> Mean of baseline period<br>
-                    <strong>Median:</strong> Median of baseline period<br>
-                    <strong>Linear Regression:</strong> Linear trend projection <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">Free</span><br>
-                    <strong>Exponential Smoothing (ETS):</strong> Adaptive trend and seasonality <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">Free</span>
-                  </div>
-                </div>
-              </template>
-            </UPopover>
-          </div>
-
-          <!-- Feature upgrade hint for baseline methods -->
-          <div
-            v-if="!can('ALL_BASELINES')"
-            class="px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
-          >
-            <p class="text-xs text-blue-700 dark:text-blue-300">
-              <UIcon
-                name="i-heroicons-information-circle"
-                class="inline-block mr-1 size-3"
-              />
-              Register for free to unlock advanced baseline methods.
-            </p>
-          </div>
-
-          <div
-            v-if="selectedBaselineMethod"
-            class="px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-          >
-            <div class="flex items-center justify-between mb-3">
-              <label class="text-sm font-medium">Period</label>
-              <!-- Period Length Selection -->
-              <div
-                v-if="props.baselineMethod !== 'naive'"
-                class="flex items-center gap-2"
-              >
-                <label class="text-xs text-gray-600 dark:text-gray-400">Length:</label>
-                <UInputMenu
-                  v-model="selectedPeriodLength"
-                  :items="periodLengthOptions"
-                  placeholder="Select period length"
-                  size="xs"
-                  class="w-28"
-                />
-              </div>
-            </div>
-            <div>
-              <DateSlider
-                :key="`${props.baselineMethod}-${selectedPeriodLength?.value ?? 3}`"
-                :slider-value="props.baselineSliderValue"
-                :labels="props.labels"
-                :chart-type="props.chartType as ChartType"
-                :color="specialColor()"
-                :min-range="baselineMinRange(props.baselineMethod)"
-                :single-value="props.baselineMethod === 'naive'"
-                :period-length="selectedPeriodLength?.value ?? 3"
-                :delay-emit="true"
-                @slider-changed="baselineSliderChanged"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+      <BaselineTab
+        v-if="activeTab === 'baseline'"
+        :selected-baseline-method="selectedBaselineMethod as { name: string, value: string, label: string }"
+        :baseline-methods-with-labels="baselineMethodsWithLabels"
+        :baseline-method="props.baselineMethod"
+        :baseline-slider-value="props.baselineSliderValue"
+        :labels="props.labels"
+        :chart-type="props.chartType"
+        :is-updating="props.isUpdating"
+        @update:selected-baseline-method="selectedBaselineMethod = $event"
+        @baseline-slider-changed="baselineSliderChanged"
+      />
 
       <!-- Style Tab -->
-      <div v-if="activeTab === 'style'">
-        <div class="flex flex-col gap-4">
-          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <label class="text-sm font-medium whitespace-nowrap">Chart Type</label>
-            <UInputMenu
-              v-model="selectedChartStyle"
-              :items="chartStylesWithLabels"
-              placeholder="Select the chart type"
-              :disabled="props.isUpdating"
-              size="sm"
-              class="flex-1"
-            />
-          </div>
-
-          <!-- Feature gate: Only Pro users can customize number precision -->
-          <FeatureGate feature="CUSTOM_DECIMALS">
-            <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-              <label class="text-sm font-medium whitespace-nowrap">
-                Number Precision
-                <FeatureBadge
-                  feature="CUSTOM_DECIMALS"
-                  class="ml-2"
-                />
-              </label>
-              <UInputMenu
-                v-model="selectedDecimals"
-                :items="decimalPrecisionsWithLabels"
-                placeholder="Select decimal precision"
-                :disabled="props.isUpdating"
-                size="sm"
-                class="flex-1"
-              />
-            </div>
-            <template #disabled>
-              <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 opacity-50">
-                <label class="text-sm font-medium whitespace-nowrap">
-                  Number Precision
-                  <FeatureBadge
-                    feature="CUSTOM_DECIMALS"
-                    class="ml-2"
-                  />
-                </label>
-                <UInputMenu
-                  v-model="selectedDecimals"
-                  :items="decimalPrecisionsWithLabels"
-                  placeholder="Select decimal precision"
-                  size="sm"
-                  class="flex-1"
-                  disabled
-                />
-              </div>
-            </template>
-          </FeatureGate>
-
-          <!-- Feature gate: Only registered users can customize colors -->
-          <FeatureGate feature="CUSTOM_COLORS">
-            <div
-              v-if="!props.isMatrixChartStyle"
-              class="px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-            >
-              <label class="block mb-2 text-sm font-medium">
-                Colors
-                <FeatureBadge
-                  feature="CUSTOM_COLORS"
-                  class="ml-2"
-                />
-              </label>
-              <div class="overflow-x-auto">
-                <MultiColorPicker
-                  :colors="props.colors || []"
-                  @colors-changed="(val) => emit('userColorsChanged', val)"
-                />
-              </div>
-            </div>
-            <template #disabled="{ message }">
-              <div
-                v-if="!props.isMatrixChartStyle"
-                class="px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 opacity-50"
-              >
-                <label class="block mb-2 text-sm font-medium">
-                  Colors
-                  <FeatureBadge
-                    feature="CUSTOM_COLORS"
-                    class="ml-2"
-                  />
-                </label>
-                <p class="text-xs text-gray-500 dark:text-gray-400">
-                  {{ message }}
-                </p>
-              </div>
-            </template>
-          </FeatureGate>
-        </div>
-      </div>
+      <StyleTab
+        v-if="activeTab === 'style'"
+        :selected-chart-style="selectedChartStyle as { name: string, value: string, label: string }"
+        :chart-styles-with-labels="chartStylesWithLabels"
+        :selected-decimals="selectedDecimals as { name: string, value: string, label: string }"
+        :decimal-precisions-with-labels="decimalPrecisionsWithLabels"
+        :colors="props.colors"
+        :is-matrix-chart-style="props.isMatrixChartStyle"
+        :is-updating="props.isUpdating"
+        @update:selected-chart-style="selectedChartStyle = $event"
+        @update:selected-decimals="selectedDecimals = $event"
+        @colors-changed="(val) => emit('userColorsChanged', val)"
+      />
     </div>
   </div>
 </template>
