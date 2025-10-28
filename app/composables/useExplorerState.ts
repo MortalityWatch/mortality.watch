@@ -196,7 +196,8 @@ export function useExplorerState() {
     showPercentage: showPercentage.value,
     maximize: maximize.value,
     showLabels: showLabels.value,
-    isLogarithmic: isLogarithmic.value
+    isLogarithmic: isLogarithmic.value,
+    decimals: decimals.value
   }))
 
   const validationResult = computed(() =>

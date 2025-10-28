@@ -14,7 +14,11 @@
  */
 
 import { z } from 'zod'
-import { StandardPopulationEnum, BaselineMethodEnum } from './explorerSchema'
+import {
+  StandardPopulationEnum,
+  BaselineMethodEnum,
+  DecimalPrecisionEnum
+} from './explorerSchema'
 
 // ============================================================================
 // ENUMS - Valid values for ranking-specific fields
@@ -32,20 +36,16 @@ export const JurisdictionTypeEnum = z.enum([
   'subdivision'
 ])
 
-export const DecimalPrecisionEnum = z.enum([
-  'auto',
-  '0',
-  '1',
-  '2'
-])
-
 // Export TypeScript types from Zod enums
 export type RankingPeriod = z.infer<typeof RankingPeriodEnum>
 export type JurisdictionType = z.infer<typeof JurisdictionTypeEnum>
-export type DecimalPrecision = z.infer<typeof DecimalPrecisionEnum>
 
 // Re-export shared types
-export type { StandardPopulation, BaselineMethod } from './explorerSchema'
+export type {
+  StandardPopulation,
+  BaselineMethod,
+  DecimalPrecision
+} from './explorerSchema'
 
 // ============================================================================
 // BASE SCHEMA - Field-level validation

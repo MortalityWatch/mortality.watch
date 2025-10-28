@@ -24,7 +24,8 @@ describe('explorerSchema', () => {
     showPercentage: false,
     maximize: false,
     showLabels: true,
-    isLogarithmic: false
+    isLogarithmic: false,
+    decimals: 'auto'
   })
 
   describe('base validation', () => {
@@ -377,6 +378,13 @@ describe('explorerSchema', () => {
     it('should reject invalid chart style', () => {
       const state = createValidState()
       state.chartStyle = 'invalid' as unknown as typeof state.chartStyle
+      const result = explorerStateSchema.safeParse(state)
+      expect(result.success).toBe(false)
+    })
+
+    it('should reject invalid decimal precision', () => {
+      const state = createValidState()
+      state.decimals = 'invalid' as unknown as typeof state.decimals
       const result = explorerStateSchema.safeParse(state)
       expect(result.success).toBe(false)
     })

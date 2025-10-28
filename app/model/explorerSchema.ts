@@ -58,12 +58,21 @@ export const ChartStyleEnum = z.enum([
   'bar'
 ])
 
+export const DecimalPrecisionEnum = z.enum([
+  'auto',
+  '0',
+  '1',
+  '2',
+  '3'
+])
+
 // Export TypeScript types from Zod enums
 export type ChartType = z.infer<typeof ChartTypeEnum>
 export type MetricType = z.infer<typeof MetricTypeEnum>
 export type StandardPopulation = z.infer<typeof StandardPopulationEnum>
 export type BaselineMethod = z.infer<typeof BaselineMethodEnum>
 export type ChartStyle = z.infer<typeof ChartStyleEnum>
+export type DecimalPrecision = z.infer<typeof DecimalPrecisionEnum>
 
 // ============================================================================
 // BASE SCHEMA - Field-level validation
@@ -105,7 +114,10 @@ const explorerStateBaseSchema = z.object({
   showPercentage: z.boolean().optional(),
   maximize: z.boolean(),
   showLabels: z.boolean(),
-  isLogarithmic: z.boolean()
+  isLogarithmic: z.boolean(),
+
+  // Chart appearance
+  decimals: DecimalPrecisionEnum
 })
 
 // ============================================================================
