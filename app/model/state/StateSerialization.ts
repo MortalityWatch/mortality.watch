@@ -1,35 +1,22 @@
-import { isRef, type Ref } from 'vue'
 import type { LocationQuery } from 'vue-router'
-import { loadCountryMetadata } from '@/lib/data'
 import { decompress, base64ToArrayBuffer } from '@/lib/compression/compress.browser'
 import { showToast } from '@/toast'
 import { decodeBool, decodeString } from '@/model/serializable'
 import type { Country } from '@/model'
+import type { StateProperties } from './stateProperties'
 
 /**
  * Handles state serialization/deserialization from URL
+ *
+ * Updated in Phase 9.3 to use StateProperties directly (no more @ts-expect-error!)
  */
 export class StateSerialization {
-  allCountries!: Record<string, Country>
-  countries!: string[]
-
-  /**
-   * Generic setter that works with both refs and regular properties
-   */
-  async setValue(prop: string, val: unknown) {
-    // @ts-expect-error - Dynamic property access
-    if (isRef(this[prop])) {
-      // @ts-expect-error - Dynamic property access
-      (this[prop] as Ref).value = val
-    } else {
-      // @ts-expect-error - Dynamic property access
-      this[prop] = val
-    }
-  }
+  constructor(
+    private props: StateProperties,
+    private allCountries: Record<string, Country>
+  ) {}
 
   async initFromSavedState(locationQuery: LocationQuery): Promise<void> {
-    if (!this.allCountries) this.allCountries = await loadCountryMetadata()
-
     let encodedState: LocationQuery | undefined = locationQuery
 
     // QR Code
@@ -74,7 +61,7 @@ export class StateSerialization {
       )
       if (!validCountries || !validCountries.length)
         validCountries = ['USA', 'SWE']
-      this.setValue('_countries', validCountries)
+      this.props.countries = validCountries
     }
 
     // Age Groups; Validate before assignment
@@ -85,7 +72,7 @@ export class StateSerialization {
     ) as string[]
     if (ageGroups && ageGroups.length) {
       const validAgeGroups = []
-      for (const iso3c of this.countries) {
+      for (const iso3c of this.props.countries) {
         const country = this.allCountries[iso3c]
         if (!country) continue
         for (const ds of country.data_source) {
@@ -96,50 +83,77 @@ export class StateSerialization {
           )
         }
       }
-      this.setValue(
-        '_ageGroups',
-        !validAgeGroups.length ? ['all'] : validAgeGroups
-      )
+      this.props.ageGroups = !validAgeGroups.length ? ['all'] : validAgeGroups
     }
 
     if (encodedState.t) {
-      this.setValue('_type', (encodedState.t as string).replace('_excess', ''))
+      this.props.type = (encodedState.t as string).replace('_excess', '')
     }
     if (encodedState.ct !== 'ytd') {
       // YTD not supported anymore, use default.
-      this.setValue('_chartType', encodedState.ct)
+      this.props.chartType = encodedState.ct as string
     }
-    this.setValue(
-      '_isExcess',
-      decodeBool(encodedState.e as string)
+    const isExcess = decodeBool(encodedState.e as string)
       ?? encodedState.t?.includes('_excess')
-    )
-    this.setValue('_chartStyle', encodedState.cs)
-    this.setValue('_dateFrom', decodeString(encodedState.df as string))
-    this.setValue('_dateTo', decodeString(encodedState.dt as string))
-    this.setValue('_sliderStart', encodedState.ss)
-    this.setValue('_baselineDateFrom', decodeString(encodedState.bf as string))
-    this.setValue('_baselineDateTo', decodeString(encodedState.bt as string))
-    this.setValue('_standardPopulation', encodedState.sp)
-    this.setValue('_showBaseline', decodeBool(encodedState.sb as string))
-    this.setValue('_baselineMethod', encodedState.bm)
-    this.setValue('_cumulative', decodeBool(encodedState.ce as string))
-    this.setValue('_showTotal', decodeBool(encodedState.st as string))
-    this.setValue('_maximize', decodeBool(encodedState.m as string))
-    this.setValue(
-      '_showPredictionInterval',
-      decodeBool(encodedState.pi as string)
-    )
-    this.setValue('_showLabels', decodeBool(encodedState.sl as string))
-    this.setValue('_showPercentage', decodeBool(encodedState.p as string))
-    this.setValue('_isLogarithmic', decodeBool(encodedState.lg as string))
+    if (isExcess !== undefined) {
+      this.props.isExcess = isExcess
+    }
+    if (encodedState.cs) {
+      this.props.chartStyle = encodedState.cs as string
+    }
+    this.props.dateFrom = decodeString(encodedState.df as string)
+    this.props.dateTo = decodeString(encodedState.dt as string)
+    if (encodedState.ss) {
+      this.props.sliderStart = encodedState.ss as string
+    }
+    this.props.baselineDateFrom = decodeString(encodedState.bf as string)
+    this.props.baselineDateTo = decodeString(encodedState.bt as string)
+    if (encodedState.sp) {
+      this.props.standardPopulation = encodedState.sp as string
+    }
+    const showBaseline = decodeBool(encodedState.sb as string)
+    if (showBaseline !== undefined) {
+      this.props.showBaseline = showBaseline
+    }
+    if (encodedState.bm) {
+      this.props.baselineMethod = encodedState.bm as string
+    }
+    const cumulative = decodeBool(encodedState.ce as string)
+    if (cumulative !== undefined) {
+      this.props.cumulative = cumulative
+    }
+    const showTotal = decodeBool(encodedState.st as string)
+    if (showTotal !== undefined) {
+      this.props.showTotal = showTotal
+    }
+    const maximize = decodeBool(encodedState.m as string)
+    if (maximize !== undefined) {
+      this.props.maximize = maximize
+    }
+    const showPredictionInterval = decodeBool(encodedState.pi as string)
+    if (showPredictionInterval !== undefined) {
+      this.props.showPredictionInterval = showPredictionInterval
+    }
+    const showLabels = decodeBool(encodedState.sl as string)
+    if (showLabels !== undefined) {
+      this.props.showLabels = showLabels
+    }
+    const showPercentage = decodeBool(encodedState.p as string)
+    if (showPercentage !== undefined) {
+      this.props.showPercentage = showPercentage
+    }
+    const isLogarithmic = decodeBool(encodedState.lg as string)
+    if (isLogarithmic !== undefined) {
+      this.props.isLogarithmic = isLogarithmic
+    }
 
     const userColors = (
       Array.isArray(encodedState.uc) || !encodedState.uc
         ? encodedState.uc
         : [encodedState.uc]
     ) as string[]
-    if (userColors && userColors.length)
-      this.setValue('_userColors', userColors)
+    if (userColors && userColors.length) {
+      this.props.userColors = userColors
+    }
   }
 }

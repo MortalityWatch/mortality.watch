@@ -1,61 +1,57 @@
 import { getKeyForType, type NumberEntryFields } from '@/model'
+import type { StateProperties } from './stateProperties'
 
 /**
  * Helper methods for state - type predicates and utilities
+ *
+ * Updated in Phase 9.3 to use StateProperties instead of dynamic property binding
  */
 export class StateHelpers {
-  type!: string
-  chartStyle!: string
-  chartType!: string
-  isExcess!: boolean
-  cumulative!: boolean
-  baselineMethod!: string
-  showBaseline!: boolean
-  standardPopulation!: string
+  constructor(private props: StateProperties) {}
 
   // Type predicates
-  isAsmrType = () => this.type.includes('asmr')
+  isAsmrType = () => this.props.type.includes('asmr')
 
-  isPopulationType = () => this.type === 'population'
+  isPopulationType = () => this.props.type === 'population'
 
-  isLifeExpectancyType = () => this.type === 'le'
+  isLifeExpectancyType = () => this.props.type === 'le'
 
-  isDeathsType = () => this.type.includes('deaths')
+  isDeathsType = () => this.props.type.includes('deaths')
 
-  isErrorBarType = () => this.isBarChartStyle() && this.isExcess
+  isErrorBarType = () => this.isBarChartStyle() && this.props.isExcess
 
-  hasBaseline = () => !this.isPopulationType() && !this.isExcess
+  hasBaseline = () => !this.isPopulationType() && !this.props.isExcess
 
-  isLineChartStyle = () => this.chartStyle === 'line'
+  isLineChartStyle = () => this.props.chartStyle === 'line'
 
-  isBarChartStyle = () => this.chartStyle === 'bar'
+  isBarChartStyle = () => this.props.chartStyle === 'bar'
 
-  isMatrixChartStyle = () => this.chartStyle === 'matrix'
+  isMatrixChartStyle = () => this.props.chartStyle === 'matrix'
 
-  isWeeklyChartType = () => this.chartType.includes('weekly')
+  isWeeklyChartType = () => this.props.chartType.includes('weekly')
 
-  isMonthlyChartType = () => this.chartType.includes('monthly')
+  isMonthlyChartType = () => this.props.chartType.includes('monthly')
 
   isYearlyChartType = () =>
-    this.chartType.includes('year')
-    || this.chartType.includes('fluseason')
-    || this.chartType.includes('midyear')
+    this.props.chartType.includes('year')
+    || this.props.chartType.includes('fluseason')
+    || this.props.chartType.includes('midyear')
 
   showCumPi = (): boolean =>
-    this.cumulative
+    this.props.cumulative
     && this.isYearlyChartType()
-    && ['lin_reg', 'mean'].includes(this.baselineMethod)
+    && ['lin_reg', 'mean'].includes(this.props.baselineMethod)
 
   getBaseKeysForType = (): (keyof NumberEntryFields)[] =>
-    getKeyForType(this.type, this.showBaseline, this.standardPopulation, false)
+    getKeyForType(this.props.type, this.props.showBaseline, this.props.standardPopulation, false)
 
   getMaxDateType() {
-    if (this.type.includes('deaths') || this.type.includes('cmr')) return 'cmr'
+    if (this.props.type.includes('deaths') || this.props.type.includes('cmr')) return 'cmr'
     return 'asmr'
   }
 
   periodMultiplicatorForType = () => {
-    switch (this.chartType) {
+    switch (this.props.chartType) {
       case 'weekly':
       case 'weekly_104w_sma':
       case 'weekly_52w_sma':
