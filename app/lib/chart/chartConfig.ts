@@ -26,6 +26,7 @@ import {
   textStrongColor
 } from './chartColors'
 import { asPercentage, numberWithCommas, round } from './chartUtils'
+import { hasFeatureAccess, type UserTier } from '~/lib/featureFlags'
 import type {
   ChartErrorDataPoint,
   ChartJSConfig,
@@ -84,13 +85,16 @@ export const makeBarLineChartConfig = (
   showLogo: boolean = true,
   decimals: string = 'auto',
   isDark?: boolean,
-  userTier?: number
+  userTier?: UserTier
 ) => {
-  // Feature gating: Only Pro users (tier 2) can hide the watermark/QR code
-  // If user is not Pro, force showLogo and showQrCode to true
-  if (userTier !== undefined && userTier < 2) {
-    showLogo = true
-    showQrCode = true
+  // Feature gating: Enforce Pro-tier requirements for branding customization
+  if (userTier !== undefined) {
+    if (!hasFeatureAccess(userTier, 'HIDE_QR')) {
+      showQrCode = true
+    }
+    if (!hasFeatureAccess(userTier, 'HIDE_WATERMARK')) {
+      showLogo = true
+    }
   }
   const showDecimals = !isDeathsType && !isPopulationType
   return {
@@ -295,7 +299,7 @@ export const makeMatrixChartConfig = (
   showLogo: boolean = true,
   isDark?: boolean,
   decimals: string = 'auto',
-  userTier?: number
+  userTier?: UserTier
 ) => {
   const config = makeBarLineChartConfig(
     data,
