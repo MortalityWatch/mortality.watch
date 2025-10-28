@@ -1,0 +1,187 @@
+/**
+ * Metadata Service
+ *
+ * Loads and queries mortality data availability metadata.
+ * Used to determine which chart types, age groups, and date ranges
+ * are available for selected countries.
+ */
+
+import Papa from 'papaparse'
+import { dataLoader } from '@/lib/dataLoader'
+
+export interface MetadataEntry {
+  iso3c: string
+  jurisdiction: string
+  type: '1' | '2' | '3' // 1=yearly, 2=monthly, 3=weekly
+  source: string
+  minDate: string
+  maxDate: string
+  ageGroups: string[]
+}
+
+export class MetadataService {
+  private metadata: MetadataEntry[] | null = null
+  private loading: Promise<void> | null = null
+
+  /**
+   * Load and parse world_meta.csv
+   * Called once on app initialization
+   */
+  async load(): Promise<void> {
+    // If already loaded, return immediately
+    if (this.metadata) return
+
+    // If already loading, wait for that to complete
+    if (this.loading) return this.loading
+
+    // Start loading
+    this.loading = this._loadInternal()
+    await this.loading
+    this.loading = null
+  }
+
+  private async _loadInternal(): Promise<void> {
+    const csv = await dataLoader.fetchMetadata()
+
+    const parsed = Papa.parse(csv, {
+      header: true,
+      skipEmptyLines: true
+    })
+
+    this.metadata = (parsed.data as Array<Record<string, string>>)
+      .filter((row: Record<string, string>) => row.iso3c && row.age_groups)
+      .map((row: Record<string, string>) => ({
+        iso3c: row.iso3c!,
+        jurisdiction: row.jurisdiction || '',
+        type: (row.type || '1') as '1' | '2' | '3',
+        source: row.source || '',
+        minDate: row.min_date || '',
+        maxDate: row.max_date || '',
+        ageGroups: row.age_groups!.split(',').map((s: string) => s.trim())
+      }))
+  }
+
+  /**
+   * Get available chart types for given countries
+   * Returns intersection of available types (data available for ALL countries)
+   */
+  getAvailableChartTypes(countries: string[]): string[] {
+    if (!this.metadata) throw new Error('Metadata not loaded')
+    if (countries.length === 0) return []
+
+    // Find entries for each country
+    const typesByCountry = countries.map((country) => {
+      const entries = this.metadata!.filter(e => e.iso3c === country)
+      return new Set(entries.map(e => e.type))
+    })
+
+    if (typesByCountry.length === 0) return []
+
+    // Intersection of all sets
+    const commonTypes = typesByCountry.reduce((acc, set) =>
+      new Set([...acc].filter(x => set.has(x)))
+    )
+
+    // Map data types to chart types
+    const typeMap: Record<string, string[]> = {
+      1: ['yearly', 'midyear', 'fluseason'],
+      2: ['monthly', 'quarterly'],
+      3: ['weekly', 'weekly_13w_sma', 'weekly_26w_sma', 'weekly_52w_sma', 'weekly_104w_sma']
+    }
+
+    return Array.from(commonTypes).flatMap(type => typeMap[type] || [])
+  }
+
+  /**
+   * Get available age groups for given countries and chart type
+   * Returns intersection of available age groups (data available for ALL countries)
+   */
+  getAvailableAgeGroups(countries: string[], chartType: string): string[] {
+    if (!this.metadata) throw new Error('Metadata not loaded')
+    if (countries.length === 0) return []
+
+    const dataType = this.chartTypeToDataType(chartType)
+
+    // Find entries for each country with matching type
+    const ageGroupsByCountry = countries.map((country) => {
+      const entries = this.metadata!.filter(
+        e => e.iso3c === country && e.type === dataType
+      )
+      const allGroups = entries.flatMap(e => e.ageGroups)
+      return new Set(allGroups)
+    })
+
+    if (ageGroupsByCountry.length === 0) return []
+
+    // Intersection
+    const commonGroups = ageGroupsByCountry.reduce((acc, set) =>
+      new Set([...acc].filter(x => set.has(x)))
+    )
+
+    return Array.from(commonGroups)
+  }
+
+  /**
+   * Get date range for given selection
+   * Returns intersection (latest start, earliest end)
+   */
+  getAvailableDateRange(
+    countries: string[],
+    chartType: string,
+    ageGroups: string[]
+  ): { minDate: string, maxDate: string } | null {
+    if (!this.metadata) throw new Error('Metadata not loaded')
+    if (countries.length === 0) return null
+
+    const dataType = this.chartTypeToDataType(chartType)
+
+    // Find matching entries
+    const entries = this.metadata.filter(e =>
+      countries.includes(e.iso3c)
+      && e.type === dataType
+      && ageGroups.some(ag => e.ageGroups.includes(ag))
+    )
+
+    if (entries.length === 0) return null
+
+    // Intersection: latest start, earliest end
+    const minDate = entries.reduce((max, e) =>
+      e.minDate > max ? e.minDate : max,
+    entries[0]!.minDate
+    )
+
+    const maxDate = entries.reduce((min, e) =>
+      e.maxDate < min ? e.maxDate : min,
+    entries[0]!.maxDate
+    )
+
+    return { minDate, maxDate }
+  }
+
+  /**
+   * Check if specific combination is available
+   */
+  isAvailable(country: string, chartType: string, ageGroup: string): boolean {
+    if (!this.metadata) return false
+
+    const dataType = this.chartTypeToDataType(chartType)
+
+    return this.metadata.some(e =>
+      e.iso3c === country
+      && e.type === dataType
+      && e.ageGroups.includes(ageGroup)
+    )
+  }
+
+  /**
+   * Convert chart type to data type (1/2/3)
+   */
+  private chartTypeToDataType(chartType: string): '1' | '2' | '3' {
+    if (['yearly', 'midyear', 'fluseason'].includes(chartType)) return '1'
+    if (['monthly', 'quarterly'].includes(chartType)) return '2'
+    return '3' // weekly variants
+  }
+}
+
+// Singleton instance
+export const metadataService = new MetadataService()
