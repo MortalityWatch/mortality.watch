@@ -22,12 +22,12 @@ import {
 } from '@/utils'
 import { computed, onMounted, ref, watch, type ComputedRef } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
-import DateSlider from '../components/charts/DateSlider.vue'
+import RankingDataSelection from '../components/ranking/RankingDataSelection.vue'
 import { useDateRangeValidation } from '@/composables/useDateRangeValidation'
 import { usePeriodFormat } from '@/composables/usePeriodFormat'
 import { useJurisdictionFilter } from '@/composables/useJurisdictionFilter'
 import { useRankingTableSort } from '@/composables/useRankingTableSort'
-import { greenColor, specialColor } from '@/colors'
+import { greenColor } from '@/colors'
 import { useRoute, useRouter } from 'vue-router'
 import { useUrlState, useUrlObjectState } from '@/composables/useUrlState'
 import {
@@ -641,89 +641,21 @@ watch(
       >
         <!-- Data Selection - First on mobile -->
         <div class="order-1 lg:order-2 lg:hidden">
-          <UCard>
-            <template #header>
-              <h2 class="text-xl font-semibold">
-                Data Selection
-              </h2>
-            </template>
-
-            <div class="flex flex-wrap gap-4">
-              <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                <label
-                  class="text-sm font-medium whitespace-nowrap"
-                  for="periodOfTime"
-                >Period of Time</label>
-                <USelectMenu
-                  id="periodOfTime"
-                  v-model="selectedPeriodOfTime"
-                  :items="periodOfTimeItems"
-                  placeholder="Select the period of time"
-                  size="sm"
-                  class="w-44"
-                  @update:model-value="periodOfTimeChanged"
-                />
-              </div>
-              <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                <label
-                  class="text-sm font-medium whitespace-nowrap"
-                  for="jurisdictionType"
-                >Jurisdictions</label>
-                <USelectMenu
-                  id="jurisdictionType"
-                  v-model="selectedJurisdictionType"
-                  :items="jurisdictionTypeItems"
-                  placeholder="Select the jurisdictions to include"
-                  size="sm"
-                  class="w-48"
-                />
-              </div>
-            </div>
-
-            <div
-              v-if="allLabels.length"
-              class="mt-6 flex flex-wrap gap-6"
-            >
-              <div
-                v-show="selectedBaselineMethod.value !== 'auto'"
-                class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-              >
-                <label
-                  class="text-sm font-medium whitespace-nowrap"
-                  for="startingPeriod"
-                >
-                  Start Period
-                </label>
-                <USelectMenu
-                  id="startingPeriod"
-                  v-model="sliderStart"
-                  :items="allYearlyChartLabelsUnique"
-                  placeholder="Select the start period"
-                  :disabled="isUpdating"
-                  size="sm"
-                  class="w-24"
-                />
-              </div>
-
-              <div class="flex-1 min-w-[400px] px-4 pt-1 pb-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                <div class="flex items-center gap-4">
-                  <label class="text-sm font-medium whitespace-nowrap">
-                    Date Range
-                  </label>
-                  <div class="flex-1 mt-12 px-4">
-                    <DateSlider
-                      :slider-value="sliderValue"
-                      :labels="sliderValues"
-                      :chart-type="(selectedPeriodOfTime?.value || 'yearly') as ChartType"
-                      :color="specialColor()"
-                      :min-range="0"
-                      @slider-changed="sliderChanged"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </UCard>
+          <RankingDataSelection
+            v-model:selected-jurisdiction-type="selectedJurisdictionType"
+            v-model:slider-start="sliderStart"
+            :selected-period-of-time="selectedPeriodOfTime"
+            :period-of-time-items="periodOfTimeItems"
+            :jurisdiction-type-items="jurisdictionTypeItems"
+            :all-yearly-chart-labels-unique="allYearlyChartLabelsUnique"
+            :all-labels="allLabels"
+            :slider-value="sliderValue"
+            :slider-values="sliderValues"
+            :is-updating="isUpdating"
+            :selected-baseline-method="selectedBaselineMethod"
+            @period-of-time-changed="periodOfTimeChanged"
+            @slider-changed="sliderChanged"
+          />
         </div>
 
         <!-- Ranking Table - Second on mobile, first on large screens -->
@@ -767,81 +699,21 @@ watch(
 
         <!-- Right Sidebar (Desktop only) - contains Data Selection + Settings -->
         <div class="hidden lg:flex lg:flex-col lg:gap-4 lg:order-2 lg:w-[420px] flex-shrink-0">
-          <UCard>
-            <template #header>
-              <h2 class="text-xl font-semibold">
-                Data Selection
-              </h2>
-            </template>
-
-            <div class="flex flex-wrap gap-4">
-              <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                <label
-                  class="text-sm font-medium whitespace-nowrap"
-                  for="periodOfTime2"
-                >Period of Time</label>
-                <USelectMenu
-                  id="periodOfTime2"
-                  v-model="selectedPeriodOfTime"
-                  :items="periodOfTimeItems"
-                  placeholder="Select the period of time"
-                  size="sm"
-                  class="w-44"
-                  @update:model-value="periodOfTimeChanged"
-                />
-              </div>
-              <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                <label
-                  class="text-sm font-medium whitespace-nowrap"
-                  for="jurisdictionType2"
-                >Jurisdictions</label>
-                <USelectMenu
-                  id="jurisdictionType2"
-                  v-model="selectedJurisdictionType"
-                  :items="jurisdictionTypeItems"
-                  placeholder="Select jurisdiction"
-                  size="sm"
-                  class="w-32"
-                />
-              </div>
-
-              <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                <label
-                  class="text-sm font-medium whitespace-nowrap"
-                  for="startingPeriod2"
-                >
-                  Start Period
-                </label>
-                <USelectMenu
-                  id="startingPeriod2"
-                  v-model="sliderStart"
-                  :items="allYearlyChartLabelsUnique"
-                  placeholder="Select the start period"
-                  :disabled="isUpdating"
-                  size="sm"
-                  class="w-24"
-                />
-              </div>
-
-              <div class="flex-1 min-w-[400px] px-4 pt-1 pb-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                <div class="flex items-center gap-4">
-                  <label class="text-sm font-medium whitespace-nowrap">
-                    Date Range
-                  </label>
-                  <div class="flex-1 mt-12 px-4">
-                    <DateSlider
-                      :slider-value="sliderValue"
-                      :labels="sliderValues"
-                      :chart-type="(selectedPeriodOfTime?.value || 'yearly') as ChartType"
-                      :color="specialColor()"
-                      :min-range="0"
-                      @slider-changed="sliderChanged"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </UCard>
+          <RankingDataSelection
+            v-model:selected-jurisdiction-type="selectedJurisdictionType"
+            v-model:slider-start="sliderStart"
+            :selected-period-of-time="selectedPeriodOfTime"
+            :period-of-time-items="periodOfTimeItems"
+            :jurisdiction-type-items="jurisdictionTypeItems"
+            :all-yearly-chart-labels-unique="allYearlyChartLabelsUnique"
+            :all-labels="allLabels"
+            :slider-value="sliderValue"
+            :slider-values="sliderValues"
+            :is-updating="isUpdating"
+            :selected-baseline-method="selectedBaselineMethod"
+            @period-of-time-changed="periodOfTimeChanged"
+            @slider-changed="sliderChanged"
+          />
 
           <RankingSettings
             v-model:show-a-s-m-r="showASMR"
