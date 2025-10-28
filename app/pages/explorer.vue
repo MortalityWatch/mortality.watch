@@ -3,26 +3,18 @@ import {
   computed,
   nextTick,
   onMounted,
-  reactive,
   ref
 } from 'vue'
-import { useDateRangeValidation } from '@/composables/useDateRangeValidation'
 import { useChartResize } from '@/composables/useChartResize'
 import { useExplorerHelpers } from '@/composables/useExplorerHelpers'
 import { useExplorerState } from '@/composables/useExplorerState'
+import { useExplorerDataOrchestration } from '@/composables/useExplorerDataOrchestration'
 import type {
-  AllChartData,
-  Country,
-  DatasetRaw
+  Country
 } from '@/model'
-import { getKeyForType } from '@/model'
-import { ChartPeriod, type ChartType } from '@/model/period'
+import type { ChartType } from '@/model/period'
 import {
-  getAllChartData,
-  getAllChartLabels,
-  getStartIndex,
-  loadCountryMetadata,
-  updateDataset
+  loadCountryMetadata
 } from '@/lib/data'
 import ExplorerDataSelection from '@/components/explorer/ExplorerDataSelection.vue'
 import ExplorerChartContainer from '@/components/explorer/ExplorerChartContainer.vue'
@@ -30,15 +22,12 @@ import ExplorerSettings from '@/components/explorer/ExplorerSettings.vue'
 import ExplorerChartActions from '@/components/explorer/ExplorerChartActions.vue'
 import { getChartColors } from '@/colors'
 import { getColorScale } from '@/lib/chart/chartColors'
-import type { MortalityChartData } from '@/lib/chart/chartTypes'
 import { useRoute, useRouter } from 'vue-router'
-import { getSeasonString } from '@/model/baseline'
-import { getFilteredChartData } from '@/lib/chart'
 import {
   arrayBufferToBase64,
   compress
 } from '@/lib/compression/compress.browser'
-import { DEFAULT_BASELINE_YEAR, CHART_RESIZE } from '@/lib/constants'
+import { CHART_RESIZE } from '@/lib/constants'
 import { showToast } from '@/toast'
 
 // Feature access for tier-based features (currently unused but may be needed in the future)
@@ -50,10 +39,6 @@ const state = useExplorerState()
 // Router
 const _router = useRouter()
 const _route = useRoute()
-
-// Validation
-const MIN_BASELINE_SPAN = 3
-const { getValidatedRange } = useDateRangeValidation()
 
 // Dynamic OG images based on current chart state
 const chartState = computed(() => ({
@@ -72,20 +57,6 @@ useSeoMeta({
   description: ogDescription,
   ogImage: ogImageUrl,
   twitterCard: 'summary_large_image'
-})
-
-// Transitory
-const chartOptions = reactive({
-  showMaximizeOption: true,
-  showMaximizeOptionDisabled: false,
-  showBaselineOption: false,
-  showPredictionIntervalOption: false,
-  showPredictionIntervalOptionDisabled: false,
-  showCumulativeOption: false,
-  showTotalOption: false,
-  showTotalOptionDisabled: false,
-  showPercentageOption: false,
-  showLogarithmicOption: true
 })
 
 // Helper Functions - use composable
@@ -151,10 +122,55 @@ const displayColors = computed(() => {
   return getColorScale(themeColors, numCountries)
 })
 
-// Data
-const isUpdating = ref<boolean>(false)
-const showLoadingOverlay = ref<boolean>(false)
-let loadingTimeout: ReturnType<typeof setTimeout> | null = null
+// Load Data - must be declared before data orchestration composable
+const allCountries = ref<Record<string, Country>>({})
+const isDataLoaded = ref(false)
+const allAgeGroups = computed(() => {
+  const result = new Set<string>()
+  state.countries.value.forEach((countryCode: string) => {
+    const country = allCountries.value[countryCode]
+    if (country) {
+      country.age_groups().forEach((ag: string) => result.add(ag))
+    }
+  })
+  return Array.from(result)
+})
+
+// Phase 9.2: Data orchestration composable
+const dataOrchestration = useExplorerDataOrchestration(
+  state,
+  {
+    isAsmrType,
+    isPopulationType,
+    isLifeExpectancyType,
+    isDeathsType,
+    isErrorBarType,
+    hasBaseline,
+    isLineChartStyle,
+    isBarChartStyle,
+    isMatrixChartStyle,
+    getMaxCountriesAllowed,
+    isYearlyChartType: _isYearlyChartType,
+    showCumPi,
+    getBaseKeysForType,
+    showPredictionIntervalDisabled
+  },
+  allCountries,
+  displayColors
+)
+
+// Destructure data orchestration (prefix unused with _ to satisfy linter)
+const {
+  allChartLabels: _allChartLabels,
+  allYearlyChartLabels: _allYearlyChartLabels,
+  allYearlyChartLabelsUnique: _allYearlyChartLabelsUnique,
+  allChartData: _allChartData,
+  chartData: _chartData,
+  isUpdating: _isUpdating,
+  showLoadingOverlay: _showLoadingOverlay,
+  chartOptions: _chartOptions,
+  updateData
+} = dataOrchestration
 
 const dateSliderChanged = async (val: string[]) => {
   // Update URL state - useUrlState now handles optimistic updates internally
@@ -164,7 +180,7 @@ const dateSliderChanged = async (val: string[]) => {
   update('dateRange')
 }
 
-const labels = computed(() => allChartData?.labels || allChartLabels.value || [])
+const labels = computed(() => dataOrchestration.allChartData?.labels || dataOrchestration.allChartLabels.value || [])
 
 // Make Chart resizeable - use composable
 const {
@@ -180,291 +196,6 @@ const {
   applyPresetSize,
   setupResizeObserver
 } = useChartResize()
-
-const updateData = async (
-  shouldDownloadDataset: boolean,
-  shouldUpdateDataset: boolean
-) => {
-  isUpdating.value = true
-
-  // Only show loading overlay if update takes longer than 500ms
-  loadingTimeout = setTimeout(() => {
-    showLoadingOverlay.value = true
-  }, 500)
-
-  if (shouldDownloadDataset) {
-    dataset = await updateDataset(
-      state.chartType.value,
-      state.countries.value,
-      isAsmrType() ? ['all'] : state.ageGroups.value
-    )
-
-    // All Labels
-    allChartLabels.value = getAllChartLabels(
-      dataset,
-      isAsmrType(),
-      state.ageGroups.value,
-      state.countries.value,
-      state.chartType.value
-    )
-
-    if (state.chartType.value === 'yearly') {
-      allYearlyChartLabels.value = allChartLabels.value
-      allYearlyChartLabelsUnique.value = allChartLabels.value.filter(
-        x => parseInt(x) <= DEFAULT_BASELINE_YEAR
-      )
-    } else {
-      allYearlyChartLabels.value = Array.from(
-        allChartLabels.value.map(v => v.substring(0, 4))
-      )
-      allYearlyChartLabelsUnique.value = Array.from(
-        new Set(allYearlyChartLabels.value)
-      ).filter(x => parseInt(x) <= DEFAULT_BASELINE_YEAR)
-    }
-  }
-
-  if (shouldDownloadDataset || shouldUpdateDataset) {
-    resetBaselineDates()
-
-    // Update all chart specific data
-    const key = getKeyForType(
-      state.type.value,
-      state.showBaseline.value,
-      state.standardPopulation.value
-    )[0]
-    if (!key) return
-
-    const newData = await getAllChartData(
-      key,
-      state.chartType.value,
-      dataset,
-      allChartLabels.value || [],
-      getStartIndex(allYearlyChartLabels.value || [], state.sliderStart.value),
-      showCumPi(),
-      state.ageGroups.value,
-      state.countries.value,
-      state.baselineMethod.value,
-      state.baselineDateFrom.value,
-      state.baselineDateTo.value,
-      getBaseKeysForType()
-    )
-    Object.assign(allChartData, newData)
-
-    resetDates()
-  }
-
-  // Update filtered chart datasets
-  const filteredData = await updateFilteredData()
-  chartData.value = filteredData as MortalityChartData
-
-  configureOptions()
-
-  // Clear the loading timeout and hide overlay
-  if (loadingTimeout) {
-    clearTimeout(loadingTimeout)
-    loadingTimeout = null
-  }
-  showLoadingOverlay.value = false
-
-  isUpdating.value = false
-}
-
-// Note: isYearlyChartType, showCumPi, and getBaseKeysForType are now provided by useExplorerHelpers composable above
-
-const resetDates = () => {
-  if (!allChartData || !allChartData.labels) return
-  const labels = allChartData.labels
-  if (labels.length === 0) return
-
-  // Only reset if values are missing or don't match
-  // Don't reset if user has manually selected a different range
-  if (state.dateFrom.value && state.dateTo.value && labels.includes(state.dateFrom.value) && labels.includes(state.dateTo.value)) {
-    // Values are valid, don't change them
-    return
-  }
-
-  // Date Slider - validate and correct range
-  const sliderStartStr = sliderStartPeriod()
-  const defaultFrom = labels.includes(sliderStartStr) ? sliderStartStr : labels[0]!
-  const defaultTo = labels[labels.length - 1]!
-
-  // Try to preserve user's selection by finding matching labels based on year
-  let currentFrom = state.dateFrom.value
-  let currentTo = state.dateTo.value
-
-  // Helper function to find closest year in labels
-  const findClosestYear = (targetYear: string, preferLast: boolean = false): string => {
-    const targetYearNum = parseInt(targetYear)
-    const availableYears = Array.from(new Set(labels.map(l => parseInt(l.substring(0, 4)))))
-
-    // Find the closest year
-    const closestYear = availableYears.reduce((prev, curr) =>
-      Math.abs(curr - targetYearNum) < Math.abs(prev - targetYearNum) ? curr : prev
-    )
-
-    // Find labels for that year
-    const yearLabels = labels.filter(l => l.startsWith(closestYear.toString()))
-    return preferLast ? yearLabels[yearLabels.length - 1]! : yearLabels[0]!
-  }
-
-  // If current values don't exist in new labels, try to find closest match by year
-  if (currentFrom && !labels.includes(currentFrom)) {
-    const fromYear = currentFrom.substring(0, 4)
-    const matchingLabel = labels.find(l => l.startsWith(fromYear))
-    // If exact year doesn't exist, find closest year instead of falling back to default
-    currentFrom = matchingLabel || findClosestYear(fromYear, false)
-  }
-
-  if (currentTo && !labels.includes(currentTo)) {
-    const toYear = currentTo.substring(0, 4)
-    // Find the last label that starts with the year (to prefer end of year)
-    const matchingLabels = labels.filter(l => l.startsWith(toYear))
-    // If exact year doesn't exist, find closest year instead of falling back to default
-    currentTo = (matchingLabels.length > 0 ? matchingLabels[matchingLabels.length - 1] : findClosestYear(toYear, true))!
-  }
-
-  const period = new ChartPeriod(labels, state.chartType.value as ChartType)
-  const validatedRange = getValidatedRange(
-    { from: currentFrom ?? defaultFrom, to: currentTo ?? defaultTo },
-    period,
-    { from: defaultFrom, to: defaultTo }
-  )
-
-  if (validatedRange.from !== state.dateFrom.value || !state.dateFrom.value) {
-    state.dateFrom.value = validatedRange.from
-  }
-  if (validatedRange.to !== state.dateTo.value || !state.dateTo.value) {
-    state.dateTo.value = validatedRange.to
-  }
-}
-
-const sliderStartPeriod = () =>
-  getSeasonString(state.chartType.value, Number(state.sliderStart.value))
-
-const makeUrl = async () => {
-  const base = 'https://mortality.watch/?qr='
-  const query = JSON.stringify(window.location)
-  const encodedQuery = arrayBufferToBase64(await compress(query))
-  return base + encodeURIComponent(encodedQuery)
-}
-
-const updateFilteredData = async () => {
-  if (!allChartData || !allChartData.labels || !allChartData.data) {
-    return { datasets: [], labels: [] }
-  }
-
-  return await getFilteredChartData(
-    state.countries.value,
-    state.standardPopulation.value,
-    state.ageGroups.value,
-    state.showPredictionInterval.value,
-    state.isExcess.value,
-    state.type.value,
-    state.cumulative.value,
-    state.showBaseline.value,
-    state.baselineMethod.value,
-    state.baselineDateFrom.value,
-    state.baselineDateTo.value,
-    state.showTotal.value,
-    state.chartType.value,
-    state.dateFrom.value,
-    state.dateTo.value,
-    isBarChartStyle(),
-    allCountries.value, // This is the country metadata, not the selected countries
-    isErrorBarType(),
-    displayColors.value, // Use displayColors which handles 8+ countries
-    isMatrixChartStyle(),
-    state.showPercentage.value,
-    showCumPi(),
-    isAsmrType(),
-    state.maximize.value,
-    state.showLabels.value,
-    await makeUrl(),
-    state.isLogarithmic.value,
-    isPopulationType(),
-    isDeathsType(),
-    allChartData.labels,
-    allChartData.data
-  )
-}
-
-const configureOptions = () => {
-  chartOptions.showTotalOption = state.isExcess.value && isBarChartStyle()
-  chartOptions.showTotalOptionDisabled = !state.cumulative.value
-  chartOptions.showMaximizeOption
-    = !(state.isExcess.value && isLineChartStyle()) && !isMatrixChartStyle()
-  chartOptions.showMaximizeOptionDisabled
-    = state.isLogarithmic.value || (state.isExcess.value && !chartOptions.showTotalOption)
-  chartOptions.showBaselineOption = hasBaseline() && !isMatrixChartStyle()
-  chartOptions.showPredictionIntervalOption
-    = chartOptions.showBaselineOption || (state.isExcess.value && !isMatrixChartStyle())
-  chartOptions.showPredictionIntervalOptionDisabled
-    = (!state.isExcess.value && !state.showBaseline.value) || (state.cumulative.value && !showCumPi())
-  chartOptions.showCumulativeOption = state.isExcess.value
-  chartOptions.showPercentageOption = state.isExcess.value
-  chartOptions.showLogarithmicOption = !isMatrixChartStyle() && !state.isExcess.value
-}
-
-const resetBaselineDates = () => {
-  if (!allChartLabels.value || !allYearlyChartLabels.value) return
-  const labels = allChartLabels.value.slice(
-    getStartIndex(allYearlyChartLabels.value, state.sliderStart.value)
-  )
-  if (labels.length === 0) return
-
-  // Validate baseline range with minimum span requirement
-  const defaultFrom = labels[0]!
-  const defaultToIndex = Math.min(labels.length - 1, MIN_BASELINE_SPAN)
-  const defaultTo = labels[defaultToIndex]!
-
-  const period = new ChartPeriod(labels, state.chartType.value as ChartType)
-  const validatedRange = getValidatedRange(
-    { from: state.baselineDateFrom.value ?? defaultFrom, to: state.baselineDateTo.value ?? defaultTo },
-    period,
-    { from: defaultFrom, to: defaultTo },
-    MIN_BASELINE_SPAN
-  )
-
-  if (validatedRange.from !== state.baselineDateFrom.value || !state.baselineDateFrom.value) {
-    state.baselineDateFrom.value = validatedRange.from
-  }
-  if (validatedRange.to !== state.baselineDateTo.value || !state.baselineDateTo.value) {
-    state.baselineDateTo.value = validatedRange.to
-  }
-
-  // Start Select - reset to default if current value is invalid
-  if (state.sliderStart.value && !allYearlyChartLabelsUnique.value?.includes(state.sliderStart.value)) {
-    state.sliderStart.value = '2010'
-  }
-}
-
-// Load Data
-const allCountries = ref<Record<string, Country>>({})
-const isDataLoaded = ref(false)
-const allAgeGroups = computed(() => {
-  const result = new Set<string>()
-  state.countries.value.forEach((countryCode: string) => {
-    const country = allCountries.value[countryCode]
-    if (country) {
-      country.age_groups().forEach((ag: string) => result.add(ag))
-    }
-  })
-  return Array.from(result)
-})
-
-let dataset: DatasetRaw
-const allChartLabels = ref<string[]>([])
-const allYearlyChartLabels = ref<string[]>([])
-const allYearlyChartLabelsUnique = ref<string[]>([])
-const allChartData = reactive<AllChartData>({
-  labels: [],
-  data: {},
-  notes: {
-    noData: undefined,
-    noAsmr: undefined
-  }
-})
-const chartData = ref<MortalityChartData | undefined>(undefined)
 
 const handleUpdate = async (key: string) => {
   if (state.countries.value.length) {
@@ -500,9 +231,9 @@ const handleUpdate = async (key: string) => {
     }
   }
 
-  if (chartData.value) {
-    if (key === '_maximize') chartData.value.isMaximized = state.maximize.value
-    if (key === '_showLabels') chartData.value.showLabels = state.showLabels.value
+  if (dataOrchestration.chartData.value) {
+    if (key === '_maximize') dataOrchestration.chartData.value.isMaximized = state.maximize.value
+    if (key === '_showLabels') dataOrchestration.chartData.value.showLabels = state.showLabels.value
   }
 }
 
@@ -644,7 +375,7 @@ const saveChart = async () => {
         :slider-value="sliderValue"
         :labels="labels"
         :slider-start="state.sliderStart.value"
-        :all-yearly-chart-labels-unique="allYearlyChartLabelsUnique"
+        :all-yearly-chart-labels-unique="dataOrchestration.allYearlyChartLabelsUnique.value"
         :chart-type="state.chartType.value as ChartType"
         @countries-changed="(v) => updateStateAndRefresh(() => state.countries.value = v, '_countries')"
         @age-groups-changed="(v) => updateStateAndRefresh(() => state.ageGroups.value = v, '_ageGroups')"
@@ -659,7 +390,7 @@ const saveChart = async () => {
           <ExplorerChartContainer
             ref="chartContainer"
             :countries="state.countries.value"
-            :chart-data="chartData"
+            :chart-data="dataOrchestration.chartData.value"
             :chart-style="state.chartStyle.value"
             :is-excess="state.isExcess.value"
             :is-life-expectancy-type="isLifeExpectancyType()"
@@ -671,7 +402,7 @@ const saveChart = async () => {
             :show-logo="state.showLogo.value"
             :show-qr-code="state.showQrCode.value"
             :decimals="state.decimals.value"
-            :show-loading-overlay="showLoadingOverlay"
+            :show-loading-overlay="dataOrchestration.showLoadingOverlay.value"
             :show-size-label="showSizeLabel"
             :container-size="containerSize"
             :has-been-resized="hasBeenResized"
@@ -684,7 +415,7 @@ const saveChart = async () => {
           <ExplorerSettings
             :countries="state.countries.value"
             :labels="labels"
-            :all-yearly-chart-labels-unique="allYearlyChartLabelsUnique || []"
+            :all-yearly-chart-labels-unique="dataOrchestration.allYearlyChartLabelsUnique.value || []"
             :type="state.type.value"
             :chart-type="state.chartType.value"
             :chart-style="state.chartStyle.value"
@@ -706,12 +437,12 @@ const saveChart = async () => {
             :show-total="state.showTotal.value"
             :show-logarithmic-option="!isMatrixChartStyle() && !state.isExcess.value"
             :show-maximize-option="!(state.isExcess.value && isLineChartStyle()) && !isMatrixChartStyle()"
-            :show-maximize-option-disabled="state.isLogarithmic.value || (state.isExcess.value && !chartOptions.showTotalOption)"
+            :show-maximize-option-disabled="state.isLogarithmic.value || (state.isExcess.value && !dataOrchestration.chartOptions.showTotalOption)"
             :show-percentage-option="state.isExcess.value"
             :show-cumulative-option="state.isExcess.value"
             :show-total-option="state.isExcess.value && isBarChartStyle()"
             :show-total-option-disabled="!state.cumulative.value"
-            :show-prediction-interval-option="chartOptions.showBaselineOption || (state.isExcess.value && !isMatrixChartStyle())"
+            :show-prediction-interval-option="dataOrchestration.chartOptions.showBaselineOption || (state.isExcess.value && !isMatrixChartStyle())"
             :show-prediction-interval-option-disabled="showPredictionIntervalDisabled"
             :is-matrix-chart-style="isMatrixChartStyle()"
             :colors="displayColors"
