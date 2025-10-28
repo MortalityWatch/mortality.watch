@@ -27,7 +27,14 @@ const managingSubscription = ref(false)
 const statusBadgeColor = computed(() => {
   if (!subscriptionStatus.value?.subscription) return 'neutral'
 
-  switch (subscriptionStatus.value.subscription.status) {
+  const subscription = subscriptionStatus.value.subscription
+
+  // If subscription is being canceled at period end, show warning
+  if (subscription.cancelAtPeriodEnd && subscription.status === 'active') {
+    return 'warning'
+  }
+
+  switch (subscription.status) {
     case 'active':
       return 'success'
     case 'trialing':
@@ -46,7 +53,14 @@ const statusBadgeColor = computed(() => {
 const statusLabel = computed(() => {
   if (!subscriptionStatus.value?.subscription) return 'No Subscription'
 
-  const status = subscriptionStatus.value.subscription.status
+  const subscription = subscriptionStatus.value.subscription
+
+  // If subscription is being canceled at period end, show special label
+  if (subscription.cancelAtPeriodEnd && subscription.status === 'active') {
+    return 'Canceling'
+  }
+
+  const status = subscription.status
   return status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')
 })
 
@@ -105,6 +119,11 @@ async function handleSubscribe(plan: 'monthly' | 'yearly') {
 }
 
 onMounted(() => {
+  loadSubscriptionStatus()
+})
+
+// Reload subscription when returning from Stripe portal
+onActivated(() => {
   loadSubscriptionStatus()
 })
 </script>

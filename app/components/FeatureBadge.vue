@@ -2,7 +2,7 @@
   <UPopover>
     <span
       :class="badgeClasses"
-      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-help"
+      class="cursor-help"
     >
       {{ tierName }}
     </span>
@@ -36,16 +36,10 @@
 import type { FeatureKey } from '~/lib/featureFlags'
 import { FEATURES, TIERS } from '~/config/features.config'
 
-const props = withDefaults(
-  defineProps<{
-    feature: FeatureKey
-    message?: string
-    variant?: 'solid' | 'soft' | 'outline' | 'subtle'
-  }>(),
-  {
-    variant: 'soft'
-  }
-)
+const props = defineProps<{
+  feature: FeatureKey
+  message?: string
+}>()
 
 const {
   can,
@@ -55,16 +49,18 @@ const {
 } = useFeatureAccess()
 
 const badgeClasses = computed(() => {
+  const baseClasses = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium'
   const tier = FEATURES[props.feature].tier
+
   switch (tier) {
     case TIERS.PUBLIC:
-      return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+      return `${baseClasses} bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300`
     case TIERS.REGISTERED:
-      return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+      return `${baseClasses} bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400`
     case TIERS.PRO:
-      return 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
+      return `${baseClasses} bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400`
     default:
-      return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+      return `${baseClasses} bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300`
   }
 })
 

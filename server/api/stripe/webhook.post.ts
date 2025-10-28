@@ -150,6 +150,13 @@ async function processWebhookEvent(event: Stripe.Event) {
       await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice)
       break
 
+    case 'customer.created': {
+      // Log customer creation for debugging
+      const customer = event.data.object as Stripe.Customer
+      console.log(`Customer created: ${customer.id}`, customer.metadata)
+      break
+    }
+
     default:
       console.log(`Unhandled webhook event type: ${event.type}`)
   }
@@ -177,6 +184,16 @@ async function handleCheckoutSessionCompleted(
   // Fetch full subscription details
   const stripe = getStripe()
   const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+
+  // Link customer to user if not already linked
+  const customerId = getCustomerIdFromSubscription(subscription)
+  if (customerId) {
+    const existingUser = await getUserIdByCustomerId(customerId)
+    if (!existingUser) {
+      // This is a new customer, create the subscription record which will store the customer ID
+      console.log(`Linking new customer ${customerId} to user ${userId}`)
+    }
+  }
 
   await upsertSubscription(parseInt(userId), subscription)
 }
@@ -334,12 +351,14 @@ async function upsertSubscription(userId: number, subscription: Stripe.Subscript
     current_period_start?: number
     current_period_end?: number
     cancel_at_period_end?: boolean
+    cancel_at?: number | null
     canceled_at?: number | null
     trial_end?: number | null
   }
   const currentPeriodStart = sub.current_period_start
   const currentPeriodEnd = sub.current_period_end
-  const cancelAtPeriodEnd = sub.cancel_at_period_end
+  // Check if subscription is scheduled to cancel (either via flag or timestamp)
+  const cancelAtPeriodEnd = sub.cancel_at_period_end || (sub.cancel_at && subscription.status === 'active')
   const canceledAt = sub.canceled_at
   const trialEnd = sub.trial_end
 
