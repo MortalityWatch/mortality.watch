@@ -5,11 +5,36 @@ definePageMeta({
 
 const { user, updateProfile, signOut, loading } = useAuth()
 const toast = useToast()
+const route = useRoute()
 
 const profileState = reactive({
   firstName: '',
   lastName: '',
   displayName: ''
+})
+
+// Show success message after checkout
+onMounted(() => {
+  if (route.query.success === 'true') {
+    toast.add({
+      title: 'Subscription activated!',
+      description: 'Your payment was successful. Welcome to Pro! 🎉',
+      color: 'success',
+      timeout: 5000
+    })
+    // Clean up the URL
+    const router = useRouter()
+    router.replace({ query: {} })
+  } else if (route.query.canceled === 'true') {
+    toast.add({
+      title: 'Checkout canceled',
+      description: 'You can subscribe anytime from your profile.',
+      color: 'info'
+    })
+    // Clean up the URL
+    const router = useRouter()
+    router.replace({ query: {} })
+  }
 })
 
 const passwordState = reactive({

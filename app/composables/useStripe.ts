@@ -29,8 +29,8 @@ export function useStripe() {
     }
   ) => {
     const baseUrl = window.location.origin
-    const successUrl = options?.successUrl || `${baseUrl}/account?success=true`
-    const cancelUrl = options?.cancelUrl || `${baseUrl}/pricing?canceled=true`
+    const successUrl = options?.successUrl || `${baseUrl}/profile?success=true`
+    const cancelUrl = options?.cancelUrl || `${baseUrl}/profile?canceled=true`
 
     try {
       const response = await $fetch('/api/stripe/create-checkout-session', {
@@ -59,7 +59,7 @@ export function useStripe() {
    */
   const createPortalSession = async (returnUrl?: string) => {
     const baseUrl = window.location.origin
-    const url = returnUrl || `${baseUrl}/account`
+    const url = returnUrl || `${baseUrl}/profile`
 
     try {
       const response = await $fetch('/api/stripe/create-portal-session', {
