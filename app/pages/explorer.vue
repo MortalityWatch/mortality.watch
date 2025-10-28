@@ -4,20 +4,19 @@ import { useUrlState } from '@/composables/useUrlState'
 import {
   computed,
   nextTick,
-  onBeforeUnmount,
   onMounted,
   reactive,
   ref
 } from 'vue'
 import { useDateRangeValidation } from '@/composables/useDateRangeValidation'
+import { useChartResize } from '@/composables/useChartResize'
+import { useExplorerHelpers } from '@/composables/useExplorerHelpers'
 import type {
   AllChartData,
   Country,
-  DatasetRaw,
-  NumberEntryFields
+  DatasetRaw
 } from '@/model'
 import { getKeyForType } from '@/model'
-import { isMobile } from '@/utils'
 import {
   getAllChartData,
   getAllChartLabels,
@@ -39,7 +38,7 @@ import {
   arrayBufferToBase64,
   compress
 } from '@/lib/compression/compress.browser'
-import { DEFAULT_BASELINE_YEAR, CHART_RESIZE, CHART_PRESETS } from '@/lib/constants'
+import { DEFAULT_BASELINE_YEAR, CHART_RESIZE } from '@/lib/constants'
 import { showToast } from '@/toast'
 
 // Feature access for tier-based features (currently unused but may be needed in the future)
@@ -163,9 +162,7 @@ const userColors = useUrlState<string[] | undefined>(
   undefined
 )
 // Chart size preferences are local state (not stored in URL)
-const chartPreset = ref<string>('Auto')
-const chartWidth = ref<number | undefined>(undefined)
-const chartHeight = ref<number | undefined>(undefined)
+// Note: These are now provided by useChartResize composable below
 const showLogo = useUrlState<boolean>(
   stateFieldEncoders.showLogo.key,
   true,
@@ -224,29 +221,37 @@ const chartOptions = reactive({
   showLogarithmicOption: true
 })
 
-// Helper Functions
-const isAsmrType = () => type.value.includes('asmr')
-const isPopulationType = () => type.value === 'population'
-const isLifeExpectancyType = () => type.value === 'le'
-const isDeathsType = () => type.value.includes('deaths')
-const isErrorBarType = () => isBarChartStyle() && isExcess.value
-const hasBaseline = () => !isPopulationType() && !isExcess.value
-const isLineChartStyle = () => chartStyle.value === 'line'
-const isBarChartStyle = () => chartStyle.value === 'bar'
-const isMatrixChartStyle = () => chartStyle.value === 'matrix'
-const getMaxCountriesAllowed = () =>
-  countries.value.length > 1
-  && isAsmrType()
-  && standardPopulation.value === 'country'
-    ? 1
-    : undefined
+// Helper Functions - use composable
+const {
+  isAsmrType,
+  isPopulationType,
+  isLifeExpectancyType,
+  isDeathsType,
+  isErrorBarType,
+  hasBaseline,
+  isLineChartStyle,
+  isBarChartStyle,
+  isMatrixChartStyle,
+  getMaxCountriesAllowed,
+  isYearlyChartType: _isYearlyChartType,
+  showCumPi,
+  getBaseKeysForType,
+  showPredictionIntervalDisabled
+} = useExplorerHelpers(
+  type,
+  chartStyle,
+  isExcess,
+  standardPopulation,
+  countries,
+  cumulative,
+  baselineMethod,
+  showBaseline,
+  chartType
+)
 
 // Computed
 const sliderValue = computed(() => [dateFrom.value, dateTo.value])
 const baselineSliderValue = computed(() => [baselineDateFrom.value, baselineDateTo.value])
-const showPredictionIntervalDisabled = computed(() =>
-  (!isExcess.value && !showBaseline.value) || (cumulative.value && !showCumPi())
-)
 
 // Get color mode for theme reactivity
 const colorMode = useColorMode()
@@ -296,100 +301,20 @@ const dateSliderChanged = async (val: string[]) => {
 
 const labels = computed(() => allChartData?.labels || allChartLabels.value || [])
 
-// Make Chart resizeable
-const chartContainer = ref<HTMLElement | null>(null)
-const showSizeLabel = ref<boolean>(false)
-const hasBeenResized = ref<boolean>(false)
-let sizeTimeout: ReturnType<typeof setTimeout> | null = null
-const containerSize = ref('100x100')
-
-// Check if chart is in Auto (responsive) mode
-const isAutoMode = computed(() => !hasBeenResized.value && !chartWidth.value && !chartHeight.value)
-
-// Check if chart is in Custom mode (user has selected Custom or dragged to resize)
-const isCustomMode = computed(() => chartPreset.value === 'Custom')
-
-// Apply preset size to chart
-const applyPresetSize = (presetName: string) => {
-  if (!chartContainer.value) return
-
-  // Try to find preset by name
-  let preset = CHART_PRESETS.find(p => p.name === presetName)
-
-  // If not found, default to Custom (for unknown/legacy values)
-  if (!preset) {
-    preset = CHART_PRESETS.find(p => p.name === 'Custom')
-  }
-
-  if (!preset) {
-    return
-  }
-
-  // Special case: "Custom" enables resize handle with current or default dimensions
-  if (preset.width === -1 && preset.height === -1) {
-    hasBeenResized.value = true
-    // Keep current dimensions if they exist, otherwise use container's current size
-    if (!chartWidth.value || !chartHeight.value) {
-      const currentWidth = chartContainer.value.offsetWidth
-      const currentHeight = chartContainer.value.offsetHeight
-      chartWidth.value = currentWidth
-      chartHeight.value = currentHeight
-      chartContainer.value.style.width = `${currentWidth}px`
-      chartContainer.value.style.height = `${currentHeight}px`
-    } else {
-      chartContainer.value.style.width = `${chartWidth.value}px`
-      chartContainer.value.style.height = `${chartHeight.value}px`
-    }
-    containerSize.value = 'Custom'
-    showSizeLabel.value = true
-    if (sizeTimeout) clearTimeout(sizeTimeout)
-    sizeTimeout = setTimeout(() => (showSizeLabel.value = false), CHART_RESIZE.SIZE_LABEL_TIMEOUT)
-    return
-  }
-
-  // Special case: "Auto" enables responsive sizing
-  if (preset.width === 0 && preset.height === 0) {
-    hasBeenResized.value = false
-    chartContainer.value.style.width = ''
-    chartContainer.value.style.height = ''
-    containerSize.value = 'Auto'
-    showSizeLabel.value = true
-
-    // Clear dimensions from local state
-    chartWidth.value = undefined
-    chartHeight.value = undefined
-
-    // Trigger resize event
-    window.dispatchEvent(new Event('resize'))
-
-    // Hide label after timeout
-    if (sizeTimeout) clearTimeout(sizeTimeout)
-    sizeTimeout = setTimeout(() => (showSizeLabel.value = false), CHART_RESIZE.SIZE_LABEL_TIMEOUT)
-    return
-  }
-
-  hasBeenResized.value = true
-  chartContainer.value.style.width = `${preset.width}px`
-  chartContainer.value.style.height = `${preset.height}px`
-
-  // Save dimensions to local state (session-only)
-  chartWidth.value = preset.width
-  chartHeight.value = preset.height
-
-  // Update the size label to show preset name
-  containerSize.value = preset.name
-  showSizeLabel.value = true
-
-  // Setup resize observer for manual dragging
-  setupResizeObserver()
-
-  // Trigger resize event
-  window.dispatchEvent(new Event('resize'))
-
-  // Hide label after timeout
-  if (sizeTimeout) clearTimeout(sizeTimeout)
-  sizeTimeout = setTimeout(() => (showSizeLabel.value = false), CHART_RESIZE.SIZE_LABEL_TIMEOUT)
-}
+// Make Chart resizeable - use composable
+const {
+  chartContainer,
+  showSizeLabel,
+  hasBeenResized,
+  chartWidth: _chartWidth,
+  chartHeight: _chartHeight,
+  chartPreset,
+  containerSize,
+  isAutoMode: _isAutoMode,
+  isCustomMode,
+  applyPresetSize,
+  setupResizeObserver
+} = useChartResize()
 
 const updateData = async (
   shouldDownloadDataset: boolean,
@@ -496,18 +421,7 @@ const updateData = async (
   isUpdating.value = false
 }
 
-const isYearlyChartType = () =>
-  chartType.value.includes('year')
-  || chartType.value.includes('fluseason')
-  || chartType.value.includes('midyear')
-
-const showCumPi = (): boolean =>
-  cumulative.value
-  && isYearlyChartType()
-  && ['lin_reg', 'mean'].includes(baselineMethod.value)
-
-const getBaseKeysForType = (): (keyof NumberEntryFields)[] =>
-  getKeyForType(type.value, showBaseline.value, standardPopulation.value, false)
+// Note: isYearlyChartType, showCumPi, and getBaseKeysForType are now provided by useExplorerHelpers composable above
 
 const resetDates = () => {
   if (!allChartData || !allChartData.labels) return
@@ -928,88 +842,6 @@ const handleDecimalsChanged = async (v: string) => {
   decimals.value = v
   await nextTick()
 }
-
-// Setup ResizeObserver cleanup before any async operations
-let resizeObserver: ResizeObserver | null = null
-
-// Helper function to setup ResizeObserver for drag resizing
-const setupResizeObserver = () => {
-  // Disconnect existing observer
-  if (resizeObserver) {
-    resizeObserver.disconnect()
-    resizeObserver = null
-  }
-
-  // Only observe if NOT on mobile
-  if (!chartContainer.value || isMobile()) {
-    return
-  }
-
-  let isFirstResize = true
-
-  resizeObserver = new ResizeObserver(() => {
-    if (isFirstResize) {
-      isFirstResize = false
-      return
-    }
-
-    // In Auto mode, only switch to Custom if user manually set inline styles (dragged handle)
-    if (isAutoMode.value) {
-      const hasInlineWidth = chartContainer.value?.style.width && chartContainer.value?.style.width !== ''
-      const hasInlineHeight = chartContainer.value?.style.height && chartContainer.value?.style.height !== ''
-
-      // If no inline styles, this is just window resize - ignore it
-      if (!hasInlineWidth && !hasInlineHeight) {
-        return
-      }
-
-      // User dragged the handle - switch to Custom mode
-      hasBeenResized.value = true
-      chartPreset.value = 'Custom'
-    }
-
-    // In Preset mode (not Auto, not Custom), ignore resize events
-    // User selected a fixed preset - don't let ResizeObserver interfere
-    if (!isAutoMode.value && !isCustomMode.value) {
-      return
-    }
-
-    // Only update dimensions in Custom mode (user is actively resizing)
-    if (!isCustomMode.value) {
-      return
-    }
-
-    const currentWidth = chartContainer.value?.offsetWidth || 0
-    const currentHeight = chartContainer.value?.offsetHeight || 0
-
-    // Save dimensions to local state (session-only)
-    chartWidth.value = currentWidth
-    chartHeight.value = currentHeight
-
-    // Update size label with dimensions
-    const displayWidth = currentWidth - 2
-    const displayHeight = currentHeight - 2
-    containerSize.value = `Custom (${displayWidth}×${displayHeight})`
-    // Keep chartPreset as 'Custom', don't change it to 'Custom (WxH)'
-    if (chartPreset.value !== 'Custom') {
-      chartPreset.value = 'Custom'
-    }
-
-    showSizeLabel.value = true
-    window.dispatchEvent(new Event('resize'))
-    requestAnimationFrame(() => (showSizeLabel.value = true))
-    if (sizeTimeout) clearTimeout(sizeTimeout)
-    sizeTimeout = setTimeout(() => (showSizeLabel.value = false), CHART_RESIZE.SIZE_LABEL_TIMEOUT)
-  })
-
-  resizeObserver.observe(chartContainer.value)
-}
-
-onBeforeUnmount(() => {
-  if (resizeObserver) {
-    resizeObserver.disconnect()
-  }
-})
 
 onMounted(async () => {
   // Initialize data - load all, client-side filtering happens via useCountryFilter
