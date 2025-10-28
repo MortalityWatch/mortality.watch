@@ -1,12 +1,14 @@
-# Future Refactoring Opportunities
+# Phase 8.5: Component Refactoring & Modularization - Detailed Technical Specs
 
-This document outlines refactoring opportunities identified during the module integration project (Phase 8.5 in IMPLEMENTATION_PLAN.md). These are separated into distinct phases for manageable implementation.
+This document provides detailed technical specifications for **Phase 8.5** of the IMPLEMENTATION_PLAN.md. Phase 8.5 breaks up large monolithic components into smaller, maintainable modules.
 
-**Note:** This document provides detailed technical analysis for Phase 8.5.2 and Phase 8.5.3. See IMPLEMENTATION_PLAN.md for the complete project roadmap and Phase 8.5.1 completion status.
+**See IMPLEMENTATION_PLAN.md (Phase 8.5) for:** Project context, timeline, and high-level overview
+
+**This document contains:** Detailed technical analysis, code examples, and implementation specifics for Phases 8.5.2 and 8.5.3
 
 ## Status of Non-Integrated Composables
 
-During Phase 1, two composables were created but could not be integrated:
+During Phase 8.5.1, two composables were created but could not be integrated:
 
 ### 1. `useExplorerDataUpdate.ts` - TypeScript Limitation ❌
 
@@ -16,9 +18,9 @@ During Phase 1, two composables were created but could not be integrated:
 
 **Issue**: Takes 30+ individual parameters which causes TypeScript's "Type instantiation is excessively deep and possibly infinite" error. This is a known limitation of the TypeScript compiler's type inference algorithm.
 
-**Solution**: Refactor to use config object pattern (see Phase 2 below)
+**Solution**: Refactor to use config object pattern (see Phase 8.5.2 below)
 
-**Decision**: Keep file as-is for now, integrate after Phase 2 refactoring
+**Decision**: Keep file as-is for now, integrate after Phase 8.5.2 refactoring
 
 ### 2. `useExplorerState.ts` - Architectural Mismatch ❌
 
@@ -57,7 +59,7 @@ Both approaches work fine, but switching between them requires major refactoring
 
 ---
 
-## Phase 2: Config Object Pattern for useExplorerDataUpdate
+## Phase 8.5.2: Config Object Pattern for useExplorerDataUpdate (Detailed)
 
 ### Problem
 
@@ -206,7 +208,7 @@ export function useExplorerDataUpdate(config: UseExplorerDataUpdateConfig) {
 
 ---
 
-## Phase 3: Date/Period Type Model
+## Phase 8.5.3: Date/Period Type Model
 
 ### Problem
 
@@ -502,13 +504,13 @@ This would enable validation BEFORE loading data, improving UX.
 
 ## Summary
 
-### Phase 2: Config Object Pattern
+### Phase 8.5.2: Config Object Pattern
 - **Goal**: Enable integration of `useExplorerDataUpdate` composable
 - **Complexity**: Low-Medium
 - **Impact**: 2-3 files
 - **Benefits**: Fixes TypeScript limitation, improves code organization
 
-### Phase 3: Date/Period Model
+### Phase 8.5.3: Date/Period Model
 - **Goal**: Eliminate brittle string array + indexOf pattern
 - **Complexity**: Medium-High
 - **Impact**: 8-10 files
@@ -516,8 +518,8 @@ This would enable validation BEFORE loading data, improving UX.
 
 ### Recommended Order
 
-1. **Phase 2 first** - Smaller, focused change that unblocks useExplorerDataUpdate integration
-2. **Phase 3 after** - Larger architectural change that improves date handling throughout the app
+1. **Phase 8.5.2 first** - Smaller, focused change that unblocks useExplorerDataUpdate integration
+2. **Phase 8.5.3 after** - Larger architectural change that improves date handling throughout the app
 
 Both phases are valuable and should be implemented, but as separate PRs for easier review and rollback if needed.
 
@@ -532,5 +534,5 @@ Both phases are valuable and should be implemented, but as separate PRs for easi
 ## Current Status
 
 - ✅ **Phase 8.5.1 (Phase 1)** - Complete and merged
-- ⏳ **Phase 8.5.2 (Phase 2)** - Next priority after Phase 8 completion
-- ⏳ **Phase 8.5.3 (Phase 3)** - Follows Phase 2
+- ⏳ **Phase 8.5.2** - Next priority after Phase 8 completion
+- ⏳ **Phase 8.5.3** - Follows Phase 8.5.2

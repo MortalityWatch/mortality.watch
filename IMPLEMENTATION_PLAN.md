@@ -1729,7 +1729,7 @@ These files became difficult to maintain and onboard new developers.
 
 **Documentation:**
 - `REFACTORING_SUMMARY.md` - Complete Phase 1 results (in git history)
-- `FUTURE_REFACTORING.md` - Phases 2 & 3 roadmap
+- `PHASE_8.5_REFACTORING.md` - Detailed technical specs for Phases 8.5.2 & 8.5.3
 
 ---
 
