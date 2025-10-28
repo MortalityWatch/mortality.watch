@@ -7,7 +7,6 @@ import { getIsDark } from './composables/useTheme'
 // Returns boolean value for use in non-reactive contexts
 const getIsDarkTheme = () => {
   const value = getIsDark()
-  console.log('[colors.ts] getIsDarkTheme():', value)
   return value
 }
 

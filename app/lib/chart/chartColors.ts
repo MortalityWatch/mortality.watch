@@ -6,7 +6,6 @@ import { getIsDark } from '~/composables/useTheme'
 // Returns boolean value for use in non-reactive contexts
 export const getIsDarkTheme = () => {
   const value = getIsDark()
-  console.log('[chartColors.ts] getIsDarkTheme():', value)
   return value
 }
 

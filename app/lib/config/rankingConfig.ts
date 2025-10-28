@@ -113,24 +113,25 @@ export function shouldEnableStandardPopulation(showASMR: boolean): boolean {
 /**
  * Get user-friendly explanation for why an option is disabled
  */
+const disabledReasons: Record<
+  'standardPopulation' | 'totalsOnly' | 'predictionInterval',
+  (state: RankingUIState) => string | null
+> = {
+  standardPopulation: state =>
+    state.standardPopulationDisabled
+      ? 'Standard Population is only used with ASMR'
+      : null,
+  totalsOnly: state =>
+    state.totalsOnlyDisabled ? 'Enable "Show Totals" first' : null,
+  predictionInterval: state =>
+    state.predictionIntervalDisabled
+      ? 'Prediction Interval is not available in cumulative or totals-only mode'
+      : null
+}
+
 export function getDisabledReason(
   option: 'standardPopulation' | 'totalsOnly' | 'predictionInterval',
   state: RankingUIState
 ): string | null {
-  switch (option) {
-    case 'standardPopulation':
-      return state.standardPopulationDisabled
-        ? 'Standard Population is only used with ASMR'
-        : null
-    case 'totalsOnly':
-      return state.totalsOnlyDisabled
-        ? 'Enable "Show Totals" first'
-        : null
-    case 'predictionInterval':
-      return state.predictionIntervalDisabled
-        ? 'Prediction Interval is not available in cumulative or totals-only mode'
-        : null
-    default:
-      return null
-  }
+  return disabledReasons[option]?.(state) ?? null
 }

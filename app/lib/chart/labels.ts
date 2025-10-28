@@ -5,20 +5,21 @@
 import { baselineMethods, type ChartLabels } from '~/model'
 import { isMobile } from '~/utils'
 
+const asmrTitles: Record<string, string> = {
+  who: 'WHO Standard Population',
+  esp: 'European Standard Population',
+  usa: 'U.S. Standard Population'
+}
+
 const getASMRTitle = (countries: string[], standardPopulation: string) => {
-  const result = 'Standard Population'
-  switch (standardPopulation) {
-    case 'who':
-      return `WHO ${result}`
-    case 'esp':
-      return `European ${result}`
-    case 'usa':
-      return `U.S. ${result}`
-    case 'country':
-      return `${countries.join(',')} 2020 ${result}`
-    default:
-      throw new Error('Uncrecognized standard population key.')
+  if (standardPopulation === 'country') {
+    return `${countries.join(',')} 2020 Standard Population`
   }
+  const title = asmrTitles[standardPopulation]
+  if (!title) {
+    throw new Error('Uncrecognized standard population key.')
+  }
+  return title
 }
 
 const getMethodDescription = (baselineMethod: string) =>

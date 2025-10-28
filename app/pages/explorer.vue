@@ -291,8 +291,6 @@ const showLoadingOverlay = ref<boolean>(false)
 let loadingTimeout: ReturnType<typeof setTimeout> | null = null
 
 const dateSliderChanged = async (val: string[]) => {
-  console.log('[Explorer] dateSliderChanged called with:', val)
-
   // Update URL state - useUrlState now handles optimistic updates internally
   dateFrom.value = val[0]!
   dateTo.value = val[1]!
@@ -321,7 +319,6 @@ const updateData = async (
   shouldDownloadDataset: boolean,
   shouldUpdateDataset: boolean
 ) => {
-  console.log('[Explorer] updateData called:', { shouldDownloadDataset, shouldUpdateDataset })
   isUpdating.value = true
 
   // Only show loading overlay if update takes longer than 500ms
@@ -330,13 +327,11 @@ const updateData = async (
   }, 500)
 
   if (shouldDownloadDataset) {
-    console.log('[Explorer] Downloading dataset for countries:', countries.value)
     dataset = await updateDataset(
       chartType.value,
       countries.value,
       isAsmrType() ? ['all'] : ageGroups.value
     )
-    console.log('[Explorer] Dataset downloaded, keys:', Object.keys(dataset))
 
     // All Labels
     allChartLabels.value = getAllChartLabels(
@@ -346,7 +341,6 @@ const updateData = async (
       countries.value,
       chartType.value
     )
-    console.log('[Explorer] All chart labels:', allChartLabels.value)
 
     if (chartType.value === 'yearly') {
       allYearlyChartLabels.value = allChartLabels.value
@@ -374,7 +368,6 @@ const updateData = async (
     )[0]
     if (!key) return
 
-    console.log('[Explorer] Getting all chart data for countries:', countries.value)
     const newData = await getAllChartData(
       key,
       chartType.value,
@@ -389,25 +382,14 @@ const updateData = async (
       baselineDateTo.value,
       getBaseKeysForType()
     )
-    console.log('[Explorer] newData from getAllChartData:', newData)
-    console.log('[Explorer] newData.data keys:', newData.data ? Object.keys(newData.data) : 'undefined')
     Object.assign(allChartData, newData)
-    console.log('[Explorer] allChartData after update:', allChartData)
-    console.log('[Explorer] allChartData.data keys:', allChartData.data ? Object.keys(allChartData.data) : 'undefined')
 
     resetDates()
   }
 
   // Update filtered chart datasets
-  console.log('[Explorer] Calling updateFilteredData...')
   const filteredData = await updateFilteredData()
-  console.log('[Explorer] Filtered data:', filteredData)
-  console.log('[Explorer] filteredData.datasets.length:', filteredData.datasets?.length)
-  console.log('[Explorer] chartData.value before update:', chartData.value)
-  console.log('[Explorer] Updating chartData with new data')
   chartData.value = filteredData as MortalityChartData
-  console.log('[Explorer] chartData.value after update:', chartData.value)
-  console.log('[Explorer] chartData.value.datasets.length:', chartData.value?.datasets?.length)
 
   configureOptions()
 
@@ -418,7 +400,6 @@ const updateData = async (
   }
   showLoadingOverlay.value = false
 
-  console.log('[Explorer] updateData completed, isUpdating = false')
   isUpdating.value = false
 }
 
@@ -505,8 +486,6 @@ const updateFilteredData = async () => {
   if (!allChartData || !allChartData.labels || !allChartData.data) {
     return { datasets: [], labels: [] }
   }
-
-  console.log('[Explorer] Filtering data with countries:', countries.value, 'dateFrom:', dateFrom.value, 'dateTo:', dateTo.value)
 
   return await getFilteredChartData(
     countries.value,
@@ -622,30 +601,6 @@ const allChartData = reactive<AllChartData>({
 const chartData = ref<MortalityChartData | undefined>(undefined)
 
 const handleUpdate = async (key: string) => {
-  console.log('[Explorer] handleUpdate called with key:', key)
-  console.log('[Explorer] Current state:', {
-    countries: countries.value,
-    type: type.value,
-    chartType: chartType.value,
-    chartStyle: chartStyle.value,
-    isExcess: isExcess.value,
-    ageGroups: ageGroups.value,
-    standardPopulation: standardPopulation.value,
-    showBaseline: showBaseline.value,
-    baselineMethod: baselineMethod.value,
-    cumulative: cumulative.value,
-    showPredictionInterval: showPredictionInterval.value,
-    showLabels: showLabels.value,
-    maximize: maximize.value,
-    isLogarithmic: isLogarithmic.value,
-    showPercentage: showPercentage.value,
-    showTotal: showTotal.value,
-    dateFrom: dateFrom.value,
-    dateTo: dateTo.value,
-    baselineDateFrom: baselineDateFrom.value,
-    baselineDateTo: baselineDateTo.value
-  })
-
   if (countries.value.length) {
     const shouldDownloadDataset = ['_countries', '_type', '_chartType', '_ageGroups'].includes(key)
     const shouldUpdateDataset = [
@@ -673,22 +628,10 @@ const handleUpdate = async (key: string) => {
       '_userColors'
     ].includes(key)
 
-    console.log('[Explorer] Update triggers:', {
-      key,
-      shouldDownloadDataset,
-      shouldUpdateDataset,
-      needsFilterUpdate,
-      willCallUpdateData: shouldDownloadDataset || shouldUpdateDataset || needsFilterUpdate
-    })
-
     // Always call updateData if any trigger is true OR if it's a filter update
     if (shouldDownloadDataset || shouldUpdateDataset || needsFilterUpdate) {
       await updateData(shouldDownloadDataset, shouldUpdateDataset)
-    } else {
-      console.log('[Explorer] No update needed for key:', key)
     }
-  } else {
-    console.log('[Explorer] Skipping updateData - no countries selected')
   }
 
   if (chartData.value) {
@@ -702,12 +645,8 @@ let isCurrentlyUpdating = false
 let pendingUpdateKey: string | null = null
 
 const update = async (key: string) => {
-  console.log('[Explorer] update() called with key:', key)
-  console.trace('[Explorer] Call stack:')
-
   // If already updating, queue this update
   if (isCurrentlyUpdating) {
-    console.log('[Explorer] Already updating, queueing:', key)
     pendingUpdateKey = key
     return
   }
@@ -720,12 +659,10 @@ const update = async (key: string) => {
     if (pendingUpdateKey) {
       const nextKey = pendingUpdateKey
       pendingUpdateKey = null
-      console.log('[Explorer] Processing queued update:', nextKey)
       await handleUpdate(nextKey)
     }
   } finally {
     isCurrentlyUpdating = false
-    console.log('[Explorer] update() completed')
   }
 }
 
@@ -881,7 +818,6 @@ onMounted(async () => {
 
 // Chart action functions
 const copyChartLink = async () => {
-  console.log('[copyChartLink] Called')
   try {
     await navigator.clipboard.writeText(window.location.href)
     showToast('Link copied to clipboard!', 'success')
@@ -892,9 +828,7 @@ const copyChartLink = async () => {
 }
 
 const screenshotChart = () => {
-  console.log('[screenshotChart] Called')
   const canvas = document.querySelector('#chart') as HTMLCanvasElement
-  console.log('[screenshotChart] Canvas found:', !!canvas)
   if (!canvas) {
     showToast('Chart not found', 'error')
     return

@@ -1,6 +1,6 @@
-export const round = (num: number, decimals = 0): number => {
-  return Math.round(num * Math.pow(10, decimals)) / Math.pow(10, decimals)
-}
+import { round } from '~/utils'
+
+export { round }
 
 export const asPercentage = (
   value: number,

@@ -165,13 +165,10 @@ export const getFilteredChartData = async (
   }
 }
 
-export const baselineMinRange = (baselineMethod: string) => {
-  switch (baselineMethod) {
-    case 'lin_reg':
-      return 2
-    case 'exp':
-      return 6
-    default:
-      return 1
-  }
+const baselineMinRanges: Record<string, number> = {
+  lin_reg: 2,
+  exp: 6
 }
+
+export const baselineMinRange = (baselineMethod: string) =>
+  baselineMinRanges[baselineMethod] ?? 1

@@ -35,15 +35,12 @@ const getCountryList = (
     const allInSet = ageGroups.every(ag => countryAgs.has(ag))
     const hasAsmr = country.age_groups().size > 1
 
-    console.log(`[MortalityChartControlsPrimary] ${iso3c} (${country.jurisdiction}): age_groups size=${country.age_groups().size}, hasAsmr=${hasAsmr}`)
-
     // Disable countries that don't have the data type we need
     const isDisabled = !allInSet
       || (props.isAsmrType && !hasAsmr)
       || (props.isLifeExpectancyType && !hasAsmr)
 
     const iconName = hasAsmr ? 'i-lucide-layers' : 'i-lucide-circle'
-    console.log(`[MortalityChartControlsPrimary] ${iso3c}: icon=${iconName}`)
 
     result.push({
       label: country.jurisdiction,
@@ -56,7 +53,6 @@ const getCountryList = (
       icon: iconName
     })
   }
-  console.log('[MortalityChartControlsPrimary] Full options list:', result)
   return result
 }
 

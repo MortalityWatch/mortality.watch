@@ -31,12 +31,9 @@ const drawQRCode = async (chart: Chart, url: string) => {
   const qrColor = isDarkMode ? '#ffffff' : '#000000'
   const cacheKey = `${url}|${qrColor}`
 
-  console.log('[QRCodePlugin] Drawing QR code:', { isDarkMode, qrColor, cacheKey })
-
   // Get or generate QR code
   let qrLogo = qrCodeCache.get(cacheKey)
   if (!qrLogo) {
-    console.log('[QRCodePlugin] Cache miss, generating new QR code')
     const qrSrc = await QRCode.toDataURL(url, {
       color: {
         dark: qrColor,
@@ -45,9 +42,6 @@ const drawQRCode = async (chart: Chart, url: string) => {
     })
     qrLogo = await newImage(qrSrc)
     qrCodeCache.set(cacheKey, qrLogo)
-    console.log('[QRCodePlugin] New QR code generated and cached')
-  } else {
-    console.log('[QRCodePlugin] Cache hit, using cached QR code')
   }
 
   const s = 60

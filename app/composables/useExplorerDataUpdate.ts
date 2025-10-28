@@ -62,8 +62,6 @@ export function useExplorerDataUpdate(config: UseExplorerDataUpdateConfig) {
       return { datasets: [], labels: [] }
     }
 
-    console.log('[Explorer] Filtering data with countries:', config.state.countries.value, 'dateFrom:', config.state.dateFrom.value, 'dateTo:', config.state.dateTo.value)
-
     return await getFilteredChartData(
       config.state.countries.value,
       config.state.standardPopulation.value,
@@ -103,7 +101,6 @@ export function useExplorerDataUpdate(config: UseExplorerDataUpdateConfig) {
     shouldDownloadDataset: boolean,
     shouldUpdateDataset: boolean
   ) => {
-    console.log('[Explorer] updateData called:', { shouldDownloadDataset, shouldUpdateDataset })
     isUpdating.value = true
 
     // Only show loading overlay if update takes longer than 500ms
@@ -112,14 +109,12 @@ export function useExplorerDataUpdate(config: UseExplorerDataUpdateConfig) {
     }, 500)
 
     if (shouldDownloadDataset) {
-      console.log('[Explorer] Downloading dataset for countries:', config.state.countries.value)
       const dataset = await updateDataset(
         config.state.chartType.value,
         config.state.countries.value,
         config.helpers.isAsmrType() ? ['all'] : config.state.ageGroups.value
       )
       config.dataset.set(dataset)
-      console.log('[Explorer] Dataset downloaded, keys:', Object.keys(dataset))
 
       // All Labels
       config.data.allChartLabels.value = getAllChartLabels(
@@ -129,7 +124,6 @@ export function useExplorerDataUpdate(config: UseExplorerDataUpdateConfig) {
         config.state.countries.value,
         config.state.chartType.value
       )
-      console.log('[Explorer] All chart labels:', config.data.allChartLabels.value)
 
       if (config.state.chartType.value === 'yearly') {
         config.data.allYearlyChartLabels.value = config.data.allChartLabels.value
@@ -155,7 +149,6 @@ export function useExplorerDataUpdate(config: UseExplorerDataUpdateConfig) {
       )[0]
       if (!key) return
 
-      console.log('[Explorer] Getting all chart data for countries:', config.state.countries.value)
       const newData = await getAllChartData(
         key,
         config.state.chartType.value,
@@ -170,23 +163,12 @@ export function useExplorerDataUpdate(config: UseExplorerDataUpdateConfig) {
         config.state.baselineDateTo.value,
         config.helpers.getBaseKeysForType()
       )
-      console.log('[Explorer] newData from getAllChartData:', newData)
-      console.log('[Explorer] newData.data keys:', newData.data ? Object.keys(newData.data) : 'undefined')
       Object.assign(config.data.allChartData, newData)
-      console.log('[Explorer] allChartData after update:', config.data.allChartData)
-      console.log('[Explorer] allChartData.data keys:', config.data.allChartData.data ? Object.keys(config.data.allChartData.data) : 'undefined')
     }
 
     // Update filtered chart datasets
-    console.log('[Explorer] Calling updateFilteredData...')
     const filteredData = await updateFilteredData()
-    console.log('[Explorer] Filtered data:', filteredData)
-    console.log('[Explorer] filteredData.datasets.length:', filteredData.datasets?.length)
-    console.log('[Explorer] chartData.value before update:', config.data.chartData.value)
-    console.log('[Explorer] Updating chartData with new data')
     config.data.chartData.value = filteredData as MortalityChartData
-    console.log('[Explorer] chartData.value after update:', config.data.chartData.value)
-    console.log('[Explorer] chartData.value.datasets.length:', config.data.chartData.value?.datasets?.length)
 
     // Clear the loading timeout and hide overlay
     if (loadingTimeout) {
@@ -195,7 +177,6 @@ export function useExplorerDataUpdate(config: UseExplorerDataUpdateConfig) {
     }
     showLoadingOverlay.value = false
 
-    console.log('[Explorer] updateData completed, isUpdating = false')
     isUpdating.value = false
   }
 
