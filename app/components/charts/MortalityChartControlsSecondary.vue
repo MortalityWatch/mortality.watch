@@ -2,6 +2,7 @@
 import { computed, ref, toRef } from 'vue'
 import DateSlider from './DateSlider.vue'
 import MultiColorPicker from './MultiColorPicker.vue'
+import DataTab from './controls/DataTab.vue'
 import { specialColor } from '@/colors'
 import { CHART_PRESETS } from '@/lib/constants'
 import { types, chartTypes, chartStyles, standardPopulations, baselineMethods, decimalPrecisions } from '@/model'
@@ -312,84 +313,17 @@ const activeTab = ref('data')
     <!-- Tab content panels -->
     <div class="mt-4">
       <!-- Data Tab -->
-      <div v-if="activeTab === 'data'">
-        <div class="flex flex-col gap-4">
-          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <label class="text-sm font-medium whitespace-nowrap">Metric</label>
-            <UInputMenu
-              v-model="selectedType"
-              :items="typesWithLabels"
-              placeholder="Select the metric"
-              :disabled="props.isUpdating"
-              size="sm"
-              class="flex-1"
-            />
-            <UPopover>
-              <UButton
-                icon="i-lucide-info"
-                color="neutral"
-                variant="ghost"
-                size="xs"
-                aria-label="Metric information"
-              />
-              <template #content>
-                <div class="p-3 space-y-2 max-w-xs">
-                  <div class="text-xs text-gray-700 dark:text-gray-300">
-                    <strong>CMR:</strong> Crude Mortality Rate per 100k<br>
-                    <strong>ASMR:</strong> Age-Standardized Mortality Rate per 100k<br>
-                    <strong>Life Expectancy:</strong> Expected years of life at birth<br>
-                    <strong>Deaths:</strong> Total death counts<br>
-                    <strong>Population:</strong> Total population size
-                  </div>
-                </div>
-              </template>
-            </UPopover>
-          </div>
-
-          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <label class="text-sm font-medium whitespace-nowrap">Period of Time</label>
-            <UInputMenu
-              v-model="selectedChartType"
-              :items="chartTypesWithLabels"
-              placeholder="Select the period of time"
-              :disabled="props.isUpdating"
-              size="sm"
-              class="flex-1"
-            />
-          </div>
-
-          <div
-            v-if="chartUIState.showStandardPopulation.value"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-          >
-            <label class="text-sm font-medium whitespace-nowrap">Standard Population</label>
-            <UInputMenu
-              v-model="selectedStandardPopulation"
-              :items="standardPopulationsWithLabels"
-              placeholder="Select the standard population"
-              :disabled="props.isUpdating"
-              size="sm"
-              class="flex-1"
-            />
-            <UPopover>
-              <UButton
-                icon="i-lucide-info"
-                color="neutral"
-                variant="ghost"
-                size="xs"
-                aria-label="Standard population information"
-              />
-              <template #content>
-                <div class="p-3 space-y-2 max-w-xs">
-                  <div class="text-xs text-gray-700 dark:text-gray-300">
-                    Reference population used to standardize mortality rates by age structure. Enables fair comparisons across countries and time periods.
-                  </div>
-                </div>
-              </template>
-            </UPopover>
-          </div>
-        </div>
-      </div>
+      <DataTab
+        v-if="activeTab === 'data'"
+        :selected-type="selectedType as { name: string, value: string, label: string }"
+        :selected-chart-type="selectedChartType as { name: string, value: string, label: string }"
+        :selected-standard-population="selectedStandardPopulation as { name: string, value: string, label: string }"
+        :is-updating="props.isUpdating"
+        :show-standard-population="chartUIState.showStandardPopulation.value"
+        @update:selected-type="selectedType = $event"
+        @update:selected-chart-type="selectedChartType = $event"
+        @update:selected-standard-population="selectedStandardPopulation = $event"
+      />
 
       <!-- Display Tab -->
       <div v-if="activeTab === 'display'">

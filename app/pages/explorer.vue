@@ -4,20 +4,19 @@ import { useUrlState } from '@/composables/useUrlState'
 import {
   computed,
   nextTick,
-  onBeforeUnmount,
   onMounted,
   reactive,
   ref
 } from 'vue'
 import { useDateRangeValidation } from '@/composables/useDateRangeValidation'
+import { useChartResize } from '@/composables/useChartResize'
+import { useExplorerHelpers } from '@/composables/useExplorerHelpers'
 import type {
   AllChartData,
   Country,
-  DatasetRaw,
-  NumberEntryFields
+  DatasetRaw
 } from '@/model'
 import { getKeyForType } from '@/model'
-import { isMobile } from '@/utils'
 import {
   getAllChartData,
   getAllChartLabels,
@@ -25,21 +24,21 @@ import {
   loadCountryMetadata,
   updateDataset
 } from '@/lib/data'
-import MortalityChartControlsSecondary from '@/components/charts/MortalityChartControlsSecondary.vue'
-import MortalityChartControlsPrimary from '@/components/charts/MortalityChartControlsPrimary.vue'
-import { getChartColors, specialColor } from '@/colors'
+import ExplorerDataSelection from '@/components/explorer/ExplorerDataSelection.vue'
+import ExplorerChartContainer from '@/components/explorer/ExplorerChartContainer.vue'
+import ExplorerSettings from '@/components/explorer/ExplorerSettings.vue'
+import ExplorerChartActions from '@/components/explorer/ExplorerChartActions.vue'
+import { getChartColors } from '@/colors'
 import { getColorScale } from '@/lib/chart/chartColors'
-import DateSlider from '@/components/charts/DateSlider.vue'
-import type { ChartStyle, MortalityChartData } from '@/lib/chart/chartTypes'
+import type { MortalityChartData } from '@/lib/chart/chartTypes'
 import { useRoute, useRouter } from 'vue-router'
-import MortalityChart from '@/components/charts/MortalityChart.vue'
 import { getSeasonString } from '@/model/baseline'
 import { getFilteredChartData } from '@/lib/chart'
 import {
   arrayBufferToBase64,
   compress
 } from '@/lib/compression/compress.browser'
-import { DEFAULT_BASELINE_YEAR, CHART_RESIZE, CHART_PRESETS } from '@/lib/constants'
+import { DEFAULT_BASELINE_YEAR, CHART_RESIZE } from '@/lib/constants'
 import { showToast } from '@/toast'
 
 // Feature access for tier-based features (currently unused but may be needed in the future)
@@ -163,9 +162,7 @@ const userColors = useUrlState<string[] | undefined>(
   undefined
 )
 // Chart size preferences are local state (not stored in URL)
-const chartPreset = ref<string>('Auto')
-const chartWidth = ref<number | undefined>(undefined)
-const chartHeight = ref<number | undefined>(undefined)
+// Note: These are now provided by useChartResize composable below
 const showLogo = useUrlState<boolean>(
   stateFieldEncoders.showLogo.key,
   true,
@@ -224,29 +221,37 @@ const chartOptions = reactive({
   showLogarithmicOption: true
 })
 
-// Helper Functions
-const isAsmrType = () => type.value.includes('asmr')
-const isPopulationType = () => type.value === 'population'
-const isLifeExpectancyType = () => type.value === 'le'
-const isDeathsType = () => type.value.includes('deaths')
-const isErrorBarType = () => isBarChartStyle() && isExcess.value
-const hasBaseline = () => !isPopulationType() && !isExcess.value
-const isLineChartStyle = () => chartStyle.value === 'line'
-const isBarChartStyle = () => chartStyle.value === 'bar'
-const isMatrixChartStyle = () => chartStyle.value === 'matrix'
-const getMaxCountriesAllowed = () =>
-  countries.value.length > 1
-  && isAsmrType()
-  && standardPopulation.value === 'country'
-    ? 1
-    : undefined
+// Helper Functions - use composable
+const {
+  isAsmrType,
+  isPopulationType,
+  isLifeExpectancyType,
+  isDeathsType,
+  isErrorBarType,
+  hasBaseline,
+  isLineChartStyle,
+  isBarChartStyle,
+  isMatrixChartStyle,
+  getMaxCountriesAllowed,
+  isYearlyChartType: _isYearlyChartType,
+  showCumPi,
+  getBaseKeysForType,
+  showPredictionIntervalDisabled
+} = useExplorerHelpers(
+  type,
+  chartStyle,
+  isExcess,
+  standardPopulation,
+  countries,
+  cumulative,
+  baselineMethod,
+  showBaseline,
+  chartType
+)
 
 // Computed
 const sliderValue = computed(() => [dateFrom.value, dateTo.value])
 const baselineSliderValue = computed(() => [baselineDateFrom.value, baselineDateTo.value])
-const showPredictionIntervalDisabled = computed(() =>
-  (!isExcess.value && !showBaseline.value) || (cumulative.value && !showCumPi())
-)
 
 // Get color mode for theme reactivity
 const colorMode = useColorMode()
@@ -296,100 +301,20 @@ const dateSliderChanged = async (val: string[]) => {
 
 const labels = computed(() => allChartData?.labels || allChartLabels.value || [])
 
-// Make Chart resizeable
-const chartContainer = ref<HTMLElement | null>(null)
-const showSizeLabel = ref<boolean>(false)
-const hasBeenResized = ref<boolean>(false)
-let sizeTimeout: ReturnType<typeof setTimeout> | null = null
-const containerSize = ref('100x100')
-
-// Check if chart is in Auto (responsive) mode
-const isAutoMode = computed(() => !hasBeenResized.value && !chartWidth.value && !chartHeight.value)
-
-// Check if chart is in Custom mode (user has selected Custom or dragged to resize)
-const isCustomMode = computed(() => chartPreset.value === 'Custom')
-
-// Apply preset size to chart
-const applyPresetSize = (presetName: string) => {
-  if (!chartContainer.value) return
-
-  // Try to find preset by name
-  let preset = CHART_PRESETS.find(p => p.name === presetName)
-
-  // If not found, default to Custom (for unknown/legacy values)
-  if (!preset) {
-    preset = CHART_PRESETS.find(p => p.name === 'Custom')
-  }
-
-  if (!preset) {
-    return
-  }
-
-  // Special case: "Custom" enables resize handle with current or default dimensions
-  if (preset.width === -1 && preset.height === -1) {
-    hasBeenResized.value = true
-    // Keep current dimensions if they exist, otherwise use container's current size
-    if (!chartWidth.value || !chartHeight.value) {
-      const currentWidth = chartContainer.value.offsetWidth
-      const currentHeight = chartContainer.value.offsetHeight
-      chartWidth.value = currentWidth
-      chartHeight.value = currentHeight
-      chartContainer.value.style.width = `${currentWidth}px`
-      chartContainer.value.style.height = `${currentHeight}px`
-    } else {
-      chartContainer.value.style.width = `${chartWidth.value}px`
-      chartContainer.value.style.height = `${chartHeight.value}px`
-    }
-    containerSize.value = 'Custom'
-    showSizeLabel.value = true
-    if (sizeTimeout) clearTimeout(sizeTimeout)
-    sizeTimeout = setTimeout(() => (showSizeLabel.value = false), CHART_RESIZE.SIZE_LABEL_TIMEOUT)
-    return
-  }
-
-  // Special case: "Auto" enables responsive sizing
-  if (preset.width === 0 && preset.height === 0) {
-    hasBeenResized.value = false
-    chartContainer.value.style.width = ''
-    chartContainer.value.style.height = ''
-    containerSize.value = 'Auto'
-    showSizeLabel.value = true
-
-    // Clear dimensions from local state
-    chartWidth.value = undefined
-    chartHeight.value = undefined
-
-    // Trigger resize event
-    window.dispatchEvent(new Event('resize'))
-
-    // Hide label after timeout
-    if (sizeTimeout) clearTimeout(sizeTimeout)
-    sizeTimeout = setTimeout(() => (showSizeLabel.value = false), CHART_RESIZE.SIZE_LABEL_TIMEOUT)
-    return
-  }
-
-  hasBeenResized.value = true
-  chartContainer.value.style.width = `${preset.width}px`
-  chartContainer.value.style.height = `${preset.height}px`
-
-  // Save dimensions to local state (session-only)
-  chartWidth.value = preset.width
-  chartHeight.value = preset.height
-
-  // Update the size label to show preset name
-  containerSize.value = preset.name
-  showSizeLabel.value = true
-
-  // Setup resize observer for manual dragging
-  setupResizeObserver()
-
-  // Trigger resize event
-  window.dispatchEvent(new Event('resize'))
-
-  // Hide label after timeout
-  if (sizeTimeout) clearTimeout(sizeTimeout)
-  sizeTimeout = setTimeout(() => (showSizeLabel.value = false), CHART_RESIZE.SIZE_LABEL_TIMEOUT)
-}
+// Make Chart resizeable - use composable
+const {
+  chartContainer,
+  showSizeLabel,
+  hasBeenResized,
+  chartWidth: _chartWidth,
+  chartHeight: _chartHeight,
+  chartPreset,
+  containerSize,
+  isAutoMode: _isAutoMode,
+  isCustomMode,
+  applyPresetSize,
+  setupResizeObserver
+} = useChartResize()
 
 const updateData = async (
   shouldDownloadDataset: boolean,
@@ -496,18 +421,7 @@ const updateData = async (
   isUpdating.value = false
 }
 
-const isYearlyChartType = () =>
-  chartType.value.includes('year')
-  || chartType.value.includes('fluseason')
-  || chartType.value.includes('midyear')
-
-const showCumPi = (): boolean =>
-  cumulative.value
-  && isYearlyChartType()
-  && ['lin_reg', 'mean'].includes(baselineMethod.value)
-
-const getBaseKeysForType = (): (keyof NumberEntryFields)[] =>
-  getKeyForType(type.value, showBaseline.value, standardPopulation.value, false)
+// Note: isYearlyChartType, showCumPi, and getBaseKeysForType are now provided by useExplorerHelpers composable above
 
 const resetDates = () => {
   if (!allChartData || !allChartData.labels) return
@@ -929,88 +843,6 @@ const handleDecimalsChanged = async (v: string) => {
   await nextTick()
 }
 
-// Setup ResizeObserver cleanup before any async operations
-let resizeObserver: ResizeObserver | null = null
-
-// Helper function to setup ResizeObserver for drag resizing
-const setupResizeObserver = () => {
-  // Disconnect existing observer
-  if (resizeObserver) {
-    resizeObserver.disconnect()
-    resizeObserver = null
-  }
-
-  // Only observe if NOT on mobile
-  if (!chartContainer.value || isMobile()) {
-    return
-  }
-
-  let isFirstResize = true
-
-  resizeObserver = new ResizeObserver(() => {
-    if (isFirstResize) {
-      isFirstResize = false
-      return
-    }
-
-    // In Auto mode, only switch to Custom if user manually set inline styles (dragged handle)
-    if (isAutoMode.value) {
-      const hasInlineWidth = chartContainer.value?.style.width && chartContainer.value?.style.width !== ''
-      const hasInlineHeight = chartContainer.value?.style.height && chartContainer.value?.style.height !== ''
-
-      // If no inline styles, this is just window resize - ignore it
-      if (!hasInlineWidth && !hasInlineHeight) {
-        return
-      }
-
-      // User dragged the handle - switch to Custom mode
-      hasBeenResized.value = true
-      chartPreset.value = 'Custom'
-    }
-
-    // In Preset mode (not Auto, not Custom), ignore resize events
-    // User selected a fixed preset - don't let ResizeObserver interfere
-    if (!isAutoMode.value && !isCustomMode.value) {
-      return
-    }
-
-    // Only update dimensions in Custom mode (user is actively resizing)
-    if (!isCustomMode.value) {
-      return
-    }
-
-    const currentWidth = chartContainer.value?.offsetWidth || 0
-    const currentHeight = chartContainer.value?.offsetHeight || 0
-
-    // Save dimensions to local state (session-only)
-    chartWidth.value = currentWidth
-    chartHeight.value = currentHeight
-
-    // Update size label with dimensions
-    const displayWidth = currentWidth - 2
-    const displayHeight = currentHeight - 2
-    containerSize.value = `Custom (${displayWidth}×${displayHeight})`
-    // Keep chartPreset as 'Custom', don't change it to 'Custom (WxH)'
-    if (chartPreset.value !== 'Custom') {
-      chartPreset.value = 'Custom'
-    }
-
-    showSizeLabel.value = true
-    window.dispatchEvent(new Event('resize'))
-    requestAnimationFrame(() => (showSizeLabel.value = true))
-    if (sizeTimeout) clearTimeout(sizeTimeout)
-    sizeTimeout = setTimeout(() => (showSizeLabel.value = false), CHART_RESIZE.SIZE_LABEL_TIMEOUT)
-  })
-
-  resizeObserver.observe(chartContainer.value)
-}
-
-onBeforeUnmount(() => {
-  if (resizeObserver) {
-    resizeObserver.disconnect()
-  }
-})
-
 onMounted(async () => {
   // Initialize data - load all, client-side filtering happens via useCountryFilter
   const allMetadata = await loadCountryMetadata()
@@ -1100,283 +932,121 @@ const saveChart = async () => {
       v-else
       class="flex flex-col gap-3"
     >
-      <UCard>
-        <template #header>
-          <h2 class="text-xl font-semibold">
-            Data Selection
-          </h2>
-        </template>
-
-        <div class="flex flex-col gap-4">
-          <!-- Jurisdictions - full width -->
-          <div class="w-full">
-            <MortalityChartControlsPrimary
-              :all-countries="allCountries"
-              :all-age-groups="allAgeGroups"
-              :countries="countries"
-              :age-groups="ageGroups"
-              :is-asmr-type="isAsmrType()"
-              :is-life-expectancy-type="isLifeExpectancyType()"
-              :is-updating="false"
-              :max-countries-allowed="getMaxCountriesAllowed()"
-              @countries-changed="handleCountriesChanged"
-              @age-groups-changed="handleAgeGroupsChanged"
-            />
-          </div>
-
-          <!-- Date Range Selection -->
-          <div class="w-full px-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <div class="flex items-center gap-3">
-              <!-- Start Period -->
-              <div class="flex items-center gap-2">
-                <label class="text-sm font-medium whitespace-nowrap">From</label>
-                <USelectMenu
-                  v-model="sliderStart"
-                  :items="allYearlyChartLabelsUnique || []"
-                  placeholder="Start"
-                  size="sm"
-                  class="w-24"
-                  :disabled="false"
-                  @update:model-value="handleSliderStartChanged"
-                />
-                <UPopover>
-                  <UButton
-                    icon="i-lucide-info"
-                    color="neutral"
-                    variant="ghost"
-                    size="xs"
-                    aria-label="Start period information"
-                  />
-                  <template #content>
-                    <div class="p-3 max-w-xs">
-                      <div class="text-sm text-gray-700 dark:text-gray-300">
-                        Sets the earliest year in the available data range. The Display slider will start from this year.
-                      </div>
-                    </div>
-                  </template>
-                </UPopover>
-              </div>
-
-              <!-- Divider -->
-              <div class="h-6 w-px bg-gray-300 dark:bg-gray-600" />
-
-              <!-- Date Range Slider -->
-              <div class="flex-1 flex items-center gap-2">
-                <label class="text-sm font-medium whitespace-nowrap">Display</label>
-                <div class="flex-1">
-                  <DateSlider
-                    :slider-value="sliderValue"
-                    :labels="labels"
-                    :color="specialColor()"
-                    :min-range="0"
-                    :disabled="false"
-                    @slider-changed="dateSliderChanged"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </UCard>
+      <ExplorerDataSelection
+        :all-countries="allCountries"
+        :all-age-groups="allAgeGroups"
+        :countries="countries"
+        :age-groups="ageGroups"
+        :is-asmr-type="isAsmrType()"
+        :is-life-expectancy-type="isLifeExpectancyType()"
+        :is-updating="false"
+        :max-countries-allowed="getMaxCountriesAllowed()"
+        :slider-value="sliderValue"
+        :labels="labels"
+        :slider-start="sliderStart"
+        :all-yearly-chart-labels-unique="allYearlyChartLabelsUnique"
+        @countries-changed="handleCountriesChanged"
+        @age-groups-changed="handleAgeGroupsChanged"
+        @slider-start-changed="handleSliderStartChanged"
+        @date-slider-changed="dateSliderChanged"
+      />
 
       <!-- Main content area with responsive layout -->
       <div class="flex flex-col gap-3 xl:flex-row xl:items-start xl:gap-4">
         <!-- Chart section - takes up available space on large screens -->
         <div class="flex-1 min-w-0 flex-shrink-0">
-          <UCard
-            class="chart-card"
-            :class="{ 'chart-card-resizable': !isMobile(), 'chart-card-resized': hasBeenResized, 'chart-card-custom': isCustomMode }"
-            :ui="{ body: 'p-0' }"
-          >
-            <div
-              ref="chartContainer"
-              class="chart-wrapper relative"
-              :class="{ 'resizable': !isMobile(), 'auto-mode': isAutoMode, 'custom-mode': isCustomMode }"
-            >
-              <!-- Glass overlay for loading (only shown after 500ms delay) -->
-              <GlassOverlay
-                v-if="showLoadingOverlay && chartData"
-                title="Loading data..."
-              />
-              <div
-                v-if="showSizeLabel"
-                class="size-label"
-              >
-                {{ containerSize }}
-              </div>
-              <div
-                v-if="countries.length === 0"
-                class="banner"
-              >
-                <p>Please select a country.</p>
-              </div>
-              <MortalityChart
-                v-if="countries.length > 0 && chartData"
-                :chart-style="chartStyle as ChartStyle"
-                :data="chartData"
-                :is-excess="isExcess"
-                :is-life-expectancy-type="isLifeExpectancyType()"
-                :show-prediction-interval="showPredictionInterval"
-                :show-percentage="showPercentage"
-                :show-labels="showLabels"
-                :is-deaths-type="isDeathsType()"
-                :is-population-type="isPopulationType()"
-                :show-logo="showLogo"
-                :show-qr-code="showQrCode"
-                :decimals="decimals"
-              />
-            </div>
-          </UCard>
+          <ExplorerChartContainer
+            ref="chartContainer"
+            :countries="countries"
+            :chart-data="chartData"
+            :chart-style="chartStyle"
+            :is-excess="isExcess"
+            :is-life-expectancy-type="isLifeExpectancyType()"
+            :show-prediction-interval="showPredictionInterval"
+            :show-percentage="showPercentage"
+            :show-labels="showLabels"
+            :is-deaths-type="isDeathsType()"
+            :is-population-type="isPopulationType()"
+            :show-logo="showLogo"
+            :show-qr-code="showQrCode"
+            :decimals="decimals"
+            :show-loading-overlay="showLoadingOverlay"
+            :show-size-label="showSizeLabel"
+            :container-size="containerSize"
+            :has-been-resized="hasBeenResized"
+            :is-custom-mode="isCustomMode"
+          />
         </div>
 
         <!-- Settings section - fixed width on large screens -->
         <div class="w-full xl:w-[420px] flex-shrink-0">
-          <UCard class="tab-card">
-            <template #header>
-              <h2 class="text-xl font-semibold">
-                Settings
-              </h2>
-            </template>
+          <ExplorerSettings
+            :countries="countries"
+            :labels="labels"
+            :all-yearly-chart-labels-unique="allYearlyChartLabelsUnique || []"
+            :type="type"
+            :chart-type="chartType"
+            :chart-style="chartStyle"
+            :standard-population="standardPopulation"
+            :is-updating="false"
+            :is-population-type="isPopulationType()"
+            :is-excess="isExcess"
+            :baseline-method="baselineMethod"
+            :baseline-slider-value="baselineSliderValue"
+            :show-baseline="showBaseline"
+            :slider-start="sliderStart"
+            :show-prediction-interval="showPredictionInterval"
+            :show-prediction-interval-disabled="showPredictionIntervalDisabled"
+            :show-labels="showLabels"
+            :maximize="maximize"
+            :is-logarithmic="isLogarithmic"
+            :show-percentage="showPercentage || false"
+            :cumulative="cumulative"
+            :show-total="showTotal"
+            :show-logarithmic-option="!isMatrixChartStyle() && !isExcess"
+            :show-maximize-option="!(isExcess && isLineChartStyle()) && !isMatrixChartStyle()"
+            :show-maximize-option-disabled="isLogarithmic || (isExcess && !chartOptions.showTotalOption)"
+            :show-percentage-option="isExcess"
+            :show-cumulative-option="isExcess"
+            :show-total-option="isExcess && isBarChartStyle()"
+            :show-total-option-disabled="!cumulative"
+            :show-prediction-interval-option="chartOptions.showBaselineOption || (isExcess && !isMatrixChartStyle())"
+            :show-prediction-interval-option-disabled="showPredictionIntervalDisabled"
+            :is-matrix-chart-style="isMatrixChartStyle()"
+            :colors="displayColors"
+            :chart-preset="chartPreset"
+            :show-logo="showLogo"
+            :show-qr-code="showQrCode"
+            :decimals="decimals"
+            @type-changed="handleTypeChanged"
+            @chart-type-changed="handleChartTypeChanged"
+            @chart-style-changed="handleChartStyleChanged"
+            @standard-population-changed="handleStandardPopulationChanged"
+            @is-excess-changed="handleIsExcessChanged"
+            @show-baseline-changed="handleShowBaselineChanged"
+            @baseline-method-changed="handleBaselineMethodChanged"
+            @baseline-slider-value-changed="handleBaselineSliderValueChanged"
+            @show-prediction-interval-changed="handleShowPredictionIntervalChanged"
+            @show-labels-changed="handleShowLabelsChanged"
+            @maximize-changed="handleMaximizeChanged"
+            @is-logarithmic-changed="handleIsLogarithmicChanged"
+            @show-percentage-changed="handleShowPercentageChanged"
+            @cumulative-changed="handleCumulativeChanged"
+            @show-total-changed="handleShowTotalChanged"
+            @slider-start-changed="handleSliderStartChanged"
+            @user-colors-changed="handleUserColorsChanged"
+            @chart-preset-changed="handleChartPresetChanged"
+            @show-logo-changed="handleShowLogoChanged"
+            @show-qr-code-changed="handleShowQrCodeChanged"
+            @decimals-changed="handleDecimalsChanged"
+          />
 
-            <MortalityChartControlsSecondary
-              :countries="countries"
-              :labels="labels"
-              :all-yearly-chart-labels-unique="allYearlyChartLabelsUnique || []"
-              :type="type"
-              :chart-type="chartType"
-              :chart-style="chartStyle"
-              :standard-population="standardPopulation"
-              :is-updating="false"
-              :is-population-type="isPopulationType()"
-              :is-excess="isExcess"
-              :baseline-method="baselineMethod"
-              :baseline-slider-value="baselineSliderValue"
-              :show-baseline="showBaseline"
-              :slider-start="sliderStart"
-              :show-prediction-interval="showPredictionInterval"
-              :show-prediction-interval-disabled="showPredictionIntervalDisabled"
-              :show-labels="showLabels"
-              :maximize="maximize"
-              :is-logarithmic="isLogarithmic"
-              :show-percentage="showPercentage || false"
-              :cumulative="cumulative"
-              :show-total="showTotal"
-              :show-logarithmic-option="!isMatrixChartStyle() && !isExcess"
-              :show-maximize-option="
-                !(isExcess && isLineChartStyle()) && !isMatrixChartStyle()
-              "
-              :show-maximize-option-disabled="
-                isLogarithmic || (isExcess && !chartOptions.showTotalOption)
-              "
-              :show-percentage-option="isExcess"
-              :show-cumulative-option="isExcess"
-              :show-total-option="isExcess && isBarChartStyle()"
-              :show-total-option-disabled="!cumulative"
-              :show-prediction-interval-option="
-                chartOptions.showBaselineOption
-                  || (isExcess && !isMatrixChartStyle())
-              "
-              :show-prediction-interval-option-disabled="showPredictionIntervalDisabled"
-              :is-matrix-chart-style="isMatrixChartStyle()"
-              :colors="displayColors"
-              :chart-preset="chartPreset"
-              :show-logo="showLogo"
-              :show-qr-code="showQrCode"
-              :decimals="decimals"
-              @type-changed="handleTypeChanged"
-              @chart-type-changed="handleChartTypeChanged"
-              @chart-style-changed="handleChartStyleChanged"
-              @standard-population-changed="handleStandardPopulationChanged"
-              @is-excess-changed="handleIsExcessChanged"
-              @show-baseline-changed="handleShowBaselineChanged"
-              @baseline-method-changed="handleBaselineMethodChanged"
-              @baseline-slider-value-changed="handleBaselineSliderValueChanged"
-              @show-prediction-interval-changed="handleShowPredictionIntervalChanged"
-              @show-labels-changed="handleShowLabelsChanged"
-              @maximize-changed="handleMaximizeChanged"
-              @is-logarithmic-changed="handleIsLogarithmicChanged"
-              @show-percentage-changed="handleShowPercentageChanged"
-              @cumulative-changed="handleCumulativeChanged"
-              @show-total-changed="handleShowTotalChanged"
-              @slider-start-changed="handleSliderStartChanged"
-              @user-colors-changed="handleUserColorsChanged"
-              @chart-preset-changed="handleChartPresetChanged"
-              @show-logo-changed="handleShowLogoChanged"
-              @show-qr-code-changed="handleShowQrCodeChanged"
-              @decimals-changed="handleDecimalsChanged"
-            />
-          </UCard>
-
-          <!-- Chart Options Card -->
-          <UCard
+          <ExplorerChartActions
             class="mt-3"
-            :ui="{ body: 'p-0' }"
-          >
-            <template #header>
-              <h2 class="text-xl font-semibold">
-                Chart Options
-              </h2>
-            </template>
-            <ClientOnly>
-              <div class="flex flex-col">
-                <button
-                  class="chart-option-button"
-                  @click="copyChartLink"
-                >
-                  <UIcon
-                    name="i-lucide-link"
-                    class="w-4 h-4 flex-shrink-0"
-                  />
-                  <div class="flex-1 text-left text-sm">
-                    Copy Link
-                  </div>
-                  <UIcon
-                    name="i-lucide-chevron-right"
-                    class="w-3 h-3 text-gray-400"
-                  />
-                </button>
-
-                <div class="border-t border-gray-200 dark:border-gray-700" />
-
-                <button
-                  class="chart-option-button"
-                  @click="screenshotChart"
-                >
-                  <UIcon
-                    name="i-lucide-camera"
-                    class="w-4 h-4 flex-shrink-0"
-                  />
-                  <div class="flex-1 text-left text-sm">
-                    Download Screenshot
-                  </div>
-                  <UIcon
-                    name="i-lucide-chevron-right"
-                    class="w-3 h-3 text-gray-400"
-                  />
-                </button>
-
-                <div class="border-t border-gray-200 dark:border-gray-700" />
-
-                <!-- Save chart (always available) -->
-                <button
-                  class="chart-option-button"
-                  @click="saveChart"
-                >
-                  <UIcon
-                    name="i-lucide-save"
-                    class="w-4 h-4 flex-shrink-0"
-                  />
-                  <div class="flex-1 text-left text-sm">
-                    Save Chart
-                  </div>
-                  <UIcon
-                    name="i-lucide-chevron-right"
-                    class="w-3 h-3 text-gray-400"
-                  />
-                </button>
-              </div>
-            </ClientOnly>
-          </UCard>
+            @copy-link="copyChartLink"
+            @screenshot="screenshotChart"
+            @save="saveChart"
+          />
         </div>
       </div>
     </div>

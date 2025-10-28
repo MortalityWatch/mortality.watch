@@ -6,14 +6,8 @@ import {
 } from '@/lib/data'
 import { getFilteredChartData } from '@/lib/chart'
 import { getCamelCase, isMobile } from '@/utils'
-import { decompress, base64ToArrayBuffer } from '../lib/compression/compress.browser'
-import { showToast } from '../toast'
-import { isRef, reactive, ref, toRaw, unref, type Ref } from 'vue'
-import {
-  decodeBool,
-  decodeString,
-  type Serializable
-} from './serializable'
+import { reactive, ref, toRaw, unref } from 'vue'
+import type { Serializable } from './serializable'
 import type {
   DatasetRaw,
   NumberEntryFields,
@@ -21,43 +15,35 @@ import type {
   Country,
   ListType
 } from '@/model'
-import { baselineMethods, getKeyForType, getChartTypeFromOrdinal } from '@/model'
+import { getChartTypeFromOrdinal, getKeyForType } from '@/model'
 import type { LocationQuery } from 'vue-router'
-import {
-  defaultBaselineFromDate,
-  defaultBaselineToDate,
-  getSeasonString
-} from './baseline'
+import { getSeasonString, defaultBaselineFromDate, defaultBaselineToDate } from './baseline'
 import { getColorsForDataset } from '@/colors'
 import type { MortalityChartData } from '@/lib/chart/chartTypes'
+import { StateCore } from './state/StateCore'
+import { StateHelpers } from './state/StateHelpers'
+import { StateSerialization } from './state/StateSerialization'
 import { Defaults } from '@/lib/state/stateSerializer'
 
-export class State implements Serializable {
-  // Core Settings
-  _countries = ref<string[]>()
-  _chartType = ref<string>()
-  _isExcess = ref<boolean>()
-  _type = ref<string>()
-  _chartStyle = ref<string>()
-  _dateFrom = ref<string>()
-  _dateTo = ref<string>()
-  _baselineDateFrom = ref<string>()
-  _baselineDateTo = ref<string>()
+export class State extends StateCore implements Serializable {
+  // Use StateHelpers for all helper methods
+  private _helpers = new StateHelpers()
 
-  // Optional Settings
-  _ageGroups = ref<string[]>()
-  _standardPopulation = ref<string>()
-  _showBaseline = ref<boolean>()
-  _baselineMethod = ref<string>()
-  _cumulative = ref<boolean>()
-  _showTotal = ref<boolean>()
-  _maximize = ref<boolean>()
-  _showPredictionInterval = ref<boolean>()
-  _showLabels = ref<boolean>()
-  _showPercentage = ref<boolean>()
-  _isLogarithmic = ref<boolean>()
-  _sliderStart = ref<string>()
-  _userColors = ref<string[]>()
+  // Use StateSerialization for URL state management
+  private _serializer = new StateSerialization()
+
+  constructor() {
+    super()
+    // Setup helpers with access to state properties
+    Object.defineProperty(this._helpers, 'type', { get: () => this.type })
+    Object.defineProperty(this._helpers, 'chartStyle', { get: () => this.chartStyle })
+    Object.defineProperty(this._helpers, 'chartType', { get: () => this.chartType })
+    Object.defineProperty(this._helpers, 'isExcess', { get: () => this.isExcess })
+    Object.defineProperty(this._helpers, 'cumulative', { get: () => this.cumulative })
+    Object.defineProperty(this._helpers, 'baselineMethod', { get: () => this.baselineMethod })
+    Object.defineProperty(this._helpers, 'showBaseline', { get: () => this.showBaseline })
+    Object.defineProperty(this._helpers, 'standardPopulation', { get: () => this.standardPopulation })
+  }
 
   // Transitory
   chartOptions = reactive({
@@ -86,125 +72,27 @@ export class State implements Serializable {
   isUpdating = ref(false)
 
   async initFromSavedState(locationQuery: LocationQuery): Promise<void> {
+    // Delegate to StateSerialization module
     if (!this.allCountries) this.allCountries = await loadCountryMetadata()
 
-    let encodedState: LocationQuery | undefined = locationQuery
+    // Setup serializer with access to this instance
+    this._serializer.allCountries = this.allCountries
+    Object.defineProperty(this._serializer, 'countries', { get: () => this.countries })
+    this._serializer.setValue = this.setValue.bind(this)
 
-    // QR Code
-    if (locationQuery.qr && typeof locationQuery.qr === 'string') {
-      const decoded = base64ToArrayBuffer(locationQuery.qr)
-      const decompressed = await decompress(decoded)
-      try {
-        encodedState = JSON.parse(decompressed)
-      } catch (e) {
-        console.error(e)
-        showToast('Your browser lacks state decompression support.')
-        encodedState = undefined
-      }
-    } else if (locationQuery.q && typeof locationQuery.q === 'string') {
-      try {
-        encodedState = JSON.parse(decodeURIComponent(locationQuery.q))
-      } catch (e) {
-        console.error(e)
-        try {
-          encodedState = JSON.parse(
-            decodeURIComponent(decodeURIComponent(locationQuery.q))
-          )
-        } catch (e) {
-          console.error(e)
-          throw new Error('Failed to decode state!')
-        }
-      }
-    }
-
-    if (!encodedState || Object.keys(encodedState).length === 0) return
-
-    // Countries; Validate before assignment
-    const countries = (
-      Array.isArray(encodedState.c) || !encodedState.c
-        ? encodedState.c
-        : [encodedState.c]
-    ) as string[]
-    if (countries && countries.length) {
-      const validCountryCodes = Object.keys(this.allCountries)
-      let validCountries = countries.filter(x =>
-        validCountryCodes.includes(x)
-      )
-      if (!validCountries || !validCountries.length)
-        validCountries = ['USA', 'SWE']
-      this.setValue('_countries', validCountries)
-    }
-
-    // Age Groups; Validate before assignment
-    const ageGroups = (
-      Array.isArray(encodedState.ag) || !encodedState.ag
-        ? encodedState.ag
-        : [encodedState.ag]
-    ) as string[]
-    if (ageGroups && ageGroups.length) {
-      const validAgeGroups = []
-      for (const iso3c of this.countries) {
-        const country = this.allCountries[iso3c]
-        if (!country) continue
-        for (const ds of country.data_source) {
-          validAgeGroups.push(
-            ...Array.from(ds.age_groups).filter(value =>
-              ageGroups.includes(value)
-            )
-          )
-        }
-      }
-      this.setValue(
-        '_ageGroups',
-        !validAgeGroups.length ? ['all'] : validAgeGroups
-      )
-    }
-
-    if (encodedState.t) {
-      this.setValue('_type', (encodedState.t as string).replace('_excess', ''))
-    }
-    if (encodedState.ct !== 'ytd') {
-      // YTD not supported anymore, use default.
-      this.setValue('_chartType', encodedState.ct)
-    }
-    this.setValue(
-      '_isExcess',
-      decodeBool(encodedState.e as string)
-      ?? encodedState.t?.includes('_excess')
-    )
-    this.setValue('_chartStyle', encodedState.cs)
-    this.setValue('_dateFrom', decodeString(encodedState.df as string))
-    this.setValue('_dateTo', decodeString(encodedState.dt as string))
-    this.setValue('_sliderStart', encodedState.ss)
-    this.setValue('_baselineDateFrom', decodeString(encodedState.bf as string))
-    this.setValue('_baselineDateTo', decodeString(encodedState.bt as string))
-    this.setValue('_standardPopulation', encodedState.sp)
-    this.setValue('_showBaseline', decodeBool(encodedState.sb as string))
-    this.setValue('_baselineMethod', encodedState.bm)
-    this.setValue('_cumulative', decodeBool(encodedState.ce as string))
-    this.setValue('_showTotal', decodeBool(encodedState.st as string))
-    this.setValue('_maximize', decodeBool(encodedState.m as string))
-    this.setValue(
-      '_showPredictionInterval',
-      decodeBool(encodedState.pi as string)
-    )
-    this.setValue('_showLabels', decodeBool(encodedState.sl as string))
-    this.setValue('_showPercentage', decodeBool(encodedState.p as string))
-    this.setValue('_isLogarithmic', decodeBool(encodedState.lg as string))
-
-    const userColors = (
-      Array.isArray(encodedState.uc) || !encodedState.uc
-        ? encodedState.uc
-        : [encodedState.uc]
-    ) as string[]
-    if (userColors && userColors.length)
-      this.setValue('_userColors', userColors)
+    // Use the serializer to load state
+    await this._serializer.initFromSavedState(locationQuery)
   }
 
-  setValue = async (prop: keyof State, val: unknown) => {
-    if (isRef(this[prop])) (this[prop] as Ref).value = val
-    // @ts-expect-error - TypeScript can't guarantee this is safe but we know it is
-    else this[prop] = val
+  override async setValue(prop: string, val: unknown) {
+    const key = prop as keyof State
+    if (isRef(this[key])) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (this[key] as any).value = val
+    } else {
+      // @ts-expect-error - TypeScript can't guarantee this is safe but we know it is
+      this[key] = val
+    }
   }
 
   private configureOptions = () => {
@@ -229,166 +117,41 @@ export class State implements Serializable {
       = !this.isMatrixChartStyle() && !this.isExcess
   }
 
-  set countries(val: string[]) {
-    this.setValue('_countries', val)
-  }
-
-  get countries(): string[] {
-    return unref(this._countries) ?? Defaults.countries
-  }
-
-  set chartStyle(val: string) {
-    this.setValue('_chartStyle', val)
-  }
-
-  get chartStyle(): string {
-    return unref(this._chartStyle) ?? (this.isExcess ? 'bar' : 'line')
-  }
-
-  set chartType(val: string) {
-    this.setValue('_chartType', val)
-  }
-
-  get chartType(): string {
-    return unref(this._chartType) ?? Defaults.chartType
-  }
-
-  set type(val: string) {
-    if (val.startsWith('asmr') || val.startsWith('le'))
-      this.setValue('_ageGroups', undefined)
-    if (val === 'population') {
-      this.setValue('_isExcess', undefined)
-      this.setValue('_baselineMethod', undefined)
-    }
-    this.setValue('_type', val)
-  }
-
-  get type(): string {
-    return unref(this._type) ?? Defaults.type
-  }
-
-  set isExcess(val: boolean) {
-    this.setValue('_isExcess', val)
-  }
-
-  get isExcess(): boolean {
-    return unref(this._isExcess) ?? Defaults.isExcess
-  }
-
-  set dateFrom(val: string | undefined) {
+  // Override dateFrom/dateTo/sliderStart with custom defaults
+  override set dateFrom(val: string | undefined) {
     this.setValue('_dateFrom', val)
   }
 
-  get dateFrom(): string {
+  override get dateFrom(): string {
     return unref(this._dateFrom) ?? this._defaultFromDate() ?? ''
   }
 
-  set dateTo(val: string | undefined) {
+  override set dateTo(val: string | undefined) {
     this.setValue('_dateTo', val)
   }
 
-  get dateTo(): string {
+  override get dateTo(): string {
     return unref(this._dateTo) ?? this._defaultToDate() ?? ''
   }
 
-  set sliderStart(val: string | undefined) {
+  override set sliderStart(val: string | undefined) {
     this.setValue('_sliderStart', val)
   }
 
-  get sliderStart(): string {
+  override get sliderStart(): string {
     return unref(this._sliderStart) ?? this._defaultSliderStart() ?? ''
   }
 
   sliderStartPeriod = () =>
     getSeasonString(this.chartType, Number(this.sliderStart))
 
-  set ageGroups(val: string[]) {
-    this.setValue('_ageGroups', val)
-  }
-
-  get ageGroups(): string[] {
-    if (this.isAsmrType()) return ['all']
-    return unref(this._ageGroups) ?? Defaults.ageGroups
-  }
-
-  set standardPopulation(val: string) {
-    this.setValue('_standardPopulation', val)
-  }
-
-  get standardPopulation(): string {
-    return (
-      unref(this._standardPopulation)
-      ?? (this.countries.length > 1 ? Defaults.standardPopulation : 'country')
-    )
-  }
-
-  set showBaseline(on: boolean) {
-    this.setValue('_showBaseline', on)
-  }
-
-  get showBaseline(): boolean {
-    return unref(this._showBaseline) ?? Defaults.showBaseline
-  }
-
-  set cumulative(on: boolean) {
-    this.setValue('_cumulative', on)
-  }
-
-  get cumulative(): boolean {
-    if (!this.isExcess) return false
-    return unref(this._cumulative) ?? Defaults.cumulative
-  }
-
-  set showTotal(on: boolean) {
-    this.setValue('_showTotal', on)
-  }
-
-  get showTotal(): boolean {
-    if (!this.isBarChartStyle() || !this.cumulative) return false
-    return unref(this._showTotal) ?? Defaults.showTotal
-  }
-
-  set maximize(on: boolean) {
-    this.setValue('_maximize', on)
-  }
-
-  get maximize(): boolean {
-    if (this.isLogarithmic) return false
-    return unref(this._maximize) ?? Defaults.maximize
-  }
-
-  set showPredictionInterval(on: boolean) {
-    this.setValue('_showPredictionInterval', on)
-  }
-
-  get showPredictionInterval(): boolean {
-    if (
-      (!this.isExcess && !this.showBaseline)
-      || this.isMatrixChartStyle()
-      || (this.cumulative && !this.showCumPi())
-    )
-      return false
-
-    const val = unref(this._showPredictionInterval)
-    if (val !== undefined) return val
-    return this.isExcess
-      ? !Defaults.showPredictionInterval
-      : Defaults.showPredictionInterval
-  }
-
-  set showLabels(on: boolean) {
-    this.setValue('_showLabels', on)
-  }
-
-  get showLabels(): boolean {
+  // Override showLabels with custom logic
+  override get showLabels(): boolean {
     const val = unref(this._showLabels)
-
-    const result
-      = val
-        ?? (Defaults.showLabels
-          && this.allChartData
-          && this.dateToIndex() - this.dateFromIndex() + 1 <= (isMobile() ? 20 : 60))
-    return result
+    return val
+      ?? (Defaults.showLabels
+        && this.allChartData
+        && this.dateToIndex() - this.dateFromIndex() + 1 <= (isMobile() ? 20 : 60))
   }
 
   get sliderValue(): string[] {
@@ -415,29 +178,12 @@ export class State implements Serializable {
       this.baselineDateTo = sliderValue[1]
   }
 
-  get showPercentage(): boolean {
-    if (!this.isExcess) return false
-    return unref(this._showPercentage) ?? (this.isExcess && !this.cumulative)
-  }
-
-  set showPercentage(on: boolean) {
-    this.setValue('_showPercentage', on)
-  }
-
-  get isLogarithmic(): boolean {
-    if (this.isMatrixChartStyle() || this.isExcess) return false
-    return unref(this._isLogarithmic) ?? Defaults.isLogarithmic
-  }
-
-  set isLogarithmic(on: boolean) {
-    this.setValue('_isLogarithmic', on)
-  }
-
-  set baselineDateFrom(val: string | undefined) {
+  // Override baselineDateFrom with custom default
+  override set baselineDateFrom(val: string | undefined) {
     this.setValue('_baselineDateFrom', val)
   }
 
-  get baselineDateFrom(): string {
+  override get baselineDateFrom(): string {
     if (this._baselineDateFrom) {
       const df = unref(this._baselineDateFrom)
       if (df) return df
@@ -446,40 +192,16 @@ export class State implements Serializable {
     return defaultBaselineFromDate(this.chartType, labels, this.baselineMethod) ?? ''
   }
 
-  set baselineDateTo(val: string | undefined) {
+  // Override baselineDateTo with custom default
+  override set baselineDateTo(val: string | undefined) {
     this.setValue('_baselineDateTo', val)
   }
 
-  get baselineDateTo(): string {
+  override get baselineDateTo(): string {
     return unref(this._baselineDateTo) ?? defaultBaselineToDate(this.chartType)
   }
 
-  set baselineMethod(val: string) {
-    this.setValue('_baselineMethod', val)
-  }
-
-  get baselineMethod(): string {
-    let method = unref(this._baselineMethod)
-    if (method) return method
-    switch (this.type) {
-      case 'cmr':
-      case 'deaths':
-        method = 'lin_reg'
-        break
-      default:
-        method = Defaults.baselineMethod
-    }
-    return method
-  }
-
-  set userColors(val: string[] | undefined) {
-    this.setValue('_userColors', val)
-  }
-
-  get userColors(): string[] | undefined {
-    return unref(this._userColors) ?? Defaults.userColors
-  }
-
+  // Custom colors getter with normalization logic
   get colors(): string[] {
     const defaultColors = getColorsForDataset(this.dataset)
     if (!this.userColors) return defaultColors
@@ -495,36 +217,30 @@ export class State implements Serializable {
     return this.userColors
   }
 
-  baselineMethodEntry = (): ListType =>
-    baselineMethods.filter(v => v.value === this.baselineMethod)[0] ?? { name: '', value: '' }
+  // Helper Functions - delegate to StateHelpers and override protected methods
+  protected override isAsmrType = () => this._helpers.isAsmrType()
 
-  // Helper Functions
-  isAsmrType = () => this.type.includes('asmr')
+  isPopulationType = () => this._helpers.isPopulationType()
 
-  isPopulationType = () => this.type === 'population'
+  isLifeExpectancyType = () => this._helpers.isLifeExpectancyType()
 
-  isLifeExpectancyType = () => this.type === 'le'
+  isDeathsType = () => this._helpers.isDeathsType()
 
-  isDeathsType = () => this.type.includes('deaths')
+  isErrorBarType = () => this._helpers.isErrorBarType()
 
-  isErrorBarType = () => this.isBarChartStyle() && this.isExcess
+  hasBaseline = () => this._helpers.hasBaseline()
 
-  hasBaseline = () => !this.isPopulationType() && !this.isExcess
+  isLineChartStyle = () => this._helpers.isLineChartStyle()
 
-  isLineChartStyle = () => this.chartStyle === 'line'
+  protected override isBarChartStyle = () => this._helpers.isBarChartStyle()
 
-  isBarChartStyle = () => this.chartStyle === 'bar'
+  protected override isMatrixChartStyle = () => this._helpers.isMatrixChartStyle()
 
-  isMatrixChartStyle = () => this.chartStyle === 'matrix'
+  isWeeklyChartType = () => this._helpers.isWeeklyChartType()
 
-  isWeeklyChartType = () => this.chartType.includes('weekly')
+  isMonthlyChartType = () => this._helpers.isMonthlyChartType()
 
-  isMonthlyChartType = () => this.chartType.includes('monthly')
-
-  isYearlyChartType = () =>
-    this.chartType.includes('year')
-    || this.chartType.includes('fluseason')
-    || this.chartType.includes('midyear')
+  isYearlyChartType = () => this._helpers.isYearlyChartType()
 
   dateFromIndex = () => this.getLabels().indexOf(this.dateFrom)
 
@@ -546,29 +262,11 @@ export class State implements Serializable {
   }
 
   getBaseKeysForType = (): (keyof NumberEntryFields)[] =>
-    getKeyForType(this.type, this.showBaseline, this.standardPopulation, false)
+    this._helpers.getBaseKeysForType()
 
-  getMaxDateType() {
-    if (this.type.includes('deaths') || this.type.includes('cmr')) return 'cmr'
-    return 'asmr'
-  }
+  getMaxDateType = () => this._helpers.getMaxDateType()
 
-  periodMultiplicatorForType = () => {
-    switch (this.chartType) {
-      case 'weekly':
-      case 'weekly_104w_sma':
-      case 'weekly_52w_sma':
-      case 'weekly_26w_sma':
-      case 'weekly_13w_sma':
-        return 52.1429
-      case 'monthly':
-        return 12
-      case 'quarterly':
-        return 4
-      default:
-        return 1
-    }
-  }
+  periodMultiplicatorForType = () => this._helpers.periodMultiplicatorForType()
 
   _defaultFromDate = () => {
     const labels = this.allChartLabels.value!
@@ -630,21 +328,10 @@ export class State implements Serializable {
     if (!labels.includes(this.dateTo)) this.dateTo = undefined
   }
 
-  // Backwards compatability
-  isIsoKey = (str: string) => {
-    return (
-      str === str.toUpperCase()
-      && (str.length === 3
-        || /^(USA-\w{2})$/.test(str)
-        || /^(DEU-\w{2})$/.test(str)
-        || /^(GBR\w{4})$/.test(str))
-    )
-  }
+  // Backwards compatibility - delegate to StateHelpers
+  isIsoKey = (str: string) => this._helpers.isIsoKey(str)
 
-  showCumPi = (): boolean =>
-    this.cumulative
-    && this.isYearlyChartType()
-    && ['lin_reg', 'mean'].includes(this.baselineMethod)
+  protected override showCumPi = (): boolean => this._helpers.showCumPi()
 
   updateData = async (
     shouldDownloadDataset: boolean,
