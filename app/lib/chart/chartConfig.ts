@@ -1,34 +1,22 @@
 import type {
-  CartesianScaleOptions,
   Chart,
-  ChartDataset,
-  LegendItem,
-  Scale,
-  ScaleOptionsByType,
-  TooltipItem
+  ChartDataset
 } from 'chart.js'
 import {
-  bgColor,
   getDatalabelsFont,
-  getLegendFont,
   getScaleTitleFont,
-  getSubtitleFont,
-  getTicksFont,
-  getTitleFont
+  getTicksFont
 } from './chartStyling'
 import {
   backgroundColor,
-  borderColor,
   getColorPalette,
   getGradientColor,
-  textColor,
   textSoftColor,
   textStrongColor
 } from './chartColors'
 import { asPercentage, numberWithCommas, round } from './chartUtils'
 import { hasFeatureAccess, type UserTier } from '~/lib/featureFlags'
 import type {
-  ChartErrorDataPoint,
   ChartJSConfig,
   ChartStyle,
   MatrixData,
@@ -38,6 +26,12 @@ import type {
 } from './chartTypes'
 import type { Context } from 'chartjs-plugin-datalabels'
 import type { MatrixDataPoint } from 'chartjs-chart-matrix'
+import {
+  createBackgroundPlugin,
+  createOnResizeHandler,
+  createPluginsConfig,
+  createScalesConfig
+} from './chartConfigHelpers'
 
 // Public API
 export const makeChartConfig = (
@@ -96,188 +90,36 @@ export const makeBarLineChartConfig = (
       showLogo = true
     }
   }
+
   const showDecimals = !isDeathsType && !isPopulationType
+
   return {
-    plugins: [
-      {
-        id: 'customCanvasBackgroundColor',
-        beforeDraw: (chart: Chart) => {
-          const { ctx } = chart
-          ctx.save()
-          ctx.fillStyle = backgroundColor(isDark)
-          ctx.fillRect(0, 0, chart.width, chart.height)
-          ctx.restore()
-        }
-      }
-    ],
+    plugins: [createBackgroundPlugin(isDark)],
     options: {
       animation: false,
       responsive: true,
       maintainAspectRatio: false,
       layout: { padding: 10 },
-      onResize: (chart: Chart) => {
-        chart.options.plugins!.title!.font! = getTitleFont()
-        chart.options.plugins!.subtitle!.font! = getSubtitleFont()
-        chart.options.plugins!.legend!.labels!.font! = getLegendFont()
-        ;(
-          chart.options.scales!.x! as ScaleOptionsByType<'radialLinear'>
-        ).ticks.font! = getTicksFont()
-        ;(chart.options.scales!.x! as CartesianScaleOptions).title.font
-          = getScaleTitleFont()
-        ;(
-          chart.options.scales!.y! as ScaleOptionsByType<'radialLinear'>
-        ).ticks.font! = getTicksFont()
-        ;(chart.options.scales!.y! as CartesianScaleOptions).title.font
-          = getScaleTitleFont()
-        chart.options.plugins!.datalabels!.font! = getDatalabelsFont()
-      },
-      plugins: {
-        title: {
-          display: true,
-          text: data.title,
-          color: textColor(isDark),
-          font: getTitleFont()
-        },
-        subtitle: {
-          display: true,
-          text: data.subtitle,
-          color: textSoftColor(isDark),
-          font: getSubtitleFont(),
-          position: 'bottom'
-        },
-        legend: {
-          labels: {
-            color: textColor(isDark),
-            filter: (item: LegendItem): boolean => item.text.length > 0,
-            font: getLegendFont()
-          }
-        },
-        tooltip: {
-          callbacks: {
-            label: (context: TooltipItem<'line' | 'bar'>) => {
-              let label = context.dataset.label || ''
-              const value = context.parsed as unknown as ChartErrorDataPoint
-              const min = value.yMin || value.yMinMin
-              const max = value.yMax || value.yMaxMax
-              const pi = showPi && min && max ? { min, max } : undefined
-              label = getLabelText(
-                label,
-                value.y,
-                pi,
-                false,
-                isExcess,
-                showPercentage,
-                showDecimals,
-                decimals
-              )
-              return label
-            }
-          }
-        },
-        datalabels: {
-          anchor: 'end',
-          align: 'end',
-          display: (context: Context): boolean => {
-            const showLabels = data.showLabels
-            const hasLabels = context.dataset.label
-              ? context.dataset.label.length > 0
-              : false
-            const x = context.dataset.data[context.dataIndex]
-            if (
-              x
-              && typeof x === 'object'
-              && isNaN((x as ChartErrorDataPoint).y)
-            )
-              return false
-            const isErrorPoint = typeof x === 'object'
-            const hasValue = !isNaN(x as number)
-            return showLabels && hasLabels && (isErrorPoint || hasValue)
-          },
-          backgroundColor: bgColor,
-          color: () => {
-            // White in dark mode, black in light mode
-            return isDark ? '#ffffff' : '#000000'
-          },
-          formatter: (x: number | ChartErrorDataPoint) => {
-            let label = ''
-            const value = typeof x == 'number' ? x : x.y
-            const val = x as ChartErrorDataPoint
-            const min = val.yMin || val.yMinMin
-            const max = val.yMax || val.yMaxMax
-            const pi = showPi && min && max ? { min, max } : undefined
-            label = getLabelText(
-              label,
-              value,
-              pi,
-              true,
-              isExcess,
-              showPercentage,
-              showDecimals,
-              decimals
-            )
-            return label
-          },
-          borderRadius: 3,
-          padding: 2,
-          font: getDatalabelsFont(),
-          offset: 1.5
-        },
-        ...(showQrCode && data.url ? { qrCodeUrl: data.url } : {}),
-        showLogo
-      },
-      scales: {
-        x: {
-          offset: data.showXOffset,
-          title: {
-            display: true,
-            text: data.xtitle,
-            color: textStrongColor(isDark),
-            font: getScaleTitleFont()
-          },
-          grid: {
-            color: borderColor(isDark)
-          },
-          ticks: {
-            color: textSoftColor(isDark),
-            font: getTicksFont()
-          }
-        },
-        y: {
-          type: data.isLogarithmic ? 'logarithmic' : 'linear',
-          beginAtZero: data.isMaximized,
-          title: {
-            display: true,
-            text: data.ytitle,
-            color: textStrongColor(isDark),
-            font: getScaleTitleFont()
-          },
-          grid: {
-            lineWidth: (context: { tick: string }) => {
-              return context.tick ? 2 : 1
-            },
-            color: borderColor(isDark)
-          },
-          ticks: {
-            color: textSoftColor(isDark),
-            font: getTicksFont(),
-            callback: function (
-              this: Scale,
-              tickValue: number | string
-            ): string {
-              return getLabelText(
-                '',
-                typeof tickValue == 'string' ? parseInt(tickValue) : tickValue,
-                undefined,
-                true,
-                isExcess,
-                showPercentage,
-                showDecimals,
-                decimals
-              )
-            }
-          }
-        }
-      }
+      onResize: createOnResizeHandler(),
+      plugins: createPluginsConfig(
+        data,
+        isExcess,
+        showPi,
+        showPercentage,
+        showDecimals,
+        decimals,
+        showQrCode,
+        showLogo,
+        isDark
+      ),
+      scales: createScalesConfig(
+        data,
+        isExcess,
+        showPercentage,
+        showDecimals,
+        decimals,
+        isDark
+      )
     },
     data: {
       datasets: data.datasets as ChartDataset<ChartStyle, (number | null)[]>[],
@@ -403,8 +245,10 @@ export const makeMatrixChartConfig = (
       {
         label: '',
         data: matrixData.data as MortalityMatrixDataPoint[],
-        backgroundColor: tileBackgroundColor,
-        borderColor: tileBackgroundColor,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        backgroundColor: tileBackgroundColor as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        borderColor: tileBackgroundColor as any,
         borderWidth: 1,
         width: ({ chart }: { chart: Chart }) =>
           (chart.chartArea || {}).width / data.labels.length,
@@ -415,76 +259,6 @@ export const makeMatrixChartConfig = (
     ]
   }
   return config
-}
-
-const formatCI = (
-  short: boolean,
-  min: number,
-  max: number,
-  formatFn: (n: number) => string
-) =>
-  short
-    ? ` (${formatFn(min)}, ${formatFn(max)})`
-    : ` [95% PI: ${formatFn(min)}, ${formatFn(max)}]`
-
-const getMaxDecimals = (
-  y: number,
-  short: boolean,
-  showDecimals: boolean,
-  decimals: string = 'auto'
-) => {
-  // If user specified a fixed precision, use it
-  if (decimals !== 'auto') {
-    return parseInt(decimals)
-  }
-  // Otherwise use auto logic
-  return short
-    ? Math.max(0, 3 - Math.min(3, round(y).toString().length))
-    : showDecimals
-      ? 1
-      : 0
-}
-
-const getLabelText = (
-  label: string,
-  y: number,
-  pi: { min: number, max: number } | undefined,
-  short: boolean,
-  isExcess: boolean,
-  isPercentage: boolean,
-  showDecimals: boolean,
-  decimals: string = 'auto'
-) => {
-  let result = label
-  const prefix = label.length ? ': ' : ''
-  const forcePlusSign = isExcess && !short
-  const plusSign = forcePlusSign ? '' : '+'
-
-  if (isPercentage) {
-    const yText = asPercentage(
-      y,
-      getMaxDecimals(y * 100, short, showDecimals, decimals),
-      plusSign
-    )
-    result += `${prefix}${yText}`
-    if (pi)
-      result += formatCI(short, pi.min, pi.max, n =>
-        asPercentage(n, getMaxDecimals(y * 100, short, showDecimals, decimals), plusSign)
-      )
-  } else {
-    const maxDecimals = getMaxDecimals(y, short, showDecimals, decimals)
-    const yText = numberWithCommas(y, isExcess, maxDecimals)
-    result += `${prefix}${yText}`
-
-    if (pi) {
-      const piText = formatCI(short, pi.min, pi.max, n =>
-        numberWithCommas(n, isExcess, maxDecimals)
-      )
-      result += isExcess ? `${piText}` : `${piText}`
-    }
-  }
-
-  return result
 }
 
 const makeMatrixData = (chartData: MortalityChartData): MatrixData => {

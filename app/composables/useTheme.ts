@@ -53,12 +53,19 @@ export const useTheme = () => {
  * const isDark = getIsDark()
  * ```
  */
+/**
+ * Type for Nuxt's useColorMode auto-import
+ */
+interface GlobalWithNuxt {
+  useColorMode?: () => { value: string }
+}
+
 export const getIsDark = (): boolean => {
   if (import.meta.server) return false
   try {
     // useColorMode is a Nuxt auto-import, only available on client
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const useColorModeFunc = (globalThis as any).useColorMode
+    const global = globalThis as GlobalWithNuxt
+    const useColorModeFunc = global.useColorMode
     if (!useColorModeFunc) return false
     const colorMode = useColorModeFunc()
     return colorMode.value === 'dark'

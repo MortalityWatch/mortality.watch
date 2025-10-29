@@ -1,44 +1,15 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import MortalityChartControlsSecondary from '@/components/charts/MortalityChartControlsSecondary.vue'
+import type { useExplorerState } from '@/composables/useExplorerState'
 
 const props = defineProps<{
-  countries: string[]
+  state: ReturnType<typeof useExplorerState>
   labels: string[]
   allYearlyChartLabelsUnique: string[]
-  type: string
-  chartType: string
-  chartStyle: string
-  standardPopulation: string
-  isUpdating: boolean
-  isPopulationType: boolean
-  isExcess: boolean
-  baselineMethod: string
-  baselineSliderValue: string[]
-  showBaseline: boolean
-  sliderStart: string
-  showPredictionInterval: boolean
-  showPredictionIntervalDisabled: boolean
-  showLabels: boolean
-  maximize: boolean
-  isLogarithmic: boolean
-  showPercentage: boolean
-  cumulative: boolean
-  showTotal: boolean
-  showLogarithmicOption: boolean
-  showMaximizeOption: boolean
-  showMaximizeOptionDisabled: boolean
-  showPercentageOption: boolean
-  showCumulativeOption: boolean
-  showTotalOption: boolean
-  showTotalOptionDisabled: boolean
-  showPredictionIntervalOption: boolean
-  showPredictionIntervalOptionDisabled: boolean
-  isMatrixChartStyle: boolean
   colors: string[]
-  chartPreset?: string
-  showLogo: boolean
-  showQrCode: boolean
-  decimals: string
+  showPredictionIntervalDisabled: boolean
+  showTotalOption: boolean
 }>()
 
 const emit = defineEmits<{
@@ -64,6 +35,14 @@ const emit = defineEmits<{
   showQrCodeChanged: [value: boolean]
   decimalsChanged: [value: string]
 }>()
+
+// Computed values derived from state
+const isPopulationType = computed(() => props.state.type.value === 'population')
+const isMatrixChartStyle = computed(() => props.state.chartStyle.value === 'matrix')
+const baselineSliderValue = computed(() => [
+  props.state.baselineDateFrom.value,
+  props.state.baselineDateTo.value
+])
 </script>
 
 <template>
@@ -75,49 +54,49 @@ const emit = defineEmits<{
     </template>
 
     <MortalityChartControlsSecondary
-      :countries="props.countries"
+      :countries="props.state.countries.value"
       :labels="props.labels"
       :all-yearly-chart-labels-unique="props.allYearlyChartLabelsUnique || []"
-      :type="props.type"
-      :chart-type="props.chartType"
-      :chart-style="props.chartStyle"
-      :standard-population="props.standardPopulation"
+      :type="props.state.type.value"
+      :chart-type="props.state.chartType.value"
+      :chart-style="props.state.chartStyle.value"
+      :standard-population="props.state.standardPopulation.value"
       :is-updating="false"
-      :is-population-type="props.isPopulationType"
-      :is-excess="props.isExcess"
-      :baseline-method="props.baselineMethod"
-      :baseline-slider-value="props.baselineSliderValue"
-      :show-baseline="props.showBaseline"
-      :slider-start="props.sliderStart"
-      :show-prediction-interval="props.showPredictionInterval"
+      :is-population-type="isPopulationType"
+      :is-excess="props.state.isExcess.value"
+      :baseline-method="props.state.baselineMethod.value"
+      :baseline-slider-value="baselineSliderValue"
+      :show-baseline="props.state.showBaseline.value"
+      :slider-start="props.state.sliderStart.value"
+      :show-prediction-interval="props.state.showPredictionInterval.value"
       :show-prediction-interval-disabled="props.showPredictionIntervalDisabled"
-      :show-labels="props.showLabels"
-      :maximize="props.maximize"
-      :is-logarithmic="props.isLogarithmic"
-      :show-percentage="props.showPercentage || false"
-      :cumulative="props.cumulative"
-      :show-total="props.showTotal"
-      :show-logarithmic-option="!props.isMatrixChartStyle && !props.isExcess"
+      :show-labels="props.state.showLabels.value"
+      :maximize="props.state.maximize.value"
+      :is-logarithmic="props.state.isLogarithmic.value"
+      :show-percentage="props.state.showPercentage.value || false"
+      :cumulative="props.state.cumulative.value"
+      :show-total="props.state.showTotal.value"
+      :show-logarithmic-option="!isMatrixChartStyle && !props.state.isExcess.value"
       :show-maximize-option="
-        !(props.isExcess && props.chartStyle === 'line') && !props.isMatrixChartStyle
+        !(props.state.isExcess.value && props.state.chartStyle.value === 'line') && !isMatrixChartStyle
       "
       :show-maximize-option-disabled="
-        props.isLogarithmic || (props.isExcess && !props.showTotalOption)
+        props.state.isLogarithmic.value || (props.state.isExcess.value && !props.showTotalOption)
       "
-      :show-percentage-option="props.isExcess"
-      :show-cumulative-option="props.isExcess"
-      :show-total-option="props.isExcess && props.chartStyle === 'bar'"
-      :show-total-option-disabled="!props.cumulative"
+      :show-percentage-option="props.state.isExcess.value"
+      :show-cumulative-option="props.state.isExcess.value"
+      :show-total-option="props.state.isExcess.value && props.state.chartStyle.value === 'bar'"
+      :show-total-option-disabled="!props.state.cumulative.value"
       :show-prediction-interval-option="
-        props.showBaseline || (props.isExcess && !props.isMatrixChartStyle)
+        props.state.showBaseline.value || (props.state.isExcess.value && !isMatrixChartStyle)
       "
       :show-prediction-interval-option-disabled="props.showPredictionIntervalDisabled"
-      :is-matrix-chart-style="props.isMatrixChartStyle"
+      :is-matrix-chart-style="isMatrixChartStyle"
       :colors="props.colors"
-      :chart-preset="props.chartPreset"
-      :show-logo="props.showLogo"
-      :show-qr-code="props.showQrCode"
-      :decimals="props.decimals"
+      :chart-preset="props.state.chartPreset.value"
+      :show-logo="props.state.showLogo.value"
+      :show-qr-code="props.state.showQrCode.value"
+      :decimals="props.state.decimals.value"
       @type-changed="emit('typeChanged', $event)"
       @chart-type-changed="emit('chartTypeChanged', $event)"
       @chart-style-changed="emit('chartStyleChanged', $event)"

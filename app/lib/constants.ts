@@ -2,6 +2,8 @@
  * Application-wide constants
  */
 
+import { getWindow } from './utils/dom'
+
 /**
  * Default baseline year for mortality data comparisons
  */
@@ -22,30 +24,27 @@ export const BREAKPOINTS = {
  * Check if current viewport is mobile
  */
 export const isMobile = () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if (typeof (globalThis as any).window === 'undefined') return false
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (globalThis as any).window.innerWidth < BREAKPOINTS.MOBILE
+  const win = getWindow()
+  if (!win) return false
+  return win.innerWidth < BREAKPOINTS.MOBILE
 }
 
 /**
  * Check if current viewport is tablet or larger
  */
 export const isTablet = () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if (typeof (globalThis as any).window === 'undefined') return false
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (globalThis as any).window.innerWidth >= BREAKPOINTS.TABLET
+  const win = getWindow()
+  if (!win) return false
+  return win.innerWidth >= BREAKPOINTS.TABLET
 }
 
 /**
  * Check if current viewport is desktop or larger
  */
 export const isDesktop = () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if (typeof (globalThis as any).window === 'undefined') return false
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (globalThis as any).window.innerWidth >= BREAKPOINTS.DESKTOP
+  const win = getWindow()
+  if (!win) return false
+  return win.innerWidth >= BREAKPOINTS.DESKTOP
 }
 
 /**
