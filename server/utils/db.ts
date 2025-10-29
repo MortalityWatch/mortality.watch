@@ -1,14 +1,17 @@
 import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import { mkdirSync } from 'node:fs'
-import { dirname } from 'node:path'
+import { dirname, resolve } from 'node:path'
 import * as schema from '../../db/schema'
 
 /**
  * Database connection for server-side operations
  */
 
-const DB_PATH = './.data/mortality.db'
+// Use absolute path based on process working directory
+// This ensures the database is always found relative to the project root,
+// whether running in dev mode or from the .output build
+const DB_PATH = resolve(process.cwd(), '.data/mortality.db')
 
 // Create singleton database connection
 let _db: ReturnType<typeof drizzle> | null = null
