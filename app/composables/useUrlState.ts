@@ -100,8 +100,10 @@ export function useUrlState<T>(
         Reflect.deleteProperty(newQuery, key)
       } else {
         const encodedValue = encoder ? encoder(val) : val
+        console.log(`[useUrlState] Encoded value for ${key}:`, encodedValue)
 
         if (encodedValue === undefined) {
+          console.log(`[useUrlState] Encoded value is undefined, deleting ${key}`)
           Reflect.deleteProperty(newQuery, key)
         } else if (Array.isArray(encodedValue)) {
           // Handle arrays
@@ -109,9 +111,11 @@ export function useUrlState<T>(
         } else {
           // Handle single values
           newQuery[key] = String(encodedValue)
+          console.log(`[useUrlState] Set ${key} in query to:`, newQuery[key])
         }
       }
 
+      console.log(`[useUrlState] Final newQuery:`, newQuery)
       debouncedUpdateUrl(newQuery)
     }
   })
