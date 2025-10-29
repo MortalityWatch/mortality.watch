@@ -34,8 +34,8 @@ export class DataLoader {
     const path = 'world_meta.csv'
     const url = this.getUrl(path)
 
-    // Server-side: no client cache, just fetch
-    if (import.meta.server) {
+    // Server-side or test environment: no client cache, just fetch
+    if (import.meta.server || import.meta.env.TEST) {
       const response = await fetch(url)
       if (!response.ok) {
         throw new Error(`Failed to fetch metadata: ${response.status} ${response.statusText}`)
@@ -70,8 +70,8 @@ export class DataLoader {
     const path = `${country}/${chartType}${ageSuffix}.csv`
     const url = this.getUrl(path)
 
-    // Server-side: no client cache, just fetch
-    if (import.meta.server) {
+    // Server-side or test environment: no client cache, just fetch
+    if (import.meta.server || import.meta.env.TEST) {
       const response = await fetch(url, {
         signal: AbortSignal.timeout(30000) // 30 second timeout
       })

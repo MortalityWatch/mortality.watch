@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { DataLoader } from './dataLoader'
+import { requestCache } from './utils/cache'
 
 describe('DataLoader', () => {
   let loader: DataLoader
@@ -7,6 +8,8 @@ describe('DataLoader', () => {
   beforeEach(() => {
     loader = new DataLoader()
     vi.clearAllMocks()
+    // Clear the cache between tests
+    requestCache.clear()
   })
 
   afterEach(() => {
