@@ -51,6 +51,15 @@ const handleItemsPerPageChange = (val: { value: number } | number) => {
   emit('update:itemsPerPage', newValue)
   emit('update:currentPage', 1)
 }
+
+// Computed for stable select menu options
+const itemsPerPageOptions = computed(() =>
+  props.pagination.options.map(x => ({ label: String(x), value: x }))
+)
+
+const selectedItemsPerPage = computed(() =>
+  itemsPerPageOptions.value.find(x => x.value === props.pagination.itemsPerPage) || itemsPerPageOptions.value[0]
+)
 </script>
 
 <template>
@@ -231,8 +240,8 @@ const handleItemsPerPageChange = (val: { value: number } | number) => {
         <div class="flex items-center gap-2">
           <label class="text-sm text-gray-600 dark:text-gray-400">Per page:</label>
           <USelectMenu
-            :model-value="{ label: String(pagination.itemsPerPage), value: pagination.itemsPerPage }"
-            :items="pagination.options.map(x => ({ label: String(x), value: x }))"
+            :model-value="selectedItemsPerPage"
+            :items="itemsPerPageOptions"
             size="xs"
             class="w-20"
             @update:model-value="handleItemsPerPageChange"
