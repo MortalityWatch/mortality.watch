@@ -4,6 +4,7 @@
 
 import { datasetEntryKeys, type CountryData, type DatasetEntry } from '~/model'
 import { color_scale_diverging_css } from '~/colors'
+import { CSS_CLASSES } from '@/lib/config/constants'
 
 export const getObjectOfArrays = (rows: CountryData[]): DatasetEntry => {
   const result = {} as Record<keyof DatasetEntry, unknown[]>
@@ -35,7 +36,7 @@ export const getByValue = (
 export const getColor = (value: number) => {
   const colors = color_scale_diverging_css()
   if (!value || isNaN(value) || value === Number.MIN_SAFE_INTEGER)
-    return 'color-scale-na'
+    return CSS_CLASSES.COLOR_SCALE_NA
   const n = colors.length
   if (value <= -0.5) return colors[0]
   if (value >= 0.5) return colors[n - 1]
