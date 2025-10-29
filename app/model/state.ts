@@ -27,10 +27,16 @@ import { DataService } from '@/services/dataService'
 /**
  * State class - Manages chart/explorer state
  *
- * Phase 9.3: Simplified architecture using composition over inheritance
- * - Replaced StateCore's 35+ getter/setter pairs with reactive StateProperties
- * - Extracted data fetching to DataService
- * - Improved type safety (no more @ts-expect-error)
+ * Phase 10.2: Proxy pattern for zero-boilerplate property access
+ * - ES6 Proxy automatically delegates simple properties to StateProperties
+ * - Side effects centralized in _sideEffects map
+ * - Only properties with custom logic need explicit getters
+ * - 100% backward compatible API
+ *
+ * Previous phases:
+ * - Phase 9.3: Composition over inheritance (StateProperties, StateHelpers, DataService)
+ * - Eliminated StateCore's 35+ getter/setter pairs
+ * - Improved type safety (no @ts-expect-error)
  */
 export class State implements Serializable {
   // Composition: reactive state properties
@@ -40,6 +46,19 @@ export class State implements Serializable {
   private _helpers: StateHelpers
   private _serializer: StateSerialization
   private _dataService: DataService
+
+  // Side effects map for property setters
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private _sideEffects: Map<string, (val: any) => void>
+
+  // TypeScript declarations for Proxy-delegated properties
+  // These are handled by the Proxy at runtime, but TypeScript needs to know they exist
+  countries!: string[]
+  chartType!: string
+  type!: string
+  isExcess!: boolean
+  showBaseline!: boolean
+  userColors?: string[]
 
   constructor() {
     // Create reactive state with defaults
@@ -54,94 +73,154 @@ export class State implements Serializable {
     // Serializer will be initialized in initFromSavedState with allCountries
     // Use a placeholder that will be replaced
     this._serializer = {} as StateSerialization
+
+    // Initialize side effects map
+    this._sideEffects = this._initializeSideEffects()
+
+    // Return Proxy instead of class instance
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return this._createProxy() as any as State
+  }
+
+  /**
+   * Create Proxy for automatic property delegation
+   *
+   * Delegates property access to _props unless:
+   * - Property is a method on State class
+   * - Property has a getter with custom logic
+   */
+  private _createProxy(): State {
+    return new Proxy(this, {
+      get: (target, prop: string | symbol) => {
+        // Only handle string properties (not symbols like Symbol.toStringTag)
+        if (typeof prop !== 'string') {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          return (target as any)[prop]
+        }
+
+        // 1. Check if it's a method or getter on the State class prototype
+        const descriptor = Object.getOwnPropertyDescriptor(
+          Object.getPrototypeOf(target),
+          prop
+        )
+        if (descriptor) {
+          // If it's a getter, call it
+          if (descriptor.get) {
+            return descriptor.get.call(target)
+          }
+          // If it's a method, bind it to target
+          if (typeof descriptor.value === 'function') {
+            return descriptor.value.bind(target)
+          }
+        }
+
+        // 2. Check private properties (start with _)
+        if (prop.startsWith('_')) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          return (target as any)[prop]
+        }
+
+        // 3. Delegate to _props for state properties
+        if (prop in target._props) {
+          return target._props[prop as keyof StateProperties]
+        }
+
+        // 4. Return undefined for unknown properties
+        return undefined
+      },
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      set: (target, prop: string | symbol, value: any) => {
+        // Only handle string properties
+        if (typeof prop !== 'string') {
+          return false
+        }
+
+        // 1. Check if there's a setter on the State class
+        const descriptor = Object.getOwnPropertyDescriptor(
+          Object.getPrototypeOf(target),
+          prop
+        )
+        if (descriptor?.set) {
+          descriptor.set.call(target, value)
+          return true
+        }
+
+        // 2. Handle private properties
+        if (prop.startsWith('_')) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (target as any)[prop] = value
+          return true
+        }
+
+        // 3. Delegate to _props with optional side effects
+        if (prop in target._props) {
+          // Execute side effect if registered
+          const sideEffect = target._sideEffects.get(prop)
+          if (sideEffect) {
+            sideEffect.call(target, value)
+          }
+
+          // Type assertion needed for Proxy dynamic property assignment
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ;(target._props as any)[prop] = value
+          return true
+        }
+
+        // 4. Unknown property - fail
+        return false
+      }
+    }) as State
+  }
+
+  /**
+   * Initialize side effects map
+   *
+   * Side effects are additional actions that occur when setting certain properties.
+   * These were previously embedded in setter methods.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private _initializeSideEffects(): Map<string, (val: any) => void> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const effects = new Map<string, (val: any) => void>()
+
+    // type: Reset age groups for ASMR/LE, disable excess for population
+    effects.set('type', function (this: State, val: string) {
+      if (val.startsWith('asmr') || val.startsWith('le')) {
+        this._props.ageGroups = ['all']
+      }
+      if (val === 'population') {
+        this._props.isExcess = false
+        this._props.baselineMethod = Defaults.baselineMethod
+      }
+    })
+
+    return effects
   }
 
   // ============================================================================
-  // PUBLIC API - Property Accessors (for backward compatibility)
+  // PUBLIC API - Getters with Custom Logic Only
   // ============================================================================
+  // Note: Simple property access is now handled by Proxy
+  // Only properties with conditional logic, defaults, or computed values need explicit getters
 
-  // Countries
-  get countries(): string[] {
-    return this._props.countries
-  }
-
-  set countries(val: string[]) {
-    this._props.countries = val
-  }
-
-  // Chart Type
-  get chartType(): string {
-    return this._props.chartType
-  }
-
-  set chartType(val: string) {
-    this._props.chartType = val
-  }
-
-  // Type
-  get type(): string {
-    return this._props.type
-  }
-
-  set type(val: string) {
-    // Side effect: reset age groups for certain types
-    if (val.startsWith('asmr') || val.startsWith('le')) {
-      this._props.ageGroups = ['all']
-    }
-    if (val === 'population') {
-      this._props.isExcess = false
-      this._props.baselineMethod = Defaults.baselineMethod
-    }
-    this._props.type = val
-  }
-
-  // Chart Style
+  // Chart Style: Defaults to 'bar' for excess, 'line' otherwise
   get chartStyle(): string {
     return this._props.chartStyle || (this._props.isExcess ? 'bar' : 'line')
   }
 
-  set chartStyle(val: string) {
-    this._props.chartStyle = val
-  }
-
-  // Is Excess
-  get isExcess(): boolean {
-    return this._props.isExcess
-  }
-
-  set isExcess(val: boolean) {
-    this._props.isExcess = val
-  }
-
-  // Age Groups
+  // Age Groups: Always ['all'] for ASMR types
   get ageGroups(): string[] {
     if (this.isAsmrType()) return ['all']
     return this._props.ageGroups
   }
 
-  set ageGroups(val: string[]) {
-    this._props.ageGroups = val
-  }
-
-  // Standard Population
+  // Standard Population: Context-dependent default
   get standardPopulation(): string {
     return this._props.standardPopulation || (this.countries.length > 1 ? Defaults.standardPopulation : 'country')
   }
 
-  set standardPopulation(val: string) {
-    this._props.standardPopulation = val
-  }
-
-  // Show Baseline
-  get showBaseline(): boolean {
-    return this._props.showBaseline
-  }
-
-  set showBaseline(val: boolean) {
-    this._props.showBaseline = val
-  }
-
-  // Baseline Method
+  // Baseline Method: Type-dependent default
   get baselineMethod(): string {
     if (this._props.baselineMethod) return this._props.baselineMethod
     // Default logic
@@ -154,41 +233,25 @@ export class State implements Serializable {
     }
   }
 
-  set baselineMethod(val: string) {
-    this._props.baselineMethod = val
-  }
-
-  // Cumulative
+  // Cumulative: Disabled when not in excess mode
   get cumulative(): boolean {
     if (!this.isExcess) return false
     return this._props.cumulative
   }
 
-  set cumulative(val: boolean) {
-    this._props.cumulative = val
-  }
-
-  // Show Total
+  // Show Total: Only available for bar charts in cumulative mode
   get showTotal(): boolean {
     if (!this.isBarChartStyle() || !this.cumulative) return false
     return this._props.showTotal
   }
 
-  set showTotal(val: boolean) {
-    this._props.showTotal = val
-  }
-
-  // Maximize
+  // Maximize: Disabled when logarithmic
   get maximize(): boolean {
     if (this.isLogarithmic) return false
     return this._props.maximize
   }
 
-  set maximize(val: boolean) {
-    this._props.maximize = val
-  }
-
-  // Show Prediction Interval
+  // Show Prediction Interval: Complex conditional logic
   get showPredictionInterval(): boolean {
     if (
       (!this.isExcess && !this.showBaseline)
@@ -203,40 +266,19 @@ export class State implements Serializable {
     return this.isExcess ? !Defaults.showPredictionInterval : Defaults.showPredictionInterval
   }
 
-  set showPredictionInterval(val: boolean) {
-    this._props.showPredictionInterval = val
-  }
-
-  // Show Percentage
+  // Show Percentage: Only available in excess mode
   get showPercentage(): boolean {
     if (!this.isExcess) return false
     return this._props.showPercentage ?? (this.isExcess && !this.cumulative)
   }
 
-  set showPercentage(val: boolean) {
-    this._props.showPercentage = val
-  }
-
-  // Is Logarithmic
+  // Is Logarithmic: Disabled for matrix charts or excess mode
   get isLogarithmic(): boolean {
     if (this.isMatrixChartStyle() || this.isExcess) return false
     return this._props.isLogarithmic
   }
 
-  set isLogarithmic(val: boolean) {
-    this._props.isLogarithmic = val
-  }
-
-  // User Colors
-  get userColors(): string[] | undefined {
-    return this._props.userColors
-  }
-
-  set userColors(val: string[] | undefined) {
-    this._props.userColors = val
-  }
-
-  // Date From (with default logic)
+  // Date From: With default fallback
   get dateFrom(): string {
     return this._props.dateFrom ?? this._defaultFromDate() ?? ''
   }
@@ -245,7 +287,7 @@ export class State implements Serializable {
     this._props.dateFrom = val
   }
 
-  // Date To (with default logic)
+  // Date To: With default fallback
   get dateTo(): string {
     return this._props.dateTo ?? this._defaultToDate() ?? ''
   }
@@ -254,7 +296,7 @@ export class State implements Serializable {
     this._props.dateTo = val
   }
 
-  // Slider Start (with default logic)
+  // Slider Start: With default fallback
   get sliderStart(): string {
     return this._props.sliderStart ?? this._defaultSliderStart() ?? ''
   }
@@ -263,7 +305,7 @@ export class State implements Serializable {
     this._props.sliderStart = val
   }
 
-  // Baseline Date From (with default logic)
+  // Baseline Date From: Complex default with label dependency
   get baselineDateFrom(): string {
     if (this._props.baselineDateFrom) return this._props.baselineDateFrom
     const labels = unref(this.allChartLabels)!
@@ -274,7 +316,7 @@ export class State implements Serializable {
     this._props.baselineDateFrom = val
   }
 
-  // Baseline Date To (with default logic)
+  // Baseline Date To: With default fallback
   get baselineDateTo(): string {
     return this._props.baselineDateTo ?? defaultBaselineToDate(this.chartType as ChartType)
   }
@@ -283,7 +325,7 @@ export class State implements Serializable {
     this._props.baselineDateTo = val
   }
 
-  // Show Labels (with custom logic)
+  // Show Labels: Complex conditional with chart data dependency
   get showLabels(): boolean {
     const val = this._props.showLabels
     if (val !== undefined) return val
@@ -292,10 +334,6 @@ export class State implements Serializable {
       && this.allChartData
       && this.dateToIndex() - this.dateFromIndex() + 1 <= (isMobile() ? 20 : 60)
     )
-  }
-
-  set showLabels(val: boolean) {
-    this._props.showLabels = val
   }
 
   // Computed properties
