@@ -28,7 +28,6 @@ import {
   arrayBufferToBase64,
   compress
 } from '@/lib/compression/compress.browser'
-import { CHART_RESIZE } from '@/lib/constants'
 import { showToast } from '@/toast'
 
 // Feature access for tier-based features (currently unused but may be needed in the future)
