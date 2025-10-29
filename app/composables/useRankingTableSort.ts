@@ -21,11 +21,11 @@ export function useRankingTableSort() {
     }
   )
 
-  const itemsPerPage = useUrlState('pp', 10,
+  const itemsPerPage = useUrlState('pp', 25,
     val => String(val),
     (val) => {
       const parsed = parseInt(val)
-      return itemsPerPageOptions.includes(parsed) ? parsed : 10
+      return itemsPerPageOptions.includes(parsed) ? parsed : 25
     }
   )
 

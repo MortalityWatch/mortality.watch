@@ -18,15 +18,13 @@
         v-if="progress !== undefined && progress > 0"
         class="text-sm text-gray-500 dark:text-gray-500 mt-2"
       >
-        {{ asPercentage(progress, 0, '', '') }}
+        {{ Math.round(progress) }}%
       </p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { asPercentage } from '@/lib/utils/formatting'
-
 interface Props {
   text?: string
   size?: 'sm' | 'md' | 'lg' | 'xl'

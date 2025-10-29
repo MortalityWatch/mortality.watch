@@ -46,8 +46,9 @@ const handlePageChange = (page: number) => {
   emit('update:currentPage', page)
 }
 
-const handleItemsPerPageChange = (val: { value: number }) => {
-  emit('update:itemsPerPage', val.value ?? val)
+const handleItemsPerPageChange = (val: { value: number } | number) => {
+  const newValue = typeof val === 'number' ? val : val.value
+  emit('update:itemsPerPage', newValue)
   emit('update:currentPage', 1)
 }
 </script>
