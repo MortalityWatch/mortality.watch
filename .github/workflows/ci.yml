@@ -124,7 +124,7 @@ jobs:
         timeout-minutes: 5
 
       - name: Run E2E tests
-        run: npm run test:e2e -- --project=chromium
+        run: npx playwright test --project=chromium
         timeout-minutes: 15
 
       - name: Upload Playwright Report

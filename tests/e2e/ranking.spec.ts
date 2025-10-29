@@ -21,8 +21,8 @@ test.describe('Ranking Page', () => {
       await loadingSpinner.waitFor({ state: 'hidden', timeout: 30000 })
     }
 
-    // Ranking table should be visible after loading
-    await expect(page.getByText(/Show in Mortality Explorer/i)).toBeVisible({ timeout: 30000 })
+    // Ranking table should be visible after loading (button text is "Show in Explorer")
+    await expect(page.getByText(/Show in Explorer/i)).toBeVisible({ timeout: 30000 })
   })
 
   test('should display data selection controls', async ({ page }) => {
@@ -49,7 +49,7 @@ test.describe('Ranking Page', () => {
 
     // Check for the main heading (Excess Mortality Ranking is h1, but card headers are h2)
     // Just check that data has loaded by looking for the explorer button
-    const explorerButton = page.getByRole('link', { name: /Show in Mortality Explorer/i })
+    const explorerButton = page.getByRole('link', { name: /Show in Explorer/i })
     await expect(explorerButton).toBeVisible({ timeout: 30000 })
   })
 
@@ -59,8 +59,8 @@ test.describe('Ranking Page', () => {
     // Wait for page load
     await page.waitForLoadState('networkidle')
 
-    // Look for "Show in Mortality Explorer" button
-    const explorerButton = page.getByRole('link', { name: /Show in Mortality Explorer/i })
+    // Look for "Show in Explorer" button
+    const explorerButton = page.getByRole('link', { name: /Show in Explorer/i })
     await expect(explorerButton).toBeVisible({ timeout: 30000 })
 
     // Verify it's a link (has href)

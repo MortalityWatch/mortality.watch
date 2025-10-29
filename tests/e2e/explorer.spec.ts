@@ -39,14 +39,14 @@ test.describe('Explorer Page', () => {
   test('should display chart canvas or container', async ({ page }) => {
     await page.goto('/explorer')
 
-    // Wait for chart to potentially render
-    await page.waitForTimeout(2000)
+    // Wait for data to load
+    await page.waitForLoadState('networkidle')
 
-    // Look for canvas element (Chart.js) or chart container
-    const chart = page.locator('canvas, [class*="chart"]').first()
+    // Look for canvas element (Chart.js renders actual chart)
+    // With default countries (USA, SWE), chart should render
+    await page.waitForSelector('canvas#chart', { timeout: 10000 })
 
-    // Chart might not render immediately without data, so just check for container
-    const hasChart = await chart.count() > 0
-    expect(hasChart).toBeTruthy()
+    const chart = page.locator('canvas#chart')
+    await expect(chart).toBeVisible()
   })
 })

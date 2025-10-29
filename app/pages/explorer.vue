@@ -24,10 +24,6 @@ import ExplorerChartActions from '@/components/explorer/ExplorerChartActions.vue
 import { getChartColors } from '@/colors'
 import { getColorScale } from '@/lib/chart/chartColors'
 import { useRoute, useRouter } from 'vue-router'
-import {
-  arrayBufferToBase64,
-  compress
-} from '@/lib/compression/compress.browser'
 import { showToast } from '@/toast'
 
 // Feature access for tier-based features (currently unused but may be needed in the future)
@@ -342,12 +338,92 @@ const screenshotChart = () => {
   }
 }
 
-const saveChart = async () => {
-  const base = `${window.location.origin}/?qr=`
-  const query = JSON.stringify(window.location)
-  const encodedQuery = arrayBufferToBase64(await compress(query))
-  const url = base + encodeURIComponent(encodedQuery)
-  window.open(url.replaceAll('/?qr', '/chart.png?qr'), '_blank')
+// Save Chart Modal State
+const showSaveModal = ref(false)
+const savingChart = ref(false)
+const saveChartName = ref('')
+const saveChartDescription = ref('')
+const saveChartPublic = ref(false)
+const saveError = ref('')
+const saveSuccess = ref(false)
+
+const saveChart = () => {
+  // Open save modal
+  showSaveModal.value = true
+  saveChartName.value = ''
+  saveChartDescription.value = ''
+  saveChartPublic.value = false
+  saveError.value = ''
+  saveSuccess.value = false
+}
+
+const saveToDB = async () => {
+  if (!saveChartName.value.trim()) {
+    saveError.value = 'Chart name is required'
+    return
+  }
+
+  savingChart.value = true
+  saveError.value = ''
+  saveSuccess.value = false
+
+  try {
+    // Serialize current state
+    const chartStateData = {
+      countries: state.countries.value,
+      type: state.type.value,
+      chartType: state.chartType.value,
+      ageGroups: state.ageGroups.value,
+      chartStyle: state.chartStyle.value,
+      isExcess: state.isExcess.value,
+      showBaseline: state.showBaseline.value,
+      baselineMethod: state.baselineMethod.value,
+      baselineDateFrom: state.baselineDateFrom.value,
+      baselineDateTo: state.baselineDateTo.value,
+      cumulative: state.cumulative.value,
+      showPercentage: state.showPercentage.value,
+      showPredictionInterval: state.showPredictionInterval.value,
+      showTotal: state.showTotal.value,
+      dateFrom: state.dateFrom.value,
+      dateTo: state.dateTo.value,
+      standardPopulation: state.standardPopulation.value,
+      isLogarithmic: state.isLogarithmic.value,
+      maximize: state.maximize.value,
+      showLabels: state.showLabels.value
+    }
+
+    const response = await $fetch('/api/charts', {
+      method: 'POST',
+      body: {
+        name: saveChartName.value.trim(),
+        description: saveChartDescription.value.trim() || null,
+        chartState: JSON.stringify(chartStateData),
+        chartType: 'explorer',
+        isPublic: saveChartPublic.value
+      }
+    })
+
+    saveSuccess.value = true
+    showToast(
+      saveChartPublic.value
+        ? 'Chart saved and published!'
+        : 'Chart saved!',
+      'success'
+    )
+
+    // Close modal and optionally navigate
+    setTimeout(() => {
+      showSaveModal.value = false
+      if (saveChartPublic.value && response.chart?.slug) {
+        navigateTo(`/charts/${response.chart.slug}`)
+      }
+    }, 1500)
+  } catch (err) {
+    console.error('Failed to save chart:', err)
+    saveError.value = err instanceof Error ? err.message : 'Failed to save chart'
+  } finally {
+    savingChart.value = false
+  }
 }
 </script>
 
@@ -453,6 +529,83 @@ const saveChart = async () => {
         </div>
       </div>
     </div>
+
+    <!-- Save Chart Modal -->
+    <UModal
+      v-model="showSaveModal"
+      title="Save Chart"
+    >
+      <div class="p-4 space-y-4">
+        <!-- Name Input -->
+        <UFormGroup
+          label="Chart Name"
+          required
+        >
+          <UInput
+            v-model="saveChartName"
+            placeholder="Enter a name for your chart"
+          />
+        </UFormGroup>
+
+        <!-- Description Input -->
+        <UFormGroup label="Description (optional)">
+          <UTextarea
+            v-model="saveChartDescription"
+            placeholder="Add a description (optional)"
+            :rows="3"
+          />
+        </UFormGroup>
+
+        <!-- Public Toggle -->
+        <UFormGroup>
+          <div class="flex items-center gap-3">
+            <UToggle v-model="saveChartPublic" />
+            <div>
+              <div class="font-medium text-sm">
+                Make this chart public
+              </div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">
+                Public charts appear in the chart gallery
+              </div>
+            </div>
+          </div>
+        </UFormGroup>
+
+        <!-- Error Message -->
+        <UAlert
+          v-if="saveError"
+          color="error"
+          variant="subtle"
+          :title="saveError"
+        />
+
+        <!-- Success Message -->
+        <UAlert
+          v-if="saveSuccess"
+          color="success"
+          variant="subtle"
+          title="Chart saved successfully!"
+        />
+      </div>
+
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            label="Cancel"
+            @click="showSaveModal = false"
+          />
+          <UButton
+            color="primary"
+            label="Save Chart"
+            :loading="savingChart"
+            :disabled="!saveChartName.trim()"
+            @click="saveToDB"
+          />
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
 
