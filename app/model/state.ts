@@ -38,7 +38,7 @@ export class State implements Serializable {
 
   // Composition: helpers and services
   private _helpers: StateHelpers
-  private _serializer: StateSerialization
+  private _serializer: StateSerialization | null = null
   private _dataService: DataService
 
   constructor() {
@@ -51,9 +51,16 @@ export class State implements Serializable {
     // Data service
     this._dataService = new DataService()
 
-    // Serializer will be initialized in initFromSavedState with allCountries
-    // Use a placeholder that will be replaced
-    this._serializer = {} as StateSerialization
+    // Note: Serializer initialized via setSerializer() after country metadata is loaded
+    // This breaks the circular dependency between State and StateSerialization
+  }
+
+  /**
+   * Initialize the state serializer (dependency injection)
+   * Must be called after country metadata is available
+   */
+  setSerializer(allCountries: Record<string, Country>): void {
+    this._serializer = new StateSerialization(this._props, allCountries)
   }
 
   // ============================================================================
@@ -377,11 +384,13 @@ export class State implements Serializable {
     // Load country metadata if needed
     if (!this.allCountries) this.allCountries = await loadCountryMetadata()
 
-    // Initialize serializer with state properties and countries
-    this._serializer = new StateSerialization(this._props, this.allCountries)
+    // Initialize serializer via dependency injection
+    this.setSerializer(this.allCountries)
 
     // Use the serializer to load state
-    await this._serializer.initFromSavedState(locationQuery)
+    if (this._serializer) {
+      await this._serializer.initFromSavedState(locationQuery)
+    }
   }
 
   private configureOptions = () => {

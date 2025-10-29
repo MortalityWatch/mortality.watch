@@ -3,9 +3,11 @@
  *
  * Abstraction layer for fetching mortality data.
  * Handles environment-aware data loading:
- * - Client: Uses API route (goes through server proxy with caching)
- * - Server: Direct S3 access (caching handled by API routes)
+ * - Client: Uses API route with SWR caching (server proxy + client-side cache)
+ * - Server: Direct S3 access (server-side caching only)
  */
+
+import { requestCache } from './utils/cache'
 
 const S3_BASE = 'https://s3.mortality.watch/data/mortality'
 
@@ -26,18 +28,38 @@ export class DataLoader {
 
   /**
    * Fetch metadata CSV
+   * Uses client-side cache on client, direct fetch on server
    */
   async fetchMetadata(): Promise<string> {
-    const url = this.getUrl('world_meta.csv')
-    const response = await fetch(url)
-    if (!response.ok) {
-      throw new Error(`Failed to fetch metadata: ${response.status} ${response.statusText}`)
+    const path = 'world_meta.csv'
+    const url = this.getUrl(path)
+
+    // Server-side: no client cache, just fetch
+    if (import.meta.server) {
+      const response = await fetch(url)
+      if (!response.ok) {
+        throw new Error(`Failed to fetch metadata: ${response.status} ${response.statusText}`)
+      }
+      return response.text()
     }
-    return response.text()
+
+    // Client-side: use SWR cache
+    return requestCache.get(
+      `metadata:${path}`,
+      async () => {
+        const response = await fetch(url)
+        if (!response.ok) {
+          throw new Error(`Failed to fetch metadata: ${response.status} ${response.statusText}`)
+        }
+        return response.text()
+      },
+      { staleTime: 10 * 60 * 1000 } // 10 minutes stale time for metadata
+    )
   }
 
   /**
    * Fetch country data CSV
+   * Uses client-side cache on client, direct fetch on server
    */
   async fetchData(
     country: string,
@@ -48,15 +70,35 @@ export class DataLoader {
     const path = `${country}/${chartType}${ageSuffix}.csv`
     const url = this.getUrl(path)
 
-    const response = await fetch(url, {
-      signal: AbortSignal.timeout(30000) // 30 second timeout
-    })
+    // Server-side: no client cache, just fetch
+    if (import.meta.server) {
+      const response = await fetch(url, {
+        signal: AbortSignal.timeout(30000) // 30 second timeout
+      })
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch data for ${country}/${chartType}/${ageGroup}: ${response.status}`)
+      if (!response.ok) {
+        throw new Error(`Failed to fetch data for ${country}/${chartType}/${ageGroup}: ${response.status}`)
+      }
+
+      return response.text()
     }
 
-    return response.text()
+    // Client-side: use SWR cache
+    return requestCache.get(
+      `data:${country}:${chartType}:${ageGroup}`,
+      async () => {
+        const response = await fetch(url, {
+          signal: AbortSignal.timeout(30000) // 30 second timeout
+        })
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch data for ${country}/${chartType}/${ageGroup}: ${response.status}`)
+        }
+
+        return response.text()
+      },
+      { staleTime: 5 * 60 * 1000 } // 5 minutes stale time for country data
+    )
   }
 
   /**
