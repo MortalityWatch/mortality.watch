@@ -1,10 +1,20 @@
 <script setup lang="ts">
+const { isIncognito } = useIncognitoMode()
+const { isAuthenticated, user } = useAuth()
+
+// Main navigation items
 const items = computed(() => [{
   label: 'Explorer',
   to: '/explorer'
 }, {
   label: 'Ranking',
   to: '/ranking'
+}, {
+  label: 'Charts',
+  to: '/charts'
+}, {
+  label: 'Pricing',
+  to: '/pricing'
 }, {
   label: 'Sources',
   to: '/sources'
@@ -14,13 +24,37 @@ const items = computed(() => [{
 }, {
   label: 'About',
   to: '/about'
-}, {
-  label: 'Donate',
-  to: '/donate'
 }])
 
-const { isIncognito } = useIncognitoMode()
-const { isAuthenticated } = useAuth()
+// User menu items (shown when authenticated)
+const userMenuItems = computed(() => {
+  const menu = [{
+    label: 'My Charts',
+    to: '/my-charts',
+    icon: 'i-lucide-save'
+  }, {
+    label: 'Profile',
+    to: '/profile',
+    icon: 'i-lucide-user'
+  }]
+
+  // Add admin link if user is admin
+  if (user.value?.role === 'admin') {
+    menu.push({
+      label: 'Admin Panel',
+      to: '/admin/featured-charts',
+      icon: 'i-lucide-shield'
+    })
+  }
+
+  menu.push({
+    label: 'Sign Out',
+    to: '/logout',
+    icon: 'i-lucide-log-out'
+  })
+
+  return menu
+})
 </script>
 
 <template>
@@ -46,12 +80,17 @@ const { isAuthenticated } = useAuth()
 
       <!-- Authentication buttons -->
       <template v-if="isAuthenticated">
-        <UButton
-          to="/profile"
-          variant="ghost"
-          icon="i-lucide-user"
-          aria-label="Go to profile"
-        />
+        <UDropdown
+          :items="[userMenuItems]"
+          :popper="{ placement: 'bottom-end' }"
+        >
+          <UButton
+            variant="ghost"
+            icon="i-lucide-user"
+            :label="user?.displayName || user?.firstName || 'Account'"
+            trailing-icon="i-lucide-chevron-down"
+          />
+        </UDropdown>
       </template>
       <template v-else>
         <UButton

@@ -272,6 +272,100 @@ watch(
   },
   { flush: 'post' } // Run after component updates
 )
+
+// Save Ranking Modal State
+const showSaveModal = ref(false)
+const savingRanking = ref(false)
+const saveRankingName = ref('')
+const saveRankingDescription = ref('')
+const saveRankingPublic = ref(false)
+const saveError = ref('')
+const saveSuccess = ref(false)
+
+const saveRanking = () => {
+  showSaveModal.value = true
+  saveRankingName.value = ''
+  saveRankingDescription.value = ''
+  saveRankingPublic.value = false
+  saveError.value = ''
+  saveSuccess.value = false
+}
+
+const saveToDB = async () => {
+  if (!saveRankingName.value.trim()) {
+    saveError.value = 'Ranking name is required'
+    return
+  }
+
+  savingRanking.value = true
+  saveError.value = ''
+  saveSuccess.value = false
+
+  try {
+    const rankingStateData = {
+      // Main type selection
+      a: showASMR.value,
+      p: selectedPeriodOfTime.value.value,
+      j: selectedJurisdictionType.value.value,
+
+      // Date range
+      df: sliderValue.value[0],
+      dt: sliderValue.value[1],
+
+      // Baseline settings
+      bm: selectedBaselineMethod.value.value,
+      bf: baselineSliderValue.value[0],
+      bt: baselineSliderValue.value[1],
+
+      // Display options
+      sp: selectedStandardPopulation.value.value,
+      dp: selectedDecimalPrecision.value.value,
+      t: showTotals.value,
+      to: showTotalsOnly.value,
+      r: showRelative.value,
+      pi: showPI.value,
+      c: cumulative.value,
+      i: !hideIncomplete.value,
+
+      // Sort settings
+      sortField: sortField.value,
+      sortOrder: sortOrder.value,
+      currentPage: currentPage.value,
+      itemsPerPage: itemsPerPage.value
+    }
+
+    const response = await $fetch('/api/charts', {
+      method: 'POST',
+      body: {
+        name: saveRankingName.value.trim(),
+        description: saveRankingDescription.value.trim() || null,
+        chartState: JSON.stringify(rankingStateData),
+        chartType: 'ranking',
+        isPublic: saveRankingPublic.value
+      }
+    })
+
+    saveSuccess.value = true
+    showToast(
+      saveRankingPublic.value
+        ? 'Ranking saved and published!'
+        : 'Ranking saved!',
+      'success'
+    )
+
+    setTimeout(() => {
+      showSaveModal.value = false
+      if (saveRankingPublic.value && response.chart?.slug) {
+        navigateTo(`/charts/${response.chart.slug}`)
+      }
+    }, 1500)
+  } catch (err) {
+    console.error('Failed to save ranking:', err)
+    saveError.value = err instanceof Error ? err.message : 'Failed to save ranking'
+  } finally {
+    savingRanking.value = false
+  }
+}
 </script>
 
 <template>
@@ -354,14 +448,23 @@ watch(
               @update:current-page="(val) => currentPage = val"
               @update:items-per-page="(val) => itemsPerPage = val"
             />
-            <UButton
-              :to="explorerLink()"
-              variant="outline"
-              size="lg"
-              class="mt-4"
-            >
-              Show in Mortality Explorer
-            </UButton>
+            <div class="flex gap-2 mt-4">
+              <UButton
+                :to="explorerLink()"
+                variant="outline"
+                size="lg"
+                class="flex-1"
+              >
+                Show in Explorer
+              </UButton>
+              <UButton
+                icon="i-lucide-save"
+                size="lg"
+                @click="saveRanking"
+              >
+                Save Ranking
+              </UButton>
+            </div>
           </UCard>
         </div>
 
@@ -428,5 +531,82 @@ watch(
         </div>
       </div>
     </div>
+
+    <!-- Save Ranking Modal -->
+    <UModal
+      v-model="showSaveModal"
+      title="Save Ranking"
+    >
+      <div class="p-4 space-y-4">
+        <!-- Name Input -->
+        <UFormGroup
+          label="Ranking Name"
+          required
+        >
+          <UInput
+            v-model="saveRankingName"
+            placeholder="Enter a name for your ranking"
+          />
+        </UFormGroup>
+
+        <!-- Description Input -->
+        <UFormGroup label="Description (optional)">
+          <UTextarea
+            v-model="saveRankingDescription"
+            placeholder="Add a description (optional)"
+            :rows="3"
+          />
+        </UFormGroup>
+
+        <!-- Public Toggle -->
+        <UFormGroup>
+          <div class="flex items-center gap-3">
+            <UToggle v-model="saveRankingPublic" />
+            <div>
+              <div class="font-medium text-sm">
+                Make this ranking public
+              </div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">
+                Public rankings appear in the chart gallery
+              </div>
+            </div>
+          </div>
+        </UFormGroup>
+
+        <!-- Error Message -->
+        <UAlert
+          v-if="saveError"
+          color="error"
+          variant="subtle"
+          :title="saveError"
+        />
+
+        <!-- Success Message -->
+        <UAlert
+          v-if="saveSuccess"
+          color="success"
+          variant="subtle"
+          title="Ranking saved successfully!"
+        />
+      </div>
+
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            label="Cancel"
+            @click="showSaveModal = false"
+          />
+          <UButton
+            color="primary"
+            label="Save Ranking"
+            :loading="savingRanking"
+            :disabled="!saveRankingName.trim()"
+            @click="saveToDB"
+          />
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
