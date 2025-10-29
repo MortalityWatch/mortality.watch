@@ -351,7 +351,7 @@ watch(
                 options: itemsPerPageOptions,
                 totalPages
               }"
-              :loading="{ isUpdating, hasLoaded, progress: updateProgress }"
+              :loading="{ isUpdating, hasLoaded, progress: updateProgress, initialLoadDone }"
               @toggle-sort="toggleSort"
             />
             <UButton

@@ -61,7 +61,7 @@ export function useRankingState() {
 
   // Display toggles
   const showASMR = computed({
-    get: () => decodeBool(route.query.a as string) ?? false, // Default to CMR since most countries lack ASMR data
+    get: () => decodeBool(route.query.a as string) ?? true, // Default to ASMR for standardized comparison
     set: (val: boolean) => updateQuery({ a: encodeBool(val) })
   })
 
