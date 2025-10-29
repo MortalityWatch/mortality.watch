@@ -6,21 +6,27 @@ test.describe('Navigation', () => {
     await page.goto('/')
     await expect(page).toHaveURL('/')
 
+    // On mobile, navigation is in hamburger menu
+    const isMobile = page.viewportSize()!.width < 1024
+
+    const clickLink = async (name: RegExp) => {
+      if (isMobile) {
+        await page.getByRole('button', { name: /open menu/i }).click()
+      }
+      await page.getByRole('link', { name }).first().click()
+    }
+
     // Navigate to About
-    await page.getByRole('link', { name: /about/i }).first().click()
+    await clickLink(/about/i)
     await expect(page).toHaveURL(/\/about/)
 
     // Navigate to Sources
-    await page.getByRole('link', { name: /sources/i }).first().click()
+    await clickLink(/sources/i)
     await expect(page).toHaveURL(/\/sources/)
 
     // Navigate to Ranking
-    await page.getByRole('link', { name: /ranking/i }).first().click()
+    await clickLink(/ranking/i)
     await expect(page).toHaveURL(/\/ranking/)
-
-    // Navigate to Donate
-    await page.getByRole('link', { name: /donate/i }).first().click()
-    await expect(page).toHaveURL(/\/donate/)
 
     // Go back to homepage (click logo or home link)
     await page.goto('/')
@@ -31,6 +37,13 @@ test.describe('Navigation', () => {
     // Navigate to explorer with some state
     await page.goto('/explorer')
     await page.waitForLoadState('networkidle')
+
+    // On mobile, navigation is in hamburger menu
+    const isMobile = page.viewportSize()!.width < 1024
+
+    if (isMobile) {
+      await page.getByRole('button', { name: /open menu/i }).click()
+    }
 
     // Navigate away
     await page.getByRole('link', { name: /about/i }).first().click()

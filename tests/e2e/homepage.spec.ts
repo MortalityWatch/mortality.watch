@@ -25,7 +25,15 @@ test.describe('Homepage', () => {
   test('should have navigation links', async ({ page }) => {
     await page.goto('/')
 
-    // Check main navigation
+    // On mobile, navigation is in hamburger menu
+    const isMobile = page.viewportSize()!.width < 1024
+
+    if (isMobile) {
+      // Open hamburger menu
+      await page.getByRole('button', { name: /open menu/i }).click()
+    }
+
+    // Check main navigation links are present
     await expect(page.getByRole('link', { name: /explorer/i })).toBeVisible()
     await expect(page.getByRole('link', { name: /ranking/i })).toBeVisible()
     await expect(page.getByRole('link', { name: /about/i })).toBeVisible()
@@ -33,6 +41,14 @@ test.describe('Homepage', () => {
 
   test('should navigate to explorer page', async ({ page }) => {
     await page.goto('/')
+
+    // On mobile, navigation is in hamburger menu
+    const isMobile = page.viewportSize()!.width < 1024
+
+    if (isMobile) {
+      // Open hamburger menu
+      await page.getByRole('button', { name: /open menu/i }).click()
+    }
 
     // Click explorer link
     await page.getByRole('link', { name: /explorer/i }).click()
