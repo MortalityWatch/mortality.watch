@@ -14,6 +14,12 @@
       >
         {{ text }}
       </p>
+      <p
+        v-if="progress !== undefined && progress > 0"
+        class="text-sm text-gray-500 dark:text-gray-500 mt-2"
+      >
+        {{ Math.round(progress * 100) }}%
+      </p>
     </div>
   </div>
 </template>
@@ -23,12 +29,14 @@ interface Props {
   text?: string
   size?: 'sm' | 'md' | 'lg' | 'xl'
   height?: string
+  progress?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
   text: 'Loading...',
   size: 'lg',
-  height: 'h-64'
+  height: 'h-64',
+  progress: undefined
 })
 
 const sizeClass = computed(() => {

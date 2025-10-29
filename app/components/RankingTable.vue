@@ -55,23 +55,12 @@ const handleItemsPerPageChange = (val: { value: number }) => {
 <template>
   <div>
     <!-- Loading state for initial data load -->
-    <div
+    <LoadingSpinner
       v-if="!loading.initialLoadDone"
-      class="flex items-center justify-center py-16"
-    >
-      <div class="text-center">
-        <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4" />
-        <p class="text-gray-600 dark:text-gray-400">
-          Loading ranking data...
-        </p>
-        <p
-          v-if="loading.progress > 0"
-          class="text-sm text-gray-500 dark:text-gray-500 mt-2"
-        >
-          {{ Math.round(loading.progress * 100) }}%
-        </p>
-      </div>
-    </div>
+      text="Loading ranking data..."
+      height="py-16"
+      :progress="loading.progress"
+    />
 
     <div
       v-else-if="data.labels.length"
