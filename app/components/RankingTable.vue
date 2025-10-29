@@ -47,7 +47,10 @@ const handlePageChange = (page: number) => {
 }
 
 const handleItemsPerPageChange = (val: { value: number } | number) => {
+  console.log('[RankingTable] handleItemsPerPageChange called with:', val)
   const newValue = typeof val === 'number' ? val : val.value
+  console.log('[RankingTable] Extracted value:', newValue)
+  console.log('[RankingTable] Current itemsPerPage:', props.pagination.itemsPerPage)
   emit('update:itemsPerPage', newValue)
   emit('update:currentPage', 1)
 }
