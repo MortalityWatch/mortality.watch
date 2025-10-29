@@ -351,8 +351,8 @@ watch(
               }"
               :loading="{ isUpdating, hasLoaded, progress: updateProgress, initialLoadDone }"
               @toggle-sort="toggleSort"
-              @update:current-page="(val) => { console.log('[ranking.vue] update:current-page:', val); currentPage = val }"
-              @update:items-per-page="(val) => { console.log('[ranking.vue] update:items-per-page:', val, 'before:', itemsPerPage); itemsPerPage = val; console.log('[ranking.vue] after:', itemsPerPage) }"
+              @update:current-page="(val) => currentPage = val"
+              @update:items-per-page="(val) => itemsPerPage = val"
             />
             <UButton
               :to="explorerLink()"

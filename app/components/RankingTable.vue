@@ -47,12 +47,8 @@ const handlePageChange = (page: number) => {
 }
 
 const handleItemsPerPageChange = (val: { value: number } | number) => {
-  console.log('[RankingTable] handleItemsPerPageChange called with:', val)
   const newValue = typeof val === 'number' ? val : val.value
-  console.log('[RankingTable] Extracted value:', newValue)
-  console.log('[RankingTable] Current itemsPerPage:', props.pagination.itemsPerPage)
-
-  // Emit both updates synchronously so they batch in the same tick
+  // Emit currentPage first, then itemsPerPage to ensure both are batched in URL update
   emit('update:currentPage', 1)
   emit('update:itemsPerPage', newValue)
 }
