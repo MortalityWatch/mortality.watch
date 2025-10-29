@@ -57,42 +57,93 @@
         height="h-64"
       />
 
-      <!-- Image grid -->
+      <!-- Charts grid -->
       <div
-        v-else-if="images.length > 0"
+        v-else-if="featuredCharts.length > 0"
         class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
       >
         <UCard
-          v-for="image of images"
-          :key="image.title"
+          v-for="chart of featuredCharts"
+          :key="chart.id"
           class="hover:shadow-lg transition-shadow"
         >
           <template #header>
-            <h3 class="text-lg font-semibold">
-              {{ image.title }}
-            </h3>
-          </template>
-          <p class="text-gray-600 dark:text-gray-400 mb-4">
-            {{ image.description }}
-          </p>
-          <div
-            class="overflow-hidden rounded-md"
-            :style="{ aspectRatio: image.width / image.height }"
-          >
-            <NuxtLink
-              :to="`/${image.url}`"
-              class="block"
-            >
-              <img
-                class="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
-                :src="`/showcase/${getFilename(image.title)}_${colorMode.value}.webp`"
-                :alt="image.title"
-                loading="lazy"
+            <div class="flex items-start justify-between">
+              <h3 class="text-lg font-semibold flex-1">
+                {{ chart.name }}
+              </h3>
+              <UBadge
+                color="primary"
+                variant="subtle"
+                size="sm"
               >
-            </NuxtLink>
+                Featured
+              </UBadge>
+            </div>
+          </template>
+          <div class="space-y-3">
+            <p
+              v-if="chart.description"
+              class="text-gray-600 dark:text-gray-400 text-sm"
+            >
+              {{ chart.description }}
+            </p>
+            <div
+              class="overflow-hidden rounded-md bg-gray-100 dark:bg-gray-800"
+              style="aspect-ratio: 16/9"
+            >
+              <NuxtLink :to="getChartUrl(chart)">
+                <img
+                  :src="getChartImageUrl(chart)"
+                  :alt="chart.name"
+                  class="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                  loading="lazy"
+                >
+              </NuxtLink>
+            </div>
+            <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+              <span>
+                <Icon
+                  name="i-lucide-user"
+                  class="w-3 h-3 inline"
+                />
+                {{ chart.authorName }}
+              </span>
+              <span>
+                <Icon
+                  name="i-lucide-eye"
+                  class="w-3 h-3 inline"
+                />
+                {{ chart.viewCount }} views
+              </span>
+            </div>
           </div>
         </UCard>
       </div>
+
+      <!-- View All Button -->
+      <div
+        v-if="featuredCharts.length > 0"
+        class="text-center mt-8"
+      >
+        <UButton
+          to="/charts"
+          color="neutral"
+          variant="outline"
+          size="lg"
+        >
+          View All Charts
+          <Icon
+            name="i-lucide-arrow-right"
+            class="w-4 h-4"
+          />
+        </UButton>
+      </div>
+    </div>
+
+    <!-- Upgrade Card -->
+    <div class="mb-12">
+      <UpgradeCard />
     </div>
 
     <!-- Key Features Section -->
@@ -178,112 +229,56 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
-import { BREAKPOINTS } from '~/lib/constants'
-
-// Type definition for showcase images
-interface ShowcaseImage {
-  title: string
-  description: string
-  url: string
-  width: number
-  height: number
+interface FeaturedChart {
+  id: number
+  name: string
+  description: string | null
+  slug: string | null
+  chartType: 'explorer' | 'ranking'
+  chartState: string
+  thumbnailUrl: string | null
+  isFeatured: boolean
+  viewCount: number
+  authorName: string
 }
 
-// Use Nuxt's built-in color mode
-const colorMode = useColorMode()
-
-// Helper function to get filename
-const getFilename = (title: string): string => {
-  return title.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
-}
-
-// Check if mobile or desktop
-const isMobile = () => window.innerWidth < BREAKPOINTS.TABLET
-const isDesktop = () => window.innerWidth >= BREAKPOINTS.DESKTOP
-
-// Reactive state for images
-const images = ref<ShowcaseImage[]>([])
-const allImages = ref<ShowcaseImage[]>([])
-const isLoading = ref(true)
-
-// Lazy loading with Intersection Observer
-const observer = ref<IntersectionObserver | null>(null)
-
-// Load showcase configuration
-onMounted(async () => {
-  isLoading.value = true
-  try {
-    const response = await fetch('/showcase/config.json')
-    if (response.ok) {
-      allImages.value = await response.json()
-      // Initial load based on screen size
-      images.value = allImages.value.slice(0, isMobile() ? 2 : isDesktop() ? 6 : 4)
-
-      // Set up lazy loading
-      observer.value = new IntersectionObserver(([entry]) => {
-        if (entry && entry.isIntersecting && allImages.value.length > 0) {
-          images.value = allImages.value
-        }
-      })
-      const target = document.getElementById('donate')
-      if (target) observer.value.observe(target)
-    }
-  } catch (error) {
-    console.error('Failed to load showcase images:', error)
-    // Mock data for demonstration
-    images.value = [
-      {
-        title: 'Global Excess Deaths',
-        description: 'Compare excess mortality across countries during COVID-19',
-        url: 'explorer?chart=excess_deaths',
-        width: 800,
-        height: 600
-      },
-      {
-        title: 'Age-Stratified Analysis',
-        description: 'Mortality rates by age groups showing demographic impacts',
-        url: 'explorer?chart=age_groups',
-        width: 800,
-        height: 600
-      },
-      {
-        title: 'Regional Comparisons',
-        description: 'Side-by-side mortality trends for different regions',
-        url: 'explorer?chart=regional',
-        width: 800,
-        height: 600
-      },
-      {
-        title: 'Time Series Trends',
-        description: 'Weekly and monthly mortality patterns over time',
-        url: 'explorer?chart=time_series',
-        width: 800,
-        height: 600
-      },
-      {
-        title: 'Baseline Models',
-        description: 'Different methods for calculating expected deaths',
-        url: 'explorer?chart=baselines',
-        width: 800,
-        height: 600
-      },
-      {
-        title: 'Life Expectancy Impact',
-        description: 'Changes in life expectancy across populations',
-        url: 'explorer?chart=life_expectancy',
-        width: 800,
-        height: 600
-      }
-    ]
-  } finally {
-    isLoading.value = false
+// Fetch featured charts from API
+const { data, pending: isLoading } = await useFetch<{
+  charts: FeaturedChart[]
+}>('/api/charts', {
+  query: {
+    featured: 'true',
+    sort: 'featured',
+    limit: 6
   }
 })
 
-onUnmounted(() => {
-  observer.value?.disconnect()
-})
+const featuredCharts = computed(() => data.value?.charts || [])
+
+// Get chart URL for navigation
+function getChartUrl(chart: FeaturedChart) {
+  // Link directly to the chart detail page
+  return `/charts/${chart.slug}`
+}
+
+// Get chart image URL for rendering
+function getChartImageUrl(chart: FeaturedChart) {
+  try {
+    const state = JSON.parse(chart.chartState)
+    const params = new URLSearchParams()
+
+    Object.entries(state).forEach(([key, value]) => {
+      if (value !== null && value !== undefined) {
+        params.set(key, String(value))
+      }
+    })
+
+    return `/chart.png?${params.toString()}&width=800&height=450`
+  } catch (err) {
+    console.error('Failed to parse chart state:', err)
+    return chart.thumbnailUrl || '/placeholder-chart.png'
+  }
+}
 
 // Page metadata
 definePageMeta({

@@ -8,6 +8,7 @@ import { getFilteredChartData } from '../../app/lib/chart/filtering'
 import { getChartColors } from '../../app/colors'
 import { decompress, base64ToArrayBuffer } from '../../app/lib/compression/compress.node'
 import { chartRenderQueue, chartRenderThrottle } from '../utils/requestQueue'
+import { generateCacheKey, getCachedChart, saveCachedChart } from '../utils/chartCache'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -57,6 +58,23 @@ export default defineEventHandler(async (event) => {
     // Generate chart title from state
     const countries = state.countries.join(', ')
     const title = `${state.type} - ${countries} (${state.chartType})`
+
+    // Generate cache key from query parameters (including width/height)
+    const cacheKey = generateCacheKey({ ...queryParams, width, height })
+
+    // Check filesystem cache first (7-day TTL)
+    const cachedBuffer = await getCachedChart(cacheKey)
+    if (cachedBuffer) {
+      // Return cached version with 7-day Cache-Control
+      setResponseHeaders(event, {
+        'Content-Type': 'image/png',
+        'Content-Length': cachedBuffer.length.toString(),
+        'Cache-Control': 'public, max-age=604800, immutable', // 7 days
+        'X-Cache': 'HIT',
+        'Content-Disposition': `inline; filename="mortality-chart-${countries.replace(/,/g, '_')}.png"`
+      })
+      return cachedBuffer
+    }
 
     // Queue the chart rendering to limit concurrency
     const buffer = await chartRenderQueue.enqueue(async () => {
@@ -182,11 +200,17 @@ export default defineEventHandler(async (event) => {
       }
     })
 
-    // Set response headers
+    // Save to filesystem cache (async, non-blocking)
+    saveCachedChart(cacheKey, buffer).catch((err) => {
+      console.error('Failed to save chart to cache:', err)
+    })
+
+    // Set response headers with 7-day cache
     setResponseHeaders(event, {
       'Content-Type': 'image/png',
       'Content-Length': buffer.length.toString(),
-      'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+      'Cache-Control': 'public, max-age=604800, immutable', // 7 days
+      'X-Cache': 'MISS',
       'Content-Disposition': `inline; filename="mortality-chart-${countries.replace(/,/g, '_')}.png"`
     })
 
