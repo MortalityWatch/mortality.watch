@@ -35,7 +35,9 @@ export class DataLoader {
     const url = this.getUrl(path)
 
     // Server-side or test environment: no client cache, just fetch
-    if (import.meta.server || import.meta.env.TEST) {
+    // Check for test environment via process.env or vitest globals
+    const isTest = typeof process !== 'undefined' && process.env?.NODE_ENV === 'test'
+    if (import.meta.server || isTest) {
       const response = await fetch(url)
       if (!response.ok) {
         throw new Error(`Failed to fetch metadata: ${response.status} ${response.statusText}`)
@@ -71,7 +73,8 @@ export class DataLoader {
     const url = this.getUrl(path)
 
     // Server-side or test environment: no client cache, just fetch
-    if (import.meta.server || import.meta.env.TEST) {
+    const isTest = typeof process !== 'undefined' && process.env?.NODE_ENV === 'test'
+    if (import.meta.server || isTest) {
       const response = await fetch(url, {
         signal: AbortSignal.timeout(30000) // 30 second timeout
       })
