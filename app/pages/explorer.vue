@@ -24,11 +24,6 @@ import ExplorerChartActions from '@/components/explorer/ExplorerChartActions.vue
 import { getChartColors } from '@/colors'
 import { getColorScale } from '@/lib/chart/chartColors'
 import { useRoute, useRouter } from 'vue-router'
-import {
-  arrayBufferToBase64,
-  compress
-} from '@/lib/compression/compress.browser'
-import { CHART_RESIZE } from '@/lib/constants'
 import { showToast } from '@/toast'
 
 // Feature access for tier-based features (currently unused but may be needed in the future)

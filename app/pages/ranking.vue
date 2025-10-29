@@ -27,6 +27,7 @@ import { useRankingState } from '@/composables/useRankingState'
 import { useRankingData } from '@/composables/useRankingData'
 import { useRankingTableSort } from '@/composables/useRankingTableSort'
 import { useCountryFilter } from '@/composables/useCountryFilter'
+import { showToast } from '@/toast'
 import RankingDataSelection from '../components/ranking/RankingDataSelection.vue'
 
 definePageMeta({
