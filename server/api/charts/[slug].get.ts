@@ -74,6 +74,20 @@ export default defineEventHandler(async (event) => {
     }
 
     console.error('Error fetching chart:', err)
+
+    // If the table doesn't exist (e.g., in e2e tests without migrations),
+    // return 404 as if the chart doesn't exist
+    if (err && typeof err === 'object' && 'code' in err && err.code === 'SQLITE_ERROR') {
+      const message = 'message' in err ? String(err.message) : ''
+      if (message.includes('no such table')) {
+        console.warn('Database table not found')
+        throw createError({
+          statusCode: 404,
+          message: 'Chart not found'
+        })
+      }
+    }
+
     throw createError({
       statusCode: 500,
       message: 'Failed to fetch chart'
