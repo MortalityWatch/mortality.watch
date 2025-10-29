@@ -46,16 +46,35 @@ const handlePageChange = (page: number) => {
   emit('update:currentPage', page)
 }
 
-const handleItemsPerPageChange = (val: { value: number }) => {
-  emit('update:itemsPerPage', val.value ?? val)
+const handleItemsPerPageChange = (val: { value: number } | number) => {
+  const newValue = typeof val === 'number' ? val : val.value
+  // Emit currentPage first, then itemsPerPage to ensure both are batched in URL update
   emit('update:currentPage', 1)
+  emit('update:itemsPerPage', newValue)
 }
+
+// Computed for stable select menu options
+const itemsPerPageOptions = computed(() =>
+  props.pagination.options.map(x => ({ label: String(x), value: x }))
+)
+
+const selectedItemsPerPage = computed(() =>
+  itemsPerPageOptions.value.find(x => x.value === props.pagination.itemsPerPage) || itemsPerPageOptions.value[0]
+)
 </script>
 
 <template>
   <div>
+    <!-- Loading state for initial data load -->
+    <LoadingSpinner
+      v-if="!loading.initialLoadDone"
+      text="Loading ranking data..."
+      height="py-16"
+      :progress="loading.progress"
+    />
+
     <div
-      v-if="data.labels.length"
+      v-else-if="data.labels.length"
       class="overflow-x-auto relative"
     >
       <!-- Glass overlay for calculating -->
@@ -222,8 +241,8 @@ const handleItemsPerPageChange = (val: { value: number }) => {
         <div class="flex items-center gap-2">
           <label class="text-sm text-gray-600 dark:text-gray-400">Per page:</label>
           <USelectMenu
-            :model-value="{ label: String(pagination.itemsPerPage), value: pagination.itemsPerPage }"
-            :items="pagination.options.map(x => ({ label: String(x), value: x }))"
+            :model-value="selectedItemsPerPage"
+            :items="itemsPerPageOptions"
             size="xs"
             class="w-20"
             @update:model-value="handleItemsPerPageChange"

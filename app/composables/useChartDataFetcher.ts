@@ -134,12 +134,10 @@ export function useChartDataFetcher() {
       )
 
       // Step 2: Get all chart labels
+      // Dataset is already filtered, so only pass dataset and isAsmr flag
       const allLabels = fetchAllChartLabels(
         dataset,
-        config.isAsmr ?? false,
-        config.ageGroups,
-        config.countries,
-        config.chartType
+        config.isAsmr ?? false
       )
 
       if (!allLabels.length) {

@@ -52,6 +52,7 @@ export interface TableLoading {
   isUpdating: boolean
   hasLoaded: boolean
   progress: number
+  initialLoadDone: boolean
 }
 
 export interface ProcessCountryRowOptions {

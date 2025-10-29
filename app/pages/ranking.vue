@@ -336,8 +336,6 @@ watch(
             </template>
 
             <RankingTable
-              v-model:current-page="currentPage"
-              v-model:items-per-page="itemsPerPage"
               :data="{
                 labels: labels || [],
                 paginatedResult: paginatedResult || [],
@@ -351,8 +349,10 @@ watch(
                 options: itemsPerPageOptions,
                 totalPages
               }"
-              :loading="{ isUpdating, hasLoaded, progress: updateProgress }"
+              :loading="{ isUpdating, hasLoaded, progress: updateProgress, initialLoadDone }"
               @toggle-sort="toggleSort"
+              @update:current-page="(val) => currentPage = val"
+              @update:items-per-page="(val) => itemsPerPage = val"
             />
             <UButton
               :to="explorerLink()"

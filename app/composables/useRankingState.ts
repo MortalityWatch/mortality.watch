@@ -55,13 +55,13 @@ export function useRankingState() {
   })
 
   const jurisdictionType = computed({
-    get: () => (route.query.j as string) || 'country',
+    get: () => (route.query.j as string) || 'countries', // Default to 'countries' (plural) to match jurisdictionTypes values
     set: (val: string) => updateQuery({ j: val })
   })
 
   // Display toggles
   const showASMR = computed({
-    get: () => decodeBool(route.query.a as string) ?? true,
+    get: () => decodeBool(route.query.a as string) ?? true, // Default to ASMR for standardized comparison
     set: (val: boolean) => updateQuery({ a: encodeBool(val) })
   })
 
