@@ -384,6 +384,3 @@ const activeTab = ref('data')
     </div>
   </div>
 </template>
-
-<style scoped>
-</style>
