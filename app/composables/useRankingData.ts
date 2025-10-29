@@ -1,31 +1,25 @@
 /**
  * Ranking Data Management Composable
  *
- * Phase 10.1.2: Extract data fetching and processing logic from ranking.vue
+ * Phase 10.3: Refactored to use shared useChartDataFetcher composable
  *
- * Similar to useExplorerDataOrchestration (Phase 9.2) but for ranking page
+ * Previous phases:
+ * - Phase 10.1.2: Extract data fetching and processing logic from ranking.vue
+ * - Similar to useExplorerDataOrchestration (Phase 9.2) but for ranking page
  */
 
 import { ref, computed, watch, onMounted, type ComputedRef } from 'vue'
 import type { useRankingState } from '@/composables/useRankingState'
 import type { AllChartData, CountryData, Country } from '@/model'
 import { ChartPeriod, type ChartType } from '@/model/period'
-import {
-  getAllChartData,
-  getAllChartLabels,
-  updateDataset
-} from '@/lib/data'
 import { getKeyForType } from '@/model'
 import { usePeriodFormat } from '@/composables/usePeriodFormat'
 import { useJurisdictionFilter } from '@/composables/useJurisdictionFilter'
-import {
-  defaultBaselineFromDate,
-  defaultBaselineToDate,
-  getSeasonString
-} from '@/model/baseline'
+import { defaultBaselineFromDate, defaultBaselineToDate, getSeasonString } from '@/model/baseline'
 import { showToast } from '@/toast'
 import { processCountryRow } from '@/lib/ranking/dataProcessing'
 import type { TableRow } from '@/lib/ranking/types'
+import { useChartDataFetcher } from '@/composables/useChartDataFetcher'
 
 const RANKING_START_YEAR = 2020
 const RANKING_END_YEAR = 2023
@@ -37,6 +31,9 @@ export function useRankingData(
   const { getPeriodStart, getPeriodEnd } = usePeriodFormat()
   const { shouldShowCountry } = useJurisdictionFilter()
 
+  // Shared data fetching logic
+  const dataFetcher = useChartDataFetcher()
+
   // ============================================================================
   // STATE - Data Refs
   // ============================================================================
@@ -47,9 +44,10 @@ export function useRankingData(
   const labels = ref<string[]>()
   const visibleCountryCodes = ref<Set<string>>(new Set<string>())
 
-  // Loading state
-  const isUpdating = ref<boolean>(false)
-  const updateProgress = ref<number>(0)
+  // Loading state - local management for full operation
+  const isUpdating = ref(false)
+  // Progress tracking from data fetcher (for getAllChartData operation)
+  const updateProgress = dataFetcher.updateProgress
   const initialLoadDone = ref(false)
 
   // Slider management
@@ -129,7 +127,7 @@ export function useRankingData(
   // ============================================================================
 
   /**
-   * Fetch and prepare chart data
+   * Fetch and prepare chart data using shared fetcher
    */
   const fetchChartData = async () => {
     const type = state.showASMR.value ? 'asmr' : 'cmr'
@@ -152,52 +150,31 @@ export function useRankingData(
     })
 
     const ageFilter = ['all']
-    const data = await updateDataset(periodOfTime, countryFilter, ageFilter)
 
-    allLabels.value = getAllChartLabels(data, type === 'asmr')
+    // Use shared data fetcher
+    const result = await dataFetcher.fetchChartData({
+      chartType: periodOfTime as ChartType,
+      countries: countryFilter,
+      ageGroups: ageFilter,
+      dataKey,
+      baselineMethod: state.baselineMethod.value || 'mean',
+      baselineDateFrom: state.baselineDateFrom.value,
+      baselineDateTo: state.baselineDateTo.value,
+      cumulative: state.cumulative.value,
+      isAsmr: type === 'asmr',
+      baseKeys: getKeyForType(type, true, state.standardPopulation.value || 'who2015')
+    })
 
-    if (!allLabels.value.length) {
+    if (!result) {
       showToast('No ASMR data for selected countries. Please select CMR', 'warning')
       return null
     }
 
+    // Update local state
+    allLabels.value = result.allLabels
     maybeResetBaselineSlider()
 
-    // Validate baseline dates against current labels
-    let baselineFrom = state.baselineDateFrom.value || ''
-    let baselineTo = state.baselineDateTo.value || ''
-
-    if (!allLabels.value.includes(baselineFrom)) {
-      baselineFrom
-        = defaultBaselineFromDate(
-          periodOfTime,
-          allLabels.value,
-          state.baselineMethod.value || 'mean'
-        ) || ''
-    }
-    if (!allLabels.value.includes(baselineTo)) {
-      baselineTo = defaultBaselineToDate(periodOfTime) || ''
-    }
-
-    // Use ChartPeriod for smart index lookup
-    const period = new ChartPeriod(allLabels.value, periodOfTime as ChartType)
-    const baselineStartIdx = period.indexOf(baselineFrom)
-
-    return await getAllChartData(
-      dataKey,
-      periodOfTime,
-      data,
-      allLabels.value,
-      baselineStartIdx,
-      state.cumulative.value,
-      ageFilter,
-      countryFilter,
-      state.baselineMethod.value || 'mean',
-      baselineFrom,
-      baselineTo,
-      getKeyForType(type, true, state.standardPopulation.value || 'who2015'),
-      (progress, total) => (updateProgress.value = Math.round((progress / total) * 100))
-    )
+    return result.chartData
   }
 
   /**

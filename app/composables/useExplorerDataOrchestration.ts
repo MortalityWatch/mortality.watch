@@ -1,7 +1,10 @@
 /**
  * Explorer Data Orchestration Composable
  *
- * Phase 9.2: Extract data fetching and filtering logic from explorer.vue
+ * Phase 10.3: Refactored to use shared useChartDataFetcher composable
+ *
+ * Previous phases:
+ * - Phase 9.2: Extract data fetching and filtering logic from explorer.vue
  *
  * Provides:
  * - Data fetching orchestration (updateData)
@@ -21,11 +24,9 @@ import type { AllChartData, DatasetRaw, Country } from '@/model'
 import { getKeyForType } from '@/model'
 import { ChartPeriod, type ChartType } from '@/model/period'
 import {
-  getAllChartData,
-  getAllChartLabels,
-  getStartIndex,
-  updateDataset
+  getStartIndex
 } from '@/lib/data'
+import { useChartDataFetcher } from '@/composables/useChartDataFetcher'
 import { getFilteredChartData } from '@/lib/chart'
 import type { MortalityChartData } from '@/lib/chart/chartTypes'
 import { useDateRangeValidation } from '@/composables/useDateRangeValidation'
@@ -44,6 +45,9 @@ export function useExplorerDataOrchestration(
   allCountries: Ref<Record<string, Country>>,
   displayColors: ComputedRef<string[]>
 ) {
+  // Shared data fetching logic
+  const dataFetcher = useChartDataFetcher()
+
   // Validation
   const { getValidatedRange } = useDateRangeValidation()
 
@@ -263,21 +267,41 @@ export function useExplorerDataOrchestration(
     }, 500)
 
     if (shouldDownloadDataset) {
-      dataset = await updateDataset(
-        state.chartType.value,
-        state.countries.value,
-        helpers.isAsmrType() ? ['all'] : state.ageGroups.value
-      )
+      // Use shared data fetcher for complete data fetch
+      const key = getKeyForType(
+        state.type.value,
+        state.showBaseline.value,
+        state.standardPopulation.value
+      )[0]
+      if (!key) {
+        isUpdating.value = false
+        return
+      }
 
-      // All Labels
-      allChartLabels.value = getAllChartLabels(
-        dataset,
-        helpers.isAsmrType(),
-        state.ageGroups.value,
-        state.countries.value,
-        state.chartType.value
-      )
+      const result = await dataFetcher.fetchChartData({
+        chartType: state.chartType.value as ChartType,
+        countries: state.countries.value,
+        ageGroups: helpers.isAsmrType() ? ['all'] : state.ageGroups.value,
+        dataKey: key,
+        baselineMethod: state.baselineMethod.value,
+        baselineDateFrom: state.baselineDateFrom.value,
+        baselineDateTo: state.baselineDateTo.value,
+        baselineStartIdx: undefined, // Will be calculated from labels
+        cumulative: helpers.showCumPi(),
+        baseKeys: helpers.getBaseKeysForType(),
+        isAsmr: helpers.isAsmrType()
+      })
 
+      if (!result) {
+        isUpdating.value = false
+        return
+      }
+
+      // Update local state
+      dataset = result.dataset
+      allChartLabels.value = result.allLabels
+
+      // Process yearly labels
       if (state.chartType.value === 'yearly') {
         allYearlyChartLabels.value = allChartLabels.value
         allYearlyChartLabelsUnique.value = allChartLabels.value.filter(
@@ -291,35 +315,51 @@ export function useExplorerDataOrchestration(
           new Set(allYearlyChartLabels.value)
         ).filter(x => parseInt(x) <= DEFAULT_BASELINE_YEAR)
       }
-    }
 
-    if (shouldDownloadDataset || shouldUpdateDataset) {
+      // Update validated baseline dates from result
+      state.baselineDateFrom.value = result.baselineDateFrom
+      state.baselineDateTo.value = result.baselineDateTo
+
+      Object.assign(allChartData, result.chartData)
+      resetDates()
+    } else if (shouldUpdateDataset) {
+      // Update chart data only (reuse existing dataset)
       resetBaselineDates()
 
-      // Update all chart specific data
       const key = getKeyForType(
         state.type.value,
         state.showBaseline.value,
         state.standardPopulation.value
       )[0]
-      if (!key) return
+      if (!key) {
+        isUpdating.value = false
+        return
+      }
 
-      const newData = await getAllChartData(
-        key,
-        state.chartType.value,
-        dataset,
-        allChartLabels.value || [],
-        getStartIndex(allYearlyChartLabels.value || [], state.sliderStart.value),
-        helpers.showCumPi(),
-        state.ageGroups.value,
-        state.countries.value,
-        state.baselineMethod.value,
-        state.baselineDateFrom.value,
-        state.baselineDateTo.value,
-        helpers.getBaseKeysForType()
-      )
-      Object.assign(allChartData, newData)
+      const result = await dataFetcher.fetchChartData({
+        chartType: state.chartType.value as ChartType,
+        countries: state.countries.value,
+        ageGroups: helpers.isAsmrType() ? ['all'] : state.ageGroups.value,
+        dataKey: key,
+        baselineMethod: state.baselineMethod.value,
+        baselineDateFrom: state.baselineDateFrom.value,
+        baselineDateTo: state.baselineDateTo.value,
+        baselineStartIdx: getStartIndex(allYearlyChartLabels.value || [], state.sliderStart.value),
+        cumulative: helpers.showCumPi(),
+        baseKeys: helpers.getBaseKeysForType(),
+        isAsmr: helpers.isAsmrType()
+      })
 
+      if (!result) {
+        isUpdating.value = false
+        return
+      }
+
+      // Update validated baseline dates from result
+      state.baselineDateFrom.value = result.baselineDateFrom
+      state.baselineDateTo.value = result.baselineDateTo
+
+      Object.assign(allChartData, result.chartData)
       resetDates()
     }
 
