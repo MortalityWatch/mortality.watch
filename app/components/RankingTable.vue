@@ -51,8 +51,10 @@ const handleItemsPerPageChange = (val: { value: number } | number) => {
   const newValue = typeof val === 'number' ? val : val.value
   console.log('[RankingTable] Extracted value:', newValue)
   console.log('[RankingTable] Current itemsPerPage:', props.pagination.itemsPerPage)
-  emit('update:itemsPerPage', newValue)
+
+  // Emit both updates synchronously so they batch in the same tick
   emit('update:currentPage', 1)
+  emit('update:itemsPerPage', newValue)
 }
 
 // Computed for stable select menu options
