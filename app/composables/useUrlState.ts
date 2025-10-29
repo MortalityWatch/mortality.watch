@@ -81,6 +81,7 @@ export function useUrlState<T>(
       return decoded ?? defaultValue
     },
     set: (val: T) => {
+      console.log(`[useUrlState] Setting ${key} to:`, val)
       // Store pending value for immediate reads
       // This is the key to solving the async URL state issue
       pendingValue.value = val

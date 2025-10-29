@@ -22,10 +22,16 @@ export function useRankingTableSort() {
   )
 
   const itemsPerPage = useUrlState('pp', 25,
-    val => String(val),
     (val) => {
+      console.log('[useRankingTableSort] Encoding itemsPerPage:', val)
+      return String(val)
+    },
+    (val) => {
+      console.log('[useRankingTableSort] Decoding itemsPerPage from URL:', val)
       const parsed = parseInt(val)
-      return itemsPerPageOptions.includes(parsed) ? parsed : 25
+      const result = itemsPerPageOptions.includes(parsed) ? parsed : 25
+      console.log('[useRankingTableSort] Decoded result:', result, 'valid options:', itemsPerPageOptions)
+      return result
     }
   )
 
