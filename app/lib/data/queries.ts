@@ -6,15 +6,24 @@ import {
   type CountryDataRaw
 } from '~/model'
 import { dataLoader } from '../dataLoader'
+import { metadataCache } from '../cache/metadataCache'
 
 const errHandler = (err: string) => console.error(err)
 
 /**
  * Load country metadata as flat array with optional filtering
+ * Uses cache to avoid repeated CSV parsing
  */
 export const loadCountryMetadataFlat = async (options?: {
   filterCountries?: string[]
 }): Promise<CountryRaw[]> => {
+  // Check cache first
+  const cached = metadataCache.getFlat(options?.filterCountries)
+  if (cached) {
+    return cached
+  }
+
+  // Cache miss - fetch and parse
   const text = await dataLoader.fetchMetadata()
   const rawObjects = Papa.parse(text, {
     header: true,
@@ -23,19 +32,30 @@ export const loadCountryMetadataFlat = async (options?: {
 
   // Filter by specified countries if provided
   const filterCountries = options?.filterCountries || []
-  if (filterCountries.length > 0) {
-    return rawObjects.filter(obj => filterCountries.includes(obj.iso3c))
-  }
+  const result = filterCountries.length > 0
+    ? rawObjects.filter(obj => filterCountries.includes(obj.iso3c))
+    : rawObjects
 
-  return rawObjects
+  // Store in cache
+  metadataCache.setFlat(result, options?.filterCountries)
+
+  return result
 }
 
 /**
  * Load country metadata as Record indexed by iso3c code
+ * Uses cache to avoid repeated CSV parsing
  */
 export const loadCountryMetadata = async (options?: {
   filterCountries?: string[]
 }): Promise<Record<string, Country>> => {
+  // Check cache first
+  const cached = metadataCache.get(options?.filterCountries)
+  if (cached) {
+    return cached
+  }
+
+  // Cache miss - fetch and parse
   const text = await dataLoader.fetchMetadata()
   const rawObjects = Papa.parse(text, { header: true }).data as unknown[]
   const data: Record<string, Country> = {}
@@ -62,6 +82,10 @@ export const loadCountryMetadata = async (options?: {
         ...parsedObj.data_source
       ]
   }
+
+  // Store in cache
+  metadataCache.set(data, options?.filterCountries)
+
   return data
 }
 
