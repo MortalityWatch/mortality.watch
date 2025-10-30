@@ -127,9 +127,9 @@ export class MetadataCache {
    * Get cache statistics (useful for debugging/monitoring)
    */
   getStats(): {
-    size: number,
-    flatSize: number,
-    entries: Array<{ key: string; age: number }>
+    size: number
+    flatSize: number
+    entries: Array<{ key: string, age: number }>
   } {
     const now = Date.now()
     const entries = Array.from(this.cache.entries()).map(([key, entry]) => ({
