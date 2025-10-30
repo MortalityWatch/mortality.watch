@@ -262,41 +262,43 @@ export class StateEffects {
   /**
    * Get a map of property names to their effect handlers
    * This can be used by State.ts to register effects with the Proxy
+   *
+   * Handlers are typed to match their specific parameter types.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getEffectHandlers(): Map<string, (value: any) => void> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handlers = new Map<string, (value: any) => void>()
+  getEffectHandlers(): Map<string, (value: unknown) => void> {
+    // Create a temporary typed map for internal use
+    type EffectHandler = (value: unknown) => void
+    const handlers = new Map<string, EffectHandler>()
 
-    // Type changes
-    handlers.set('type', (val: string) => this.onTypeChange(val))
+    // Type changes (string parameter)
+    handlers.set('type', ((val: string) => this.onTypeChange(val)) as EffectHandler)
 
-    // Country changes
-    handlers.set('countries', (val: string[]) => this.onCountriesChange(val))
+    // Country changes (string[] parameter)
+    handlers.set('countries', ((val: string[]) => this.onCountriesChange(val)) as EffectHandler)
 
-    // Excess mode changes
-    handlers.set('isExcess', (val: boolean) => this.onIsExcessChange(val))
+    // Excess mode changes (boolean parameter)
+    handlers.set('isExcess', ((val: boolean) => this.onIsExcessChange(val)) as EffectHandler)
 
-    // Cumulative changes
-    handlers.set('cumulative', (val: boolean) => this.onCumulativeChange(val))
+    // Cumulative changes (boolean parameter)
+    handlers.set('cumulative', ((val: boolean) => this.onCumulativeChange(val)) as EffectHandler)
 
-    // Chart type changes
-    handlers.set('chartType', () => this.onChartTypeChange())
+    // Chart type changes (no parameter)
+    handlers.set('chartType', (() => this.onChartTypeChange()) as EffectHandler)
 
-    // Age group changes
-    handlers.set('ageGroups', () => this.onAgeGroupsChange())
+    // Age group changes (no parameter)
+    handlers.set('ageGroups', (() => this.onAgeGroupsChange()) as EffectHandler)
 
-    // Baseline method changes
-    handlers.set('baselineMethod', () => this.onBaselineMethodChange())
+    // Baseline method changes (no parameter)
+    handlers.set('baselineMethod', (() => this.onBaselineMethodChange()) as EffectHandler)
 
-    // Chart style changes
-    handlers.set('chartStyle', () => this.onChartStyleChange())
+    // Chart style changes (no parameter)
+    handlers.set('chartStyle', (() => this.onChartStyleChange()) as EffectHandler)
 
-    // Maximize changes
-    handlers.set('maximize', (val: boolean) => this.onMaximizeChange(val))
+    // Maximize changes (boolean parameter)
+    handlers.set('maximize', ((val: boolean) => this.onMaximizeChange(val)) as EffectHandler)
 
-    // Show labels changes
-    handlers.set('showLabels', (val: boolean) => this.onShowLabelsChange(val))
+    // Show labels changes (boolean parameter)
+    handlers.set('showLabels', ((val: boolean) => this.onShowLabelsChange(val)) as EffectHandler)
 
     return handlers
   }
