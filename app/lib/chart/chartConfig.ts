@@ -96,7 +96,14 @@ export const makeBarLineChartConfig = (
       animation: false,
       responsive: true,
       maintainAspectRatio: false,
-      layout: { padding: 10 },
+      layout: {
+        padding: {
+          top: 70, // Space for logo (60px + 10px margin)
+          right: 70, // Space for QR code (60px + 10px margin)
+          bottom: 10,
+          left: 10
+        }
+      },
       onResize: createOnResizeHandler(),
       plugins: createPluginsConfig(
         data,

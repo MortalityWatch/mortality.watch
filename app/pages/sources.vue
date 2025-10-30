@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { loadCountryMetadataFlat, getSourceDescription } from '~/lib/data'
 import { getDataTypeDescription } from '~/utils'
@@ -35,12 +35,28 @@ const products = ref<Array<{
 }>>([])
 
 // Pagination
-const pagination = usePagination({ items: products })
+const initialItemsPerPage = route.query.limit ? parseInt(route.query.limit as string) : 10
+const pagination = usePagination({ items: products, itemsPerPage: initialItemsPerPage })
 const { currentPage, paginatedItems, total, startIndex, endIndex, itemsPerPage } = pagination
 
 // Initialize page from URL
 if (route.query.page) {
   currentPage.value = parseInt(route.query.page as string) || 1
+}
+
+// Items per page options
+const itemsPerPageOptionsRaw = [10, 25, 50, 100]
+const itemsPerPageOptions = computed(() =>
+  itemsPerPageOptionsRaw.map(x => ({ label: String(x), value: x }))
+)
+
+const selectedItemsPerPage = computed(() =>
+  itemsPerPageOptions.value.find(x => x.value === itemsPerPage.value) || itemsPerPageOptions.value[0]
+)
+
+const handleItemsPerPageChange = (val: { value: number } | number) => {
+  const newValue = typeof val === 'number' ? val : val.value
+  itemsPerPage.value = newValue
 }
 
 // Watch for tab changes and update URL
@@ -56,6 +72,19 @@ watch(currentPage, (newPage) => {
     router.replace({ query: rest })
   } else {
     router.replace({ query: { ...route.query, page: String(newPage) } })
+  }
+})
+
+// Watch for items per page changes and update URL
+watch(itemsPerPage, (newLimit) => {
+  currentPage.value = 1 // Reset to first page when changing items per page
+  if (newLimit === 10) {
+    // Default value, remove from URL
+    const { limit, page, ...rest } = route.query
+    router.replace({ query: rest })
+  } else {
+    const { page, ...rest } = route.query
+    router.replace({ query: { ...rest, limit: String(newLimit) } })
   }
 })
 
@@ -191,13 +220,23 @@ useSeoMeta({
               />
 
               <div
-                v-if="!isLoading && !error && total > itemsPerPage"
-                class="mt-4 flex justify-between items-center"
+                v-if="!isLoading && !error && total > 0"
+                class="mt-4 flex justify-between items-center gap-4"
               >
-                <div class="text-sm text-gray-600 dark:text-gray-400">
-                  Showing {{ startIndex }} to {{ endIndex }} of {{ total }} entries
+                <div class="flex items-center gap-3">
+                  <div class="text-sm text-gray-600 dark:text-gray-400">
+                    Showing {{ startIndex }} to {{ endIndex }} of {{ total }} entries
+                  </div>
+                  <USelectMenu
+                    :model-value="selectedItemsPerPage"
+                    :items="itemsPerPageOptions"
+                    size="xs"
+                    class="w-20"
+                    @update:model-value="handleItemsPerPageChange"
+                  />
                 </div>
                 <UPagination
+                  v-if="total > itemsPerPage"
                   v-model:page="currentPage"
                   :total="total"
                   :items-per-page="itemsPerPage"
