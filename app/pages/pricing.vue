@@ -13,7 +13,12 @@
     <!-- Pricing Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-12">
       <!-- Free Tier -->
-      <UCard class="relative">
+      <UCard
+        :class="[
+          'relative',
+          tier === 0 ? 'border-2 border-primary ring-2 ring-primary ring-offset-2' : ''
+        ]"
+      >
         <template #header>
           <div class="text-center">
             <h2 class="text-2xl font-bold mb-2">
@@ -80,15 +85,12 @@
       </UCard>
 
       <!-- Registered Tier (Free) -->
-      <UCard class="relative border-2 border-primary">
-        <UBadge
-          color="primary"
-          class="absolute -top-3 left-1/2 transform -translate-x-1/2"
-          size="lg"
-        >
-          Most Popular
-        </UBadge>
-
+      <UCard
+        :class="[
+          'relative',
+          tier === 1 ? 'border-2 border-primary ring-2 ring-primary ring-offset-2' : ''
+        ]"
+      >
         <template #header>
           <div class="text-center">
             <h2 class="text-2xl font-bold mb-2">
@@ -168,7 +170,12 @@
       </UCard>
 
       <!-- Pro Tier -->
-      <UCard>
+      <UCard
+        :class="[
+          'relative',
+          tier === 2 ? 'border-2 border-primary ring-2 ring-primary ring-offset-2' : ''
+        ]"
+      >
         <template #header>
           <div class="text-center">
             <h2 class="text-2xl font-bold mb-2">
@@ -339,6 +346,9 @@
 </template>
 
 <script setup lang="ts">
+// Auth composable for user tier detection
+const { tier } = useAuth()
+
 // Page meta
 definePageMeta({
   title: 'Pricing'
