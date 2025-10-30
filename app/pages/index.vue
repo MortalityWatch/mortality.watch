@@ -159,7 +159,10 @@ interface FeaturedChart {
   chartState: string
   thumbnailUrl: string | null
   isFeatured: boolean
+  isPublic?: boolean
   viewCount: number
+  createdAt: number
+  updatedAt: number
   authorName: string
 }
 
