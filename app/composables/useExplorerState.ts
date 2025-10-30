@@ -214,14 +214,14 @@ export function useExplorerState() {
   // AUTO-FIX - Automatically correct incompatible state combinations
   // ============================================================================
 
-  // Track if we've already shown a toast to avoid spamming
-  let lastErrorMessage = ''
+  // Track the last set of error messages to avoid duplicate toasts
+  let lastShownErrors = new Set<string>()
 
   watch(
     errors,
     (newErrors) => {
       if (newErrors.length === 0) {
-        lastErrorMessage = ''
+        lastShownErrors.clear()
         return
       }
 
@@ -264,13 +264,19 @@ export function useExplorerState() {
         return // Exit early after auto-fix
       }
 
-      // For errors that can't be auto-fixed, notify user
-      // Only show if error message has changed to avoid spam
-      const firstError = newErrors[0]
-      if (firstError && firstError.message !== lastErrorMessage) {
-        lastErrorMessage = firstError.message
-        showToast(firstError.message, 'warning')
-      }
+      // For errors that can't be auto-fixed, notify user only once per unique error
+      const errorMessages = new Set(newErrors.map(e => e.message))
+
+      // Only show toasts for errors we haven't shown before
+      errorMessages.forEach((errorMsg) => {
+        if (!lastShownErrors.has(errorMsg)) {
+          lastShownErrors.add(errorMsg)
+          showToast(errorMsg, 'warning')
+        }
+      })
+
+      // Clean up old errors that are no longer present
+      lastShownErrors = new Set(Array.from(lastShownErrors).filter(msg => errorMessages.has(msg)))
     },
     { immediate: false }
   )
