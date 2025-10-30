@@ -35,7 +35,7 @@ import { useCountryFilter } from '@/composables/useCountryFilter'
 import { useSaveChart } from '@/composables/useSaveChart'
 import RankingHeader from '@/components/ranking/RankingHeader.vue'
 import RankingDataSelection from '@/components/ranking/RankingDataSelection.vue'
-import RankingSaveModal from '@/components/ranking/RankingSaveModal.vue'
+import SaveModal from '@/components/SaveModal.vue'
 import ExplorerChartActions from '@/components/explorer/ExplorerChartActions.vue'
 
 definePageMeta({
@@ -472,14 +472,15 @@ const copyRankingLink = () => {
               v-if="isAuthenticated"
               #save-button
             >
-              <RankingSaveModal
+              <SaveModal
                 v-model="showSaveModal"
-                v-model:save-chart-name="saveRankingName"
-                v-model:save-chart-description="saveRankingDescription"
-                v-model:save-chart-public="saveRankingPublic"
-                :saving-chart="savingRanking"
-                :save-error="saveError"
-                :save-success="saveSuccess"
+                v-model:name="saveRankingName"
+                v-model:description="saveRankingDescription"
+                v-model:is-public="saveRankingPublic"
+                :saving="savingRanking"
+                :error="saveError"
+                :success="saveSuccess"
+                type="ranking"
                 @save="saveToDB"
               />
             </template>
@@ -525,14 +526,15 @@ const copyRankingLink = () => {
               v-if="isAuthenticated"
               #save-button
             >
-              <RankingSaveModal
+              <SaveModal
                 v-model="showSaveModal"
-                v-model:save-chart-name="saveRankingName"
-                v-model:save-chart-description="saveRankingDescription"
-                v-model:save-chart-public="saveRankingPublic"
-                :saving-chart="savingRanking"
-                :save-error="saveError"
-                :save-success="saveSuccess"
+                v-model:name="saveRankingName"
+                v-model:description="saveRankingDescription"
+                v-model:is-public="saveRankingPublic"
+                :saving="savingRanking"
+                :error="saveError"
+                :success="saveSuccess"
+                type="ranking"
                 @save="saveToDB"
               />
             </template>

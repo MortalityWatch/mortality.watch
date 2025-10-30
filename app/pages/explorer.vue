@@ -23,7 +23,7 @@ import ExplorerDataSelection from '@/components/explorer/ExplorerDataSelection.v
 import ExplorerChartContainer from '@/components/explorer/ExplorerChartContainer.vue'
 import ExplorerSettings from '@/components/explorer/ExplorerSettings.vue'
 import ExplorerChartActions from '@/components/explorer/ExplorerChartActions.vue'
-import ExplorerSaveChartModal from '@/components/explorer/ExplorerSaveChartModal.vue'
+import SaveModal from '@/components/SaveModal.vue'
 
 // Feature access for tier-based features (currently unused but may be needed in the future)
 // const { can, getFeatureUpgradeUrl } = useFeatureAccess()
@@ -411,16 +411,16 @@ const downloadChart = () => {
               v-if="isAuthenticated"
               #save-button
             >
-              <ExplorerSaveChartModal
+              <SaveModal
                 v-model="showSaveModal"
-                v-model:chart-name="saveChartName"
-                v-model:chart-description="saveChartDescription"
-                v-model:chart-public="saveChartPublic"
-                :saving-chart="savingChart"
-                :save-error="saveError"
-                :save-success="saveSuccess"
+                v-model:name="saveChartName"
+                v-model:description="saveChartDescription"
+                v-model:is-public="saveChartPublic"
+                :saving="savingChart"
+                :error="saveError"
+                :success="saveSuccess"
+                type="chart"
                 @save="saveToDB"
-                @cancel="showSaveModal = false"
               />
             </template>
           </ExplorerChartActions>

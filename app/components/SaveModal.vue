@@ -1,48 +1,64 @@
 <script setup lang="ts">
 /**
- * RankingSaveModal Component
+ * Generic Save Modal Component
  *
- * Modal dialog for saving ranking configurations.
- * Extracted from ranking.vue as part of Phase 5b refactoring.
+ * Reusable modal for saving charts and rankings to the database.
+ * Used by both explorer and ranking pages.
  */
 
-interface Props {
+const props = withDefaults(defineProps<{
   modelValue: boolean
-  savingChart: boolean
-  saveChartName: string
-  saveChartDescription: string
-  saveChartPublic: boolean
-  saveError: string
-  saveSuccess: boolean
-}
+  saving: boolean
+  name: string
+  description: string
+  isPublic: boolean
+  error: string | null
+  success: boolean
+  type?: 'chart' | 'ranking'
+}>(), {
+  type: 'chart'
+})
 
-interface Emits {
-  (e: 'update:modelValue' | 'update:saveChartPublic', value: boolean): void
-  (e: 'update:saveChartName' | 'update:saveChartDescription', value: string): void
-  (e: 'save'): void
-}
+const emit = defineEmits<{
+  'update:modelValue': [value: boolean]
+  'update:name': [value: string]
+  'update:description': [value: string]
+  'update:isPublic': [value: boolean]
+  'save': []
+}>()
 
-defineProps<Props>()
-const emit = defineEmits<Emits>()
+const localShow = computed({
+  get: () => props.modelValue,
+  set: value => emit('update:modelValue', value)
+})
 
-const handleSave = () => {
-  emit('save')
-}
+const localName = computed({
+  get: () => props.name,
+  set: value => emit('update:name', value)
+})
 
-const handleClose = () => {
-  emit('update:modelValue', false)
-}
+const localDescription = computed({
+  get: () => props.description,
+  set: value => emit('update:description', value)
+})
+
+const localPublic = computed({
+  get: () => props.isPublic,
+  set: value => emit('update:isPublic', value)
+})
+
+const typeLabel = computed(() => props.type === 'ranking' ? 'Ranking' : 'Chart')
+const typeLabelLower = computed(() => typeLabel.value.toLowerCase())
 </script>
 
 <template>
   <UModal
-    :model-value="modelValue"
-    title="Save Ranking"
+    v-model="localShow"
+    :title="`Save ${typeLabel}`"
     :close="{
       color: 'neutral',
       variant: 'ghost'
     }"
-    @update:model-value="emit('update:modelValue', $event)"
   >
     <button class="chart-option-button">
       <UIcon
@@ -51,7 +67,7 @@ const handleClose = () => {
       />
       <div class="flex-1 text-left">
         <div class="text-sm font-medium">
-          Save Ranking
+          Save {{ typeLabel }}
         </div>
         <div class="text-xs text-gray-500 dark:text-gray-400">
           Bookmark for later access
@@ -67,15 +83,14 @@ const handleClose = () => {
       <div class="space-y-4 w-full">
         <!-- Name Input -->
         <UFormField
-          label="Ranking Name"
+          :label="`${typeLabel} Name`"
           required
           class="w-full"
         >
           <UInput
-            :model-value="saveChartName"
-            placeholder="Enter a name for your ranking"
+            v-model="localName"
+            :placeholder="`Enter a name for your ${typeLabelLower}`"
             class="w-full"
-            @update:model-value="emit('update:saveChartName', $event)"
           />
         </UFormField>
 
@@ -85,27 +100,23 @@ const handleClose = () => {
           class="w-full"
         >
           <UTextarea
-            :model-value="saveChartDescription"
+            v-model="localDescription"
             placeholder="Add a description (optional)"
             :rows="3"
             class="w-full"
-            @update:model-value="emit('update:saveChartDescription', $event)"
           />
         </UFormField>
 
         <!-- Public Toggle -->
         <UFormField>
           <div class="flex items-center gap-3">
-            <USwitch
-              :model-value="saveChartPublic"
-              @update:model-value="emit('update:saveChartPublic', $event)"
-            />
+            <USwitch v-model="localPublic" />
             <div>
               <div class="font-medium text-sm">
-                Make this ranking public
+                Make this {{ typeLabelLower }} public
               </div>
               <div class="text-xs text-gray-500 dark:text-gray-400">
-                Public rankings appear in the chart gallery
+                Public {{ typeLabelLower }}s appear in the {{ typeLabelLower }} gallery
               </div>
             </div>
           </div>
@@ -113,18 +124,18 @@ const handleClose = () => {
 
         <!-- Error Message -->
         <UAlert
-          v-if="saveError"
+          v-if="error"
           color="error"
           variant="subtle"
-          :title="saveError"
+          :title="error"
         />
 
         <!-- Success Message -->
         <UAlert
-          v-if="saveSuccess"
+          v-if="success"
           color="success"
           variant="subtle"
-          title="Ranking saved successfully!"
+          :title="`${typeLabel} saved successfully!`"
         />
       </div>
     </template>
@@ -135,14 +146,14 @@ const handleClose = () => {
           color="neutral"
           variant="ghost"
           label="Cancel"
-          @click="handleClose"
+          @click="localShow = false"
         />
         <UButton
           color="primary"
-          label="Save Ranking"
-          :loading="savingChart"
-          :disabled="!saveChartName.trim()"
-          @click="handleSave"
+          :label="`Save ${typeLabel}`"
+          :loading="saving"
+          :disabled="!name.trim()"
+          @click="emit('save')"
         />
       </div>
     </template>
