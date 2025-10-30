@@ -46,7 +46,9 @@
         ]"
         :button="tier === 1
           ? { label: 'Current Plan', disabled: true, color: 'neutral' }
-          : { label: 'Sign Up Free', to: '/signup', color: 'primary' }"
+          : tier >= 2
+            ? { label: 'Active', disabled: true, color: 'neutral' }
+            : { label: 'Sign Up Free', to: '/signup', color: 'primary' }"
         class="border-2 border-blue-500 dark:border-blue-400"
       />
 
@@ -67,7 +69,7 @@
           { title: 'Priority email support', icon: 'i-lucide-headphones' }
         ]"
         :button="tier === 2
-          ? { label: 'Current Plan', disabled: true, color: 'neutral' }
+          ? { label: 'Manage Subscription', to: '/profile', color: 'neutral' }
           : { label: 'Upgrade to Pro', to: '/subscribe', color: 'primary', class: 'bg-purple-600 hover:bg-purple-700 text-white dark:bg-purple-500 dark:hover:bg-purple-600' }"
         class="border-2 border-purple-500 dark:border-purple-400"
       />
