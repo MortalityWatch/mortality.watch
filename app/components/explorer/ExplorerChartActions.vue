@@ -119,32 +119,34 @@ const emit = defineEmits<{
           </NuxtLink>
         </template>
 
-        <div class="border-t border-gray-200 dark:border-gray-700" />
+        <template v-if="$slots['save-button'] || showSaveButton">
+          <div class="border-t border-gray-200 dark:border-gray-700" />
 
-        <slot name="save-button">
-          <button
-            v-if="showSaveButton"
-            class="chart-option-button"
-            @click="emit('saveChart')"
-          >
-            <UIcon
-              name="i-lucide-save"
-              class="w-4 h-4 flex-shrink-0"
-            />
-            <div class="flex-1 text-left">
-              <div class="text-sm font-medium">
-                Save Chart
+          <slot name="save-button">
+            <button
+              v-if="showSaveButton"
+              class="chart-option-button"
+              @click="emit('saveChart')"
+            >
+              <UIcon
+                name="i-lucide-save"
+                class="w-4 h-4 flex-shrink-0"
+              />
+              <div class="flex-1 text-left">
+                <div class="text-sm font-medium">
+                  Save Chart
+                </div>
+                <div class="text-xs text-gray-500 dark:text-gray-400">
+                  Bookmark for later access
+                </div>
               </div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">
-                Bookmark for later access
-              </div>
-            </div>
-            <UIcon
-              name="i-lucide-chevron-right"
-              class="w-3 h-3 text-gray-400"
-            />
-          </button>
-        </slot>
+              <UIcon
+                name="i-lucide-chevron-right"
+                class="w-3 h-3 text-gray-400"
+              />
+            </button>
+          </slot>
+        </template>
       </div>
     </ClientOnly>
   </UCard>
