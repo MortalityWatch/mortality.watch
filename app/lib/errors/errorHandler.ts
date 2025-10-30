@@ -56,6 +56,7 @@ export interface ErrorHandlerOptions {
  * }
  * ```
  */
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class ErrorHandler {
   /**
    * Main error handling method
@@ -123,7 +124,6 @@ export class ErrorHandler {
     operation: string,
     context?: string
   ): string {
-    const errorMessage = this.extractErrorMessage(error)
     const userMessage = `Failed to ${operation}`
 
     return this.handle(error, {

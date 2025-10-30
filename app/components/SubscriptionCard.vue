@@ -2,7 +2,6 @@
 import { handleError } from '@/lib/errors/errorHandler'
 
 const { getSubscriptionStatus, manageSubscription, subscribe } = useStripe()
-const toast = useToast()
 
 interface SubscriptionStatus {
   hasSubscription: boolean

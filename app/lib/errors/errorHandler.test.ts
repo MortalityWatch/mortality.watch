@@ -7,8 +7,11 @@ vi.mock('@/toast', () => ({
 }))
 
 describe('ErrorHandler', () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let consoleErrorSpy: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let consoleWarnSpy: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let consoleLogSpy: any
 
   beforeEach(() => {
@@ -129,7 +132,7 @@ describe('ErrorHandler', () => {
       const result = handleApiError(error, 'fetch user data', 'getUserData')
 
       expect(result).toBe('Network error')
-      expect(consoleErrorSpy).toHaveBeenCalledWith('[api:fetch user data] Network error')
+      expect(consoleErrorSpy).toHaveBeenCalledWith('[getUserData] Network error')
     })
   })
 
