@@ -1,8 +1,15 @@
 import { deflateSync, inflateSync } from 'zlib'
 
 export const compress = (str: string): ArrayBuffer => {
-  const buffer = deflateSync(str).buffer
-  return buffer instanceof ArrayBuffer ? buffer : (buffer.slice(0) as unknown as ArrayBuffer)
+  const nodeBuffer = deflateSync(str)
+  const arrayBuffer = nodeBuffer.buffer
+  // Node.js Buffer.buffer returns ArrayBuffer | SharedArrayBuffer
+  // We need to ensure it's an ArrayBuffer
+  if (arrayBuffer instanceof ArrayBuffer) {
+    return arrayBuffer
+  }
+  // If it's SharedArrayBuffer, convert to ArrayBuffer
+  return nodeBuffer.buffer.slice(0)
 }
 
 export const decompress = (byteArrayBuffer: ArrayBuffer): string => {
