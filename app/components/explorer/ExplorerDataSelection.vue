@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { Country } from '@/model'
 import type { ChartType } from '@/model/period'
 import MortalityChartControlsPrimary from '@/components/charts/MortalityChartControlsPrimary.vue'
 import DateSlider from '@/components/charts/DateSlider.vue'
+import FeatureBadge from '@/components/FeatureBadge.vue'
 import { specialColor } from '@/colors'
 
 const props = defineProps<{
@@ -27,6 +29,27 @@ const emit = defineEmits<{
   sliderStartChanged: [value: string]
   dateSliderChanged: [value: string[]]
 }>()
+
+// Feature access for extended time periods
+const { can } = useFeatureAccess()
+const hasExtendedTimeAccess = computed(() => can('EXTENDED_TIME_PERIODS'))
+
+// For users without extended access, find the year 2000 or earliest after
+const restrictedSliderStart = computed(() => {
+  if (hasExtendedTimeAccess.value) return null
+
+  const year2000OrLater = props.allYearlyChartLabelsUnique.find((label) => {
+    const year = parseInt(label.substring(0, 4))
+    return year >= 2000
+  })
+
+  return year2000OrLater || props.allYearlyChartLabelsUnique[0] || ''
+})
+
+// Display value for the From input
+const displaySliderStart = computed(() => {
+  return restrictedSliderStart.value || props.sliderStart
+})
 </script>
 
 <template>
@@ -61,15 +84,19 @@ const emit = defineEmits<{
           <div class="flex items-center gap-2">
             <label class="text-sm font-medium whitespace-nowrap">From</label>
             <USelectMenu
-              :model-value="props.sliderStart"
+              :model-value="displaySliderStart"
               :items="props.allYearlyChartLabelsUnique || []"
               placeholder="Start"
               size="sm"
               class="w-24"
-              :disabled="false"
+              :disabled="!hasExtendedTimeAccess"
               @update:model-value="emit('sliderStartChanged', $event)"
             />
-            <UPopover>
+            <FeatureBadge
+              v-if="!hasExtendedTimeAccess"
+              feature="EXTENDED_TIME_PERIODS"
+            />
+            <UPopover v-if="hasExtendedTimeAccess">
               <UButton
                 icon="i-lucide-info"
                 color="neutral"
