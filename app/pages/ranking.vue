@@ -6,6 +6,11 @@
  * - useRankingState: Centralized state management
  * - useRankingData: Data fetching and processing
  * - useRankingTableSort: Table sorting logic
+ *
+ * Phase 5b: Extracted UI components to reduce page size
+ * - RankingHeader: Page title and description
+ * - RankingActions: Action buttons (Explorer link, Save ranking)
+ * - RankingSaveModal: Save ranking modal dialog
  */
 
 import { computed, ref, onMounted, watch } from 'vue'
@@ -28,7 +33,10 @@ import { useRankingData } from '@/composables/useRankingData'
 import { useRankingTableSort } from '@/composables/useRankingTableSort'
 import { useCountryFilter } from '@/composables/useCountryFilter'
 import { useSaveChart } from '@/composables/useSaveChart'
-import RankingDataSelection from '../components/ranking/RankingDataSelection.vue'
+import RankingHeader from '@/components/ranking/RankingHeader.vue'
+import RankingDataSelection from '@/components/ranking/RankingDataSelection.vue'
+import RankingActions from '@/components/ranking/RankingActions.vue'
+import RankingSaveModal from '@/components/ranking/RankingSaveModal.vue'
 
 definePageMeta({
   ssr: false
@@ -328,26 +336,9 @@ const saveToDB = async () => {
 
 <template>
   <div class="container mx-auto px-4 py-8">
-    <div class="flex flex-col gap-6 text-center mx-auto">
-      <h1 class="text-4xl font-bold mb-6">
-        Excess Mortality Ranking
-      </h1>
+    <RankingHeader />
 
-      <div class="space-y-4">
-        <p class="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
-          Compare excess mortality across all available countries and regions.
-          Countries are ranked by total excess mortality for the selected period.
-        </p>
-        <p class="text-lg text-gray-600 dark:text-gray-400 leading-relaxed mb-6">
-          Click on a country name to jump directly to the
-          <NuxtLink
-            to="/explorer"
-            class="text-primary hover:underline"
-          >Explorer</NuxtLink>
-          for detailed time-series analysis and visualization.
-        </p>
-      </div>
-
+    <div class="flex flex-col gap-6 mx-auto">
       <LoadingSpinner
         v-if="!hasLoaded"
         text="Loading ranking data..."
@@ -406,23 +397,10 @@ const saveToDB = async () => {
               @update:current-page="(val) => currentPage = val"
               @update:items-per-page="(val) => itemsPerPage = val"
             />
-            <div class="flex gap-2 mt-4">
-              <UButton
-                :to="explorerLink()"
-                variant="outline"
-                size="lg"
-                class="flex-1"
-              >
-                Show in Explorer
-              </UButton>
-              <UButton
-                icon="i-lucide-save"
-                size="lg"
-                @click="saveRanking"
-              >
-                Save Ranking
-              </UButton>
-            </div>
+            <RankingActions
+              :explorer-link="explorerLink()"
+              @save="saveRanking"
+            />
           </UCard>
         </div>
 
@@ -491,80 +469,15 @@ const saveToDB = async () => {
     </div>
 
     <!-- Save Ranking Modal -->
-    <UModal
+    <RankingSaveModal
       v-model="showSaveModal"
-      title="Save Ranking"
-    >
-      <div class="p-4 space-y-4">
-        <!-- Name Input -->
-        <UFormGroup
-          label="Ranking Name"
-          required
-        >
-          <UInput
-            v-model="saveRankingName"
-            placeholder="Enter a name for your ranking"
-          />
-        </UFormGroup>
-
-        <!-- Description Input -->
-        <UFormGroup label="Description (optional)">
-          <UTextarea
-            v-model="saveRankingDescription"
-            placeholder="Add a description (optional)"
-            :rows="3"
-          />
-        </UFormGroup>
-
-        <!-- Public Toggle -->
-        <UFormGroup>
-          <div class="flex items-center gap-3">
-            <UToggle v-model="saveRankingPublic" />
-            <div>
-              <div class="font-medium text-sm">
-                Make this ranking public
-              </div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">
-                Public rankings appear in the chart gallery
-              </div>
-            </div>
-          </div>
-        </UFormGroup>
-
-        <!-- Error Message -->
-        <UAlert
-          v-if="saveError"
-          color="error"
-          variant="subtle"
-          :title="saveError"
-        />
-
-        <!-- Success Message -->
-        <UAlert
-          v-if="saveSuccess"
-          color="success"
-          variant="subtle"
-          title="Ranking saved successfully!"
-        />
-      </div>
-
-      <template #footer>
-        <div class="flex justify-end gap-2">
-          <UButton
-            color="neutral"
-            variant="ghost"
-            label="Cancel"
-            @click="showSaveModal = false"
-          />
-          <UButton
-            color="primary"
-            label="Save Ranking"
-            :loading="savingRanking"
-            :disabled="!saveRankingName.trim()"
-            @click="saveToDB"
-          />
-        </div>
-      </template>
-    </UModal>
+      v-model:save-chart-name="saveRankingName"
+      v-model:save-chart-description="saveRankingDescription"
+      v-model:save-chart-public="saveRankingPublic"
+      :saving-chart="savingRanking"
+      :save-error="saveError"
+      :save-success="saveSuccess"
+      @save="saveToDB"
+    />
   </div>
 </template>
