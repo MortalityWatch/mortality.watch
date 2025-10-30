@@ -35,6 +35,7 @@ export const users = sqliteTable(
     passwordResetTokenExpires: integer('password_reset_token_expires', {
       mode: 'timestamp'
     }),
+    tosAcceptedAt: integer('tos_accepted_at', { mode: 'timestamp' }),
     lastLogin: integer('last_login', { mode: 'timestamp' }),
     createdAt: integer('created_at', { mode: 'timestamp' })
       .notNull()
