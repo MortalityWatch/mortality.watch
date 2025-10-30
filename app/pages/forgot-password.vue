@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
-import { handleError } from '@/lib/errors/errorHandler'
 
 definePageMeta({
   layout: 'auth'
@@ -14,6 +13,7 @@ useSeoMeta({
 
 const { forgotPassword } = useAuth()
 const toast = useToast()
+const { formError, handleAuthError, clearError } = useAuthError()
 
 const submitted = ref(false)
 const email = ref('')
@@ -27,12 +27,17 @@ const fields = [{
 }]
 
 const schema = z.object({
-  email: z.string().email('Invalid email')
+  email: z.preprocess(
+    val => val || '',
+    z.string().min(1, 'Email is required').email('Invalid email')
+  )
 })
 
 type Schema = z.output<typeof schema>
 
-async function onSubmit(event: FormSubmitEvent<Schema>) {
+const onSubmit = async (event: FormSubmitEvent<Schema>) => {
+  clearError()
+
   try {
     email.value = event.data.email
     await forgotPassword(event.data.email)
@@ -43,13 +48,24 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       color: 'success'
     })
   } catch (error: unknown) {
-    handleError(error, 'Failed to send password reset email', 'forgotPassword')
+    handleAuthError(error, 'forgotPassword')
   }
 }
 </script>
 
 <template>
   <div v-if="!submitted">
+    <UAlert
+      v-if="formError"
+      color="error"
+      variant="soft"
+      :title="formError"
+      icon="i-lucide-alert-circle"
+      :close-button="{ icon: 'i-lucide-x', color: 'gray', variant: 'link', padded: false }"
+      class="mb-6"
+      @close="clearError"
+    />
+
     <UAuthForm
       :fields="fields"
       :schema="schema"
@@ -57,7 +73,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       description="Enter your email address and we'll send you a link to reset your password."
       icon="i-lucide-mail"
       :submit="{ label: 'Send Reset Link' }"
-      @submit="onSubmit"
+      @submit="(onSubmit as (event: FormSubmitEvent<Schema>) => Promise<void>)"
     >
       <template #footer>
         Remember your password? <ULink

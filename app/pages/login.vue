@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
-import { handleError } from '@/lib/errors/errorHandler'
 
 definePageMeta({
   layout: 'auth'
@@ -16,6 +15,7 @@ const { signIn } = useAuth()
 const router = useRouter()
 const route = useRoute()
 const toast = useToast()
+const { formError, handleAuthError, clearError } = useAuthError()
 
 const fields = [{
   name: 'email',
@@ -36,14 +36,22 @@ const fields = [{
 }]
 
 const schema = z.object({
-  email: z.string().email('Invalid email'),
-  password: z.string().min(8, 'Must be at least 8 characters'),
-  remember: z.boolean().optional()
+  email: z.preprocess(
+    val => val || '',
+    z.string().min(1, 'Email is required').email('Invalid email')
+  ),
+  password: z.preprocess(
+    val => val || '',
+    z.string().min(1, 'Password is required').min(8, 'Must be at least 8 characters')
+  ),
+  remember: z.boolean().optional().default(false)
 })
 
 type Schema = z.output<typeof schema>
 
-async function onSubmit(event: FormSubmitEvent<Schema>) {
+const onSubmit = async (event: FormSubmitEvent<Schema>) => {
+  clearError()
+
   try {
     await signIn(event.data.email, event.data.password, event.data.remember || false)
     toast.add({
@@ -55,32 +63,45 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     const redirect = route.query.redirect as string || '/'
     await router.push(redirect)
   } catch (error: unknown) {
-    handleError(error, 'Sign in failed', 'login')
+    handleAuthError(error, 'login')
   }
 }
 </script>
 
 <template>
-  <UAuthForm
-    :fields="fields"
-    :schema="schema"
-    title="Welcome back"
-    icon="i-lucide-lock"
-    @submit="onSubmit"
-  >
-    <template #description>
-      Don't have an account? <ULink
-        to="/signup"
-        class="text-primary font-medium"
-      >Sign up</ULink>.
-    </template>
+  <div>
+    <UAlert
+      v-if="formError"
+      color="error"
+      variant="soft"
+      :title="formError"
+      icon="i-lucide-alert-circle"
+      :close-button="{ icon: 'i-lucide-x', color: 'gray', variant: 'link', padded: false }"
+      class="mb-6"
+      @close="clearError"
+    />
 
-    <template #password-hint>
-      <ULink
-        to="/forgot-password"
-        class="text-primary font-medium"
-        tabindex="-1"
-      >Forgot password?</ULink>
-    </template>
-  </UAuthForm>
+    <UAuthForm
+      :fields="fields"
+      :schema="schema"
+      title="Welcome back"
+      icon="i-lucide-lock"
+      @submit="(onSubmit as (event: FormSubmitEvent<Schema>) => Promise<void>)"
+    >
+      <template #description>
+        Don't have an account? <ULink
+          to="/signup"
+          class="text-primary font-medium"
+        >Sign up</ULink>.
+      </template>
+
+      <template #password-hint>
+        <ULink
+          to="/forgot-password"
+          class="text-primary font-medium"
+          tabindex="-1"
+        >Forgot password?</ULink>
+      </template>
+    </UAuthForm>
+  </div>
 </template>
