@@ -3,63 +3,27 @@
  */
 
 import type { ChartDataset, ChartType, DefaultDataPoint } from 'chart.js'
-import type { ChartErrorDataPoint } from './chartTypes'
+import type { DataTransformationConfig } from './types'
 import {
   getKeyForType,
-  type Country,
   type DatasetReturn,
   type Dataset
 } from '~/model'
-import { cumulativeSum, sum, getCamelCase } from '~/utils'
+import { getCamelCase } from '~/utils'
 import { isBl, isPredictionIntervalKey } from './predicates'
+import { DataTransformationPipeline } from './strategies/DataTransformationPipeline'
 import { DATA_CONFIG } from '@/lib/config/constants'
 
 const SUBREGION_SEPERATOR = DATA_CONFIG.SUBREGION_SEPARATOR
+
+// Create a singleton pipeline instance
+const transformPipeline = new DataTransformationPipeline()
 
 const getLabel = (key: string, country: string, ageGroup: string) => {
   if (isBl(key) || isPredictionIntervalKey(key)) return ''
   const idx = country.indexOf(SUBREGION_SEPERATOR)
   if (idx > -1) return `${country.substring(idx + 3)}${ageGroup}`
   return `${country}${ageGroup}`
-}
-
-const getBLForKey = (isAsmr: boolean, key: string) => {
-  if (isAsmr) return `${key.split('_')[0]}_${key.split('_')[1]}_baseline`
-  else return `${key.split('_')[0]}_baseline`
-}
-
-const getPercentageDataRow = (dataRow: number[], blRow: number[]) => {
-  const result = []
-  for (let i = 0; i < dataRow.length; i++) result.push((dataRow[i] ?? 0) / (blRow[i] ?? 1))
-  return result
-}
-
-const getData = (
-  showPercentage: boolean,
-  cumulative: boolean,
-  showTotal: boolean,
-  isAsmrType: boolean,
-  data: Record<string, number[]>,
-  key: string
-): number[] => {
-  const dataRow = data[key] ?? []
-  if (showPercentage) {
-    const blDataRow = data[getBLForKey(isAsmrType, key)] ?? []
-    // Absolute
-    if (!cumulative) return getPercentageDataRow(dataRow, blDataRow)
-    if (!showTotal)
-      return getPercentageDataRow(
-        // Cumulative
-        cumulativeSum(dataRow),
-        cumulativeSum(blDataRow)
-      )
-    else return [sum(dataRow) / sum(blDataRow)] // Cumulative Total
-  } else {
-    if (!cumulative) return dataRow // Absolute
-    if (!showTotal)
-      return cumulativeSum(dataRow) // Cumulative
-    else return [sum(dataRow)] // Cumulative Total
-  }
 }
 
 const getPointBackgroundColor = (key: string, color: string) => {
@@ -103,112 +67,6 @@ const getType = (key: string, isBarChartStyle: boolean, isExcess: boolean) => {
   else return isBarChartStyle && !key.includes('_baseline') ? 'bar' : 'line'
 }
 
-const makeErrorBarData = (
-  row: number[],
-  lowerRow: (number | undefined)[],
-  upperRow: (number | undefined)[]
-): ChartErrorDataPoint[] => {
-  const result: ChartErrorDataPoint[] = []
-  for (let i = 0; i < row.length; i++) {
-    result.push({
-      x: i,
-      y: row[i] ?? 0,
-      yMin: lowerRow[i],
-      yMax: upperRow[i],
-      yMinMin: undefined,
-      yMaxMax: undefined
-    })
-  }
-  return result
-}
-
-const repeat = <T>(value: T, length: number): T[] => {
-  return new Array(length).fill(value)
-}
-
-const getBarExcessData = (
-  showPercentage: boolean,
-  cumulative: boolean,
-  showTotal: boolean,
-  showCumPi: boolean,
-  isAsmrType: boolean,
-  dataRaw: Record<string, number[]>,
-  key: string
-): (number | null)[] | ChartErrorDataPoint[] => {
-  const data = dataRaw[key] ?? []
-  const dataL = dataRaw[`${key}_upper`] ?? []
-  const dataU = dataRaw[`${key}_lower`] ?? []
-
-  if (showPercentage) {
-    const blDataRow = dataRaw[getBLForKey(isAsmrType, key)] ?? []
-    const blDataLRow = dataRaw[getBLForKey(isAsmrType, `${key}_upper`)] ?? []
-    const blDataURow = dataRaw[getBLForKey(isAsmrType, `${key}_lower`)] ?? []
-
-    // Absolute
-    if (!cumulative)
-      return makeErrorBarData(
-        getPercentageDataRow(data, blDataRow),
-        getPercentageDataRow(dataL, blDataLRow),
-        getPercentageDataRow(dataU, blDataURow)
-      )
-
-    if (!showTotal) {
-      if (showCumPi) {
-        // Cumulative
-        return makeErrorBarData(
-          getPercentageDataRow(cumulativeSum(data), cumulativeSum(blDataRow)),
-          getPercentageDataRow(cumulativeSum(dataL), cumulativeSum(blDataLRow)),
-          getPercentageDataRow(cumulativeSum(dataU), cumulativeSum(blDataURow))
-        )
-      } else {
-        return makeErrorBarData(
-          getPercentageDataRow(cumulativeSum(data), cumulativeSum(blDataRow)),
-          repeat(undefined, data.length),
-          repeat(undefined, data.length)
-        )
-      }
-    } else {
-      if (showCumPi) {
-        return makeErrorBarData(
-          [sum(data) / sum(blDataRow)],
-          [sum(dataL) / sum(blDataLRow)],
-          [sum(dataU) / sum(blDataURow)]
-        ) // Cumulative Total
-      } else {
-        return makeErrorBarData(
-          [sum(data) / sum(blDataRow)],
-          [undefined],
-          [undefined]
-        ) // Cumulative Total
-      }
-    }
-  } else {
-    if (!cumulative) return makeErrorBarData(data, dataL, dataU) // Absolute
-
-    if (!showTotal) {
-      if (showCumPi) {
-        return makeErrorBarData(
-          cumulativeSum(data),
-          cumulativeSum(dataL),
-          cumulativeSum(dataU)
-        )
-      } else {
-        return makeErrorBarData(
-          cumulativeSum(data),
-          repeat(undefined, data.length),
-          repeat(undefined, data.length)
-        )
-      }
-    } else {
-      if (showCumPi) {
-        return makeErrorBarData([sum(data)], [sum(dataL)], [sum(dataU)]) // Cumulative Total
-      } else {
-        return makeErrorBarData([sum(data)], [undefined], [undefined]) // Cumulative Total
-      }
-    }
-  }
-}
-
 const getSource = (ds: Record<string, unknown[]>, key: string) => {
   if (key.startsWith('asmr') && ds['source_asmr']) {
     return ds.source_asmr
@@ -217,30 +75,29 @@ const getSource = (ds: Record<string, unknown[]>, key: string) => {
   }
 }
 
+/**
+ * Generate chart datasets with transformed data
+ * @param config - Configuration object containing display, chart, visual, and context settings
+ * @param data - The dataset to process
+ * @returns Dataset return object with datasets and sources
+ */
 export const getDatasets = (
-  type: string,
-  showBaseline: boolean,
-  standardPopulation: string,
-  isExcess: boolean,
-  allCountries: Record<string, Country>,
-  isErrorBarType: boolean,
-  colors: string[],
-  isMatrixChartStyle: boolean,
-  countries: string[],
-  showPercentage: boolean,
-  cumulative: boolean,
-  showTotal: boolean,
-  showCumPi: boolean,
-  isAsmrType: boolean,
-  showPredictionInterval: boolean,
-  chartType: string,
-  isBarChartStyle: boolean,
+  config: DataTransformationConfig,
   data: Dataset
 ): DatasetReturn => {
   let countryIndex = 0
   const datasets: ChartDataset<ChartType, DefaultDataPoint<ChartType>>[] = []
   const sources = new Set<string>()
   const ags = Object.keys(data)
+
+  // Create transformation config for pipeline
+  const transformConfig = {
+    showPercentage: config.display.showPercentage,
+    cumulative: config.display.cumulative,
+    showTotal: config.display.showTotal,
+    showCumPi: config.display.showCumPi,
+    isAsmrType: config.chart.isAsmrType
+  }
 
   for (const ag of ags) {
     const agData = data[ag]
@@ -250,27 +107,27 @@ export const getDatasets = (
       if (!ds) continue
       const dsRecord: Record<string, unknown[]> = ds
       const keys = getKeyForType(
-        type,
-        showBaseline,
-        standardPopulation,
-        isExcess,
+        config.chart.type,
+        config.display.showBaseline,
+        config.chart.standardPopulation,
+        config.chart.isExcess,
         true
       )
-      const country = allCountries[iso3c]
+      const country = config.context.allCountries[iso3c]
       if (!country) throw new Error(`No country found for iso3c ${iso3c}`)
       keys.forEach((key) => {
         if (
-          isErrorBarType
+          config.chart.isErrorBarType
           && (key.endsWith('_lower') || key.endsWith('_upper'))
         )
           return
         const offset
           = keys.length * countryIndex + 1 + (key.includes('_prediction') ? 1 : 0)
-        const color: string = colors[countryIndex] ?? '#000000'
+        const color: string = config.visual.colors[countryIndex] ?? '#000000'
         const ag_str = ags.length === 1 ? '' : ` [${getCamelCase(ag)}]`
         const label = getLabel(
           key,
-          isMatrixChartStyle || datasets.length === 0 || countries.length > 1
+          config.chart.isMatrixChartStyle || datasets.length === 0 || config.context.countries.length > 1
             ? country.jurisdiction
             : '',
           ag_str
@@ -287,43 +144,36 @@ export const getDatasets = (
         datasets.push({
           label,
           data:
-            isErrorBarType && showPredictionInterval
-              ? getBarExcessData(
-                  showPercentage,
-                  cumulative,
-                  showTotal,
-                  showCumPi,
-                  isAsmrType,
+            config.chart.isErrorBarType && config.display.showPredictionInterval
+              ? transformPipeline.transformErrorBarData(
+                  transformConfig,
                   dsRecord as Record<string, number[]>,
                   key
                 )
-              : getData(
-                  showPercentage,
-                  cumulative,
-                  showTotal,
-                  isAsmrType,
+              : transformPipeline.transformData(
+                  transformConfig,
                   dsRecord as Record<string, number[]>,
                   key
                 ),
-          borderColor: colors[countryIndex],
+          borderColor: config.visual.colors[countryIndex],
           backgroundColor: getBackgroundColor(key, color),
           fill: isPredictionIntervalKey(key) ? offset : undefined,
-          borderWidth: getBorderWidth(key, isBarChartStyle),
+          borderWidth: getBorderWidth(key, config.chart.isBarChartStyle),
           borderDash: getBorderDash(key),
           pointRadius:
-            countries.length * ags.length > 5
+            config.context.countries.length * ags.length > 5
               ? 0
-              : getPointRadius(chartType, key),
+              : getPointRadius(config.chart.chartType, key),
           pointBackgroundColor: getPointBackgroundColor(key, color),
-          type: getType(key, isBarChartStyle, isExcess),
-          hidden: isPredictionIntervalKey(key) && !showPredictionInterval
+          type: getType(key, config.chart.isBarChartStyle, config.chart.isExcess),
+          hidden: isPredictionIntervalKey(key) && !config.display.showPredictionInterval
         })
       })
       countryIndex++
     }
   }
 
-  if (showTotal) {
+  if (config.display.showTotal) {
     return {
       datasets: datasets.sort(
         (a, b) => (a.data[0] as number) - (b.data[0] as number)

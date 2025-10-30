@@ -13,6 +13,7 @@ import {
 } from '~/model'
 import { ChartPeriod, type ChartType } from '~/model/period'
 import type { MortalityChartData } from './chartTypes'
+import type { DataTransformationConfig } from './types'
 import { getDatasets } from './datasets'
 import { getChartLabels } from './labels'
 
@@ -127,26 +128,35 @@ export const getFilteredChartData = async (
       ? getLabels(dateFrom, dateTo)
       : filteredData.labels
 
-  const ds = getDatasets(
-    type,
-    showBaseline,
-    standardPopulation,
-    isExcess,
-    allCountries,
-    isErrorBarType,
-    colors,
-    isMatrixChartStyle,
-    countries,
-    showPercentage,
-    cumulative,
-    showTotal,
-    showCumPi,
-    isAsmrType,
-    showPredictionInterval,
-    chartType,
-    isBarChartStyle,
-    filteredData.data
-  )
+  const config: DataTransformationConfig = {
+    display: {
+      showPercentage,
+      cumulative,
+      showTotal,
+      showCumPi,
+      showBaseline,
+      showPredictionInterval
+    },
+    chart: {
+      type,
+      chartType,
+      isExcess,
+      isAsmrType,
+      isBarChartStyle,
+      isMatrixChartStyle,
+      isErrorBarType,
+      standardPopulation
+    },
+    visual: {
+      colors
+    },
+    context: {
+      countries,
+      allCountries
+    }
+  }
+
+  const ds = getDatasets(config, filteredData.data)
 
   return {
     labels,
