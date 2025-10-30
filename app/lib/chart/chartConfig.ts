@@ -44,8 +44,10 @@ export const makeChartConfig = (
   showPercentage: boolean,
   showPi: boolean
 ): Record<string, unknown> => {
+  // Cast from generic data structure to MortalityChartData
+  // The caller is responsible for providing properly structured data
   const internalData = data as unknown as MortalityChartData
-  if (style == 'matrix') {
+  if (style === 'matrix') {
     return makeMatrixChartConfig(
       internalData,
       isExcess,
@@ -56,15 +58,15 @@ export const makeChartConfig = (
       isDeathsType,
       isPopulationType
     ) as unknown as Record<string, unknown>
-  } else
-    return makeBarLineChartConfig(
-      internalData,
-      isExcess,
-      showPi,
-      showPercentage,
-      isDeathsType,
-      isPopulationType
-    ) as unknown as Record<string, unknown>
+  }
+  return makeBarLineChartConfig(
+    internalData,
+    isExcess,
+    showPi,
+    showPercentage,
+    isDeathsType,
+    isPopulationType
+  ) as unknown as Record<string, unknown>
 }
 
 export const makeBarLineChartConfig = (
@@ -240,10 +242,10 @@ export const makeMatrixChartConfig = (
       {
         label: '',
         data: matrixData.data as MortalityMatrixDataPoint[],
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        backgroundColor: tileBackgroundColor as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        borderColor: tileBackgroundColor as any,
+        // Chart.js matrix plugin supports callback functions for colors
+        // Type casting is necessary because ChartDataset type doesn't reflect this capability
+        backgroundColor: tileBackgroundColor as unknown as string | CanvasGradient | CanvasPattern,
+        borderColor: tileBackgroundColor as unknown as string | CanvasGradient | CanvasPattern,
         borderWidth: 1,
         width: ({ chart }: { chart: Chart }) =>
           (chart.chartArea || {}).width / data.labels.length,

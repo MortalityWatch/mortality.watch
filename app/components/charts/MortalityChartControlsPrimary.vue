@@ -80,8 +80,24 @@ const selectedAgeGroups = computed({
   }
 })
 
-const handleCountryChange = (val: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
-  const countries = Array.isArray(val) ? val.map((v: any) => typeof v === 'string' ? v : v.value) : [] // eslint-disable-line @typescript-eslint/no-explicit-any
+interface SelectOption {
+  label: string
+  value: string
+  [key: string]: unknown
+}
+
+type SelectValue = string | SelectOption | (string | SelectOption)[] | null | undefined
+
+const extractStringValues = (val: SelectValue): string[] => {
+  if (!val) return []
+  if (Array.isArray(val)) {
+    return val.map(v => typeof v === 'string' ? v : (v as SelectOption).value)
+  }
+  return []
+}
+
+const handleCountryChange = (val: SelectValue) => {
+  const countries = extractStringValues(val)
   selectedCountries.value = countries
   const lastSelected = countries[countries.length - 1]
   if (lastSelected) {
@@ -92,8 +108,8 @@ const handleCountryChange = (val: any) => { // eslint-disable-line @typescript-e
   }
 }
 
-const handleAgeGroupChange = (val: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
-  const ageGroups = Array.isArray(val) ? val.map((v: any) => typeof v === 'string' ? v : v.value) : [] // eslint-disable-line @typescript-eslint/no-explicit-any
+const handleAgeGroupChange = (val: SelectValue) => {
+  const ageGroups = extractStringValues(val)
   selectedAgeGroups.value = ageGroups
   const lastSelected = ageGroups[ageGroups.length - 1]
   if (lastSelected) {
