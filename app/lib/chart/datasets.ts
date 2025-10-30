@@ -12,8 +12,9 @@ import {
 import { getCamelCase } from '~/utils'
 import { isBl, isPredictionIntervalKey } from './predicates'
 import { DataTransformationPipeline } from './strategies/DataTransformationPipeline'
+import { DATA_CONFIG } from '@/lib/config/constants'
 
-const SUBREGION_SEPERATOR = ' - '
+const SUBREGION_SEPERATOR = DATA_CONFIG.SUBREGION_SEPARATOR
 
 // Create a singleton pipeline instance
 const transformPipeline = new DataTransformationPipeline()

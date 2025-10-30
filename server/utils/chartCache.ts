@@ -1,6 +1,7 @@
 import { promises as fs } from 'node:fs'
 import { join } from 'node:path'
 import { createHash } from 'node:crypto'
+import { CACHE_CONFIG } from '@/lib/config/constants'
 
 /**
  * Chart filesystem cache for rendered PNG images
@@ -8,7 +9,7 @@ import { createHash } from 'node:crypto'
  */
 
 const CACHE_DIR = '.data/cache/charts'
-const CACHE_TTL = 7 * 24 * 60 * 60 * 1000 // 7 days in milliseconds
+const CACHE_TTL = CACHE_CONFIG.CHART_CACHE_TTL
 
 // Unused for now but kept for future potential use
 // interface CacheEntry {

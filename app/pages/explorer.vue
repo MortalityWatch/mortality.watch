@@ -25,6 +25,7 @@ import { getChartColors } from '@/colors'
 import { getColorScale } from '@/lib/chart/chartColors'
 import { useRoute, useRouter } from 'vue-router'
 import { showToast } from '@/toast'
+import { useSaveChart } from '@/composables/useSaveChart'
 
 // Feature access for tier-based features (currently unused but may be needed in the future)
 // const { can, getFeatureUpgradeUrl } = useFeatureAccess()
@@ -338,92 +339,46 @@ const screenshotChart = () => {
   }
 }
 
-// Save Chart Modal State
-const showSaveModal = ref(false)
-const savingChart = ref(false)
-const saveChartName = ref('')
-const saveChartDescription = ref('')
-const saveChartPublic = ref(false)
-const saveError = ref('')
-const saveSuccess = ref(false)
+// Phase 0: Save Chart functionality using composable
+const {
+  showSaveModal,
+  savingChart,
+  saveChartName,
+  saveChartDescription,
+  saveChartPublic,
+  saveError,
+  saveSuccess,
+  openSaveModal: saveChart,
+  saveToDB: saveToDBComposable
+} = useSaveChart({ chartType: 'explorer' })
 
-const saveChart = () => {
-  // Open save modal
-  showSaveModal.value = true
-  saveChartName.value = ''
-  saveChartDescription.value = ''
-  saveChartPublic.value = false
-  saveError.value = ''
-  saveSuccess.value = false
-}
-
+// Wrapper function to serialize state and call composable
 const saveToDB = async () => {
-  if (!saveChartName.value.trim()) {
-    saveError.value = 'Chart name is required'
-    return
+  // Serialize current explorer state
+  const chartStateData = {
+    countries: state.countries.value,
+    type: state.type.value,
+    chartType: state.chartType.value,
+    ageGroups: state.ageGroups.value,
+    chartStyle: state.chartStyle.value,
+    isExcess: state.isExcess.value,
+    showBaseline: state.showBaseline.value,
+    baselineMethod: state.baselineMethod.value,
+    baselineDateFrom: state.baselineDateFrom.value,
+    baselineDateTo: state.baselineDateTo.value,
+    cumulative: state.cumulative.value,
+    showPercentage: state.showPercentage.value,
+    showPredictionInterval: state.showPredictionInterval.value,
+    showTotal: state.showTotal.value,
+    dateFrom: state.dateFrom.value,
+    dateTo: state.dateTo.value,
+    standardPopulation: state.standardPopulation.value,
+    isLogarithmic: state.isLogarithmic.value,
+    maximize: state.maximize.value,
+    showLabels: state.showLabels.value
   }
 
-  savingChart.value = true
-  saveError.value = ''
-  saveSuccess.value = false
-
-  try {
-    // Serialize current state
-    const chartStateData = {
-      countries: state.countries.value,
-      type: state.type.value,
-      chartType: state.chartType.value,
-      ageGroups: state.ageGroups.value,
-      chartStyle: state.chartStyle.value,
-      isExcess: state.isExcess.value,
-      showBaseline: state.showBaseline.value,
-      baselineMethod: state.baselineMethod.value,
-      baselineDateFrom: state.baselineDateFrom.value,
-      baselineDateTo: state.baselineDateTo.value,
-      cumulative: state.cumulative.value,
-      showPercentage: state.showPercentage.value,
-      showPredictionInterval: state.showPredictionInterval.value,
-      showTotal: state.showTotal.value,
-      dateFrom: state.dateFrom.value,
-      dateTo: state.dateTo.value,
-      standardPopulation: state.standardPopulation.value,
-      isLogarithmic: state.isLogarithmic.value,
-      maximize: state.maximize.value,
-      showLabels: state.showLabels.value
-    }
-
-    const response = await $fetch('/api/charts', {
-      method: 'POST',
-      body: {
-        name: saveChartName.value.trim(),
-        description: saveChartDescription.value.trim() || null,
-        chartState: JSON.stringify(chartStateData),
-        chartType: 'explorer',
-        isPublic: saveChartPublic.value
-      }
-    })
-
-    saveSuccess.value = true
-    showToast(
-      saveChartPublic.value
-        ? 'Chart saved and published!'
-        : 'Chart saved!',
-      'success'
-    )
-
-    // Close modal and optionally navigate
-    setTimeout(() => {
-      showSaveModal.value = false
-      if (saveChartPublic.value && response.chart?.slug) {
-        navigateTo(`/charts/${response.chart.slug}`)
-      }
-    }, 1500)
-  } catch (err) {
-    console.error('Failed to save chart:', err)
-    saveError.value = err instanceof Error ? err.message : 'Failed to save chart'
-  } finally {
-    savingChart.value = false
-  }
+  await saveToDBComposable(chartStateData)
 }
 </script>
 

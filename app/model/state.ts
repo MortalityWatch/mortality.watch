@@ -23,6 +23,7 @@ import { StateSerialization } from './state/StateSerialization'
 import { Defaults } from '@/lib/state/stateSerializer'
 import { createStateProperties, type StateProperties } from './state/stateProperties'
 import { DataService } from '@/services/dataService'
+import { DATA_CONFIG } from '@/lib/config/constants'
 
 /**
  * State class - Manages chart/explorer state
@@ -537,7 +538,7 @@ export class State implements Serializable {
   _defaultToDate = () =>
     this.allChartLabels.value![this.allChartLabels.value!.length - 1]
 
-  _defaultPeriods = 30
+  _defaultPeriods = DATA_CONFIG.DEFAULT_PERIODS
 
   _defaultSliderPeriods = () =>
     Math.round(this._defaultPeriods * this.periodMultiplicatorForType())
