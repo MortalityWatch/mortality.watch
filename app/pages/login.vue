@@ -15,7 +15,7 @@ const { signIn } = useAuth()
 const router = useRouter()
 const route = useRoute()
 const toast = useToast()
-const formError = ref<string | null>(null)
+const { formError, handleAuthError, clearError } = useAuthError()
 
 const fields = [{
   name: 'email',
@@ -50,8 +50,7 @@ const schema = z.object({
 type Schema = z.output<typeof schema>
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
-  // Clear any previous errors
-  formError.value = null
+  clearError()
 
   try {
     await signIn(event.data.email, event.data.password, event.data.remember || false)
@@ -64,36 +63,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     const redirect = route.query.redirect as string || '/'
     await router.push(redirect)
   } catch (error: unknown) {
-    // Only handle API/network errors here, not validation errors
-    // Validation errors should be handled by the form component
-    console.error('[login] Error caught:', error)
-
-    const errorObj = error && typeof error === 'object' ? error : { message: String(error) }
-
-    // Check if this is an API error (has statusCode or data with statusCode)
-    // Skip validation errors which don't have these properties
-    const isApiError = ('statusCode' in errorObj)
-      || ('data' in errorObj && errorObj.data && typeof errorObj.data === 'object')
-
-    if (!isApiError) {
-      // This is likely a validation or other non-API error
-      // Don't show in our custom alert - let the form handle it
-      console.warn('[login] Non-API error detected, not displaying in alert')
-      return
-    }
-
-    // Extract API error message
-    let errorMessage = 'An error occurred'
-    if ('data' in errorObj && errorObj.data && typeof errorObj.data === 'object' && 'message' in errorObj.data) {
-      errorMessage = String((errorObj.data as Record<string, unknown>).message)
-    } else if ('statusMessage' in errorObj && errorObj.statusMessage) {
-      errorMessage = String(errorObj.statusMessage)
-    } else if ('message' in errorObj) {
-      errorMessage = String(errorObj.message)
-    }
-
-    // Show inline error only for API errors
-    formError.value = errorMessage
+    handleAuthError(error, 'login')
   }
 }
 </script>
@@ -108,7 +78,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       icon="i-lucide-alert-circle"
       :close-button="{ icon: 'i-lucide-x', color: 'gray', variant: 'link', padded: false }"
       class="mb-6"
-      @close="formError = null"
+      @close="clearError"
     />
 
     <UAuthForm

@@ -184,7 +184,7 @@ export class ErrorHandler {
   /**
    * Extract human-readable message from error object
    */
-  private static extractErrorMessage(error: unknown): string {
+  static extractErrorMessage(error: unknown): string {
     if (typeof error === 'string') {
       return error
     }

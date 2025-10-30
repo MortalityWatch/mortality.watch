@@ -13,10 +13,10 @@ useSeoMeta({
 
 const { forgotPassword } = useAuth()
 const toast = useToast()
+const { formError, handleAuthError, clearError } = useAuthError()
 
 const submitted = ref(false)
 const email = ref('')
-const formError = ref<string | null>(null)
 
 const fields = [{
   name: 'email',
@@ -36,8 +36,7 @@ const schema = z.object({
 type Schema = z.output<typeof schema>
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
-  // Clear any previous errors
-  formError.value = null
+  clearError()
 
   try {
     email.value = event.data.email
@@ -49,32 +48,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       color: 'success'
     })
   } catch (error: unknown) {
-    // Only handle API/network errors here, not validation errors
-    console.error('[forgotPassword] Error caught:', error)
-
-    const errorObj = error && typeof error === 'object' ? error : { message: String(error) }
-
-    // Check if this is an API error (has statusCode or data with statusCode)
-    const isApiError = ('statusCode' in errorObj)
-      || ('data' in errorObj && errorObj.data && typeof errorObj.data === 'object')
-
-    if (!isApiError) {
-      console.warn('[forgotPassword] Non-API error detected, not displaying in alert')
-      return
-    }
-
-    // Extract API error message
-    let errorMessage = 'An error occurred'
-    if ('data' in errorObj && errorObj.data && typeof errorObj.data === 'object' && 'message' in errorObj.data) {
-      errorMessage = String((errorObj.data as Record<string, unknown>).message)
-    } else if ('statusMessage' in errorObj && errorObj.statusMessage) {
-      errorMessage = String(errorObj.statusMessage)
-    } else if ('message' in errorObj) {
-      errorMessage = String(errorObj.message)
-    }
-
-    // Show inline error only for API errors
-    formError.value = errorMessage
+    handleAuthError(error, 'forgotPassword')
   }
 }
 </script>
@@ -89,7 +63,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       icon="i-lucide-alert-circle"
       :close-button="{ icon: 'i-lucide-x', color: 'gray', variant: 'link', padded: false }"
       class="mb-6"
-      @close="formError = null"
+      @close="clearError"
     />
 
     <UAuthForm
