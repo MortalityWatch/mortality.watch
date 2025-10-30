@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import MortalityChart from '@/components/charts/MortalityChart.vue'
 import type { ChartStyle, MortalityChartData } from '@/lib/chart/chartTypes'
 import { isMobile } from '@/utils'
@@ -24,8 +25,12 @@ const props = defineProps<{
   isCustomMode: boolean
 }>()
 
+// Ref to the actual DOM element for ResizeObserver
+const chartWrapperElement = ref<HTMLElement | null>(null)
+
 defineExpose({
-  // Expose container ref to parent
+  // Expose the actual DOM element to parent for ResizeObserver
+  chartWrapperElement
 })
 </script>
 
@@ -36,6 +41,7 @@ defineExpose({
     :ui="{ body: 'p-0' }"
   >
     <div
+      ref="chartWrapperElement"
       class="chart-wrapper relative"
       :class="{ 'resizable': !isMobile(), 'auto-mode': !props.hasBeenResized, 'custom-mode': props.isCustomMode }"
     >

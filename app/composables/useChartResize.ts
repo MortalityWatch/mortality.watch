@@ -24,10 +24,33 @@ export function useChartResize() {
   const isCustomMode = computed(() => chartPreset.value === 'Custom')
 
   /**
+   * Get the actual DOM element from the container ref
+   * Handles both direct refs and component instances
+   */
+  const getTargetElement = (): HTMLElement | null => {
+    if (!chartContainer.value) return null
+
+    // Check if chartContainer.value is a component instance with exposed chartWrapperElement
+    if (typeof chartContainer.value === 'object' && 'chartWrapperElement' in chartContainer.value) {
+      // Component instance with exposed element
+      const component = chartContainer.value as { chartWrapperElement: HTMLElement | null }
+      return component.chartWrapperElement
+    }
+
+    // Direct DOM element
+    if (chartContainer.value instanceof HTMLElement) {
+      return chartContainer.value
+    }
+
+    return null
+  }
+
+  /**
    * Apply preset size to chart
    */
   const applyPresetSize = (presetName: string) => {
-    if (!chartContainer.value) return
+    const targetElement = getTargetElement()
+    if (!targetElement) return
 
     // Try to find preset by name
     let preset = CHART_PRESETS.find(p => p.name === presetName)
@@ -46,15 +69,15 @@ export function useChartResize() {
       hasBeenResized.value = true
       // Keep current dimensions if they exist, otherwise use container's current size
       if (!chartWidth.value || !chartHeight.value) {
-        const currentWidth = chartContainer.value.offsetWidth
-        const currentHeight = chartContainer.value.offsetHeight
+        const currentWidth = targetElement.offsetWidth
+        const currentHeight = targetElement.offsetHeight
         chartWidth.value = currentWidth
         chartHeight.value = currentHeight
-        chartContainer.value.style.width = `${currentWidth}px`
-        chartContainer.value.style.height = `${currentHeight}px`
+        targetElement.style.width = `${currentWidth}px`
+        targetElement.style.height = `${currentHeight}px`
       } else {
-        chartContainer.value.style.width = `${chartWidth.value}px`
-        chartContainer.value.style.height = `${chartHeight.value}px`
+        targetElement.style.width = `${chartWidth.value}px`
+        targetElement.style.height = `${chartHeight.value}px`
       }
       containerSize.value = 'Custom'
       showSizeLabel.value = true
@@ -66,8 +89,8 @@ export function useChartResize() {
     // Special case: "Auto" enables responsive sizing
     if (preset.width === 0 && preset.height === 0) {
       hasBeenResized.value = false
-      chartContainer.value.style.width = ''
-      chartContainer.value.style.height = ''
+      targetElement.style.width = ''
+      targetElement.style.height = ''
       containerSize.value = 'Auto'
       showSizeLabel.value = true
 
@@ -85,8 +108,8 @@ export function useChartResize() {
     }
 
     hasBeenResized.value = true
-    chartContainer.value.style.width = `${preset.width}px`
-    chartContainer.value.style.height = `${preset.height}px`
+    targetElement.style.width = `${preset.width}px`
+    targetElement.style.height = `${preset.height}px`
 
     // Save dimensions to local state (session-only)
     chartWidth.value = preset.width
@@ -118,7 +141,16 @@ export function useChartResize() {
     }
 
     // Only observe if NOT on mobile
-    if (!chartContainer.value || isMobile()) {
+    if (isMobile()) {
+      return
+    }
+
+    // Get the actual DOM element using helper function
+    const targetElement = getTargetElement()
+
+    // Validate that we have a valid DOM element
+    if (!targetElement || !(targetElement instanceof Element)) {
+      // Silently return - element may not be mounted yet
       return
     }
 
@@ -132,8 +164,8 @@ export function useChartResize() {
 
       // In Auto mode, only switch to Custom if user manually set inline styles (dragged handle)
       if (isAutoMode.value) {
-        const hasInlineWidth = chartContainer.value?.style.width && chartContainer.value?.style.width !== ''
-        const hasInlineHeight = chartContainer.value?.style.height && chartContainer.value?.style.height !== ''
+        const hasInlineWidth = targetElement?.style.width && targetElement?.style.width !== ''
+        const hasInlineHeight = targetElement?.style.height && targetElement?.style.height !== ''
 
         // If no inline styles, this is just window resize - ignore it
         if (!hasInlineWidth && !hasInlineHeight) {
@@ -156,8 +188,8 @@ export function useChartResize() {
         return
       }
 
-      const currentWidth = chartContainer.value?.offsetWidth || 0
-      const currentHeight = chartContainer.value?.offsetHeight || 0
+      const currentWidth = targetElement?.offsetWidth || 0
+      const currentHeight = targetElement?.offsetHeight || 0
 
       // Save dimensions to local state (session-only)
       chartWidth.value = currentWidth
@@ -179,7 +211,7 @@ export function useChartResize() {
       sizeTimeout = setTimeout(() => (showSizeLabel.value = false), CHART_RESIZE.SIZE_LABEL_TIMEOUT)
     })
 
-    resizeObserver.observe(chartContainer.value)
+    resizeObserver.observe(targetElement)
   }
 
   // Cleanup
