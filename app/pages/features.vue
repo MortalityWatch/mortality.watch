@@ -37,7 +37,6 @@
       <UPricingPlan
         title="Registered"
         description="Full-featured, forever free"
-        :badge="tier === 1 ? { label: 'Current Plan', color: 'primary' } : undefined"
         price="Free"
         :features="[
           { title: 'All Public features, plus:' },
@@ -48,11 +47,9 @@
           { title: 'Full historical data access', icon: 'i-lucide-calendar' },
           { title: 'Publish and share charts', icon: 'i-lucide-share-2' }
         ]"
-        :button="{
-          label: 'Sign Up Free',
-          to: '/signup',
-          color: 'primary'
-        }"
+        :button="tier >= 1
+          ? { label: 'Current Plan', disabled: true, color: 'neutral' }
+          : { label: 'Sign Up Free', to: '/signup', color: 'primary' }"
         class="border-2 border-blue-500 dark:border-blue-400"
       />
 
@@ -60,7 +57,6 @@
       <UPricingPlan
         title="Pro"
         description="Professional features"
-        :badge="tier === 2 ? { label: 'Current Plan', class: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' } : undefined"
         price="$9.99"
         billing-cycle="/month"
         tagline="or $99/year"
@@ -73,12 +69,9 @@
           { title: 'Z-score calculations (Coming Soon)', icon: 'i-lucide-calculator' },
           { title: 'Priority email support', icon: 'i-lucide-headphones' }
         ]"
-        :button="{
-          label: 'Upgrade to Pro',
-          to: '/subscribe',
-          color: 'primary',
-          class: 'bg-purple-600 hover:bg-purple-700 text-white dark:bg-purple-500 dark:hover:bg-purple-600'
-        }"
+        :button="tier === 2
+          ? { label: 'Current Plan', disabled: true, color: 'neutral' }
+          : { label: 'Upgrade to Pro', to: '/subscribe', color: 'primary', class: 'bg-purple-600 hover:bg-purple-700 text-white dark:bg-purple-500 dark:hover:bg-purple-600' }"
         class="border-2 border-purple-500 dark:border-purple-400"
       />
     </UPricingPlans>
