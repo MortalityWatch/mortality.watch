@@ -109,19 +109,30 @@ export function useRankingData(
 
   /**
    * Create explorer link for a country or countries
+   * Limits to 20 countries to avoid URL/API limitations
+   *
+   * Note: Uses Vue Router's query object format which will automatically
+   * serialize arrays as repeated query parameters (c=USA&c=SWE)
    */
   const explorerLink = (countryCodes?: string[]): string => {
     const codes = countryCodes || Array.from(visibleCountryCodes.value)
-    const baseUrl = '/explorer'
-    const query = new URLSearchParams({
-      c: codes.join(','),
-      ct: state.periodOfTime.value || 'yearly',
-      df: state.dateFrom.value,
-      dt: state.dateTo.value,
-      sp: state.standardPopulation.value,
-      bm: state.baselineMethod.value || 'mean'
+    // Limit to 20 countries to avoid overwhelming the API
+    const limitedCodes = codes.slice(0, 20)
+
+    const router = useRouter()
+    const route = router.resolve({
+      path: '/explorer',
+      query: {
+        c: limitedCodes, // Array will be serialized as c=USA&c=SWE
+        ct: state.periodOfTime.value || 'yearly',
+        df: state.dateFrom.value,
+        dt: state.dateTo.value,
+        sp: state.standardPopulation.value,
+        bm: state.baselineMethod.value || 'mean'
+      }
     })
-    return `${baseUrl}?${query.toString()}`
+
+    return route.href
   }
 
   // ============================================================================

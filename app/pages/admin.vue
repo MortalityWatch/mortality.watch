@@ -40,24 +40,10 @@ const stats = ref([
 
 const quickActions = [
   {
-    label: 'View Users',
-    icon: 'i-lucide-users',
-    to: '/admin/users',
-    description: 'Manage user accounts'
-  },
-  {
-    label: 'Database Studio',
-    icon: 'i-lucide-database',
-    click: () => {
-      window.open('http://localhost:4983', '_blank')
-    },
-    description: 'Open Drizzle Studio (local dev only)'
-  },
-  {
-    label: 'Back to Site',
-    icon: 'i-lucide-home',
-    to: '/',
-    description: 'Return to main site'
+    label: 'Featured Charts',
+    icon: 'i-lucide-star',
+    to: '/admin/featured-charts',
+    description: 'Manage featured charts'
   }
 ]
 </script>
@@ -112,7 +98,7 @@ const quickActions = [
           v-for="action in quickActions"
           :key="action.label"
           class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
-          @click="action.click ? action.click() : action.to ? $router.push(action.to) : null"
+          @click="$router.push(action.to)"
         >
           <div class="flex items-start gap-3">
             <UIcon
@@ -153,26 +139,7 @@ const quickActions = [
           <span class="text-gray-600 dark:text-gray-400">Environment</span>
           <span class="font-medium">{{ $config.public.nodeEnv || 'development' }}</span>
         </div>
-        <div class="flex justify-between py-2">
-          <span class="text-gray-600 dark:text-gray-400">Phase 6 Status</span>
-          <UBadge
-            color="success"
-            variant="subtle"
-          >
-            Implemented
-          </UBadge>
-        </div>
       </div>
     </UCard>
-
-    <!-- Note -->
-    <UAlert
-      color="info"
-      variant="subtle"
-      class="mt-8"
-      icon="i-lucide-info"
-      title="Development Note"
-      description="This is a basic admin dashboard. Full user management and analytics features will be added in future phases."
-    />
   </div>
 </template>

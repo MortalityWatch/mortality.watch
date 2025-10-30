@@ -54,120 +54,15 @@
       v-else-if="charts && charts.length > 0"
       class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
     >
-      <UCard
+      <ChartsChartCard
         v-for="chart in charts"
         :key="chart.id"
-        class="hover:shadow-lg transition-shadow"
-      >
-        <template #header>
-          <div class="flex items-start justify-between">
-            <h3 class="text-lg font-semibold flex-1">
-              {{ chart.name }}
-            </h3>
-            <UBadge
-              v-if="chart.isFeatured"
-              color="primary"
-              variant="subtle"
-              size="sm"
-            >
-              Featured
-            </UBadge>
-          </div>
-        </template>
-
-        <div class="space-y-3">
-          <!-- Description -->
-          <p
-            v-if="chart.description"
-            class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2"
-          >
-            {{ chart.description }}
-          </p>
-
-          <!-- Thumbnail -->
-          <div
-            class="overflow-hidden rounded-md bg-gray-100 dark:bg-gray-800"
-            style="aspect-ratio: 16/9"
-          >
-            <NuxtLink :to="`/charts/${chart.slug}`">
-              <img
-                v-if="chart.thumbnailUrl"
-                :src="chart.thumbnailUrl"
-                :alt="chart.name"
-                class="w-full h-full object-cover hover:scale-105 transition-transform"
-                loading="lazy"
-              >
-              <div
-                v-else
-                class="w-full h-full flex items-center justify-center text-gray-400"
-              >
-                <Icon
-                  name="i-lucide-bar-chart-2"
-                  class="w-12 h-12"
-                />
-              </div>
-            </NuxtLink>
-          </div>
-
-          <!-- Meta info -->
-          <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-            <span>
-              <Icon
-                name="i-lucide-user"
-                class="w-3 h-3 inline"
-              />
-              {{ chart.authorName }}
-            </span>
-            <span>
-              <Icon
-                name="i-lucide-eye"
-                class="w-3 h-3 inline"
-              />
-              {{ chart.viewCount }} views
-            </span>
-          </div>
-
-          <!-- Badge for chart type -->
-          <UBadge
-            :color="chart.chartType === 'explorer' ? 'info' : 'success'"
-            variant="subtle"
-            size="xs"
-          >
-            {{ chart.chartType }}
-          </UBadge>
-        </div>
-
-        <template #footer>
-          <div class="flex gap-2">
-            <UButton
-              :to="`/charts/${chart.slug}`"
-              color="primary"
-              variant="outline"
-              size="sm"
-              block
-            >
-              <Icon
-                name="i-lucide-eye"
-                class="w-4 h-4"
-              />
-              View Chart
-            </UButton>
-            <UButton
-              :to="getRemixUrl(chart)"
-              color="neutral"
-              variant="outline"
-              size="sm"
-              block
-            >
-              <Icon
-                name="i-lucide-copy"
-                class="w-4 h-4"
-              />
-              Remix
-            </UButton>
-          </div>
-        </template>
-      </UCard>
+        :chart="chart"
+        variant="gallery"
+        :show-admin-toggle="isAdmin"
+        :is-toggling="togglingFeatured === chart.id"
+        @toggle-featured="toggleFeatured"
+      />
     </div>
 
     <!-- Empty State -->
@@ -201,7 +96,10 @@
 </template>
 
 <script setup lang="ts">
-import { handleSilentError } from '@/lib/errors/errorHandler'
+import { handleApiError } from '@/lib/errors/errorHandler'
+
+const { user } = useAuth()
+const isAdmin = computed(() => user.value?.role === 'admin')
 
 interface Chart {
   id: number
@@ -291,24 +189,26 @@ watch([sortBy, filterType, filterFeatured], () => {
   currentPage.value = 1
 })
 
-// Get remix URL for a chart
-function getRemixUrl(chart: Chart) {
-  try {
-    const state = JSON.parse(chart.chartState)
-    const baseUrl = chart.chartType === 'explorer' ? '/explorer' : '/ranking'
+// Admin: Toggle featured status
+const togglingFeatured = ref<number | null>(null)
 
-    // Convert state to URL params
-    const params = new URLSearchParams()
-    Object.entries(state).forEach(([key, value]) => {
-      if (value !== null && value !== undefined) {
-        params.set(key, String(value))
-      }
+async function toggleFeatured(chartId: number, newValue: boolean) {
+  togglingFeatured.value = chartId
+  try {
+    await $fetch(`/api/admin/charts/${chartId}/featured`, {
+      method: 'PATCH',
+      body: { isFeatured: newValue }
     })
 
-    return `${baseUrl}?${params.toString()}`
+    // Update local state
+    const chart = charts.value.find(c => c.id === chartId)
+    if (chart) {
+      chart.isFeatured = newValue
+    }
   } catch (err) {
-    handleSilentError(err, 'getChartUrl')
-    return chart.chartType === 'explorer' ? '/explorer' : '/ranking'
+    handleApiError(err, 'update featured status', 'toggleFeatured')
+  } finally {
+    togglingFeatured.value = null
   }
 }
 </script>

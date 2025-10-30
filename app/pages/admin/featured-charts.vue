@@ -276,9 +276,8 @@ interface CacheStats {
 
 // Page meta
 definePageMeta({
+  middleware: 'admin',
   title: 'Featured Charts Management'
-  // TODO: Add admin layout when auth is implemented
-  // layout: 'admin'
 })
 
 // Filters
