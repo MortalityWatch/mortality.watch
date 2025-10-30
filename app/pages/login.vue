@@ -49,7 +49,7 @@ const schema = z.object({
 
 type Schema = z.output<typeof schema>
 
-async function onSubmit(event: FormSubmitEvent<Schema>) {
+const onSubmit = async (event: FormSubmitEvent<Schema>) => {
   clearError()
 
   try {
@@ -86,7 +86,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       :schema="schema"
       title="Welcome back"
       icon="i-lucide-lock"
-      @submit="onSubmit as any"
+      @submit="(onSubmit as (event: FormSubmitEvent<Schema>) => Promise<void>)"
     >
       <template #description>
         Don't have an account? <ULink

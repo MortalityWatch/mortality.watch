@@ -35,7 +35,7 @@ const schema = z.object({
 
 type Schema = z.output<typeof schema>
 
-async function onSubmit(event: FormSubmitEvent<Schema>) {
+const onSubmit = async (event: FormSubmitEvent<Schema>) => {
   clearError()
 
   try {
@@ -73,7 +73,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       description="Enter your email address and we'll send you a link to reset your password."
       icon="i-lucide-mail"
       :submit="{ label: 'Send Reset Link' }"
-      @submit="onSubmit as any"
+      @submit="(onSubmit as (event: FormSubmitEvent<Schema>) => Promise<void>)"
     >
       <template #footer>
         Remember your password? <ULink
