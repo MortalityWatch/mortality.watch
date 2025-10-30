@@ -2,6 +2,9 @@
  * Server-side Chart Renderer
  *
  * Registers Chart.js components and plugins for server-side rendering
+ *
+ * Note: This module uses node-canvas which provides browser-compatible Canvas APIs
+ * but with different type signatures. Type assertions are necessary and documented below.
  */
 
 import {
@@ -28,6 +31,14 @@ import ChartDataLabels from 'chartjs-plugin-datalabels'
 import { MatrixController, MatrixElement } from 'chartjs-chart-matrix'
 import QRCode from 'qrcode'
 import { withTimeout, cleanupCanvas } from './memoryManager'
+
+// node-canvas Image type (compatible with CanvasImageSource but has different types)
+type CanvasImage = Awaited<ReturnType<typeof loadImage>>
+
+// ChartInstance type for server-side rendering
+// node-canvas context is runtime-compatible with Chart.js but has type incompatibilities
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ServerChart = any
 
 // Register Chart.js components and plugins
 Chart.register(
@@ -59,8 +70,7 @@ const LOGO_SRC_LIGHT = 'data:image/svg+xml;base64,' + Buffer.from(LOGO_SVG).toSt
 /**
  * Pre-load logo image for synchronous drawing
  */
-type LoadedImage = Awaited<ReturnType<typeof loadImage>>
-let cachedLogoImage: LoadedImage | null = null
+let cachedLogoImage: CanvasImage | null = null
 async function preloadLogo() {
   if (!cachedLogoImage) {
     cachedLogoImage = await loadImage(LOGO_SRC_LIGHT)
@@ -72,7 +82,7 @@ async function preloadLogo() {
  * Full logo plugin for server-side rendering
  * Includes logo and QR code (drawn after images are pre-loaded)
  */
-const createLogoPlugin = (logoImage: LoadedImage, qrImage: LoadedImage | null) => {
+const createLogoPlugin = (logoImage: CanvasImage, qrImage: CanvasImage | null) => {
   return {
     id: 'LogoPlugin',
     beforeDraw: (chart: Chart) => {
@@ -99,9 +109,8 @@ const createLogoPlugin = (logoImage: LoadedImage, qrImage: LoadedImage | null) =
           ctx.fillStyle = '#ffffff'
           ctx.fillRect(10, 10, w, h)
           ctx.restore()
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore - node-canvas Image is compatible with CanvasImageSource
-          ctx.drawImage(logoImage, 10, 10, w, h)
+          // node-canvas Image is compatible with Canvas API but TypeScript doesn't recognize it
+          ctx.drawImage(logoImage as unknown as CanvasImageSource, 10, 10, w, h)
         } catch (err) {
           console.error('Failed to draw logo:', err)
         }
@@ -111,9 +120,8 @@ const createLogoPlugin = (logoImage: LoadedImage, qrImage: LoadedImage | null) =
       if (qrImage) {
         try {
           const s = 60
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore - node-canvas Image is compatible with CanvasImageSource
-          ctx.drawImage(qrImage, chart.width - s, 0, s, s)
+          // node-canvas Image is compatible with Canvas API but TypeScript doesn't recognize it
+          ctx.drawImage(qrImage as unknown as CanvasImageSource, chart.width - s, 0, s, s)
         } catch (err) {
           console.error('Failed to draw QR code:', err)
         }
@@ -142,7 +150,7 @@ export async function renderChart(
   chartType: 'line' | 'bar' | 'matrix' = 'line'
 ): Promise<Buffer> {
   const { canvas, ctx } = createChartCanvas(width, height)
-  let chart: Chart | null = null
+  let chart: ServerChart = null
   let logoPlugin: { id: string } | null = null
 
   try {
@@ -153,7 +161,7 @@ export async function renderChart(
         const logoImage = await preloadLogo()
 
         // Pre-load QR code if URL provided
-        let qrImage: LoadedImage | null = null
+        let qrImage: CanvasImage | null = null
         const qrCodeUrl = ((chartConfig.options as Record<string, unknown>)?.plugins as Record<string, unknown>)?.qrCodeUrl
         if (qrCodeUrl) {
           try {
@@ -175,6 +183,8 @@ export async function renderChart(
         Chart.register(logoPlugin)
 
         // Merge config with server-specific overrides
+        // node-canvas context is compatible with Chart.js but TypeScript types differ
+        // We need to cast the config to avoid strict type checking
         const serverConfig = {
           ...chartConfig,
           type: chartType,
@@ -183,12 +193,14 @@ export async function renderChart(
             responsive: false,
             animation: false,
             devicePixelRatio: 2
-          }
-        }
+          },
+          // Ensure data property is included for Chart.js constructor
+          data: (chartConfig as ServerChart).data || { labels: [], datasets: [] }
+        } as ServerChart
 
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore - node-canvas context is compatible but has different type
-        chart = new Chart(ctx, serverConfig)
+        // Create Chart instance
+        // node-canvas context is runtime-compatible but has type incompatibilities with Chart.js
+        chart = new Chart(ctx as ServerChart, serverConfig)
 
         // Wait for chart to complete rendering (now synchronous)
         await new Promise(resolve => setTimeout(resolve, 100))
@@ -205,8 +217,7 @@ export async function renderChart(
     // Cleanup: destroy chart and unregister plugin
     if (chart) {
       try {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore - Chart.js destroy method exists at runtime
+        // Chart.js destroy method exists and works at runtime
         chart.destroy()
       } catch (err) {
         console.warn('Error destroying chart:', err)
@@ -221,9 +232,7 @@ export async function renderChart(
       }
     }
 
-    // Cleanup canvas
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - node-canvas Canvas type is compatible
+    // Cleanup canvas - node-canvas Canvas type is compatible at runtime
     cleanupCanvas(canvas)
   }
 }

@@ -35,14 +35,23 @@ export async function withTimeout<T>(
 }
 
 /**
- * Clean up canvas resources
- * Helps prevent memory leaks by explicitly clearing canvas contexts
+ * Canvas-like object with necessary properties for cleanup
+ * Works with both browser Canvas and node-canvas Canvas elements
+ * Uses flexible typing to accommodate both browser and node-canvas implementations
  */
-export function cleanupCanvas(canvas: {
-  getContext: (type: string) => unknown
+interface CanvasLike {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getContext: (type: any) => unknown | null
   width: number
   height: number
-}) {
+}
+
+/**
+ * Clean up canvas resources
+ * Helps prevent memory leaks by explicitly clearing canvas contexts
+ * Works with both browser and node-canvas Canvas implementations
+ */
+export function cleanupCanvas(canvas: CanvasLike) {
   try {
     const ctx = canvas.getContext('2d') as {
       clearRect?: (x: number, y: number, w: number, h: number) => void
