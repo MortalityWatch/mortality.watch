@@ -69,7 +69,7 @@
           { title: 'Priority email support', icon: 'i-lucide-headphones' }
         ]"
         :button="tier === 2
-          ? { label: 'Manage Subscription', to: '/profile', color: 'neutral' }
+          ? { label: 'Current Plan', disabled: true, color: 'neutral' }
           : { label: 'Upgrade to Pro', to: '/subscribe', color: 'primary', class: 'bg-purple-600 hover:bg-purple-700 text-white dark:bg-purple-500 dark:hover:bg-purple-600' }"
         class="border-2 border-purple-500 dark:border-purple-400"
       />
