@@ -50,6 +50,8 @@ export default defineNuxtConfig({
     '/sources': { ssr: true, prerender: false },
     '/donate': { ssr: true, prerender: false },
     '/ranking': { ssr: true, prerender: false }, // Server-rendered (fresh data)
+    // Redirect /pricing to /features (permanent)
+    '/pricing': { redirect: { to: '/features', statusCode: 301 } },
     // Exclude test pages from production prerendering (dev-only)
     '/test-data': { prerender: false },
     '/test-fetch': { prerender: false },

@@ -3,73 +3,129 @@ import { eq } from 'drizzle-orm'
 import bcrypt from 'bcryptjs'
 
 /**
- * Seed script to create an admin user
+ * Seed script to create test users
  * Usage: npm run db:seed
  *
- * Set environment variables:
- * - ADMIN_EMAIL (default: admin@mortality.watch)
- * - ADMIN_PASSWORD (default: admin123456)
- * - ADMIN_NAME (default: Admin User)
+ * Creates three users:
+ * - admin@mortality.watch - Admin + Pro (tier 2)
+ * - pro@mortality.watch - Pro user (tier 2)
+ * - free@mortality.watch - Free user (tier 1)
+ *
+ * All users have password: Password1!
  */
 
-async function seedAdmin() {
-  const email
-    = process.env.ADMIN_EMAIL?.toLowerCase() || 'admin@mortality.watch'
-  const password = process.env.ADMIN_PASSWORD || 'admin123456'
-  const name = process.env.ADMIN_NAME || 'Admin User'
+interface UserSeed {
+  email: string
+  password: string
+  firstName: string
+  lastName: string
+  displayName: string
+  role: 'admin' | 'user'
+  tier: number
+}
 
-  console.log('Seeding admin user...')
-  console.log(`Email: ${email}`)
+const seedUsers: UserSeed[] = [
+  {
+    email: 'admin@mortality.watch',
+    password: 'Password1!',
+    firstName: 'Admin',
+    lastName: 'User',
+    displayName: 'Admin',
+    role: 'admin',
+    tier: 2
+  },
+  {
+    email: 'pro@mortality.watch',
+    password: 'Password1!',
+    firstName: 'Pro',
+    lastName: 'User',
+    displayName: 'Pro',
+    role: 'user',
+    tier: 2
+  },
+  {
+    email: 'free@mortality.watch',
+    password: 'Password1!',
+    firstName: 'Free',
+    lastName: 'User',
+    displayName: 'Free',
+    role: 'user',
+    tier: 1
+  }
+]
 
-  // Check if admin already exists
-  const existingAdmin = await db
+async function seedUser(userData: UserSeed) {
+  const { email, password, firstName, lastName, displayName, role, tier } = userData
+
+  console.log(`\nSeeding user: ${email}`)
+
+  // Check if user already exists
+  const existingUser = await db
     .select()
     .from(users)
     .where(eq(users.email, email))
     .get()
 
-  if (existingAdmin) {
-    console.log('Admin user already exists, updating...')
+  const passwordHash = await bcrypt.hash(password, 12)
 
-    // Update password
-    const passwordHash = await bcrypt.hash(password, 12)
+  if (existingUser) {
+    console.log('  User already exists, updating...')
 
     await db
       .update(users)
       .set({
         passwordHash,
-        name,
-        role: 'admin',
-        tier: 2, // Give admin user Pro tier
+        firstName,
+        lastName,
+        displayName,
+        role,
+        tier,
         emailVerified: true,
         updatedAt: new Date()
       })
-      .where(eq(users.id, existingAdmin.id))
+      .where(eq(users.id, existingUser.id))
 
-    console.log('✅ Admin user updated successfully!')
+    console.log(`  ✅ ${email} updated successfully!`)
   } else {
-    // Create new admin user
-    const passwordHash = await bcrypt.hash(password, 12)
-
+    // Create new user
     await db.insert(users).values({
       email,
       passwordHash,
-      name,
-      role: 'admin',
-      tier: 2, // Give admin user Pro tier
+      firstName,
+      lastName,
+      displayName,
+      role,
+      tier,
       emailVerified: true
     })
 
-    console.log('✅ Admin user created successfully!')
+    console.log(`  ✅ ${email} created successfully!`)
   }
-
-  console.log('\nAdmin credentials:')
-  console.log(`Email: ${email}`)
-  console.log(`Password: ${password}`)
-  console.log('\n⚠️  Please change the password after first login!')
 }
 
-seedAdmin()
+async function seedAllUsers() {
+  console.log('Seeding test users...')
+  console.log('='.repeat(50))
+
+  for (const userData of seedUsers) {
+    await seedUser(userData)
+  }
+
+  console.log('\n' + '='.repeat(50))
+  console.log('\n📋 Test user credentials:')
+  console.log('\nAdmin + Pro (tier 2):')
+  console.log('  Email: admin@mortality.watch')
+  console.log('  Password: Password1!')
+  console.log('\nPro user (tier 2):')
+  console.log('  Email: pro@mortality.watch')
+  console.log('  Password: Password1!')
+  console.log('\nFree user (tier 1):')
+  console.log('  Email: free@mortality.watch')
+  console.log('  Password: Password1!')
+  console.log('\n⚠️  These are test credentials for development/staging only!')
+}
+
+seedAllUsers()
   .then(() => {
     console.log('\n✅ Seeding completed!')
     process.exit(0)

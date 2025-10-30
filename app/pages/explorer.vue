@@ -23,10 +23,13 @@ import ExplorerDataSelection from '@/components/explorer/ExplorerDataSelection.v
 import ExplorerChartContainer from '@/components/explorer/ExplorerChartContainer.vue'
 import ExplorerSettings from '@/components/explorer/ExplorerSettings.vue'
 import ExplorerChartActions from '@/components/explorer/ExplorerChartActions.vue'
-import ExplorerSaveChartModal from '@/components/explorer/ExplorerSaveChartModal.vue'
+import SaveModal from '@/components/SaveModal.vue'
 
 // Feature access for tier-based features (currently unused but may be needed in the future)
 // const { can, getFeatureUpgradeUrl } = useFeatureAccess()
+
+// Auth state for conditional features
+const { isAuthenticated } = useAuth()
 
 // Phase 9.2: Centralized state management with validation
 const state = useExplorerState()
@@ -286,7 +289,6 @@ onMounted(async () => {
 const {
   copyChartLink,
   screenshotChart,
-  saveChart,
   saveToDB,
   showSaveModal,
   savingChart,
@@ -296,6 +298,12 @@ const {
   saveError,
   saveSuccess
 } = useExplorerChartActions(state)
+
+// Download chart as PNG (for social media/OG image)
+const downloadChart = () => {
+  const url = window.location.href.replaceAll('/?', '/chart.png?').replaceAll('/explorer?', '/chart.png?')
+  window.open(url, '_blank')
+}
 </script>
 
 <template>
@@ -393,26 +401,32 @@ const {
 
           <ExplorerChartActions
             class="mt-3"
+            :show-save-button="!isAuthenticated"
             @copy-link="copyChartLink"
+            @download-chart="downloadChart"
             @screenshot="screenshotChart"
-            @save="saveChart"
-          />
+            @save-chart="navigateTo('/signup')"
+          >
+            <template
+              v-if="isAuthenticated"
+              #save-button
+            >
+              <SaveModal
+                v-model="showSaveModal"
+                v-model:name="saveChartName"
+                v-model:description="saveChartDescription"
+                v-model:is-public="saveChartPublic"
+                :saving="savingChart"
+                :error="saveError"
+                :success="saveSuccess"
+                type="chart"
+                @save="saveToDB"
+              />
+            </template>
+          </ExplorerChartActions>
         </div>
       </div>
     </div>
-
-    <!-- Save Chart Modal -->
-    <ExplorerSaveChartModal
-      v-model="showSaveModal"
-      v-model:chart-name="saveChartName"
-      v-model:chart-description="saveChartDescription"
-      v-model:chart-public="saveChartPublic"
-      :saving-chart="savingChart"
-      :save-error="saveError"
-      :save-success="saveSuccess"
-      @save="saveToDB"
-      @cancel="showSaveModal = false"
-    />
   </div>
 </template>
 

@@ -1,10 +1,19 @@
 <script setup lang="ts">
-// No props needed for now, actions are self-contained
+const props = withDefaults(defineProps<{
+  showSaveButton?: boolean
+  showDownloadChart?: boolean
+  showScreenshot?: boolean
+  explorerLink?: string
+}>(), {
+  showDownloadChart: true,
+  showScreenshot: true
+})
 
 const emit = defineEmits<{
   copyLink: []
+  downloadChart: []
   screenshot: []
-  save: []
+  saveChart: []
 }>()
 </script>
 
@@ -12,7 +21,7 @@ const emit = defineEmits<{
   <UCard :ui="{ body: 'p-0' }">
     <template #header>
       <h2 class="text-xl font-semibold">
-        Chart Options
+        Chart Actions
       </h2>
     </template>
     <ClientOnly>
@@ -25,8 +34,13 @@ const emit = defineEmits<{
             name="i-lucide-link"
             class="w-4 h-4 flex-shrink-0"
           />
-          <div class="flex-1 text-left text-sm">
-            Copy Link
+          <div class="flex-1 text-left">
+            <div class="text-sm font-medium">
+              Copy Link
+            </div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">
+              Share this chart via URL
+            </div>
           </div>
           <UIcon
             name="i-lucide-chevron-right"
@@ -34,43 +48,108 @@ const emit = defineEmits<{
           />
         </button>
 
-        <div class="border-t border-gray-200 dark:border-gray-700" />
+        <template v-if="props.showDownloadChart">
+          <div class="border-t border-gray-200 dark:border-gray-700" />
 
-        <button
-          class="chart-option-button"
-          @click="emit('screenshot')"
-        >
-          <UIcon
-            name="i-lucide-camera"
-            class="w-4 h-4 flex-shrink-0"
-          />
-          <div class="flex-1 text-left text-sm">
-            Download Screenshot
-          </div>
-          <UIcon
-            name="i-lucide-chevron-right"
-            class="w-3 h-3 text-gray-400"
-          />
-        </button>
+          <button
+            class="chart-option-button"
+            @click="emit('downloadChart')"
+          >
+            <UIcon
+              name="i-lucide-image"
+              class="w-4 h-4 flex-shrink-0"
+            />
+            <div class="flex-1 text-left">
+              <div class="text-sm font-medium">
+                Download Chart
+              </div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">
+                Optimized PNG for social media
+              </div>
+            </div>
+            <UIcon
+              name="i-lucide-chevron-right"
+              class="w-3 h-3 text-gray-400"
+            />
+          </button>
+        </template>
 
-        <div class="border-t border-gray-200 dark:border-gray-700" />
+        <template v-if="props.showScreenshot">
+          <div class="border-t border-gray-200 dark:border-gray-700" />
 
-        <button
-          class="chart-option-button"
-          @click="emit('save')"
-        >
-          <UIcon
-            name="i-lucide-save"
-            class="w-4 h-4 flex-shrink-0"
-          />
-          <div class="flex-1 text-left text-sm">
-            Save Chart
-          </div>
-          <UIcon
-            name="i-lucide-chevron-right"
-            class="w-3 h-3 text-gray-400"
-          />
-        </button>
+          <button
+            class="chart-option-button"
+            @click="emit('screenshot')"
+          >
+            <UIcon
+              name="i-lucide-download"
+              class="w-4 h-4 flex-shrink-0"
+            />
+            <div class="flex-1 text-left">
+              <div class="text-sm font-medium">
+                Download Screenshot
+              </div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">
+                Save current view as image
+              </div>
+            </div>
+            <UIcon
+              name="i-lucide-chevron-right"
+              class="w-3 h-3 text-gray-400"
+            />
+          </button>
+        </template>
+
+        <template v-if="props.explorerLink">
+          <div class="border-t border-gray-200 dark:border-gray-700" />
+
+          <NuxtLink
+            :to="props.explorerLink"
+            class="chart-option-button"
+          >
+            <UIcon
+              name="i-lucide-bar-chart-3"
+              class="w-4 h-4 flex-shrink-0"
+            />
+            <div class="flex-1 text-left">
+              <div class="text-sm font-medium">Show in Explorer</div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">View as interactive chart</div>
+            </div>
+            <UIcon
+              name="i-lucide-chevron-right"
+              class="w-3 h-3 text-gray-400"
+            />
+          </NuxtLink>
+        </template>
+
+        <template v-if="$slots['save-button'] || props.showSaveButton">
+          <div class="border-t border-gray-200 dark:border-gray-700" />
+
+          <slot name="save-button">
+            <button
+              v-if="props.showSaveButton"
+              class="chart-option-button"
+              @click="emit('saveChart')"
+            >
+              <UIcon
+                name="i-lucide-save"
+                class="w-4 h-4 flex-shrink-0"
+              />
+              <div class="flex-1 text-left">
+                <div class="text-sm font-medium">
+                  Save Chart
+                </div>
+                <div class="text-xs text-gray-500 dark:text-gray-400">
+                  Bookmark for later access
+                </div>
+              </div>
+              <UIcon
+                name="i-lucide-chevron-right"
+                class="w-3 h-3 text-gray-400"
+              />
+            </button>
+          </slot>
+        </template>
       </div>
     </ClientOnly>
   </UCard>

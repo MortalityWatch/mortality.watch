@@ -3,8 +3,8 @@ import { sql } from 'drizzle-orm'
 
 /**
  * Users table - stores user accounts
- * Tier 0: Anonymous (not stored in DB)
- * Tier 1: Registered (FREE) - Default for new users
+ * Tier 0: Public (not stored in DB)
+ * Tier 1: Free - Default for new users
  * Tier 2: Pro (PAID)
  */
 export const users = sqliteTable(

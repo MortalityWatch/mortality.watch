@@ -13,7 +13,7 @@ This document outlines the implementation plan for addressing critical issues, r
 The application uses a **3-tier access model**:
 
 - **Tier 0 (Public/Free):** Anonymous users with basic features
-- **Tier 1 (Registered/Power User):** Free registration unlocks extended features (save charts, custom colors, export data)
+- **Tier 1 (Free/Power User):** Free registration unlocks extended features (save charts, custom colors, export data)
 - **Tier 2 (Pro/Paid):** $9.99/month subscription for advanced features (no watermarks, advanced calculations, z-scores)
 
 **These decisions have been finalized:**
@@ -99,7 +99,7 @@ export const baselineMethods: ListType[] = [
 
 Note: Add 'Median' method during Phase 2 UI fixes.
 
-**Tier 1 (Registered/Power User - FREE):**
+**Tier 1 (Free/Power User - FREE):**
 
 - All Tier 0 features
 - Multiple baseline methods: ✅ Yes (all methods)
@@ -780,7 +780,7 @@ CREATE TABLE users (
   role TEXT DEFAULT 'user' CHECK(role IN ('user', 'admin')),
   tier INTEGER DEFAULT 1 CHECK(tier IN (0, 1, 2)),
   -- Tier 0: Anonymous (not stored in DB)
-  -- Tier 1: Registered (FREE) - Default for new users
+  -- Tier 1: Free (FREE) - Default for new users
   -- Tier 2: Pro (PAID)
   email_verified BOOLEAN DEFAULT 0,
   verification_token TEXT,
@@ -1042,7 +1042,7 @@ CREATE INDEX idx_sessions_expires ON sessions(expires_at);
 - Watermark/logo visible
 - QR code visible
 
-**Registered/Power User (Tier 1):**
+**Free/Power User (Tier 1):**
 
 - All Free features
 - Save charts to "My Charts"
@@ -1054,7 +1054,7 @@ CREATE INDEX idx_sessions_expires ON sessions(expires_at);
 
 **Paid/Premium (Tier 2):**
 
-- All Registered features
+- All Free features
 - Hide logo/watermark
 - Hide QR code
 - Single age group LE calculations
@@ -1080,7 +1080,7 @@ CREATE INDEX idx_sessions_expires ON sessions(expires_at);
 /**
  * Feature definitions with tier requirements
  * Tier 0: Anonymous/Public (not logged in)
- * Tier 1: Registered/Power User (FREE with account)
+ * Tier 1: Free/Power User (FREE with account)
  * Tier 2: Pro/Premium (PAID subscription)
  */
 export const FEATURES = {
@@ -1111,7 +1111,7 @@ export const FEATURES = {
     description: "3-year mean baseline only",
   },
 
-  // Tier 1 (Registered - FREE) - Extended features
+  // Tier 1 (Free - FREE) - Extended features
   SAVE_CHARTS: {
     tier: 1,
     name: "Save Charts",
@@ -1252,7 +1252,7 @@ export function useFeatureAccess() {
   });
 
   const isAnonymous = computed(() => tier.value === 0);
-  const isRegistered = computed(() => tier.value >= 1);
+  const isFree = computed(() => tier.value >= 1);
   const isPro = computed(() => tier.value >= 2);
 
   /**
@@ -1295,7 +1295,7 @@ export function useFeatureAccess() {
   return {
     tier,
     isAnonymous,
-    isRegistered,
+    isFree,
     isPro,
     can,
     requiresUpgrade,
@@ -1638,11 +1638,11 @@ STRIPE_PUBLISHABLE_KEY=pk_test_xxx  # for frontend
 ### 8.2 Subscription Pages
 
 - [ ] `/pricing` - Pricing page with 3-tier comparison
-  - Show all three tiers: Public (Free), Registered (Free), Pro (Paid)
-  - Emphasize that Registered tier is FREE (just sign up!)
+  - Show all three tiers: Public (Free), Free (Free), Pro (Paid)
+  - Emphasize that Free tier is FREE (just sign up!)
   - Clear feature breakdown for each tier
 - [ ] `/pro` - Dedicated Pro tier showcase and benefits page
-  - Detailed 3-tier feature comparison (Public vs Registered vs Pro)
+  - Detailed 3-tier feature comparison (Public vs Free vs Pro)
   - Visual examples of Pro features (before/after with watermarks)
   - Highlight what you get FREE with registration (Tier 1)
   - Highlight what requires paid Pro subscription (Tier 2)
@@ -1657,8 +1657,8 @@ STRIPE_PUBLISHABLE_KEY=pk_test_xxx  # for frontend
 **UI Components:**
 
 - [ ] `PricingCard.vue` - Tier comparison cards (supports 3 tiers)
-- [ ] `FeatureComparisonTable.vue` - 3-column comparison: Public | Registered | Pro
-- [ ] `SubscriptionStatus.vue` - Show current tier (Public/Registered/Pro)
+- [ ] `FeatureComparisonTable.vue` - 3-column comparison: Public | Free | Pro
+- [ ] `SubscriptionStatus.vue` - Show current tier (Public/Free/Pro)
 - [ ] `UpgradePrompt.vue` - Context-aware upgrade CTA (shows "Sign Up" for public, "Upgrade to Pro" for registered)
 - [ ] `UpgradeCard.vue` - Marketing card for homepage (dual messaging)
 
@@ -1671,6 +1671,7 @@ STRIPE_PUBLISHABLE_KEY=pk_test_xxx  # for frontend
 **Goal:** Break up large monolithic components into smaller, maintainable modules
 
 **Context:** After Phase 8, the codebase had several large component files that had grown organically:
+
 - `explorer.vue` (1,582 lines)
 - `model/state.ts` (870 lines)
 - `components/charts/MortalityChartControlsSecondary.vue` (809 lines)
@@ -1687,6 +1688,7 @@ These files became difficult to maintain and onboard new developers.
 #### Successfully Integrated (10/12 modules - 83%)
 
 **Explorer Components (4/4):**
+
 - [x] `ExplorerDataSelection.vue` - Data selection UI
 - [x] `ExplorerChartContainer.vue` - Chart display with loading states
 - [x] `ExplorerSettings.vue` - Settings panel wrapper
@@ -1694,21 +1696,25 @@ These files became difficult to maintain and onboard new developers.
 - **Impact:** Reduced explorer.vue by 158 lines (-10%)
 
 **State Modules (3/3):**
+
 - [x] `StateCore.ts` - Core state properties and getters/setters
 - [x] `StateHelpers.ts` - Helper utilities and type predicates
 - [x] `StateSerialization.ts` - URL state serialization/deserialization
 - **Impact:** Clean inheritance and delegation pattern
 
 **Chart Control Component (1/1):**
+
 - [x] `DataTab.vue` - Data settings tab
 - **Impact:** Replaced 77 lines of inline template
 
 **Composables (2/4):**
+
 - [x] `useChartResize.ts` - Chart resizing functionality
 - [x] `useExplorerHelpers.ts` - Helper functions and type predicates
 - **Impact:** Eliminated 108 lines from explorer.vue
 
 **Total Impact:**
+
 - explorer.vue: -276 lines total (~18% reduction)
 - All 466 tests passing ✅
 - TypeScript compilation successful ✅
@@ -1716,18 +1722,21 @@ These files became difficult to maintain and onboard new developers.
 #### Non-Integrated Composables (2/12)
 
 **1. `useExplorerDataUpdate.ts` (223 lines)**
+
 - ❌ Cannot integrate due to TypeScript limitation
 - Takes 30+ parameters → "Type instantiation excessively deep" error
 - Solution: Phase 2 config object refactor
 - File kept for Phase 2 integration
 
 **2. `useExplorerState.ts` (255 lines)**
+
 - ❌ Cannot integrate due to architectural mismatch
 - Centralized state pattern incompatible with current inline pattern
 - Decision: Keep as reference implementation
 - No integration planned
 
 **Documentation:**
+
 - `REFACTORING_SUMMARY.md` - Complete Phase 1 results (in git history)
 - `PHASE_8.5_REFACTORING.md` - Detailed technical specs for Phases 8.5.2 & 8.5.3
 
@@ -1743,23 +1752,25 @@ These files became difficult to maintain and onboard new developers.
 
 ```typescript
 interface UseExplorerDataUpdateConfig {
-  state: ExplorerStateRefs     // 20 parameters
-  data: ExplorerDataRefs        // 5 parameters
-  helpers: ExplorerHelpers      // 8 parameters
-  dataset: ExplorerDataset      // 2 parameters
-  config: ExplorerConfig        // 2 parameters
+  state: ExplorerStateRefs; // 20 parameters
+  data: ExplorerDataRefs; // 5 parameters
+  helpers: ExplorerHelpers; // 8 parameters
+  dataset: ExplorerDataset; // 2 parameters
+  config: ExplorerConfig; // 2 parameters
 }
 
-export function useExplorerDataUpdate(config: UseExplorerDataUpdateConfig)
+export function useExplorerDataUpdate(config: UseExplorerDataUpdateConfig);
 ```
 
 **Benefits:**
+
 - ✅ Fixes TypeScript limitation
 - ✅ Improved readability and maintainability
 - ✅ Better testability
 - ✅ Self-documenting interface names
 
 **Tasks:**
+
 - [ ] Define configuration interfaces
 - [ ] Update `useExplorerDataUpdate.ts` to accept config object
 - [ ] Update `explorer.vue` to pass config object
@@ -1776,13 +1787,16 @@ export function useExplorerDataUpdate(config: UseExplorerDataUpdateConfig)
 **Problem:** Date handling scattered across 8+ files with extensive edge case handling
 
 **Current Pattern (Problematic):**
+
 ```typescript
 // Scattered across multiple files
-const toIdx = props.labels.indexOf(props.sliderValue[1] ?? '')
-if (toIdx === -1) { /* handle error */ }
+const toIdx = props.labels.indexOf(props.sliderValue[1] ?? "");
+if (toIdx === -1) {
+  /* handle error */
+}
 
-const startIndex = allChartData.value?.labels.indexOf(dateFrom || '') || 0
-const endIndex = (allChartData.value?.labels.indexOf(dateTo || '') || 0) + 1
+const startIndex = allChartData.value?.labels.indexOf(dateFrom || "") || 0;
+const endIndex = (allChartData.value?.labels.indexOf(dateTo || "") || 0) + 1;
 ```
 
 **Proposed Solution:** Create domain model for chart periods
@@ -1791,31 +1805,33 @@ const endIndex = (allChartData.value?.labels.indexOf(dateTo || '') || 0) + 1
 class ChartPeriod {
   constructor(labels: string[], chartType: string) {}
 
-  indexOf(date: string): number          // Smart fallback, no -1
-  labelAt(index: number): string | undefined
-  findClosestDate(date: string): number
-  createRange(from: string, to: string): DateRange
-  isValidRange(from: string, to: string): boolean
+  indexOf(date: string): number; // Smart fallback, no -1
+  labelAt(index: number): string | undefined;
+  findClosestDate(date: string): number;
+  createRange(from: string, to: string): DateRange;
+  isValidRange(from: string, to: string): boolean;
 }
 
 class DateRange {
   constructor(period: ChartPeriod, from: string, to: string) {}
 
-  get fromIndex(): number
-  get toIndex(): number
-  get labels(): string[]
-  contains(date: string): boolean
+  get fromIndex(): number;
+  get toIndex(): number;
+  get labels(): string[];
+  contains(date: string): boolean;
 }
 ```
 
 **Usage After:**
+
 ```typescript
-const period = new ChartPeriod(props.labels, chartType)
-const range = period.createRange(dateFrom, dateTo)
-const dataLabels = range.labels  // Clean and simple
+const period = new ChartPeriod(props.labels, chartType);
+const range = period.createRange(dateFrom, dateTo);
+const dataLabels = range.labels; // Clean and simple
 ```
 
 **Benefits:**
+
 - ✅ Centralizes date logic in one place
 - ✅ Handles chart type differences (yearly/monthly/weekly)
 - ✅ Smart fallback logic (no -1 handling everywhere)
@@ -1823,6 +1839,7 @@ const dataLabels = range.labels  // Clean and simple
 - ✅ Better utilization of metadata (min_date/max_date from world_meta.csv)
 
 **Files Affected (8+):**
+
 - `app/components/charts/DateSlider.vue`
 - `app/pages/ranking.vue`
 - `app/model/state.ts`
@@ -1833,6 +1850,7 @@ const dataLabels = range.labels  // Clean and simple
 - `app/composables/useDateRangeValidation.ts`
 
 **Tasks:**
+
 - [ ] Create `app/model/period.ts` with ChartPeriod and DateRange classes
 - [ ] Update `getAllChartLabels` to return ChartPeriod instead of string[]
 - [ ] Replace all `labels.indexOf` calls with `period.indexOf`
@@ -1845,16 +1863,18 @@ const dataLabels = range.labels  // Clean and simple
 **Metadata Enhancement Opportunity:**
 
 The `world_meta.csv` contains date ranges per country/source:
+
 ```csv
 iso3c,jurisdiction,type,source,min_date,max_date,age_groups
 ALB,Albania,3,eurostat,2014-12-29,2021-09-13,"0-9, 10-19, ..., all"
 ```
 
 Could enhance `ChartPeriod` to validate dates against metadata BEFORE loading data:
+
 ```typescript
 class ChartPeriod {
   isDateAvailable(date: string): boolean {
-    return date >= this.metadata.minDate && date <= this.metadata.maxDate
+    return date >= this.metadata.minDate && date <= this.metadata.maxDate;
   }
 }
 ```
@@ -1870,6 +1890,7 @@ class ChartPeriod {
 3. **Phase 3** (After) - Date model, larger change, needs careful testing
 
 **Each phase as separate PR for:**
+
 - Easier code review
 - Independent rollback if needed
 - Incremental progress
@@ -1880,6 +1901,7 @@ class ChartPeriod {
 ### 8.5.5 Success Criteria
 
 **Phase 1:** ✅
+
 - [x] 10/12 modules integrated
 - [x] explorer.vue reduced by 276 lines
 - [x] All tests passing
@@ -1887,12 +1909,14 @@ class ChartPeriod {
 - [x] Documentation complete
 
 **Phase 2:**
+
 - [ ] useExplorerDataUpdate successfully integrated
 - [ ] TypeScript compilation without deep instantiation errors
 - [ ] All tests passing
 - [ ] Code is more readable than before
 
 **Phase 3:**
+
 - [ ] All indexOf calls replaced with ChartPeriod API
 - [ ] Date handling centralized in one place
 - [ ] All tests passing (especially date/slider tests)
@@ -2114,7 +2138,7 @@ Use the existing `/server/routes/chart.png.ts` route for on-demand generation wi
   - Custom color schemes
   - Export chart data (CSV)
   - CTA: "Sign Up Free" → links to registration
-- [ ] For **Registered (Tier 1)** users - emphasize Pro upgrade:
+- [ ] For **Free (Tier 1)** users - emphasize Pro upgrade:
   - "Upgrade to Pro for advanced features:"
   - Remove watermarks and QR codes
   - Single age group LE calculations
@@ -2131,7 +2155,7 @@ Use the existing `/server/routes/chart.png.ts` route for on-demand generation wi
 **Tier indicators throughout the app:**
 
 - [ ] Add tier badges on features:
-  - "FREE with sign up" badge for Registered features
+  - "FREE with sign up" badge for Free features
   - "PRO" badge for Pro features
 - [ ] Show sample watermarked charts with note: "Remove watermark with Pro"
 - [ ] Add hover tooltips explaining which tier unlocks each feature

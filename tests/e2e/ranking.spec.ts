@@ -22,7 +22,8 @@ test.describe('Ranking Page', () => {
     }
 
     // Ranking table should be visible after loading (button text is "Show in Explorer")
-    await expect(page.getByText(/Show in Explorer/i)).toBeVisible({ timeout: 30000 })
+    // Use .first() because there are two instances (desktop and mobile) in the DOM
+    await expect(page.getByText(/Show in Explorer/i).first()).toBeVisible({ timeout: 30000 })
   })
 
   test('should display data selection controls', async ({ page }) => {

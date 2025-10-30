@@ -19,8 +19,8 @@ const items = computed(() => [{
   label: 'Charts',
   to: '/charts'
 }, {
-  label: 'Pricing',
-  to: '/pricing'
+  label: 'Features',
+  to: '/features'
 }, {
   label: 'Sources',
   to: '/sources'

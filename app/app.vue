@@ -22,7 +22,7 @@ useHead({
 })
 
 useSeoMeta({
-  titleTemplate: '%s - MortalityWatch',
+  titleTemplate: '%s - Mortality Watch',
   ogImage: '/og-image.png',
   twitterImage: '/og-image.png',
   twitterCard: 'summary_large_image'
