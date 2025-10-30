@@ -73,6 +73,7 @@
 
         <template #footer>
           <UButton
+            v-if="tier === 0"
             to="/explorer"
             color="neutral"
             variant="outline"
@@ -80,6 +81,16 @@
             size="lg"
           >
             Start Exploring
+          </UButton>
+          <UButton
+            v-else
+            disabled
+            color="neutral"
+            variant="outline"
+            block
+            size="lg"
+          >
+            Current Plan
           </UButton>
         </template>
       </UCard>
@@ -159,12 +170,32 @@
 
         <template #footer>
           <UButton
+            v-if="tier === 0"
             to="/signup"
             color="primary"
             block
             size="lg"
           >
             Sign Up Free
+          </UButton>
+          <UButton
+            v-else-if="tier === 1"
+            disabled
+            color="primary"
+            block
+            size="lg"
+          >
+            Current Plan
+          </UButton>
+          <UButton
+            v-else
+            to="/my-charts"
+            color="neutral"
+            variant="outline"
+            block
+            size="lg"
+          >
+            View My Charts
           </UButton>
         </template>
       </UCard>
@@ -247,13 +278,23 @@
 
         <template #footer>
           <UButton
+            v-if="tier < 2"
             to="/subscribe"
             color="primary"
             variant="outline"
             block
             size="lg"
           >
-            Upgrade to Pro
+            {{ tier === 0 ? 'Sign Up & Upgrade' : 'Upgrade to Pro' }}
+          </UButton>
+          <UButton
+            v-else
+            disabled
+            color="primary"
+            block
+            size="lg"
+          >
+            Current Plan
           </UButton>
         </template>
       </UCard>
