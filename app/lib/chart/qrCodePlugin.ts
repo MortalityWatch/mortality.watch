@@ -1,5 +1,4 @@
 import type { Chart } from 'chart.js'
-import QRCode from 'qrcode'
 import { getIsDark } from '~/composables/useTheme'
 
 const newImage = (src: string): Promise<HTMLImageElement> => {
@@ -25,6 +24,9 @@ export const clearQRCodeCache = () => {
 const drawQRCode = async (chart: Chart, url: string) => {
   const { ctx } = chart
   if (!ctx) return
+
+  // Dynamic import - only loads when actually drawing QR code
+  const { default: QRCode } = await import('qrcode')
 
   // QR code should be white in dark mode, black in light mode
   const isDarkMode = getIsDarkTheme()
