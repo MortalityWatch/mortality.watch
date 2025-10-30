@@ -1,6 +1,18 @@
 <script lang="ts" setup>
 import { computed, ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
-import { Chart, registerables } from 'chart.js'
+import {
+  Chart,
+  LineController,
+  BarController,
+  LineElement,
+  BarElement,
+  PointElement,
+  CategoryScale,
+  LinearScale,
+  TimeScale,
+  Tooltip,
+  Legend
+} from 'chart.js'
 import { createTypedChart, Line, Bar } from 'vue-chartjs'
 import {
   BarWithErrorBar,
@@ -41,7 +53,16 @@ const props = defineProps<{
 }>()
 
 Chart.register(
-  ...registerables,
+  LineController,
+  BarController,
+  LineElement,
+  BarElement,
+  PointElement,
+  CategoryScale,
+  LinearScale,
+  TimeScale,
+  Tooltip,
+  Legend,
   BarWithErrorBar,
   ChartDataLabels,
   MatrixController,
