@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
-import { handleError } from '@/lib/errors/errorHandler'
 
 definePageMeta({
   layout: 'auth'
@@ -67,38 +66,52 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     await new Promise(resolve => setTimeout(resolve, 500))
     await router.push('/')
   } catch (error: unknown) {
-    // Extract and store the error message for display
-    const errorMessage = handleError(error, 'Registration failed', 'signup')
+    // Extract the error message but don't show toast (we'll show inline alert instead)
+    const errorObj = error && typeof error === 'object' ? error : { message: String(error) }
+
+    // Extract API error message
+    let errorMessage = 'An error occurred'
+    if ('data' in errorObj && errorObj.data && typeof errorObj.data === 'object' && 'message' in errorObj.data) {
+      errorMessage = String((errorObj.data as Record<string, unknown>).message)
+    } else if ('statusMessage' in errorObj && errorObj.statusMessage) {
+      errorMessage = String(errorObj.statusMessage)
+    } else if ('message' in errorObj) {
+      errorMessage = String(errorObj.message)
+    }
+
+    // Show inline error only, skip toast
     formError.value = errorMessage
+    console.error('[signup]', errorMessage)
   }
 }
 </script>
 
 <template>
-  <UAuthForm
-    :fields="fields"
-    :schema="schema"
-    title="Create an account"
-    :submit="{ label: 'Create account' }"
-    @submit="onSubmit"
-  >
-    <template #description>
-      Already have an account? <ULink
-        to="/login"
-        class="text-primary font-medium"
-      >Login</ULink>.
-    </template>
+  <div>
+    <UAlert
+      v-if="formError"
+      color="error"
+      variant="soft"
+      :title="formError"
+      icon="i-lucide-alert-circle"
+      :close-button="{ icon: 'i-lucide-x', color: 'gray', variant: 'link', padded: false }"
+      class="mb-6"
+      @close="formError = null"
+    />
 
-    <template #footer>
-      <UAlert
-        v-if="formError"
-        color="error"
-        variant="soft"
-        :title="formError"
-        icon="i-lucide-alert-circle"
-        :close-button="{ icon: 'i-lucide-x', color: 'gray', variant: 'link', padded: false }"
-        @close="formError = null"
-      />
-    </template>
-  </UAuthForm>
+    <UAuthForm
+      :fields="fields"
+      :schema="schema"
+      title="Create an account"
+      :submit="{ label: 'Create account' }"
+      @submit="onSubmit"
+    >
+      <template #description>
+        Already have an account? <ULink
+          to="/login"
+          class="text-primary font-medium"
+        >Login</ULink>.
+      </template>
+    </UAuthForm>
+  </div>
 </template>
