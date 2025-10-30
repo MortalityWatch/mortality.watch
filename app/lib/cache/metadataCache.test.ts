@@ -20,9 +20,11 @@ describe('MetadataCache', () => {
         USA: new Country({
           iso3c: 'USA',
           jurisdiction: 'United States',
-          data_source: 'CDC',
-          chart_type: 'deaths',
-          age_groups: 'all'
+          min_date: '2020-01-01',
+          max_date: '2023-12-31',
+          type: 'deaths',
+          age_groups: 'all',
+          source: 'CDC'
         } as CountryRaw)
       }
 
@@ -30,7 +32,7 @@ describe('MetadataCache', () => {
       const result = cache.get()
 
       expect(result).toEqual(mockData)
-      expect(result?.USA.iso3c).toBe('USA')
+      expect(result?.USA?.iso3c).toBe('USA')
     })
 
     it('should handle filtered cache keys', () => {
@@ -38,21 +40,25 @@ describe('MetadataCache', () => {
         USA: new Country({
           iso3c: 'USA',
           jurisdiction: 'United States',
-          data_source: 'CDC',
-          chart_type: 'deaths',
-          age_groups: 'all'
+          min_date: '2020-01-01',
+          max_date: '2023-12-31',
+          type: 'deaths',
+          age_groups: 'all',
+          source: 'CDC'
         } as CountryRaw),
         GBR: new Country({
           iso3c: 'GBR',
           jurisdiction: 'United Kingdom',
-          data_source: 'ONS',
-          chart_type: 'deaths',
-          age_groups: 'all'
+          min_date: '2020-01-01',
+          max_date: '2023-12-31',
+          type: 'deaths',
+          age_groups: 'all',
+          source: 'ONS'
         } as CountryRaw)
       }
 
       const filteredData: Record<string, Country> = {
-        USA: allData.USA
+        USA: allData.USA!
       }
 
       // Cache both all and filtered
@@ -74,9 +80,11 @@ describe('MetadataCache', () => {
         USA: new Country({
           iso3c: 'USA',
           jurisdiction: 'United States',
-          data_source: 'CDC',
-          chart_type: 'deaths',
-          age_groups: 'all'
+          min_date: '2020-01-01',
+          max_date: '2023-12-31',
+          type: 'deaths',
+          age_groups: 'all',
+          source: 'CDC'
         } as CountryRaw)
       }
 
@@ -101,16 +109,20 @@ describe('MetadataCache', () => {
         {
           iso3c: 'USA',
           jurisdiction: 'United States',
-          data_source: 'CDC',
-          chart_type: 'deaths',
-          age_groups: 'all'
+          min_date: '2020-01-01',
+          max_date: '2023-12-31',
+          type: 'deaths',
+          age_groups: 'all',
+          source: 'CDC'
         },
         {
           iso3c: 'GBR',
           jurisdiction: 'United Kingdom',
-          data_source: 'ONS',
-          chart_type: 'deaths',
-          age_groups: 'all'
+          min_date: '2020-01-01',
+          max_date: '2023-12-31',
+          type: 'deaths',
+          age_groups: 'all',
+          source: 'ONS'
         }
       ]
 
@@ -119,7 +131,7 @@ describe('MetadataCache', () => {
 
       expect(result).toEqual(mockData)
       expect(result).toHaveLength(2)
-      expect(result![0].iso3c).toBe('USA')
+      expect(result?.[0]?.iso3c).toBe('USA')
     })
 
     it('should handle filtered flat cache', () => {
@@ -127,9 +139,11 @@ describe('MetadataCache', () => {
         {
           iso3c: 'USA',
           jurisdiction: 'United States',
-          data_source: 'CDC',
-          chart_type: 'deaths',
-          age_groups: 'all'
+          min_date: '2020-01-01',
+          max_date: '2023-12-31',
+          type: 'deaths',
+          age_groups: 'all',
+          source: 'CDC'
         }
       ]
 
@@ -147,9 +161,11 @@ describe('MetadataCache', () => {
         USA: new Country({
           iso3c: 'USA',
           jurisdiction: 'United States',
-          data_source: 'CDC',
-          chart_type: 'deaths',
-          age_groups: 'all'
+          min_date: '2020-01-01',
+          max_date: '2023-12-31',
+          type: 'deaths',
+          age_groups: 'all',
+          source: 'CDC'
         } as CountryRaw)
       }
 
@@ -171,9 +187,11 @@ describe('MetadataCache', () => {
         USA: new Country({
           iso3c: 'USA',
           jurisdiction: 'United States',
-          data_source: 'CDC',
-          chart_type: 'deaths',
-          age_groups: 'all'
+          min_date: '2020-01-01',
+          max_date: '2023-12-31',
+          type: 'deaths',
+          age_groups: 'all',
+          source: 'CDC'
         } as CountryRaw)
       }
 
@@ -197,9 +215,11 @@ describe('MetadataCache', () => {
         USA: new Country({
           iso3c: 'USA',
           jurisdiction: 'United States',
-          data_source: 'CDC',
-          chart_type: 'deaths',
-          age_groups: 'all'
+          min_date: '2020-01-01',
+          max_date: '2023-12-31',
+          type: 'deaths',
+          age_groups: 'all',
+          source: 'CDC'
         } as CountryRaw)
       }
 
@@ -207,9 +227,11 @@ describe('MetadataCache', () => {
         {
           iso3c: 'USA',
           jurisdiction: 'United States',
-          data_source: 'CDC',
-          chart_type: 'deaths',
-          age_groups: 'all'
+          min_date: '2020-01-01',
+          max_date: '2023-12-31',
+          type: 'deaths',
+          age_groups: 'all',
+          source: 'CDC'
         }
       ]
 
@@ -227,14 +249,16 @@ describe('MetadataCache', () => {
         USA: new Country({
           iso3c: 'USA',
           jurisdiction: 'United States',
-          data_source: 'CDC',
-          chart_type: 'deaths',
-          age_groups: 'all'
+          min_date: '2020-01-01',
+          max_date: '2023-12-31',
+          type: 'deaths',
+          age_groups: 'all',
+          source: 'CDC'
         } as CountryRaw)
       }
 
       const filteredData: Record<string, Country> = {
-        USA: allData.USA
+        USA: allData.USA!
       }
 
       cache.set(allData)
@@ -254,9 +278,11 @@ describe('MetadataCache', () => {
         USA: new Country({
           iso3c: 'USA',
           jurisdiction: 'United States',
-          data_source: 'CDC',
-          chart_type: 'deaths',
-          age_groups: 'all'
+          min_date: '2020-01-01',
+          max_date: '2023-12-31',
+          type: 'deaths',
+          age_groups: 'all',
+          source: 'CDC'
         } as CountryRaw)
       }
 
@@ -275,9 +301,11 @@ describe('MetadataCache', () => {
         {
           iso3c: 'USA',
           jurisdiction: 'United States',
-          data_source: 'CDC',
-          chart_type: 'deaths',
-          age_groups: 'all'
+          min_date: '2020-01-01',
+          max_date: '2023-12-31',
+          type: 'deaths',
+          age_groups: 'all',
+          source: 'CDC'
         }
       ]
 
