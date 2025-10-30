@@ -36,9 +36,9 @@ const fields = [{
 }]
 
 const schema = z.object({
-  email: z.string().email('Invalid email'),
-  password: z.string().min(8, 'Must be at least 8 characters'),
-  remember: z.boolean().optional()
+  email: z.string({ required_error: 'Email is required' }).email('Invalid email'),
+  password: z.string({ required_error: 'Password is required' }).min(8, 'Must be at least 8 characters'),
+  remember: z.boolean().optional().default(false)
 })
 
 type Schema = z.output<typeof schema>
