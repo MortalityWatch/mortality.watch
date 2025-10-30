@@ -16,7 +16,10 @@ const registerSchema = z.object({
     .min(8, 'Password must be at least 8 characters')
     .max(100, 'Password is too long'),
   firstName: z.string().min(1, 'First name is required').max(50, 'First name is too long'),
-  lastName: z.string().min(1, 'Last name is required').max(50, 'Last name is too long')
+  lastName: z.string().min(1, 'Last name is required').max(50, 'Last name is too long'),
+  tosAccepted: z.boolean().refine(val => val === true, {
+    message: 'You must accept the Terms of Service and Privacy Policy'
+  })
 })
 
 export default defineEventHandler(async (event) => {
@@ -31,7 +34,15 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const { email, password, firstName, lastName } = result.data
+  const { email, password, firstName, lastName, tosAccepted } = result.data
+
+  // Verify TOS acceptance (should already be validated by schema, but double-check for security)
+  if (!tosAccepted) {
+    throw createError({
+      statusCode: 400,
+      message: 'You must accept the Terms of Service and Privacy Policy to create an account'
+    })
+  }
 
   // Check if user already exists
   const existingUser = await db
@@ -72,7 +83,8 @@ export default defineEventHandler(async (event) => {
       tier: 1, // Default to tier 1 (registered, free)
       emailVerified: false,
       verificationToken,
-      verificationTokenExpires
+      verificationTokenExpires,
+      tosAcceptedAt: new Date() // Store TOS acceptance timestamp for legal compliance
     })
     .returning()
     .get()

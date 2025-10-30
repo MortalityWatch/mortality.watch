@@ -58,7 +58,10 @@ const schema = z.object({
   password: z.preprocess(
     val => val || '',
     z.string().min(1, 'Password is required').min(8, 'Must be at least 8 characters')
-  )
+  ),
+  tosAccepted: z.boolean().refine(val => val === true, {
+    message: 'You must accept the Terms of Service and Privacy Policy'
+  })
 })
 
 type Schema = z.output<typeof schema>
@@ -67,7 +70,7 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
   clearError()
 
   try {
-    await signUp(event.data.email, event.data.password, event.data.firstName, event.data.lastName)
+    await signUp(event.data.email, event.data.password, event.data.firstName, event.data.lastName, event.data.tosAccepted)
     toast.add({
       title: 'Welcome to Mortality Watch!',
       description: `Your account has been created, ${event.data.firstName}. You're now signed in.`,
@@ -107,6 +110,35 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
           to="/login"
           class="text-primary font-medium"
         >Login</ULink>.
+      </template>
+
+      <template #validation>
+        <UFormField
+          name="tosAccepted"
+          :required="true"
+        >
+          <UCheckbox
+            name="tosAccepted"
+            :required="true"
+          >
+            <template #label>
+              <span class="text-sm">
+                I agree to the
+                <ULink
+                  to="/legal/terms"
+                  target="_blank"
+                  class="text-primary font-medium hover:underline"
+                >Terms of Service</ULink>
+                and
+                <ULink
+                  to="/legal/privacy"
+                  target="_blank"
+                  class="text-primary font-medium hover:underline"
+                >Privacy Policy</ULink>
+              </span>
+            </template>
+          </UCheckbox>
+        </UFormField>
       </template>
     </UAuthForm>
   </div>
