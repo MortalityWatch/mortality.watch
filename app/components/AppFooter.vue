@@ -14,6 +14,27 @@
         >
           Support us
         </ULink>
+        <span class="mx-1">·</span>
+        <ULink
+          to="/legal/terms"
+          class="text-muted hover:text-default"
+        >
+          Terms
+        </ULink>
+        <span class="mx-1">·</span>
+        <ULink
+          to="/legal/privacy"
+          class="text-muted hover:text-default"
+        >
+          Privacy
+        </ULink>
+        <span class="mx-1">·</span>
+        <ULink
+          to="/legal/refund"
+          class="text-muted hover:text-default"
+        >
+          Refund
+        </ULink>
       </p>
     </template>
 
