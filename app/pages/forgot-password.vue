@@ -17,6 +17,7 @@ const toast = useToast()
 
 const submitted = ref(false)
 const email = ref('')
+const formError = ref<string | null>(null)
 
 const fields = [{
   name: 'email',
@@ -33,6 +34,9 @@ const schema = z.object({
 type Schema = z.output<typeof schema>
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
+  // Clear any previous errors
+  formError.value = null
+
   try {
     email.value = event.data.email
     await forgotPassword(event.data.email)
@@ -43,7 +47,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       color: 'success'
     })
   } catch (error: unknown) {
-    handleError(error, 'Failed to send password reset email', 'forgotPassword')
+    // Extract and store the error message for display
+    const errorMessage = handleError(error, 'Failed to send password reset email', 'forgotPassword')
+    formError.value = errorMessage
   }
 }
 </script>
@@ -60,6 +66,16 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       @submit="onSubmit"
     >
       <template #footer>
+        <UAlert
+          v-if="formError"
+          color="error"
+          variant="soft"
+          :title="formError"
+          icon="i-lucide-alert-circle"
+          :close-button="{ icon: 'i-lucide-x', color: 'gray', variant: 'link', padded: false }"
+          class="mb-4"
+          @close="formError = null"
+        />
         Remember your password? <ULink
           to="/login"
           class="text-primary font-medium"

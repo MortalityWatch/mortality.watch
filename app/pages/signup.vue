@@ -15,6 +15,7 @@ useSeoMeta({
 const { signUp } = useAuth()
 const router = useRouter()
 const toast = useToast()
+const formError = ref<string | null>(null)
 
 const fields = [{
   name: 'firstName',
@@ -52,6 +53,9 @@ const schema = z.object({
 type Schema = z.output<typeof schema>
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
+  // Clear any previous errors
+  formError.value = null
+
   try {
     await signUp(event.data.email, event.data.password, event.data.firstName, event.data.lastName)
     toast.add({
@@ -63,7 +67,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     await new Promise(resolve => setTimeout(resolve, 500))
     await router.push('/')
   } catch (error: unknown) {
-    handleError(error, 'Registration failed', 'signup')
+    // Extract and store the error message for display
+    const errorMessage = handleError(error, 'Registration failed', 'signup')
+    formError.value = errorMessage
   }
 }
 </script>
@@ -81,6 +87,18 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         to="/login"
         class="text-primary font-medium"
       >Login</ULink>.
+    </template>
+
+    <template #footer>
+      <UAlert
+        v-if="formError"
+        color="error"
+        variant="soft"
+        :title="formError"
+        icon="i-lucide-alert-circle"
+        :close-button="{ icon: 'i-lucide-x', color: 'gray', variant: 'link', padded: false }"
+        @close="formError = null"
+      />
     </template>
   </UAuthForm>
 </template>

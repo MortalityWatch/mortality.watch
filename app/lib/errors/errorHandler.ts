@@ -193,8 +193,22 @@ export class ErrorHandler {
       return error.message
     }
 
-    if (error && typeof error === 'object' && 'message' in error) {
-      return String(error.message)
+    // Handle Nuxt/Nitro API errors (from $fetch)
+    if (error && typeof error === 'object') {
+      // Check for data.message (Nitro error format)
+      if ('data' in error && error.data && typeof error.data === 'object' && 'message' in error.data) {
+        return String(error.data.message)
+      }
+
+      // Check for statusMessage (alternative format)
+      if ('statusMessage' in error && error.statusMessage) {
+        return String(error.statusMessage)
+      }
+
+      // Fallback to message property
+      if ('message' in error) {
+        return String(error.message)
+      }
     }
 
     return 'An unexpected error occurred'

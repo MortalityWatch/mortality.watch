@@ -16,6 +16,7 @@ const { signIn } = useAuth()
 const router = useRouter()
 const route = useRoute()
 const toast = useToast()
+const formError = ref<string | null>(null)
 
 const fields = [{
   name: 'email',
@@ -44,6 +45,9 @@ const schema = z.object({
 type Schema = z.output<typeof schema>
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
+  // Clear any previous errors
+  formError.value = null
+
   try {
     await signIn(event.data.email, event.data.password, event.data.remember || false)
     toast.add({
@@ -55,7 +59,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     const redirect = route.query.redirect as string || '/'
     await router.push(redirect)
   } catch (error: unknown) {
-    handleError(error, 'Sign in failed', 'login')
+    // Extract and store the error message for display
+    const errorMessage = handleError(error, 'Sign in failed', 'login')
+    formError.value = errorMessage
   }
 }
 </script>
@@ -81,6 +87,18 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         class="text-primary font-medium"
         tabindex="-1"
       >Forgot password?</ULink>
+    </template>
+
+    <template #footer>
+      <UAlert
+        v-if="formError"
+        color="error"
+        variant="soft"
+        :title="formError"
+        icon="i-lucide-alert-circle"
+        :close-button="{ icon: 'i-lucide-x', color: 'gray', variant: 'link', padded: false }"
+        @close="formError = null"
+      />
     </template>
   </UAuthForm>
 </template>
