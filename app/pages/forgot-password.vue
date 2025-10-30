@@ -27,7 +27,7 @@ const fields = [{
 }]
 
 const schema = z.object({
-  email: z.string({ required_error: 'Email is required' }).email('Invalid email')
+  email: z.string().min(1, 'Email is required').email('Invalid email').default('')
 })
 
 type Schema = z.output<typeof schema>
@@ -46,8 +46,19 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       color: 'success'
     })
   } catch (error: unknown) {
-    // Extract the error message but don't show toast (we'll show inline alert instead)
+    // Only handle API/network errors here, not validation errors
+    console.error('[forgotPassword] Error caught:', error)
+
     const errorObj = error && typeof error === 'object' ? error : { message: String(error) }
+
+    // Check if this is an API error (has statusCode or data with statusCode)
+    const isApiError = ('statusCode' in errorObj)
+      || ('data' in errorObj && errorObj.data && typeof errorObj.data === 'object')
+
+    if (!isApiError) {
+      console.warn('[forgotPassword] Non-API error detected, not displaying in alert')
+      return
+    }
 
     // Extract API error message
     let errorMessage = 'An error occurred'
@@ -59,9 +70,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       errorMessage = String(errorObj.message)
     }
 
-    // Show inline error only, skip toast
+    // Show inline error only for API errors
     formError.value = errorMessage
-    console.error('[forgotPassword]', errorMessage)
   }
 }
 </script>
@@ -82,6 +92,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     <UAuthForm
       :fields="fields"
       :schema="schema"
+      :validate-on="['submit']"
       title="Forgot Password"
       description="Enter your email address and we'll send you a link to reset your password."
       icon="i-lucide-mail"

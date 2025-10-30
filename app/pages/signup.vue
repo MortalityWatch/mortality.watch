@@ -43,10 +43,10 @@ const fields = [{
 }]
 
 const schema = z.object({
-  firstName: z.string({ required_error: 'First name is required' }).min(1, 'First name is required').max(50, 'First name is too long'),
-  lastName: z.string({ required_error: 'Last name is required' }).min(1, 'Last name is required').max(50, 'Last name is too long'),
-  email: z.string({ required_error: 'Email is required' }).email('Invalid email'),
-  password: z.string({ required_error: 'Password is required' }).min(8, 'Must be at least 8 characters')
+  firstName: z.string().min(1, 'First name is required').max(50, 'First name is too long').default(''),
+  lastName: z.string().min(1, 'Last name is required').max(50, 'Last name is too long').default(''),
+  email: z.string().min(1, 'Email is required').email('Invalid email').default(''),
+  password: z.string().min(1, 'Password is required').min(8, 'Must be at least 8 characters').default('')
 })
 
 type Schema = z.output<typeof schema>
@@ -66,8 +66,19 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     await new Promise(resolve => setTimeout(resolve, 500))
     await router.push('/')
   } catch (error: unknown) {
-    // Extract the error message but don't show toast (we'll show inline alert instead)
+    // Only handle API/network errors here, not validation errors
+    console.error('[signup] Error caught:', error)
+
     const errorObj = error && typeof error === 'object' ? error : { message: String(error) }
+
+    // Check if this is an API error (has statusCode or data with statusCode)
+    const isApiError = ('statusCode' in errorObj)
+      || ('data' in errorObj && errorObj.data && typeof errorObj.data === 'object')
+
+    if (!isApiError) {
+      console.warn('[signup] Non-API error detected, not displaying in alert')
+      return
+    }
 
     // Extract API error message
     let errorMessage = 'An error occurred'
@@ -79,9 +90,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       errorMessage = String(errorObj.message)
     }
 
-    // Show inline error only, skip toast
+    // Show inline error only for API errors
     formError.value = errorMessage
-    console.error('[signup]', errorMessage)
   }
 }
 </script>
@@ -102,6 +112,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     <UAuthForm
       :fields="fields"
       :schema="schema"
+      :validate-on="['submit']"
       title="Create an account"
       :submit="{ label: 'Create account' }"
       @submit="onSubmit"

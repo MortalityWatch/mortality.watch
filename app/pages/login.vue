@@ -36,8 +36,8 @@ const fields = [{
 }]
 
 const schema = z.object({
-  email: z.string({ required_error: 'Email is required' }).email('Invalid email'),
-  password: z.string({ required_error: 'Password is required' }).min(8, 'Must be at least 8 characters'),
+  email: z.string().min(1, 'Email is required').email('Invalid email').default(''),
+  password: z.string().min(1, 'Password is required').min(8, 'Must be at least 8 characters').default(''),
   remember: z.boolean().optional().default(false)
 })
 
@@ -58,8 +58,23 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     const redirect = route.query.redirect as string || '/'
     await router.push(redirect)
   } catch (error: unknown) {
-    // Extract the error message but don't show toast (we'll show inline alert instead)
+    // Only handle API/network errors here, not validation errors
+    // Validation errors should be handled by the form component
+    console.error('[login] Error caught:', error)
+
     const errorObj = error && typeof error === 'object' ? error : { message: String(error) }
+
+    // Check if this is an API error (has statusCode or data with statusCode)
+    // Skip validation errors which don't have these properties
+    const isApiError = ('statusCode' in errorObj)
+      || ('data' in errorObj && errorObj.data && typeof errorObj.data === 'object')
+
+    if (!isApiError) {
+      // This is likely a validation or other non-API error
+      // Don't show in our custom alert - let the form handle it
+      console.warn('[login] Non-API error detected, not displaying in alert')
+      return
+    }
 
     // Extract API error message
     let errorMessage = 'An error occurred'
@@ -71,9 +86,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       errorMessage = String(errorObj.message)
     }
 
-    // Show inline error only, skip toast
+    // Show inline error only for API errors
     formError.value = errorMessage
-    console.error('[login]', errorMessage)
   }
 }
 </script>
@@ -94,6 +108,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     <UAuthForm
       :fields="fields"
       :schema="schema"
+      :validate-on="['submit']"
       title="Welcome back"
       icon="i-lucide-lock"
       @submit="onSubmit"
