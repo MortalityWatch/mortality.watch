@@ -2,12 +2,11 @@
 interface MenuItem {
   label: string
   icon: string
-  to?: string
-  click?: () => void
+  to: string
 }
 
 const { isIncognito } = useIncognitoMode()
-const { isAuthenticated, user, signOut } = useAuth()
+const { isAuthenticated, user } = useAuth()
 
 // Main navigation items
 const items = computed(() => [{
@@ -57,7 +56,7 @@ const userMenuItems = computed<MenuItem[]>(() => {
   menu.push({
     label: 'Sign Out',
     icon: 'i-lucide-log-out',
-    click: () => signOut()
+    to: '/logout'
   })
 
   return menu
@@ -90,7 +89,6 @@ const userMenuItems = computed<MenuItem[]>(() => {
         <UDropdownMenu
           :items="[userMenuItems]"
           :popper="{ placement: 'bottom-end' }"
-          @select="(item: MenuItem) => item.click?.()"
         >
           <UButton
             variant="ghost"
