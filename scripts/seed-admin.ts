@@ -17,7 +17,9 @@ import bcrypt from 'bcryptjs'
 interface UserSeed {
   email: string
   password: string
-  name: string
+  firstName: string
+  lastName: string
+  displayName: string
   role: 'admin' | 'user'
   tier: number
 }
@@ -26,34 +28,34 @@ const seedUsers: UserSeed[] = [
   {
     email: 'admin@mortality.watch',
     password: 'Password1!',
-    first_name: 'Admin',
-    last_name: 'User',
-    display_name: 'Admin',
+    firstName: 'Admin',
+    lastName: 'User',
+    displayName: 'Admin',
     role: 'admin',
     tier: 2
   },
   {
     email: 'pro@mortality.watch',
     password: 'Password1!',
-    first_name: 'Pro',
-    last_name: 'User',
-    display_name: 'Pro',
+    firstName: 'Pro',
+    lastName: 'User',
+    displayName: 'Pro',
     role: 'user',
     tier: 2
   },
   {
     email: 'free@mortality.watch',
     password: 'Password1!',
-    first_name: 'Free',
-    last_name: 'User',
-    display_name: 'Free',
+    firstName: 'Free',
+    lastName: 'User',
+    displayName: 'Free',
     role: 'user',
     tier: 1
   }
 ]
 
 async function seedUser(userData: UserSeed) {
-  const { email, password, name, role, tier } = userData
+  const { email, password, firstName, lastName, displayName, role, tier } = userData
 
   console.log(`\nSeeding user: ${email}`)
 
@@ -73,7 +75,9 @@ async function seedUser(userData: UserSeed) {
       .update(users)
       .set({
         passwordHash,
-        name,
+        firstName,
+        lastName,
+        displayName,
         role,
         tier,
         emailVerified: true,
@@ -87,7 +91,9 @@ async function seedUser(userData: UserSeed) {
     await db.insert(users).values({
       email,
       passwordHash,
-      name,
+      firstName,
+      lastName,
+      displayName,
       role,
       tier,
       emailVerified: true
