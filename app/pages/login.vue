@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
+import { handleError } from '@/lib/errors/errorHandler'
 
 definePageMeta({
   layout: 'auth'
@@ -54,11 +55,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     const redirect = route.query.redirect as string || '/'
     await router.push(redirect)
   } catch (error: unknown) {
-    toast.add({
-      title: 'Sign in failed',
-      description: getErrorMessage(error),
-      color: 'error'
-    })
+    handleError(error, 'Sign in failed', 'login')
   }
 }
 </script>

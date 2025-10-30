@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { handleError } from '@/lib/errors/errorHandler'
+
 definePageMeta({
   layout: 'auth'
 })
@@ -34,7 +36,7 @@ onMounted(async () => {
     }, 3000)
   } catch (err: unknown) {
     success.value = false
-    error.value = getErrorMessage(err)
+    error.value = handleError(err, 'Email verification failed', 'verifyEmail')
   } finally {
     verifying.value = false
   }

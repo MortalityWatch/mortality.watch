@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
+import { handleError } from '@/lib/errors/errorHandler'
 
 definePageMeta({
   layout: 'auth'
@@ -52,11 +53,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     })
     await router.push('/')
   } catch (error: unknown) {
-    toast.add({
-      title: 'Password reset failed',
-      description: getErrorMessage(error),
-      color: 'error'
-    })
+    handleError(error, 'Password reset failed', 'resetPassword')
   }
 }
 </script>

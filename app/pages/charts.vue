@@ -201,6 +201,8 @@
 </template>
 
 <script setup lang="ts">
+import { handleSilentError } from '@/lib/errors/errorHandler'
+
 interface Chart {
   id: number
   name: string
@@ -305,7 +307,7 @@ function getRemixUrl(chart: Chart) {
 
     return `${baseUrl}?${params.toString()}`
   } catch (err) {
-    console.error('Failed to parse chart state:', err)
+    handleSilentError(err, 'getChartUrl')
     return chart.chartType === 'explorer' ? '/explorer' : '/ranking'
   }
 }

@@ -25,6 +25,7 @@ import { getChartColors } from '@/colors'
 import { getColorScale } from '@/lib/chart/chartColors'
 import { useRoute, useRouter } from 'vue-router'
 import { showToast } from '@/toast'
+import { handleError } from '@/lib/errors/errorHandler'
 
 // Feature access for tier-based features (currently unused but may be needed in the future)
 // const { can, getFeatureUpgradeUrl } = useFeatureAccess()
@@ -314,8 +315,7 @@ const copyChartLink = async () => {
     await navigator.clipboard.writeText(window.location.href)
     showToast('Link copied to clipboard!', 'success')
   } catch (error) {
-    console.error('[copyChartLink] Error:', error)
-    showToast('Failed to copy link', 'error')
+    handleError(error, 'Failed to copy link', 'copyChartLink')
   }
 }
 
@@ -333,8 +333,7 @@ const screenshotChart = () => {
     link.click()
     showToast('Chart downloaded!', 'success')
   } catch (error) {
-    console.error('[screenshotChart] Error:', error)
-    showToast('Failed to download chart', 'error')
+    handleError(error, 'Failed to download chart', 'screenshotChart')
   }
 }
 
@@ -419,8 +418,7 @@ const saveToDB = async () => {
       }
     }, 1500)
   } catch (err) {
-    console.error('Failed to save chart:', err)
-    saveError.value = err instanceof Error ? err.message : 'Failed to save chart'
+    saveError.value = handleError(err, 'Failed to save chart', 'saveChart')
   } finally {
     savingChart.value = false
   }

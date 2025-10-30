@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { handleError } from '@/lib/errors/errorHandler'
+
 const { user, isAuthenticated } = useAuth()
 const toast = useToast()
 const sending = ref(false)
@@ -20,11 +22,7 @@ async function resendVerification() {
       color: 'success'
     })
   } catch (error: unknown) {
-    toast.add({
-      title: 'Failed to send email',
-      description: getErrorMessage(error),
-      color: 'error'
-    })
+    handleError(error, 'Failed to send verification email', 'resendVerification')
   } finally {
     sending.value = false
   }

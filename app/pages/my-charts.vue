@@ -197,6 +197,8 @@
 </template>
 
 <script setup lang="ts">
+import { handleSilentError, handleApiError } from '@/lib/errors/errorHandler'
+
 interface Chart {
   id: number
   name: string
@@ -249,7 +251,7 @@ function getChartUrl(chart: Chart) {
 
     return `${baseUrl}?${params.toString()}`
   } catch (err) {
-    console.error('Failed to parse chart state:', err)
+    handleSilentError(err, 'getChartUrl')
     return chart.chartType === 'explorer' ? '/explorer' : '/ranking'
   }
 }
@@ -268,7 +270,7 @@ function getChartImageUrl(chart: Chart) {
 
     return `/chart.png?${params.toString()}&width=600&height=337`
   } catch (err) {
-    console.error('Failed to parse chart state:', err)
+    handleSilentError(err, 'getChartImageUrl')
     return chart.thumbnailUrl || '/placeholder-chart.png'
   }
 }
@@ -287,8 +289,7 @@ async function deleteChart(chartId: number) {
     // Refresh the list
     await refresh()
   } catch (err) {
-    console.error('Failed to delete chart:', err)
-    alert('Failed to delete chart')
+    handleApiError(err, 'delete chart', 'deleteChart')
   }
 }
 

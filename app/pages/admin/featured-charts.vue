@@ -242,6 +242,8 @@
 </template>
 
 <script setup lang="ts">
+import { handleSilentError, handleApiError } from '@/lib/errors/errorHandler'
+
 interface Chart {
   id: number
   name: string
@@ -349,7 +351,7 @@ async function refreshCacheStats() {
     )
     cacheStats.value = response.stats
   } catch (err) {
-    console.error('Failed to fetch cache stats:', err)
+    handleSilentError(err, 'refreshCacheStats')
   } finally {
     loadingCacheStats.value = false
   }
@@ -370,8 +372,7 @@ async function clearCache() {
     alert(response.message)
     await refreshCacheStats()
   } catch (err) {
-    console.error('Failed to clear cache:', err)
-    alert('Failed to clear cache')
+    handleApiError(err, 'clear cache', 'clearCache')
   } finally {
     clearingCache.value = false
   }
@@ -392,8 +393,7 @@ async function toggleFeatured(chartId: number, isFeatured: boolean) {
     // Refresh the list
     await refresh()
   } catch (err) {
-    console.error('Failed to toggle featured status:', err)
-    alert('Failed to update featured status')
+    handleApiError(err, 'update featured status', 'toggleFeatured')
   } finally {
     togglingFeatured.value = null
   }

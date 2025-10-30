@@ -28,6 +28,7 @@ import { useRankingData } from '@/composables/useRankingData'
 import { useRankingTableSort } from '@/composables/useRankingTableSort'
 import { useCountryFilter } from '@/composables/useCountryFilter'
 import { showToast } from '@/toast'
+import { handleError } from '@/lib/errors/errorHandler'
 import RankingDataSelection from '../components/ranking/RankingDataSelection.vue'
 
 definePageMeta({
@@ -361,8 +362,7 @@ const saveToDB = async () => {
       }
     }, 1500)
   } catch (err) {
-    console.error('Failed to save ranking:', err)
-    saveError.value = err instanceof Error ? err.message : 'Failed to save ranking'
+    saveError.value = handleError(err, 'Failed to save ranking', 'saveRanking')
   } finally {
     savingRanking.value = false
   }
