@@ -10,6 +10,9 @@ export {
   fetchData
 } from './queries'
 
+// Cache - Metadata caching
+export { metadataCache } from '../cache/metadataCache'
+
 // Transformations - Data processing and manipulation
 export {
   updateDataset,
