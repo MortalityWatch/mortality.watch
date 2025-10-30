@@ -1,10 +1,13 @@
 <script setup lang="ts">
-defineProps<{
+const props = withDefaults(defineProps<{
   showSaveButton?: boolean
   showDownloadChart?: boolean
   showScreenshot?: boolean
   explorerLink?: string
-}>()
+}>(), {
+  showDownloadChart: true,
+  showScreenshot: true
+})
 
 const emit = defineEmits<{
   copyLink: []
@@ -45,7 +48,7 @@ const emit = defineEmits<{
           />
         </button>
 
-        <template v-if="showDownloadChart !== false">
+        <template v-if="props.showDownloadChart">
           <div class="border-t border-gray-200 dark:border-gray-700" />
 
           <button
@@ -71,7 +74,7 @@ const emit = defineEmits<{
           </button>
         </template>
 
-        <template v-if="showScreenshot !== false">
+        <template v-if="props.showScreenshot">
           <div class="border-t border-gray-200 dark:border-gray-700" />
 
           <button
@@ -97,11 +100,11 @@ const emit = defineEmits<{
           </button>
         </template>
 
-        <template v-if="explorerLink">
+        <template v-if="props.explorerLink">
           <div class="border-t border-gray-200 dark:border-gray-700" />
 
           <NuxtLink
-            :to="explorerLink"
+            :to="props.explorerLink"
             class="chart-option-button"
           >
             <UIcon
@@ -119,12 +122,12 @@ const emit = defineEmits<{
           </NuxtLink>
         </template>
 
-        <template v-if="$slots['save-button'] || showSaveButton">
+        <template v-if="$slots['save-button'] || props.showSaveButton">
           <div class="border-t border-gray-200 dark:border-gray-700" />
 
           <slot name="save-button">
             <button
-              v-if="showSaveButton"
+              v-if="props.showSaveButton"
               class="chart-option-button"
               @click="emit('saveChart')"
             >
