@@ -17,6 +17,7 @@
         title="Public"
         description="Explore without registration"
         price="Free"
+        :badge="tier === 0 ? { label: 'Current Plan', color: 'neutral' } : undefined"
         :features="[
           'View mortality charts',
           'Basic controls and filters',
@@ -24,17 +25,16 @@
           'View ranking page',
           'Conservative baseline only'
         ]"
-        :button="tier === 0
-          ? { label: 'Current Plan', disabled: true, color: 'neutral' }
-          : { label: 'Start Exploring', to: '/explorer', color: 'neutral' }"
+        :button="{ label: 'Start Exploring', to: '/explorer', color: 'neutral' }"
         class="border-2 border-gray-900 dark:border-gray-100"
       />
 
-      <!-- Registered Tier -->
+      <!-- Free Tier -->
       <UPricingPlan
-        title="Registered"
+        title="Free"
         description="Full-featured, forever free"
         price="Free"
+        :badge="tier === 1 ? { label: 'Current Plan', color: 'primary' } : tier >= 2 ? { label: 'Active', color: 'primary' } : undefined"
         :features="[
           { title: 'All Public features, plus:' },
           { title: 'Save charts to My Charts', icon: 'i-lucide-save' },
@@ -44,11 +44,9 @@
           { title: 'Full historical data access', icon: 'i-lucide-calendar' },
           { title: 'Publish and share charts', icon: 'i-lucide-share-2' }
         ]"
-        :button="tier === 1
-          ? { label: 'Current Plan', disabled: true, color: 'neutral' }
-          : tier >= 2
-            ? { label: 'Active', disabled: true, color: 'neutral' }
-            : { label: 'Sign Up Free', to: '/signup', color: 'primary' }"
+        :button="tier >= 1
+          ? { label: 'Start Exploring', to: '/explorer', color: 'neutral' }
+          : { label: 'Sign Up Free', to: '/signup', color: 'primary' }"
         class="border-2 border-blue-500 dark:border-blue-400"
       />
 
@@ -59,8 +57,9 @@
         price="$9.99"
         billing-cycle="/month"
         tagline="or $99/year"
+        :badge="tier === 2 ? { label: 'Current Plan', color: 'primary' } : undefined"
         :features="[
-          { title: 'All Registered features, plus:' },
+          { title: 'All Free features, plus:' },
           { title: 'Remove watermarks', icon: 'i-lucide-image-off' },
           { title: 'Remove QR codes', icon: 'i-lucide-scan-line' },
           { title: 'Single age group LE (Coming Soon)', icon: 'i-lucide-activity' },
@@ -69,7 +68,7 @@
           { title: 'Priority email support', icon: 'i-lucide-headphones' }
         ]"
         :button="tier === 2
-          ? { label: 'Current Plan', disabled: true, color: 'neutral' }
+          ? { label: 'Start Exploring', to: '/explorer', color: 'neutral' }
           : { label: 'Upgrade to Pro', to: '/subscribe', color: 'primary', class: 'bg-purple-600 hover:bg-purple-700 text-white dark:bg-purple-500 dark:hover:bg-purple-600' }"
         class="border-2 border-purple-500 dark:border-purple-400"
       />
@@ -172,9 +171,9 @@ definePageMeta({
 
 // SEO metadata
 useSeoMeta({
-  title: 'Features & Pricing - MortalityWatch',
-  description: 'Explore MortalityWatch features across all tiers. Free registration includes chart saving, custom colors, and data exports. Upgrade to Pro for advanced analytics at $9.99/month.',
-  ogTitle: 'MortalityWatch Features & Pricing',
+  title: 'Features & Pricing - Mortality Watch',
+  description: 'Explore Mortality Watch features across all tiers. Free registration includes chart saving, custom colors, and data exports. Upgrade to Pro for advanced analytics at $9.99/month.',
+  ogTitle: 'Mortality Watch Features & Pricing',
   ogDescription: 'Free registration with powerful features. Upgrade to Pro for advanced mortality analysis tools.'
 })
 </script>

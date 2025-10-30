@@ -27,7 +27,7 @@ export const TIER_INFO = {
     signupRequired: false
   },
   [TIERS.REGISTERED]: {
-    name: 'Registered',
+    name: 'Free',
     description: 'Free account with extended features',
     price: 'Free',
     signupRequired: true

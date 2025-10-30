@@ -24,8 +24,8 @@ const badgeClasses = computed(() => {
   // Tier-specific color classes
   const colorClasses = {
     2: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400', // Pro
-    1: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', // Registered
-    0: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' // Free
+    1: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', // Free
+    0: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' // Public
   }
 
   return `${baseClasses} ${sizeClasses[props.size]} ${colorClasses[props.tier]}`
@@ -33,8 +33,8 @@ const badgeClasses = computed(() => {
 
 const tierLabels: Record<number, string> = {
   2: 'Pro',
-  1: 'Registered',
-  0: 'Free'
+  1: 'Free',
+  0: 'Public'
 }
 
 const tierLabel = computed(() => tierLabels[props.tier] ?? 'Free')

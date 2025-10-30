@@ -72,7 +72,7 @@ const tierName = computed(() => {
     case TIERS.PUBLIC:
       return 'Public'
     case TIERS.REGISTERED:
-      return hasAccess ? 'Registered' : 'Free'
+      return hasAccess ? 'Free' : 'Free'
     case TIERS.PRO:
       return hasAccess ? 'Pro' : 'Pro'
     default:

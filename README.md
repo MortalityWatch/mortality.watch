@@ -1,4 +1,4 @@
-# MortalityWatch
+# Mortality Watch
 
 [![CI](https://github.com/MortalityWatch/mortality.watch/actions/workflows/ci.yml/badge.svg)](https://github.com/MortalityWatch/mortality.watch/actions/workflows/ci.yml)
 
@@ -188,7 +188,7 @@ See [Stripe Setup](#stripe-subscription-setup) below for detailed configuration 
 
 ### Offline Development
 
-MortalityWatch supports **true offline development** - work on planes, trains, or anywhere without internet!
+Mortality Watch supports **true offline development** - work on planes, trains, or anywhere without internet!
 
 #### Step 1: Choose Your Countries
 
@@ -374,7 +374,7 @@ Powered by **husky** + **lint-staged**.
 
 ## 💳 Stripe Subscription Setup
 
-MortalityWatch uses Stripe for subscription payments. Follow these steps to configure Stripe for your deployment:
+Mortality Watch uses Stripe for subscription payments. Follow these steps to configure Stripe for your deployment:
 
 ### 1. Get API Keys
 
@@ -385,6 +385,7 @@ In your [Stripe Dashboard](https://dashboard.stripe.com/):
 3. Reveal and copy your **Secret key** (starts with `sk_live_...` or `sk_test_...`)
 
 Add to `.env`:
+
 ```bash
 STRIPE_PUBLISHABLE_KEY=pk_live_...
 STRIPE_SECRET_KEY=sk_live_...
@@ -407,6 +408,7 @@ In your [Stripe Dashboard](https://dashboard.stripe.com/products):
    - Copy the **Price ID** (starts with `price_...`)
 
 Add to `.env`:
+
 ```bash
 STRIPE_PRICE_MONTHLY=price_...
 STRIPE_PRICE_YEARLY=price_...
@@ -429,6 +431,7 @@ In your [Stripe Dashboard](https://dashboard.stripe.com/webhooks):
 5. Reveal and copy the **Signing secret** (starts with `whsec_...`)
 
 Add to `.env`:
+
 ```bash
 STRIPE_WEBHOOK_SECRET=whsec_...
 ```
@@ -464,11 +467,13 @@ stripe trigger checkout.session.completed
 Stripe has two modes:
 
 **Test Mode** (for development):
+
 - Keys start with `pk_test_...` and `sk_test_...`
 - Use test card: `4242 4242 4242 4242`
 - No real charges are made
 
 **Live Mode** (for production):
+
 - Keys start with `pk_live_...` and `sk_live_...`
 - Real payments are processed
 - Requires activated Stripe account
@@ -778,6 +783,6 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 ---
 
-**Built with ❤️ by the MortalityWatch team**
+**Built with ❤️ by the Mortality Watch team**
 
 _Last updated: 2025-10-05_

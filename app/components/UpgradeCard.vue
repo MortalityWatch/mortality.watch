@@ -137,7 +137,7 @@
         </div>
       </div>
 
-      <!-- Tier 1: Registered Users (Free) -->
+      <!-- Tier 1: Free Users -->
       <div v-else-if="user.tier === 1">
         <div class="mb-6">
           <Icon

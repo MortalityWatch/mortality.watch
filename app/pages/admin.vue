@@ -19,7 +19,7 @@ const stats = ref([
     color: 'primary' as const
   },
   {
-    label: 'Registered Today',
+    label: 'Signups Today',
     value: '0',
     icon: 'i-lucide-user-plus',
     color: 'success' as const

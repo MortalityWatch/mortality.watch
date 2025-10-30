@@ -22,7 +22,7 @@ const hasExtendedTimeAccess = computed(() => can('EXTENDED_TIME_PERIODS'))
 // Calculate the minimum allowed index for public users (year 2000+)
 const minAllowedIndex = computed(() => {
   if (hasExtendedTimeAccess.value) {
-    return 0 // Registered users can access all data
+    return 0 // Free tier users can access all data
   }
 
   // Find the first label that is >= 2000

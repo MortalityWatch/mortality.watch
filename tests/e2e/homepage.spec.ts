@@ -4,8 +4,8 @@ test.describe('Homepage', () => {
   test('should load successfully', async ({ page }) => {
     await page.goto('/')
 
-    // Check that the page loaded (title is "MortalityWatch" - one word)
-    await expect(page).toHaveTitle(/MortalityWatch/i)
+    // Check that the page loaded (title is "Mortality Watch" - two words)
+    await expect(page).toHaveTitle(/Mortality Watch/i)
   })
 
   test('should display showcase section', async ({ page }) => {

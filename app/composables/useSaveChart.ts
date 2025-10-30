@@ -42,7 +42,9 @@ export function useSaveChart(options: SaveChartOptions) {
    * Opens the save modal and resets all form state
    */
   const openSaveModal = () => {
+    console.log('[useSaveChart] openSaveModal called for:', chartType)
     showSaveModal.value = true
+    console.log('[useSaveChart] showSaveModal set to:', showSaveModal.value)
     saveChartName.value = ''
     saveChartDescription.value = ''
     saveChartPublic.value = false
