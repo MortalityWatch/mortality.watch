@@ -12,8 +12,9 @@ import {
 } from '~/model'
 import { cumulativeSum, sum, getCamelCase } from '~/utils'
 import { isBl, isPredictionIntervalKey } from './predicates'
+import { DATA_CONFIG } from '@/lib/config/constants'
 
-const SUBREGION_SEPERATOR = ' - '
+const SUBREGION_SEPERATOR = DATA_CONFIG.SUBREGION_SEPARATOR
 
 const getLabel = (key: string, country: string, ageGroup: string) => {
   if (isBl(key) || isPredictionIntervalKey(key)) return ''

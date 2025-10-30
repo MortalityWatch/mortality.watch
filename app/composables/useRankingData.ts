@@ -21,9 +21,10 @@ import { handleError } from '@/lib/errors/errorHandler'
 import { processCountryRow } from '@/lib/ranking/dataProcessing'
 import type { TableRow } from '@/lib/ranking/types'
 import { useChartDataFetcher } from '@/composables/useChartDataFetcher'
+import { DATA_CONFIG } from '@/lib/config/constants'
 
-const RANKING_START_YEAR = 2020
-const RANKING_END_YEAR = 2023
+const RANKING_START_YEAR = DATA_CONFIG.RANKING_START_YEAR
+const RANKING_END_YEAR = DATA_CONFIG.RANKING_END_YEAR
 
 export function useRankingData(
   state: ReturnType<typeof useRankingState>,
@@ -55,7 +56,7 @@ export function useRankingData(
   let sliderValueNeedsUpdate = false
 
   // Table row key
-  const total_row_key = 'TOTAL'
+  const total_row_key = DATA_CONFIG.TOTAL_ROW_KEY
 
   // ============================================================================
   // COMPUTED - Derived Values
