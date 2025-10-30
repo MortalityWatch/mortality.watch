@@ -91,6 +91,8 @@
 </template>
 
 <script setup lang="ts">
+import { handleError } from '@/lib/errors/errorHandler'
+
 interface Props {
   chartState: Record<string, unknown>
   chartType: 'explorer' | 'ranking'
@@ -178,8 +180,7 @@ async function saveChart() {
       }
     }, 1500)
   } catch (err) {
-    console.error('Failed to save chart:', err)
-    error.value = err instanceof Error ? err.message : 'Failed to save chart'
+    error.value = handleError(err, 'Failed to save chart', 'saveChart')
   } finally {
     saving.value = false
   }

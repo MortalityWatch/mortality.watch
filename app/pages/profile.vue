@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { handleError } from '@/lib/errors/errorHandler'
+
 definePageMeta({
   middleware: 'auth'
 })
@@ -72,11 +74,7 @@ async function saveProfile() {
       color: 'success'
     })
   } catch (error: unknown) {
-    toast.add({
-      title: 'Update failed',
-      description: getErrorMessage(error),
-      color: 'error'
-    })
+    handleError(error, 'Failed to update profile', 'saveProfile')
   } finally {
     savingProfile.value = false
   }
@@ -100,11 +98,7 @@ async function deleteAccount() {
     // Sign out and redirect
     await signOut()
   } catch (error: unknown) {
-    toast.add({
-      title: 'Deletion failed',
-      description: getErrorMessage(error),
-      color: 'error'
-    })
+    handleError(error, 'Failed to delete account', 'deleteAccount')
   } finally {
     deletingAccount.value = false
   }
@@ -136,11 +130,7 @@ async function changePassword() {
     passwordState.newPassword = ''
     passwordState.confirmPassword = ''
   } catch (error: unknown) {
-    toast.add({
-      title: 'Password change failed',
-      description: getErrorMessage(error),
-      color: 'error'
-    })
+    handleError(error, 'Failed to change password', 'changePassword')
   } finally {
     savingPassword.value = false
   }

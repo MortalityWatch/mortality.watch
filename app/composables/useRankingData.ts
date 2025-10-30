@@ -17,6 +17,7 @@ import { usePeriodFormat } from '@/composables/usePeriodFormat'
 import { useJurisdictionFilter } from '@/composables/useJurisdictionFilter'
 import { defaultBaselineFromDate, defaultBaselineToDate, getSeasonString } from '@/model/baseline'
 import { showToast } from '@/toast'
+import { handleError } from '@/lib/errors/errorHandler'
 import { processCountryRow } from '@/lib/ranking/dataProcessing'
 import type { TableRow } from '@/lib/ranking/types'
 import { useChartDataFetcher } from '@/composables/useChartDataFetcher'
@@ -254,8 +255,7 @@ export function useRankingData(
         initialLoadDone.value = true
       }
     } catch (error) {
-      console.error('Failed to load ranking data:', error)
-      showToast('Failed to load data', 'error')
+      handleError(error, 'Failed to load ranking data', 'useRankingData.updateData')
     } finally {
       isUpdating.value = false
     }

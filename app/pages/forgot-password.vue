@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
+import { handleError } from '@/lib/errors/errorHandler'
 
 definePageMeta({
   layout: 'auth'
@@ -42,11 +43,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       color: 'success'
     })
   } catch (error: unknown) {
-    toast.add({
-      title: 'Request failed',
-      description: getErrorMessage(error),
-      color: 'error'
-    })
+    handleError(error, 'Failed to send password reset email', 'forgotPassword')
   }
 }
 </script>

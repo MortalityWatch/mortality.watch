@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { handleError } from '@/lib/errors/errorHandler'
+
 const { getSubscriptionStatus, manageSubscription, subscribe } = useStripe()
-const toast = useToast()
 
 interface SubscriptionStatus {
   hasSubscription: boolean
@@ -77,12 +78,7 @@ async function loadSubscriptionStatus() {
   try {
     subscriptionStatus.value = await getSubscriptionStatus()
   } catch (error) {
-    console.error('Error loading subscription status:', error)
-    toast.add({
-      title: 'Error',
-      description: 'Failed to load subscription status',
-      color: 'error'
-    })
+    handleError(error, 'Failed to load subscription status', 'loadSubscriptionStatus')
   } finally {
     loading.value = false
   }
@@ -93,12 +89,7 @@ async function handleManageSubscription() {
   try {
     await manageSubscription()
   } catch (error) {
-    console.error('Error opening customer portal:', error)
-    toast.add({
-      title: 'Error',
-      description: 'Failed to open subscription management',
-      color: 'error'
-    })
+    handleError(error, 'Failed to open subscription management', 'manageSubscription')
     managingSubscription.value = false
   }
 }
@@ -108,12 +99,7 @@ async function handleSubscribe(plan: 'monthly' | 'yearly') {
   try {
     await subscribe(plan)
   } catch (error) {
-    console.error('Error creating checkout session:', error)
-    toast.add({
-      title: 'Error',
-      description: 'Failed to start subscription checkout',
-      color: 'error'
-    })
+    handleError(error, 'Failed to start subscription checkout', 'subscribe')
     subscribing.value = false
   }
 }
