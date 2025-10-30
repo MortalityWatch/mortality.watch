@@ -17,17 +17,6 @@ describe('StateComputed', () => {
     stateComputed = new StateComputed(stateData, stateHelpers)
   })
 
-  // Helper to sync stateData changes to props for StateHelpers
-  function syncPropsFromData() {
-    props.chartStyle = stateData.chartStyle
-    props.type = stateData.type
-    props.isExcess = stateData.isExcess
-    props.cumulative = stateData.cumulative
-    props.showBaseline = stateData.showBaseline
-    props.baselineMethod = stateData.baselineMethod
-    props.isLogarithmic = stateData.isLogarithmic
-  }
-
   describe('getChartStyle', () => {
     it('should return explicit chartStyle if set', () => {
       stateData.chartStyle = 'line'
