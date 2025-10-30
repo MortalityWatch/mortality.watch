@@ -155,7 +155,7 @@ describe('ErrorHandler', () => {
       }
       const result = ErrorHandler.handle(fetchError, { showToast: false, logToConsole: false })
 
-      expect(result).toBe('An unexpected error occurred')
+      expect(result).toBe('Fetch error message')
     })
   })
 

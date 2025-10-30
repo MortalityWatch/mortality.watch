@@ -36,8 +36,14 @@ const fields = [{
 }]
 
 const schema = z.object({
-  email: z.string().min(1, 'Email is required').email('Invalid email').default(''),
-  password: z.string().min(1, 'Password is required').min(8, 'Must be at least 8 characters').default(''),
+  email: z.preprocess(
+    val => val || '',
+    z.string().min(1, 'Email is required').email('Invalid email')
+  ),
+  password: z.preprocess(
+    val => val || '',
+    z.string().min(1, 'Password is required').min(8, 'Must be at least 8 characters')
+  ),
   remember: z.boolean().optional().default(false)
 })
 
@@ -108,10 +114,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     <UAuthForm
       :fields="fields"
       :schema="schema"
-      :validate-on="['submit']"
       title="Welcome back"
       icon="i-lucide-lock"
-      @submit="onSubmit"
+      @submit="onSubmit as any"
     >
       <template #description>
         Don't have an account? <ULink

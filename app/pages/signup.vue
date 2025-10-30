@@ -43,10 +43,22 @@ const fields = [{
 }]
 
 const schema = z.object({
-  firstName: z.string().min(1, 'First name is required').max(50, 'First name is too long').default(''),
-  lastName: z.string().min(1, 'Last name is required').max(50, 'Last name is too long').default(''),
-  email: z.string().min(1, 'Email is required').email('Invalid email').default(''),
-  password: z.string().min(1, 'Password is required').min(8, 'Must be at least 8 characters').default('')
+  firstName: z.preprocess(
+    val => val || '',
+    z.string().min(1, 'First name is required').max(50, 'First name is too long')
+  ),
+  lastName: z.preprocess(
+    val => val || '',
+    z.string().min(1, 'Last name is required').max(50, 'Last name is too long')
+  ),
+  email: z.preprocess(
+    val => val || '',
+    z.string().min(1, 'Email is required').email('Invalid email')
+  ),
+  password: z.preprocess(
+    val => val || '',
+    z.string().min(1, 'Password is required').min(8, 'Must be at least 8 characters')
+  )
 })
 
 type Schema = z.output<typeof schema>
@@ -112,10 +124,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     <UAuthForm
       :fields="fields"
       :schema="schema"
-      :validate-on="['submit']"
       title="Create an account"
       :submit="{ label: 'Create account' }"
-      @submit="onSubmit"
+      @submit="onSubmit as any"
     >
       <template #description>
         Already have an account? <ULink

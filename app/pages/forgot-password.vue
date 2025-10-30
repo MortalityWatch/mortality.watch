@@ -27,7 +27,10 @@ const fields = [{
 }]
 
 const schema = z.object({
-  email: z.string().min(1, 'Email is required').email('Invalid email').default('')
+  email: z.preprocess(
+    val => val || '',
+    z.string().min(1, 'Email is required').email('Invalid email')
+  )
 })
 
 type Schema = z.output<typeof schema>
@@ -92,12 +95,11 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     <UAuthForm
       :fields="fields"
       :schema="schema"
-      :validate-on="['submit']"
       title="Forgot Password"
       description="Enter your email address and we'll send you a link to reset your password."
       icon="i-lucide-mail"
       :submit="{ label: 'Send Reset Link' }"
-      @submit="onSubmit"
+      @submit="onSubmit as any"
     >
       <template #footer>
         Remember your password? <ULink
