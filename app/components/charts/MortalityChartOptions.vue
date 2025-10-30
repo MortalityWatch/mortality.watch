@@ -65,7 +65,7 @@ const copyToClipboard = async () => {
     class="fixed bottom-4 right-4"
     style="z-index: 9999;"
   >
-    <UDropdown
+    <UDropdownMenu
       v-model:open="isOpen"
       :items="menuItems"
       :popper="{ placement: 'top-end' }"
@@ -78,6 +78,6 @@ const copyToClipboard = async () => {
         class="rounded-full"
         aria-label="Chart options"
       />
-    </UDropdown>
+    </UDropdownMenu>
   </div>
 </template>

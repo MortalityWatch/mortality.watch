@@ -18,7 +18,7 @@
     >
       <div class="p-4 space-y-4">
         <!-- Name Input -->
-        <UFormGroup
+        <UFormField
           label="Chart Name"
           required
         >
@@ -26,21 +26,21 @@
             v-model="chartName"
             placeholder="Enter a name for your chart"
           />
-        </UFormGroup>
+        </UFormField>
 
         <!-- Description Input -->
-        <UFormGroup label="Description (optional)">
+        <UFormField label="Description (optional)">
           <UTextarea
             v-model="chartDescription"
             placeholder="Add a description (optional)"
             :rows="3"
           />
-        </UFormGroup>
+        </UFormField>
 
         <!-- Public Toggle -->
-        <UFormGroup>
+        <UFormField>
           <div class="flex items-center gap-3">
-            <UToggle v-model="isPublic" />
+            <USwitch v-model="isPublic" />
             <div>
               <div class="font-medium text-sm">
                 Make this chart public
@@ -50,7 +50,7 @@
               </div>
             </div>
           </div>
-        </UFormGroup>
+        </UFormField>
 
         <!-- Error Message -->
         <UAlert
