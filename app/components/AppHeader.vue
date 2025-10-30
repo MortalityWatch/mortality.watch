@@ -90,6 +90,7 @@ const userMenuItems = computed<MenuItem[]>(() => {
         <UDropdownMenu
           :items="[userMenuItems]"
           :popper="{ placement: 'bottom-end' }"
+          @select="(item: MenuItem) => item.click?.()"
         >
           <UButton
             variant="ghost"
