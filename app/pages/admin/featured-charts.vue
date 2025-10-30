@@ -197,7 +197,7 @@
               />
             </UButton>
 
-            <UToggle
+            <USwitch
               :model-value="chart.isFeatured"
               :loading="togglingFeatured === chart.id"
               @update:model-value="(value: boolean) => toggleFeatured(chart.id, value)"

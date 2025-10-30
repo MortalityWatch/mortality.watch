@@ -42,7 +42,7 @@ const handleClose = () => {
   >
     <div class="p-4 space-y-4">
       <!-- Name Input -->
-      <UFormGroup
+      <UFormField
         label="Ranking Name"
         required
       >
@@ -51,22 +51,22 @@ const handleClose = () => {
           placeholder="Enter a name for your ranking"
           @update:model-value="emit('update:saveChartName', $event)"
         />
-      </UFormGroup>
+      </UFormField>
 
       <!-- Description Input -->
-      <UFormGroup label="Description (optional)">
+      <UFormField label="Description (optional)">
         <UTextarea
           :model-value="saveChartDescription"
           placeholder="Add a description (optional)"
           :rows="3"
           @update:model-value="emit('update:saveChartDescription', $event)"
         />
-      </UFormGroup>
+      </UFormField>
 
       <!-- Public Toggle -->
-      <UFormGroup>
+      <UFormField>
         <div class="flex items-center gap-3">
-          <UToggle
+          <USwitch
             :model-value="saveChartPublic"
             @update:model-value="emit('update:saveChartPublic', $event)"
           />
@@ -79,7 +79,7 @@ const handleClose = () => {
             </div>
           </div>
         </div>
-      </UFormGroup>
+      </UFormField>
 
       <!-- Error Message -->
       <UAlert

@@ -80,7 +80,7 @@ const userMenuItems = computed(() => {
 
       <!-- Authentication buttons -->
       <template v-if="isAuthenticated">
-        <UDropdown
+        <UDropdownMenu
           :items="[userMenuItems]"
           :popper="{ placement: 'bottom-end' }"
         >
@@ -90,7 +90,7 @@ const userMenuItems = computed(() => {
             :label="user?.displayName || user?.firstName || 'Account'"
             trailing-icon="i-lucide-chevron-down"
           />
-        </UDropdown>
+        </UDropdownMenu>
       </template>
       <template v-else>
         <UButton
