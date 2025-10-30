@@ -1,6 +1,13 @@
 <script setup lang="ts">
+interface MenuItem {
+  label: string
+  icon: string
+  to?: string
+  click?: () => void
+}
+
 const { isIncognito } = useIncognitoMode()
-const { isAuthenticated, user } = useAuth()
+const { isAuthenticated, user, signOut } = useAuth()
 
 // Main navigation items
 const items = computed(() => [{
@@ -27,8 +34,8 @@ const items = computed(() => [{
 }])
 
 // User menu items (shown when authenticated)
-const userMenuItems = computed(() => {
-  const menu = [{
+const userMenuItems = computed<MenuItem[]>(() => {
+  const menu: MenuItem[] = [{
     label: 'My Charts',
     to: '/my-charts',
     icon: 'i-lucide-save'
@@ -49,8 +56,8 @@ const userMenuItems = computed(() => {
 
   menu.push({
     label: 'Sign Out',
-    to: '/logout',
-    icon: 'i-lucide-log-out'
+    icon: 'i-lucide-log-out',
+    click: () => signOut()
   })
 
   return menu
