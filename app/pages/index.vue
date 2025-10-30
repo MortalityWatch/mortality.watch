@@ -62,63 +62,12 @@
         v-else-if="featuredCharts.length > 0"
         class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
       >
-        <UCard
+        <ChartsChartCard
           v-for="chart of featuredCharts"
           :key="chart.id"
-          class="hover:shadow-lg transition-shadow"
-        >
-          <template #header>
-            <div class="flex items-start justify-between">
-              <h3 class="text-lg font-semibold flex-1">
-                {{ chart.name }}
-              </h3>
-              <UBadge
-                color="primary"
-                variant="subtle"
-                size="sm"
-              >
-                Featured
-              </UBadge>
-            </div>
-          </template>
-          <div class="space-y-3">
-            <p
-              v-if="chart.description"
-              class="text-gray-600 dark:text-gray-400 text-sm"
-            >
-              {{ chart.description }}
-            </p>
-            <div
-              class="overflow-hidden rounded-md bg-gray-100 dark:bg-gray-800"
-              style="aspect-ratio: 16/9"
-            >
-              <NuxtLink :to="getChartUrl(chart)">
-                <img
-                  :src="getChartImageUrl(chart)"
-                  :alt="chart.name"
-                  class="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
-                  loading="lazy"
-                >
-              </NuxtLink>
-            </div>
-            <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-              <span>
-                <Icon
-                  name="i-lucide-user"
-                  class="w-3 h-3 inline"
-                />
-                {{ chart.authorName }}
-              </span>
-              <span>
-                <Icon
-                  name="i-lucide-eye"
-                  class="w-3 h-3 inline"
-                />
-                {{ chart.viewCount }} views
-              </span>
-            </div>
-          </div>
-        </UCard>
+          :chart="chart"
+          variant="homepage"
+        />
       </div>
 
       <!-- View All Button -->
@@ -226,31 +175,6 @@ const { data, pending: isLoading } = await useFetch<{
 })
 
 const featuredCharts = computed(() => data.value?.charts || [])
-
-// Get chart URL for navigation
-function getChartUrl(chart: FeaturedChart) {
-  // Link directly to the chart detail page
-  return `/charts/${chart.slug}`
-}
-
-// Get chart image URL for rendering
-function getChartImageUrl(chart: FeaturedChart) {
-  try {
-    const state = JSON.parse(chart.chartState)
-    const params = new URLSearchParams()
-
-    Object.entries(state).forEach(([key, value]) => {
-      if (value !== null && value !== undefined) {
-        params.set(key, String(value))
-      }
-    })
-
-    return `/chart.png?${params.toString()}&width=800&height=450`
-  } catch (err) {
-    console.error('Failed to parse chart state:', err)
-    return chart.thumbnailUrl || '/placeholder-chart.png'
-  }
-}
 
 // Page metadata
 definePageMeta({
