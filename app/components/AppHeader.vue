@@ -48,7 +48,7 @@ const userMenuItems = computed<MenuItem[]>(() => {
   if (user.value?.role === 'admin') {
     menu.push({
       label: 'Admin Panel',
-      to: '/admin/featured-charts',
+      to: '/admin',
       icon: 'i-lucide-shield'
     })
   }
