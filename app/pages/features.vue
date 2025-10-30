@@ -16,7 +16,6 @@
       <UPricingPlan
         title="Public"
         description="Explore without registration"
-        :badge="tier === 0 ? 'Current Plan' : undefined"
         price="Free"
         :features="[
           'View mortality charts',
@@ -25,11 +24,9 @@
           'View ranking page',
           'Conservative baseline only'
         ]"
-        :button="{
-          label: 'Start Exploring',
-          to: '/explorer',
-          color: 'neutral'
-        }"
+        :button="tier === 0
+          ? { label: 'Current Plan', disabled: true, color: 'neutral' }
+          : { label: 'Start Exploring', to: '/explorer', color: 'neutral' }"
         class="border-2 border-gray-900 dark:border-gray-100"
       />
 
@@ -47,7 +44,7 @@
           { title: 'Full historical data access', icon: 'i-lucide-calendar' },
           { title: 'Publish and share charts', icon: 'i-lucide-share-2' }
         ]"
-        :button="tier >= 1
+        :button="tier === 1
           ? { label: 'Current Plan', disabled: true, color: 'neutral' }
           : { label: 'Sign Up Free', to: '/signup', color: 'primary' }"
         class="border-2 border-blue-500 dark:border-blue-400"
