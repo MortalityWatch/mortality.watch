@@ -44,14 +44,6 @@
             </h3>
             <div class="flex gap-1">
               <UBadge
-                v-if="chart.isFeatured"
-                color="primary"
-                variant="subtle"
-                size="sm"
-              >
-                Featured
-              </UBadge>
-              <UBadge
                 v-if="chart.isPublic"
                 color="success"
                 variant="subtle"
@@ -124,41 +116,58 @@
         </div>
 
         <template #footer>
-          <div class="flex gap-2">
-            <UButton
-              :to="getChartUrl(chart)"
-              color="primary"
-              variant="outline"
-              size="sm"
-              class="flex-1"
-            >
-              <Icon
-                name="i-lucide-eye"
-                class="w-4 h-4"
+          <div class="space-y-2">
+            <div class="flex gap-2">
+              <UButton
+                :to="getChartUrl(chart)"
+                color="primary"
+                variant="outline"
+                size="sm"
+                class="flex-1"
+              >
+                <Icon
+                  name="i-lucide-eye"
+                  class="w-4 h-4"
+                />
+                View
+              </UButton>
+              <UButton
+                v-if="chart.isPublic && chart.slug"
+                :to="`/charts/${chart.slug}`"
+                color="neutral"
+                variant="outline"
+                size="sm"
+                class="flex-1"
+              >
+                <Icon
+                  name="i-lucide-external-link"
+                  class="w-4 h-4"
+                />
+                Public Page
+              </UButton>
+              <UButton
+                color="error"
+                variant="ghost"
+                size="sm"
+                icon="i-lucide-trash-2"
+                @click="deleteChart(chart.id)"
               />
-              View
-            </UButton>
-            <UButton
-              v-if="chart.isPublic && chart.slug"
-              :to="`/charts/${chart.slug}`"
-              color="neutral"
-              variant="outline"
-              size="sm"
-              class="flex-1"
+            </div>
+
+            <!-- Admin: Feature Toggle -->
+            <div
+              v-if="isAdmin && chart.isPublic"
+              class="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700"
             >
-              <Icon
-                name="i-lucide-external-link"
-                class="w-4 h-4"
+              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ chart.isFeatured ? 'Featured' : 'Feature' }}
+              </span>
+              <USwitch
+                :model-value="chart.isFeatured"
+                :loading="togglingFeatured === chart.id"
+                @update:model-value="(value: boolean) => toggleFeatured(chart.id, value)"
               />
-              Public Page
-            </UButton>
-            <UButton
-              color="error"
-              variant="ghost"
-              size="sm"
-              icon="i-lucide-trash-2"
-              @click="deleteChart(chart.id)"
-            />
+            </div>
           </div>
         </template>
       </UCard>
@@ -198,6 +207,9 @@
 
 <script setup lang="ts">
 import { handleSilentError, handleApiError } from '@/lib/errors/errorHandler'
+
+const { user } = useAuth()
+const isAdmin = computed(() => user.value?.role === 'admin')
 
 interface Chart {
   id: number
@@ -300,5 +312,28 @@ function formatDate(timestamp: number) {
     month: 'short',
     day: 'numeric'
   })
+}
+
+// Admin: Toggle featured status
+const togglingFeatured = ref<number | null>(null)
+
+async function toggleFeatured(chartId: number, newValue: boolean) {
+  togglingFeatured.value = chartId
+  try {
+    await $fetch(`/api/admin/charts/${chartId}/featured`, {
+      method: 'PATCH',
+      body: { isFeatured: newValue }
+    })
+
+    // Update local state
+    const chart = charts.value.find(c => c.id === chartId)
+    if (chart) {
+      chart.isFeatured = newValue
+    }
+  } catch (err) {
+    handleApiError(err, 'update featured status', 'toggleFeatured')
+  } finally {
+    togglingFeatured.value = null
+  }
 }
 </script>
