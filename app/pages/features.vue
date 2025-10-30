@@ -68,9 +68,9 @@
           { title: 'All Registered features, plus:' },
           { title: 'Remove watermarks', icon: 'i-lucide-image-off' },
           { title: 'Remove QR codes', icon: 'i-lucide-scan-line' },
-          { title: 'Single age group LE', icon: 'i-lucide-activity' },
-          { title: 'Age standardized deaths', icon: 'i-lucide-trending-up' },
-          { title: 'Z-score calculations', icon: 'i-lucide-calculator' },
+          { title: 'Single age group LE (Coming Soon)', icon: 'i-lucide-activity' },
+          { title: 'Age standardized deaths (Coming Soon)', icon: 'i-lucide-trending-up' },
+          { title: 'Z-score calculations (Coming Soon)', icon: 'i-lucide-calculator' },
           { title: 'Priority email support', icon: 'i-lucide-headphones' }
         ]"
         :button="{
