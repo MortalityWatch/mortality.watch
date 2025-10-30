@@ -90,6 +90,10 @@ export const makeBarLineChartConfig = (
 
   const showDecimals = !isDeathsType && !isPopulationType
 
+  // Dynamic padding based on logo/QR code visibility
+  const topPadding = showLogo ? 70 : 10 // 60px logo + 10px margin, or just 10px
+  const rightPadding = showQrCode ? 70 : 10 // 60px QR code + 10px margin, or just 10px
+
   return {
     plugins: [createBackgroundPlugin(isDark)],
     options: {
@@ -98,8 +102,8 @@ export const makeBarLineChartConfig = (
       maintainAspectRatio: false,
       layout: {
         padding: {
-          top: 70, // Space for logo (60px + 10px margin)
-          right: 70, // Space for QR code (60px + 10px margin)
+          top: topPadding,
+          right: rightPadding,
           bottom: 10,
           left: 10
         }
