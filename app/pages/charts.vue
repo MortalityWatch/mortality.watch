@@ -60,19 +60,9 @@
         class="hover:shadow-lg transition-shadow"
       >
         <template #header>
-          <div class="flex items-start justify-between">
-            <h3 class="text-lg font-semibold flex-1">
-              {{ chart.name }}
-            </h3>
-            <UBadge
-              v-if="chart.isFeatured"
-              color="primary"
-              variant="subtle"
-              size="sm"
-            >
-              Featured
-            </UBadge>
-          </div>
+          <h3 class="text-lg font-semibold">
+            {{ chart.name }}
+          </h3>
         </template>
 
         <div class="space-y-3">
