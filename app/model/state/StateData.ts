@@ -18,27 +18,57 @@ import type { MortalityChartData } from '@/lib/chart/chartTypes'
 export class StateData {
   // ============================================================================
   // CONFIGURATION PROPERTIES
+  // Configuration properties define the current chart view and filtering state.
+  // These are persisted to the URL and restored on page load.
   // ============================================================================
 
-  // Core Settings
+  /**
+   * Core chart settings:
+   * - countries: Selected countries for display
+   * - chartType: Time period granularity (weekly, monthly, yearly)
+   * - type: Mortality measure (deaths, cmr, asmr, etc.)
+   * - chartStyle: Visual representation (line, bar, matrix)
+   * - isExcess: Whether to show excess mortality calculations
+   */
   private _countries: string[] = []
   private _chartType: string = 'weekly'
   private _type: string = 'deaths'
   private _chartStyle: string = 'line'
   private _isExcess: boolean = false
 
-  // Date Range
+  /**
+   * Date range configuration:
+   * - dateFrom: Start date for main chart display
+   * - dateTo: End date for main chart display
+   * - sliderStart: Alternative slider starting point
+   */
   private _dateFrom: string | undefined
   private _dateTo: string | undefined
   private _sliderStart: string | undefined
 
-  // Baseline
+  /**
+   * Baseline comparison configuration:
+   * - showBaseline: Whether to display baseline reference period
+   * - baselineMethod: Calculation method (auto, manual, etc.)
+   * - baselineDateFrom/To: Date range for baseline period
+   */
   private _showBaseline: boolean = false
   private _baselineMethod: string = 'auto'
   private _baselineDateFrom: string | undefined
   private _baselineDateTo: string | undefined
 
-  // Display Options
+  /**
+   * Display and analysis options:
+   * - ageGroups: Age groups to display
+   * - standardPopulation: Population standard for age adjustment
+   * - cumulative: Show cumulative values
+   * - showTotal: Show total aggregates
+   * - maximize: Expand chart to full size
+   * - showPredictionInterval: Display confidence intervals
+   * - showLabels: Display data point labels
+   * - showPercentage: Display percentage values
+   * - isLogarithmic: Use logarithmic scale
+   */
   private _ageGroups: string[] = ['all']
   private _standardPopulation: string = 'esp2013'
   private _cumulative: boolean = false
@@ -49,14 +79,23 @@ export class StateData {
   private _showPercentage: boolean = false
   private _isLogarithmic: boolean = false
 
-  // Colors
+  /**
+   * User customization:
+   * - userColors: Custom colors for country series (optional)
+   */
   private _userColors: string[] | undefined
 
   // ============================================================================
   // DATA PROPERTIES
+  // Runtime data that supports the chart visualization and interaction.
+  // These are computed based on configuration properties and external data.
   // ============================================================================
 
-  // Chart Options (reactive for UI updates)
+  /**
+   * Chart options configuration:
+   * Controls which UI options are available and enabled based on current state.
+   * Updated by StateEffects.configureChartOptions() when configuration changes.
+   */
   chartOptions = reactive({
     showMaximizeOption: true,
     showMaximizeOptionDisabled: false,
@@ -70,20 +109,36 @@ export class StateData {
     showLogarithmicOption: true
   })
 
-  // Country and Dataset Data
+  /**
+   * Metadata references:
+   * - allCountries: Country definitions with available data sources
+   * - dataset: Raw mortality data from database
+   */
   allCountries!: Record<string, Country>
   dataset!: DatasetRaw
 
-  // Chart Labels (refs for reactivity)
+  /**
+   * Chart labels (reactive refs for auto-updating UI):
+   * - allChartLabels: All available time period labels
+   * - allYearlyChartLabels: All yearly labels (with possible duplicates)
+   * - allYearlyChartLabelsUnique: Unique yearly labels
+   */
   allChartLabels = ref<string[]>()
   allYearlyChartLabels = ref<string[]>()
   allYearlyChartLabelsUnique = ref<string[]>()
 
-  // Chart Data
+  /**
+   * Processed chart data:
+   * - allChartData: Complete dataset for all countries/filters
+   * - chartData: Filtered dataset ready for chart.js rendering
+   */
   allChartData!: AllChartData
   chartData!: MortalityChartData
 
-  // Status
+  /**
+   * Async operation status:
+   * - isUpdating: Whether data is currently being fetched/processed
+   */
   isUpdating = ref(false)
 
   // ============================================================================

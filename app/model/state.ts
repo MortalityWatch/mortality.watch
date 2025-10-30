@@ -23,28 +23,44 @@ import { StateEffects } from './state/StateEffects'
 import { DataService } from '@/services/dataService'
 
 /**
- * State class - Manages chart/explorer state
+ * State class - Central state management for chart/explorer
  *
- * Phase 4b: Removed Proxy pattern, integrated Phase 4a classes
- * - StateData: Direct property access via getters/setters
- * - StateComputed: All computed property logic
- * - StateValidation: Validation and data integrity
- * - StateEffects: Explicit side effect handling
- * - 100% backward compatible API
+ * Architecture (Composition Pattern):
+ * - StateData: Core data properties and storage
+ * - StateComputed: Derived/computed properties
+ * - StateValidation: State validation and integrity
+ * - StateEffects: Side effect coordination
+ * - StateHelpers: Type checking and utility methods
+ * - StateSerialization: URL state persistence
+ * - DataService: External data loading and processing
  *
- * Previous phases:
- * - Phase 4a: Created StateData, StateComputed, StateValidation, StateEffects
- * - Phase 10.2: Proxy pattern (now removed)
+ * Design Principles:
+ * - Single Responsibility: Each class handles specific concerns
+ * - Explicit Side Effects: All changes trigger documented effects
+ * - Reactive Properties: Vue reactivity integrated at source
+ * - 100% Backward Compatible: Maintains existing API surface
+ *
+ * History:
+ * - Phase 4b: Removed Proxy pattern, integrated Phase 4a classes
+ * - Phase 4a: Initial class extraction from monolithic State
+ * - Phase 10.2: Proxy pattern (now removed for clarity)
  * - Phase 9.3: Composition over inheritance
  */
 export class State implements Serializable {
-  // Composition: Phase 4a state management classes
+  /**
+   * Core state composition classes
+   * Each handles a specific aspect of state management
+   */
   private _data: StateData
   private _computed: StateComputed
   private _validation: StateValidation
   private _effects: StateEffects
 
-  // Composition: helpers and services
+  /**
+   * Supporting classes
+   * Helpers provide utilities, serializer handles persistence,
+   * dataService handles external data operations
+   */
   private _helpers: StateHelpers
   private _serializer: StateSerialization
   private _dataService: DataService
@@ -74,10 +90,14 @@ export class State implements Serializable {
   }
 
   // ============================================================================
-  // SIMPLE PROPERTY DELEGATION - Delegate to StateData
+  // CONFIGURATION PROPERTIES
+  // Direct delegation to StateData with effect coordination
   // ============================================================================
 
-  // Core Settings
+  /**
+   * Core chart settings
+   * Changes to these properties trigger appropriate side effects
+   */
   get countries(): string[] {
     return this._data.countries
   }
@@ -131,7 +151,9 @@ export class State implements Serializable {
   }
 
   // ============================================================================
-  // COMPUTED PROPERTIES - Delegate to StateComputed
+  // COMPUTED PROPERTIES
+  // Derived properties calculated from configuration state
+  // Changes may trigger data updates via StateEffects
   // ============================================================================
 
   get chartStyle(): string {
@@ -303,7 +325,8 @@ export class State implements Serializable {
     baselineMethods.filter(v => v.value === this.baselineMethod)[0] ?? { name: '', value: '' }
 
   // ============================================================================
-  // DATA PROPERTIES - Delegate to StateData
+  // RUNTIME DATA PROPERTIES
+  // Processed data and metadata for chart rendering
   // ============================================================================
 
   get chartOptions() {
@@ -376,7 +399,8 @@ export class State implements Serializable {
   sliderStartPeriod = () => this._computed.sliderStartPeriod()
 
   // ============================================================================
-  // HELPER METHODS - Delegate to StateHelpers
+  // HELPER METHODS & TYPE CHECKS
+  // Utilities for type checking and categorical queries
   // ============================================================================
 
   isAsmrType = () => this._helpers.isAsmrType()
@@ -404,7 +428,8 @@ export class State implements Serializable {
   isYearlyChartType = () => this._helpers.isYearlyChartType()
 
   // ============================================================================
-  // INDEX CALCULATIONS - Delegate to StateComputed
+  // INDEX CALCULATIONS & HELPERS
+  // Date indexing, label retrieval, and type-specific utilities
   // ============================================================================
 
   dateFromIndex = () => this._computed.dateFromIndex()
@@ -435,7 +460,8 @@ export class State implements Serializable {
   showSliderStartSelect = () => this._computed.showSliderStartSelect()
 
   // ============================================================================
-  // VALIDATION METHODS - Delegate to StateValidation
+  // VALIDATION & DATE RESET
+  // State validation and date range normalization
   // ============================================================================
 
   resetBaselineDates = () => {
@@ -447,7 +473,8 @@ export class State implements Serializable {
   }
 
   // ============================================================================
-  // DATA UPDATE METHODS
+  // DATA OPERATIONS
+  // Async data fetching and processing
   // ============================================================================
 
   updateData = async (
