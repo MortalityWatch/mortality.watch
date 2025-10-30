@@ -55,59 +55,90 @@ const localPublic = computed({
   <UModal
     v-model="localShow"
     title="Save Chart"
+    :close="{
+      color: 'neutral',
+      variant: 'ghost'
+    }"
   >
-    <div class="p-4 space-y-4">
-      <!-- Name Input -->
-      <UFormField
-        label="Chart Name"
-        required
-      >
-        <UInput
-          v-model="localName"
-          placeholder="Enter a name for your chart"
-        />
-      </UFormField>
+    <button class="chart-option-button">
+      <UIcon
+        name="i-lucide-save"
+        class="w-4 h-4 flex-shrink-0"
+      />
+      <div class="flex-1 text-left">
+        <div class="text-sm font-medium">
+          Save Chart
+        </div>
+        <div class="text-xs text-gray-500 dark:text-gray-400">
+          Bookmark for later access
+        </div>
+      </div>
+      <UIcon
+        name="i-lucide-chevron-right"
+        class="w-3 h-3 text-gray-400"
+      />
+    </button>
 
-      <!-- Description Input -->
-      <UFormField label="Description (optional)">
-        <UTextarea
-          v-model="localDescription"
-          placeholder="Add a description (optional)"
-          :rows="3"
-        />
-      </UFormField>
+    <template #body>
+      <div class="space-y-4 w-full">
+        <!-- Name Input -->
+        <UFormField
+          label="Chart Name"
+          required
+          class="w-full"
+        >
+          <UInput
+            v-model="localName"
+            placeholder="Enter a name for your chart"
+            class="w-full"
+          />
+        </UFormField>
 
-      <!-- Public Toggle -->
-      <UFormField>
-        <div class="flex items-center gap-3">
-          <USwitch v-model="localPublic" />
-          <div>
-            <div class="font-medium text-sm">
-              Make this chart public
-            </div>
-            <div class="text-xs text-gray-500 dark:text-gray-400">
-              Public charts appear in the chart gallery
+        <!-- Description Input -->
+        <UFormField
+          label="Description (optional)"
+          class="w-full"
+        >
+          <UTextarea
+            v-model="localDescription"
+            placeholder="Add a description (optional)"
+            :rows="3"
+            class="w-full"
+          />
+        </UFormField>
+
+        <!-- Public Toggle -->
+        <UFormField>
+          <div class="flex items-center gap-3">
+            <USwitch v-model="localPublic" />
+            <div>
+              <div class="font-medium text-sm">
+                Make this chart public
+              </div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">
+                Public charts appear in the chart gallery
+              </div>
             </div>
           </div>
-        </div>
-      </UFormField>
+        </UFormField>
 
-      <!-- Error Message -->
-      <UAlert
-        v-if="saveError"
-        color="error"
-        variant="subtle"
-        :title="saveError"
-      />
+        <!-- Error Message -->
+        <UAlert
+          v-if="saveError"
+          color="error"
+          variant="subtle"
+          :title="saveError"
+        />
 
-      <!-- Success Message -->
-      <UAlert
-        v-if="saveSuccess"
-        color="success"
-        variant="subtle"
-        title="Chart saved successfully!"
-      />
-    </div>
+        <!-- Success Message -->
+        <UAlert
+          v-if="saveSuccess"
+          color="success"
+          variant="subtle"
+          title="Chart saved successfully!"
+        />
+      </div>
+    </template>
 
     <template #footer>
       <div class="flex justify-end gap-2">
@@ -115,7 +146,7 @@ const localPublic = computed({
           color="neutral"
           variant="ghost"
           label="Cancel"
-          @click="emit('cancel')"
+          @click="localShow = false"
         />
         <UButton
           color="primary"
@@ -128,3 +159,35 @@ const localPublic = computed({
     </template>
   </UModal>
 </template>
+
+<style scoped>
+.chart-option-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  color: inherit;
+}
+
+.chart-option-button:hover {
+  background-color: rgb(243 244 246);
+}
+
+.dark .chart-option-button:hover {
+  background-color: rgb(31 41 55);
+}
+
+.chart-option-button:active {
+  background-color: rgb(229 231 235);
+}
+
+.dark .chart-option-button:active {
+  background-color: rgb(17 24 39);
+}
+</style>

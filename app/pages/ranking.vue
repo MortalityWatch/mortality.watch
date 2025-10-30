@@ -35,12 +35,15 @@ import { useCountryFilter } from '@/composables/useCountryFilter'
 import { useSaveChart } from '@/composables/useSaveChart'
 import RankingHeader from '@/components/ranking/RankingHeader.vue'
 import RankingDataSelection from '@/components/ranking/RankingDataSelection.vue'
-import RankingActions from '@/components/ranking/RankingActions.vue'
 import RankingSaveModal from '@/components/ranking/RankingSaveModal.vue'
+import ExplorerChartActions from '@/components/explorer/ExplorerChartActions.vue'
 
 definePageMeta({
   ssr: false
 })
+
+// Auth state for conditional features
+const { isAuthenticated } = useAuth()
 
 // Set page title
 useSeoMeta({
@@ -291,7 +294,6 @@ const {
   saveChartPublic: saveRankingPublic,
   saveError,
   saveSuccess,
-  openSaveModal: saveRanking,
   saveToDB: saveToDBComposable
 } = useSaveChart({ chartType: 'ranking' })
 
@@ -331,6 +333,21 @@ const saveToDB = async () => {
   }
 
   await saveToDBComposable(rankingStateData)
+}
+
+// Chart actions for ranking
+const copyRankingLink = () => {
+  if (typeof navigator !== 'undefined' && navigator.clipboard) {
+    navigator.clipboard.writeText(window.location.href)
+      .then(() => {
+        const toast = useToast()
+        toast.add({
+          title: 'Link copied to clipboard',
+          color: 'success'
+        })
+      })
+      .catch(err => console.error('Failed to copy:', err))
+  }
 }
 </script>
 
@@ -397,10 +414,6 @@ const saveToDB = async () => {
               @update:current-page="(val) => currentPage = val"
               @update:items-per-page="(val) => itemsPerPage = val"
             />
-            <RankingActions
-              :explorer-link="explorerLink()"
-              @save="saveRanking"
-            />
           </UCard>
         </div>
 
@@ -441,6 +454,36 @@ const saveToDB = async () => {
             :chart-type="(selectedPeriodOfTime?.value || 'yearly') as ChartType"
             @baseline-slider-changed="baselineSliderChanged"
           />
+
+          <!-- Ranking Actions Card -->
+          <ExplorerChartActions
+            class="mt-4"
+            :show-save-button="!isAuthenticated"
+            :show-download-chart="false"
+            :show-screenshot="false"
+            :explorer-link="explorerLink()"
+            @copy-link="copyRankingLink"
+            @save-chart="navigateTo('/signup')"
+          >
+            <template #title>
+              Ranking Actions
+            </template>
+            <template
+              v-if="isAuthenticated"
+              #save-button
+            >
+              <RankingSaveModal
+                v-model="showSaveModal"
+                v-model:save-chart-name="saveRankingName"
+                v-model:save-chart-description="saveRankingDescription"
+                v-model:save-chart-public="saveRankingPublic"
+                :saving-chart="savingRanking"
+                :save-error="saveError"
+                :save-success="saveSuccess"
+                @save="saveToDB"
+              />
+            </template>
+          </ExplorerChartActions>
         </div>
 
         <!-- Settings - Third on mobile only -->
@@ -464,20 +507,38 @@ const saveToDB = async () => {
             :chart-type="(selectedPeriodOfTime?.value || 'yearly') as ChartType"
             @baseline-slider-changed="baselineSliderChanged"
           />
+
+          <!-- Ranking Actions Card - Mobile -->
+          <ExplorerChartActions
+            class="mt-4"
+            :show-save-button="!isAuthenticated"
+            :show-download-chart="false"
+            :show-screenshot="false"
+            :explorer-link="explorerLink()"
+            @copy-link="copyRankingLink"
+            @save-chart="navigateTo('/signup')"
+          >
+            <template #title>
+              Ranking Actions
+            </template>
+            <template
+              v-if="isAuthenticated"
+              #save-button
+            >
+              <RankingSaveModal
+                v-model="showSaveModal"
+                v-model:save-chart-name="saveRankingName"
+                v-model:save-chart-description="saveRankingDescription"
+                v-model:save-chart-public="saveRankingPublic"
+                :saving-chart="savingRanking"
+                :save-error="saveError"
+                :save-success="saveSuccess"
+                @save="saveToDB"
+              />
+            </template>
+          </ExplorerChartActions>
         </div>
       </div>
     </div>
-
-    <!-- Save Ranking Modal -->
-    <RankingSaveModal
-      v-model="showSaveModal"
-      v-model:save-chart-name="saveRankingName"
-      v-model:save-chart-description="saveRankingDescription"
-      v-model:save-chart-public="saveRankingPublic"
-      :saving-chart="savingRanking"
-      :save-error="saveError"
-      :save-success="saveSuccess"
-      @save="saveToDB"
-    />
   </div>
 </template>
