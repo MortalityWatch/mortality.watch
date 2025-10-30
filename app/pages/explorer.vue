@@ -10,6 +10,8 @@ import { useExplorerHelpers } from '@/composables/useExplorerHelpers'
 import { useExplorerState } from '@/composables/useExplorerState'
 import { useDataAvailability } from '@/composables/useDataAvailability'
 import { useExplorerDataOrchestration } from '@/composables/useExplorerDataOrchestration'
+import { useExplorerColors } from '@/composables/useExplorerColors'
+import { useExplorerChartActions } from '@/composables/useExplorerChartActions'
 import type {
   Country
 } from '@/model'
@@ -21,12 +23,7 @@ import ExplorerDataSelection from '@/components/explorer/ExplorerDataSelection.v
 import ExplorerChartContainer from '@/components/explorer/ExplorerChartContainer.vue'
 import ExplorerSettings from '@/components/explorer/ExplorerSettings.vue'
 import ExplorerChartActions from '@/components/explorer/ExplorerChartActions.vue'
-import { getChartColors } from '@/colors'
-import { getColorScale } from '@/lib/chart/chartColors'
-import { useRoute, useRouter } from 'vue-router'
-import { showToast } from '@/toast'
-import { handleError } from '@/lib/errors/errorHandler'
-import { useSaveChart } from '@/composables/useSaveChart'
+import ExplorerSaveChartModal from '@/components/explorer/ExplorerSaveChartModal.vue'
 
 // Feature access for tier-based features (currently unused but may be needed in the future)
 // const { can, getFeatureUpgradeUrl } = useFeatureAccess()
@@ -36,10 +33,6 @@ const state = useExplorerState()
 
 // Phase 9.4: Data availability checks with auto-correction
 const _availability = useDataAvailability(state)
-
-// Router
-const _router = useRouter()
-const _route = useRoute()
 
 // Dynamic OG images based on current chart state
 const chartState = computed(() => ({
@@ -94,33 +87,12 @@ const sliderValue = computed(() => [state.dateFrom.value, state.dateTo.value])
 // Get color mode for theme reactivity
 const colorMode = useColorMode()
 
-// Color picker should only show colors for selected jurisdictions
-const displayColors = computed(() => {
-  // Add colorMode.value as dependency to make this reactive to theme changes
-  const _theme = colorMode.value
-
-  const numCountries = state.countries.value.length
-  if (numCountries === 0) return []
-
-  // If user has custom colors, use them (extending if needed)
-  if (state.userColors.value) {
-    if (state.userColors.value.length >= numCountries) {
-      return state.userColors.value.slice(0, numCountries)
-    }
-    // If user colors are fewer than countries, extend using color scale
-    return getColorScale(state.userColors.value, numCountries)
-  }
-
-  // Use default colors (theme-aware)
-  const themeColors = getChartColors()
-  if (themeColors.length >= numCountries) {
-    // We have enough colors, just slice
-    return themeColors.slice(0, numCountries)
-  }
-
-  // Need more colors than we have, use chroma to generate
-  return getColorScale(themeColors, numCountries)
-})
+// Phase 5a: Colors management extracted to composable
+const { displayColors } = useExplorerColors(
+  state.countries,
+  state.userColors,
+  colorMode
+)
 
 // Load Data - must be declared before data orchestration composable
 const allCountries = ref<Record<string, Country>>({})
@@ -310,75 +282,20 @@ onMounted(async () => {
   setupResizeObserver()
 })
 
-// Chart action functions
-const copyChartLink = async () => {
-  try {
-    await navigator.clipboard.writeText(window.location.href)
-    showToast('Link copied to clipboard!', 'success')
-  } catch (error) {
-    handleError(error, 'Failed to copy link', 'copyChartLink')
-  }
-}
-
-const screenshotChart = () => {
-  const canvas = document.querySelector('#chart') as HTMLCanvasElement
-  if (!canvas) {
-    showToast('Chart not found', 'error')
-    return
-  }
-  try {
-    const dataURL = canvas.toDataURL('image/png')
-    const link = document.createElement('a')
-    link.download = 'mortality-chart.png'
-    link.href = dataURL
-    link.click()
-    showToast('Chart downloaded!', 'success')
-  } catch (error) {
-    handleError(error, 'Failed to download chart', 'screenshotChart')
-  }
-}
-
-// Phase 0: Save Chart functionality using composable
+// Phase 5a: Chart actions extracted to composable
 const {
+  copyChartLink,
+  screenshotChart,
+  saveChart,
+  saveToDB,
   showSaveModal,
   savingChart,
   saveChartName,
   saveChartDescription,
   saveChartPublic,
   saveError,
-  saveSuccess,
-  openSaveModal: saveChart,
-  saveToDB: saveToDBComposable
-} = useSaveChart({ chartType: 'explorer' })
-
-// Wrapper function to serialize state and call composable
-const saveToDB = async () => {
-  // Serialize current explorer state
-  const chartStateData = {
-    countries: state.countries.value,
-    type: state.type.value,
-    chartType: state.chartType.value,
-    ageGroups: state.ageGroups.value,
-    chartStyle: state.chartStyle.value,
-    isExcess: state.isExcess.value,
-    showBaseline: state.showBaseline.value,
-    baselineMethod: state.baselineMethod.value,
-    baselineDateFrom: state.baselineDateFrom.value,
-    baselineDateTo: state.baselineDateTo.value,
-    cumulative: state.cumulative.value,
-    showPercentage: state.showPercentage.value,
-    showPredictionInterval: state.showPredictionInterval.value,
-    showTotal: state.showTotal.value,
-    dateFrom: state.dateFrom.value,
-    dateTo: state.dateTo.value,
-    standardPopulation: state.standardPopulation.value,
-    isLogarithmic: state.isLogarithmic.value,
-    maximize: state.maximize.value,
-    showLabels: state.showLabels.value
-  }
-
-  await saveToDBComposable(chartStateData)
-}
+  saveSuccess
+} = useExplorerChartActions(state)
 </script>
 
 <template>
@@ -485,81 +402,17 @@ const saveToDB = async () => {
     </div>
 
     <!-- Save Chart Modal -->
-    <UModal
+    <ExplorerSaveChartModal
       v-model="showSaveModal"
-      title="Save Chart"
-    >
-      <div class="p-4 space-y-4">
-        <!-- Name Input -->
-        <UFormGroup
-          label="Chart Name"
-          required
-        >
-          <UInput
-            v-model="saveChartName"
-            placeholder="Enter a name for your chart"
-          />
-        </UFormGroup>
-
-        <!-- Description Input -->
-        <UFormGroup label="Description (optional)">
-          <UTextarea
-            v-model="saveChartDescription"
-            placeholder="Add a description (optional)"
-            :rows="3"
-          />
-        </UFormGroup>
-
-        <!-- Public Toggle -->
-        <UFormGroup>
-          <div class="flex items-center gap-3">
-            <UToggle v-model="saveChartPublic" />
-            <div>
-              <div class="font-medium text-sm">
-                Make this chart public
-              </div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">
-                Public charts appear in the chart gallery
-              </div>
-            </div>
-          </div>
-        </UFormGroup>
-
-        <!-- Error Message -->
-        <UAlert
-          v-if="saveError"
-          color="error"
-          variant="subtle"
-          :title="saveError"
-        />
-
-        <!-- Success Message -->
-        <UAlert
-          v-if="saveSuccess"
-          color="success"
-          variant="subtle"
-          title="Chart saved successfully!"
-        />
-      </div>
-
-      <template #footer>
-        <div class="flex justify-end gap-2">
-          <UButton
-            color="neutral"
-            variant="ghost"
-            label="Cancel"
-            @click="showSaveModal = false"
-          />
-          <UButton
-            color="primary"
-            label="Save Chart"
-            :loading="savingChart"
-            :disabled="!saveChartName.trim()"
-            @click="saveToDB"
-          />
-        </div>
-      </template>
-    </UModal>
+      v-model:chart-name="saveChartName"
+      v-model:chart-description="saveChartDescription"
+      v-model:chart-public="saveChartPublic"
+      :saving-chart="savingChart"
+      :save-error="saveError"
+      :save-success="saveSuccess"
+      @save="saveToDB"
+      @cancel="showSaveModal = false"
+    />
   </div>
 </template>
 
