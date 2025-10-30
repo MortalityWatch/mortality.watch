@@ -11,9 +11,9 @@
     </div>
 
     <!-- Pricing Plans -->
-    <UPricingGrid class="mb-12">
+    <UPricingPlans class="mb-12">
       <!-- Public Tier -->
-      <UPricingCard
+      <UPricingPlan
         title="Public"
         description="Explore without registration"
         price="Free"
@@ -34,18 +34,17 @@
       />
 
       <!-- Registered Tier -->
-      <UPricingCard
+      <UPricingPlan
         title="Registered"
         description="Full-featured, forever free"
         price="Free"
         :features="[
-          { label: 'All Public features, plus:', class: 'font-semibold' },
-          { label: 'Save charts to My Charts', icon: 'i-lucide-save' },
-          { label: 'Custom color schemes', icon: 'i-lucide-palette' },
-          { label: 'All baseline methods', icon: 'i-lucide-chart-line' },
-          { label: 'Export data (CSV/JSON)', icon: 'i-lucide-download' },
-          { label: 'Full date range access', icon: 'i-lucide-calendar' },
-          { label: 'Publish and share charts', icon: 'i-lucide-share-2' }
+          { title: 'Save charts to My Charts', icon: 'i-lucide-save' },
+          { title: 'Custom color schemes', icon: 'i-lucide-palette' },
+          { title: 'All baseline methods', icon: 'i-lucide-chart-line' },
+          { title: 'Export data (CSV/JSON)', icon: 'i-lucide-download' },
+          { title: 'Full date range access', icon: 'i-lucide-calendar' },
+          { title: 'Publish and share charts', icon: 'i-lucide-share-2' }
         ]"
         :button="{
           label: 'Sign Up Free',
@@ -57,20 +56,19 @@
       />
 
       <!-- Pro Tier -->
-      <UPricingCard
+      <UPricingPlan
         title="Pro"
         description="Professional features"
         price="$9.99"
         billing-cycle="/month"
-        cycle="or $99/year"
+        tagline="or $99/year"
         :features="[
-          { label: 'All Registered features, plus:', class: 'font-semibold' },
-          { label: 'Remove watermarks', icon: 'i-lucide-image-off' },
-          { label: 'Remove QR codes', icon: 'i-lucide-scan-line' },
-          { label: 'Single age group LE', icon: 'i-lucide-activity' },
-          { label: 'Age standardized deaths', icon: 'i-lucide-trending-up' },
-          { label: 'Z-score calculations', icon: 'i-lucide-calculator' },
-          { label: 'Priority email support', icon: 'i-lucide-headphones' }
+          { title: 'Remove watermarks', icon: 'i-lucide-image-off' },
+          { title: 'Remove QR codes', icon: 'i-lucide-scan-line' },
+          { title: 'Single age group LE', icon: 'i-lucide-activity' },
+          { title: 'Age standardized deaths', icon: 'i-lucide-trending-up' },
+          { title: 'Z-score calculations', icon: 'i-lucide-calculator' },
+          { title: 'Priority email support', icon: 'i-lucide-headphones' }
         ]"
         :button="{
           label: 'Upgrade to Pro',
@@ -79,7 +77,7 @@
         }"
         :class="tier === 2 ? 'ring-2 ring-primary' : ''"
       />
-    </UPricingGrid>
+    </UPricingPlans>
 
     <!-- FAQ Section -->
     <div class="max-w-3xl mx-auto mb-12">
