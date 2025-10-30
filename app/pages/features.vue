@@ -16,6 +16,7 @@
       <UPricingPlan
         title="Public"
         description="Explore without registration"
+        :badge="tier === 0 ? 'Current Plan' : undefined"
         price="Free"
         :features="[
           'View mortality charts',
@@ -27,23 +28,24 @@
         :button="{
           label: 'Start Exploring',
           to: '/explorer',
-          color: 'neutral',
-          variant: 'outline'
+          color: 'neutral'
         }"
-        :class="tier === 0 ? 'ring-2 ring-primary' : ''"
+        class="border-2 border-gray-900 dark:border-gray-100"
       />
 
       <!-- Registered Tier -->
       <UPricingPlan
         title="Registered"
         description="Full-featured, forever free"
+        :badge="tier === 1 ? { label: 'Current Plan', color: 'primary' } : undefined"
         price="Free"
         :features="[
+          { title: 'All Public features, plus:' },
           { title: 'Save charts to My Charts', icon: 'i-lucide-save' },
           { title: 'Custom color schemes', icon: 'i-lucide-palette' },
           { title: 'All baseline methods', icon: 'i-lucide-chart-line' },
           { title: 'Export data (CSV/JSON)', icon: 'i-lucide-download' },
-          { title: 'Full date range access', icon: 'i-lucide-calendar' },
+          { title: 'Full historical data access', icon: 'i-lucide-calendar' },
           { title: 'Publish and share charts', icon: 'i-lucide-share-2' }
         ]"
         :button="{
@@ -51,18 +53,19 @@
           to: '/signup',
           color: 'primary'
         }"
-        :class="tier === 1 ? 'ring-2 ring-primary' : ''"
-        highlight
+        class="border-2 border-blue-500 dark:border-blue-400"
       />
 
       <!-- Pro Tier -->
       <UPricingPlan
         title="Pro"
         description="Professional features"
+        :badge="tier === 2 ? { label: 'Current Plan', class: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' } : undefined"
         price="$9.99"
         billing-cycle="/month"
         tagline="or $99/year"
         :features="[
+          { title: 'All Registered features, plus:' },
           { title: 'Remove watermarks', icon: 'i-lucide-image-off' },
           { title: 'Remove QR codes', icon: 'i-lucide-scan-line' },
           { title: 'Single age group LE', icon: 'i-lucide-activity' },
@@ -73,9 +76,10 @@
         :button="{
           label: 'Upgrade to Pro',
           to: '/subscribe',
-          color: 'primary'
+          color: 'primary',
+          class: 'bg-purple-600 hover:bg-purple-700 text-white dark:bg-purple-500 dark:hover:bg-purple-600'
         }"
-        :class="tier === 2 ? 'ring-2 ring-primary' : ''"
+        class="border-2 border-purple-500 dark:border-purple-400"
       />
     </UPricingPlans>
 
