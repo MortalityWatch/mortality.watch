@@ -27,7 +27,7 @@ import { useRankingState } from '@/composables/useRankingState'
 import { useRankingData } from '@/composables/useRankingData'
 import { useRankingTableSort } from '@/composables/useRankingTableSort'
 import { useCountryFilter } from '@/composables/useCountryFilter'
-import { showToast } from '@/toast'
+import { useSaveChart } from '@/composables/useSaveChart'
 import RankingDataSelection from '../components/ranking/RankingDataSelection.vue'
 
 definePageMeta({
@@ -274,98 +274,55 @@ watch(
   { flush: 'post' } // Run after component updates
 )
 
-// Save Ranking Modal State
-const showSaveModal = ref(false)
-const savingRanking = ref(false)
-const saveRankingName = ref('')
-const saveRankingDescription = ref('')
-const saveRankingPublic = ref(false)
-const saveError = ref('')
-const saveSuccess = ref(false)
+// Phase 0: Save Ranking functionality using composable
+const {
+  showSaveModal,
+  savingChart: savingRanking,
+  saveChartName: saveRankingName,
+  saveChartDescription: saveRankingDescription,
+  saveChartPublic: saveRankingPublic,
+  saveError,
+  saveSuccess,
+  openSaveModal: saveRanking,
+  saveToDB: saveToDBComposable
+} = useSaveChart({ chartType: 'ranking' })
 
-const saveRanking = () => {
-  showSaveModal.value = true
-  saveRankingName.value = ''
-  saveRankingDescription.value = ''
-  saveRankingPublic.value = false
-  saveError.value = ''
-  saveSuccess.value = false
-}
-
+// Wrapper function to serialize state and call composable
 const saveToDB = async () => {
-  if (!saveRankingName.value.trim()) {
-    saveError.value = 'Ranking name is required'
-    return
+  // Serialize current ranking state
+  const rankingStateData = {
+    // Main type selection
+    a: showASMR.value,
+    p: selectedPeriodOfTime.value.value,
+    j: selectedJurisdictionType.value.value,
+
+    // Date range
+    df: sliderValue.value[0],
+    dt: sliderValue.value[1],
+
+    // Baseline settings
+    bm: selectedBaselineMethod.value.value,
+    bf: baselineSliderValue.value[0],
+    bt: baselineSliderValue.value[1],
+
+    // Display options
+    sp: selectedStandardPopulation.value.value,
+    dp: selectedDecimalPrecision.value.value,
+    t: showTotals.value,
+    to: showTotalsOnly.value,
+    r: showRelative.value,
+    pi: showPI.value,
+    c: cumulative.value,
+    i: !hideIncomplete.value,
+
+    // Sort settings
+    sortField: sortField.value,
+    sortOrder: sortOrder.value,
+    currentPage: currentPage.value,
+    itemsPerPage: itemsPerPage.value
   }
 
-  savingRanking.value = true
-  saveError.value = ''
-  saveSuccess.value = false
-
-  try {
-    const rankingStateData = {
-      // Main type selection
-      a: showASMR.value,
-      p: selectedPeriodOfTime.value.value,
-      j: selectedJurisdictionType.value.value,
-
-      // Date range
-      df: sliderValue.value[0],
-      dt: sliderValue.value[1],
-
-      // Baseline settings
-      bm: selectedBaselineMethod.value.value,
-      bf: baselineSliderValue.value[0],
-      bt: baselineSliderValue.value[1],
-
-      // Display options
-      sp: selectedStandardPopulation.value.value,
-      dp: selectedDecimalPrecision.value.value,
-      t: showTotals.value,
-      to: showTotalsOnly.value,
-      r: showRelative.value,
-      pi: showPI.value,
-      c: cumulative.value,
-      i: !hideIncomplete.value,
-
-      // Sort settings
-      sortField: sortField.value,
-      sortOrder: sortOrder.value,
-      currentPage: currentPage.value,
-      itemsPerPage: itemsPerPage.value
-    }
-
-    const response = await $fetch('/api/charts', {
-      method: 'POST',
-      body: {
-        name: saveRankingName.value.trim(),
-        description: saveRankingDescription.value.trim() || null,
-        chartState: JSON.stringify(rankingStateData),
-        chartType: 'ranking',
-        isPublic: saveRankingPublic.value
-      }
-    })
-
-    saveSuccess.value = true
-    showToast(
-      saveRankingPublic.value
-        ? 'Ranking saved and published!'
-        : 'Ranking saved!',
-      'success'
-    )
-
-    setTimeout(() => {
-      showSaveModal.value = false
-      if (saveRankingPublic.value && response.chart?.slug) {
-        navigateTo(`/charts/${response.chart.slug}`)
-      }
-    }, 1500)
-  } catch (err) {
-    console.error('Failed to save ranking:', err)
-    saveError.value = err instanceof Error ? err.message : 'Failed to save ranking'
-  } finally {
-    savingRanking.value = false
-  }
+  await saveToDBComposable(rankingStateData)
 }
 </script>
 
