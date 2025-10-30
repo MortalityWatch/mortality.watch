@@ -7,6 +7,13 @@
     <template #left>
       <p class="text-muted text-sm">
         © {{ new Date().getFullYear() }} MortalityWatch. Open data for public health.
+        <span class="mx-1">·</span>
+        <ULink
+          to="/donate"
+          class="text-muted hover:text-default"
+        >
+          Support us
+        </ULink>
       </p>
     </template>
 

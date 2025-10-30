@@ -141,11 +141,6 @@
       </div>
     </div>
 
-    <!-- Upgrade Card -->
-    <div class="mb-12">
-      <UpgradeCard />
-    </div>
-
     <!-- Key Features Section -->
     <div class="mb-12">
       <UCard class="max-w-5xl mx-auto">
@@ -198,32 +193,9 @@
       </UCard>
     </div>
 
-    <!-- Donation Section -->
+    <!-- Upgrade Card -->
     <div class="mb-8">
-      <UCard
-        id="donate"
-        class="max-w-lg mx-auto text-center"
-      >
-        <template #header>
-          <h2 class="text-xl font-bold">
-            Keep MortalityWatch Free for Everyone
-          </h2>
-        </template>
-        <div class="space-y-4">
-          <p class="text-gray-600 dark:text-gray-400">
-            Your support helps maintain our servers, develop new features, and
-            keep this vital public health resource accessible to all.
-          </p>
-          <NuxtLink to="/donate">
-            <UButton
-              icon="i-lucide-heart"
-              label="Support Our Work"
-              size="lg"
-              color="primary"
-            />
-          </NuxtLink>
-        </div>
-      </UCard>
+      <UpgradeCard />
     </div>
   </div>
 </template>

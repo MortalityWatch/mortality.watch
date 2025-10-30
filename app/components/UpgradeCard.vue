@@ -123,7 +123,7 @@
             Sign Up Free
           </UButton>
           <UButton
-            to="/pricing"
+            to="/features"
             color="neutral"
             variant="ghost"
             size="xl"
@@ -265,7 +265,7 @@
             Upgrade to Pro
           </UButton>
           <UButton
-            to="/pricing"
+            to="/features"
             color="neutral"
             variant="ghost"
             size="xl"
