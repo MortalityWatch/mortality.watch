@@ -1,5 +1,6 @@
 import { db, users } from '#db'
 import { eq, and, gt } from 'drizzle-orm'
+import { generateToken, setAuthToken } from '../../../utils/auth'
 
 export default defineEventHandler(async (event) => {
   const token = getRouterParam(event, 'token')
@@ -51,8 +52,19 @@ export default defineEventHandler(async (event) => {
     .where(eq(users.id, user.id))
     .run()
 
+  // Auto-login: Generate JWT token and set cookie
+  const authToken = generateToken({
+    userId: user.id,
+    email: user.email,
+    tier: user.tier,
+    role: user.role
+  })
+
+  setAuthToken(event, authToken)
+
   return {
     success: true,
-    message: 'Email verified successfully'
+    message: 'Email verified successfully',
+    autoLogin: true
   }
 })

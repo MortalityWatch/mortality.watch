@@ -19,11 +19,11 @@
             <p>
               Welcome to Mortality Watch. By accessing or using our website and services at
               <ULink
-                to="https://staging.mortality.watch"
+                :to="siteUrl"
                 target="_blank"
                 class="text-primary hover:underline"
               >
-                staging.mortality.watch
+                {{ siteDomain }}
               </ULink>
               (the "Service"), you agree to be bound by these Terms of Service ("Terms").
               If you do not agree to these Terms, please do not use the Service.
@@ -387,6 +387,10 @@
 </template>
 
 <script setup lang="ts">
+const config = useRuntimeConfig()
+const siteUrl = config.public.siteUrl || 'https://www.mortality.watch'
+const siteDomain = siteUrl.replace(/^https?:\/\//, '')
+
 // Page metadata
 definePageMeta({
   title: 'Terms of Service'

@@ -63,6 +63,16 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
     const redirect = route.query.redirect as string || '/'
     await router.push(redirect)
   } catch (error: unknown) {
+    // Check if it's an email verification error (403)
+    if ((error as { statusCode?: number, data?: { statusCode?: number } })?.statusCode === 403 || (error as { statusCode?: number, data?: { statusCode?: number } })?.data?.statusCode === 403) {
+      // Redirect to verification page with the email
+      await router.push({
+        path: '/check-email',
+        query: { email: event.data.email }
+      })
+      return
+    }
+
     handleAuthError(error, 'login')
   }
 }

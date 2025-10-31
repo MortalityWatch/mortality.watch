@@ -71,10 +71,10 @@ onMounted(async () => {
           {{ alreadyVerified ? 'Already Verified' : 'Email Verified!' }}
         </h2>
         <p class="text-gray-600 dark:text-gray-400 mb-4">
-          {{ alreadyVerified ? 'Your email was already verified.' : 'Your email has been successfully verified.' }}
+          {{ alreadyVerified ? 'Your email was already verified.' : 'Your email has been successfully verified. You\'re now signed in!' }}
         </p>
         <p class="text-sm text-gray-500 dark:text-gray-500">
-          Redirecting to homepage...
+          Redirecting you to the homepage...
         </p>
       </div>
 
