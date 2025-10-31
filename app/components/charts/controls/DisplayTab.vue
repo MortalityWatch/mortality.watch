@@ -14,6 +14,7 @@ const props = defineProps<{
   showTotal: boolean
   showLogo: boolean
   showQrCode: boolean
+  showZScores?: boolean
   // Disabled states
   isPopulationType: boolean
   showBaselineOption: boolean
@@ -27,6 +28,7 @@ const props = defineProps<{
   showPercentageOption: boolean
   showCumulativeOption: boolean
   showTotalOption: boolean
+  showZScoresOption?: boolean
   // Chart preset
   chartPreset?: { name: string, value: string, label: string, category: string }
   chartPresetOptions: { name: string, value: string, label: string, category: string }[]
@@ -44,6 +46,7 @@ const emit = defineEmits<{
   'update:showTotal': [value: boolean]
   'update:showLogo': [value: boolean]
   'update:showQrCode': [value: boolean]
+  'update:showZScores': [value: boolean]
   'update:chartPreset': [value: { name: string, value: string, label: string, category: string } | undefined]
 }>()
 
@@ -106,6 +109,11 @@ const showQrCodeModel = computed({
 const chartPresetModel = computed({
   get: () => props.chartPreset,
   set: v => emit('update:chartPreset', v)
+})
+
+const showZScoresModel = computed({
+  get: () => props.showZScores || false,
+  set: v => emit('update:showZScores', v)
 })
 </script>
 
@@ -240,6 +248,73 @@ const chartPresetModel = computed({
           :disabled="props.showTotalOptionDisabled"
         />
       </div>
+
+      <!-- Feature gate: Only Pro users can enable z-scores -->
+      <FeatureGate
+        v-if="props.showZScoresOption"
+        feature="Z_SCORES"
+      >
+        <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+          <label class="text-sm font-medium whitespace-nowrap">
+            Z-Scores
+          </label>
+          <USwitch v-model="showZScoresModel" />
+          <UPopover>
+            <UButton
+              icon="i-lucide-info"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              aria-label="Z-score information"
+            />
+            <template #content>
+              <div class="p-3 space-y-2 max-w-xs">
+                <div class="text-xs font-semibold text-gray-900 dark:text-gray-100">
+                  Statistical Z-Scores
+                </div>
+                <div class="text-xs text-gray-700 dark:text-gray-300">
+                  Shows how many standard deviations each value is from the baseline mean. Values beyond ±2 are statistically significant (95% confidence).
+                </div>
+              </div>
+            </template>
+          </UPopover>
+        </div>
+        <template #disabled>
+          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 opacity-50">
+            <label class="text-sm font-medium whitespace-nowrap">
+              Z-Scores
+              <FeatureBadge
+                feature="Z_SCORES"
+                class="ml-2"
+              />
+            </label>
+            <USwitch
+              v-model="showZScoresModel"
+              disabled
+            />
+            <UPopover>
+              <UButton
+                icon="i-lucide-info"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                aria-label="Z-score information"
+                disabled
+              />
+              <template #content>
+                <div class="p-3 space-y-2 max-w-xs">
+                  <div class="text-xs font-semibold text-gray-900 dark:text-gray-100">
+                    Statistical Z-Scores (Pro Feature)
+                  </div>
+                  <div class="text-xs text-gray-700 dark:text-gray-300">
+                    Shows how many standard deviations each value is from the baseline mean. Values beyond ±2 are statistically significant (95% confidence).
+                  </div>
+                </div>
+              </template>
+            </UPopover>
+          </div>
+        </template>
+      </FeatureGate>
 
       <!-- Feature gate: Only Pro users can hide watermark -->
       <FeatureGate feature="HIDE_WATERMARK">
