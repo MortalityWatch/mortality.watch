@@ -104,19 +104,16 @@ interface Chart {
 
 // Page meta
 definePageMeta({
-  title: 'My Charts'
-  // TODO: Add middleware to require authentication
-  // middleware: 'auth'
+  title: 'My Charts',
+  middleware: 'auth'
 })
 
-// Fetch user's charts
-// TODO: Filter by actual user ID when auth is implemented
-// For now, show all charts as a demo
+// Fetch user's charts (filtered by userId on the backend)
 const { data, pending, error, refresh } = await useFetch<{
   charts: Chart[]
 }>('/api/charts', {
   query: {
-    // userId: user.id, // TODO: Add when auth is implemented
+    userId: user.value?.id,
     limit: 100
   }
 })

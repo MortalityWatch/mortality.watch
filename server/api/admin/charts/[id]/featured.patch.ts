@@ -11,11 +11,8 @@ import { eq } from 'drizzle-orm'
  * Requires admin authentication
  */
 export default defineEventHandler(async (event) => {
-  // TODO: Add admin authentication check when auth is implemented
-  // const user = await requireAuth(event)
-  // if (user.role !== 'admin') {
-  //   throw createError({ statusCode: 403, message: 'Admin access required' })
-  // }
+  // Require admin authentication
+  await requireAdmin(event)
 
   const id = parseInt(getRouterParam(event, 'id') || '')
 

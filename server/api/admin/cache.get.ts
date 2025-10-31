@@ -6,12 +6,9 @@ import { getCacheStats } from '../../utils/chartCache'
  *
  * Requires admin authentication
  */
-export default defineEventHandler(async (_event) => {
-  // TODO: Add admin authentication check when auth is implemented
-  // const user = await requireAuth(event)
-  // if (user.role !== 'admin') {
-  //   throw createError({ statusCode: 403, message: 'Admin access required' })
-  // }
+export default defineEventHandler(async (event) => {
+  // Require admin authentication
+  await requireAdmin(event)
 
   try {
     const stats = await getCacheStats()

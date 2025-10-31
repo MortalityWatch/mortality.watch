@@ -111,6 +111,9 @@ const props = withDefaults(defineProps<Props>(), {
   size: 'md'
 })
 
+// Auth
+const { user, isAuthenticated } = useAuth()
+
 // Modal state
 const isOpen = ref(false)
 const chartName = ref('')
@@ -122,12 +125,17 @@ const success = ref(false)
 
 // Open modal
 function openModal() {
-  // TODO: Check if user is authenticated
-  // const { isAuthenticated } = useAuth()
-  // if (!isAuthenticated.value) {
-  //   navigateTo('/signup')
-  //   return
-  // }
+  // Check if user is authenticated
+  if (!isAuthenticated.value) {
+    navigateTo('/login?redirect=' + encodeURIComponent(window.location.pathname))
+    return
+  }
+
+  // Check if user has required tier (Pro or Premium)
+  if (user.value && user.value.tier < 1) {
+    navigateTo('/pricing')
+    return
+  }
 
   isOpen.value = true
   chartName.value = ''

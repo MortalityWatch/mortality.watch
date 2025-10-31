@@ -9,11 +9,8 @@ import { eq } from 'drizzle-orm'
  * Requires authentication and ownership (or admin)
  */
 export default defineEventHandler(async (event) => {
-  // TODO: Add authentication check when auth is implemented
-  // const user = await requireAuth(event)
-  // if (!user) {
-  //   throw createError({ statusCode: 401, message: 'Authentication required' })
-  // }
+  // Require authentication
+  const user = await requireAuth(event)
 
   const chartId = parseInt(event.context.params?.id || '')
 
@@ -25,18 +22,23 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    // TODO: Add ownership check when auth is implemented
-    // const chart = await db.query.savedCharts.findFirst({
-    //   where: eq(savedCharts.id, chartId)
-    // })
-    //
-    // if (!chart) {
-    //   throw createError({ statusCode: 404, message: 'Chart not found' })
-    // }
-    //
-    // if (chart.userId !== user.id && user.role !== 'admin') {
-    //   throw createError({ statusCode: 403, message: 'Permission denied' })
-    // }
+    // Check ownership
+    const charts = await db
+      .select()
+      .from(savedCharts)
+      .where(eq(savedCharts.id, chartId))
+      .limit(1)
+
+    const chart = charts[0]
+
+    if (!chart) {
+      throw createError({ statusCode: 404, message: 'Chart not found' })
+    }
+
+    // Only owner or admin can delete
+    if (chart.userId !== user.id && user.role !== 'admin') {
+      throw createError({ statusCode: 403, message: 'Permission denied' })
+    }
 
     await db.delete(savedCharts).where(eq(savedCharts.id, chartId))
 
