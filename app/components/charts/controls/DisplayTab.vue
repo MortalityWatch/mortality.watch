@@ -7,7 +7,6 @@ const props = defineProps<{
   showBaseline: boolean
   showPredictionInterval: boolean
   showLabels: boolean
-  showCaption: boolean
   maximize: boolean
   isLogarithmic: boolean
   showPercentage: boolean
@@ -15,6 +14,7 @@ const props = defineProps<{
   showTotal: boolean
   showLogo: boolean
   showQrCode: boolean
+  showZScores?: boolean
   // Disabled states
   isPopulationType: boolean
   showBaselineOption: boolean
@@ -28,6 +28,7 @@ const props = defineProps<{
   showPercentageOption: boolean
   showCumulativeOption: boolean
   showTotalOption: boolean
+  showZScoresOption?: boolean
   // Chart preset
   chartPreset?: { name: string, value: string, label: string, category: string }
   chartPresetOptions: { name: string, value: string, label: string, category: string }[]
@@ -38,7 +39,6 @@ const emit = defineEmits<{
   'update:showBaseline': [value: boolean]
   'update:showPredictionInterval': [value: boolean]
   'update:showLabels': [value: boolean]
-  'update:showCaption': [value: boolean]
   'update:maximize': [value: boolean]
   'update:isLogarithmic': [value: boolean]
   'update:showPercentage': [value: boolean]
@@ -46,6 +46,7 @@ const emit = defineEmits<{
   'update:showTotal': [value: boolean]
   'update:showLogo': [value: boolean]
   'update:showQrCode': [value: boolean]
+  'update:showZScores': [value: boolean]
   'update:chartPreset': [value: { name: string, value: string, label: string, category: string } | undefined]
 }>()
 
@@ -68,11 +69,6 @@ const showPredictionIntervalModel = computed({
 const showLabelsModel = computed({
   get: () => props.showLabels,
   set: v => emit('update:showLabels', v)
-})
-
-const showCaptionModel = computed({
-  get: () => props.showCaption,
-  set: v => emit('update:showCaption', v)
 })
 
 const maximizeModel = computed({
@@ -114,174 +110,285 @@ const chartPresetModel = computed({
   get: () => props.chartPreset,
   set: v => emit('update:chartPreset', v)
 })
+
+const showZScoresModel = computed({
+  get: () => props.showZScores || false,
+  set: v => emit('update:showZScores', v)
+})
 </script>
 
 <template>
-  <div class="space-y-6">
-    <!-- Data Analysis Section -->
-    <div class="pb-6 border-b border-gray-200 dark:border-gray-700">
-      <h3 class="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4 flex items-center gap-2">
-        <span class="w-1 h-4 bg-primary-500 rounded-full" />
-        Data Analysis
-      </h3>
-      <div class="flex flex-wrap gap-4">
-        <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-          <label class="text-sm font-medium whitespace-nowrap">Excess</label>
-          <USwitch
-            v-model="isExcessModel"
-            :disabled="props.isPopulationType"
+  <div>
+    <div class="flex flex-wrap gap-4">
+      <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+        <label class="text-sm font-medium whitespace-nowrap">Excess</label>
+        <USwitch
+          v-model="isExcessModel"
+          :disabled="props.isPopulationType"
+        />
+        <UPopover>
+          <UButton
+            icon="i-lucide-info"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            aria-label="Excess mortality information"
           />
-          <UPopover>
-            <UButton
-              icon="i-lucide-info"
-              color="neutral"
-              variant="ghost"
-              size="xs"
-              aria-label="Excess mortality information"
-            />
-            <template #content>
-              <div class="p-3 space-y-2 max-w-xs">
-                <div class="text-xs text-gray-700 dark:text-gray-300">
-                  Compares observed mortality to expected baseline. Positive values indicate more deaths than expected, negative values indicate fewer deaths.
-                </div>
+          <template #content>
+            <div class="p-3 space-y-2 max-w-xs">
+              <div class="text-xs text-gray-700 dark:text-gray-300">
+                Compares observed mortality to expected baseline. Positive values indicate more deaths than expected, negative values indicate fewer deaths.
               </div>
-            </template>
-          </UPopover>
-        </div>
-
-        <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-          <label class="text-sm font-medium whitespace-nowrap">Baseline</label>
-          <USwitch
-            v-model="showBaselineModel"
-            :disabled="!props.showBaselineOption"
-          />
-          <UPopover>
-            <UButton
-              icon="i-lucide-info"
-              color="neutral"
-              variant="ghost"
-              size="xs"
-              aria-label="Baseline information"
-            />
-            <template #content>
-              <div class="p-3 space-y-2 max-w-xs">
-                <div class="text-xs text-gray-700 dark:text-gray-300">
-                  Shows the expected mortality level used for comparison. Configure baseline period and method in the Baseline tab.
-                </div>
-              </div>
-            </template>
-          </UPopover>
-        </div>
-
-        <div
-          v-if="props.showPredictionIntervalOption"
-          class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-        >
-          <label class="text-sm font-medium whitespace-nowrap">95% PI</label>
-          <USwitch
-            v-model="showPredictionIntervalModel"
-            :disabled="props.showPredictionIntervalOptionDisabled"
-          />
-          <UPopover>
-            <UButton
-              icon="i-lucide-info"
-              color="neutral"
-              variant="ghost"
-              size="xs"
-              aria-label="Prediction interval information"
-            />
-            <template #content>
-              <div class="p-3 space-y-2 max-w-xs">
-                <div class="text-xs text-gray-700 dark:text-gray-300">
-                  95% Prediction Interval shows the range of uncertainty around expected values. Values outside this range are statistically significant.
-                </div>
-              </div>
-            </template>
-          </UPopover>
-        </div>
+            </div>
+          </template>
+        </UPopover>
       </div>
-    </div>
 
-    <!-- Data Transformation Section -->
-    <div class="pb-6 border-b border-gray-200 dark:border-gray-700">
-      <h3 class="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4 flex items-center gap-2">
-        <span class="w-1 h-4 bg-primary-500 rounded-full" />
-        Data Transformation
-      </h3>
-      <div class="flex flex-wrap gap-4">
-        <div
-          v-if="props.showPercentageOption"
-          class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-        >
-          <label class="text-sm font-medium whitespace-nowrap">Percentage</label>
-          <USwitch v-model="showPercentageModel" />
-        </div>
-
-        <div
-          v-if="props.showCumulativeOption"
-          class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-        >
-          <label class="text-sm font-medium whitespace-nowrap">Cumulative</label>
-          <USwitch v-model="cumulativeModel" />
-        </div>
-
-        <div
-          v-if="props.showTotalOption"
-          class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-        >
-          <label class="text-sm font-medium whitespace-nowrap">Total</label>
-          <USwitch
-            v-model="showTotalModel"
-            :disabled="props.showTotalOptionDisabled"
+      <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+        <label class="text-sm font-medium whitespace-nowrap">Baseline</label>
+        <USwitch
+          v-model="showBaselineModel"
+          :disabled="!props.showBaselineOption"
+        />
+        <UPopover>
+          <UButton
+            icon="i-lucide-info"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            aria-label="Baseline information"
           />
-        </div>
-
-        <div
-          v-if="props.showLogarithmicOption"
-          class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-        >
-          <label class="text-sm font-medium whitespace-nowrap">Log Scale</label>
-          <USwitch
-            v-model="isLogarithmicModel"
-            :disabled="!props.showLogarithmicOption"
-          />
-        </div>
+          <template #content>
+            <div class="p-3 space-y-2 max-w-xs">
+              <div class="text-xs text-gray-700 dark:text-gray-300">
+                Shows the expected mortality level used for comparison. Configure baseline period and method in the Baseline tab.
+              </div>
+            </div>
+          </template>
+        </UPopover>
       </div>
-    </div>
 
-    <!-- Chart Presentation Section -->
-    <div class="pb-6 border-b border-gray-200 dark:border-gray-700">
-      <h3 class="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4 flex items-center gap-2">
-        <span class="w-1 h-4 bg-primary-500 rounded-full" />
-        Chart Presentation
-      </h3>
-      <div class="flex flex-col gap-4">
-        <div class="flex flex-wrap gap-4">
-          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <label class="text-sm font-medium whitespace-nowrap">Show Labels</label>
-            <USwitch v-model="showLabelsModel" />
-          </div>
+      <div
+        v-if="props.showPredictionIntervalOption"
+        class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+      >
+        <label class="text-sm font-medium whitespace-nowrap">95% PI</label>
+        <USwitch
+          v-model="showPredictionIntervalModel"
+          :disabled="props.showPredictionIntervalOptionDisabled"
+        />
+        <UPopover>
+          <UButton
+            icon="i-lucide-info"
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            aria-label="Prediction interval information"
+          />
+          <template #content>
+            <div class="p-3 space-y-2 max-w-xs">
+              <div class="text-xs text-gray-700 dark:text-gray-300">
+                95% Prediction Interval shows the range of uncertainty around expected values. Values outside this range are statistically significant.
+              </div>
+            </div>
+          </template>
+        </UPopover>
+      </div>
 
-          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <label class="text-sm font-medium whitespace-nowrap">Show Caption</label>
-            <USwitch v-model="showCaptionModel" />
-          </div>
+      <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+        <label class="text-sm font-medium whitespace-nowrap">Show Labels</label>
+        <USwitch v-model="showLabelsModel" />
+      </div>
 
-          <div
-            v-if="props.showMaximizeOption"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-          >
-            <label class="text-sm font-medium whitespace-nowrap">Maximize</label>
+      <div
+        v-if="props.showMaximizeOption"
+        class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+      >
+        <label class="text-sm font-medium whitespace-nowrap">Maximize</label>
+        <USwitch
+          v-model="maximizeModel"
+          :disabled="props.showMaximizeOptionDisabled"
+        />
+      </div>
+
+      <div
+        v-if="props.showLogarithmicOption"
+        class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+      >
+        <label class="text-sm font-medium whitespace-nowrap">Log Scale</label>
+        <USwitch
+          v-model="isLogarithmicModel"
+          :disabled="!props.showLogarithmicOption"
+        />
+      </div>
+
+      <div
+        v-if="props.showPercentageOption"
+        class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+      >
+        <label class="text-sm font-medium whitespace-nowrap">Percentage</label>
+        <USwitch v-model="showPercentageModel" />
+      </div>
+
+      <div
+        v-if="props.showCumulativeOption"
+        class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+      >
+        <label class="text-sm font-medium whitespace-nowrap">Cumulative</label>
+        <USwitch v-model="cumulativeModel" />
+      </div>
+
+      <div
+        v-if="props.showTotalOption"
+        class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+      >
+        <label class="text-sm font-medium whitespace-nowrap">Total</label>
+        <USwitch
+          v-model="showTotalModel"
+          :disabled="props.showTotalOptionDisabled"
+        />
+      </div>
+
+      <!-- Feature gate: Only Pro users can enable z-scores -->
+      <FeatureGate
+        v-if="props.showZScoresOption"
+        feature="Z_SCORES"
+      >
+        <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+          <label class="text-sm font-medium whitespace-nowrap">
+            Z-Scores
+          </label>
+          <USwitch v-model="showZScoresModel" />
+          <UPopover>
+            <UButton
+              icon="i-lucide-info"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              aria-label="Z-score information"
+            />
+            <template #content>
+              <div class="p-3 space-y-2 max-w-xs">
+                <div class="text-xs font-semibold text-gray-900 dark:text-gray-100">
+                  Statistical Z-Scores
+                </div>
+                <div class="text-xs text-gray-700 dark:text-gray-300">
+                  Shows how many standard deviations each value is from the baseline mean. Values beyond ±2 are statistically significant (95% confidence).
+                </div>
+              </div>
+            </template>
+          </UPopover>
+        </div>
+        <template #disabled>
+          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 opacity-50">
+            <label class="text-sm font-medium whitespace-nowrap">
+              Z-Scores
+              <FeatureBadge
+                feature="Z_SCORES"
+                class="ml-2"
+              />
+            </label>
             <USwitch
-              v-model="maximizeModel"
-              :disabled="props.showMaximizeOptionDisabled"
+              v-model="showZScoresModel"
+              disabled
+            />
+            <UPopover>
+              <UButton
+                icon="i-lucide-info"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                aria-label="Z-score information"
+                disabled
+              />
+              <template #content>
+                <div class="p-3 space-y-2 max-w-xs">
+                  <div class="text-xs font-semibold text-gray-900 dark:text-gray-100">
+                    Statistical Z-Scores (Pro Feature)
+                  </div>
+                  <div class="text-xs text-gray-700 dark:text-gray-300">
+                    Shows how many standard deviations each value is from the baseline mean. Values beyond ±2 are statistically significant (95% confidence).
+                  </div>
+                </div>
+              </template>
+            </UPopover>
+          </div>
+        </template>
+      </FeatureGate>
+
+      <!-- Feature gate: Only Pro users can hide watermark -->
+      <FeatureGate feature="HIDE_WATERMARK">
+        <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+          <label class="text-sm font-medium whitespace-nowrap">
+            Show Logo
+          </label>
+          <USwitch v-model="showLogoModel" />
+        </div>
+        <template #disabled>
+          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 opacity-50">
+            <label class="text-sm font-medium whitespace-nowrap">
+              Show Logo
+              <FeatureBadge
+                feature="HIDE_WATERMARK"
+                class="ml-2"
+              />
+            </label>
+            <USwitch
+              v-model="showLogoModel"
+              disabled
             />
           </div>
-        </div>
+        </template>
+      </FeatureGate>
 
-        <!-- Feature gate: Only Pro users can customize chart size -->
-        <FeatureGate feature="CUSTOM_CHART_SIZE">
-          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+      <!-- Feature gate: Only Pro users can hide QR code -->
+      <FeatureGate feature="HIDE_QR">
+        <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+          <label class="text-sm font-medium whitespace-nowrap">
+            Show QR Code
+          </label>
+          <USwitch v-model="showQrCodeModel" />
+        </div>
+        <template #disabled>
+          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 opacity-50">
+            <label class="text-sm font-medium whitespace-nowrap">
+              Show QR Code
+              <FeatureBadge
+                feature="HIDE_QR"
+                class="ml-2"
+              />
+            </label>
+            <USwitch
+              v-model="showQrCodeModel"
+              disabled
+            />
+          </div>
+        </template>
+      </FeatureGate>
+    </div>
+
+    <!-- Chart Options Section -->
+    <div class="mt-6 flex flex-col gap-4">
+      <!-- Feature gate: Only Pro users can customize chart size -->
+      <FeatureGate feature="CUSTOM_CHART_SIZE">
+        <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+          <label class="text-sm font-medium whitespace-nowrap">
+            Chart Size
+            <FeatureBadge
+              feature="CUSTOM_CHART_SIZE"
+              class="ml-2"
+            />
+          </label>
+          <UInputMenu
+            v-model="chartPresetModel"
+            :items="props.chartPresetOptions"
+            placeholder="Select a size"
+            size="sm"
+            class="flex-1"
+          />
+        </div>
+        <template #disabled>
+          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 opacity-50">
             <label class="text-sm font-medium whitespace-nowrap">
               Chart Size
               <FeatureBadge
@@ -295,96 +402,11 @@ const chartPresetModel = computed({
               placeholder="Select a size"
               size="sm"
               class="flex-1"
+              disabled
             />
           </div>
-          <template #disabled>
-            <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 opacity-50">
-              <label class="text-sm font-medium whitespace-nowrap">
-                Chart Size
-                <FeatureBadge
-                  feature="CUSTOM_CHART_SIZE"
-                  class="ml-2"
-                />
-              </label>
-              <UInputMenu
-                v-model="chartPresetModel"
-                :items="props.chartPresetOptions"
-                placeholder="Select a size"
-                size="sm"
-                class="flex-1"
-                disabled
-              />
-            </div>
-          </template>
-        </FeatureGate>
-      </div>
-    </div>
-
-    <!-- Branding Section -->
-    <div>
-      <h3 class="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4 flex items-center gap-2">
-        <span class="w-1 h-4 bg-primary-500 rounded-full" />
-        Branding
-      </h3>
-      <div class="flex flex-wrap gap-4">
-        <!-- Feature gate: Only Pro users can hide watermark -->
-        <FeatureGate feature="HIDE_WATERMARK">
-          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <label class="text-sm font-medium whitespace-nowrap">
-              Show Logo
-              <FeatureBadge
-                feature="HIDE_WATERMARK"
-                class="ml-2"
-              />
-            </label>
-            <USwitch v-model="showLogoModel" />
-          </div>
-          <template #disabled>
-            <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 opacity-50">
-              <label class="text-sm font-medium whitespace-nowrap">
-                Show Logo
-                <FeatureBadge
-                  feature="HIDE_WATERMARK"
-                  class="ml-2"
-                />
-              </label>
-              <USwitch
-                v-model="showLogoModel"
-                disabled
-              />
-            </div>
-          </template>
-        </FeatureGate>
-
-        <!-- Feature gate: Only Pro users can hide QR code -->
-        <FeatureGate feature="HIDE_QR">
-          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <label class="text-sm font-medium whitespace-nowrap">
-              Show QR Code
-              <FeatureBadge
-                feature="HIDE_QR"
-                class="ml-2"
-              />
-            </label>
-            <USwitch v-model="showQrCodeModel" />
-          </div>
-          <template #disabled>
-            <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 opacity-50">
-              <label class="text-sm font-medium whitespace-nowrap">
-                Show QR Code
-                <FeatureBadge
-                  feature="HIDE_QR"
-                  class="ml-2"
-                />
-              </label>
-              <USwitch
-                v-model="showQrCodeModel"
-                disabled
-              />
-            </div>
-          </template>
-        </FeatureGate>
-      </div>
+        </template>
+      </FeatureGate>
     </div>
   </div>
 </template>

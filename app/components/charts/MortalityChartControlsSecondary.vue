@@ -35,6 +35,7 @@ const props = defineProps<{
   showPercentage?: boolean
   cumulative: boolean
   showTotal: boolean
+  showZScores?: boolean
   showLogarithmicOption: boolean
   showMaximizeOption: boolean
   showMaximizeOptionDisabled: boolean
@@ -44,6 +45,7 @@ const props = defineProps<{
   showTotalOptionDisabled: boolean
   showPredictionIntervalOption: boolean
   showPredictionIntervalOptionDisabled: boolean
+  showZScoresOption?: boolean
   isMatrixChartStyle: boolean
   colors: string[]
   sliderStart: string
@@ -71,6 +73,7 @@ const emit = defineEmits<{
   showPercentageChanged: [value: boolean]
   cumulativeChanged: [value: boolean]
   showTotalChanged: [value: boolean]
+  showZScoresChanged: [value: boolean]
   userColorsChanged: [value: string[]]
   sliderStartChanged: [value: string]
   chartPresetChanged: [value: string]
@@ -185,6 +188,11 @@ const cumulative = computed({
 const showTotal = computed({
   get: () => props.showTotal,
   set: (v: boolean) => emit('showTotalChanged', v)
+})
+
+const showZScores = computed({
+  get: () => props.showZScores || false,
+  set: (v: boolean) => emit('showZScoresChanged', v)
 })
 
 const _sliderStart = computed({
@@ -337,6 +345,7 @@ const activeTab = ref('data')
         :show-percentage="props.showPercentage || false"
         :cumulative="props.cumulative"
         :show-total="props.showTotal"
+        :show-z-scores="props.showZScores || false"
         :show-logo="props.showLogo"
         :show-qr-code="props.showQrCode"
         :is-population-type="props.isPopulationType"
@@ -350,6 +359,7 @@ const activeTab = ref('data')
         :show-percentage-option="props.showPercentageOption"
         :show-cumulative-option="props.showCumulativeOption"
         :show-total-option="props.showTotalOption"
+        :show-z-scores-option="props.showZScoresOption"
         :chart-preset="chartPreset"
         :chart-preset-options="chartPresetOptions"
         @update:is-excess="isExcess = $event"
@@ -362,6 +372,7 @@ const activeTab = ref('data')
         @update:show-percentage="showPercentage = $event"
         @update:cumulative="cumulative = $event"
         @update:show-total="showTotal = $event"
+        @update:show-z-scores="showZScores = $event"
         @update:show-logo="showLogo = $event"
         @update:show-qr-code="showQrCode = $event"
         @update:chart-preset="chartPreset = $event"
