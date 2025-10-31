@@ -93,7 +93,7 @@ export const loadCountryMetadata = async (options?: {
     const filterCountries = options?.filterCountries || []
 
     for (const rawObj of rawObjects) {
-      const typedObj = rawObj as Record<string, unknown>
+      const typedObj = rawObj as unknown as Record<string, unknown>
       if (!typedObj.iso3c) continue
 
       const parsedObj = new Country(rawObj as CountryRaw)

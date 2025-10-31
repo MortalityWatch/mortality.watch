@@ -10,8 +10,7 @@
  */
 
 import { dataLoader } from '@/lib/dataLoader'
-import { sendEmail } from '#email'
-import { db } from '#db-connection'
+// sendEmail and db are auto-imported from server/utils
 import { users } from '#db'
 import { eq } from 'drizzle-orm'
 import Papa from 'papaparse'
@@ -27,7 +26,7 @@ interface StaleCountry {
   dataSource: string
 }
 
-async function checkDataStaleness() {
+export async function checkDataStaleness() {
   console.log('[Data Staleness Check] Starting check...')
 
   try {
@@ -68,6 +67,7 @@ async function checkDataStaleness() {
       return {
         success: true,
         staleCount: 0,
+        adminCount: 0,
         message: 'All data is fresh'
       }
     }
@@ -87,12 +87,13 @@ async function checkDataStaleness() {
       return {
         success: true,
         staleCount: staleCountries.length,
+        adminCount: 0,
         message: 'No admin users to notify'
       }
     }
 
     // Send email to each admin
-    const emailPromises = admins.map(async (admin) => {
+    const emailPromises = admins.map(async (admin: typeof users.$inferSelect) => {
       const html = generateStaleDataEmailHtml(staleCountries)
 
       try {
@@ -171,7 +172,7 @@ function generateStaleDataEmailHtml(staleCountries: StaleCountry[]): string {
                 <div style="font-size: 14px; color: #92400e; margin-top: 5px;">Stale Countries</div>
               </div>
               <div style="text-align: center; padding: 15px; background-color: #fee2e2; border-radius: 6px;">
-                <div style="font-size: 28px; font-weight: bold; color: #dc2626;">${staleCountries[0].daysSinceUpdate}</div>
+                <div style="font-size: 28px; font-weight: bold; color: #dc2626;">${staleCountries[0]?.daysSinceUpdate ?? 0}</div>
                 <div style="font-size: 14px; color: #991b1b; margin-top: 5px;">Most Stale (days)</div>
               </div>
               <div style="text-align: center; padding: 15px; background-color: #dbeafe; border-radius: 6px;">
@@ -241,8 +242,7 @@ function generateStaleDataEmailHtml(staleCountries: StaleCountry[]): string {
   `
 }
 
-// Export for use in API routes or direct execution
-export { checkDataStaleness }
+// Function is already exported above
 
 // Allow direct execution if running as script
 if (import.meta.url === `file://${process.argv[1]}`) {

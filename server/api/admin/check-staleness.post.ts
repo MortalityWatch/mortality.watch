@@ -1,4 +1,3 @@
-import { requireAdmin } from '#auth'
 import { checkDataStaleness } from '../../tasks/check-data-staleness'
 
 /**
@@ -15,10 +14,7 @@ export default defineEventHandler(async (event) => {
   try {
     const result = await checkDataStaleness()
 
-    return {
-      success: true,
-      ...result
-    }
+    return result
   } catch (err) {
     console.error('Error running staleness check:', err)
     throw createError({

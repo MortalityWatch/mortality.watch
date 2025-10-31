@@ -1,5 +1,3 @@
-import { sendEmail } from '#email'
-import { db } from '#db-connection'
 import { users } from '#db'
 import { eq } from 'drizzle-orm'
 
