@@ -18,7 +18,10 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <UCard :ui="{ body: 'p-0' }">
+  <UCard
+    :ui="{ body: 'p-0' }"
+    data-tour="share-button"
+  >
     <template #header>
       <h2 class="text-xl font-semibold">
         Chart Actions
@@ -129,6 +132,7 @@ const emit = defineEmits<{
             <button
               v-if="props.showSaveButton"
               class="chart-option-button"
+              data-tour="save-button"
               @click="emit('saveChart')"
             >
               <UIcon

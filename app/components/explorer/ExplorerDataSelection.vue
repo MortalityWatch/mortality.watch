@@ -62,7 +62,10 @@ const displaySliderStart = computed(() => {
 
     <div class="flex flex-col gap-4">
       <!-- Jurisdictions - full width -->
-      <div class="w-full">
+      <div
+        class="w-full"
+        data-tour="country-selection"
+      >
         <MortalityChartControlsPrimary
           :all-countries="props.allCountries"
           :all-age-groups="props.allAgeGroups"
@@ -78,7 +81,10 @@ const displaySliderStart = computed(() => {
       </div>
 
       <!-- Date Range Selection -->
-      <div class="w-full px-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+      <div
+        class="w-full px-3 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+        data-tour="date-range"
+      >
         <div class="flex items-center gap-3">
           <!-- Start Period -->
           <div class="flex items-center gap-2">

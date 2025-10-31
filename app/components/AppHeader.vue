@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useTutorial } from '@/composables/useTutorial'
+
 interface MenuItem {
   label: string
   icon: string
@@ -7,6 +9,11 @@ interface MenuItem {
 
 const { isIncognito } = useIncognitoMode()
 const { isAuthenticated, user } = useAuth()
+const { startTutorial } = useTutorial()
+
+// Check if we're on the explorer page to show help button
+const route = useRoute()
+const isExplorerPage = computed(() => route.path === '/explorer')
 
 // Main navigation items
 const items = computed(() => [{
@@ -82,6 +89,16 @@ const userMenuItems = computed<MenuItem[]>(() => {
     />
 
     <template #right>
+      <!-- Help button (only on explorer page) -->
+      <UButton
+        v-if="isExplorerPage"
+        icon="i-lucide-help-circle"
+        color="neutral"
+        variant="ghost"
+        aria-label="Show tutorial"
+        @click="startTutorial"
+      />
+
       <UColorModeButton />
 
       <!-- Authentication buttons -->

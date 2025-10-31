@@ -46,7 +46,10 @@ const baselineSliderValue = computed(() => [
 </script>
 
 <template>
-  <UCard class="tab-card">
+  <UCard
+    class="tab-card"
+    data-tour="chart-controls"
+  >
     <template #header>
       <h2 class="text-xl font-semibold">
         Settings

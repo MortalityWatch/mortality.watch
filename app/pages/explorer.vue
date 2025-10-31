@@ -12,6 +12,7 @@ import { useDataAvailability } from '@/composables/useDataAvailability'
 import { useExplorerDataOrchestration } from '@/composables/useExplorerDataOrchestration'
 import { useExplorerColors } from '@/composables/useExplorerColors'
 import { useExplorerChartActions } from '@/composables/useExplorerChartActions'
+import { useTutorial } from '@/composables/useTutorial'
 import type {
   Country
 } from '@/model'
@@ -30,6 +31,9 @@ import SaveModal from '@/components/SaveModal.vue'
 
 // Auth state for conditional features
 const { isAuthenticated } = useAuth()
+
+// Tutorial for first-time users
+const { autoStartTutorial } = useTutorial()
 
 // Phase 9.2: Centralized state management with validation
 const state = useExplorerState()
@@ -283,6 +287,9 @@ onMounted(async () => {
 
   // Setup resize observer for drag resizing (only if not in Auto mode)
   setupResizeObserver()
+
+  // Auto-start tutorial for first-time users
+  autoStartTutorial()
 })
 
 // Phase 5a: Chart actions extracted to composable
@@ -420,6 +427,7 @@ const downloadChart = () => {
                 :error="saveError"
                 :success="saveSuccess"
                 type="chart"
+                data-tour="save-button"
                 @save="saveToDB"
               />
             </template>

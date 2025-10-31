@@ -46,29 +46,33 @@
 
     <!-- Empty State -->
     <UCard v-else-if="!pending">
-      <div class="text-center py-12">
-        <Icon
-          name="i-lucide-inbox"
-          class="w-16 h-16 mx-auto text-gray-400 mb-4"
+      <div class="text-center py-16 px-4">
+        <UIcon
+          name="i-lucide-bar-chart-3"
+          class="w-20 h-20 mx-auto text-gray-300 dark:text-gray-600 mb-6"
         />
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-          No saved charts yet
+        <h3 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-3">
+          You haven't saved any charts yet
         </h3>
-        <p class="text-gray-600 dark:text-gray-400 mb-6">
-          Start exploring and save your first chart
+        <p class="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
+          Explore mortality data, create custom visualizations, and save your favorite charts for quick access later.
         </p>
-        <div class="flex gap-4 justify-center">
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
           <UButton
             to="/explorer"
             color="primary"
+            size="lg"
+            icon="i-lucide-line-chart"
           >
-            Go to Explorer
+            Create Your First Chart
           </UButton>
           <UButton
             to="/ranking"
             variant="outline"
+            size="lg"
+            icon="i-lucide-trending-up"
           >
-            Go to Ranking
+            View Rankings
           </UButton>
         </div>
       </div>
