@@ -87,18 +87,8 @@ export default defineEventHandler(async (event) => {
     .returning()
     .get()
 
-  // Don't generate token yet - user must verify email first
-  // const token = generateToken({
-  //   userId: newUser.id,
-  //   email: newUser.email,
-  //   tier: newUser.tier,
-  //   role: newUser.role
-  // })
-
-  // Don't set cookie - user must verify email first
-  // setAuthToken(event, token)
-
   // Send verification email (don't await - send in background)
+  // Note: Auth token is not generated until email is verified
   sendVerificationEmail(newUser.email, verificationToken).catch((error) => {
     console.error('Failed to send verification email:', error)
     // Don't throw error - user is already created and signed in

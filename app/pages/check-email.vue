@@ -10,10 +10,42 @@ useSeoMeta({
 
 const route = useRoute()
 const email = route.query.email as string || ''
+const toast = useToast()
+const isResending = ref(false)
 
 async function resendVerification() {
-  // TODO: Implement resend verification
-  console.log('Resending verification to:', email)
+  if (!email) {
+    toast.add({
+      title: 'Error',
+      description: 'Email address is required',
+      color: 'error'
+    })
+    return
+  }
+
+  isResending.value = true
+
+  try {
+    await $fetch('/api/auth/resend-verification-email', {
+      method: 'POST',
+      body: { email }
+    })
+
+    toast.add({
+      title: 'Email sent',
+      description: 'Verification email has been resent. Please check your inbox.',
+      color: 'success'
+    })
+  } catch (error: unknown) {
+    const errorMessage = (error as { data?: { message?: string } })?.data?.message || 'Failed to resend verification email'
+    toast.add({
+      title: 'Error',
+      description: errorMessage,
+      color: 'error'
+    })
+  } finally {
+    isResending.value = false
+  }
 }
 </script>
 
@@ -96,6 +128,8 @@ async function resendVerification() {
         </p>
         <UButton
           variant="soft"
+          :loading="isResending"
+          :disabled="isResending"
           @click="resendVerification"
         >
           Resend Verification Email
