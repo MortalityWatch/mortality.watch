@@ -66,8 +66,11 @@ export async function validateMetadata(
       skipEmptyLines: true
     })
 
+    // Log CSV parsing errors but don't fail immediately
+    // Some rows may be corrupt but others valid
     if (parsed.errors.length > 0) {
-      throw new Error(`CSV parsing errors: ${JSON.stringify(parsed.errors)}`)
+      console.warn(`CSV parsing warnings: ${parsed.errors.length} errors found`)
+      console.warn('Sample errors:', parsed.errors.slice(0, 3))
     }
 
     // Validate each row with Zod
@@ -171,8 +174,11 @@ export async function validateMortalityData(
       newline: '\n'
     })
 
+    // Log CSV parsing errors but don't fail immediately
+    // Some rows may be corrupt but others valid
     if (parsed.errors.length > 0) {
-      throw new Error(`CSV parsing errors: ${JSON.stringify(parsed.errors)}`)
+      console.warn(`Mortality data CSV parsing warnings for ${cacheKey}: ${parsed.errors.length} errors found`)
+      console.warn('Sample errors:', parsed.errors.slice(0, 3))
     }
 
     // Validate each row with Zod (but be lenient)
