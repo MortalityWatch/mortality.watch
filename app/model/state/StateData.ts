@@ -78,6 +78,7 @@ export class StateData {
   private _showLabels: boolean = true
   private _showPercentage: boolean = false
   private _isLogarithmic: boolean = false
+  private _showZScores: boolean = false
 
   /**
    * User customization:
@@ -307,6 +308,14 @@ export class StateData {
 
   set showPercentage(value: boolean) {
     this._showPercentage = value
+  }
+
+  get showZScores(): boolean {
+    return this._showZScores
+  }
+
+  set showZScores(value: boolean) {
+    this._showZScores = value
   }
 
   get isLogarithmic(): boolean {
