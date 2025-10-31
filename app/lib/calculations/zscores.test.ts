@@ -31,10 +31,10 @@ describe('getMean', () => {
 describe('getStdDev', () => {
   it('calculates standard deviation', () => {
     // Known values: [2, 4, 4, 4, 5, 5, 7, 9]
-    // Mean = 5, StdDev = 2
+    // Mean = 5, Sample StdDev ≈ 2.138 (using n-1)
     const values = [2, 4, 4, 4, 5, 5, 7, 9]
     const result = getStdDev(values)
-    expect(result).toBeCloseTo(2, 1)
+    expect(result).toBeCloseTo(2.138, 2)
   })
 
   it('handles empty array', () => {
@@ -49,7 +49,7 @@ describe('getStdDev', () => {
     const values = [2, 4, 4, 4, 5, 5, 7, 9]
     const mean = 5
     const result = getStdDev(values, mean)
-    expect(result).toBeCloseTo(2, 1)
+    expect(result).toBeCloseTo(2.138, 2)
   })
 
   it('handles identical values', () => {
@@ -137,16 +137,16 @@ describe('calculateExcessZScores', () => {
 
   it('calculates with baseline variation', () => {
     const observed = [110, 120, 105, 130]
-    const baseline = [95, 100, 100, 105, 100] // mean=100, stddev~3.54
+    const baseline = [95, 100, 100, 105, 100] // mean=100, sample stddev≈3.536
 
     const zscores = calculateExcessZScores(observed, baseline)
 
-    // Excess: [10, 20, 5, 30]
-    // z = excess / 3.54
-    expect(zscores[0]).toBeCloseTo(2.83, 0) // 10/3.54 ~ 2.83
-    expect(zscores[1]).toBeCloseTo(5.65, 0) // 20/3.54 ~ 5.65
-    expect(zscores[2]).toBeCloseTo(1.41, 0) // 5/3.54 ~ 1.41
-    expect(zscores[3]).toBeCloseTo(8.48, 0) // 30/3.54 ~ 8.48
+    // Excess: observed[i] - baseline[i] = [15, 20, 5, 25] (baseline[3]=105, baseline[4] not used)
+    // z = excess / 3.536
+    expect(zscores[0]).toBeCloseTo(4.24, 1) // 15/3.536 ≈ 4.24
+    expect(zscores[1]).toBeCloseTo(5.66, 1) // 20/3.536 ≈ 5.66
+    expect(zscores[2]).toBeCloseTo(1.41, 1) // 5/3.536 ≈ 1.41
+    expect(zscores[3]).toBeCloseTo(7.07, 1) // 25/3.536 ≈ 7.07
   })
 
   it('handles negative excess (below baseline)', () => {
