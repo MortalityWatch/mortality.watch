@@ -63,7 +63,7 @@ export function calculateZScores(
   if (stddev === 0) {
     // All baseline values are identical
     // Return 0 for values equal to mean, large positive/negative for deviations
-    return dataValues.map(val => {
+    return dataValues.map((val) => {
       if (val === mean) return 0
       return val > mean ? 999 : -999
     })
@@ -108,7 +108,7 @@ export function calculateExcessZScores(
 
   // Handle edge case: zero standard deviation
   if (baselineStdDev === 0) {
-    return excessValues.map(val => {
+    return excessValues.map((val) => {
       if (val === 0) return 0
       return val > 0 ? 999 : -999
     })
