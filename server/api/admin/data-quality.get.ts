@@ -1,7 +1,7 @@
-import { requireAdmin } from '~/server/utils/auth'
-import { dataLoader } from '~/app/lib/dataLoader'
+import { requireAdmin } from '#auth'
+import { dataLoader } from '@/lib/dataLoader'
 import Papa from 'papaparse'
-import type { CountryRaw } from '~/app/model/country'
+import type { CountryRaw } from '@/model/country'
 
 /**
  * Admin API: Get data quality and freshness report

@@ -9,13 +9,13 @@
  * - Or use Nitro's scheduled tasks when available
  */
 
-import { dataLoader } from '~/app/lib/dataLoader'
-import { sendEmail } from '../utils/email'
-import { db } from '../utils/db'
+import { dataLoader } from '@/lib/dataLoader'
+import { sendEmail } from '#email'
+import { db } from '#db-connection'
 import { users } from '#db'
 import { eq } from 'drizzle-orm'
 import Papa from 'papaparse'
-import type { CountryRaw } from '~/app/model/country'
+import type { CountryRaw } from '@/model/country'
 
 const STALE_THRESHOLD_DAYS = 14
 
