@@ -3,8 +3,6 @@ import { db, users } from '#db'
 import { eq } from 'drizzle-orm'
 import {
   hashPassword,
-  generateToken,
-  setAuthToken,
   generateRandomToken
 } from '../../utils/auth'
 import { sendVerificationEmail } from '../../utils/email'
@@ -15,8 +13,8 @@ const registerSchema = z.object({
     .string()
     .min(8, 'Password must be at least 8 characters')
     .max(100, 'Password is too long'),
-  firstName: z.string().min(1, 'First name is required').max(50, 'First name is too long'),
-  lastName: z.string().min(1, 'Last name is required').max(50, 'Last name is too long'),
+  firstName: z.string().max(50, 'First name is too long').optional().default(''),
+  lastName: z.string().max(50, 'Last name is too long').optional().default(''),
   tosAccepted: z.boolean().refine(val => val === true, {
     message: 'You must accept the Terms of Service and Privacy Policy'
   })
@@ -67,8 +65,8 @@ export default defineEventHandler(async (event) => {
     Date.now() + 24 * 60 * 60 * 1000
   ) // 24 hours
 
-  // Create full name for legacy compatibility
-  const fullName = `${firstName} ${lastName}`
+  // Create full name for legacy compatibility (empty if no names provided)
+  const fullName = [firstName, lastName].filter(Boolean).join(' ').trim() || null
 
   // Create user with tier 1 (registered, free)
   const newUser = await db
@@ -89,16 +87,16 @@ export default defineEventHandler(async (event) => {
     .returning()
     .get()
 
-  // Generate JWT token
-  const token = generateToken({
-    userId: newUser.id,
-    email: newUser.email,
-    tier: newUser.tier,
-    role: newUser.role
-  })
+  // Don't generate token yet - user must verify email first
+  // const token = generateToken({
+  //   userId: newUser.id,
+  //   email: newUser.email,
+  //   tier: newUser.tier,
+  //   role: newUser.role
+  // })
 
-  // Set cookie
-  setAuthToken(event, token)
+  // Don't set cookie - user must verify email first
+  // setAuthToken(event, token)
 
   // Send verification email (don't await - send in background)
   sendVerificationEmail(newUser.email, verificationToken).catch((error) => {
@@ -112,6 +110,7 @@ export default defineEventHandler(async (event) => {
   return {
     success: true,
     user: userWithoutPassword,
-    message: 'Account created successfully'
+    message: 'Account created successfully. Please check your email to verify your account.',
+    requiresVerification: true
   }
 })

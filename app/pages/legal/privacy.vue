@@ -21,11 +21,11 @@
               Privacy Policy explains how we collect, use, disclose, and safeguard your information
               when you use our website and services at
               <ULink
-                to="https://staging.mortality.watch"
+                :to="siteUrl"
                 target="_blank"
                 class="text-primary hover:underline"
               >
-                staging.mortality.watch
+                {{ siteDomain }}
               </ULink>
               (the "Service").
             </p>
@@ -458,6 +458,10 @@
 </template>
 
 <script setup lang="ts">
+const config = useRuntimeConfig()
+const siteUrl = config.public.siteUrl || 'https://www.mortality.watch'
+const siteDomain = siteUrl.replace(/^https?:\/\//, '')
+
 // Page metadata
 definePageMeta({
   title: 'Privacy Policy'

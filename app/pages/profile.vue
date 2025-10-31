@@ -542,6 +542,7 @@ async function changePassword() {
 
     <!-- Delete Account Modal -->
     <DeleteAccountModal
+      v-if="showDeleteModal"
       :open="showDeleteModal"
       @close="showDeleteModal = false"
       @deleted="handleAccountDeleted"

@@ -3,7 +3,7 @@
     <AppLogo class="w-auto h-4 shrink-0" />
   </USeparator>
 
-  <UFooter :ui="{ top: 'border-b border-default' }">
+  <UFooter :ui="{ top: 'border-b border-default', left: 'lg:flex-initial', right: 'lg:flex-initial' }">
     <template #left>
       <p class="text-muted text-sm">
         © {{ new Date().getFullYear() }} MortalityWatch. Open data for public health.
@@ -12,7 +12,7 @@
           to="/donate"
           class="text-muted hover:text-default"
         >
-          Support us
+          Support Us
         </ULink>
         <span class="mx-1">·</span>
         <ULink

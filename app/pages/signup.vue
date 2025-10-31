@@ -13,22 +13,10 @@ useSeoMeta({
 
 const { signUp } = useAuth()
 const router = useRouter()
-const toast = useToast()
 const { formError, handleAuthError, clearError } = useAuthError()
+const tosAccepted = ref(false)
 
 const fields = [{
-  name: 'firstName',
-  type: 'text' as const,
-  label: 'First Name',
-  placeholder: 'Enter your first name',
-  required: true
-}, {
-  name: 'lastName',
-  type: 'text' as const,
-  label: 'Last Name',
-  placeholder: 'Enter your last name',
-  required: true
-}, {
   name: 'email',
   type: 'text' as const,
   label: 'Email',
@@ -43,14 +31,6 @@ const fields = [{
 }]
 
 const schema = z.object({
-  firstName: z.preprocess(
-    val => val || '',
-    z.string().min(1, 'First name is required').max(50, 'First name is too long')
-  ),
-  lastName: z.preprocess(
-    val => val || '',
-    z.string().min(1, 'Last name is required').max(50, 'Last name is too long')
-  ),
   email: z.preprocess(
     val => val || '',
     z.string().min(1, 'Email is required').email('Invalid email')
@@ -58,10 +38,7 @@ const schema = z.object({
   password: z.preprocess(
     val => val || '',
     z.string().min(1, 'Password is required').min(8, 'Must be at least 8 characters')
-  ),
-  tosAccepted: z.boolean().refine(val => val === true, {
-    message: 'You must accept the Terms of Service and Privacy Policy'
-  })
+  )
 })
 
 type Schema = z.output<typeof schema>
@@ -69,16 +46,20 @@ type Schema = z.output<typeof schema>
 const onSubmit = async (event: FormSubmitEvent<Schema>) => {
   clearError()
 
+  // Validate TOS acceptance
+  if (!tosAccepted.value) {
+    formError.value = 'You must accept the Terms of Service and Privacy Policy'
+    return
+  }
+
   try {
-    await signUp(event.data.email, event.data.password, event.data.firstName, event.data.lastName, event.data.tosAccepted)
-    toast.add({
-      title: 'Welcome to Mortality Watch!',
-      description: `Your account has been created, ${event.data.firstName}. You're now signed in.`,
-      color: 'success'
+    const _response = await signUp(event.data.email, event.data.password, '', '', tosAccepted.value)
+
+    // Redirect to verification page with email
+    await router.push({
+      path: '/check-email',
+      query: { email: event.data.email }
     })
-    // Small delay to let user see they're signed in
-    await new Promise(resolve => setTimeout(resolve, 500))
-    await router.push('/')
   } catch (error: unknown) {
     handleAuthError(error, 'signup')
   }
@@ -115,11 +96,10 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
       <template #validation>
         <UFormField
           name="tosAccepted"
-          :required="true"
         >
           <UCheckbox
+            v-model="tosAccepted"
             name="tosAccepted"
-            :required="true"
           >
             <template #label>
               <span class="text-sm">
