@@ -272,17 +272,15 @@ describe('explorerSchema', () => {
       expect(result.success).toBe(true)
     })
 
-    it('should reject baseline overlapping data period', () => {
+    it('should allow baseline overlapping data period', () => {
       const state = createValidState()
       state.showBaseline = true
       state.baselineDateFrom = '2020'
       state.baselineDateTo = '2021'
       state.dateFrom = '2020'
       const result = explorerStateSchema.safeParse(state)
-      expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.error.issues[0]?.message).toContain('Baseline period must be before data period')
-      }
+      // Baseline can overlap with data period as baselines often use historical data
+      expect(result.success).toBe(true)
     })
   })
 

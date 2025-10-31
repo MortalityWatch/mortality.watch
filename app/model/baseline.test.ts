@@ -55,9 +55,9 @@ describe('baseline', () => {
         expect(defaultBaselineFromDate('weekly', labels, 'naive')).toBe('2019 W01')
       })
 
-      it('should return first label if 2019 format not in labels', () => {
+      it('should return calculated 2019 W01 even if not in labels', () => {
         const labels = ['2010 W01', '2011 W01']
-        expect(defaultBaselineFromDate('weekly', labels, 'naive')).toBe('2010 W01')
+        expect(defaultBaselineFromDate('weekly', labels, 'naive')).toBe('2019 W01')
       })
     })
 
@@ -67,9 +67,9 @@ describe('baseline', () => {
         expect(defaultBaselineFromDate('monthly', labels, 'mean')).toBe('2016 Jan')
       })
 
-      it('should return first label if 2016 format not in labels', () => {
+      it('should return calculated 2016 Jan even if not in labels', () => {
         const labels = ['2010 Jan', '2012 Jan']
-        expect(defaultBaselineFromDate('monthly', labels, 'mean')).toBe('2010 Jan')
+        expect(defaultBaselineFromDate('monthly', labels, 'mean')).toBe('2016 Jan')
       })
     })
 
@@ -91,8 +91,8 @@ describe('baseline', () => {
         expect(defaultBaselineFromDate('yearly', labels, 'exp')).toBe('2000')
       })
 
-      it('should return undefined for empty labels', () => {
-        expect(defaultBaselineFromDate('yearly', [], 'exp')).toBeUndefined()
+      it('should return 2015 for empty labels (fallback)', () => {
+        expect(defaultBaselineFromDate('yearly', [], 'exp')).toBe('2015')
       })
     })
 
@@ -102,8 +102,8 @@ describe('baseline', () => {
         expect(defaultBaselineFromDate('yearly', labels, 'unknown')).toBe('2012')
       })
 
-      it('should return undefined if labels empty', () => {
-        expect(defaultBaselineFromDate('yearly', [], 'unknown')).toBeUndefined()
+      it('should return 2015 if labels empty (fallback)', () => {
+        expect(defaultBaselineFromDate('yearly', [], 'unknown')).toBe('2015')
       })
     })
 
@@ -172,21 +172,22 @@ describe('baseline', () => {
   })
 
   describe('edge cases', () => {
-    it('should return undefined for empty label arrays', () => {
-      expect(defaultBaselineFromDate('weekly', [], 'naive')).toBeUndefined()
-      expect(defaultBaselineFromDate('monthly', [], 'mean')).toBeUndefined()
-      expect(defaultBaselineFromDate('yearly', [], 'lin_reg')).toBeUndefined()
+    it('should return 2015 fallback for empty label arrays', () => {
+      // When labels are empty, baselineStartYear returns 2015 fallback
+      expect(defaultBaselineFromDate('weekly', [], 'naive')).toBe('2015 W01')
+      expect(defaultBaselineFromDate('monthly', [], 'mean')).toBe('2015 Jan')
+      expect(defaultBaselineFromDate('yearly', [], 'lin_reg')).toBe('2015')
     })
 
-    it('should return first label when calculated baseline not in labels', () => {
+    it('should return calculated baseline even when not in labels', () => {
       const labels = ['invalid', 'data']
       const result = defaultBaselineFromDate('yearly', labels, 'exp')
-      expect(result).toBe('invalid') // Returns first label when '2000' not in array
+      expect(result).toBe('2000') // Returns calculated year, not first label
     })
 
-    it('should return first label when baseline year not in labels', () => {
+    it('should return calculated baseline year even when not in labels', () => {
       const labels = ['2020 W01']
-      expect(defaultBaselineFromDate('weekly', labels, 'naive')).toBe('2020 W01')
+      expect(defaultBaselineFromDate('weekly', labels, 'naive')).toBe('2019 W01')
     })
 
     it('should return calculated baseline when it exists in labels', () => {
