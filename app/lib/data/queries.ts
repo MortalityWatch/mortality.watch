@@ -1,4 +1,3 @@
-import Papa from 'papaparse'
 import {
   CountryData,
   Country,
@@ -7,6 +6,7 @@ import {
 } from '~/model'
 import { dataLoader } from '../dataLoader'
 import { metadataCache } from '../cache/metadataCache'
+import { validateMetadata, validateMortalityData } from './validation'
 
 const errHandler = (err: string) => console.error(err)
 
@@ -23,23 +23,38 @@ export const loadCountryMetadataFlat = async (options?: {
     return cached
   }
 
-  // Cache miss - fetch and parse
-  const text = await dataLoader.fetchMetadata()
-  const rawObjects = Papa.parse(text, {
-    header: true,
-    skipEmptyLines: true
-  }).data as CountryRaw[]
+  // Cache miss - fetch and parse with validation
+  try {
+    const text = await dataLoader.fetchMetadata()
 
-  // Filter by specified countries if provided
-  const filterCountries = options?.filterCountries || []
-  const result = filterCountries.length > 0
-    ? rawObjects.filter(obj => filterCountries.includes(obj.iso3c))
-    : rawObjects
+    // Validate data with fallback support
+    const validationResult = await validateMetadata(text)
 
-  // Store in cache
-  metadataCache.setFlat(result, options?.filterCountries)
+    if (!validationResult.success || !validationResult.data) {
+      throw new Error('Metadata validation failed and no cache available')
+    }
 
-  return result
+    // Log if we used cached data due to validation failure
+    if (validationResult.usedCache) {
+      console.warn('Using cached metadata due to validation failure')
+    }
+
+    const rawObjects = validationResult.data
+
+    // Filter by specified countries if provided
+    const filterCountries = options?.filterCountries || []
+    const result = filterCountries.length > 0
+      ? rawObjects.filter(obj => filterCountries.includes(obj.iso3c))
+      : rawObjects
+
+    // Store in cache
+    metadataCache.setFlat(result, options?.filterCountries)
+
+    return result
+  } catch (error) {
+    console.error('Error loading metadata:', error)
+    throw error
+  }
 }
 
 /**
@@ -55,38 +70,56 @@ export const loadCountryMetadata = async (options?: {
     return cached
   }
 
-  // Cache miss - fetch and parse
-  const text = await dataLoader.fetchMetadata()
-  const rawObjects = Papa.parse(text, { header: true }).data as unknown[]
-  const data: Record<string, Country> = {}
+  // Cache miss - fetch and parse with validation
+  try {
+    const text = await dataLoader.fetchMetadata()
 
-  // Get dev countries filter from options
-  const filterCountries = options?.filterCountries || []
+    // Validate data with fallback support
+    const validationResult = await validateMetadata(text)
 
-  for (const rawObj of rawObjects) {
-    const typedObj = rawObj as Record<string, unknown>
-    if (!typedObj.iso3c) continue
-
-    const parsedObj = new Country(rawObj as CountryRaw)
-    const iso = parsedObj.iso3c
-
-    // Filter by specified countries if provided
-    if (filterCountries.length > 0 && !filterCountries.includes(iso)) {
-      continue
+    if (!validationResult.success || !validationResult.data) {
+      throw new Error('Metadata validation failed and no cache available')
     }
 
-    if (!data[iso]) data[iso] = parsedObj
-    else
-      data[iso].data_source = [
-        ...data[iso].data_source,
-        ...parsedObj.data_source
-      ]
+    // Log if we used cached data due to validation failure
+    if (validationResult.usedCache) {
+      console.warn('Using cached metadata due to validation failure')
+    }
+
+    const rawObjects = validationResult.data
+    const data: Record<string, Country> = {}
+
+    // Get dev countries filter from options
+    const filterCountries = options?.filterCountries || []
+
+    for (const rawObj of rawObjects) {
+      const typedObj = rawObj as Record<string, unknown>
+      if (!typedObj.iso3c) continue
+
+      const parsedObj = new Country(rawObj as CountryRaw)
+      const iso = parsedObj.iso3c
+
+      // Filter by specified countries if provided
+      if (filterCountries.length > 0 && !filterCountries.includes(iso)) {
+        continue
+      }
+
+      if (!data[iso]) data[iso] = parsedObj
+      else
+        data[iso].data_source = [
+          ...data[iso].data_source,
+          ...parsedObj.data_source
+        ]
+    }
+
+    // Store in cache
+    metadataCache.set(data, options?.filterCountries)
+
+    return data
+  } catch (error) {
+    console.error('Error loading metadata:', error)
+    throw error
   }
-
-  // Store in cache
-  metadataCache.set(data, options?.filterCountries)
-
-  return data
 }
 
 /**
@@ -99,17 +132,28 @@ export const fetchData = async (
 ): Promise<CountryData[]> => {
   try {
     const rawData = await dataLoader.fetchData(country, chartType, ageGroup)
-    const rawObjects = Papa.parse(rawData, {
-      header: true,
-      delimiter: ',',
-      newline: '\n'
-    }).data
+
+    // Validate data with fallback support
+    const validationResult = await validateMortalityData(rawData, country, chartType, ageGroup)
+
+    if (!validationResult.success || !validationResult.data) {
+      throw new Error(`Mortality data validation failed for ${country}/${chartType}/${ageGroup}`)
+    }
+
+    // Log if we used cached data due to validation failure
+    if (validationResult.usedCache) {
+      console.warn(`Using cached data for ${country}/${chartType}/${ageGroup} due to validation failure`)
+    }
+
+    const rawObjects = validationResult.data
     const data: CountryData[] = []
+
     for (const rawObj of rawObjects) {
       const parsedObj = new CountryData(rawObj as CountryDataRaw, ageGroup, chartType)
       if (!parsedObj.iso3c) continue
       data.push(parsedObj)
     }
+
     return data
   } catch (error) {
     console.error(`Error fetching ${country}/${chartType}/${ageGroup}:`, error)

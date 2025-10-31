@@ -44,6 +44,12 @@ const quickActions = [
     icon: 'i-lucide-star',
     to: '/admin/featured-charts',
     description: 'Manage featured charts'
+  },
+  {
+    label: 'Data Quality',
+    icon: 'i-lucide-activity',
+    to: '/admin/data-quality',
+    description: 'Monitor data freshness and quality'
   }
 ]
 </script>
