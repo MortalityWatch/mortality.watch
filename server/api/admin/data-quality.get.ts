@@ -1,4 +1,4 @@
-import { requireAdmin } from '#auth'
+// requireAdmin is auto-imported from server/utils/auth.ts
 import { dataLoader } from '@/lib/dataLoader'
 import Papa from 'papaparse'
 import type { CountryRaw } from '@/model/country'
