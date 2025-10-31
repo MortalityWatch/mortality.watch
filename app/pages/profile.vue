@@ -50,6 +50,8 @@ const passwordState = reactive({
 const savingProfile = ref(false)
 const savingPassword = ref(false)
 const deletingAccount = ref(false)
+const showDeleteModal = ref(false)
+const exportingData = ref(false)
 
 // Initialize profile form with user data
 watch(user, (newUser) => {
@@ -80,28 +82,46 @@ async function saveProfile() {
   }
 }
 
-async function deleteAccount() {
-  if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-    return
-  }
-
-  deletingAccount.value = true
+async function exportData() {
+  exportingData.value = true
   try {
-    await $fetch('/api/user/account', {
-      method: 'DELETE'
+    const response = await $fetch('/api/user/export-data', {
+      method: 'GET'
     })
+
+    // Convert response to JSON blob and download
+    const blob = new Blob([JSON.stringify(response, null, 2)], {
+      type: 'application/json'
+    })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `mortality-watch-data-export-${Date.now()}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+
     toast.add({
-      title: 'Account deleted',
-      description: 'Your account has been permanently deleted',
+      title: 'Data exported',
+      description: 'Your data has been downloaded as a JSON file',
       color: 'success'
     })
-    // Sign out and redirect
-    await signOut()
   } catch (error: unknown) {
-    handleError(error, 'Failed to delete account', 'deleteAccount')
+    handleError(error, 'Failed to export data', 'exportData')
   } finally {
-    deletingAccount.value = false
+    exportingData.value = false
   }
+}
+
+function openDeleteModal() {
+  showDeleteModal.value = true
+}
+
+async function handleAccountDeleted() {
+  showDeleteModal.value = false
+  // Sign out and redirect
+  await signOut()
 }
 
 async function changePassword() {
@@ -386,6 +406,54 @@ async function changePassword() {
         </form>
       </UCard>
 
+      <!-- Data & Privacy -->
+      <UCard>
+        <template #header>
+          <div>
+            <h2 class="text-xl font-semibold">
+              Data & Privacy
+            </h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Manage your personal data and privacy
+            </p>
+          </div>
+        </template>
+
+        <div class="space-y-6">
+          <div class="p-4 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-200 dark:border-blue-800">
+            <div class="flex items-start gap-3 mb-3">
+              <UIcon
+                name="i-lucide-download"
+                class="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0"
+              />
+              <div>
+                <h3 class="text-base font-semibold text-blue-900 dark:text-blue-200 mb-2">
+                  Export Your Data
+                </h3>
+                <div class="text-sm text-blue-800 dark:text-blue-300 space-y-2">
+                  <p>
+                    Download a copy of all your personal data in JSON format (GDPR Article 15).
+                  </p>
+                  <p>
+                    This includes your profile, saved charts, and subscription history.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <UButton
+              color="primary"
+              variant="soft"
+              icon="i-lucide-download"
+              :loading="exportingData"
+              :disabled="exportingData"
+              @click="exportData"
+            >
+              Export My Data
+            </UButton>
+          </div>
+        </div>
+      </UCard>
+
       <!-- Danger Zone -->
       <UCard>
         <template #header>
@@ -441,8 +509,11 @@ async function changePassword() {
                     <li>All saved charts and visualizations</li>
                     <li>Account preferences and settings</li>
                     <li>Account history and activity</li>
-                    <li>Any subscription or payment history</li>
+                    <li>Sessions and login history</li>
                   </ul>
+                  <p class="text-xs mt-2">
+                    Note: Payment records will be anonymized but retained for legal compliance.
+                  </p>
                 </div>
               </div>
             </div>
@@ -451,7 +522,7 @@ async function changePassword() {
               icon="i-lucide-trash-2"
               :loading="deletingAccount"
               :disabled="deletingAccount"
-              @click="deleteAccount"
+              @click="openDeleteModal"
             >
               Delete Account Permanently
             </UButton>
@@ -468,5 +539,12 @@ async function changePassword() {
         Loading profile...
       </p>
     </div>
+
+    <!-- Delete Account Modal -->
+    <DeleteAccountModal
+      :open="showDeleteModal"
+      @close="showDeleteModal = false"
+      @deleted="handleAccountDeleted"
+    />
   </div>
 </template>
