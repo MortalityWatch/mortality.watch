@@ -7,7 +7,7 @@
 
 import { z } from 'zod'
 import Papa from 'papaparse'
-import type { CountryRaw, CountryDataRaw } from '~/app/model/country'
+import type { CountryRaw, CountryDataRaw } from '@/model/country'
 
 // Zod schema for country metadata validation
 const CountryRawSchema = z.object({
@@ -83,7 +83,7 @@ export async function validateMetadata(
       } else {
         errors.push({
           row: i + 1,
-          errors: result.error.errors
+          errors: result.error.issues
         })
       }
     }
@@ -188,7 +188,7 @@ export async function validateMortalityData(
       } else {
         errors.push({
           row: i + 1,
-          errors: result.error.errors
+          errors: result.error.issues
         })
       }
     }

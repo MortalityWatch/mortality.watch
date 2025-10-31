@@ -1,5 +1,5 @@
-import { requireAdmin } from '~/server/utils/auth'
-import { checkDataStaleness } from '~/server/tasks/check-data-staleness'
+import { requireAdmin } from '#auth'
+import { checkDataStaleness } from '../../tasks/check-data-staleness'
 
 /**
  * Admin API: Manually trigger data staleness check

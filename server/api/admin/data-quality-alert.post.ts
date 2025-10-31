@@ -1,5 +1,5 @@
-import { sendEmail } from '~/server/utils/email'
-import { db } from '~/server/utils/db'
+import { sendEmail } from '#email'
+import { db } from '#db-connection'
 import { users } from '#db'
 import { eq } from 'drizzle-orm'
 
@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Send email to each admin
-    const emailPromises = admins.map(async (admin) => {
+    const emailPromises = admins.map(async (admin: typeof users.$inferSelect) => {
       const html = `
         <!DOCTYPE html>
         <html>
