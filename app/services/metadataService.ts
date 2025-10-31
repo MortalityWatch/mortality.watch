@@ -8,6 +8,7 @@
 
 import Papa from 'papaparse'
 import { dataLoader } from '@/lib/dataLoader'
+import { getSeasonString } from '@/model/baseline'
 
 export interface MetadataEntry {
   iso3c: string
@@ -136,26 +137,58 @@ export class MetadataService {
     const dataType = this.chartTypeToDataType(chartType)
 
     // Find matching entries
-    const entries = this.metadata.filter(e =>
+    let entries = this.metadata.filter(e =>
       countries.includes(e.iso3c)
       && e.type === dataType
       && ageGroups.some(ag => e.ageGroups.includes(ag))
     )
 
+    // Fallback: For yearly/fluseason/midyear (type 1), also check weekly data (type 3)
+    // since we can calculate yearly aggregates from weekly data
+    if (dataType === '1') {
+      const weeklyEntries = this.metadata.filter(e =>
+        countries.includes(e.iso3c)
+        && e.type === '3'
+        && ageGroups.some(ag => e.ageGroups.includes(ag))
+      )
+      entries = [...entries, ...weeklyEntries]
+    }
+
     if (entries.length === 0) return null
 
-    // Intersection: latest start, earliest end
-    const minDate = entries.reduce((max, e) =>
-      e.minDate > max ? e.minDate : max,
+    // Union: earliest start, latest end (show maximum available range across all countries)
+    const minDate = entries.reduce((min, e) =>
+      e.minDate < min ? e.minDate : min,
     entries[0]!.minDate
     )
 
-    const maxDate = entries.reduce((min, e) =>
-      e.maxDate < min ? e.maxDate : min,
+    const maxDate = entries.reduce((max, e) =>
+      e.maxDate > max ? e.maxDate : max,
     entries[0]!.maxDate
     )
 
-    return { minDate, maxDate }
+    // Convert ISO dates to period format based on chart type
+    // For flu season/midyear, the ISO date represents the END of the period
+    // So we need to add 1 to get the season that ends in that year
+    const minYear = parseInt(minDate.substring(0, 4))
+    const maxYear = parseInt(maxDate.substring(0, 4))
+
+    const isFluSeason = chartType === 'fluseason' || chartType === 'midyear'
+    const formattedMinDate = getSeasonString(chartType, isFluSeason ? minYear + 1 : minYear)
+    const formattedMaxDate = getSeasonString(chartType, isFluSeason ? maxYear + 1 : maxYear)
+
+    console.log('[MetadataService] Date range:', {
+      rawMin: minDate,
+      rawMax: maxDate,
+      minYear,
+      maxYear,
+      formattedMin: formattedMinDate,
+      formattedMax: formattedMaxDate,
+      chartType,
+      countries
+    })
+
+    return { minDate: formattedMinDate, maxDate: formattedMaxDate }
   }
 
   /**

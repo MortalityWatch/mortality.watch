@@ -106,6 +106,8 @@ export function useDataAvailability(
   })
 
   // Auto-correct: Dates outside available range
+  // Note: For yearly/fluseason/midyear, metadata includes both type 1 (yearly) and type 3 (weekly)
+  // data ranges, since we can calculate yearly aggregates from weekly data
   watch(
     [availableDateRange, () => state.dateFrom.value, () => state.dateTo.value],
     ([range, from, to]) => {
@@ -113,11 +115,11 @@ export function useDataAvailability(
       if (!range) return
 
       let changed = false
-      if (from < range.minDate) {
+      if (from && from < range.minDate) {
         state.dateFrom.value = range.minDate
         changed = true
       }
-      if (to > range.maxDate) {
+      if (to && to > range.maxDate) {
         state.dateTo.value = range.maxDate
         changed = true
       }

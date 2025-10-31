@@ -79,7 +79,7 @@ export class StateValidation {
 
     // Reset dateTo if it's not in available labels
     if (!labels.includes(dateTo)) {
-      this.data.dateTo = undefined
+      this.data.dateTo = labels[labels.length - 1]
     }
   }
 

@@ -57,18 +57,19 @@ export function useExplorerState() {
   )
 
   // URL State - Date Range
-  const dateFrom = useUrlState<string>(
+  // Note: Defaults are undefined to let StateComputed calculate proper format based on chart type
+  const dateFrom = useUrlState<string | undefined>(
     stateFieldEncoders.dateFrom.key,
-    '2017',
-    stateFieldEncoders.dateFrom.encode,
-    stateFieldEncoders.dateFrom.decode,
+    undefined,
+    undefined,
+    undefined,
     { debounce: 300 }
   )
-  const dateTo = useUrlState<string>(
+  const dateTo = useUrlState<string | undefined>(
     stateFieldEncoders.dateTo.key,
-    '2023',
-    stateFieldEncoders.dateTo.encode,
-    stateFieldEncoders.dateTo.decode,
+    undefined,
+    undefined,
+    undefined,
     { debounce: 300 }
   )
   const sliderStart = useUrlState(
@@ -77,17 +78,14 @@ export function useExplorerState() {
   )
 
   // URL State - Baseline
-  const baselineDateFrom = useUrlState<string>(
+  // Note: Defaults are undefined to let StateComputed calculate proper format based on chart type
+  const baselineDateFrom = useUrlState<string | undefined>(
     stateFieldEncoders.baselineDateFrom.key,
-    '2017',
-    stateFieldEncoders.baselineDateFrom.encode,
-    stateFieldEncoders.baselineDateFrom.decode
+    undefined
   )
-  const baselineDateTo = useUrlState<string>(
+  const baselineDateTo = useUrlState<string | undefined>(
     stateFieldEncoders.baselineDateTo.key,
-    '2019',
-    stateFieldEncoders.baselineDateTo.encode,
-    stateFieldEncoders.baselineDateTo.decode
+    undefined
   )
   const showBaseline = useUrlState<boolean>(
     stateFieldEncoders.showBaseline.key,
@@ -227,6 +225,13 @@ export function useExplorerState() {
 
       // Log validation errors for debugging
       console.warn('[useExplorerState] Validation errors:', newErrors)
+      console.warn('[useExplorerState] Current state:', {
+        dateFrom: dateFrom.value,
+        dateTo: dateTo.value,
+        baselineDateFrom: baselineDateFrom.value,
+        baselineDateTo: baselineDateTo.value,
+        chartType: chartType.value
+      })
 
       // Auto-fix: Can't show baseline in excess mode
       const excessBaselineError = newErrors.find(e =>
@@ -261,6 +266,28 @@ export function useExplorerState() {
       )
       if (populationExcessError) {
         isExcess.value = false
+        return // Exit early after auto-fix
+      }
+
+      // Auto-fix: Invalid date format for chart type
+      const dateFormatError = newErrors.find(e =>
+        e.message.includes('Date format must be')
+      )
+      if (dateFormatError) {
+        // Clear invalid dates - they will be recalculated by resetDates()
+        dateFrom.value = undefined
+        dateTo.value = undefined
+        return // Exit early after auto-fix
+      }
+
+      // Auto-fix: Baseline period must end before data period
+      const baselineBeforeDataError = newErrors.find(e =>
+        e.message.includes('Baseline period must end before data period')
+      )
+      if (baselineBeforeDataError) {
+        // Reset baseline dates - they will be recalculated
+        baselineDateFrom.value = undefined
+        baselineDateTo.value = undefined
         return // Exit early after auto-fix
       }
 
