@@ -53,7 +53,7 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
   }
 
   try {
-    const _response = await signUp(event.data.email, event.data.password, '', '', tosAccepted.value)
+    await signUp(event.data.email, event.data.password, '', '', tosAccepted.value)
 
     // Redirect to verification page with email
     await router.push({

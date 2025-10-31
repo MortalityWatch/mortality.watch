@@ -8,6 +8,29 @@ const resendSchema = z.object({
   email: z.string().email('Invalid email address')
 })
 
+// Simple in-memory rate limiter: 3 resends per hour per email
+const rateLimitMap = new Map<string, { count: number, resetAt: number }>()
+const MAX_RESENDS = 3
+const RATE_LIMIT_WINDOW = 60 * 60 * 1000 // 1 hour in milliseconds
+
+function checkRateLimit(email: string): boolean {
+  const now = Date.now()
+  const record = rateLimitMap.get(email)
+
+  if (!record || now > record.resetAt) {
+    // Reset or create new record
+    rateLimitMap.set(email, { count: 1, resetAt: now + RATE_LIMIT_WINDOW })
+    return true
+  }
+
+  if (record.count >= MAX_RESENDS) {
+    return false
+  }
+
+  record.count++
+  return true
+}
+
 export default defineEventHandler(async (event) => {
   // Parse and validate request body
   const body = await readBody(event)
@@ -21,6 +44,14 @@ export default defineEventHandler(async (event) => {
   }
 
   const { email } = result.data
+
+  // Check rate limit
+  if (!checkRateLimit(email.toLowerCase())) {
+    throw createError({
+      statusCode: 429,
+      message: 'Too many requests. Please try again in an hour.'
+    })
+  }
 
   // Find user by email
   const user = await db

@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+import { randomBytes } from 'node:crypto'
 import type { H3Event } from 'h3'
 import { db, users } from '#db'
 import { eq } from 'drizzle-orm'
@@ -149,13 +150,11 @@ export async function requireTier(event: H3Event, requiredTier: 0 | 1 | 2) {
 }
 
 /**
- * Generate a random token for email verification or password reset
+ * Generate a cryptographically secure random token for email verification or password reset
+ * @returns A 64-character hex string (32 bytes)
  */
 export function generateRandomToken(): string {
-  return (
-    Math.random().toString(36).substring(2, 15)
-    + Math.random().toString(36).substring(2, 15)
-  )
+  return randomBytes(32).toString('hex')
 }
 
 /**

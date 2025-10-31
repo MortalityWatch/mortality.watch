@@ -87,12 +87,15 @@ export default defineEventHandler(async (event) => {
     .returning()
     .get()
 
-  // Send verification email (don't await - send in background)
+  // Send verification email - await to ensure it succeeds
   // Note: Auth token is not generated until email is verified
-  sendVerificationEmail(newUser.email, verificationToken).catch((error) => {
+  try {
+    await sendVerificationEmail(newUser.email, verificationToken)
+  } catch (error) {
     console.error('Failed to send verification email:', error)
-    // Don't throw error - user is already created and signed in
-  })
+    // User is created but can use resend functionality from check-email page
+    // Still return success so they get to check-email page
+  }
 
   // Return user without password hash
   const { passwordHash: _passwordHash, ...userWithoutPassword } = newUser

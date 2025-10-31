@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { z } from 'zod'
+
 definePageMeta({
   layout: 'auth'
 })
@@ -9,9 +11,13 @@ useSeoMeta({
 })
 
 const route = useRoute()
-const email = route.query.email as string || ''
 const toast = useToast()
 const isResending = ref(false)
+
+// Validate email from URL params
+const rawEmail = route.query.email as string || ''
+const emailValidation = z.string().email().safeParse(rawEmail)
+const email = emailValidation.success ? rawEmail : ''
 
 async function resendVerification() {
   if (!email) {
@@ -63,13 +69,29 @@ async function resendVerification() {
         Check Your Email
       </h1>
 
-      <p class="text-muted text-lg">
+      <p
+        v-if="email"
+        class="text-muted text-lg"
+      >
         We've sent a verification link to
       </p>
 
-      <p class="text-default font-semibold text-lg mt-2">
+      <p
+        v-if="email"
+        class="text-default font-semibold text-lg mt-2"
+      >
         {{ email }}
       </p>
+
+      <UAlert
+        v-if="!email"
+        color="error"
+        variant="soft"
+        title="No email address provided"
+        description="Please sign up or provide a valid email address"
+        icon="i-lucide-alert-circle"
+        class="mt-4"
+      />
     </div>
 
     <div class="max-w-md mx-auto space-y-6">
