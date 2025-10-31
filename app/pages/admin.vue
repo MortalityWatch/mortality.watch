@@ -40,6 +40,12 @@ const stats = ref([
 
 const quickActions = [
   {
+    label: 'Business Metrics',
+    icon: 'i-lucide-bar-chart-3',
+    to: '/admin/metrics',
+    description: 'View KPIs, revenue, and conversions'
+  },
+  {
     label: 'Featured Charts',
     icon: 'i-lucide-star',
     to: '/admin/featured-charts',
