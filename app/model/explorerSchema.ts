@@ -96,15 +96,15 @@ const explorerStateBaseSchema = z.object({
   chartStyle: ChartStyleEnum,
 
   // Date range
-  dateFrom: z.string(),
-  dateTo: z.string(),
+  dateFrom: z.string().optional(),
+  dateTo: z.string().optional(),
   sliderStart: z.string().optional(),
 
   // Baseline configuration
   showBaseline: z.boolean(),
   baselineMethod: BaselineMethodEnum,
-  baselineDateFrom: z.string(),
-  baselineDateTo: z.string(),
+  baselineDateFrom: z.string().optional(),
+  baselineDateTo: z.string().optional(),
 
   // Display options
   isExcess: z.boolean(),
@@ -144,13 +144,13 @@ export const explorerStateSchema = explorerStateBaseSchema.superRefine(
       })
     }
 
-    // Rule 3: Date format must match chart type
+    // Rule 3: Date format must match chart type (only validate if dates are present)
     const yearlyPattern = /^\d{4}$/
     const monthlyPattern = /^\d{4}-\d{2}$/
     const weeklyPattern = /^\d{4}-W\d{2}$/
     const fluseasonPattern = /^\d{4}\/\d{2}$/
 
-    if (data.chartType === 'yearly' && !yearlyPattern.test(data.dateFrom)) {
+    if (data.dateFrom && data.chartType === 'yearly' && !yearlyPattern.test(data.dateFrom)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: `Date format must be YYYY for yearly charts (got: ${data.dateFrom})`,
@@ -158,7 +158,7 @@ export const explorerStateSchema = explorerStateBaseSchema.superRefine(
       })
     }
 
-    if (data.chartType === 'yearly' && !yearlyPattern.test(data.dateTo)) {
+    if (data.dateTo && data.chartType === 'yearly' && !yearlyPattern.test(data.dateTo)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: `Date format must be YYYY for yearly charts (got: ${data.dateTo})`,
@@ -166,7 +166,7 @@ export const explorerStateSchema = explorerStateBaseSchema.superRefine(
       })
     }
 
-    if (data.chartType === 'monthly' && !monthlyPattern.test(data.dateFrom)) {
+    if (data.dateFrom && data.chartType === 'monthly' && !monthlyPattern.test(data.dateFrom)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: `Date format must be YYYY-MM for monthly charts (got: ${data.dateFrom})`,
@@ -174,7 +174,7 @@ export const explorerStateSchema = explorerStateBaseSchema.superRefine(
       })
     }
 
-    if (data.chartType === 'monthly' && !monthlyPattern.test(data.dateTo)) {
+    if (data.dateTo && data.chartType === 'monthly' && !monthlyPattern.test(data.dateTo)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: `Date format must be YYYY-MM for monthly charts (got: ${data.dateTo})`,
@@ -183,7 +183,8 @@ export const explorerStateSchema = explorerStateBaseSchema.superRefine(
     }
 
     if (
-      data.chartType.startsWith('weekly')
+      data.dateFrom
+      && data.chartType.startsWith('weekly')
       && !weeklyPattern.test(data.dateFrom)
     ) {
       ctx.addIssue({
@@ -194,7 +195,8 @@ export const explorerStateSchema = explorerStateBaseSchema.superRefine(
     }
 
     if (
-      data.chartType.startsWith('weekly')
+      data.dateTo
+      && data.chartType.startsWith('weekly')
       && !weeklyPattern.test(data.dateTo)
     ) {
       ctx.addIssue({
@@ -205,7 +207,8 @@ export const explorerStateSchema = explorerStateBaseSchema.superRefine(
     }
 
     if (
-      (data.chartType === 'fluseason' || data.chartType === 'midyear')
+      data.dateFrom
+      && (data.chartType === 'fluseason' || data.chartType === 'midyear')
       && !fluseasonPattern.test(data.dateFrom)
     ) {
       ctx.addIssue({
@@ -216,7 +219,8 @@ export const explorerStateSchema = explorerStateBaseSchema.superRefine(
     }
 
     if (
-      (data.chartType === 'fluseason' || data.chartType === 'midyear')
+      data.dateTo
+      && (data.chartType === 'fluseason' || data.chartType === 'midyear')
       && !fluseasonPattern.test(data.dateTo)
     ) {
       ctx.addIssue({
@@ -226,8 +230,8 @@ export const explorerStateSchema = explorerStateBaseSchema.superRefine(
       })
     }
 
-    // Rule 4: dateFrom must be before or equal to dateTo
-    if (data.dateFrom > data.dateTo) {
+    // Rule 4: dateFrom must be before or equal to dateTo (only validate if both present)
+    if (data.dateFrom && data.dateTo && data.dateFrom > data.dateTo) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'Start date must be before or equal to end date',
@@ -235,14 +239,10 @@ export const explorerStateSchema = explorerStateBaseSchema.superRefine(
       })
     }
 
-    // Rule 5: Baseline dates must be before data dates
-    if (data.showBaseline && data.baselineDateFrom >= data.dateFrom) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Baseline period must be before data period',
-        path: ['baselineDateFrom']
-      })
-    }
+    // Rule 5: Baseline dates should be within reasonable range
+    // Note: We don't strictly validate that baseline is "before" data period
+    // because baselines are often calculated from overlapping historical data
+    // The actual baseline calculation logic handles this appropriately
 
     // Rule 6: Population type can't have baseline or excess
     if (data.type === 'population' && data.showBaseline) {

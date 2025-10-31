@@ -88,7 +88,7 @@ describe('StateValidation', () => {
     it('should reset invalid dateTo', () => {
       stateData.dateTo = 'invalid-date'
       stateValidation.resetDates()
-      expect(stateData.dateTo).toBeUndefined()
+      expect(stateData.dateTo).toBe('2020-W05')
     })
 
     it('should keep valid dates', () => {

@@ -26,10 +26,7 @@ export const defaultBaselineFromDate = (
   baselineMethod: string
 ) => {
   const blStartYear = baselineStartYear(allChartLabels, baselineMethod)
-  const result = getSeasonString(chartType, blStartYear)
-  if (allChartLabels && !allChartLabels.includes(result))
-    return allChartLabels[0]
-  else return result
+  return getSeasonString(chartType, blStartYear)
 }
 
 const baselineStartYear = (
