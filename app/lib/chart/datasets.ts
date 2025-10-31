@@ -96,7 +96,8 @@ export const getDatasets = (
     cumulative: config.display.cumulative,
     showTotal: config.display.showTotal,
     showCumPi: config.display.showCumPi,
-    isAsmrType: config.chart.isAsmrType
+    isAsmrType: config.chart.isAsmrType,
+    showZScores: config.display.showZScores
   }
 
   for (const ag of ags) {

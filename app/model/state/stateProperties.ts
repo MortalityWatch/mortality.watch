@@ -33,6 +33,7 @@ export interface StateProperties {
   showLabels: boolean
   showPercentage: boolean
   isLogarithmic: boolean
+  showZScores: boolean
 
   // Colors
   userColors: string[] | undefined
@@ -74,6 +75,7 @@ export function createStateProperties(defaults: Partial<StateProperties> = {}): 
     showLabels: defaults.showLabels ?? true,
     showPercentage: defaults.showPercentage ?? false,
     isLogarithmic: defaults.isLogarithmic ?? false,
+    showZScores: defaults.showZScores ?? false,
 
     // Colors
     userColors: defaults.userColors

@@ -95,7 +95,8 @@ export const getChartLabels = (
   baselineDateFrom: string,
   baselineDateTo: string,
   showTotal: boolean,
-  chartType: string
+  chartType: string,
+  showZScores?: boolean
 ): ChartLabels => {
   const title = []
   let subtitle = ''
@@ -113,13 +114,21 @@ export const getChartLabels = (
 
   if (cumulative) title.push('Cumulative')
 
-  // Get label configuration for the metric type
-  const config = LABEL_CONFIGS[type]
-  if (config) {
-    title.push(...config.getTitleParts(ag, isExcess))
-    ytitle = config.getYTitle(isExcess, cumulative)
-    if (config.getSubtitle) {
-      subtitle = config.getSubtitle(asmrTitle, showBaseline)
+  // Z-scores override standard labels
+  if (showZScores) {
+    title.push('Z-Score Analysis')
+    title.push(ag)
+    ytitle = 'Z-Score (Standard Deviations)'
+    subtitle = 'Statistical deviations from baseline mean · Values beyond ±2 are significant'
+  } else {
+    // Get label configuration for the metric type
+    const config = LABEL_CONFIGS[type]
+    if (config) {
+      title.push(...config.getTitleParts(ag, isExcess))
+      ytitle = config.getYTitle(isExcess, cumulative)
+      if (config.getSubtitle) {
+        subtitle = config.getSubtitle(asmrTitle, showBaseline)
+      }
     }
   }
 
