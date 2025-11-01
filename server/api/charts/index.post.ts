@@ -10,14 +10,16 @@ import { savedCharts } from '../../../db/schema'
  * Requires authentication (Tier 1+)
  */
 export default defineEventHandler(async (event) => {
-  // TODO: Add authentication check when auth is implemented
-  // const user = await requireAuth(event)
-  // if (!user || user.tier < 1) {
-  //   throw createError({ statusCode: 403, message: 'Registration required to save charts' })
-  // }
+  // Require authentication (Tier 1+)
+  const user = await requireAuth(event)
+  if (user.tier < 1) {
+    throw createError({
+      statusCode: 403,
+      message: 'Pro or Premium subscription required to save charts'
+    })
+  }
 
-  // For now, use a mock user ID
-  const userId = 1 // TODO: Get from authenticated user
+  const userId = user.id
 
   const body = await readBody(event)
   const { name, description, chartState, chartType, isPublic } = body
