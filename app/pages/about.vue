@@ -1,9 +1,10 @@
 <template>
   <div class="container mx-auto px-4 py-8">
     <div class="flex flex-col gap-6 text-center max-w-6xl mx-auto">
-      <h1 class="text-4xl font-bold mb-6">
-        About Mortality Watch
-      </h1>
+      <PageHeader
+        title="About Mortality Watch"
+        max-width="lg"
+      />
 
       <div class="space-y-4">
         <p class="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">

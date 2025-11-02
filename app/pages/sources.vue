@@ -191,26 +191,25 @@ useSeoMeta({
 <template>
   <div class="container mx-auto px-4 py-8">
     <div class="flex flex-col gap-6 text-center max-w-7xl mx-auto">
-      <h1 class="text-4xl font-bold mb-6">
-        Data Sources & Coverage
-      </h1>
-
-      <div class="space-y-4">
-        <p class="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
+      <PageHeader
+        title="Data Sources & Coverage"
+        max-width="xl"
+      >
+        <p>
           Mortality Watch aggregates data from official statistical offices and
           international organizations to provide comprehensive mortality statistics.
           We collect daily updates from over 100 countries and territories, ensuring
           the most current and reliable mortality data available.
         </p>
 
-        <p class="text-lg text-gray-600 dark:text-gray-400 leading-relaxed mb-6">
+        <p>
           Our dataset includes weekly, monthly, and yearly mortality data spanning
           different age groups and time periods. Each data source is carefully
           validated and updated regularly to maintain accuracy and completeness.
           Click on the tabs below to explore our data sources for deaths, population
           statistics, and standard populations used for age-adjustment.
         </p>
-      </div>
+      </PageHeader>
 
       <UCard>
         <UTabs
