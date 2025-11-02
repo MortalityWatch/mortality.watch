@@ -45,6 +45,7 @@ export const Defaults = {
   userColors: undefined as string[] | undefined,
   showLogo: true,
   showQrCode: true,
+  showCaption: true,
   decimals: 'auto'
 }
 
@@ -75,5 +76,6 @@ export const stateFieldEncoders = {
   userColors: { key: 'uc' },
   decimals: { key: 'dec' },
   showLogo: { key: 'l', encode: encodeBool, decode: decodeBool },
-  showQrCode: { key: 'qr', encode: encodeBool, decode: decodeBool }
+  showQrCode: { key: 'qr', encode: encodeBool, decode: decodeBool },
+  showCaption: { key: 'cap', encode: encodeBool, decode: decodeBool }
 }

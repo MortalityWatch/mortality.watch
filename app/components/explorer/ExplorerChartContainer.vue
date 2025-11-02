@@ -17,6 +17,7 @@ const props = defineProps<{
   isPopulationType: boolean
   showLogo: boolean
   showQrCode: boolean
+  showCaption: boolean
   decimals: string
   showLoadingOverlay: boolean
   showSizeLabel: boolean
@@ -39,6 +40,7 @@ defineExpose({
     class="chart-card"
     :class="{ 'chart-card-resizable': !isMobile(), 'chart-card-resized': props.hasBeenResized, 'chart-card-custom': props.isCustomMode }"
     :ui="{ body: 'p-0' }"
+    data-tour="chart-visualization"
   >
     <div
       ref="chartWrapperElement"
@@ -75,6 +77,7 @@ defineExpose({
         :is-population-type="props.isPopulationType"
         :show-logo="props.showLogo"
         :show-qr-code="props.showQrCode"
+        :show-caption="props.showCaption"
         :decimals="props.decimals"
       />
     </div>

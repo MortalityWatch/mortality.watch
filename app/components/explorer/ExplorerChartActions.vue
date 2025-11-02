@@ -128,6 +128,10 @@ const emit = defineEmits<{
             <div class="flex-1 text-left">
               <div class="text-sm font-medium">
                 Export as CSV
+                <FeatureBadge
+                  feature="EXPORT_DATA"
+                  class="ml-2"
+                />
               </div>
               <div class="text-xs text-gray-500 dark:text-gray-400">
                 Download data as spreadsheet
@@ -152,6 +156,10 @@ const emit = defineEmits<{
             <div class="flex-1 text-left">
               <div class="text-sm font-medium">
                 Export as JSON
+                <FeatureBadge
+                  feature="EXPORT_DATA"
+                  class="ml-2"
+                />
               </div>
               <div class="text-xs text-gray-500 dark:text-gray-400">
                 Download data as structured file
@@ -170,12 +178,16 @@ const emit = defineEmits<{
             @click="navigateTo('/signup')"
           >
             <UIcon
-              name="i-lucide-lock"
+              name="i-lucide-sheet"
               class="w-4 h-4 flex-shrink-0"
             />
             <div class="flex-1 text-left">
               <div class="text-sm font-medium">
                 Export Data
+                <FeatureBadge
+                  feature="EXPORT_DATA"
+                  class="ml-2"
+                />
               </div>
               <div class="text-xs text-gray-500 dark:text-gray-400">
                 Sign up free to export CSV & JSON
@@ -221,12 +233,16 @@ const emit = defineEmits<{
               @click="emit('saveChart')"
             >
               <UIcon
-                name="i-lucide-lock"
+                name="i-lucide-bookmark"
                 class="w-4 h-4 flex-shrink-0"
               />
               <div class="flex-1 text-left">
                 <div class="text-sm font-medium">
                   Save Chart
+                  <FeatureBadge
+                    feature="SAVE_CHART"
+                    class="ml-2"
+                  />
                 </div>
                 <div class="text-xs text-gray-500 dark:text-gray-400">
                   Sign up free to save charts

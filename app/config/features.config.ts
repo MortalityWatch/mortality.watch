@@ -114,6 +114,13 @@ export const FEATURES = {
     category: 'analysis'
   },
 
+  SAVE_CHART: {
+    tier: TIERS.REGISTERED,
+    name: 'Save Chart',
+    description: 'Save chart configurations',
+    category: 'storage'
+  },
+
   SAVE_RANKINGS: {
     tier: TIERS.REGISTERED,
     name: 'Save Rankings',

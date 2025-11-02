@@ -7,6 +7,7 @@ const props = defineProps<{
   showBaseline: boolean
   showPredictionInterval: boolean
   showLabels: boolean
+  showCaption: boolean
   maximize: boolean
   isLogarithmic: boolean
   showPercentage: boolean
@@ -37,6 +38,7 @@ const emit = defineEmits<{
   'update:showBaseline': [value: boolean]
   'update:showPredictionInterval': [value: boolean]
   'update:showLabels': [value: boolean]
+  'update:showCaption': [value: boolean]
   'update:maximize': [value: boolean]
   'update:isLogarithmic': [value: boolean]
   'update:showPercentage': [value: boolean]
@@ -66,6 +68,11 @@ const showPredictionIntervalModel = computed({
 const showLabelsModel = computed({
   get: () => props.showLabels,
   set: v => emit('update:showLabels', v)
+})
+
+const showCaptionModel = computed({
+  get: () => props.showCaption,
+  set: v => emit('update:showCaption', v)
 })
 
 const maximizeModel = computed({
@@ -255,6 +262,11 @@ const chartPresetModel = computed({
             <USwitch v-model="showLabelsModel" />
           </div>
 
+          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+            <label class="text-sm font-medium whitespace-nowrap">Show Caption</label>
+            <USwitch v-model="showCaptionModel" />
+          </div>
+
           <div
             v-if="props.showMaximizeOption"
             class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
@@ -320,6 +332,10 @@ const chartPresetModel = computed({
           <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
             <label class="text-sm font-medium whitespace-nowrap">
               Show Logo
+              <FeatureBadge
+                feature="HIDE_WATERMARK"
+                class="ml-2"
+              />
             </label>
             <USwitch v-model="showLogoModel" />
           </div>
@@ -345,6 +361,10 @@ const chartPresetModel = computed({
           <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
             <label class="text-sm font-medium whitespace-nowrap">
               Show QR Code
+              <FeatureBadge
+                feature="HIDE_QR"
+                class="ml-2"
+              />
             </label>
             <USwitch v-model="showQrCodeModel" />
           </div>

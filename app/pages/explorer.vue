@@ -397,6 +397,7 @@ const downloadChart = () => {
             :is-population-type="isPopulationType()"
             :show-logo="state.showLogo.value"
             :show-qr-code="state.showQrCode.value"
+            :show-caption="state.showCaption.value"
             :decimals="state.decimals.value"
             :show-loading-overlay="dataOrchestration.showLoadingOverlay.value"
             :show-size-label="showSizeLabel"
@@ -435,6 +436,7 @@ const downloadChart = () => {
             @chart-preset-changed="handleChartPresetChanged"
             @show-logo-changed="(v) => { state.showLogo.value = v; nextTick() }"
             @show-qr-code-changed="(v) => { state.showQrCode.value = v; nextTick() }"
+            @show-caption-changed="(v: boolean) => { state.showCaption.value = v; nextTick() }"
             @decimals-changed="(v) => { state.decimals.value = v; nextTick() }"
           />
 

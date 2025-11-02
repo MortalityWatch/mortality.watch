@@ -251,6 +251,7 @@ export function createPluginsConfig(
   decimals: string,
   showQrCode: boolean,
   showLogo: boolean,
+  showCaption: boolean = true,
   isDark?: boolean
 ) {
   return {
@@ -261,7 +262,7 @@ export function createPluginsConfig(
       font: getTitleFont()
     },
     subtitle: {
-      display: true,
+      display: showCaption,
       text: data.subtitle,
       color: textSoftColor(isDark),
       font: getSubtitleFont(),

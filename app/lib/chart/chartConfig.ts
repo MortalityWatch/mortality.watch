@@ -80,7 +80,8 @@ export const makeBarLineChartConfig = (
   showLogo: boolean = true,
   decimals: string = 'auto',
   isDark?: boolean,
-  userTier?: number
+  userTier?: number,
+  showCaption: boolean = true
 ) => {
   // Feature gating: Only Pro users (tier 2) can hide the watermark/QR code
   if (userTier !== undefined && userTier < 2) {
@@ -90,9 +91,8 @@ export const makeBarLineChartConfig = (
 
   const showDecimals = !isDeathsType && !isPopulationType
 
-  // Dynamic padding based on logo/QR code visibility
-  const topPadding = showLogo ? 70 : 10 // 60px logo + 10px margin, or just 10px
-  const rightPadding = showQrCode ? 70 : 10 // 60px QR code + 10px margin, or just 10px
+  // Logo and QR code plugins overlay the chart, so no padding needed for them
+  // They draw at absolute positions in corners without affecting chart layout
 
   return {
     plugins: [createBackgroundPlugin(isDark)],
@@ -102,8 +102,8 @@ export const makeBarLineChartConfig = (
       maintainAspectRatio: false,
       layout: {
         padding: {
-          top: topPadding,
-          right: rightPadding,
+          top: 10,
+          right: 10,
           bottom: 10,
           left: 10
         }
@@ -118,6 +118,7 @@ export const makeBarLineChartConfig = (
         decimals,
         showQrCode,
         showLogo,
+        showCaption,
         isDark
       ),
       scales: createScalesConfig(
@@ -149,7 +150,8 @@ export const makeMatrixChartConfig = (
   showLogo: boolean = true,
   isDark?: boolean,
   decimals: string = 'auto',
-  userTier?: number
+  userTier?: number,
+  showCaption: boolean = true
 ) => {
   const config = makeBarLineChartConfig(
     data,
@@ -162,7 +164,8 @@ export const makeMatrixChartConfig = (
     showLogo,
     decimals,
     isDark,
-    userTier
+    userTier,
+    showCaption
   ) as unknown as ChartJSConfig<'matrix', MortalityMatrixDataPoint[]>
 
   config.options!.scales = {

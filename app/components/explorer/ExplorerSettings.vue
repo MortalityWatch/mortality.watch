@@ -33,6 +33,7 @@ const emit = defineEmits<{
   chartPresetChanged: [value: string]
   showLogoChanged: [value: boolean]
   showQrCodeChanged: [value: boolean]
+  showCaptionChanged: [value: boolean]
   decimalsChanged: [value: string]
 }>()
 
@@ -99,6 +100,7 @@ const baselineSliderValue = computed(() => [
       :chart-preset="props.state.chartPreset.value"
       :show-logo="props.state.showLogo.value"
       :show-qr-code="props.state.showQrCode.value"
+      :show-caption="props.state.showCaption.value"
       :decimals="props.state.decimals.value"
       @type-changed="emit('typeChanged', $event)"
       @chart-type-changed="emit('chartTypeChanged', $event)"
@@ -120,6 +122,7 @@ const baselineSliderValue = computed(() => [
       @chart-preset-changed="emit('chartPresetChanged', $event)"
       @show-logo-changed="emit('showLogoChanged', $event)"
       @show-qr-code-changed="emit('showQrCodeChanged', $event)"
+      @show-caption-changed="emit('showCaptionChanged', $event)"
       @decimals-changed="emit('decimalsChanged', $event)"
     />
   </UCard>

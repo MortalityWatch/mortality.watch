@@ -50,6 +50,7 @@ const props = defineProps<{
   chartPreset?: string
   showLogo: boolean
   showQrCode: boolean
+  showCaption: boolean
   decimals: string
 }>()
 
@@ -75,6 +76,7 @@ const emit = defineEmits<{
   chartPresetChanged: [value: string]
   showLogoChanged: [value: boolean]
   showQrCodeChanged: [value: boolean]
+  showCaptionChanged: [value: boolean]
   decimalsChanged: [value: string]
 }>()
 
@@ -98,15 +100,17 @@ const chartTypesWithLabels = chartTypes.map(t => ({ ...t, label: t.name }))
 const chartStylesWithLabels = chartStyles.map(t => ({ ...t, label: t.name }))
 const standardPopulationsWithLabels = standardPopulations.map(t => ({ ...t, label: t.name }))
 
-// Feature gate: Only registered users (Tier 1+) get access to all baseline methods
-// Public users (Tier 0) get last value, average, and median methods
+// Feature gate: Show all baseline methods but disable advanced ones for non-registered users
 const baselineMethodsWithLabels = computed(() => {
-  const allMethods = baselineMethods.map(t => ({ ...t, label: t.name }))
-  if (can('ALL_BASELINES')) {
-    return allMethods
-  }
-  // Only show 'naive', 'mean' and 'median' methods for non-registered users
-  return allMethods.filter(m => m.value === 'naive' || m.value === 'mean' || m.value === 'median')
+  const hasAccess = can('ALL_BASELINES')
+  return baselineMethods.map((t) => {
+    const isBasicMethod = t.value === 'naive' || t.value === 'mean' || t.value === 'median'
+    return {
+      ...t,
+      label: t.name,
+      disabled: !hasAccess && !isBasicMethod
+    }
+  })
 })
 
 const decimalPrecisionsWithLabels = decimalPrecisions.map(t => ({ ...t, label: t.name }))
@@ -132,9 +136,10 @@ const selectedStandardPopulation = computed({
   set: (v: { name: string, value: string, label: string }) => emit('standardPopulationChanged', v.value)
 })
 
+type BaselineMethodItem = { name: string, value: string, label: string, disabled?: boolean }
 const selectedBaselineMethod = computed({
-  get: () => baselineMethodsWithLabels.value.find(t => t.value === props.baselineMethod) || baselineMethodsWithLabels.value[0],
-  set: (v: { name: string, value: string, label: string }) => emit('baselineMethodChanged', v.value)
+  get: (): BaselineMethodItem => (baselineMethodsWithLabels.value.find(t => t.value === props.baselineMethod) || baselineMethodsWithLabels.value[0]) as BaselineMethodItem,
+  set: (v: BaselineMethodItem) => emit('baselineMethodChanged', v.value)
 })
 
 const isExcess = computed({
@@ -223,6 +228,11 @@ const showLogo = computed({
 const showQrCode = computed({
   get: () => props.showQrCode,
   set: (v: boolean) => emit('showQrCodeChanged', v)
+})
+
+const showCaption = computed({
+  get: () => props.showCaption,
+  set: (v: boolean) => emit('showCaptionChanged', v)
 })
 
 const selectedDecimals = computed({
@@ -321,6 +331,7 @@ const activeTab = ref('data')
         :show-baseline="props.showBaseline"
         :show-prediction-interval="props.showPredictionInterval"
         :show-labels="props.showLabels"
+        :show-caption="props.showCaption"
         :maximize="props.maximize"
         :is-logarithmic="props.isLogarithmic"
         :show-percentage="props.showPercentage || false"
@@ -345,6 +356,7 @@ const activeTab = ref('data')
         @update:show-baseline="showBaseline = $event"
         @update:show-prediction-interval="showPredictionInterval = $event"
         @update:show-labels="showLabels = $event"
+        @update:show-caption="showCaption = $event"
         @update:maximize="maximize = $event"
         @update:is-logarithmic="isLogarithmic = $event"
         @update:show-percentage="showPercentage = $event"

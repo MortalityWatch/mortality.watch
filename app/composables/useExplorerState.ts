@@ -153,6 +153,12 @@ export function useExplorerState() {
     stateFieldEncoders.showQrCode.encode,
     stateFieldEncoders.showQrCode.decode
   )
+  const showCaption = useUrlState<boolean>(
+    stateFieldEncoders.showCaption.key,
+    true,
+    stateFieldEncoders.showCaption.encode,
+    stateFieldEncoders.showCaption.decode
+  )
   const decimals = useUrlState<string>(
     stateFieldEncoders.decimals.key,
     Defaults.decimals
@@ -348,6 +354,7 @@ export function useExplorerState() {
     userColors,
     showLogo,
     showQrCode,
+    showCaption,
     decimals,
 
     // Local state

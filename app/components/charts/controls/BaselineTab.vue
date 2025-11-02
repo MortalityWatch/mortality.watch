@@ -8,8 +8,8 @@ import type { ChartType } from '@/model/period'
 const { can } = useFeatureAccess()
 
 const props = defineProps<{
-  selectedBaselineMethod: { name: string, value: string, label: string }
-  baselineMethodsWithLabels: { name: string, value: string, label: string }[]
+  selectedBaselineMethod: { name: string, value: string, label: string, disabled?: boolean }
+  baselineMethodsWithLabels: { name: string, value: string, label: string, disabled?: boolean }[]
   baselineMethod: string
   baselineSliderValue: string[]
   labels: string[]
@@ -18,7 +18,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  'update:selectedBaselineMethod': [value: { name: string, value: string, label: string }]
+  'update:selectedBaselineMethod': [value: { name: string, value: string, label: string, disabled?: boolean }]
   'baseline-slider-changed': [value: string[]]
 }>()
 
@@ -65,12 +65,24 @@ const baselineSliderChanged = (values: string[]) => {
         />
         <template #content>
           <div class="p-3 space-y-2 max-w-xs">
-            <div class="text-xs text-gray-700 dark:text-gray-300">
-              <strong>Last Value:</strong> Uses the final value from baseline period<br>
-              <strong>Average:</strong> Mean of baseline period<br>
-              <strong>Median:</strong> Median of baseline period<br>
-              <strong>Linear Regression:</strong> Linear trend projection <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">Free</span><br>
-              <strong>Exponential Smoothing (ETS):</strong> Adaptive trend and seasonality <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">Free</span>
+            <div class="text-xs text-gray-700 dark:text-gray-300 space-y-1">
+              <div><strong>Last Value:</strong> Uses the final value from baseline period</div>
+              <div><strong>Average:</strong> Mean of baseline period</div>
+              <div><strong>Median:</strong> Median of baseline period</div>
+              <div>
+                <strong>Linear Regression:</strong> Linear trend projection
+                <FeatureBadge
+                  feature="ALL_BASELINES"
+                  class="ml-1"
+                />
+              </div>
+              <div>
+                <strong>Exponential Smoothing (ETS):</strong> Adaptive trend and seasonality
+                <FeatureBadge
+                  feature="ALL_BASELINES"
+                  class="ml-1"
+                />
+              </div>
             </div>
           </div>
         </template>

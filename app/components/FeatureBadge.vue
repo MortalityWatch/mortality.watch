@@ -1,5 +1,5 @@
 <template>
-  <UPopover>
+  <UPopover v-if="shouldShowBadge">
     <span
       :class="badgeClasses"
       class="cursor-help"
@@ -78,5 +78,10 @@ const tierName = computed(() => {
     default:
       return 'Unknown'
   }
+})
+
+// Don't show badge for PUBLIC tier features (everyone has access)
+const shouldShowBadge = computed(() => {
+  return FEATURES[props.feature].tier !== TIERS.PUBLIC
 })
 </script>
