@@ -15,6 +15,8 @@ import {
 
 const route = useRoute()
 const router = useRouter()
+const { user } = useAuth()
+const isAdmin = computed(() => user.value?.role === 'admin')
 
 // URL state
 const activeTab = ref<string>((route.query.tab as string) || 'mortality')
@@ -284,6 +286,30 @@ useSeoMeta({
           </template>
         </UTabs>
       </UCard>
+
+      <!-- Admin Link to Data Quality Dashboard -->
+      <div
+        v-if="isAdmin"
+        class="mt-6 text-center"
+      >
+        <UCard>
+          <div class="flex items-center justify-center gap-3 py-2">
+            <UIcon
+              name="i-lucide-activity"
+              class="w-5 h-5 text-primary-500"
+            />
+            <span class="text-sm text-gray-600 dark:text-gray-400">
+              Admin:
+            </span>
+            <NuxtLink
+              to="/admin/data-quality"
+              class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline"
+            >
+              View Data Quality Dashboard
+            </NuxtLink>
+          </div>
+        </UCard>
+      </div>
     </div>
   </div>
 </template>

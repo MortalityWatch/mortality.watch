@@ -201,6 +201,33 @@ export const sessions = sqliteTable(
   })
 )
 
+/**
+ * Data quality overrides table - stores admin preferences for monitoring
+ */
+export const dataQualityOverrides = sqliteTable(
+  'data_quality_overrides',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    iso3c: text('iso3c').notNull(),
+    source: text('source').notNull(),
+    status: text('status', { enum: ['monitor', 'muted', 'hidden'] })
+      .notNull()
+      .default('monitor'),
+    notes: text('notes'),
+    updatedBy: integer('updated_by').references(() => users.id),
+    createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`)
+  },
+  table => ({
+    uniqueEntry: index('idx_data_quality_unique').on(table.iso3c, table.source),
+    statusIdx: index('idx_data_quality_status').on(table.status)
+  })
+)
+
 // Type exports for use in application code
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
@@ -216,3 +243,6 @@ export type NewWebhookEvent = typeof webhookEvents.$inferInsert
 
 export type Session = typeof sessions.$inferSelect
 export type NewSession = typeof sessions.$inferInsert
+
+export type DataQualityOverride = typeof dataQualityOverrides.$inferSelect
+export type NewDataQualityOverride = typeof dataQualityOverrides.$inferInsert

@@ -114,6 +114,9 @@ const props = withDefaults(defineProps<Props>(), {
 // Auth
 const { user, isAuthenticated } = useAuth()
 
+// Current route for redirect
+const route = useRoute()
+
 // Modal state
 const isOpen = ref(false)
 const chartName = ref('')
@@ -127,7 +130,7 @@ const success = ref(false)
 function openModal() {
   // Check if user is authenticated
   if (!isAuthenticated.value) {
-    navigateTo('/login?redirect=' + encodeURIComponent(window.location.pathname))
+    navigateTo('/login?redirect=' + encodeURIComponent(route.path))
     return
   }
 

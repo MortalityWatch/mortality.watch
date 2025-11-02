@@ -99,20 +99,20 @@ const quickActions = [
         </h2>
       </template>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <button
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <UCard
           v-for="action in quickActions"
           :key="action.label"
-          class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
-          @click="$router.push(action.to)"
+          class="cursor-pointer hover:shadow-md transition-shadow"
+          @click="navigateTo(action.to)"
         >
           <div class="flex items-start gap-3">
             <UIcon
               :name="action.icon"
-              class="w-5 h-5 text-primary-500 mt-0.5"
+              class="w-6 h-6 text-primary-500 mt-0.5"
             />
             <div>
-              <h3 class="font-medium mb-1">
+              <h3 class="font-medium text-lg mb-1">
                 {{ action.label }}
               </h3>
               <p class="text-sm text-gray-600 dark:text-gray-400">
@@ -120,7 +120,7 @@ const quickActions = [
               </p>
             </div>
           </div>
-        </button>
+        </UCard>
       </div>
     </UCard>
 

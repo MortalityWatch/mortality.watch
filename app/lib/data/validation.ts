@@ -116,9 +116,6 @@ export async function validateMetadata(
         skipEmptyLines: true
       })
 
-      // Send alert to admin
-      await sendValidationAlert('metadata', errors)
-
       return {
         success: true,
         data: cachedParsed.data as CountryRaw[],
@@ -137,9 +134,6 @@ export async function validateMetadata(
         header: true,
         skipEmptyLines: true
       })
-
-      // Send alert to admin
-      await sendValidationAlert('metadata', error)
 
       return {
         success: true,
@@ -225,9 +219,6 @@ export async function validateMortalityData(
         newline: '\n'
       })
 
-      // Send alert to admin
-      await sendValidationAlert(cacheKey, errors)
-
       return {
         success: true,
         data: cachedParsed.data as CountryDataRaw[],
@@ -249,9 +240,6 @@ export async function validateMortalityData(
         newline: '\n'
       })
 
-      // Send alert to admin
-      await sendValidationAlert(cacheKey, error)
-
       return {
         success: true,
         data: cachedParsed.data as CountryDataRaw[],
@@ -263,35 +251,6 @@ export async function validateMortalityData(
       success: false,
       errors: error as z.ZodError
     }
-  }
-}
-
-/**
- * Send validation failure alert to admin
- * Only sends if running on server-side and in production
- */
-async function sendValidationAlert(dataType: string, error: unknown) {
-  // Only send alerts on server-side
-  if (!import.meta.server) return
-
-  // Skip in development
-  if (process.env.NODE_ENV !== 'production') {
-    console.warn(`[DEV] Would send validation alert for ${dataType}`)
-    return
-  }
-
-  try {
-    // Call internal API to send email alert
-    await $fetch('/api/admin/data-quality-alert', {
-      method: 'POST',
-      body: {
-        dataType,
-        error: error instanceof Error ? error.message : JSON.stringify(error),
-        timestamp: new Date().toISOString()
-      }
-    })
-  } catch (alertError) {
-    console.error('Failed to send validation alert:', alertError)
   }
 }
 

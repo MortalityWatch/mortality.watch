@@ -1,22 +1,51 @@
 import { users } from '#db'
 import { eq } from 'drizzle-orm'
+import { z } from 'zod'
 
 /**
  * Admin API: Send data quality alert email
  * POST /api/admin/data-quality-alert
  *
  * Internal API used by validation system to alert admins
- * Does not require authentication (internal use only)
+ * Requires admin authentication for security
  */
 export default defineEventHandler(async (event) => {
-  const body = await readBody(event)
-  const { dataType, error, timestamp } = body
+  // Require admin authentication to prevent abuse
+  await requireAdmin(event)
 
-  if (!dataType || !error) {
+  const body = await readBody(event)
+
+  // Validate input to prevent email injection
+  const bodySchema = z.object({
+    dataType: z.string().min(1).max(100),
+    error: z.string().max(10000),
+    timestamp: z.string().optional()
+  })
+
+  let dataType: string
+  let error: string
+  let timestamp: string | undefined
+
+  try {
+    const validated = bodySchema.parse(body)
+    dataType = validated.dataType
+    error = validated.error
+    timestamp = validated.timestamp
+  } catch (validationError) {
     throw createError({
       statusCode: 400,
-      message: 'Missing required fields: dataType, error'
+      message: 'Invalid input: ' + (validationError instanceof Error ? validationError.message : 'Validation failed')
     })
+  }
+
+  // HTML escape function to prevent XSS
+  function escapeHtml(unsafe: string): string {
+    return unsafe
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;')
   }
 
   try {
@@ -58,21 +87,21 @@ export default defineEventHandler(async (event) => {
               <div style="margin-bottom: 10px;">
                 <strong style="color: #666;">Data Type:</strong>
                 <div style="font-family: monospace; background-color: #fff; padding: 8px; border-radius: 4px; margin-top: 5px;">
-                  ${dataType}
+                  ${escapeHtml(dataType)}
                 </div>
               </div>
 
               <div style="margin-bottom: 10px;">
                 <strong style="color: #666;">Timestamp:</strong>
                 <div style="font-family: monospace; background-color: #fff; padding: 8px; border-radius: 4px; margin-top: 5px;">
-                  ${timestamp || new Date().toISOString()}
+                  ${escapeHtml(timestamp || new Date().toISOString())}
                 </div>
               </div>
 
               <div>
                 <strong style="color: #666;">Error Details:</strong>
                 <div style="font-family: monospace; background-color: #fff; padding: 8px; border-radius: 4px; margin-top: 5px; overflow-x: auto; font-size: 12px;">
-                  ${error}
+                  ${escapeHtml(error)}
                 </div>
               </div>
             </div>
@@ -112,7 +141,7 @@ export default defineEventHandler(async (event) => {
       try {
         await sendEmail({
           to: admin.email,
-          subject: `⚠️ Data Quality Alert - ${dataType}`,
+          subject: `⚠️ Data Quality Alert - ${escapeHtml(dataType)}`,
           html
         })
         console.log(`Data quality alert sent to admin: ${admin.email}`)

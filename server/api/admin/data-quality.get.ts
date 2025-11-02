@@ -1,7 +1,9 @@
-// requireAdmin is auto-imported from server/utils/auth.ts
+// requireAdmin and db are auto-imported from server/utils
 import { dataLoader } from '@/lib/dataLoader'
 import Papa from 'papaparse'
 import type { CountryRaw } from '@/model/country'
+import { getStalenessStatus, isSourceIgnored } from '../../../server/config/staleness'
+import { dataQualityOverrides } from '#db'
 
 /**
  * Admin API: Get data quality and freshness report
@@ -11,7 +13,7 @@ import type { CountryRaw } from '@/model/country'
  *
  * Returns:
  * - Last update timestamp per country
- * - Data staleness status (fresh, warning, stale)
+ * - Data staleness status (fresh, stale)
  * - Data source information
  * - Summary statistics
  */
@@ -27,51 +29,71 @@ export default defineEventHandler(async (event) => {
       skipEmptyLines: true
     }).data as CountryRaw[]
 
+    // Fetch all overrides
+    const overrides = await db.select().from(dataQualityOverrides).all()
+    const overrideMap = new Map(
+      overrides.map(o => [`${o.iso3c}:${o.source}`, o.status])
+    )
+
     const now = Date.now()
     const ONE_DAY = 24 * 60 * 60 * 1000
 
-    // Process each country's data
-    const countries = rawObjects.map((country) => {
-      const maxDate = new Date(country.max_date)
-      const lastUpdateMs = maxDate.getTime()
-      const daysSinceUpdate = Math.floor((now - lastUpdateMs) / ONE_DAY)
+    // Process each country's data, filtering out ignored sources
+    const countries = rawObjects
+      .filter(country => !isSourceIgnored(country.source))
+      .map((country) => {
+        const maxDate = new Date(country.max_date)
+        const lastUpdateMs = maxDate.getTime()
+        const daysSinceUpdate = Math.floor((now - lastUpdateMs) / ONE_DAY)
 
-      // Determine status based on staleness
-      let status: 'fresh' | 'warning' | 'stale'
-      if (daysSinceUpdate < 7) {
-        status = 'fresh'
-      } else if (daysSinceUpdate < 14) {
-        status = 'warning'
-      } else {
-        status = 'stale'
-      }
+        // Determine status based on source-specific staleness thresholds
+        const status = getStalenessStatus(country.source, daysSinceUpdate)
 
-      return {
-        iso3c: country.iso3c,
-        jurisdiction: country.jurisdiction,
-        lastUpdate: country.max_date,
-        lastUpdateTimestamp: lastUpdateMs,
-        daysSinceUpdate,
-        status,
-        dataSource: country.source,
-        type: country.type,
-        ageGroups: country.age_groups,
-        minDate: country.min_date
-      }
-    })
+        // Get override status if it exists
+        const overrideKey = `${country.iso3c}:${country.source}`
+        const overrideStatus = overrideMap.get(overrideKey) || 'monitor'
+
+        return {
+          iso3c: country.iso3c,
+          jurisdiction: country.jurisdiction,
+          lastUpdate: country.max_date,
+          lastUpdateTimestamp: lastUpdateMs,
+          daysSinceUpdate,
+          status,
+          overrideStatus,
+          dataSource: country.source,
+          type: country.type,
+          ageGroups: country.age_groups,
+          minDate: country.min_date
+        }
+      })
 
     // Sort by staleness (most stale first)
     countries.sort((a, b) => b.daysSinceUpdate - a.daysSinceUpdate)
 
+    // Helper to calculate median
+    const calculateMedian = (values: number[]): number => {
+      if (values.length === 0) return 0
+      const sorted = [...values].sort((a, b) => a - b)
+      const mid = Math.floor(sorted.length / 2)
+      if (sorted.length % 2 === 0) {
+        const val1 = sorted[mid - 1]
+        const val2 = sorted[mid]
+        return val1 !== undefined && val2 !== undefined ? Math.floor((val1 + val2) / 2) : 0
+      }
+      return sorted[mid] ?? 0
+    }
+
+    const freshCountries = countries.filter(c => c.status === 'fresh')
+    const staleCountries = countries.filter(c => c.status === 'stale')
+
     // Calculate summary statistics
     const summary = {
       total: countries.length,
-      fresh: countries.filter(c => c.status === 'fresh').length,
-      warning: countries.filter(c => c.status === 'warning').length,
-      stale: countries.filter(c => c.status === 'stale').length,
-      averageDaysSinceUpdate: Math.floor(
-        countries.reduce((sum, c) => sum + c.daysSinceUpdate, 0) / countries.length
-      ),
+      fresh: freshCountries.length,
+      stale: staleCountries.length,
+      medianFreshDays: calculateMedian(freshCountries.map(c => c.daysSinceUpdate)),
+      medianStaleDays: calculateMedian(staleCountries.map(c => c.daysSinceUpdate)),
       mostStaleCountry: countries[0]
         ? {
             iso3c: countries[0].iso3c,

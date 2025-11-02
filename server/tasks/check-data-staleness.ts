@@ -2,11 +2,11 @@
  * Scheduled Task: Check Data Staleness
  *
  * This task checks for stale data (>14 days old) and sends alerts to admins
- * Can be run as a cron job or scheduled task
  *
  * Usage:
- * - Add to cron: 0 9 * * * node server/tasks/check-data-staleness.ts
- * - Or use Nitro's scheduled tasks when available
+ * - Manually trigger via API: POST /api/admin/check-staleness (requires admin auth)
+ * - Can be scheduled using cron to call the API endpoint
+ * - Or use Nitro's scheduled tasks when available (Nitro 2.6+)
  */
 
 import { dataLoader } from '@/lib/dataLoader'
@@ -15,8 +15,7 @@ import { users } from '#db'
 import { eq } from 'drizzle-orm'
 import Papa from 'papaparse'
 import type { CountryRaw } from '@/model/country'
-
-const STALE_THRESHOLD_DAYS = 14
+import { getStalenessStatus } from '../config/staleness'
 
 interface StaleCountry {
   iso3c: string
@@ -48,7 +47,10 @@ export async function checkDataStaleness() {
       const lastUpdateMs = maxDate.getTime()
       const daysSinceUpdate = Math.floor((now - lastUpdateMs) / ONE_DAY)
 
-      if (daysSinceUpdate > STALE_THRESHOLD_DAYS) {
+      // Use source-specific staleness thresholds
+      const status = getStalenessStatus(country.source, daysSinceUpdate)
+
+      if (status === 'stale') {
         staleCountries.push({
           iso3c: country.iso3c,
           jurisdiction: country.jurisdiction,
@@ -160,7 +162,7 @@ function generateStaleDataEmailHtml(staleCountries: StaleCountry[]): string {
               ⚠️ Data Staleness Alert
             </h1>
             <p style="margin: 0; color: #78350f;">
-              ${staleCountries.length} countries have data that is more than ${STALE_THRESHOLD_DAYS} days old
+              ${staleCountries.length} countries have stale data exceeding source-specific thresholds
             </p>
           </div>
 
@@ -240,19 +242,4 @@ function generateStaleDataEmailHtml(staleCountries: StaleCountry[]): string {
       </body>
     </html>
   `
-}
-
-// Function is already exported above
-
-// Allow direct execution if running as script
-if (import.meta.url === `file://${process.argv[1]}`) {
-  checkDataStaleness()
-    .then((result) => {
-      console.log('Result:', result)
-      process.exit(0)
-    })
-    .catch((error) => {
-      console.error('Error:', error)
-      process.exit(1)
-    })
 }
