@@ -15,6 +15,7 @@ import {
   standardSources,
   populationSources
 } from '~/lib/sourcesConstants'
+import { UI_CONFIG } from '~/lib/config/constants'
 
 const route = useRoute()
 const router = useRouter()
@@ -81,7 +82,7 @@ if (route.query.page) {
 }
 
 // Items per page options
-const itemsPerPageOptionsRaw = [10, 25, 50, 100]
+const itemsPerPageOptionsRaw = [...UI_CONFIG.PAGINATION_OPTIONS]
 const itemsPerPageOptions = computed(() =>
   itemsPerPageOptionsRaw.map(x => ({ label: String(x), value: x }))
 )

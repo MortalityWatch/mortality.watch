@@ -5,6 +5,7 @@ import { getGroupedRowModel } from '@tanstack/vue-table'
 import type { GroupingOptions } from '@tanstack/vue-table'
 import { getSourceDescription } from '~/lib/data/utils'
 import { usePagination } from '~/composables/usePagination'
+import { UI_CONFIG } from '~/lib/config/constants'
 
 definePageMeta({
   middleware: 'admin'
@@ -235,7 +236,7 @@ const pagination = usePagination({ items: filteredCountries, itemsPerPage: 25 })
 const { currentPage, paginatedItems, total, startIndex, endIndex, itemsPerPage } = pagination
 
 // Items per page options
-const itemsPerPageOptionsRaw = [10, 25, 50, 100]
+const itemsPerPageOptionsRaw = [...UI_CONFIG.PAGINATION_OPTIONS]
 const itemsPerPageOptions = computed(() =>
   itemsPerPageOptionsRaw.map(x => ({ label: String(x), value: x }))
 )

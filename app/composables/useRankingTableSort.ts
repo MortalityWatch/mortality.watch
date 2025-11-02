@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import type { TableRow } from '@/lib/ranking/types'
 import { useUrlState } from './useUrlState'
+import { UI_CONFIG } from '@/lib/config/constants'
 
 /**
  * Composable for handling table sorting and pagination
@@ -11,7 +12,7 @@ export function useRankingTableSort() {
   const sortOrder = ref<'asc' | 'desc'>('desc')
 
   // Pagination state - synced with URL
-  const itemsPerPageOptions = [10, 25, 50, 100]
+  const itemsPerPageOptions = [...UI_CONFIG.PAGINATION_OPTIONS] as number[]
 
   const currentPage = useUrlState('pg', 1,
     val => String(val),
