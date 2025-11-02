@@ -42,9 +42,7 @@ export function useSaveChart(options: SaveChartOptions) {
    * Opens the save modal and resets all form state
    */
   const openSaveModal = () => {
-    console.log('[useSaveChart] openSaveModal called for:', chartType)
     showSaveModal.value = true
-    console.log('[useSaveChart] showSaveModal set to:', showSaveModal.value)
     saveChartName.value = ''
     saveChartDescription.value = ''
     saveChartPublic.value = false
@@ -88,7 +86,8 @@ export function useSaveChart(options: SaveChartOptions) {
         }
       })
 
-      saveSuccess.value = true
+      // Close modal immediately
+      showSaveModal.value = false
 
       // Show success toast
       showToast(
@@ -98,13 +97,10 @@ export function useSaveChart(options: SaveChartOptions) {
         'success'
       )
 
-      // Close modal and optionally navigate to the saved chart
-      setTimeout(() => {
-        showSaveModal.value = false
-        if (saveChartPublic.value && response.chart?.slug) {
-          navigateTo(`/charts/${response.chart.slug}`)
-        }
-      }, 1500)
+      // Navigate to saved chart if public
+      if (saveChartPublic.value && response.chart?.slug) {
+        navigateTo(`/charts/${response.chart.slug}`)
+      }
     } catch (err) {
       console.error(`Failed to save ${entityName}:`, err)
       saveError.value = err instanceof Error ? err.message : `Failed to save ${entityName}`

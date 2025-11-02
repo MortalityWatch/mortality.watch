@@ -12,7 +12,9 @@ export default withNuxt({
         allowTaggedTemplates: false
       }
     ],
-    'vue/no-v-html': 'off'
+    'vue/no-v-html': 'off',
+    // Disable unified-signatures due to bug with Vue 3 compiler macros (defineProps/defineEmits)
+    '@typescript-eslint/unified-signatures': 'off'
   }
 }).append({
   plugins: {

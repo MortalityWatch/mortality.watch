@@ -60,17 +60,11 @@ export function useExplorerState() {
   // Note: Defaults are undefined to let StateComputed calculate proper format based on chart type
   const dateFrom = useUrlState<string | undefined>(
     stateFieldEncoders.dateFrom.key,
-    undefined,
-    undefined,
-    undefined,
-    { debounce: 300 }
+    undefined
   )
   const dateTo = useUrlState<string | undefined>(
     stateFieldEncoders.dateTo.key,
-    undefined,
-    undefined,
-    undefined,
-    { debounce: 300 }
+    undefined
   )
   const sliderStart = useUrlState(
     stateFieldEncoders.sliderStart.key,

@@ -1,3 +1,7 @@
+<script setup lang="ts">
+const { tier } = useAuth()
+</script>
+
 <template>
   <USeparator class="h-px">
     <AppLogo class="w-auto h-4 shrink-0" />
@@ -7,6 +11,36 @@
     <template #left>
       <p class="text-muted text-sm">
         © {{ new Date().getFullYear() }} MortalityWatch. Open data for public health.
+        <span class="mx-1">·</span>
+        <ULink
+          to="/about"
+          class="text-muted hover:text-default"
+        >
+          About
+        </ULink>
+        <span class="mx-1">·</span>
+        <ULink
+          to="/sources"
+          class="text-muted hover:text-default"
+        >
+          Sources
+        </ULink>
+        <span class="mx-1">·</span>
+        <ULink
+          to="/methods"
+          class="text-muted hover:text-default"
+        >
+          Methods
+        </ULink>
+        <template v-if="tier === 2">
+          <span class="mx-1">·</span>
+          <ULink
+            to="/features"
+            class="text-muted hover:text-default"
+          >
+            Features
+          </ULink>
+        </template>
         <span class="mx-1">·</span>
         <ULink
           to="/donate"

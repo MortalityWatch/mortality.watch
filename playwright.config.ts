@@ -36,7 +36,10 @@ export default defineConfig({
     screenshot: 'only-on-failure',
 
     /* Video on failure */
-    video: 'retain-on-failure'
+    video: 'retain-on-failure',
+
+    /* Run headless by default */
+    headless: true
   },
 
   /* Configure projects for major browsers */

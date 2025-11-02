@@ -196,8 +196,15 @@ export class ErrorHandler {
     // Handle Nuxt/Nitro API errors (from $fetch)
     if (error && typeof error === 'object') {
       // Check for data.message (Nitro error format)
-      if ('data' in error && error.data && typeof error.data === 'object' && 'message' in error.data) {
-        return String(error.data.message)
+      if ('data' in error && error.data && typeof error.data === 'object') {
+        // First try data.message
+        if ('message' in error.data && error.data.message) {
+          return String(error.data.message)
+        }
+        // Then try data.statusMessage
+        if ('statusMessage' in error.data && error.data.statusMessage) {
+          return String(error.data.statusMessage)
+        }
       }
 
       // Check for statusMessage (alternative format)
@@ -206,7 +213,7 @@ export class ErrorHandler {
       }
 
       // Fallback to message property
-      if ('message' in error) {
+      if ('message' in error && error.message) {
         return String(error.message)
       }
     }

@@ -152,11 +152,30 @@ const {
 } = dataOrchestration
 
 const dateSliderChanged = async (val: string[]) => {
-  // Update URL state - useUrlState now handles optimistic updates internally
-  state.dateFrom.value = val[0]!
-  state.dateTo.value = val[1]!
+  // IMPORTANT: Batch both updates into a single router.push to avoid race condition
+  // where the second update overwrites the first with stale route data
+  const route = useRoute()
+  const router = useRouter()
+  const newQuery = { ...route.query }
+  newQuery.df = val[0]!
+  newQuery.dt = val[1]!
+
+  await router.push({ query: newQuery })
 
   update('dateRange')
+}
+
+const baselineSliderChanged = async (val: string[]) => {
+  // IMPORTANT: Batch both updates into a single router.push to avoid race condition
+  const route = useRoute()
+  const router = useRouter()
+  const newQuery = { ...route.query }
+  newQuery.bf = val[0]!
+  newQuery.bt = val[1]!
+
+  await router.push({ query: newQuery })
+
+  update('_baselineDateFrom')
 }
 
 const labels = computed(() => dataOrchestration.allChartData?.labels || dataOrchestration.allChartLabels.value || [])
@@ -297,7 +316,7 @@ const {
   copyChartLink,
   screenshotChart,
   saveToDB,
-  showSaveModal,
+  showSaveModal: _showSaveModal,
   savingChart,
   saveChartName,
   saveChartDescription,
@@ -305,6 +324,14 @@ const {
   saveError,
   saveSuccess
 } = useExplorerChartActions(state)
+
+// Wrap showSaveModal in computed for proper v-model binding
+const showSaveModal = computed({
+  get: () => _showSaveModal.value,
+  set: (val) => {
+    _showSaveModal.value = val
+  }
+})
 
 // Download chart as PNG (for social media/OG image)
 const downloadChart = () => {
@@ -390,7 +417,7 @@ const downloadChart = () => {
             @is-excess-changed="(v) => updateStateAndRefresh(() => state.isExcess.value = v, '_isExcess')"
             @show-baseline-changed="(v) => updateStateAndRefresh(() => state.showBaseline.value = v, '_showBaseline')"
             @baseline-method-changed="(v) => updateStateAndRefresh(() => state.baselineMethod.value = v, '_baselineMethod')"
-            @baseline-slider-value-changed="(v) => updateStateAndRefresh(() => { state.baselineDateFrom.value = v[0]!; state.baselineDateTo.value = v[1]! }, '_baselineDateFrom')"
+            @baseline-slider-value-changed="baselineSliderChanged"
             @show-prediction-interval-changed="(v) => updateStateAndRefresh(() => state.showPredictionInterval.value = v, '_showPredictionInterval')"
             @show-labels-changed="(v) => updateStateAndRefresh(() => state.showLabels.value = v, '_showLabels')"
             @maximize-changed="(v) => updateStateAndRefresh(() => state.maximize.value = v, '_maximize')"

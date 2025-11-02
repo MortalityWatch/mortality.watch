@@ -134,6 +134,7 @@ const displaySliderStart = computed(() => {
                 :color="specialColor()"
                 :min-range="0"
                 :disabled="false"
+                :delay-emit="true"
                 @slider-changed="emit('dateSliderChanged', $event)"
               />
             </div>

@@ -166,7 +166,8 @@ const calculatePeriodIndices = (years: number): number => {
   const uniqueYears = Array.from(new Set(props.labels.map(l => l.substring(0, 4))))
   const labelsPerYear = Math.round(props.labels.length / uniqueYears.length)
 
-  return years * labelsPerYear
+  const result = years * labelsPerYear
+  return result
 }
 
 // Previous indices to detect which handle moved
@@ -212,10 +213,12 @@ watch(sliderIndices, (newIndices) => {
 
       if (startMoved && !endMoved) {
         // Start handle moved - adjust end handle
-        idx1 = Math.min(idx0 + periodIndices, props.labels.length - 1)
+        const newIdx1 = Math.min(idx0 + periodIndices, props.labels.length - 1)
+        idx1 = newIdx1
       } else if (endMoved && !startMoved) {
         // End handle moved - adjust start handle
-        idx0 = Math.max(idx1 - periodIndices, 0)
+        const newIdx0 = Math.max(idx1 - periodIndices, 0)
+        idx0 = newIdx0
       }
 
       // Update indices if they changed
@@ -226,6 +229,19 @@ watch(sliderIndices, (newIndices) => {
           isUpdatingFromProp.value = false
         })
         prevIndices.value = [idx0, idx1]
+
+        // IMPORTANT: Store pending values even when adjusting for fixed period
+        // This ensures the emit happens on pointer up
+        if (props.delayEmit && isDragging.value) {
+          const minIdx = Math.min(idx0 ?? 0, idx1 ?? 0)
+          const maxIdx = Math.max(idx0 ?? 0, idx1 ?? 0)
+          const values = [
+            (minIdx !== undefined ? props.labels[minIdx] : undefined) || props.labels[0] || '',
+            (maxIdx !== undefined ? props.labels[maxIdx] : undefined) || props.labels[props.labels.length - 1] || ''
+          ]
+          pendingEmitValues.value = values
+        }
+
         return
       }
     }

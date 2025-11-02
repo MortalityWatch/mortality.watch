@@ -8,7 +8,7 @@ interface MenuItem {
 }
 
 const { isIncognito } = useIncognitoMode()
-const { isAuthenticated, user } = useAuth()
+const { isAuthenticated, user, tier } = useAuth()
 const { startTutorial } = useTutorial()
 
 // Check if we're on the explorer page to show help button
@@ -16,36 +16,45 @@ const route = useRoute()
 const isExplorerPage = computed(() => route.path === '/explorer')
 
 // Main navigation items
-const items = computed(() => [{
-  label: 'Explorer',
-  to: '/explorer'
-}, {
-  label: 'Ranking',
-  to: '/ranking'
-}, {
-  label: 'Charts',
-  to: '/charts'
-}, {
-  label: 'Features',
-  to: '/features'
-}, {
-  label: 'Sources',
-  to: '/sources'
-}, {
-  label: 'Methods',
-  to: '/methods'
-}, {
-  label: 'About',
-  to: '/about'
-}])
+const items = computed(() => {
+  const navItems = [{
+    label: 'Explorer',
+    icon: 'i-lucide-line-chart',
+    to: '/explorer'
+  }, {
+    label: 'Ranking',
+    icon: 'i-lucide-chart-bar-decreasing',
+    to: '/ranking'
+  }, {
+    label: 'Chart Gallery',
+    icon: 'i-lucide-gallery-horizontal-end',
+    to: '/charts'
+  }]
+
+  // Add "My Charts" if user is authenticated
+  if (isAuthenticated.value) {
+    navItems.push({
+      label: 'My Charts',
+      icon: 'i-lucide-book-heart',
+      to: '/my-charts'
+    })
+  }
+
+  // Add "Features" for non-pro users (PUBLIC and REGISTERED, tier < 2)
+  if (tier.value < 2) {
+    navItems.push({
+      label: 'Features',
+      icon: 'i-lucide-sparkles',
+      to: '/features'
+    })
+  }
+
+  return navItems
+})
 
 // User menu items (shown when authenticated)
 const userMenuItems = computed<MenuItem[]>(() => {
   const menu: MenuItem[] = [{
-    label: 'My Charts',
-    to: '/my-charts',
-    icon: 'i-lucide-save'
-  }, {
     label: 'Profile',
     to: '/profile',
     icon: 'i-lucide-user'

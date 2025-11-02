@@ -35,7 +35,9 @@ const selectedPeriodLength = ref(periodLengthOptions.find(o => o.value === 3) ||
 
 const baselineMinRange = (method: string) => method === 'mean' ? 0 : 2
 
-const baselineSliderChanged = (values: string[]) => emit('baseline-slider-changed', values)
+const baselineSliderChanged = (values: string[]) => {
+  emit('baseline-slider-changed', values)
+}
 </script>
 
 <template>

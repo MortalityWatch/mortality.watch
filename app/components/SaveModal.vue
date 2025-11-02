@@ -20,11 +20,11 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-  'update:modelValue': [value: boolean]
-  'update:name': [value: string]
-  'update:description': [value: string]
-  'update:isPublic': [value: boolean]
-  'save': []
+  (e: 'update:modelValue', value: boolean): void
+  (e: 'update:name', value: string): void
+  (e: 'update:description', value: string): void
+  (e: 'update:isPublic', value: boolean): void
+  (e: 'save'): void
 }>()
 
 const localShow = computed({
@@ -49,18 +49,23 @@ const localPublic = computed({
 
 const typeLabel = computed(() => props.type === 'ranking' ? 'Ranking' : 'Chart')
 const typeLabelLower = computed(() => typeLabel.value.toLowerCase())
+
+const handleOpenModal = () => {
+  // Reset form and open
+  emit('update:name', '')
+  emit('update:description', '')
+  emit('update:isPublic', false)
+  localShow.value = true
+}
 </script>
 
 <template>
-  <UModal
-    v-model="localShow"
-    :title="`Save ${typeLabel}`"
-    :close="{
-      color: 'neutral',
-      variant: 'ghost'
-    }"
-  >
-    <button class="chart-option-button">
+  <div>
+    <button
+      type="button"
+      class="chart-option-button"
+      @click="handleOpenModal"
+    >
       <UIcon
         name="i-lucide-save"
         class="w-4 h-4 flex-shrink-0"
@@ -79,85 +84,94 @@ const typeLabelLower = computed(() => typeLabel.value.toLowerCase())
       />
     </button>
 
-    <template #body>
-      <div class="space-y-4 w-full">
-        <!-- Name Input -->
-        <UFormField
-          :label="`${typeLabel} Name`"
-          required
-          class="w-full"
-        >
-          <UInput
-            v-model="localName"
-            :placeholder="`Enter a name for your ${typeLabelLower}`"
+    <UModal
+      v-model:open="localShow"
+      :title="`Save ${typeLabel}`"
+      :close="{
+        color: 'neutral',
+        variant: 'ghost'
+      }"
+    >
+      <template #body>
+        <div class="space-y-4 w-full">
+          <!-- Name Input -->
+          <UFormField
+            :label="`${typeLabel} Name`"
+            required
             class="w-full"
-          />
-        </UFormField>
+          >
+            <UInput
+              v-model="localName"
+              :placeholder="`Enter a name for your ${typeLabelLower}`"
+              class="w-full"
+            />
+          </UFormField>
 
-        <!-- Description Input -->
-        <UFormField
-          label="Description (optional)"
-          class="w-full"
-        >
-          <UTextarea
-            v-model="localDescription"
-            placeholder="Add a description (optional)"
-            :rows="3"
+          <!-- Description Input -->
+          <UFormField
+            label="Description (optional)"
             class="w-full"
-          />
-        </UFormField>
+          >
+            <UTextarea
+              v-model="localDescription"
+              placeholder="Add a description (optional)"
+              :rows="3"
+              class="w-full"
+            />
+          </UFormField>
 
-        <!-- Public Toggle -->
-        <UFormField>
-          <div class="flex items-center gap-3">
-            <USwitch v-model="localPublic" />
-            <div>
-              <div class="font-medium text-sm">
-                Make this {{ typeLabelLower }} public
-              </div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">
-                Public {{ typeLabelLower }}s appear in the {{ typeLabelLower }} gallery
+          <!-- Public Toggle -->
+          <UFormField>
+            <div class="flex items-center gap-3">
+              <USwitch v-model="localPublic" />
+              <div>
+                <div class="font-medium text-sm">
+                  Make this {{ typeLabelLower }} public
+                </div>
+                <div class="text-xs text-gray-500 dark:text-gray-400">
+                  Public {{ typeLabelLower }}s appear in the {{ typeLabelLower }} gallery
+                </div>
               </div>
             </div>
-          </div>
-        </UFormField>
+          </UFormField>
 
-        <!-- Error Message -->
-        <UAlert
-          v-if="error"
-          color="error"
-          variant="subtle"
-          :title="error"
-        />
+          <!-- Error Message -->
+          <UAlert
+            v-if="error"
+            color="error"
+            variant="subtle"
+            :title="error"
+          />
 
-        <!-- Success Message -->
-        <UAlert
-          v-if="success"
-          color="success"
-          variant="subtle"
-          :title="`${typeLabel} saved successfully!`"
-        />
-      </div>
-    </template>
+          <!-- Success Message -->
+          <UAlert
+            v-if="success"
+            color="success"
+            variant="subtle"
+            :title="`${typeLabel} saved successfully!`"
+          />
+        </div>
+      </template>
 
-    <template #footer>
-      <div class="flex justify-end gap-2">
-        <UButton
-          color="neutral"
-          variant="ghost"
-          label="Cancel"
-          @click="localShow = false"
-        />
-        <UButton
-          color="primary"
-          :label="`Save ${typeLabel}`"
-          :loading="saving"
-          :disabled="!name.trim()"
-          @click="emit('save')"
-        />
-      </div>
-    </template>
-  </UModal>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            label="Cancel"
+            @click="localShow = false"
+          />
+          <UButton
+            color="primary"
+            :label="`Save ${typeLabel}`"
+            :loading="saving"
+            :disabled="!name.trim()"
+            @click="emit('save')"
+          />
+        </div>
+      </template>
+    </UModal>
+  </div>
 </template>
 
 <style scoped>

@@ -230,7 +230,9 @@ const selectedDecimals = computed({
   set: (v: { name: string, value: string, label: string }) => emit('decimalsChanged', v.value)
 })
 
-const baselineSliderChanged = (values: string[]) => emit('baselineSliderValueChanged', values)
+const baselineSliderChanged = (values: string[]) => {
+  emit('baselineSliderValueChanged', values)
+}
 // Use configuration-based baseline option visibility (kept for backward compatibility)
 const showBaselineOption = chartUIState.showBaselineOption
 
