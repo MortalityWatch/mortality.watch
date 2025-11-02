@@ -2,8 +2,8 @@
 import { ref, computed, toRef } from 'vue'
 import { standardPopulationItems, baselineMethodItems, decimalPrecisionItems } from '@/model'
 import type { ChartType } from '@/model/period'
-import { baselineMinRange } from '@/lib/chart'
-import DateSlider from '@/components/charts/DateSlider.vue'
+import BaselineMethodPicker from '@/components/shared/BaselineMethodPicker.vue'
+import BaselinePeriodPicker from '@/components/shared/BaselinePeriodPicker.vue'
 import { useRankingUIState } from '@/composables/useRankingUIState'
 
 // Props
@@ -243,45 +243,22 @@ const activeTab = ref('metric')
 
     <!-- Baseline Tab -->
     <div v-if="activeTab === 'baseline'">
-      <div class="flex flex-wrap items-start gap-6">
-        <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-          <label
-            class="text-sm font-medium whitespace-nowrap"
-            for="baselineMethod"
-          >
-            Method
-          </label>
-          <USelectMenu
-            id="baselineMethod"
-            v-model="selectedBaselineMethodLocal"
-            :items="baselineMethodItems"
-            placeholder="Select Baseline Method"
-            :disabled="isUpdating"
-            size="sm"
-            class="w-52"
-          />
-        </div>
+      <div class="flex flex-col gap-4">
+        <BaselineMethodPicker
+          v-model="selectedBaselineMethodLocal"
+          :items="baselineMethodItems"
+          :is-updating="isUpdating"
+        />
 
-        <div
+        <BaselinePeriodPicker
           v-if="allLabels.length && selectedBaselineMethod"
-          class="flex-1 min-w-[400px] px-4 pt-1 pb-3 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-        >
-          <div class="flex items-center gap-4">
-            <label class="text-sm font-medium whitespace-nowrap">
-              Period
-            </label>
-            <div class="flex-1 mt-12 px-4">
-              <DateSlider
-                :slider-value="baselineSliderValue"
-                :labels="baselineSliderValues()"
-                :chart-type="chartType"
-                :color="greenColor()"
-                :min-range="baselineMinRange(selectedBaselineMethod.value || 'mean')"
-                @slider-changed="(val: string[]) => emit('baselineSliderChanged', val)"
-              />
-            </div>
-          </div>
-        </div>
+          :baseline-method="selectedBaselineMethod.value || 'mean'"
+          :slider-value="baselineSliderValue"
+          :labels="baselineSliderValues()"
+          :chart-type="chartType"
+          :show-period-length="false"
+          @slider-changed="(val: string[]) => emit('baselineSliderChanged', val)"
+        />
       </div>
     </div>
   </UCard>

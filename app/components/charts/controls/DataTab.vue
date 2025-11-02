@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { types, chartTypes, standardPopulations } from '@/model'
+import { types, standardPopulations } from '@/model'
+import PeriodOfTimePicker from '@/components/shared/PeriodOfTimePicker.vue'
 
 const props = defineProps<{
   selectedType: { name: string, value: string, label: string }
@@ -18,7 +19,6 @@ const emit = defineEmits<{
 
 // Add 'label' property for USelectMenu compatibility
 const typesWithLabels = types.map(t => ({ ...t, label: t.name }))
-const chartTypesWithLabels = chartTypes.map(t => ({ ...t, label: t.name }))
 const standardPopulationsWithLabels = standardPopulations.map(t => ({ ...t, label: t.name }))
 
 const selectedTypeModel = computed({
@@ -71,17 +71,10 @@ const selectedStandardPopulationModel = computed({
       </UPopover>
     </div>
 
-    <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-      <label class="text-sm font-medium whitespace-nowrap">Period of Time</label>
-      <UInputMenu
-        v-model="selectedChartTypeModel"
-        :items="chartTypesWithLabels"
-        placeholder="Select the period of time"
-        :disabled="props.isUpdating"
-        size="sm"
-        class="flex-1"
-      />
-    </div>
+    <PeriodOfTimePicker
+      v-model="selectedChartTypeModel"
+      :is-updating="props.isUpdating"
+    />
 
     <div
       v-if="props.showStandardPopulation"

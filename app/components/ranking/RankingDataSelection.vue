@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { ChartType } from '@/model/period'
-import DateSlider from '../charts/DateSlider.vue'
-import { specialColor } from '@/colors'
+import PeriodOfTimePicker from '@/components/shared/PeriodOfTimePicker.vue'
+import DateRangePicker from '@/components/shared/DateRangePicker.vue'
 
 const props = defineProps<{
   selectedPeriodOfTime: { label: string, name: string, value: string }
@@ -35,24 +35,13 @@ const emit = defineEmits<{
     </template>
 
     <div class="flex flex-wrap gap-4">
-      <div
-        class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+      <PeriodOfTimePicker
+        :model-value="props.selectedPeriodOfTime"
+        :items="props.periodOfTimeItems"
+        :is-updating="props.isUpdating"
         data-tour="ranking-period"
-      >
-        <label
-          class="text-sm font-medium whitespace-nowrap"
-          for="periodOfTime"
-        >Period of Time</label>
-        <USelectMenu
-          id="periodOfTime"
-          :model-value="props.selectedPeriodOfTime"
-          :items="props.periodOfTimeItems"
-          placeholder="Select the period of time"
-          size="sm"
-          class="w-44"
-          @update:model-value="emit('periodOfTimeChanged', $event)"
-        />
-      </div>
+        @update:model-value="emit('periodOfTimeChanged', $event)"
+      />
       <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
         <label
           class="text-sm font-medium whitespace-nowrap"
@@ -71,51 +60,21 @@ const emit = defineEmits<{
     </div>
 
     <div
-      v-if="props.allLabels.length"
-      class="mt-6 flex flex-wrap gap-6"
+      v-if="props.allLabels.length && props.selectedBaselineMethod?.value !== 'auto'"
+      class="mt-6"
     >
-      <div
-        v-show="props.selectedBaselineMethod?.value !== 'auto'"
-        class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-      >
-        <label
-          class="text-sm font-medium whitespace-nowrap"
-          for="startingPeriod"
-        >
-          Start Period
-        </label>
-        <USelectMenu
-          id="startingPeriod"
-          :model-value="props.sliderStart"
-          :items="props.allYearlyChartLabelsUnique"
-          placeholder="Select the start period"
-          :disabled="props.isUpdating"
-          size="sm"
-          class="w-24"
-          @update:model-value="emit('update:sliderStart', $event)"
-        />
-      </div>
-
-      <div
-        class="flex-1 min-w-[400px] px-4 pt-1 pb-3 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+      <DateRangePicker
+        :slider-start="props.sliderStart"
+        :all-yearly-chart-labels-unique="props.allYearlyChartLabelsUnique"
+        :slider-value="props.sliderValue"
+        :labels="props.sliderValues"
+        :chart-type="(props.selectedPeriodOfTime?.value || 'yearly') as ChartType"
+        :disabled="props.isUpdating"
+        :show-from-picker="false"
         data-tour="ranking-date-range"
-      >
-        <div class="flex items-center gap-4">
-          <label class="text-sm font-medium whitespace-nowrap">
-            Date Range
-          </label>
-          <div class="flex-1 mt-12 px-4">
-            <DateSlider
-              :slider-value="props.sliderValue"
-              :labels="props.sliderValues"
-              :chart-type="(props.selectedPeriodOfTime?.value || 'yearly') as ChartType"
-              :color="specialColor()"
-              :min-range="0"
-              @slider-changed="emit('sliderChanged', $event)"
-            />
-          </div>
-        </div>
-      </div>
+        @update:slider-start="emit('update:sliderStart', $event)"
+        @slider-changed="emit('sliderChanged', $event)"
+      />
     </div>
   </UCard>
 </template>
