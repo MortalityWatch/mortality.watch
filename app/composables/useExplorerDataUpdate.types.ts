@@ -33,6 +33,7 @@ export interface ExplorerStateRefs {
   maximize: Ref<boolean>
   showLabels: Ref<boolean>
   isLogarithmic: Ref<boolean>
+  showZScores: Ref<boolean>
 }
 
 /**

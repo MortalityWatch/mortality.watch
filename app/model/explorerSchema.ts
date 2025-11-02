@@ -115,6 +115,7 @@ const explorerStateBaseSchema = z.object({
   maximize: z.boolean(),
   showLabels: z.boolean(),
   isLogarithmic: z.boolean(),
+  showZScores: z.boolean(),
 
   // Chart appearance
   decimals: DecimalPrecisionEnum

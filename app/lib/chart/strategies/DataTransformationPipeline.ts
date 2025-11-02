@@ -68,10 +68,10 @@ export class DataTransformationPipeline {
     const dataRow = data[key] ?? []
 
     // Z-scores take priority over other transformations
+    // Z-scores are pre-calculated by the R stats API and stored as <metric>_zscore
     if (config.showZScores) {
-      const blKey = this.zscoreStrategy.getBaselineKey(config.isAsmrType, key)
-      const blDataRow = data[blKey] ?? []
-      return this.zscoreStrategy.transform(dataRow, blDataRow)
+      const zscoreKey = this.zscoreStrategy.getZScoreKey(config.isAsmrType, key)
+      return data[zscoreKey] ?? []
     }
 
     if (config.showPercentage) {

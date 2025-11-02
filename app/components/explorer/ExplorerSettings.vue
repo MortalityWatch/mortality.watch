@@ -28,6 +28,7 @@ const emit = defineEmits<{
   showPercentageChanged: [value: boolean]
   cumulativeChanged: [value: boolean]
   showTotalChanged: [value: boolean]
+  showZScoresChanged: [value: boolean]
   sliderStartChanged: [value: string]
   userColorsChanged: [value: string[]]
   chartPresetChanged: [value: string]
@@ -102,6 +103,8 @@ const baselineSliderValue = computed(() => [
       :show-qr-code="props.state.showQrCode.value"
       :show-caption="props.state.showCaption.value"
       :decimals="props.state.decimals.value"
+      :show-z-scores="props.state.showZScores.value"
+      :show-z-scores-option="!isPopulationType"
       @type-changed="emit('typeChanged', $event)"
       @chart-type-changed="emit('chartTypeChanged', $event)"
       @chart-style-changed="emit('chartStyleChanged', $event)"
@@ -124,6 +127,7 @@ const baselineSliderValue = computed(() => [
       @show-qr-code-changed="emit('showQrCodeChanged', $event)"
       @show-caption-changed="emit('showCaptionChanged', $event)"
       @decimals-changed="emit('decimalsChanged', $event)"
+      @show-z-scores-changed="emit('showZScoresChanged', $event)"
     />
   </UCard>
 </template>

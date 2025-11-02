@@ -443,6 +443,7 @@ const downloadChart = () => {
             @show-qr-code-changed="(v) => { state.showQrCode.value = v; nextTick() }"
             @show-caption-changed="(v: boolean) => { state.showCaption.value = v; nextTick() }"
             @decimals-changed="(v) => { state.decimals.value = v; nextTick() }"
+            @show-z-scores-changed="(v) => updateStateAndRefresh(() => state.showZScores.value = v, '_showZScores')"
           />
 
           <ExplorerChartActions

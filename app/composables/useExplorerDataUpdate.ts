@@ -92,6 +92,7 @@ export function useExplorerDataUpdate(config: UseExplorerDataUpdateConfig) {
       config.state.isLogarithmic.value,
       config.helpers.isPopulationType(),
       config.helpers.isDeathsType(),
+      config.state.showZScores.value,
       config.data.allChartData.labels,
       config.data.allChartData.data
     )

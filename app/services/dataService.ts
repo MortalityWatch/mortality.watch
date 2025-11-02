@@ -172,6 +172,7 @@ export class DataService {
       props.isLogarithmic,
       helpers.isPopulationType(),
       helpers.isDeathsType(),
+      props.showZScores ?? false,
       allChartDataLabels,
       allChartDataData
     )

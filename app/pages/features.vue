@@ -23,7 +23,7 @@
           'Basic controls and filters',
           'Share URLs',
           'View ranking page',
-          'Conservative baseline only'
+          'Conservative baselines only'
         ]"
         :button="{ label: 'Start Exploring', to: '/explorer', color: 'neutral' }"
         class="border-2 border-gray-900 dark:border-gray-100"
@@ -40,7 +40,6 @@
           { title: 'Save charts to My Charts', icon: 'i-lucide-save' },
           { title: 'Custom color schemes', icon: 'i-lucide-palette' },
           { title: 'All baseline methods', icon: 'i-lucide-chart-line' },
-          { title: 'Export data (CSV/JSON)', icon: 'i-lucide-download' },
           { title: 'Full historical data access', icon: 'i-lucide-calendar' },
           { title: 'Publish and share charts', icon: 'i-lucide-share-2' }
         ]"
@@ -62,10 +61,12 @@
           { title: 'All Free features, plus:' },
           { title: 'Remove watermarks', icon: 'i-lucide-image-off' },
           { title: 'Remove QR codes', icon: 'i-lucide-scan-line' },
-          { title: 'Single age group LE (Coming Soon)', icon: 'i-lucide-activity' },
-          { title: 'Age standardized deaths (Coming Soon)', icon: 'i-lucide-trending-up' },
-          { title: 'Z-score calculations (Coming Soon)', icon: 'i-lucide-calculator' },
-          { title: 'Priority email support', icon: 'i-lucide-headphones' }
+          { title: 'Z-score calculations', icon: 'i-lucide-calculator' },
+          { title: 'Priority email support', icon: 'i-lucide-headphones' },
+          { title: 'Single age group LE [Coming Soon]', icon: 'i-lucide-activity' },
+          { title: 'Age standardized deaths [Coming Soon]', icon: 'i-lucide-trending-up' },
+          { title: 'Export data (CSV/JSON) [Coming Soon]', icon: 'i-lucide-download' }
+
         ]"
         :button="tier === 2
           ? { label: 'Start Exploring', to: '/explorer', color: 'neutral' }

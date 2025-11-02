@@ -1,35 +1,27 @@
 /**
- * Strategy for transforming mortality data to z-scores
+ * Strategy for accessing pre-calculated z-score data
  * Z-scores show how many standard deviations each value is from the baseline mean
+ * Z-scores are calculated by the R stats API and stored as <metric>_zscore fields
  */
 
-import { calculateZScores } from '~/lib/calculations/zscores'
-
 /**
- * Transforms mortality data values to z-scores relative to baseline
+ * Provides access to pre-calculated z-score data from the R stats API
  */
 export class ZScoreTransformStrategy {
   /**
-   * Transform data row to z-scores relative to baseline
-   * @param dataRow - The data values to transform
-   * @param blRow - The baseline values used to calculate mean and stddev
-   * @returns Z-score values
-   */
-  transform(dataRow: number[], blRow: number[]): number[] {
-    return calculateZScores(dataRow, blRow)
-  }
-
-  /**
-   * Get the baseline key for a given data key
+   * Get the z-score key for a given data key
+   * Z-scores are pre-calculated by the R stats API during baseline calculation
    * @param isAsmr - Whether this is ASMR data
-   * @param key - The data key
-   * @returns The baseline key
+   * @param key - The data key (e.g., "deaths", "asmr_who")
+   * @returns The z-score key (e.g., "deaths_zscore", "asmr_who_zscore")
    */
-  getBaselineKey(isAsmr: boolean, key: string): string {
+  getZScoreKey(isAsmr: boolean, key: string): string {
     if (isAsmr) {
-      return `${key.split('_')[0]}_${key.split('_')[1]}_baseline`
+      // For ASMR: asmr_who -> asmr_who_zscore
+      return `${key.split('_')[0]}_${key.split('_')[1]}_zscore`
     } else {
-      return `${key.split('_')[0]}_baseline`
+      // For other metrics: deaths -> deaths_zscore
+      return `${key.split('_')[0]}_zscore`
     }
   }
 }

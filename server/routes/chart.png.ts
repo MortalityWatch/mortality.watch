@@ -169,6 +169,7 @@ export default defineEventHandler(async (event) => {
           state.isLogarithmic,
           isPopulationType,
           isDeathsType,
+          state.showZScores ?? false,
           allLabels,
           allChartData.data
         )

@@ -142,6 +142,12 @@ const calculateBaseline = async (
     ) as DataVector
     if (keys[2]) data[keys[2]] = prefillUndefined(json.lower, startIdx) as DataVector
     if (keys[3]) data[keys[3]] = prefillUndefined(json.upper, startIdx) as DataVector
+
+    // Store z-scores if available (added in API v2)
+    if (json.zscore && keys[0]) {
+      const zscoreKey = `${keys[0]}_zscore` as keyof DatasetEntry
+      data[zscoreKey] = prefillUndefined(json.zscore as NumberArray, startIdx) as DataVector
+    }
   } catch (error) {
     console.error('Baseline calculation failed, using simple mean fallback:', {
       iso3c: data.iso3c?.[0],

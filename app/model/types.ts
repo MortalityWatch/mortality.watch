@@ -71,7 +71,7 @@ export type NumberEntryFields = {
  *
  * For each metric, generates:
  * - <metric>
- * - <metric>_baseline, <metric>_baseline_lower, <metric>_baseline_upper
+ * - <metric>_baseline, <metric>_baseline_lower, <metric>_baseline_upper, <metric>_zscore
  * - <metric>_excess, <metric>_excess_lower, <metric>_excess_upper
  */
 
@@ -86,6 +86,7 @@ for (const metric of metrics) {
   metricFields.push(`${metric}_baseline` as MetricField)
   metricFields.push(`${metric}_baseline_lower` as MetricField)
   metricFields.push(`${metric}_baseline_upper` as MetricField)
+  metricFields.push(`${metric}_zscore` as MetricField)
   // Excess variant + modifiers
   metricFields.push(`${metric}_excess` as MetricField)
   metricFields.push(`${metric}_excess_lower` as MetricField)
