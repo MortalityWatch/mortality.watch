@@ -5,7 +5,6 @@
 
 // Queries - Loading metadata and fetching data
 export {
-  loadCountryMetadataFlat,
   loadCountryMetadata,
   fetchData
 } from './queries'

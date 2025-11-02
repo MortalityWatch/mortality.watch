@@ -11,57 +11,6 @@ import { validateMetadata, validateMortalityData } from './validation'
 const errHandler = (err: string) => console.error(err)
 
 /**
- * Load country metadata as flat array with optional filtering
- * Uses cache to avoid repeated CSV parsing
- */
-export const loadCountryMetadataFlat = async (options?: {
-  filterCountries?: string[]
-}): Promise<CountryRaw[]> => {
-  // Check cache first
-  const cached = metadataCache.getFlat(options?.filterCountries)
-  if (cached) {
-    return cached
-  }
-
-  // Cache miss - fetch and parse with validation
-  try {
-    const text = await dataLoader.fetchMetadata()
-
-    // Validate data with fallback support
-    const validationResult = await validateMetadata(text)
-
-    if (!validationResult.success || !validationResult.data) {
-      throw new Error('Metadata validation failed and no cache available')
-    }
-
-    // Log if we used cached data due to validation failure
-    if (validationResult.usedCache) {
-      console.warn('Using cached metadata due to validation failure')
-    }
-
-    const rawObjects = validationResult.data
-
-    // Filter by specified countries if provided
-    // Includes sub-national jurisdictions (e.g., USA matches USA, USA-ND, USA-CA, etc.)
-    const filterCountries = options?.filterCountries || []
-    const result = filterCountries.length > 0
-      ? rawObjects.filter(obj =>
-          filterCountries.includes(obj.iso3c)
-          || filterCountries.some(fc => obj.iso3c.startsWith(`${fc}-`))
-        )
-      : rawObjects
-
-    // Store in cache
-    metadataCache.setFlat(result, options?.filterCountries)
-
-    return result
-  } catch (error) {
-    console.error('Error loading metadata:', error)
-    throw error
-  }
-}
-
-/**
  * Load country metadata as Record indexed by iso3c code
  * Uses cache to avoid repeated CSV parsing
  */
