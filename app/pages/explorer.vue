@@ -359,6 +359,11 @@ const downloadChart = () => {
       v-else
       class="flex flex-col gap-3"
     >
+      <PageHeader
+        title="Data Explorer"
+        description="Visualize and analyze mortality data across countries, time periods, and demographics with interactive charts and customizable baselines."
+        max-width="xl"
+      />
       <ExplorerDataSelection
         :all-countries="allCountries"
         :all-age-groups="allAgeGroups"

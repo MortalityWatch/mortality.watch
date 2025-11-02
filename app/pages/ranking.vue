@@ -45,6 +45,9 @@ definePageMeta({
 // Auth state for conditional features
 const { isAuthenticated } = useAuth()
 
+// Tutorial for first-time users
+const { autoStartTutorial } = useTutorial()
+
 // Set page title
 useSeoMeta({
   title: 'Excess Mortality Ranking - Mortality Watch',
@@ -263,6 +266,8 @@ const displaySettings = computed(() => ({
 // Only load data on client-side after mount
 onMounted(() => {
   hasLoaded.value = true
+  // Auto-start tutorial for first-time users
+  autoStartTutorial('ranking')
 })
 
 // Watch route.query changes for date/baseline updates
@@ -381,6 +386,7 @@ const copyRankingLink = () => {
             :slider-values="sliderValues"
             :is-updating="isUpdating"
             :selected-baseline-method="selectedBaselineMethod"
+            data-tour="ranking-data-selection-mobile"
             @period-of-time-changed="periodOfTimeChanged"
             @slider-changed="sliderChanged"
           />
@@ -388,7 +394,7 @@ const copyRankingLink = () => {
 
         <!-- Ranking Table - Second on mobile, first on large screens -->
         <div class="order-2 lg:order-1 flex-1">
-          <UCard>
+          <UCard data-tour="ranking-table">
             <template #header>
               <h2 class="text-xl font-semibold">
                 {{ title() }}
@@ -431,6 +437,7 @@ const copyRankingLink = () => {
             :slider-values="sliderValues"
             :is-updating="isUpdating"
             :selected-baseline-method="selectedBaselineMethod"
+            data-tour="ranking-data-selection"
             @period-of-time-changed="periodOfTimeChanged"
             @slider-changed="sliderChanged"
           />
@@ -462,6 +469,7 @@ const copyRankingLink = () => {
             :show-download-chart="false"
             :show-screenshot="false"
             :explorer-link="explorerLink()"
+            data-tour="ranking-actions"
             @copy-link="copyRankingLink"
             @save-chart="navigateTo('/signup')"
           >
@@ -481,6 +489,7 @@ const copyRankingLink = () => {
                 :error="saveError"
                 :success="saveSuccess"
                 type="ranking"
+                data-tour="ranking-save-button"
                 @save="saveToDB"
               />
             </template>
@@ -535,6 +544,7 @@ const copyRankingLink = () => {
                 :error="saveError"
                 :success="saveSuccess"
                 type="ranking"
+                data-tour="ranking-save-button"
                 @save="saveToDB"
               />
             </template>

@@ -44,9 +44,20 @@ function toggleColorMode() {
   }
 }
 
-// Check if we're on the explorer page to show help button
+// Check if we're on pages with tutorials to show help button
 const route = useRoute()
 const isExplorerPage = computed(() => route.path === '/explorer')
+const isRankingPage = computed(() => route.path === '/ranking')
+const showHelpButton = computed(() => isExplorerPage.value || isRankingPage.value)
+
+// Determine which tutorial to start based on current page
+const handleHelpClick = () => {
+  if (isRankingPage.value) {
+    startTutorial('ranking')
+  } else {
+    startTutorial('explorer')
+  }
+}
 
 // Main navigation items
 const items = computed(() => {
@@ -131,14 +142,14 @@ const userMenuItems = computed<MenuItem[]>(() => {
     />
 
     <template #right>
-      <!-- Help button (only on explorer page) -->
+      <!-- Help button (only on pages with tutorials) -->
       <UButton
-        v-if="isExplorerPage"
+        v-if="showHelpButton"
         icon="i-lucide-help-circle"
         color="neutral"
         variant="ghost"
         aria-label="Show tutorial"
-        @click="startTutorial"
+        @click="handleHelpClick"
       />
 
       <UButton

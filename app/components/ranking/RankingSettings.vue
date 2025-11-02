@@ -107,7 +107,7 @@ const activeTab = ref('metric')
 </script>
 
 <template>
-  <UCard>
+  <UCard data-tour="ranking-settings">
     <template #header>
       <h2 class="text-xl font-semibold">
         Settings

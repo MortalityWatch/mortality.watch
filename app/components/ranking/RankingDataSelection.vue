@@ -15,6 +15,7 @@ const props = defineProps<{
   sliderValues: string[]
   isUpdating: boolean
   selectedBaselineMethod?: { label: string, name: string, value: string }
+  dataTour?: string
 }>()
 
 const emit = defineEmits<{
@@ -26,7 +27,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <UCard>
+  <UCard :data-tour="props.dataTour">
     <template #header>
       <h2 class="text-xl font-semibold">
         Data Selection
@@ -34,7 +35,10 @@ const emit = defineEmits<{
     </template>
 
     <div class="flex flex-wrap gap-4">
-      <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+      <div
+        class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+        data-tour="ranking-period"
+      >
         <label
           class="text-sm font-medium whitespace-nowrap"
           for="periodOfTime"
@@ -92,7 +96,10 @@ const emit = defineEmits<{
         />
       </div>
 
-      <div class="flex-1 min-w-[400px] px-4 pt-1 pb-3 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+      <div
+        class="flex-1 min-w-[400px] px-4 pt-1 pb-3 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+        data-tour="ranking-date-range"
+      >
         <div class="flex items-center gap-4">
           <label class="text-sm font-medium whitespace-nowrap">
             Date Range
