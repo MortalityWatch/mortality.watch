@@ -9,14 +9,21 @@ import type { ChartType } from '~/model/period'
 
 describe('filtering', () => {
   describe('getFilteredLabelAndData', () => {
+    const createMockDatasetEntry = (overrides: Partial<import('~/model').DatasetEntry> = {}): import('~/model').DatasetEntry => ({
+      iso3c: ['USA', 'USA', 'USA', 'USA', 'USA'],
+      age_group: ['all', 'all', 'all', 'all', 'all'],
+      date: ['2020-W01', '2020-W02', '2020-W03', '2020-W04', '2020-W05'],
+      source: ['Source 1', 'Source 1', 'Source 1', 'Source 1', 'Source 1'],
+      source_asmr: ['test', 'test', 'test', 'test', 'test'],
+      type: ['0', '0', '0', '0', '0'],
+      deaths: [100, 200, 300, 400, 500],
+      population: [1000000, 1000000, 1000000, 1000000, 1000000],
+      ...overrides
+    } as import('~/model').DatasetEntry)
+
     const createMockDataset = (): Dataset => ({
       all: {
-        USA: {
-          deaths: [100, 200, 300, 400, 500],
-          population: [1000000, 1000000, 1000000, 1000000, 1000000],
-          source: ['Source 1', 'Source 1', 'Source 1', 'Source 1', 'Source 1'],
-          type: ['0', '0', '0', '0', '0']
-        }
+        USA: createMockDatasetEntry()
       }
     })
 
@@ -50,8 +57,8 @@ describe('filtering', () => {
           data
         )
 
-        expect(result.data.all.USA.deaths).toEqual([200, 300, 400])
-        expect(result.data.all.USA.population).toEqual([1000000, 1000000, 1000000])
+        expect(result.data.all?.USA?.deaths).toEqual([200, 300, 400])
+        expect(result.data.all?.USA?.population).toEqual([1000000, 1000000, 1000000])
       })
 
       it('should include start and end dates in range', () => {
@@ -86,7 +93,7 @@ describe('filtering', () => {
         )
 
         expect(result.labels).toEqual(['2020-W02'])
-        expect(result.data.all.USA.deaths).toEqual([200])
+        expect(result.data.all?.USA?.deaths).toEqual([200])
       })
     })
 
@@ -95,18 +102,20 @@ describe('filtering', () => {
         const allLabels = ['2020-W01', '2020-W02', '2020-W03']
         const data: Dataset = {
           all: {
-            USA: {
+            USA: createMockDatasetEntry({
+              iso3c: ['USA', 'USA', 'USA'],
               deaths: [100, 200, 300],
               population: [1000000, 1000000, 1000000],
-              source: ['Source 1', 'Source 1', 'Source 1'],
-              type: ['0', '0', '0']
-            },
-            GBR: {
+              date: ['2020-W01', '2020-W02', '2020-W03'],
+              source: ['Source 1', 'Source 1', 'Source 1']
+            }),
+            GBR: createMockDatasetEntry({
+              iso3c: ['GBR', 'GBR', 'GBR'],
               deaths: [150, 250, 350],
               population: [700000, 700000, 700000],
-              source: ['Source 2', 'Source 2', 'Source 2'],
-              type: ['0', '0', '0']
-            }
+              date: ['2020-W01', '2020-W02', '2020-W03'],
+              source: ['Source 2', 'Source 2', 'Source 2']
+            })
           }
         }
 
@@ -119,8 +128,8 @@ describe('filtering', () => {
           data
         )
 
-        expect(result.data.all.USA.deaths).toEqual([100, 200])
-        expect(result.data.all.GBR.deaths).toEqual([150, 250])
+        expect(result.data.all?.USA?.deaths).toEqual([100, 200])
+        expect(result.data.all?.GBR?.deaths).toEqual([150, 250])
       })
     })
 
@@ -129,20 +138,23 @@ describe('filtering', () => {
         const allLabels = ['2020-W01', '2020-W02', '2020-W03']
         const data: Dataset = {
           'all': {
-            USA: {
+            USA: createMockDatasetEntry({
+              iso3c: ['USA', 'USA', 'USA'],
               deaths: [100, 200, 300],
               population: [1000000, 1000000, 1000000],
-              source: ['Source 1', 'Source 1', 'Source 1'],
-              type: ['0', '0', '0']
-            }
+              date: ['2020-W01', '2020-W02', '2020-W03'],
+              source: ['Source 1', 'Source 1', 'Source 1']
+            })
           },
           '0-64': {
-            USA: {
+            USA: createMockDatasetEntry({
+              iso3c: ['USA', 'USA', 'USA'],
+              age_group: ['0-64', '0-64', '0-64'],
               deaths: [50, 100, 150],
               population: [700000, 700000, 700000],
-              source: ['Source 1', 'Source 1', 'Source 1'],
-              type: ['0', '0', '0']
-            }
+              date: ['2020-W01', '2020-W02', '2020-W03'],
+              source: ['Source 1', 'Source 1', 'Source 1']
+            })
           }
         }
 
@@ -155,8 +167,8 @@ describe('filtering', () => {
           data
         )
 
-        expect(result.data.all.USA.deaths).toEqual([100, 200])
-        expect(result.data['0-64'].USA.deaths).toEqual([50, 100])
+        expect(result.data.all?.USA?.deaths).toEqual([100, 200])
+        expect(result.data['0-64']?.USA?.deaths).toEqual([50, 100])
       })
     })
 
@@ -165,12 +177,14 @@ describe('filtering', () => {
         const allLabels = ['2020-W01', '2020-W02', '2020-W03']
         const data: Dataset = {
           all: {
-            USA: {
+            USA: createMockDatasetEntry({
+              iso3c: ['USA', 'USA', 'USA'],
               deaths: [100, 200, 300],
               population: [1000000, 1000000, 1000000],
+              date: ['2020-W01', '2020-W02', '2020-W03'],
               source: ['Source 1', 'Source 1', 'Source 1'],
               type: ['0', '1', '0'] // Mix of weekly (0) and monthly (1) data
-            }
+            })
           }
         }
 
@@ -183,20 +197,22 @@ describe('filtering', () => {
           data
         )
 
-        expect(result.notes.disaggregatedData).toBeDefined()
-        expect(result.notes.disaggregatedData.USA).toBeDefined()
+        expect(result.notes?.disaggregatedData).toBeDefined()
+        expect(result.notes?.disaggregatedData?.USA).toBeDefined()
       })
 
       it('should not mark data as disaggregated when type ordinal matches', () => {
         const allLabels = ['2020-W01', '2020-W02', '2020-W03']
         const data: Dataset = {
           all: {
-            USA: {
+            USA: createMockDatasetEntry({
+              iso3c: ['USA', 'USA', 'USA'],
               deaths: [100, 200, 300],
               population: [1000000, 1000000, 1000000],
+              date: ['2020-W01', '2020-W02', '2020-W03'],
               source: ['Source 1', 'Source 1', 'Source 1'],
               type: ['0', '0', '0']
-            }
+            })
           }
         }
 
@@ -209,19 +225,21 @@ describe('filtering', () => {
           data
         )
 
-        expect(Object.keys(result.notes.disaggregatedData).length).toBe(0)
+        expect(Object.keys(result.notes?.disaggregatedData || {}).length).toBe(0)
       })
 
       it('should handle undefined type values', () => {
         const allLabels = ['2020-W01', '2020-W02', '2020-W03']
         const data: Dataset = {
           all: {
-            USA: {
+            USA: createMockDatasetEntry({
+              iso3c: ['USA', 'USA', 'USA'],
               deaths: [100, 200, 300],
               population: [1000000, 1000000, 1000000],
+              date: ['2020-W01', '2020-W02', '2020-W03'],
               source: ['Source 1', 'Source 1', 'Source 1'],
               type: [undefined as unknown as string, '0', '0']
-            }
+            })
           }
         }
 
@@ -234,7 +252,7 @@ describe('filtering', () => {
           data
         )
 
-        expect(result.data.all.USA.type.length).toBe(3)
+        expect(result.data.all?.USA?.type.length).toBe(3)
       })
     })
 
@@ -243,15 +261,17 @@ describe('filtering', () => {
         const allLabels = ['2020-W01', '2020-W02', '2020-W03']
         const data: Dataset = {
           all: {
-            USA: {
+            USA: createMockDatasetEntry({
+              iso3c: ['USA', 'USA', 'USA'],
               deaths: [100, 200, 300],
-              deaths_baseline: [90, 180, 270],
-              deaths_baseline_lower: [85, 170, 255],
-              deaths_baseline_upper: [115, 230, 345],
+              deaths_baseline: [90, 180, 270] as import('~/model').NumberArray,
+              deaths_baseline_lower: [85, 170, 255] as import('~/model').NumberArray,
+              deaths_baseline_upper: [115, 230, 345] as import('~/model').NumberArray,
               population: [1000000, 1000000, 1000000],
+              date: ['2020-W01', '2020-W02', '2020-W03'],
               source: ['Source 1', 'Source 1', 'Source 1'],
               type: ['0', '0', '0']
-            }
+            })
           }
         }
 
@@ -264,10 +284,10 @@ describe('filtering', () => {
           data
         )
 
-        expect(result.data.all.USA.deaths).toEqual([100, 200])
-        expect(result.data.all.USA.deaths_baseline).toEqual([90, 180])
-        expect(result.data.all.USA.deaths_baseline_lower).toEqual([85, 170])
-        expect(result.data.all.USA.deaths_baseline_upper).toEqual([115, 230])
+        expect(result.data.all?.USA?.deaths).toEqual([100, 200])
+        expect(result.data.all?.USA?.deaths_baseline).toEqual([90, 180])
+        expect(result.data.all?.USA?.deaths_baseline_lower).toEqual([85, 170])
+        expect(result.data.all?.USA?.deaths_baseline_upper).toEqual([115, 230])
       })
     })
 
@@ -327,12 +347,14 @@ describe('filtering', () => {
         const allLabels = ['2020-W01', '2020-W02', '2020-W03']
         const data: Dataset = {
           all: {
-            USA: {
+            USA: createMockDatasetEntry({
+              iso3c: ['USA', 'USA', 'USA'],
               deaths: [100, 200, 300],
               population: [1000000, 1000000, 1000000],
+              date: ['2020-W01', '2020-W02', '2020-W03'],
               source: ['Source 1', 'Source 1', 'Source 1'],
               type: ['0', '0', '0']
-            }
+            })
           }
         }
 
@@ -346,7 +368,7 @@ describe('filtering', () => {
         )
 
         // Should handle missing keys gracefully
-        expect(result.data.all.USA.deaths).toEqual([100, 200])
+        expect(result.data.all?.USA?.deaths).toEqual([100, 200])
       })
     })
 

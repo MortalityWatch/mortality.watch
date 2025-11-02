@@ -5,24 +5,29 @@
 import { describe, it, expect } from 'vitest'
 import { getDatasets } from './datasets'
 import type { DataTransformationConfig } from './types'
-import type { Dataset, Country } from '~/model'
+import type { Dataset, DatasetEntry, NumberArray } from '~/model'
+import { Country } from '~/model'
 
 describe('datasets', () => {
   const mockCountries: Record<string, Country> = {
-    USA: {
+    USA: new Country({
       iso3c: 'USA',
       jurisdiction: 'United States',
-      subregion: '',
-      region: 'Americas',
-      whoRegion: 'AMRO'
-    },
-    GBR: {
+      min_date: '2020-01-01',
+      max_date: '2020-12-31',
+      type: '1',
+      age_groups: 'all',
+      source: 'test'
+    }),
+    GBR: new Country({
       iso3c: 'GBR',
       jurisdiction: 'United Kingdom',
-      subregion: '',
-      region: 'Europe',
-      whoRegion: 'EURO'
-    }
+      min_date: '2020-01-01',
+      max_date: '2020-12-31',
+      type: '1',
+      age_groups: 'all',
+      source: 'test'
+    })
   }
 
   const createBaseConfig = (): DataTransformationConfig => ({
@@ -53,14 +58,21 @@ describe('datasets', () => {
     }
   })
 
+  const createMockDatasetEntry = (overrides: Partial<DatasetEntry> = {}): DatasetEntry => ({
+    iso3c: ['USA', 'USA', 'USA'],
+    age_group: ['all', 'all', 'all'],
+    date: ['2020-01-01', '2020-01-08', '2020-01-15'],
+    source: ['Source 1'],
+    source_asmr: ['test'],
+    type: ['0', '0', '0'],
+    deaths: [100, 200, 300],
+    population: [1000000, 1000000, 1000000],
+    ...overrides
+  } as DatasetEntry)
+
   const createBasicDataset = (): Dataset => ({
     all: {
-      USA: {
-        deaths: [100, 200, 300],
-        population: [1000000, 1000000, 1000000],
-        source: ['Source 1'],
-        type: ['0', '0', '0']
-      }
+      USA: createMockDatasetEntry()
     }
   })
 
@@ -82,7 +94,7 @@ describe('datasets', () => {
 
       const result = getDatasets(config, data)
 
-      expect(result.datasets[0].label).toContain('United States')
+      expect(result.datasets[0]?.label).toContain('United States')
     })
 
     it('should set correct data values', () => {
@@ -91,8 +103,8 @@ describe('datasets', () => {
 
       const result = getDatasets(config, data)
 
-      expect(result.datasets[0].data).toBeDefined()
-      expect(result.datasets[0].data.length).toBeGreaterThan(0)
+      expect(result.datasets[0]?.data).toBeDefined()
+      expect(result.datasets[0]?.data.length).toBeGreaterThan(0)
     })
 
     it('should set border and background colors', () => {
@@ -101,8 +113,8 @@ describe('datasets', () => {
 
       const result = getDatasets(config, data)
 
-      expect(result.datasets[0].borderColor).toBe('#FF0000')
-      expect(result.datasets[0].backgroundColor).toBeDefined()
+      expect(result.datasets[0]?.borderColor).toBe('#FF0000')
+      expect(result.datasets[0]?.backgroundColor).toBeDefined()
     })
 
     it('should collect sources from data', () => {
@@ -122,18 +134,13 @@ describe('datasets', () => {
 
       const data: Dataset = {
         all: {
-          USA: {
-            deaths: [100, 200, 300],
-            population: [1000000, 1000000, 1000000],
-            source: ['Source 1'],
-            type: ['0', '0', '0']
-          },
-          GBR: {
+          USA: createMockDatasetEntry({ iso3c: ['USA', 'USA', 'USA'] }),
+          GBR: createMockDatasetEntry({
+            iso3c: ['GBR', 'GBR', 'GBR'],
             deaths: [150, 250, 350],
             population: [700000, 700000, 700000],
-            source: ['Source 2'],
-            type: ['0', '0', '0']
-          }
+            source: ['Source 2']
+          })
         }
       }
 
@@ -148,24 +155,19 @@ describe('datasets', () => {
 
       const data: Dataset = {
         all: {
-          USA: {
-            deaths: [100, 200, 300],
-            population: [1000000, 1000000, 1000000],
-            source: ['Source 1'],
-            type: ['0', '0', '0']
-          },
-          GBR: {
+          USA: createMockDatasetEntry({ iso3c: ['USA', 'USA', 'USA'] }),
+          GBR: createMockDatasetEntry({
+            iso3c: ['GBR', 'GBR', 'GBR'],
             deaths: [150, 250, 350],
             population: [700000, 700000, 700000],
-            source: ['Source 2'],
-            type: ['0', '0', '0']
-          }
+            source: ['Source 2']
+          })
         }
       }
 
       const result = getDatasets(config, data)
 
-      expect(result.datasets[0].borderColor).not.toBe(result.datasets[1].borderColor)
+      expect(result.datasets[0]?.borderColor).not.toBe(result.datasets[1]?.borderColor)
     })
 
     it('should merge sources from multiple countries', () => {
@@ -174,18 +176,13 @@ describe('datasets', () => {
 
       const data: Dataset = {
         all: {
-          USA: {
-            deaths: [100, 200, 300],
-            population: [1000000, 1000000, 1000000],
-            source: ['Source 1'],
-            type: ['0', '0', '0']
-          },
-          GBR: {
+          USA: createMockDatasetEntry({ iso3c: ['USA', 'USA', 'USA'] }),
+          GBR: createMockDatasetEntry({
+            iso3c: ['GBR', 'GBR', 'GBR'],
             deaths: [150, 250, 350],
             population: [700000, 700000, 700000],
-            source: ['Source 2'],
-            type: ['0', '0', '0']
-          }
+            source: ['Source 2']
+          })
         }
       }
 
@@ -202,20 +199,14 @@ describe('datasets', () => {
       const config = createBaseConfig()
       const data: Dataset = {
         'all': {
-          USA: {
-            deaths: [100, 200, 300],
-            population: [1000000, 1000000, 1000000],
-            source: ['Source 1'],
-            type: ['0', '0', '0']
-          }
+          USA: createMockDatasetEntry()
         },
         '0-64': {
-          USA: {
+          USA: createMockDatasetEntry({
+            age_group: ['0-64', '0-64', '0-64'],
             deaths: [50, 100, 150],
-            population: [700000, 700000, 700000],
-            source: ['Source 1'],
-            type: ['0', '0', '0']
-          }
+            population: [700000, 700000, 700000]
+          })
         }
       }
 
@@ -228,27 +219,25 @@ describe('datasets', () => {
       const config = createBaseConfig()
       const data: Dataset = {
         '0-64': {
-          USA: {
+          USA: createMockDatasetEntry({
+            age_group: ['0-64', '0-64', '0-64'],
             deaths: [50, 100, 150],
-            population: [700000, 700000, 700000],
-            source: ['Source 1'],
-            type: ['0', '0', '0']
-          }
+            population: [700000, 700000, 700000]
+          })
         },
         '65+': {
-          USA: {
+          USA: createMockDatasetEntry({
+            age_group: ['65+', '65+', '65+'],
             deaths: [150, 200, 250],
-            population: [300000, 300000, 300000],
-            source: ['Source 1'],
-            type: ['0', '0', '0']
-          }
+            population: [300000, 300000, 300000]
+          })
         }
       }
 
       const result = getDatasets(config, data)
 
-      const labels = result.datasets.map(ds => ds.label).filter(l => l.length > 0)
-      expect(labels.some(l => l.includes('0-64') || l.includes('65+'))).toBe(true)
+      const labels = result.datasets.map(ds => ds.label).filter(l => l && l.length > 0)
+      expect(labels.some(l => l && (l.includes('0-64') || l.includes('65+')))).toBe(true)
     })
   })
 
@@ -259,13 +248,9 @@ describe('datasets', () => {
 
       const data: Dataset = {
         all: {
-          USA: {
-            deaths: [100, 200, 300],
-            deaths_baseline: [90, 180, 270],
-            population: [1000000, 1000000, 1000000],
-            source: ['Source 1'],
-            type: ['0', '0', '0']
-          }
+          USA: createMockDatasetEntry({
+            deaths_baseline: [90, 180, 270] as NumberArray
+          })
         }
       }
 
@@ -280,19 +265,15 @@ describe('datasets', () => {
 
       const data: Dataset = {
         all: {
-          USA: {
-            deaths: [100, 200, 300],
-            deaths_baseline: [90, 180, 270],
-            population: [1000000, 1000000, 1000000],
-            source: ['Source 1'],
-            type: ['0', '0', '0']
-          }
+          USA: createMockDatasetEntry({
+            deaths_baseline: [90, 180, 270] as NumberArray
+          })
         }
       }
 
       const result = getDatasets(config, data)
 
-      const baselineDataset = result.datasets.find(ds => ds.borderDash)
+      const baselineDataset = result.datasets.find(ds => (ds as { borderDash?: number[] }).borderDash)
       expect(baselineDataset).toBeDefined()
     })
 
@@ -302,19 +283,15 @@ describe('datasets', () => {
 
       const data: Dataset = {
         all: {
-          USA: {
-            deaths: [100, 200, 300],
-            deaths_baseline: [90, 180, 270],
-            population: [1000000, 1000000, 1000000],
-            source: ['Source 1'],
-            type: ['0', '0', '0']
-          }
+          USA: createMockDatasetEntry({
+            deaths_baseline: [90, 180, 270] as NumberArray
+          })
         }
       }
 
       const result = getDatasets(config, data)
 
-      const baselineDataset = result.datasets.find(ds => ds.borderDash && ds.label === '')
+      const baselineDataset = result.datasets.find(ds => (ds as { borderDash?: number[] }).borderDash && ds.label === '')
       expect(baselineDataset).toBeDefined()
     })
   })
@@ -327,13 +304,9 @@ describe('datasets', () => {
 
       const data: Dataset = {
         all: {
-          USA: {
-            deaths: [100, 200, 300],
-            deaths_baseline: [50, 100, 150],
-            population: [1000000, 1000000, 1000000],
-            source: ['Source 1'],
-            type: ['0', '0', '0']
-          }
+          USA: createMockDatasetEntry({
+            deaths_baseline: [50, 100, 150] as NumberArray
+          })
         }
       }
 
@@ -353,12 +326,9 @@ describe('datasets', () => {
 
       const data: Dataset = {
         all: {
-          USA: {
-            deaths: [10, 20, 30],
-            population: [1000000, 1000000, 1000000],
-            source: ['Source 1'],
-            type: ['0', '0', '0']
-          }
+          USA: createMockDatasetEntry({
+            deaths: [10, 20, 30]
+          })
         }
       }
 
@@ -366,7 +336,7 @@ describe('datasets', () => {
 
       expect(result.datasets).toBeDefined()
       const mainDataset = result.datasets[0]
-      expect(mainDataset.data).toBeDefined()
+      expect(mainDataset?.data).toBeDefined()
     })
   })
 
@@ -377,19 +347,16 @@ describe('datasets', () => {
 
       const data: Dataset = {
         all: {
-          USA: {
-            deaths: [10, 20, 30],
-            population: [1000000, 1000000, 1000000],
-            source: ['Source 1'],
-            type: ['0', '0', '0']
-          }
+          USA: createMockDatasetEntry({
+            deaths: [10, 20, 30]
+          })
         }
       }
 
       const result = getDatasets(config, data)
 
       expect(result.datasets).toBeDefined()
-      expect(result.datasets[0].data).toBeDefined()
+      expect(result.datasets[0]?.data).toBeDefined()
     })
 
     it('should sort datasets by total when showTotal is true', () => {
@@ -399,18 +366,13 @@ describe('datasets', () => {
 
       const data: Dataset = {
         all: {
-          USA: {
-            deaths: [100, 200, 300],
-            population: [1000000, 1000000, 1000000],
-            source: ['Source 1'],
-            type: ['0', '0', '0']
-          },
-          GBR: {
+          USA: createMockDatasetEntry(),
+          GBR: createMockDatasetEntry({
+            iso3c: ['GBR', 'GBR', 'GBR'],
             deaths: [50, 100, 150],
             population: [700000, 700000, 700000],
-            source: ['Source 2'],
-            type: ['0', '0', '0']
-          }
+            source: ['Source 2']
+          })
         }
       }
 
@@ -468,15 +430,11 @@ describe('datasets', () => {
 
       const data: Dataset = {
         all: {
-          USA: {
-            deaths: [100, 200, 300],
-            deaths_baseline: [95, 190, 285],
-            deaths_baseline_lower: [90, 180, 270],
-            deaths_baseline_upper: [110, 220, 330],
-            population: [1000000, 1000000, 1000000],
-            source: ['Source 1'],
-            type: ['0', '0', '0']
-          }
+          USA: createMockDatasetEntry({
+            deaths_baseline: [95, 190, 285] as NumberArray,
+            deaths_baseline_lower: [90, 180, 270] as NumberArray,
+            deaths_baseline_upper: [110, 220, 330] as NumberArray
+          })
         }
       }
 
@@ -493,15 +451,11 @@ describe('datasets', () => {
 
       const data: Dataset = {
         all: {
-          USA: {
-            deaths: [100, 200, 300],
-            deaths_baseline: [95, 190, 285],
-            deaths_baseline_lower: [90, 180, 270],
-            deaths_baseline_upper: [110, 220, 330],
-            population: [1000000, 1000000, 1000000],
-            source: ['Source 1'],
-            type: ['0', '0', '0']
-          }
+          USA: createMockDatasetEntry({
+            deaths_baseline: [95, 190, 285] as NumberArray,
+            deaths_baseline_lower: [90, 180, 270] as NumberArray,
+            deaths_baseline_upper: [110, 220, 330] as NumberArray
+          })
         }
       }
 
@@ -521,12 +475,9 @@ describe('datasets', () => {
       const data: Dataset = {
         all: {
           USA: {
-            deaths: [100, 200, 300],
-            deaths_lower: [90, 180, 270],
-            deaths_upper: [110, 220, 330],
-            population: [1000000, 1000000, 1000000],
-            source: ['Source 1'],
-            type: ['0', '0', '0']
+            ...createMockDatasetEntry(),
+            deaths_excess_lower: [90, 180, 270] as NumberArray,
+            deaths_excess_upper: [110, 220, 330] as NumberArray
           }
         }
       }
@@ -534,7 +485,7 @@ describe('datasets', () => {
       const result = getDatasets(config, data)
 
       expect(result.datasets).toBeDefined()
-      expect(result.datasets[0].data).toBeDefined()
+      expect(result.datasets[0]?.data).toBeDefined()
     })
 
     it('should exclude lower/upper keys when isErrorBarType is true', () => {
@@ -544,12 +495,9 @@ describe('datasets', () => {
       const data: Dataset = {
         all: {
           USA: {
-            deaths: [100, 200, 300],
-            deaths_lower: [90, 180, 270],
-            deaths_upper: [110, 220, 330],
-            population: [1000000, 1000000, 1000000],
-            source: ['Source 1'],
-            type: ['0', '0', '0']
+            ...createMockDatasetEntry(),
+            deaths_excess_lower: [90, 180, 270] as NumberArray,
+            deaths_excess_upper: [110, 220, 330] as NumberArray
           }
         }
       }
@@ -574,7 +522,7 @@ describe('datasets', () => {
       const result = getDatasets(config, data)
 
       const mainDataset = result.datasets[0]
-      expect(mainDataset.pointRadius).toBe(0)
+      expect((mainDataset as { pointRadius?: number })?.pointRadius).toBe(0)
     })
 
     it('should set normal point radius for few countries', () => {
@@ -586,7 +534,7 @@ describe('datasets', () => {
       const result = getDatasets(config, data)
 
       const mainDataset = result.datasets[0]
-      expect(mainDataset.pointRadius).toBeGreaterThan(0)
+      expect((mainDataset as { pointRadius?: number })?.pointRadius).toBeGreaterThan(0)
     })
   })
 
@@ -607,12 +555,9 @@ describe('datasets', () => {
 
       const data: Dataset = {
         all: {
-          INVALID: {
-            deaths: [100, 200, 300],
-            population: [1000000, 1000000, 1000000],
-            source: ['Source 1'],
-            type: ['0', '0', '0']
-          }
+          INVALID: createMockDatasetEntry({
+            iso3c: ['INVALID', 'INVALID', 'INVALID']
+          })
         }
       }
 
@@ -623,11 +568,9 @@ describe('datasets', () => {
       const config = createBaseConfig()
       const data: Dataset = {
         all: {
-          USA: {
-            deaths: [100, 200, 300],
-            population: [1000000, 1000000, 1000000],
-            type: ['0', '0', '0']
-          }
+          USA: createMockDatasetEntry({
+            source: undefined
+          })
         }
       }
 
