@@ -65,7 +65,7 @@
 
           <div class="flex gap-3">
             <Icon
-              name="i-lucide-download"
+              name="i-lucide-file-spreadsheet"
               class="w-6 h-6 text-primary-600 dark:text-primary-400 flex-shrink-0"
             />
             <div>
@@ -73,7 +73,7 @@
                 Export Data
               </h3>
               <p class="text-sm text-gray-600 dark:text-gray-400">
-                Download chart data as CSV or JSON
+                Download chart data as CSV and JSON
               </p>
             </div>
           </div>
@@ -314,16 +314,6 @@
 </template>
 
 <script setup lang="ts">
-interface User {
-  id: number
-  email: string
-  tier: 0 | 1 | 2
-  role: 'user' | 'admin'
-}
-
-// TODO: Get user from auth composable when auth is implemented
-// For now, assume user is not logged in (Tier 0)
-const user = ref<User | null>(null)
-
-// Example: const { user } = useAuth()
+// Get user from auth composable
+const { user } = useAuth()
 </script>

@@ -10,6 +10,39 @@ interface MenuItem {
 const { isIncognito } = useIncognitoMode()
 const { isAuthenticated, user, tier } = useAuth()
 const { startTutorial } = useTutorial()
+const colorMode = useColorMode()
+
+// Color mode toggle - cycles through light -> dark -> system
+const colorModeIcon = computed(() => {
+  if (colorMode.preference === 'light') {
+    return 'i-lucide-sun'
+  }
+  if (colorMode.preference === 'dark') {
+    return 'i-lucide-moon'
+  }
+  return 'i-lucide-sun-moon' // system
+})
+
+const colorModeLabel = computed(() => {
+  if (colorMode.preference === 'light') {
+    return 'Light mode'
+  }
+  if (colorMode.preference === 'dark') {
+    return 'Dark mode'
+  }
+  return 'System theme'
+})
+
+function toggleColorMode() {
+  // Cycle: light -> dark -> system -> light
+  if (colorMode.preference === 'light') {
+    colorMode.preference = 'dark'
+  } else if (colorMode.preference === 'dark') {
+    colorMode.preference = 'system'
+  } else {
+    colorMode.preference = 'light'
+  }
+}
 
 // Check if we're on the explorer page to show help button
 const route = useRoute()
@@ -108,7 +141,13 @@ const userMenuItems = computed<MenuItem[]>(() => {
         @click="startTutorial"
       />
 
-      <UColorModeButton />
+      <UButton
+        :icon="colorModeIcon"
+        :aria-label="colorModeLabel"
+        color="neutral"
+        variant="ghost"
+        @click="toggleColorMode"
+      />
 
       <!-- Authentication buttons -->
       <template v-if="isAuthenticated">

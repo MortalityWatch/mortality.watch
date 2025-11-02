@@ -43,19 +43,17 @@ export function useTutorial() {
   const getExplorerSteps = (): DriveStep[] => {
     const steps: DriveStep[] = [
       {
-        element: '[data-tour="country-selection"]',
         popover: {
-          title: 'Select Jurisdictions',
-          description: 'Choose one or more countries or regions to compare. You can select multiple jurisdictions to see them side-by-side.',
-          side: 'bottom',
-          align: 'start'
+          title: 'Welcome to Mortality Watch Explorer',
+          description: 'This interactive tour will guide you through the key features of the explorer. You can visualize and compare mortality data across different countries and time periods. Let\'s get started!',
+          side: 'over'
         }
       },
       {
-        element: '[data-tour="chart-controls"]',
+        element: '[data-tour="country-selection"]',
         popover: {
-          title: 'Configure Your Chart',
-          description: 'Select the metric you want to visualize (deaths, mortality rates, or life expectancy) and customize how the data is displayed.',
+          title: '1. Select Jurisdictions',
+          description: 'Choose one or more countries or regions to compare. You can select multiple jurisdictions to see them side-by-side in the chart.',
           side: 'bottom',
           align: 'start'
         }
@@ -63,17 +61,26 @@ export function useTutorial() {
       {
         element: '[data-tour="date-range"]',
         popover: {
-          title: 'Choose Time Period',
-          description: 'Drag the slider to select your date range. You can focus on specific years or compare long-term trends.',
+          title: '2. Choose Time Period',
+          description: 'Drag the slider handles to select your date range. You can focus on specific periods or compare long-term trends across years.',
           side: 'top',
+          align: 'start'
+        }
+      },
+      {
+        element: '[data-tour="chart-controls"]',
+        popover: {
+          title: '3. Configure Your Chart',
+          description: 'Select the metric you want to visualize (deaths, mortality rates, or life expectancy) and customize how the data is displayed. Try different chart types, enable excess mortality calculations, adjust baselines, and more.',
+          side: 'bottom',
           align: 'start'
         }
       },
       {
         element: '[data-tour="share-button"]',
         popover: {
-          title: 'Share Your Chart',
-          description: 'Copy a link to share this exact chart configuration, download it as an image, or take a screenshot.',
+          title: '4. Share & Export',
+          description: 'Copy a shareable link that preserves your exact chart configuration, download the chart as an image, take a screenshot, or export the data as CSV/JSON.',
           side: 'left',
           align: 'start'
         }
@@ -85,13 +92,22 @@ export function useTutorial() {
       steps.push({
         element: '[data-tour="save-button"]',
         popover: {
-          title: 'Save Your Charts',
-          description: 'Bookmark charts to your account for quick access later. Find all your saved charts in "My Charts".',
+          title: '5. Save Your Charts',
+          description: 'Bookmark charts to your account for quick access later. All your saved charts can be found in the "My Charts" section.',
           side: 'left',
           align: 'start'
         }
       })
     }
+
+    // Add final step
+    steps.push({
+      popover: {
+        title: 'You\'re All Set!',
+        description: 'You can restart this tutorial anytime by clicking the help icon (?) in the header. Now go ahead and explore the data!',
+        side: 'over'
+      }
+    })
 
     return steps
   }

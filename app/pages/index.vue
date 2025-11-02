@@ -3,10 +3,10 @@
   <div class="container mx-auto px-4 py-8">
     <div class="mb-12 mt-6 space-y-6 text-center">
       <h1 class="text-5xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-        Visualizing Global Mortality Data Since COVID-19
+        Track Global Mortality Trends and Excess Deaths
       </h1>
       <p class="text-xl text-gray-700 dark:text-gray-300 leading-relaxed max-w-4xl mx-auto">
-        MortalityWatch provides comprehensive mortality analysis tools with daily
+        MortalityWatch provides the world's most comprehensive open mortality database with daily
         updates from over 100 countries. Explore excess deaths, compare regions,
         analyze trends by age groups, and understand the true impact of global
         health events.
@@ -15,25 +15,50 @@
         Free, open-source, and transparent. All data from official government
         sources. Used by researchers, journalists, and policymakers worldwide.
       </p>
-      <div class="flex items-center justify-center gap-4 mt-8">
-        <NuxtLink to="/explorer">
-          <UButton
-            label="Explore Data"
-            icon="i-lucide-bar-chart-2"
-            trailing
-            size="lg"
-            color="primary"
+
+      <!-- Trust Indicators -->
+      <div class="flex flex-wrap items-center justify-center gap-4 pt-6 pb-4">
+        <div class="inline-flex items-center gap-2 px-4 py-2 bg-primary-50 dark:bg-primary-950/30 rounded-full border border-primary-200 dark:border-primary-800">
+          <UIcon
+            name="i-lucide-globe"
+            class="w-4 h-4 text-primary-600 dark:text-primary-400"
           />
-        </NuxtLink>
-        <NuxtLink to="/about">
-          <UButton
-            label="Learn More"
-            icon="i-lucide-info"
-            trailing
-            size="lg"
-            variant="outline"
+          <span class="text-sm font-semibold text-primary-900 dark:text-primary-100">100+ countries</span>
+        </div>
+        <div class="inline-flex items-center gap-2 px-4 py-2 bg-primary-50 dark:bg-primary-950/30 rounded-full border border-primary-200 dark:border-primary-800">
+          <UIcon
+            name="i-lucide-refresh-cw"
+            class="w-4 h-4 text-primary-600 dark:text-primary-400"
           />
-        </NuxtLink>
+          <span class="text-sm font-semibold text-primary-900 dark:text-primary-100">Updated daily</span>
+        </div>
+        <div class="inline-flex items-center gap-2 px-4 py-2 bg-primary-50 dark:bg-primary-950/30 rounded-full border border-primary-200 dark:border-primary-800">
+          <UIcon
+            name="i-lucide-chart-line"
+            class="w-4 h-4 text-primary-600 dark:text-primary-400"
+          />
+          <span class="text-sm font-semibold text-primary-900 dark:text-primary-100">14 models</span>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mt-6">
+        <UButton
+          to="/explorer"
+          label="Explore Data"
+          icon="i-lucide-line-chart"
+          trailing
+          size="xl"
+          color="primary"
+        />
+        <UButton
+          to="/about"
+          label="Learn More"
+          icon="i-lucide-info"
+          trailing
+          size="lg"
+          variant="outline"
+          color="neutral"
+        />
       </div>
     </div>
 
@@ -62,12 +87,57 @@
         v-else-if="featuredCharts.length > 0"
         class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
       >
-        <ChartsChartCard
+        <ChartCard
           v-for="chart of featuredCharts"
           :key="chart.id"
           :chart="chart"
           variant="homepage"
         />
+      </div>
+
+      <!-- Empty state -->
+      <div
+        v-else-if="!isLoading && featuredCharts.length === 0"
+        class="text-center py-12"
+      >
+        <UIcon
+          name="i-lucide-inbox"
+          class="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4"
+        />
+        <h3 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+          No featured charts yet
+        </h3>
+        <p class="text-gray-600 dark:text-gray-400 mb-6">
+          Check out the Explorer to create your first visualization!
+        </p>
+        <UButton
+          to="/explorer"
+          color="primary"
+          size="lg"
+        >
+          Go to Explorer
+          <UIcon
+            name="i-lucide-arrow-right"
+            class="w-4 h-4"
+          />
+        </UButton>
+      </div>
+
+      <!-- Error state -->
+      <div
+        v-else-if="!isLoading && !featuredCharts.length"
+        class="text-center py-12"
+      >
+        <UIcon
+          name="i-lucide-alert-circle"
+          class="w-16 h-16 mx-auto text-red-400 dark:text-red-600 mb-4"
+        />
+        <h3 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+          Error loading charts
+        </h3>
+        <p class="text-gray-600 dark:text-gray-400">
+          Please try refreshing the page
+        </p>
       </div>
 
       <!-- View All Button -->
@@ -101,41 +171,40 @@
         <div class="grid gap-8 md:grid-cols-3">
           <div class="text-center">
             <UIcon
-              name="i-lucide-database"
+              name="i-lucide-globe"
               class="text-5xl mb-4 text-primary-600 dark:text-primary-400"
             />
             <h3 class="text-lg font-semibold mb-2">
-              Comprehensive Data
+              100+ Countries & Regions
             </h3>
             <p class="text-gray-600 dark:text-gray-400 text-sm">
-              Weekly, monthly, and yearly mortality data from 100+ countries
-              with age stratification
+              Weekly, monthly, and yearly mortality data with age stratification
+              from official government sources
             </p>
           </div>
           <div class="text-center">
             <UIcon
-              name="i-lucide-refresh-cw"
+              name="i-lucide-chart-line"
               class="text-5xl mb-4 text-primary-600 dark:text-primary-400"
             />
             <h3 class="text-lg font-semibold mb-2">
-              Daily Updates
+              14 Statistical Models
             </h3>
             <p class="text-gray-600 dark:text-gray-400 text-sm">
-              Automatic data collection from official sources ensures the latest
-              statistics
+              Linear regression, ETS, moving averages, and 11 other baseline
+              methods for accurate excess mortality calculations
             </p>
           </div>
           <div class="text-center">
             <UIcon
-              name="i-lucide-trending-up"
+              name="i-lucide-download"
               class="text-5xl mb-4 text-primary-600 dark:text-primary-400"
             />
             <h3 class="text-lg font-semibold mb-2">
-              Advanced Analysis
+              Export Charts & Data
             </h3>
             <p class="text-gray-600 dark:text-gray-400 text-sm">
-              Multiple baseline methods, moving averages, and age-standardized
-              rates
+              Download visualizations as PNG and data as CSV/JSON (free account required for data export)
             </p>
           </div>
         </div>
@@ -186,13 +255,13 @@ definePageMeta({
 
 // SEO metadata
 useSeoMeta({
-  title: 'MortalityWatch - Global Mortality Data Visualization',
-  description: 'Comprehensive mortality analysis tools with daily updates from over 100 countries. Explore excess deaths, compare regions, and understand the impact of global health events.',
-  ogTitle: 'MortalityWatch - Visualizing Global Mortality Data',
-  ogDescription: 'Free, open-source platform for analyzing mortality data worldwide.',
+  title: 'MortalityWatch - Track Global Mortality Trends and Excess Deaths',
+  description: 'The world\'s most comprehensive open mortality database with daily updates from 100+ countries. Explore excess deaths, compare regions, and analyze trends with 14 statistical models.',
+  ogTitle: 'MortalityWatch - Track Global Mortality Trends',
+  ogDescription: 'Free, open-source platform with 100+ countries, 14 statistical models, and daily updates from official sources.',
   ogImage: '/og-image.png',
-  twitterTitle: 'MortalityWatch',
-  twitterDescription: 'Visualizing global mortality data since COVID-19',
+  twitterTitle: 'MortalityWatch - Global Mortality Database',
+  twitterDescription: 'Track mortality trends and excess deaths across 100+ countries with advanced statistical analysis.',
   twitterImage: '/og-image.png',
   twitterCard: 'summary_large_image'
 })

@@ -25,6 +25,13 @@ export default defineNuxtConfig({
     }
   },
 
+  // Color mode configuration - follows system preference by default
+  colorMode: {
+    preference: 'system', // default value of $colorMode.preference
+    fallback: 'light', // fallback value if not system preference found
+    classSuffix: '' // no suffix for dark/light class names
+  },
+
   runtimeConfig: {
     public: {
       incognitoMode: process.env.NUXT_PUBLIC_INCOGNITO_MODE || '0',

@@ -1,7 +1,10 @@
 import { showToast } from '@/toast'
 import { handleError } from '@/lib/errors/errorHandler'
 import { useSaveChart } from '@/composables/useSaveChart'
+import { generateChartFilename } from '@/lib/utils/strings'
+import Papa from 'papaparse'
 import type { Ref } from 'vue'
+import type { MortalityChartData } from '@/lib/chart/chartTypes'
 
 /**
  * Explorer Chart Actions Composable
@@ -12,29 +15,14 @@ import type { Ref } from 'vue'
  * - Copy chart link to clipboard
  * - Screenshot/download chart as PNG
  * - Save chart to database with current state
+ * - Export chart data as CSV
+ * - Export chart data as JSON
  */
-export function useExplorerChartActions(state: {
-  countries: Ref<string[]>
-  type: Ref<string>
-  chartType: Ref<string>
-  ageGroups: Ref<string[]>
-  chartStyle: Ref<string>
-  isExcess: Ref<boolean>
-  showBaseline: Ref<boolean>
-  baselineMethod: Ref<string>
-  baselineDateFrom: Ref<string>
-  baselineDateTo: Ref<string>
-  cumulative: Ref<boolean>
-  showPercentage: Ref<boolean>
-  showPredictionInterval: Ref<boolean>
-  showTotal: Ref<boolean>
-  dateFrom: Ref<string>
-  dateTo: Ref<string>
-  standardPopulation: Ref<string>
-  isLogarithmic: Ref<boolean>
-  maximize: Ref<boolean>
-  showLabels: Ref<boolean>
-}) {
+export function useExplorerChartActions(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  state: any, // Using any to avoid deep type recursion with State proxy
+  chartData?: Ref<MortalityChartData | undefined> | { value: MortalityChartData | undefined }
+) {
   // Copy chart link to clipboard
   const copyChartLink = async () => {
     try {
@@ -106,12 +94,188 @@ export function useExplorerChartActions(state: {
     await saveToDBComposable(chartStateData)
   }
 
+  // Export chart data as CSV
+  const exportCSV = () => {
+    if (!chartData || !chartData.value) {
+      showToast('No chart data available', 'error')
+      return
+    }
+
+    try {
+      const data = chartData.value
+
+      // Validate required data
+      if (!data.datasets || !Array.isArray(data.datasets) || data.datasets.length === 0) {
+        showToast('No data to export', 'error')
+        return
+      }
+
+      if (!data.labels || !Array.isArray(data.labels) || data.labels.length === 0) {
+        showToast('No labels to export', 'error')
+        return
+      }
+
+      // Filter meaningful datasets
+      const meaningfulDatasets = filterMeaningfulDatasets(data.datasets)
+      const datasetsToExport = meaningfulDatasets.length > 0 ? meaningfulDatasets : data.datasets
+
+      // Prepare data for CSV export
+      const rows: Record<string, string | number>[] = []
+
+      data.labels.forEach((label, index) => {
+        const row: Record<string, string | number> = {
+          'Date/Period': String(label)
+        }
+
+        datasetsToExport.forEach((dataset, dsIdx) => {
+          const columnName = (dataset.label && dataset.label.trim() !== '')
+            ? dataset.label
+            : `Series ${dsIdx + 1}`
+
+          const value = dataset.data?.[index]
+          // Handle different data formats (number, point with x/y, etc.)
+          if (typeof value === 'number') {
+            row[columnName] = value
+          } else if (value && typeof value === 'object' && 'y' in value) {
+            row[columnName] = (value as { y: number }).y
+          } else {
+            row[columnName] = ''
+          }
+        })
+
+        rows.push(row)
+      })
+
+      // Use papaparse for proper CSV encoding
+      const csvContent = Papa.unparse(rows, {
+        quotes: true, // Quote all fields
+        delimiter: ',',
+        newline: '\n'
+      })
+
+      // Generate filename
+      const filename = generateChartFilename(
+        data.title || 'chart',
+        data.subtitle,
+        'csv'
+      )
+
+      // Trigger download
+      downloadFile(csvContent, filename, 'text/csv;charset=utf-8;')
+
+      showToast('CSV exported successfully!', 'success')
+    } catch (error) {
+      handleError(error, 'Failed to export CSV', 'exportCSV')
+    }
+  }
+
+  // Export chart data as JSON
+  const exportJSON = () => {
+    if (!chartData || !chartData.value) {
+      showToast('No chart data available', 'error')
+      return
+    }
+
+    try {
+      const data = chartData.value
+
+      // Validate required data
+      if (!data.datasets || !Array.isArray(data.datasets) || data.datasets.length === 0) {
+        showToast('No data to export', 'error')
+        return
+      }
+
+      if (!data.labels || !Array.isArray(data.labels) || data.labels.length === 0) {
+        showToast('No labels to export', 'error')
+        return
+      }
+
+      // Filter meaningful datasets
+      const meaningfulDatasets = filterMeaningfulDatasets(data.datasets)
+      const datasetsToExport = meaningfulDatasets.length > 0 ? meaningfulDatasets : data.datasets
+
+      // Format data for JSON export
+      const exportData = {
+        metadata: {
+          title: data.title || 'Mortality Chart',
+          subtitle: data.subtitle || '',
+          xAxisLabel: data.xtitle || 'Time',
+          yAxisLabel: data.ytitle || 'Value',
+          sources: data.sources || [],
+          exportedAt: new Date().toISOString(),
+          url: data.url || window.location.href
+        },
+        labels: data.labels,
+        datasets: datasetsToExport.map((dataset, idx) => ({
+          label: (dataset.label && dataset.label.trim() !== '') ? dataset.label : `Series ${idx + 1}`,
+          data: dataset.data || [],
+          backgroundColor: dataset.backgroundColor,
+          borderColor: dataset.borderColor
+        }))
+      }
+
+      // Convert to JSON string
+      const jsonContent = JSON.stringify(exportData, null, 2)
+
+      // Generate filename
+      const filename = generateChartFilename(
+        data.title || 'chart',
+        data.subtitle,
+        'json'
+      )
+
+      // Trigger download
+      downloadFile(jsonContent, filename, 'application/json;charset=utf-8;')
+
+      showToast('JSON exported successfully!', 'success')
+    } catch (error) {
+      handleError(error, 'Failed to export JSON', 'exportJSON')
+    }
+  }
+
+  // Helper: Filter out datasets that are purely visualization helpers
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function filterMeaningfulDatasets(datasets: any[]) {
+    return datasets.filter((ds) => {
+      // Keep if it has a label
+      if (ds.label && ds.label.trim() !== '') return true
+
+      // Skip if it's a Chart.js internal dataset (error bars, etc.)
+      if (ds.type === 'line' && !ds.label) return false
+
+      // Keep if it has actual data points
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const hasData = ds.data && Array.isArray(ds.data) && ds.data.some((d: any) => {
+        if (typeof d === 'number') return !isNaN(d) && d !== null
+        if (d && typeof d === 'object' && 'y' in d) return !isNaN((d as { y: number }).y)
+        return false
+      })
+      return hasData
+    })
+  }
+
+  // Helper: Trigger file download
+  function downloadFile(content: string, filename: string, mimeType: string) {
+    const blob = new Blob([content], { type: mimeType })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', filename)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url) // Clean up
+  }
+
   return {
     // Actions
     copyChartLink,
     screenshotChart,
     saveChart,
     saveToDB,
+    exportCSV,
+    exportJSON,
 
     // Save modal state
     showSaveModal,
@@ -121,5 +285,5 @@ export function useExplorerChartActions(state: {
     saveChartPublic,
     saveError,
     saveSuccess
-  }
+  } as const
 }

@@ -45,3 +45,29 @@ export const getFilename = (title: string) =>
     .toLowerCase()
     .replace(/[^\w\s]/gi, '')
     .replace(/ /gi, '_')
+
+/**
+ * Generate a descriptive filename for chart exports
+ * @param title - Chart title
+ * @param subtitle - Optional chart subtitle
+ * @param extension - File extension (e.g., 'csv', 'json', 'png')
+ * @returns Sanitized filename with date and extension
+ */
+export function generateChartFilename(
+  title: string | string[],
+  subtitle?: string,
+  extension?: string
+): string {
+  const date = new Date().toISOString().split('T')[0] // YYYY-MM-DD
+  const titleStr = typeof title === 'string' ? title : (Array.isArray(title) ? title[0] : 'chart')
+
+  // Clean and combine title parts
+  const parts = [titleStr, subtitle].filter(Boolean).join('-')
+  const cleaned = parts
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-') // Replace non-alphanumeric with dash
+    .replace(/^-+|-+$/g, '') // Remove leading/trailing dashes
+    .substring(0, 50) // Limit length
+
+  return extension ? `${cleaned}-${date}.${extension}` : `${cleaned}-${date}`
+}

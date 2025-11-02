@@ -12,6 +12,8 @@ import {
   TimeScale,
   Tooltip,
   Legend,
+  Title,
+  SubTitle,
   Filler
 } from 'chart.js'
 import { createTypedChart, Line, Bar } from 'vue-chartjs'
@@ -64,6 +66,8 @@ Chart.register(
   TimeScale,
   Tooltip,
   Legend,
+  Title,
+  SubTitle,
   Filler,
   BarWithErrorBar,
   ChartDataLabels,

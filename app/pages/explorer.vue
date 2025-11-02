@@ -312,10 +312,15 @@ onMounted(async () => {
 })
 
 // Phase 5a: Chart actions extracted to composable
+// Note: Using 'any' type to avoid excessive type recursion with State proxy
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const chartActions: any = useExplorerChartActions(state as any, dataOrchestration.chartData as any)
 const {
   copyChartLink,
   screenshotChart,
   saveToDB,
+  exportCSV,
+  exportJSON,
   showSaveModal: _showSaveModal,
   savingChart,
   saveChartName,
@@ -323,7 +328,7 @@ const {
   saveChartPublic,
   saveError,
   saveSuccess
-} = useExplorerChartActions(state)
+} = chartActions
 
 // Wrap showSaveModal in computed for proper v-model binding
 const showSaveModal = computed({
@@ -440,6 +445,8 @@ const downloadChart = () => {
             @download-chart="downloadChart"
             @screenshot="screenshotChart"
             @save-chart="navigateTo('/signup')"
+            @export-c-s-v="exportCSV"
+            @export-j-s-o-n="exportJSON"
           >
             <template
               v-if="isAuthenticated"

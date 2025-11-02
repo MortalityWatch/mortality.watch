@@ -1,12 +1,18 @@
 <script setup lang="ts">
+// Feature access for data export
+const { can } = useFeatureAccess()
+const canExportData = computed(() => can('EXPORT_DATA'))
+
 const props = withDefaults(defineProps<{
   showSaveButton?: boolean
   showDownloadChart?: boolean
   showScreenshot?: boolean
+  showExportData?: boolean
   explorerLink?: string
 }>(), {
   showDownloadChart: true,
-  showScreenshot: true
+  showScreenshot: true,
+  showExportData: true
 })
 
 const emit = defineEmits<{
@@ -14,6 +20,8 @@ const emit = defineEmits<{
   downloadChart: []
   screenshot: []
   saveChart: []
+  exportCSV: []
+  exportJSON: []
 }>()
 </script>
 
@@ -103,6 +111,83 @@ const emit = defineEmits<{
           </button>
         </template>
 
+        <!-- Export Data Section -->
+        <template v-if="props.showExportData">
+          <div class="border-t border-gray-200 dark:border-gray-700" />
+
+          <!-- CSV Export -->
+          <button
+            v-if="canExportData"
+            class="chart-option-button"
+            @click="emit('exportCSV')"
+          >
+            <UIcon
+              name="i-lucide-sheet"
+              class="w-4 h-4 flex-shrink-0"
+            />
+            <div class="flex-1 text-left">
+              <div class="text-sm font-medium">
+                Export as CSV
+              </div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">
+                Download data as spreadsheet
+              </div>
+            </div>
+            <UIcon
+              name="i-lucide-chevron-right"
+              class="w-3 h-3 text-gray-400"
+            />
+          </button>
+
+          <!-- JSON Export -->
+          <button
+            v-if="canExportData"
+            class="chart-option-button"
+            @click="emit('exportJSON')"
+          >
+            <UIcon
+              name="i-lucide-braces"
+              class="w-4 h-4 flex-shrink-0"
+            />
+            <div class="flex-1 text-left">
+              <div class="text-sm font-medium">
+                Export as JSON
+              </div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">
+                Download data as structured file
+              </div>
+            </div>
+            <UIcon
+              name="i-lucide-chevron-right"
+              class="w-3 h-3 text-gray-400"
+            />
+          </button>
+
+          <!-- Upgrade prompt for non-registered users -->
+          <button
+            v-if="!canExportData"
+            class="chart-option-button opacity-60"
+            @click="navigateTo('/signup')"
+          >
+            <UIcon
+              name="i-lucide-lock"
+              class="w-4 h-4 flex-shrink-0"
+            />
+            <div class="flex-1 text-left">
+              <div class="text-sm font-medium">
+                Export Data
+              </div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">
+                Sign up free to export CSV & JSON
+              </div>
+            </div>
+            <UIcon
+              name="i-lucide-chevron-right"
+              class="w-3 h-3 text-gray-400"
+            />
+          </button>
+        </template>
+
         <template v-if="props.explorerLink">
           <div class="border-t border-gray-200 dark:border-gray-700" />
 
@@ -131,12 +216,12 @@ const emit = defineEmits<{
           <slot name="save-button">
             <button
               v-if="props.showSaveButton"
-              class="chart-option-button"
+              class="chart-option-button opacity-60"
               data-tour="save-button"
               @click="emit('saveChart')"
             >
               <UIcon
-                name="i-lucide-save"
+                name="i-lucide-lock"
                 class="w-4 h-4 flex-shrink-0"
               />
               <div class="flex-1 text-left">
@@ -144,7 +229,7 @@ const emit = defineEmits<{
                   Save Chart
                 </div>
                 <div class="text-xs text-gray-500 dark:text-gray-400">
-                  Bookmark for later access
+                  Sign up free to save charts
                 </div>
               </div>
               <UIcon
