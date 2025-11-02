@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { loadCountryMetadataFlat, getSourceDescription } from '~/lib/data'
+import { getSourceDescription } from '~/lib/data'
 import { getDataTypeDescription } from '~/utils'
 import { usePagination } from '~/composables/usePagination'
+import { dataLoader } from '~/lib/dataLoader'
+import Papa from 'papaparse'
+import type { CountryRaw } from '~/model/country'
 import {
   tabs,
   mortalityColumns,
@@ -15,9 +18,14 @@ import {
 
 const route = useRoute()
 const router = useRouter()
+const { user } = useAuth()
+const isAdmin = computed(() => user.value?.role === 'admin')
 
 // URL state
 const activeTab = ref<string>((route.query.tab as string) || 'mortality')
+
+// Search/filter state
+const searchQuery = ref('')
 
 // Loading state
 const isLoading = ref(true)
@@ -27,6 +35,8 @@ const error = ref<string | null>(null)
 const products = ref<Array<{
   id: string
   iso3c: string
+  jurisdiction: string
+  country: string
   min_date: string
   max_date: string
   type: string
@@ -34,9 +44,35 @@ const products = ref<Array<{
   source: string
 }>>([])
 
+// Filtered products
+const filteredProducts = computed(() => {
+  if (!searchQuery.value) return products.value
+
+  const query = searchQuery.value.toLowerCase()
+  return products.value.filter(
+    p =>
+      p.iso3c.toLowerCase().includes(query)
+      || p.jurisdiction.toLowerCase().includes(query)
+      || p.source.toLowerCase().includes(query)
+      || p.type.toLowerCase().includes(query)
+  )
+})
+
+// Summary stats
+const summary = computed(() => {
+  const uniqueCountries = new Set(products.value.map(p => p.iso3c))
+  const uniqueSources = new Set(products.value.map(p => p.source))
+
+  return {
+    totalEntries: products.value.length,
+    countries: uniqueCountries.size,
+    sources: uniqueSources.size
+  }
+})
+
 // Pagination
 const initialItemsPerPage = route.query.limit ? parseInt(route.query.limit as string) : 10
-const pagination = usePagination({ items: products, itemsPerPage: initialItemsPerPage })
+const pagination = usePagination({ items: filteredProducts, itemsPerPage: initialItemsPerPage })
 const { currentPage, paginatedItems, total, startIndex, endIndex, itemsPerPage } = pagination
 
 // Initialize page from URL
@@ -88,20 +124,28 @@ watch(itemsPerPage, (newLimit) => {
   }
 })
 
+// Watch for search query changes and reset to page 1
+watch(searchQuery, () => {
+  currentPage.value = 1
+})
+
 const loadData = async () => {
   try {
     isLoading.value = true
     error.value = null
 
-    // Load all metadata, then filter client-side
-    const allMeta = await loadCountryMetadataFlat()
-    const { filterCountries } = useCountryFilter()
-    const meta = filterCountries.length > 0
-      ? allMeta.filter(obj => filterCountries.includes(obj.iso3c))
-      : allMeta
-    products.value = meta.map(r => ({
+    // Fetch metadata CSV using dataLoader (same as admin dashboard)
+    const metadataText = await dataLoader.fetchMetadata()
+    const allMeta = Papa.parse(metadataText, {
+      header: true,
+      skipEmptyLines: true
+    }).data as CountryRaw[]
+
+    products.value = allMeta.map(r => ({
       id: `${r.iso3c}_${r.type}_${r.age_groups}`,
       iso3c: r.iso3c,
+      jurisdiction: r.jurisdiction,
+      country: `<div><strong>${r.jurisdiction}</strong><br/><span class="font-mono text-xs text-gray-600 dark:text-gray-400">${r.iso3c}</span></div>`,
       min_date: r.min_date.replaceAll('-', '/'),
       max_date: r.max_date.replaceAll('-', '/'),
       type: getDataTypeDescription(r.type),
@@ -182,6 +226,60 @@ useSeoMeta({
                 official source organization.
               </p>
 
+              <!-- Summary Stats -->
+              <div
+                v-if="!isLoading && !error"
+                class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"
+              >
+                <UCard>
+                  <div class="text-center">
+                    <p class="text-3xl font-bold text-primary-600 dark:text-primary-400">
+                      {{ summary.countries }}
+                    </p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      Countries/Regions
+                    </p>
+                  </div>
+                </UCard>
+
+                <UCard>
+                  <div class="text-center">
+                    <p class="text-3xl font-bold text-primary-600 dark:text-primary-400">
+                      {{ summary.sources }}
+                    </p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      Data Sources
+                    </p>
+                  </div>
+                </UCard>
+
+                <UCard>
+                  <div class="text-center">
+                    <p class="text-3xl font-bold text-primary-600 dark:text-primary-400">
+                      {{ summary.totalEntries }}
+                    </p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      Total Datasets
+                    </p>
+                  </div>
+                </UCard>
+              </div>
+
+              <!-- Search Filter -->
+              <div class="mb-4">
+                <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 max-w-md">
+                  <label class="text-sm font-medium whitespace-nowrap">Search</label>
+                  <UInput
+                    v-model="searchQuery"
+                    icon="i-lucide-search"
+                    placeholder="Country, ISO code, source, or type..."
+                    size="sm"
+                    class="flex-1"
+                    :ui="{ base: 'bg-transparent border-0' }"
+                  />
+                </div>
+              </div>
+
               <LoadingSpinner
                 v-if="isLoading"
                 text="Loading data sources..."
@@ -216,7 +314,7 @@ useSeoMeta({
                 :data="paginatedItems"
                 row-key="id"
                 :allow-html="true"
-                :html-columns="['source']"
+                :html-columns="['country', 'source']"
               />
 
               <div
@@ -284,6 +382,43 @@ useSeoMeta({
           </template>
         </UTabs>
       </UCard>
+
+      <!-- Admin Link to Data Quality Dashboard -->
+      <div
+        v-if="isAdmin"
+        class="mt-6"
+      >
+        <UCard>
+          <div class="flex items-center justify-between p-4">
+            <div class="flex items-center gap-3">
+              <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-900/30">
+                <UIcon
+                  name="i-lucide-activity"
+                  class="w-5 h-5 text-primary-600 dark:text-primary-400"
+                />
+              </div>
+              <div>
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                  Data Quality Monitoring
+                </h3>
+                <p class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                  Monitor data freshness and staleness across all sources
+                </p>
+              </div>
+            </div>
+            <NuxtLink to="/admin/data-quality">
+              <UButton
+                color="primary"
+                variant="solid"
+                size="sm"
+                trailing-icon="i-lucide-arrow-right"
+              >
+                View Dashboard
+              </UButton>
+            </NuxtLink>
+          </div>
+        </UCard>
+      </div>
     </div>
   </div>
 </template>

@@ -15,6 +15,13 @@
       "when": 1761866297478,
       "tag": "0001_spicy_spectrum",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1762046368993,
+      "tag": "0002_broken_ricochet",
+      "breakpoints": true
     }
   ]
 }
