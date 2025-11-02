@@ -14,20 +14,22 @@ const colorMode = useColorMode()
 
 // Color mode toggle - cycles through light -> dark -> system
 const colorModeIcon = computed(() => {
-  if (colorMode.preference === 'light') {
+  const pref = colorMode.preference
+  if (pref === 'light') {
     return 'i-lucide-sun'
   }
-  if (colorMode.preference === 'dark') {
+  if (pref === 'dark') {
     return 'i-lucide-moon'
   }
   return 'i-lucide-sun-moon' // system
 })
 
 const colorModeLabel = computed(() => {
-  if (colorMode.preference === 'light') {
+  const pref = colorMode.preference
+  if (pref === 'light') {
     return 'Light mode'
   }
-  if (colorMode.preference === 'dark') {
+  if (pref === 'dark') {
     return 'Dark mode'
   }
   return 'System theme'
@@ -35,9 +37,10 @@ const colorModeLabel = computed(() => {
 
 function toggleColorMode() {
   // Cycle: light -> dark -> system -> light
-  if (colorMode.preference === 'light') {
+  const current = colorMode.preference
+  if (current === 'light') {
     colorMode.preference = 'dark'
-  } else if (colorMode.preference === 'dark') {
+  } else if (current === 'dark') {
     colorMode.preference = 'system'
   } else {
     colorMode.preference = 'light'
@@ -92,6 +95,52 @@ const items = computed(() => {
       to: '/features'
     })
   }
+
+  return navItems
+})
+
+// Secondary navigation items (footer links)
+const secondaryItems = computed<MenuItem[]>(() => {
+  const navItems: MenuItem[] = [{
+    label: 'About',
+    icon: 'i-lucide-info',
+    to: '/about'
+  }, {
+    label: 'Sources',
+    icon: 'i-lucide-database',
+    to: '/sources'
+  }, {
+    label: 'Methods',
+    icon: 'i-lucide-flask-conical',
+    to: '/methods'
+  }]
+
+  // Add Features if tier 2
+  if (tier.value === 2) {
+    navItems.push({
+      label: 'Features',
+      icon: 'i-lucide-sparkles',
+      to: '/features'
+    })
+  }
+
+  navItems.push({
+    label: 'Support Us',
+    icon: 'i-lucide-heart',
+    to: '/donate'
+  }, {
+    label: 'Terms',
+    icon: 'i-lucide-file-text',
+    to: '/legal/terms'
+  }, {
+    label: 'Privacy',
+    icon: 'i-lucide-shield',
+    to: '/legal/privacy'
+  }, {
+    label: 'Refund',
+    icon: 'i-lucide-receipt',
+    to: '/legal/refund'
+  })
 
   return navItems
 })
@@ -153,6 +202,7 @@ const userMenuItems = computed<MenuItem[]>(() => {
       />
 
       <UButton
+        :key="`color-mode-${colorMode.preference}`"
         :icon="colorModeIcon"
         :aria-label="colorModeLabel"
         color="neutral"
@@ -192,6 +242,16 @@ const userMenuItems = computed<MenuItem[]>(() => {
         :items="items"
         orientation="vertical"
         class="-mx-2.5"
+        :ui="{ item: 'mb-2' }"
+      />
+
+      <USeparator class="my-2" />
+
+      <UNavigationMenu
+        :items="secondaryItems"
+        orientation="vertical"
+        class="-mx-2.5"
+        :ui="{ item: 'mb-2' }"
       />
     </template>
   </UHeader>
