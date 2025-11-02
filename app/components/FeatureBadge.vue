@@ -66,22 +66,28 @@ const badgeClasses = computed(() => {
 
 const tierName = computed(() => {
   const tier = FEATURES[props.feature].tier
-  const hasAccess = can(props.feature)
 
   switch (tier) {
     case TIERS.PUBLIC:
       return 'Public'
     case TIERS.REGISTERED:
-      return hasAccess ? 'Free' : 'Sign Up'
+      return 'Sign Up'
     case TIERS.PRO:
-      return hasAccess ? 'Pro' : 'Upgrade'
+      return 'Upgrade'
     default:
       return 'Unknown'
   }
 })
 
-// Don't show badge for PUBLIC tier features (everyone has access)
+// Only show badge when user doesn't have access to the feature
 const shouldShowBadge = computed(() => {
-  return FEATURES[props.feature].tier !== TIERS.PUBLIC
+  const tier = FEATURES[props.feature].tier
+  const hasAccess = can(props.feature)
+
+  // Don't show for PUBLIC tier (everyone has access)
+  if (tier === TIERS.PUBLIC) return false
+
+  // Only show if user doesn't have access
+  return !hasAccess
 })
 </script>

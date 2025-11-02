@@ -341,12 +341,12 @@ const currentRange = computed(() => {
         name="i-lucide-lock"
         class="w-3 h-3"
       />
-      <span>Data before {{ labels[minAllowedIndex]?.substring(0, 4) }} requires </span>
+      <span>Data before {{ labels[minAllowedIndex]?.substring(0, 4) }} - </span>
       <NuxtLink
         to="/signup"
-        class="text-primary hover:underline"
+        class="text-primary hover:underline font-medium"
       >
-        free registration
+        Sign up free
       </NuxtLink>
     </div>
   </div>

@@ -117,9 +117,8 @@ const emit = defineEmits<{
 
           <!-- CSV Export -->
           <button
-            v-if="canExportData"
-            class="chart-option-button"
-            @click="emit('exportCSV')"
+            :class="canExportData ? 'chart-option-button' : 'chart-option-button opacity-60'"
+            @click="canExportData ? emit('exportCSV') : navigateTo('/signup')"
           >
             <UIcon
               name="i-lucide-sheet"
@@ -143,11 +142,12 @@ const emit = defineEmits<{
             />
           </button>
 
+          <div class="border-t border-gray-200 dark:border-gray-700" />
+
           <!-- JSON Export -->
           <button
-            v-if="canExportData"
-            class="chart-option-button"
-            @click="emit('exportJSON')"
+            :class="canExportData ? 'chart-option-button' : 'chart-option-button opacity-60'"
+            @click="canExportData ? emit('exportJSON') : navigateTo('/signup')"
           >
             <UIcon
               name="i-lucide-braces"
@@ -163,34 +163,6 @@ const emit = defineEmits<{
               </div>
               <div class="text-xs text-gray-500 dark:text-gray-400">
                 Download data as structured file
-              </div>
-            </div>
-            <UIcon
-              name="i-lucide-chevron-right"
-              class="w-3 h-3 text-gray-400"
-            />
-          </button>
-
-          <!-- Upgrade prompt for non-registered users -->
-          <button
-            v-if="!canExportData"
-            class="chart-option-button opacity-60"
-            @click="navigateTo('/signup')"
-          >
-            <UIcon
-              name="i-lucide-sheet"
-              class="w-4 h-4 flex-shrink-0"
-            />
-            <div class="flex-1 text-left">
-              <div class="text-sm font-medium">
-                Export Data
-                <FeatureBadge
-                  feature="EXPORT_DATA"
-                  class="ml-2"
-                />
-              </div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">
-                Sign up free to export CSV & JSON
               </div>
             </div>
             <UIcon

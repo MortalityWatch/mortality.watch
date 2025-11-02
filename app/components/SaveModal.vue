@@ -73,6 +73,10 @@ const handleOpenModal = () => {
       <div class="flex-1 text-left">
         <div class="text-sm font-medium">
           Save {{ typeLabel }}
+          <FeatureBadge
+            feature="SAVE_CHART"
+            class="ml-2"
+          />
         </div>
         <div class="text-xs text-gray-500 dark:text-gray-400">
           Bookmark for later access
