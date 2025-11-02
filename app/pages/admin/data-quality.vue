@@ -410,6 +410,33 @@ onMounted(() => {
 
 <template>
   <div class="container mx-auto px-4 py-8 max-w-7xl">
+    <!-- Breadcrumb / Navigation -->
+    <div class="mb-6">
+      <nav class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+        <NuxtLink
+          to="/"
+          class="hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
+        >
+          Home
+        </NuxtLink>
+        <UIcon
+          name="i-lucide-chevron-right"
+          class="w-4 h-4"
+        />
+        <NuxtLink
+          to="/sources"
+          class="hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
+        >
+          Data Sources
+        </NuxtLink>
+        <UIcon
+          name="i-lucide-chevron-right"
+          class="w-4 h-4"
+        />
+        <span class="text-gray-900 dark:text-gray-200 font-medium">Data Quality</span>
+      </nav>
+    </div>
+
     <!-- Header -->
     <div class="mb-8">
       <div class="flex items-center justify-between mb-4">

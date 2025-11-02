@@ -21,6 +21,9 @@ const isAdmin = computed(() => user.value?.role === 'admin')
 // URL state
 const activeTab = ref<string>((route.query.tab as string) || 'mortality')
 
+// Search/filter state
+const searchQuery = ref('')
+
 // Loading state
 const isLoading = ref(true)
 const error = ref<string | null>(null)
@@ -36,9 +39,34 @@ const products = ref<Array<{
   source: string
 }>>([])
 
+// Filtered products
+const filteredProducts = computed(() => {
+  if (!searchQuery.value) return products.value
+
+  const query = searchQuery.value.toLowerCase()
+  return products.value.filter(
+    p =>
+      p.iso3c.toLowerCase().includes(query)
+      || p.source.toLowerCase().includes(query)
+      || p.type.toLowerCase().includes(query)
+  )
+})
+
+// Summary stats
+const summary = computed(() => {
+  const uniqueCountries = new Set(products.value.map(p => p.iso3c))
+  const uniqueSources = new Set(products.value.map(p => p.source))
+
+  return {
+    totalEntries: products.value.length,
+    countries: uniqueCountries.size,
+    sources: uniqueSources.size
+  }
+})
+
 // Pagination
 const initialItemsPerPage = route.query.limit ? parseInt(route.query.limit as string) : 10
-const pagination = usePagination({ items: products, itemsPerPage: initialItemsPerPage })
+const pagination = usePagination({ items: filteredProducts, itemsPerPage: initialItemsPerPage })
 const { currentPage, paginatedItems, total, startIndex, endIndex, itemsPerPage } = pagination
 
 // Initialize page from URL
@@ -184,6 +212,60 @@ useSeoMeta({
                 official source organization.
               </p>
 
+              <!-- Summary Stats -->
+              <div
+                v-if="!isLoading && !error"
+                class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"
+              >
+                <UCard>
+                  <div class="text-center">
+                    <p class="text-3xl font-bold text-primary-600 dark:text-primary-400">
+                      {{ summary.countries }}
+                    </p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      Countries/Regions
+                    </p>
+                  </div>
+                </UCard>
+
+                <UCard>
+                  <div class="text-center">
+                    <p class="text-3xl font-bold text-primary-600 dark:text-primary-400">
+                      {{ summary.sources }}
+                    </p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      Data Sources
+                    </p>
+                  </div>
+                </UCard>
+
+                <UCard>
+                  <div class="text-center">
+                    <p class="text-3xl font-bold text-primary-600 dark:text-primary-400">
+                      {{ summary.totalEntries }}
+                    </p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                      Total Datasets
+                    </p>
+                  </div>
+                </UCard>
+              </div>
+
+              <!-- Search Filter -->
+              <div class="mb-4">
+                <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 max-w-md">
+                  <label class="text-sm font-medium whitespace-nowrap">Search</label>
+                  <UInput
+                    v-model="searchQuery"
+                    icon="i-lucide-search"
+                    placeholder="ISO code, source, or type..."
+                    size="sm"
+                    class="flex-1"
+                    :ui="{ base: 'bg-transparent border-0' }"
+                  />
+                </div>
+              </div>
+
               <LoadingSpinner
                 v-if="isLoading"
                 text="Loading data sources..."
@@ -290,22 +372,35 @@ useSeoMeta({
       <!-- Admin Link to Data Quality Dashboard -->
       <div
         v-if="isAdmin"
-        class="mt-6 text-center"
+        class="mt-6"
       >
         <UCard>
-          <div class="flex items-center justify-center gap-3 py-2">
-            <UIcon
-              name="i-lucide-activity"
-              class="w-5 h-5 text-primary-500"
-            />
-            <span class="text-sm text-gray-600 dark:text-gray-400">
-              Admin:
-            </span>
-            <NuxtLink
-              to="/admin/data-quality"
-              class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline"
-            >
-              View Data Quality Dashboard
+          <div class="flex items-center justify-between p-4">
+            <div class="flex items-center gap-3">
+              <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary-100 dark:bg-primary-900/30">
+                <UIcon
+                  name="i-lucide-activity"
+                  class="w-5 h-5 text-primary-600 dark:text-primary-400"
+                />
+              </div>
+              <div>
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                  Data Quality Monitoring
+                </h3>
+                <p class="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                  Monitor data freshness and staleness across all sources
+                </p>
+              </div>
+            </div>
+            <NuxtLink to="/admin/data-quality">
+              <UButton
+                color="primary"
+                variant="solid"
+                size="sm"
+                trailing-icon="i-lucide-arrow-right"
+              >
+                View Dashboard
+              </UButton>
             </NuxtLink>
           </div>
         </UCard>
