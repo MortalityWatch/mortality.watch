@@ -3,21 +3,28 @@ import { computed } from 'vue'
 import { baselineMethods } from '@/model'
 import FeatureBadge from '@/components/FeatureBadge.vue'
 
+interface BaselineMethodItem {
+  name: string
+  value: string
+  label: string
+  disabled?: boolean
+}
+
 const props = defineProps<{
-  modelValue: { name: string, value: string, label: string, disabled?: boolean }
+  modelValue: BaselineMethodItem
   isUpdating?: boolean
   items?: Array<{ name: string, value: string, label?: string, disabled?: boolean }>
 }>()
 
 const emit = defineEmits<{
-  'update:modelValue': [value: { name: string, value: string, label: string, disabled?: boolean }]
+  'update:modelValue': [value: BaselineMethodItem]
 }>()
 
 // Feature access for tier-based features
 const { can } = useFeatureAccess()
 
 // Feature gate: Show all baseline methods but disable advanced ones for non-registered users
-const baselineMethodsWithLabels = computed(() => {
+const baselineMethodsWithLabels = computed((): Array<{ name: string, value: string, label: string, disabled: boolean }> => {
   const hasAccess = can('ALL_BASELINES')
   const methods = props.items || baselineMethods
   return methods.map((t) => {
@@ -29,14 +36,24 @@ const baselineMethodsWithLabels = computed(() => {
       name: t.name,
       value: t.value,
       label,
-      disabled: disabled ?? false
+      disabled: Boolean(disabled)
     }
   })
 })
 
 const selectedValue = computed({
-  get: () => props.modelValue,
-  set: v => emit('update:modelValue', v)
+  get: () => ({
+    ...props.modelValue,
+    disabled: Boolean(props.modelValue.disabled)
+  }),
+  set: (v: { name: string, value: string, label: string, disabled: boolean }) => {
+    emit('update:modelValue', {
+      name: v.name,
+      value: v.value,
+      label: v.label,
+      disabled: v.disabled
+    })
+  }
 })
 </script>
 
