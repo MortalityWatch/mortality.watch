@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { loadCountryMetadataFlat, getSourceDescription } from '~/lib/data'
+import { getSourceDescription } from '~/lib/data'
 import { getDataTypeDescription } from '~/utils'
 import { usePagination } from '~/composables/usePagination'
+import { dataLoader } from '~/lib/dataLoader'
+import Papa from 'papaparse'
+import type { CountryRaw } from '~/model/country'
 import {
   tabs,
   mortalityColumns,
@@ -131,13 +134,14 @@ const loadData = async () => {
     isLoading.value = true
     error.value = null
 
-    // Load all metadata, then filter client-side
-    const allMeta = await loadCountryMetadataFlat()
-    const { filterCountries } = useCountryFilter()
-    const meta = filterCountries.length > 0
-      ? allMeta.filter(obj => filterCountries.includes(obj.iso3c))
-      : allMeta
-    products.value = meta.map(r => ({
+    // Fetch metadata CSV using dataLoader (same as admin dashboard)
+    const metadataText = await dataLoader.fetchMetadata()
+    const allMeta = Papa.parse(metadataText, {
+      header: true,
+      skipEmptyLines: true
+    }).data as CountryRaw[]
+
+    products.value = allMeta.map(r => ({
       id: `${r.iso3c}_${r.type}_${r.age_groups}`,
       iso3c: r.iso3c,
       jurisdiction: r.jurisdiction,
