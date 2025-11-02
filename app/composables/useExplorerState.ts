@@ -287,6 +287,15 @@ export function useExplorerState() {
         return // Exit early after auto-fix
       }
 
+      // Auto-fix: Z-scores require baseline
+      const zscoreBaselineError = newErrors.find(e =>
+        e.message.includes('Z-scores require baseline')
+      )
+      if (zscoreBaselineError) {
+        showBaseline.value = true
+        return // Exit early after auto-fix
+      }
+
       // Auto-fix: Baseline period must end before data period
       const baselineBeforeDataError = newErrors.find(e =>
         e.message.includes('Baseline period must end before data period')

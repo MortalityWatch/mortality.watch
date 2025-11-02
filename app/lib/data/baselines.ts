@@ -147,6 +147,9 @@ const calculateBaseline = async (
     if (json.zscore && keys[0]) {
       const zscoreKey = `${keys[0]}_zscore` as keyof DatasetEntry
       data[zscoreKey] = prefillUndefined(json.zscore as NumberArray, startIdx) as DataVector
+      console.log('[baselines] Stored z-scores:', zscoreKey, data[zscoreKey]?.slice(0, 10))
+    } else {
+      console.warn('[baselines] No zscore data in API response:', { hasZscore: !!json.zscore, keys })
     }
   } catch (error) {
     console.error('Baseline calculation failed, using simple mean fallback:', {

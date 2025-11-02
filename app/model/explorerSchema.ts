@@ -270,6 +270,15 @@ export const explorerStateSchema = explorerStateBaseSchema.superRefine(
         path: ['showPredictionInterval']
       })
     }
+
+    // Rule 8: Z-scores require baseline to be enabled
+    if (data.showZScores && !data.showBaseline) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Z-scores require baseline to be enabled',
+        path: ['showZScores']
+      })
+    }
   }
 )
 

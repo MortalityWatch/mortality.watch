@@ -71,7 +71,9 @@ export class DataTransformationPipeline {
     // Z-scores are pre-calculated by the R stats API and stored as <metric>_zscore
     if (config.showZScores) {
       const zscoreKey = this.zscoreStrategy.getZScoreKey(config.isAsmrType, key)
-      return data[zscoreKey] ?? []
+      const zscoreData = data[zscoreKey] ?? []
+      console.log('[pipeline] Using z-scores:', { key, zscoreKey, hasData: zscoreData.length > 0, sample: zscoreData.slice(0, 5) })
+      return zscoreData
     }
 
     if (config.showPercentage) {
