@@ -402,6 +402,11 @@ const formatDaysSince = (days: number) => {
   return `${days}d`
 }
 
+// Watch for filter changes and reset to page 1
+watch([searchQuery, statusFilter, sourceFilter, showMuted, showHidden], () => {
+  currentPage.value = 1
+})
+
 // Fetch report on mount
 onMounted(() => {
   fetchReport()

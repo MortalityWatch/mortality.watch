@@ -121,6 +121,11 @@ watch(itemsPerPage, (newLimit) => {
   }
 })
 
+// Watch for search query changes and reset to page 1
+watch(searchQuery, () => {
+  currentPage.value = 1
+})
+
 const loadData = async () => {
   try {
     isLoading.value = true

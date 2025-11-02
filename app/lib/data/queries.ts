@@ -42,9 +42,13 @@ export const loadCountryMetadataFlat = async (options?: {
     const rawObjects = validationResult.data
 
     // Filter by specified countries if provided
+    // Includes sub-national jurisdictions (e.g., USA matches USA, USA-ND, USA-CA, etc.)
     const filterCountries = options?.filterCountries || []
     const result = filterCountries.length > 0
-      ? rawObjects.filter(obj => filterCountries.includes(obj.iso3c))
+      ? rawObjects.filter(obj =>
+          filterCountries.includes(obj.iso3c)
+          || filterCountries.some(fc => obj.iso3c.startsWith(`${fc}-`))
+        )
       : rawObjects
 
     // Store in cache
