@@ -32,6 +32,8 @@ const error = ref<string | null>(null)
 const products = ref<Array<{
   id: string
   iso3c: string
+  jurisdiction: string
+  country: string
   min_date: string
   max_date: string
   type: string
@@ -47,6 +49,7 @@ const filteredProducts = computed(() => {
   return products.value.filter(
     p =>
       p.iso3c.toLowerCase().includes(query)
+      || p.jurisdiction.toLowerCase().includes(query)
       || p.source.toLowerCase().includes(query)
       || p.type.toLowerCase().includes(query)
   )
@@ -132,6 +135,8 @@ const loadData = async () => {
     products.value = meta.map(r => ({
       id: `${r.iso3c}_${r.type}_${r.age_groups}`,
       iso3c: r.iso3c,
+      jurisdiction: r.jurisdiction,
+      country: `<div><strong>${r.jurisdiction}</strong><br/><span class="font-mono text-xs text-gray-600 dark:text-gray-400">${r.iso3c}</span></div>`,
       min_date: r.min_date.replaceAll('-', '/'),
       max_date: r.max_date.replaceAll('-', '/'),
       type: getDataTypeDescription(r.type),
@@ -258,7 +263,7 @@ useSeoMeta({
                   <UInput
                     v-model="searchQuery"
                     icon="i-lucide-search"
-                    placeholder="ISO code, source, or type..."
+                    placeholder="Country, ISO code, source, or type..."
                     size="sm"
                     class="flex-1"
                     :ui="{ base: 'bg-transparent border-0' }"
@@ -300,7 +305,7 @@ useSeoMeta({
                 :data="paginatedItems"
                 row-key="id"
                 :allow-html="true"
-                :html-columns="['source']"
+                :html-columns="['country', 'source']"
               />
 
               <div

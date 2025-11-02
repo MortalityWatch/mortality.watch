@@ -19,7 +19,7 @@ export const tabs = [
 ] satisfies TabsItem[]
 
 export const mortalityColumns = [
-  { key: 'iso3c', label: 'ISO' },
+  { key: 'country', label: 'COUNTRY' },
   { key: 'min_date', label: 'FROM' },
   { key: 'max_date', label: 'UNTIL' },
   { key: 'type', label: 'TYPE' },
