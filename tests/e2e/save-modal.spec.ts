@@ -5,8 +5,8 @@ test('save modal opens and closes on cancel', async ({ page }) => {
   // Login first
   await login(page)
 
-  // Navigate to Explorer
-  await page.getByRole('link', { name: 'Explorer' }).click()
+  // Navigate to Explorer (use first() when multiple matches)
+  await page.getByRole('link', { name: 'Explorer' }).first().click()
 
   // Wait for page to load and close any welcome/tutorial modals
   await page.waitForLoadState('networkidle')
@@ -44,8 +44,8 @@ test('save modal opens and closes on save', async ({ page }) => {
   // Login first
   await login(page)
 
-  // Navigate to Explorer
-  await page.getByRole('link', { name: 'Explorer' }).click()
+  // Navigate to Explorer (use first() when multiple matches)
+  await page.getByRole('link', { name: 'Explorer' }).first().click()
 
   // Wait for page to load and close any welcome/tutorial modals
   await page.waitForLoadState('networkidle')

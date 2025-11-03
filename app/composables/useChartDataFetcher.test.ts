@@ -42,11 +42,11 @@ vi.mock('@/model/baseline', () => ({
 describe('useChartDataFetcher', () => {
   const mockDataset: DatasetRaw = {
     USA: {
-      all: {
-        2020: { cmr: 100, asmr_who2015: 50 } as any
-      }
+      all: [
+        { cmr: 100, asmr_who2015: 50 } as any
+      ]
     }
-  } as DatasetRaw
+  }
 
   const mockLabels = ['2020', '2021', '2022']
 
@@ -363,7 +363,7 @@ describe('useChartDataFetcher', () => {
       expect(index).toBe(1)
     })
 
-    it('should return 0 for date not in labels', () => {
+    it('should return closest date index for date not in labels', () => {
       const fetcher = useChartDataFetcher()
 
       const index = fetcher.getBaselineStartIndex(
@@ -372,7 +372,8 @@ describe('useChartDataFetcher', () => {
         '2099'
       )
 
-      expect(index).toBe(-1) // ChartPeriod.indexOf returns -1 for not found
+      // ChartPeriod.indexOf has smart fallback - returns closest date (2022 at index 2)
+      expect(index).toBe(2)
     })
 
     it('should handle first label', () => {

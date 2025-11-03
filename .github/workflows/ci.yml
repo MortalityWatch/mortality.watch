@@ -92,16 +92,15 @@ jobs:
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: npm ci --prefer-offline
 
-      - name: Cache Nuxt Build
+      - name: Cache Nuxt Build (no .output for E2E)
         uses: actions/cache@v4
         with:
           path: |
             .nuxt
-            .output
             node_modules/.cache
-          key: ${{ runner.os }}-nuxt-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-nuxt-e2e-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-nuxt-
+            ${{ runner.os }}-nuxt-e2e-
 
       - name: Cache Playwright Browsers
         uses: actions/cache@v4
@@ -118,12 +117,33 @@ jobs:
         run: |
           mkdir -p .data
           npm run db:migrate
+          npx tsx scripts/seed-test-user.ts
+          echo "Database created, checking tables:"
+          sqlite3 .data/mortality.db ".tables"
+          echo "Checking test user exists:"
+          sqlite3 .data/mortality.db "SELECT email FROM users WHERE email = 'pro@mortality.watch';"
+          echo "Database file size:"
+          ls -lh .data/mortality.db
 
       - name: Build for E2E tests
         run: npm run build
         timeout-minutes: 5
 
+      - name: Verify database after build
+        run: |
+          echo "Checking if database still exists after build:"
+          if [ -f .data/mortality.db ]; then
+            echo "Database exists, size:"
+            ls -lh .data/mortality.db
+            echo "Tables:"
+            sqlite3 .data/mortality.db ".tables"
+          else
+            echo "ERROR: Database was deleted during build!"
+          fi
+
       - name: Run E2E tests
+        env:
+          JWT_SECRET: test-secret-for-e2e-only-do-not-use-in-production
         run: npx playwright test --project=chromium
         timeout-minutes: 15
 

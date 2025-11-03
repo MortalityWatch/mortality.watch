@@ -9,9 +9,10 @@ import * as schema from '../../db/schema'
  */
 
 // Use absolute path based on process working directory
-// This ensures the database is always found relative to the project root,
-// whether running in dev mode or from the .output build
-const DB_PATH = resolve(process.cwd(), '.data/mortality.db')
+// In preview/production mode, cwd is .output, so go up one level to project root
+const isPreviewMode = process.cwd().endsWith('.output')
+const rootDir = isPreviewMode ? resolve(process.cwd(), '..') : process.cwd()
+const DB_PATH = resolve(rootDir, '.data/mortality.db')
 
 // Create singleton database connection
 let _db: ReturnType<typeof drizzle> | null = null

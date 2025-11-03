@@ -6,8 +6,8 @@ import { defineConfig, devices } from '@playwright/test'
 export default defineConfig({
   testDir: './tests/e2e',
 
-  /* Run tests in files in parallel */
-  fullyParallel: true,
+  /* Run tests in files in parallel (disabled in CI due to SQLite locking) */
+  fullyParallel: !process.env.CI,
 
   /* Fail the build on CI if you accidentally left test.only in the source code */
   forbidOnly: !!process.env.CI,
@@ -75,6 +75,8 @@ export default defineConfig({
     command: 'npm run preview',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
-    timeout: 30 * 1000 // 30 seconds for preview server startup
+    timeout: 30 * 1000, // 30 seconds for preview server startup
+    stdout: 'pipe', // Show server output in test logs
+    stderr: 'pipe' // Show server errors in test logs
   }
 })

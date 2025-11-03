@@ -47,10 +47,10 @@ test.describe('Homepage', () => {
       await page.getByRole('button', { name: /open menu/i }).click()
     }
 
-    // Check main navigation links are present
-    await expect(page.getByRole('link', { name: /explorer/i })).toBeVisible()
-    await expect(page.getByRole('link', { name: /ranking/i })).toBeVisible()
-    await expect(page.getByRole('link', { name: /about/i })).toBeVisible()
+    // Check main navigation links are present (use first() when multiple matches)
+    await expect(page.getByRole('link', { name: /explorer/i }).first()).toBeVisible()
+    await expect(page.getByRole('link', { name: /ranking/i }).first()).toBeVisible()
+    await expect(page.getByRole('link', { name: /about/i }).first()).toBeVisible()
   })
 
   test('should navigate to explorer page', async ({ page }) => {
@@ -64,8 +64,8 @@ test.describe('Homepage', () => {
       await page.getByRole('button', { name: /open menu/i }).click()
     }
 
-    // Click explorer link
-    await page.getByRole('link', { name: /explorer/i }).click()
+    // Click explorer link (use first() when multiple matches)
+    await page.getByRole('link', { name: /explorer/i }).first().click()
 
     // Verify we're on explorer page
     await expect(page).toHaveURL(/\/explorer/)

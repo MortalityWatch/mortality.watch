@@ -4,7 +4,13 @@ import { resolve } from 'path'
 import * as schema from './schema'
 import type { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3'
 
-const dbPath = resolve(process.cwd(), '.data/mortality.db')
+// Runtime path resolution to handle both dev and preview modes
+function getDbPath() {
+  const cwd = process.cwd()
+  const isPreviewMode = cwd.endsWith('.output')
+  const rootDir = isPreviewMode ? resolve(cwd, '..') : cwd
+  return resolve(rootDir, '.data/mortality.db')
+}
 
 // Lazy-load database to avoid initialization errors during build/prerender
 let sqlite: Database.Database | null = null
@@ -12,6 +18,7 @@ let drizzleDb: BetterSQLite3Database<typeof schema> | null = null
 
 function initDb() {
   if (!drizzleDb) {
+    const dbPath = getDbPath() // Evaluate at runtime, not build time
     sqlite = new Database(dbPath)
     // Enable WAL mode for better concurrent access
     sqlite.pragma('journal_mode = WAL')

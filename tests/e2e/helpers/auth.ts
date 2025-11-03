@@ -19,7 +19,7 @@ export async function login(
   password: string = TEST_USER.password,
   rememberMe: boolean = false
 ) {
-  await page.goto('http://localhost:3001/login', { waitUntil: 'networkidle' })
+  await page.goto('/login', { waitUntil: 'networkidle' })
 
   await page.getByRole('textbox', { name: 'Email*' }).fill(email)
   await page.getByRole('textbox', { name: 'Password*' }).fill(password)
@@ -31,7 +31,7 @@ export async function login(
   await page.getByRole('button', { name: 'Continue' }).click()
 
   // Wait for redirect to home page
-  await page.waitForURL('http://localhost:3001/')
+  await page.waitForURL('/')
 }
 
 /**
@@ -40,9 +40,11 @@ export async function login(
  * @param page - Playwright page object
  */
 export async function logout(page: Page) {
-  await page.getByRole('button', { name: 'Pro' }).click()
+  // The user menu button shows displayName, firstName, or defaults to 'Account'
+  // Use a flexible regex to match any of these possibilities
+  await page.getByRole('button', { name: /account|test user|pro/i }).click()
   await page.getByRole('menuitem', { name: 'Sign Out' }).click()
 
   // Wait for redirect to home
-  await page.waitForURL('http://localhost:3001/')
+  await page.waitForURL('/')
 }

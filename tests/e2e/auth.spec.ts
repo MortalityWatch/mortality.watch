@@ -4,7 +4,7 @@ import { login, logout, TEST_USER } from './helpers/auth'
 test.describe('Authentication Flow', () => {
   test.describe('Login Page', () => {
     test('should display login form', async ({ page }) => {
-      await page.goto('http://localhost:3001/login')
+      await page.goto('/login')
 
       // Verify form elements are present
       await expect(page.getByRole('textbox', { name: 'Email*' })).toBeVisible()
@@ -19,7 +19,7 @@ test.describe('Authentication Flow', () => {
 
     test.skip('should show validation errors for empty fields', async ({ page }) => {
       // TODO: Fix validation - errors might not be shown on submit, only on blur/input
-      await page.goto('http://localhost:3001/login')
+      await page.goto('/login')
 
       // Try to submit without filling fields
       await page.getByRole('button', { name: 'Continue' }).click()
@@ -31,7 +31,7 @@ test.describe('Authentication Flow', () => {
 
     test.skip('should show validation error for invalid email', async ({ page }) => {
       // TODO: Check actual validation error text
-      await page.goto('http://localhost:3001/login')
+      await page.goto('/login')
 
       // Enter invalid email
       await page.getByRole('textbox', { name: 'Email*' }).fill('invalid-email')
@@ -44,7 +44,7 @@ test.describe('Authentication Flow', () => {
 
     test.skip('should show validation error for short password', async ({ page }) => {
       // TODO: Check actual validation error text
-      await page.goto('http://localhost:3001/login')
+      await page.goto('/login')
 
       // Enter short password
       await page.getByRole('textbox', { name: 'Email*' }).fill('test@example.com')
@@ -57,7 +57,7 @@ test.describe('Authentication Flow', () => {
 
     test.skip('should toggle password visibility', async ({ page }) => {
       // TODO: Password input changes role when visibility toggles - need different approach
-      await page.goto('http://localhost:3001/login')
+      await page.goto('/login')
 
       const passwordInput = page.getByRole('textbox', { name: 'Password*' })
       await passwordInput.fill('Password1!')
@@ -75,7 +75,7 @@ test.describe('Authentication Flow', () => {
     })
 
     test('should successfully login with valid credentials', async ({ page }) => {
-      await page.goto('http://localhost:3001/login', { waitUntil: 'networkidle' })
+      await page.goto('/login', { waitUntil: 'networkidle' })
 
       // Fill in credentials
       await page.getByRole('textbox', { name: 'Email*' }).fill(TEST_USER.email)
@@ -87,7 +87,7 @@ test.describe('Authentication Flow', () => {
       await page.getByRole('button', { name: 'Continue' }).click()
 
       // Should redirect to home page
-      await expect(page).toHaveURL('http://localhost:3001/')
+      await expect(page).toHaveURL('/')
 
       // Should show success toast (use first() to handle multiple matches)
       await expect(page.getByText('Welcome back!').first()).toBeVisible()
@@ -96,7 +96,7 @@ test.describe('Authentication Flow', () => {
     test.skip('should redirect to intended page after login', async ({ page }) => {
       // Explorer doesn't require auth - need to use a page that does (e.g., /profile or /my-charts)
       // Try to access profile while not logged in
-      await page.goto('http://localhost:3001/profile')
+      await page.goto('/profile')
 
       // Should redirect to login with redirect query param
       await expect(page).toHaveURL(/\/login\?redirect=/)
@@ -107,11 +107,11 @@ test.describe('Authentication Flow', () => {
       await page.getByRole('button', { name: 'Continue' }).click()
 
       // Should redirect back to profile
-      await expect(page).toHaveURL('http://localhost:3001/profile')
+      await expect(page).toHaveURL('/profile')
     })
 
     test('should handle invalid credentials', async ({ page }) => {
-      await page.goto('http://localhost:3001/login', { waitUntil: 'networkidle' })
+      await page.goto('/login', { waitUntil: 'networkidle' })
 
       // Fill in invalid credentials
       await page.getByRole('textbox', { name: 'Email*' }).fill('wrong@example.com')
@@ -122,12 +122,12 @@ test.describe('Authentication Flow', () => {
       await expect(page.getByText(/401 Server Error|Invalid email or password/i)).toBeVisible()
 
       // Should stay on login page
-      await expect(page).toHaveURL('http://localhost:3001/login')
+      await expect(page).toHaveURL('/login')
     })
 
     test('should NOT pre-fill credentials from URL parameters (security)', async ({ page }) => {
       // This is a critical security test - credentials should NEVER be in URL
-      await page.goto('http://localhost:3001/login?email=test@example.com&password=secret123')
+      await page.goto('/login?email=test@example.com&password=secret123')
 
       // Verify fields are empty (not pre-filled from URL)
       const emailInput = page.getByRole('textbox', { name: 'Email*' })
@@ -141,7 +141,7 @@ test.describe('Authentication Flow', () => {
   test.describe('Session Management', () => {
     test.skip('should maintain session after page reload when "Remember me" is checked', async ({ page }) => {
       // TODO: Fix checkbox interaction
-      await page.goto('http://localhost:3001/login')
+      await page.goto('/login')
 
       // Login with "Remember me"
       await page.getByRole('textbox', { name: 'Email*' }).fill(TEST_USER.email)
@@ -150,13 +150,13 @@ test.describe('Authentication Flow', () => {
       await page.getByRole('button', { name: 'Continue' }).click()
 
       // Wait for redirect
-      await expect(page).toHaveURL('http://localhost:3001/')
+      await expect(page).toHaveURL('/')
 
       // Reload the page
       await page.reload()
 
       // Should still be logged in (not redirected to login)
-      await expect(page).toHaveURL('http://localhost:3001/')
+      await expect(page).toHaveURL('/')
     })
 
     test('should logout successfully', async ({ page }) => {
@@ -167,27 +167,27 @@ test.describe('Authentication Flow', () => {
       await logout(page)
 
       // Should be on home page
-      await expect(page).toHaveURL('http://localhost:3001/')
+      await expect(page).toHaveURL('/')
     })
   })
 
   test.describe('Signup Page', () => {
     test('should navigate to signup page', async ({ page }) => {
-      await page.goto('http://localhost:3001/login')
+      await page.goto('/login')
 
       await page.getByRole('link', { name: 'Sign up' }).click()
 
-      await expect(page).toHaveURL('http://localhost:3001/signup')
+      await expect(page).toHaveURL('/signup')
     })
   })
 
   test.describe('Forgot Password', () => {
     test('should navigate to forgot password page', async ({ page }) => {
-      await page.goto('http://localhost:3001/login')
+      await page.goto('/login')
 
       await page.getByRole('link', { name: 'Forgot password?' }).click()
 
-      await expect(page).toHaveURL('http://localhost:3001/forgot-password')
+      await expect(page).toHaveURL('/forgot-password')
     })
   })
 })
