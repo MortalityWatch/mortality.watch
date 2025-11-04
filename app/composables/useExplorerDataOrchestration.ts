@@ -16,7 +16,7 @@
  * making explorer.vue more focused and maintainable.
  */
 
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import type { Ref, ComputedRef } from 'vue'
 import type { useExplorerState } from '@/composables/useExplorerState'
 import type { useExplorerHelpers } from '@/composables/useExplorerHelpers'
