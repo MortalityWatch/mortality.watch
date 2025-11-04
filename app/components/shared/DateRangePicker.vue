@@ -2,7 +2,6 @@
 import { computed } from 'vue'
 import type { ChartType } from '@/model/period'
 import DateSlider from '@/components/charts/DateSlider.vue'
-import FeatureBadge from '@/components/FeatureBadge.vue'
 import { specialColor } from '@/colors'
 
 const props = defineProps<{
@@ -12,7 +11,6 @@ const props = defineProps<{
   labels: string[]
   chartType: ChartType
   disabled?: boolean
-  showFromPicker?: boolean // Option to hide the "From" picker (for ranking without feature gate)
 }>()
 
 const emit = defineEmits<{
@@ -24,53 +22,68 @@ const emit = defineEmits<{
 const { can } = useFeatureAccess()
 const hasExtendedTimeAccess = computed(() => can('EXTENDED_TIME_PERIODS'))
 
-// For users without extended access, find the year 2000 or earliest after
-const restrictedSliderStart = computed(() => {
-  if (hasExtendedTimeAccess.value) return null
+// For users without extended access, restrict to year 2000+
+const availableStartYears = computed(() => {
+  if (hasExtendedTimeAccess.value) {
+    return props.allYearlyChartLabelsUnique || []
+  }
 
-  const year2000OrLater = props.allYearlyChartLabelsUnique.find((label) => {
+  // Filter to only years >= 2000
+  return (props.allYearlyChartLabelsUnique || []).filter((label) => {
     const year = parseInt(label.substring(0, 4))
     return year >= 2000
   })
-
-  return year2000OrLater || props.allYearlyChartLabelsUnique[0] || ''
 })
 
-// Display value for the From input
-const displaySliderStart = computed(() => {
-  return restrictedSliderStart.value || props.sliderStart
-})
+// Ensure sliderStart is within allowed range
+const effectiveSliderStart = computed(() => {
+  if (!props.sliderStart || !props.allYearlyChartLabelsUnique?.length) {
+    return props.sliderStart
+  }
 
-// Determine if we should show the feature gate (only on Explorer with showFromPicker=true by default)
-const shouldShowFeatureGate = computed(() => props.showFromPicker !== false)
+  if (hasExtendedTimeAccess.value) {
+    return props.sliderStart
+  }
+
+  // For non-premium users, if current sliderStart is before 2000, use first available year >= 2000
+  const year = parseInt(props.sliderStart.substring(0, 4))
+  if (year < 2000) {
+    const year2000OrLater = availableStartYears.value.find((label) => {
+      const y = parseInt(label.substring(0, 4))
+      return y >= 2000
+    })
+    if (!year2000OrLater) {
+      console.warn(
+        `[DateRangePicker] No years >= 2000 available for free user. Falling back to ${props.sliderStart}. Available years:`,
+        availableStartYears.value
+      )
+    }
+    return year2000OrLater || props.sliderStart
+  }
+
+  return props.sliderStart
+})
 </script>
 
 <template>
   <div
-    class="w-full px-3 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+    class="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
     data-tour="date-range"
   >
     <div class="flex items-center gap-3">
-      <!-- Start Period (From) - Optional with feature gating -->
-      <div
-        v-if="shouldShowFeatureGate"
-        class="flex items-center gap-2"
-      >
+      <!-- From dropdown -->
+      <div class="flex items-center gap-2">
         <label class="text-sm font-medium whitespace-nowrap">From</label>
         <USelectMenu
-          :model-value="displaySliderStart"
-          :items="props.allYearlyChartLabelsUnique || []"
+          :model-value="effectiveSliderStart"
+          :items="availableStartYears"
           placeholder="Start"
           size="sm"
           class="w-24"
-          :disabled="!hasExtendedTimeAccess"
+          :disabled="props.disabled"
           @update:model-value="emit('update:sliderStart', $event)"
         />
-        <FeatureBadge
-          v-if="!hasExtendedTimeAccess"
-          feature="EXTENDED_TIME_PERIODS"
-        />
-        <UPopover v-if="hasExtendedTimeAccess">
+        <UPopover>
           <UButton
             icon="i-lucide-info"
             color="neutral"
@@ -79,49 +92,32 @@ const shouldShowFeatureGate = computed(() => props.showFromPicker !== false)
             aria-label="Start period information"
           />
           <template #content>
-            <div class="p-3 max-w-xs">
-              <div class="text-sm text-gray-700 dark:text-gray-300">
-                Sets the earliest year in the available data range. The Display slider will start from this year.
+            <div class="p-3 space-y-2 max-w-xs">
+              <div class="text-xs text-gray-700 dark:text-gray-300">
+                <template v-if="!hasExtendedTimeAccess">
+                  Data before 2000 is restricted.
+                  <NuxtLink
+                    to="/signup"
+                    class="text-primary hover:underline font-medium"
+                  >
+                    Register for free
+                  </NuxtLink>
+                  to access the full historical dataset.
+                </template>
+                <template v-else>
+                  Sets the earliest year in the available data range. The slider will start from this year.
+                </template>
               </div>
             </div>
           </template>
         </UPopover>
       </div>
 
-      <!-- Start Period (From) - Simple version without feature gate -->
-      <div
-        v-else-if="props.allYearlyChartLabelsUnique?.length"
-        class="flex items-center gap-2"
-      >
-        <label
-          class="text-sm font-medium whitespace-nowrap"
-          for="startingPeriod"
-        >
-          Start Period
-        </label>
-        <USelectMenu
-          id="startingPeriod"
-          :model-value="props.sliderStart"
-          :items="props.allYearlyChartLabelsUnique"
-          placeholder="Select the start period"
-          :disabled="props.disabled"
-          size="sm"
-          class="w-24"
-          @update:model-value="emit('update:sliderStart', $event)"
-        />
-      </div>
-
-      <!-- Divider (only show if From picker is shown) -->
-      <div
-        v-if="shouldShowFeatureGate || props.allYearlyChartLabelsUnique?.length"
-        class="h-6 w-px bg-gray-300 dark:bg-gray-600"
-      />
+      <!-- Divider -->
+      <div class="h-6 w-px bg-gray-300 dark:bg-gray-600" />
 
       <!-- Date Range Slider -->
       <div class="flex-1 flex items-center gap-2">
-        <label class="text-sm font-medium whitespace-nowrap">
-          {{ shouldShowFeatureGate ? 'Display' : 'Date Range' }}
-        </label>
         <div class="flex-1">
           <DateSlider
             :slider-value="props.sliderValue"
