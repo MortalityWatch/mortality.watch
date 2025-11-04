@@ -109,7 +109,8 @@ describe('useExplorerDataOrchestration', () => {
       dateFrom: ref('2020'),
       dateTo: ref('2023'),
       sliderStart: ref('2010'),
-      chartStyle: ref('line')
+      chartStyle: ref('line'),
+      showZScores: ref(false)
     } as any
 
     // Create mock helpers
@@ -943,6 +944,7 @@ describe('useExplorerDataOrchestration', () => {
         mockState.isLogarithmic.value,
         false, // isPopulationType
         true, // isDeathsType
+        mockState.showZScores.value,
         orchestration.allChartData.labels,
         orchestration.allChartData.data
       )
