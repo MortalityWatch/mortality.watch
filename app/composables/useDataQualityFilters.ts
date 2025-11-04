@@ -15,7 +15,7 @@
  */
 
 import { ref, computed, watch } from 'vue'
-import type { Ref, ComputedRef } from 'vue'
+import type { Ref } from 'vue'
 import { getSourceDescription } from '~/lib/data/utils'
 
 export interface CountryQuality {

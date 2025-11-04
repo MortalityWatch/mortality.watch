@@ -14,7 +14,7 @@
  * making the code more modular and testable.
  */
 
-import { h, computed } from 'vue'
+import { h } from 'vue'
 import type { ComputedRef } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import { getGroupedRowModel } from '@tanstack/vue-table'
