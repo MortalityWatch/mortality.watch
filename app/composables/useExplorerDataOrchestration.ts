@@ -1,6 +1,7 @@
 /**
  * Explorer Data Orchestration Composable
  *
+ * Phase 12e: Added computed() memoization for expensive calculations
  * Phase 10.3: Refactored to use shared useChartDataFetcher composable
  *
  * Previous phases:
@@ -117,6 +118,19 @@ export function useExplorerDataOrchestration(
     const encodedQuery = arrayBufferToBase64(await compress(query))
     return base + encodeURIComponent(encodedQuery)
   }
+
+  // Memoized computations (Phase 12e) - cache expensive calculations
+  const dataKey = computed(() => {
+    return getKeyForType(
+      state.type.value,
+      state.showBaseline.value,
+      state.standardPopulation.value
+    )[0]
+  })
+
+  const ageGroupsForFetch = computed(() => {
+    return helpers.isAsmrType() ? ['all'] : state.ageGroups.value
+  })
 
   // Configure chart options based on current state
   const configureOptions = () => {
@@ -308,11 +322,8 @@ export function useExplorerDataOrchestration(
 
     if (shouldDownloadDataset) {
       // Use shared data fetcher for complete data fetch
-      const key = getKeyForType(
-        state.type.value,
-        state.showBaseline.value,
-        state.standardPopulation.value
-      )[0]
+      // Use memoized dataKey for performance
+      const key = dataKey.value
       if (!key) {
         isUpdating.value = false
         return
@@ -321,7 +332,7 @@ export function useExplorerDataOrchestration(
       const result = await dataFetcher.fetchChartData({
         chartType: state.chartType.value as ChartType,
         countries: state.countries.value,
-        ageGroups: helpers.isAsmrType() ? ['all'] : state.ageGroups.value,
+        ageGroups: ageGroupsForFetch.value, // Use memoized age groups
         dataKey: key,
         baselineMethod: state.baselineMethod.value,
         baselineDateFrom: state.baselineDateFrom.value,
@@ -366,11 +377,8 @@ export function useExplorerDataOrchestration(
       // Update chart data only (reuse existing dataset)
       resetBaselineDates()
 
-      const key = getKeyForType(
-        state.type.value,
-        state.showBaseline.value,
-        state.standardPopulation.value
-      )[0]
+      // Use memoized dataKey for performance
+      const key = dataKey.value
       if (!key) {
         isUpdating.value = false
         return
@@ -379,7 +387,7 @@ export function useExplorerDataOrchestration(
       const result = await dataFetcher.fetchChartData({
         chartType: state.chartType.value as ChartType,
         countries: state.countries.value,
-        ageGroups: helpers.isAsmrType() ? ['all'] : state.ageGroups.value,
+        ageGroups: ageGroupsForFetch.value, // Use memoized age groups
         dataKey: key,
         baselineMethod: state.baselineMethod.value,
         baselineDateFrom: state.baselineDateFrom.value,
