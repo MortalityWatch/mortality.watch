@@ -1,4 +1,3 @@
-// @ts-nocheck - Test file with many type guards
 import { describe, it, expect, beforeEach } from 'vitest'
 import {
   validateMetadata,
@@ -11,6 +10,11 @@ describe('app/lib/data/validation', () => {
     clearValidationCache()
   })
 
+  // Helper to assert data is defined (for TypeScript)
+  function assertDefined<T>(value: T | undefined): asserts value is T {
+    expect(value).toBeDefined()
+  }
+
   describe('validateMetadata', () => {
     describe('valid data scenarios', () => {
       it('should validate correct metadata CSV', async () => {
@@ -21,12 +25,10 @@ CAN,Canada,2020-01-01,2023-12-31,3,0-100,statcan`
         const result = await validateMetadata(csv)
 
         expect(result.success).toBe(true)
-        expect(result.data).toBeDefined()
-        expect(result.data?.length).toBe(2)
-        if (result.data && result.data.length > 0) {
-          expect(result.data![0].iso3c).toBe('USA')
-          expect(result.data![1].iso3c).toBe('CAN')
-        }
+        // Type checked via toHaveLength
+        expect(result.data).toHaveLength(2)
+        expect(result.data![0]!.iso3c).toBe('USA')
+        expect(result.data![1]!.iso3c).toBe('CAN')
       })
 
       it('should handle single row metadata', async () => {
@@ -84,10 +86,11 @@ USA,United States,2020-01-01,2020-01-01,3,0-100,cdc`
         const result = await validateMetadata(csv)
 
         expect(result.success).toBe(true)
-        if (result.data && result.data.length > 0) {
-          expect(result.data![0].min_date).toBe('2020-01-01')
-          expect(result.data![0].max_date).toBe('2020-01-01')
-        }
+        expect(result.data).toHaveLength(1)
+        // Type checked via toHaveLength
+        expect(result.data![0]!.min_date).toBe('2020-01-01')
+        // Type checked via toHaveLength
+        expect(result.data![0]!.max_date).toBe('2020-01-01')
       })
 
       it('should handle maximum date range', async () => {
@@ -97,10 +100,11 @@ USA,United States,1900-01-01,2099-12-31,3,0-100,cdc`
         const result = await validateMetadata(csv)
 
         expect(result.success).toBe(true)
-        if (result.data && result.data.length > 0) {
-          expect(result.data![0].min_date).toBe('1900-01-01')
-          expect(result.data![0].max_date).toBe('2099-12-31')
-        }
+        expect(result.data).toHaveLength(1)
+        // Type checked via toHaveLength
+        expect(result.data![0]!.min_date).toBe('1900-01-01')
+        // Type checked via toHaveLength
+        expect(result.data![0]!.max_date).toBe('2099-12-31')
       })
     })
 
@@ -132,15 +136,17 @@ USA,,2020-01-01,2023-12-31,3,0-100,cdc`
         expect(result.success).toBe(false)
       })
 
-      it('should accept valid rows even with some empty fields', async () => {
+      it('should pass validation with empty optional fields', async () => {
         const csv = `iso3c,jurisdiction,min_date,max_date,type,age_groups,source
 USA,United States,2020-01-01,2023-12-31,3,,cdc`
 
         const result = await validateMetadata(csv)
 
-        // Empty string passes min validation, so this succeeds
+        // age_groups field allows empty strings (optional field)
         expect(result.success).toBe(true)
-        expect(result.data?.length).toBe(1)
+        expect(result.data).toHaveLength(1)
+        // Type checked via toHaveLength
+        expect(result.data![0]!.age_groups).toBe('')
       })
 
       it('should handle partially valid data (accept valid rows)', async () => {
@@ -152,11 +158,11 @@ CAN,Canada,2020-01-01,2023-12-31,3,0-100,statcan`
         const result = await validateMetadata(csv)
 
         expect(result.success).toBe(true)
-        expect(result.data?.length).toBe(2)
-        if (result.data && result.data.length > 0) {
-          expect(result.data![0].iso3c).toBe('USA')
-          expect(result.data![1].iso3c).toBe('CAN')
-        }
+        expect(result.data).toHaveLength(2)
+        // Type checked via toHaveLength
+        expect(result.data![0]!.iso3c).toBe('USA')
+        // Type checked via toHaveLength
+        expect(result.data![1]!.iso3c).toBe('CAN')
       })
     })
 
@@ -169,6 +175,9 @@ USA,United States,2020-01-01,2023-12-31,3,0-100,cdc`
         const firstResult = await validateMetadata(validCsv)
         expect(firstResult.success).toBe(true)
         expect(firstResult.usedCache).toBeUndefined()
+        assertDefined(firstResult.data)
+        expect(firstResult.data).toHaveLength(1)
+        expect(firstResult.data![0]!.iso3c).toBe('USA')
 
         // Second call - all invalid data
         const invalidCsv = `iso3c,jurisdiction,min_date,max_date,type,age_groups,source
@@ -177,10 +186,11 @@ X,,,,,,`
         const secondResult = await validateMetadata(invalidCsv)
         expect(secondResult.success).toBe(true)
         expect(secondResult.usedCache).toBe(true)
-        expect(secondResult.data?.length).toBe(1)
-        if (secondResult.data && secondResult.data.length > 0) {
-          expect(secondResult.data![0].iso3c).toBe('USA')
-        }
+        assertDefined(secondResult.data)
+        expect(secondResult.data).toHaveLength(1)
+        // Verify cached data is returned
+        expect(secondResult.data![0]!.iso3c).toBe('USA')
+        expect(secondResult.data![0]!.jurisdiction).toBe('United States')
       })
 
       it('should fail when no cache available and data is invalid', async () => {
@@ -196,16 +206,19 @@ X,,,,,,`
         const csv1 = `iso3c,jurisdiction,min_date,max_date,type,age_groups,source
 USA,United States,2020-01-01,2023-12-31,3,0-100,cdc`
 
-        await validateMetadata(csv1)
+        const firstResult = await validateMetadata(csv1)
+        expect(firstResult.success).toBe(true)
+        assertDefined(firstResult.data)
+        expect(firstResult.data![0]!.iso3c).toBe('USA')
 
         const csv2 = `iso3c,jurisdiction,min_date,max_date,type,age_groups,source
 CAN,Canada,2020-01-01,2023-12-31,3,0-100,statcan`
 
         const result = await validateMetadata(csv2)
         expect(result.success).toBe(true)
-        if (result.data && result.data.length > 0) {
-          expect(result.data![0].iso3c).toBe('CAN')
-        }
+        // Type checked via toHaveLength
+        expect(result.data).toHaveLength(1)
+        expect(result.data![0]!.iso3c).toBe('CAN')
       })
     })
 
@@ -217,10 +230,10 @@ USA,United States,2020-01-01,2023-12-31,3,0-100,cdc`
         const result = await validateMetadata(csv)
 
         expect(result.success).toBe(true)
-        if (result.data && result.data.length > 0) {
-          expect(typeof result.data![0].min_date).toBe('string')
-          expect(typeof result.data![0].max_date).toBe('string')
-        }
+        // Type checked via toHaveLength
+        expect(result.data).toHaveLength(1)
+        expect(typeof result.data![0]!.min_date).toBe('string')
+        expect(typeof result.data![0]!.max_date).toBe('string')
       })
 
       it('should handle numeric type as string', async () => {
@@ -230,9 +243,9 @@ USA,United States,2020-01-01,2023-12-31,3,0-100,cdc`
         const result = await validateMetadata(csv)
 
         expect(result.success).toBe(true)
-        if (result.data && result.data.length > 0) {
-          expect(typeof result.data![0].type).toBe('string')
-        }
+        // Type checked via toHaveLength
+        expect(result.data).toHaveLength(1)
+        expect(typeof result.data![0]!.type).toBe('string')
       })
     })
   })
@@ -248,11 +261,11 @@ USA,330000000,2020-02-01,monthly,cdc,who,52000,15.76,10.8,10.8,10.8,10.8`
 
         expect(result.success).toBe(true)
         expect(result.data).toBeDefined()
-        expect(result.data?.length).toBe(2)
-        if (result.data && result.data.length > 0) {
-          expect(result.data![0].deaths).toBe('50000')
-          expect(result.data![1].deaths).toBe('52000')
-        }
+        expect(result.data).toHaveLength(2)
+        // Type checked via toHaveLength
+        expect(result.data![0]!.deaths).toBe('50000')
+        // Type checked via toHaveLength
+        expect(result.data![1]!.deaths).toBe('52000')
       })
 
       it('should handle single data point', async () => {
@@ -295,9 +308,9 @@ USA,0,2020-01-01,monthly,cdc,who,50000,15.15,10.5,10.5,10.5,10.5`
         const result = await validateMortalityData(csv, 'USA', 'monthly', 'all')
 
         expect(result.success).toBe(true)
-        if (result.data && result.data.length > 0) {
-          expect(result.data![0].population).toBe('0')
-        }
+        expect(result.data).toHaveLength(1)
+        // Type checked via toHaveLength
+        expect(result.data![0]!.population).toBe('0')
       })
 
       it('should handle zero deaths', async () => {
@@ -307,9 +320,9 @@ USA,330000000,2020-01-01,monthly,cdc,who,0,0,0,0,0,0`
         const result = await validateMortalityData(csv, 'USA', 'monthly', 'all')
 
         expect(result.success).toBe(true)
-        if (result.data && result.data.length > 0) {
-          expect(result.data![0].deaths).toBe('0')
-        }
+        expect(result.data).toHaveLength(1)
+        // Type checked via toHaveLength
+        expect(result.data![0]!.deaths).toBe('0')
       })
     })
 
@@ -341,10 +354,11 @@ USA,,2020-01-01,monthly,cdc,who,,,,,,`
         const result = await validateMortalityData(csv, 'USA', 'monthly', 'all')
 
         expect(result.success).toBe(true)
-        if (result.data && result.data.length > 0) {
-          expect(result.data![0].population).toBe('')
-          expect(result.data![0].deaths).toBe('')
-        }
+        expect(result.data).toHaveLength(1)
+        // Type checked via toHaveLength
+        expect(result.data![0]!.population).toBe('')
+        // Type checked via toHaveLength
+        expect(result.data![0]!.deaths).toBe('')
       })
 
       it('should handle partially valid data (accept valid rows)', async () => {
@@ -402,15 +416,17 @@ XX,,,,,,,,,,`
 
         const result1 = await validateMortalityData(invalidCsv, 'USA', 'monthly', 'all')
         expect(result1.success).toBe(true)
-        if (result1.data && result1.data.length > 0) {
-          expect(result1.data![0].iso3c).toBe('USA')
-        }
+        expect(result1.usedCache).toBe(true)
+        assertDefined(result1.data)
+        expect(result1.data).toHaveLength(1)
+        expect(result1.data![0]!.iso3c).toBe('USA')
 
         const result2 = await validateMortalityData(invalidCsv, 'CAN', 'monthly', 'all')
         expect(result2.success).toBe(true)
-        if (result2.data && result2.data.length > 0) {
-          expect(result2.data![0].iso3c).toBe('CAN')
-        }
+        expect(result2.usedCache).toBe(true)
+        assertDefined(result2.data)
+        expect(result2.data).toHaveLength(1)
+        expect(result2.data![0]!.iso3c).toBe('CAN')
       })
     })
 
@@ -422,12 +438,12 @@ USA,330000000,2020-01-01,monthly,cdc,who,50000,15.15,10.5,10.5,10.5,10.5`
         const result = await validateMortalityData(csv, 'USA', 'monthly', 'all')
 
         expect(result.success).toBe(true)
-        if (result.data && result.data.length > 0) {
-          const data = result.data[0]
-          expect(typeof data.population).toBe('string')
-          expect(typeof data.deaths).toBe('string')
-          expect(typeof data.cmr).toBe('string')
-        }
+        // Type checked via toHaveLength
+        expect(result.data).toHaveLength(1)
+        const data = result.data![0]!
+        expect(typeof data.population).toBe('string')
+        expect(typeof data.deaths).toBe('string')
+        expect(typeof data.cmr).toBe('string')
       })
 
       it('should handle decimal values in mortality rates', async () => {
@@ -437,11 +453,11 @@ USA,330000000,2020-01-01,monthly,cdc,who,50000,15.123456,10.987654,10.5,10.5,10.
         const result = await validateMortalityData(csv, 'USA', 'monthly', 'all')
 
         expect(result.success).toBe(true)
-        if (result.data && result.data.length > 0) {
-          const data = result.data[0]
-          expect(data.cmr).toBe('15.123456')
-          expect(data.asmr_who).toBe('10.987654')
-        }
+        // Type checked via toHaveLength
+        expect(result.data).toHaveLength(1)
+        const data = result.data![0]!
+        expect(data.cmr).toBe('15.123456')
+        expect(data.asmr_who).toBe('10.987654')
       })
     })
   })
@@ -531,10 +547,10 @@ USA,330000000,2020-02-01,monthly,cdc,who,52000,15.76,10.8,10.8,10.8,10.8`
       const result = await validateMortalityData(csv, 'USA', 'monthly', 'all')
 
       expect(result.success).toBe(true)
-      if (result.data && result.data.length > 1) {
-        expect(result.data[0].iso3c).toBe('USA')
-        expect(result.data[1].iso3c).toBe('USA')
-      }
+      // Type checked via toHaveLength
+      expect(result.data).toHaveLength(2)
+      expect(result.data![0]!.iso3c).toBe('USA')
+      expect(result.data![1]!.iso3c).toBe('USA')
     })
   })
 })
