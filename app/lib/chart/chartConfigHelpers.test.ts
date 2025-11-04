@@ -13,7 +13,7 @@ import {
   createDatalabelsConfig,
   createPluginsConfig,
   createScalesConfig
-} from './chartConfigHelpers'
+} from './config'
 import type { ChartErrorDataPoint, MortalityChartData } from './chartTypes'
 
 describe('chartConfigHelpers', () => {

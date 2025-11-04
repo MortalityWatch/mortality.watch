@@ -30,7 +30,7 @@ import {
   createOnResizeHandler,
   createPluginsConfig,
   createScalesConfig
-} from './chartConfigHelpers'
+} from './config'
 
 // Public API
 export const makeChartConfig = (
