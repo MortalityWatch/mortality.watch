@@ -2,6 +2,7 @@
 /**
  * Ranking Page
  *
+ * Phase 12e: Added computed() memoization for expensive calculations
  * Phase 10.1: Refactored to use composables for cleaner architecture
  * - useRankingState: Centralized state management
  * - useRankingData: Data fetching and processing
@@ -217,29 +218,31 @@ const {
   getTotalPages
 } = useRankingTableSort()
 
+// Memoized sorting and pagination (Phase 12e)
 const sortedResult = computed(() => getSortedResult(result.value))
 const paginatedResult = computed(() => getPaginatedResult(sortedResult.value))
 const totalPages = computed(() => getTotalPages(sortedResult.value))
 
 // ============================================================================
-// HELPER FUNCTIONS
+// HELPER FUNCTIONS - Memoized (Phase 12e)
 // ============================================================================
 
-const title = () => {
-  let result = 'Excess '
+// Memoized title computation for performance
+const title = computed(() => {
+  let titleResult = 'Excess '
 
   if (showASMR.value)
-    result = isMobile()
-      ? `${result}ASMR`
-      : `${result}Age-Standardized Mortality Rate`
-  else result = isMobile() ? `${result}CMR` : `${result}Crude Mortality Rate`
+    titleResult = isMobile()
+      ? `${titleResult}ASMR`
+      : `${titleResult}Age-Standardized Mortality Rate`
+  else titleResult = isMobile() ? `${titleResult}CMR` : `${titleResult}Crude Mortality Rate`
 
   if (selectedJurisdictionType.value.value !== 'countries') {
-    result = `${result} [${selectedJurisdictionType.value.name}]`
+    titleResult = `${titleResult} [${selectedJurisdictionType.value.name}]`
   }
 
-  return cumulative.value ? `Cumulative ${result}` : result
-}
+  return cumulative.value ? `Cumulative ${titleResult}` : titleResult
+})
 
 const subtitle = computed(() => {
   return blDescription(
@@ -302,42 +305,42 @@ const {
   saveToDB: saveToDBComposable
 } = useSaveChart({ chartType: 'ranking' })
 
+// Memoized ranking state serialization (Phase 12e)
+const rankingStateData = computed(() => ({
+  // Main type selection
+  a: showASMR.value,
+  p: selectedPeriodOfTime.value.value,
+  j: selectedJurisdictionType.value.value,
+
+  // Date range
+  df: sliderValue.value[0],
+  dt: sliderValue.value[1],
+
+  // Baseline settings
+  bm: selectedBaselineMethod.value.value,
+  bf: baselineSliderValue.value[0],
+  bt: baselineSliderValue.value[1],
+
+  // Display options
+  sp: selectedStandardPopulation.value.value,
+  dp: selectedDecimalPrecision.value.value,
+  t: showTotals.value,
+  to: showTotalsOnly.value,
+  r: showRelative.value,
+  pi: showPI.value,
+  c: cumulative.value,
+  i: !hideIncomplete.value,
+
+  // Sort settings
+  sortField: sortField.value,
+  sortOrder: sortOrder.value,
+  currentPage: currentPage.value,
+  itemsPerPage: itemsPerPage.value
+}))
+
 // Wrapper function to serialize state and call composable
 const saveToDB = async () => {
-  // Serialize current ranking state
-  const rankingStateData = {
-    // Main type selection
-    a: showASMR.value,
-    p: selectedPeriodOfTime.value.value,
-    j: selectedJurisdictionType.value.value,
-
-    // Date range
-    df: sliderValue.value[0],
-    dt: sliderValue.value[1],
-
-    // Baseline settings
-    bm: selectedBaselineMethod.value.value,
-    bf: baselineSliderValue.value[0],
-    bt: baselineSliderValue.value[1],
-
-    // Display options
-    sp: selectedStandardPopulation.value.value,
-    dp: selectedDecimalPrecision.value.value,
-    t: showTotals.value,
-    to: showTotalsOnly.value,
-    r: showRelative.value,
-    pi: showPI.value,
-    c: cumulative.value,
-    i: !hideIncomplete.value,
-
-    // Sort settings
-    sortField: sortField.value,
-    sortOrder: sortOrder.value,
-    currentPage: currentPage.value,
-    itemsPerPage: itemsPerPage.value
-  }
-
-  await saveToDBComposable(rankingStateData)
+  await saveToDBComposable(rankingStateData.value)
 }
 
 // Chart actions for ranking
@@ -397,7 +400,7 @@ const copyRankingLink = () => {
           <UCard data-tour="ranking-table">
             <template #header>
               <h2 class="text-xl font-semibold">
-                {{ title() }}
+                {{ title }}
               </h2>
             </template>
 

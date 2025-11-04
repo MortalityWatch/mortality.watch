@@ -1,11 +1,22 @@
 <script setup lang="ts">
-import { h } from 'vue'
-import type { TableColumn } from '@nuxt/ui'
-import { getGroupedRowModel } from '@tanstack/vue-table'
-import type { GroupingOptions } from '@tanstack/vue-table'
-import { getSourceDescription } from '~/lib/data/utils'
+/**
+ * Data Quality Admin Page
+ *
+ * Phase 12g: Refactored to use focused composables
+ * - useDataQualityFilters: Filter logic
+ * - useDataQualityOverrides: Override management
+ * - useDataQualityTable: Table configuration
+ *
+ * This reduces page complexity and improves maintainability.
+ */
+
+import { ref, onMounted } from 'vue'
 import { usePagination } from '~/composables/usePagination'
 import { UI_CONFIG } from '~/lib/config/constants'
+import { useDataQualityFilters } from '~/composables/useDataQualityFilters'
+import { useDataQualityOverrides } from '~/composables/useDataQualityOverrides'
+import { useDataQualityTable } from '~/composables/useDataQualityTable'
+import type { DataQualityReport } from '~/composables/useDataQualityFilters'
 
 definePageMeta({
   middleware: 'admin'
@@ -16,72 +27,13 @@ useSeoMeta({
   description: 'Monitor data freshness and quality'
 })
 
-interface CountryQuality {
-  iso3c: string
-  jurisdiction: string
-  lastUpdate: string
-  lastUpdateTimestamp: number
-  daysSinceUpdate: number
-  status: 'fresh' | 'stale'
-  overrideStatus: 'monitor' | 'muted' | 'hidden'
-  dataSource: string
-  type: string
-  ageGroups: string
-  minDate: string
-}
-
-interface DataQualityReport {
-  success: boolean
-  timestamp: string
-  summary: {
-    total: number
-    fresh: number
-    stale: number
-    medianFreshDays: number
-    medianStaleDays: number
-    mostStaleCountry: {
-      iso3c: string
-      jurisdiction: string
-      daysSinceUpdate: number
-    } | null
-    mostRecentUpdate: number
-  }
-  countries: CountryQuality[]
-}
+// ============================================================================
+// DATA FETCHING
+// ============================================================================
 
 const loading = ref(true)
 const error = ref<string | null>(null)
 const report = ref<DataQualityReport | null>(null)
-const searchQuery = ref('')
-const statusFilter = ref<'all' | 'fresh' | 'stale'>('all')
-const sourceFilter = ref<string>('all')
-const showMuted = ref(true)
-const showHidden = ref(false)
-
-// Status filter options
-const statusOptions = [
-  { label: 'All Statuses', value: 'all' },
-  { label: 'Fresh', value: 'fresh' },
-  { label: 'Stale', value: 'stale' }
-]
-
-// Get unique sources for filtering
-const uniqueSources = computed(() => {
-  if (!report.value) return []
-  const sources = new Set(report.value.countries.map(c => c.dataSource))
-  return Array.from(sources).sort()
-})
-
-// Source filter options
-const sourceOptions = computed(() => {
-  return [
-    { label: 'All Sources', value: 'all' },
-    ...uniqueSources.value.map(source => ({
-      label: getReadableSourceName(source),
-      value: source
-    }))
-  ]
-})
 
 // Fetch data quality report
 const fetchReport = async () => {
@@ -99,139 +51,54 @@ const fetchReport = async () => {
   }
 }
 
-// Update override status
-const updateOverrideStatus = async (country: CountryQuality, newStatus: 'monitor' | 'muted' | 'hidden') => {
-  try {
-    await $fetch('/api/admin/data-quality-override', {
-      method: 'POST',
-      body: {
-        iso3c: country.iso3c,
-        source: country.dataSource,
-        status: newStatus
-      }
-    })
+// ============================================================================
+// FILTERING - useDataQualityFilters composable
+// ============================================================================
 
-    // Update local state
-    country.overrideStatus = newStatus
-
-    // Show toast notification
-    useToast().add({
-      title: 'Override updated',
-      description: `${country.jurisdiction} (${country.dataSource}) is now ${newStatus}`,
-      color: 'success'
-    })
-  } catch (err) {
-    console.error('Failed to update override:', err)
-    useToast().add({
-      title: 'Error',
-      description: 'Failed to update override status',
-      color: 'error'
-    })
-  }
-}
-
-// Cycle through override statuses: monitor -> muted -> hidden -> monitor
-const cycleOverrideStatus = (country: CountryQuality) => {
-  let nextStatus: 'monitor' | 'muted' | 'hidden'
-
-  switch (country.overrideStatus) {
-    case 'monitor':
-      nextStatus = 'muted'
-      break
-    case 'muted':
-      nextStatus = 'hidden'
-      break
-    case 'hidden':
-      nextStatus = 'monitor'
-      break
-  }
-
-  updateOverrideStatus(country, nextStatus)
-}
-
-// Cycle override status for all sources in a jurisdiction
-const cycleJurisdictionOverride = (jurisdiction: string) => {
-  const entries = filteredCountries.value.filter(c => c.jurisdiction === jurisdiction)
-
-  if (entries.length === 0) return
-
-  // Determine the most common current status
-  const statusCounts = {
-    monitor: entries.filter(e => e.overrideStatus === 'monitor').length,
-    muted: entries.filter(e => e.overrideStatus === 'muted').length,
-    hidden: entries.filter(e => e.overrideStatus === 'hidden').length
-  }
-
-  // Find the most common status
-  let currentStatus: 'monitor' | 'muted' | 'hidden' = 'monitor'
-  let maxCount = statusCounts.monitor
-
-  if (statusCounts.muted > maxCount) {
-    currentStatus = 'muted'
-    maxCount = statusCounts.muted
-  }
-  if (statusCounts.hidden > maxCount) {
-    currentStatus = 'hidden'
-  }
-
-  // Determine next status
-  let nextStatus: 'monitor' | 'muted' | 'hidden'
-
-  switch (currentStatus) {
-    case 'monitor':
-      nextStatus = 'muted'
-      break
-    case 'muted':
-      nextStatus = 'hidden'
-      break
-    case 'hidden':
-      nextStatus = 'monitor'
-      break
-  }
-
-  // Apply to all entries
-  entries.forEach((entry) => {
-    updateOverrideStatus(entry, nextStatus)
-  })
-}
-
-// Filter countries
-const filteredCountries = computed(() => {
-  if (!report.value) return []
-
-  let countries = report.value.countries
-
-  // Apply override visibility filters
-  countries = countries.filter((c) => {
-    if (c.overrideStatus === 'hidden' && !showHidden.value) return false
-    if (c.overrideStatus === 'muted' && !showMuted.value) return false
-    return true
-  })
-
-  // Apply status filter
-  if (statusFilter.value !== 'all') {
-    countries = countries.filter(c => c.status === statusFilter.value)
-  }
-
-  // Apply source filter
-  if (sourceFilter.value !== 'all') {
-    countries = countries.filter(c => c.dataSource === sourceFilter.value)
-  }
-
-  // Apply search filter
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    countries = countries.filter(
-      c =>
-        c.jurisdiction.toLowerCase().includes(query)
-        || c.iso3c.toLowerCase().includes(query)
-    )
-  }
-
-  return countries
+const {
+  searchQuery,
+  statusFilter,
+  sourceFilter,
+  showMuted,
+  showHidden,
+  statusOptions,
+  sourceOptions,
+  filteredCountries,
+  getReadableSourceName
+} = useDataQualityFilters(report, () => {
+  // Reset to page 1 when filters change
+  currentPage.value = 1
 })
 
-// Pagination
+// ============================================================================
+// OVERRIDES - useDataQualityOverrides composable
+// ============================================================================
+
+const {
+  cycleOverrideStatus,
+  cycleJurisdictionOverride,
+  getMostCommonOverrideStatus,
+  getOverrideIcon
+} = useDataQualityOverrides(filteredCountries)
+
+// ============================================================================
+// TABLE - useDataQualityTable composable
+// ============================================================================
+
+const {
+  columns,
+  groupingOptions,
+  getStatusCounts,
+  getStatusColor,
+  formatDate,
+  formatDaysSince,
+  getMostStaleDays
+} = useDataQualityTable(filteredCountries, getReadableSourceName)
+
+// ============================================================================
+// PAGINATION
+// ============================================================================
+
 const pagination = usePagination({ items: filteredCountries, itemsPerPage: 25 })
 const { currentPage, paginatedItems, total, startIndex, endIndex, itemsPerPage } = pagination
 
@@ -251,162 +118,9 @@ const handleItemsPerPageChange = (val: { value: number } | number) => {
   currentPage.value = 1
 }
 
-// Table columns configuration
-const columns: TableColumn<CountryQuality>[] = [
-  {
-    id: 'country',
-    header: 'Country'
-  },
-  {
-    accessorKey: 'jurisdiction',
-    header: 'Jurisdiction'
-  },
-  {
-    id: 'status',
-    header: 'Status'
-  },
-  {
-    accessorKey: 'dataSource',
-    header: 'Data Source',
-    cell: ({ row }) => {
-      if (row.getIsGrouped()) {
-        const count = row.getValue('dataSource') as number
-        return `${count} source${count === 1 ? '' : 's'}`
-      }
-      return getReadableSourceName(row.getValue('dataSource') as string)
-    },
-    aggregationFn: 'uniqueCount'
-  },
-  {
-    accessorKey: 'type',
-    header: 'Type'
-  },
-  {
-    accessorKey: 'ageGroups',
-    header: 'Age Groups'
-  },
-  {
-    id: 'lastUpdate',
-    header: 'Last Update'
-  },
-  {
-    id: 'daysSince',
-    header: () => h('div', { class: 'text-right' }, 'Days Since')
-  },
-  {
-    id: 'actions',
-    header: 'Monitor'
-  }
-]
-
-// TanStack Table grouping options
-const groupingOptions = ref<GroupingOptions>({
-  groupedColumnMode: 'remove',
-  getGroupedRowModel: getGroupedRowModel()
-})
-
-// Helper to get status counts for a jurisdiction
-const getStatusCounts = (jurisdiction: string) => {
-  const entries = filteredCountries.value.filter(c => c.jurisdiction === jurisdiction)
-  return {
-    fresh: entries.filter(e => e.status === 'fresh').length,
-    stale: entries.filter(e => e.status === 'stale').length
-  }
-}
-
-// Helper to get the most common override status for a jurisdiction
-const getMostCommonOverrideStatus = (jurisdiction: string): 'monitor' | 'muted' | 'hidden' => {
-  const entries = filteredCountries.value.filter(c => c.jurisdiction === jurisdiction)
-
-  if (entries.length === 0) return 'monitor'
-
-  const statusCounts = {
-    monitor: entries.filter(e => e.overrideStatus === 'monitor').length,
-    muted: entries.filter(e => e.overrideStatus === 'muted').length,
-    hidden: entries.filter(e => e.overrideStatus === 'hidden').length
-  }
-
-  let currentStatus: 'monitor' | 'muted' | 'hidden' = 'monitor'
-  let maxCount = statusCounts.monitor
-
-  if (statusCounts.muted > maxCount) {
-    currentStatus = 'muted'
-    maxCount = statusCounts.muted
-  }
-  if (statusCounts.hidden > maxCount) {
-    currentStatus = 'hidden'
-  }
-
-  return currentStatus
-}
-
-// Helper to get override status icon
-const getOverrideIcon = (status: 'monitor' | 'muted' | 'hidden') => {
-  switch (status) {
-    case 'monitor':
-      return 'i-lucide-bell'
-    case 'muted':
-      return 'i-lucide-bell-off'
-    case 'hidden':
-      return 'i-lucide-eye-off'
-  }
-}
-
-// Helper to get readable source name (strips HTML)
-const getReadableSourceName = (source: string) => {
-  const description = getSourceDescription(source)
-  if (!description || description === 'unknown') {
-    return source
-  }
-  // Strip HTML tags to get plain text
-  const plainText = description.replace(/<[^>]*>/g, '').trim()
-  // Remove trailing numbers and colons (like ": 1 2")
-  return plainText.replace(/:\s*[\d\s]+$/, '').trim()
-}
-
-// Status badge styling
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'fresh':
-      return 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900'
-    case 'stale':
-      return 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900'
-    default:
-      return 'text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-900'
-  }
-}
-
-// Format date for display
-const formatDate = (dateStr: string) => {
-  const date = new Date(dateStr)
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
-}
-
-// Format days since update in a readable way
-const formatDaysSince = (days: number) => {
-  const years = Math.floor(days / 365)
-  const months = Math.floor((days % 365) / 30)
-
-  if (years > 0) {
-    if (months > 0) {
-      return `${years}y ${months}m`
-    }
-    return `${years}y`
-  }
-  if (months > 0) {
-    return `${months}m`
-  }
-  return `${days}d`
-}
-
-// Watch for filter changes and reset to page 1
-watch([searchQuery, statusFilter, sourceFilter, showMuted, showHidden], () => {
-  currentPage.value = 1
-})
+// ============================================================================
+// LIFECYCLE
+// ============================================================================
 
 // Fetch report on mount
 onMounted(() => {
@@ -683,7 +397,7 @@ onMounted(() => {
               v-if="row.getIsGrouped()"
               class="text-right text-xs text-gray-600 dark:text-gray-400"
             >
-              Most stale: {{ formatDaysSince(Math.max(...filteredCountries.filter(c => c.jurisdiction === row.original.jurisdiction).map(c => c.daysSinceUpdate))) }}
+              Most stale: {{ formatDaysSince(getMostStaleDays(row.original.jurisdiction)) }}
             </div>
             <div
               v-else
