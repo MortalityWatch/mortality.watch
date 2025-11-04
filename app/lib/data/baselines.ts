@@ -6,6 +6,7 @@ import type {
 } from '~/model'
 import { prefillUndefined } from '~/utils'
 import { dataLoader } from '../dataLoader'
+import { baselineCache } from '../cache/baselineCache'
 
 /**
  * Calculate excess mortality from baseline data
@@ -117,24 +118,50 @@ const calculateBaseline = async (
   }
 
   try {
-    const baseUrl = 'https://stats.mortality.watch/'
-    const dataParam
-      = cumulative && s === 1 ? (all_data as (string | number)[]).join(',') : (bl_data as (string | number)[]).join(',')
-    const url
-      = cumulative && s === 1
-        ? `${baseUrl}cum?y=${dataParam}&h=${h}&t=${trend ? 1 : 0}`
-        : `${baseUrl}?y=${dataParam}&h=${h}&s=${s}&t=${trend ? 1 : 0}&m=${method}`
+    // Check cache first
+    const cacheData = (cumulative && s === 1 ? all_data : bl_data) as NumberArray
+    const cached = baselineCache.get(cacheData, h, s, trend ? 1 : 0, method, cumulative && s === 1)
 
-    const text = await dataLoader.fetchBaseline(url)
-    const json = JSON.parse(text)
+    let json
+    if (cached) {
+      // Cache hit - use cached result
+      json = cached
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Baseline cache hit:', {
+          iso3c: data.iso3c?.[0],
+          method,
+          chartType,
+          hitRate: baselineCache.getHitRate().toFixed(1) + '%'
+        })
+      }
+    } else {
+      // Cache miss - fetch from API
+      const baseUrl = 'https://stats.mortality.watch/'
+      const dataParam
+        = cumulative && s === 1 ? (all_data as (string | number)[]).join(',') : (bl_data as (string | number)[]).join(',')
+      const url
+        = cumulative && s === 1
+          ? `${baseUrl}cum?y=${dataParam}&h=${h}&t=${trend ? 1 : 0}`
+          : `${baseUrl}?y=${dataParam}&h=${h}&s=${s}&t=${trend ? 1 : 0}&m=${method}`
 
-    // Update NA to undefined
-    json.lower = (json.lower as string[]).map(x =>
-      x === 'NA' ? undefined : x
-    )
-    json.upper = (json.upper as string[]).map(x =>
-      x === 'NA' ? undefined : x
-    )
+      const text = await dataLoader.fetchBaseline(url)
+      json = JSON.parse(text)
+
+      // Update NA to undefined
+      json.lower = (json.lower as string[]).map(x =>
+        x === 'NA' ? undefined : x
+      )
+      json.upper = (json.upper as string[]).map(x =>
+        x === 'NA' ? undefined : x
+      )
+
+      // Store in cache
+      baselineCache.set(cacheData, h, s, trend ? 1 : 0, method, cumulative && s === 1, {
+        y: json.y as NumberArray,
+        lower: json.lower as NumberArray,
+        upper: json.upper as NumberArray
+      })
+    }
 
     if (keys[1]) data[keys[1]] = prefillUndefined(
       json.y as NumberArray,
@@ -220,4 +247,30 @@ export const calculateBaselines = async (
   }
   if (progressCb) progressCb(0, total)
   await Promise.all(promises)
+
+  // Log cache statistics after baseline calculations
+  if (process.env.NODE_ENV === 'development') {
+    const stats = baselineCache.getStats()
+    console.log('Baseline cache stats:', {
+      size: stats.size,
+      hits: stats.hits,
+      misses: stats.misses,
+      hitRate: baselineCache.getHitRate().toFixed(1) + '%'
+    })
+  }
 }
+
+/**
+ * Get baseline cache statistics
+ */
+export const getBaselineCacheStats = () => baselineCache.getStats()
+
+/**
+ * Get baseline cache hit rate
+ */
+export const getBaselineCacheHitRate = () => baselineCache.getHitRate()
+
+/**
+ * Invalidate baseline cache
+ */
+export const invalidateBaselineCache = () => baselineCache.invalidate()
