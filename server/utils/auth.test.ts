@@ -37,11 +37,16 @@ const mockDeleteCookie = vi.fn()
 const mockCreateError = vi.fn(error => error)
 
 // Make h3 functions available globally (Nuxt auto-imports them)
-global.getCookie = mockGetCookie
-global.getHeader = mockGetHeader
-global.setCookie = mockSetCookie
-global.deleteCookie = mockDeleteCookie
-global.createError = mockCreateError
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+;(global as any).getCookie = mockGetCookie
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+;(global as any).getHeader = mockGetHeader
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+;(global as any).setCookie = mockSetCookie
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+;(global as any).deleteCookie = mockDeleteCookie
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+;(global as any).createError = mockCreateError
 
 vi.mock('h3', () => ({
   getCookie: mockGetCookie,
