@@ -31,6 +31,7 @@ import {
   createPluginsConfig,
   createScalesConfig
 } from './config'
+import { chartConfigCache } from '../cache/chartConfigCache'
 
 // Public API
 export const makeChartConfig = (
@@ -44,11 +45,30 @@ export const makeChartConfig = (
   showPercentage: boolean,
   showPi: boolean
 ): Record<string, unknown> => {
+  // Check cache first
+  const cached = chartConfigCache.get(
+    style,
+    data,
+    isDeathsType,
+    isExcess,
+    isLE,
+    isPopulationType,
+    showLabels,
+    showPercentage,
+    showPi
+  )
+
+  if (cached) {
+    return cached
+  }
+
   // Cast from generic data structure to MortalityChartData
   // The caller is responsible for providing properly structured data
   const internalData = data as unknown as MortalityChartData
+  let config: Record<string, unknown>
+
   if (style === 'matrix') {
-    return makeMatrixChartConfig(
+    config = makeMatrixChartConfig(
       internalData,
       isExcess,
       isLE,
@@ -58,15 +78,32 @@ export const makeChartConfig = (
       isDeathsType,
       isPopulationType
     ) as unknown as Record<string, unknown>
+  } else {
+    config = makeBarLineChartConfig(
+      internalData,
+      isExcess,
+      showPi,
+      showPercentage,
+      isDeathsType,
+      isPopulationType
+    ) as unknown as Record<string, unknown>
   }
-  return makeBarLineChartConfig(
-    internalData,
-    isExcess,
-    showPi,
-    showPercentage,
+
+  // Store in cache
+  chartConfigCache.set(
+    config,
+    style,
+    data,
     isDeathsType,
-    isPopulationType
-  ) as unknown as Record<string, unknown>
+    isExcess,
+    isLE,
+    isPopulationType,
+    showLabels,
+    showPercentage,
+    showPi
+  )
+
+  return config
 }
 
 export const makeBarLineChartConfig = (
@@ -83,6 +120,30 @@ export const makeBarLineChartConfig = (
   userTier?: number,
   showCaption: boolean = true
 ) => {
+  // Check cache for bar/line configs with extended parameters
+  const dataArray = [data] as unknown as Array<Record<string, unknown>>
+  const cached = chartConfigCache.get(
+    'bar', // Use 'bar' as default for bar/line configs
+    dataArray,
+    isDeathsType,
+    isExcess,
+    false, // isLE not applicable for bar/line
+    isPopulationType,
+    false, // showLabels not applicable for bar/line
+    showPercentage,
+    showPi,
+    showQrCode,
+    showLogo,
+    isDark,
+    decimals,
+    userTier,
+    showCaption
+  )
+
+  if (cached) {
+    return cached
+  }
+
   // Feature gating: Only Pro users (tier 2) can hide the watermark/QR code
   if (userTier !== undefined && userTier < 2) {
     showLogo = true
@@ -94,7 +155,7 @@ export const makeBarLineChartConfig = (
   // Logo and QR code plugins overlay the chart, so no padding needed for them
   // They draw at absolute positions in corners without affecting chart layout
 
-  return {
+  const config = {
     plugins: [createBackgroundPlugin(isDark)],
     options: {
       animation: false,
@@ -135,6 +196,28 @@ export const makeBarLineChartConfig = (
       labels: data.labels
     }
   }
+
+  // Store in cache
+  chartConfigCache.set(
+    config,
+    'bar',
+    dataArray,
+    isDeathsType,
+    isExcess,
+    false, // isLE
+    isPopulationType,
+    false, // showLabels
+    showPercentage,
+    showPi,
+    showQrCode,
+    showLogo,
+    isDark,
+    decimals,
+    userTier,
+    showCaption
+  )
+
+  return config
 }
 
 export const makeMatrixChartConfig = (
@@ -153,6 +236,30 @@ export const makeMatrixChartConfig = (
   userTier?: number,
   showCaption: boolean = true
 ) => {
+  // Check cache for matrix configs
+  const dataArray = [data] as unknown as Array<Record<string, unknown>>
+  const cached = chartConfigCache.get(
+    'matrix',
+    dataArray,
+    isDeathsType,
+    isExcess,
+    isLE,
+    isPopulationType,
+    showLabels,
+    showPercentage,
+    showPi,
+    showQrCode,
+    showLogo,
+    isDark,
+    decimals,
+    userTier,
+    showCaption
+  )
+
+  if (cached) {
+    return cached as unknown as ChartJSConfig<'matrix', MortalityMatrixDataPoint[]>
+  }
+
   const config = makeBarLineChartConfig(
     data,
     isExcess,
@@ -269,6 +376,27 @@ export const makeMatrixChartConfig = (
       }
     ]
   }
+
+  // Store in cache
+  chartConfigCache.set(
+    config as unknown as Record<string, unknown>,
+    'matrix',
+    dataArray,
+    isDeathsType,
+    isExcess,
+    isLE,
+    isPopulationType,
+    showLabels,
+    showPercentage,
+    showPi,
+    showQrCode,
+    showLogo,
+    isDark,
+    decimals,
+    userTier,
+    showCaption
+  )
+
   return config
 }
 
