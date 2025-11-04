@@ -21,7 +21,7 @@ import { handleError } from '@/lib/errors/errorHandler'
 import { processCountryRow } from '@/lib/ranking/dataProcessing'
 import type { TableRow } from '@/lib/ranking/types'
 import { useChartDataFetcher } from '@/composables/useChartDataFetcher'
-import { DATA_CONFIG } from '@/lib/config/constants'
+import { DATA_CONFIG, UI_CONFIG } from '@/lib/config/constants'
 
 const RANKING_START_YEAR = DATA_CONFIG.RANKING_START_YEAR
 const RANKING_END_YEAR = DATA_CONFIG.RANKING_END_YEAR
@@ -116,8 +116,8 @@ export function useRankingData(
    */
   const explorerLink = (countryCodes?: string[]): string => {
     const codes = countryCodes || Array.from(visibleCountryCodes.value)
-    // Limit to 20 countries to avoid overwhelming the API
-    const limitedCodes = codes.slice(0, 20)
+    // Limit countries to avoid overwhelming the API
+    const limitedCodes = codes.slice(0, UI_CONFIG.MAX_EXPLORER_COUNTRIES)
 
     const router = useRouter()
     const route = router.resolve({

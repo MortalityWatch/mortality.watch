@@ -31,6 +31,7 @@ import { getFilteredChartData } from '@/lib/chart'
 import type { MortalityChartData } from '@/lib/chart/chartTypes'
 import { useDateRangeValidation } from '@/composables/useDateRangeValidation'
 import { getSeasonString } from '@/model/baseline'
+import { UI_CONFIG } from '@/lib/config/constants'
 import {
   arrayBufferToBase64,
   compress
@@ -261,10 +262,10 @@ export function useExplorerDataOrchestration(
   ) => {
     isUpdating.value = true
 
-    // Only show loading overlay if update takes longer than 500ms
+    // Only show loading overlay if update takes longer than configured delay
     loadingTimeout = setTimeout(() => {
       showLoadingOverlay.value = true
-    }, 500)
+    }, UI_CONFIG.LOADING_OVERLAY_DELAY)
 
     if (shouldDownloadDataset) {
       // Use shared data fetcher for complete data fetch

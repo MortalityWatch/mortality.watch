@@ -7,6 +7,8 @@
  * - Server: Direct S3 access (caching handled by API routes)
  */
 
+import { UI_CONFIG } from './config/constants'
+
 const S3_BASE = 'https://s3.mortality.watch/data/mortality'
 
 export class DataLoader {
@@ -93,8 +95,8 @@ export class DataLoader {
 
         // Only retry on network/server errors
         if (attempt < retries) {
-          // Exponential backoff: 500ms, 1000ms
-          await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)))
+          // Exponential backoff based on configured retry delay
+          await new Promise(resolve => setTimeout(resolve, UI_CONFIG.RETRY_DELAY * (attempt + 1) / 2))
           continue
         }
       }
