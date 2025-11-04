@@ -129,12 +129,62 @@ export function useDataAvailability(
     }
   )
 
+  // Feature access for extended time periods
+  const { can } = useFeatureAccess()
+  const hasExtendedTimeAccess = computed(() => can('EXTENDED_TIME_PERIODS'))
+
+  /**
+   * Get the year 2000 start date formatted for the given chart type
+   */
+  const getYear2000Start = (chartType: string): string => {
+    switch (chartType) {
+      case 'yearly':
+        return '2000'
+      case 'midyear':
+      case 'fluseason':
+        return '1999/00' // These periods span two years, starting in 1999
+      case 'quarterly':
+        return '2000 Q1'
+      case 'monthly':
+        return '2000 Jan'
+      case 'weekly':
+      case 'weekly_13w_sma':
+      case 'weekly_26w_sma':
+      case 'weekly_52w_sma':
+      case 'weekly_104w_sma':
+        return '2000-W01'
+      default:
+        return '2000'
+    }
+  }
+
+  // Computed: Effective minimum date considering both feature gating and data availability
+  const effectiveMinDate = computed(() => {
+    // If no data available yet, return null
+    if (!availableDateRange.value) return null
+
+    const dataMinDate = availableDateRange.value.minDate
+
+    // For premium users, use the actual data minimum
+    if (hasExtendedTimeAccess.value) {
+      return dataMinDate
+    }
+
+    // For non-premium users, restrict to 2000 or later
+    const year2000Start = getYear2000Start(state.chartType.value)
+
+    // Return whichever is later: year 2000 or actual data start
+    return dataMinDate > year2000Start ? dataMinDate : year2000Start
+  })
+
   return {
     isLoading,
     error,
     availableChartTypes,
     availableAgeGroups,
     availableDateRange,
+    effectiveMinDate,
+    hasExtendedTimeAccess,
     isAvailable: (country: string, chartType: string, ageGroup: string) =>
       metadataService.isAvailable(country, chartType, ageGroup)
   }
