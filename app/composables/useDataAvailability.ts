@@ -15,6 +15,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { metadataService } from '@/services/metadataService'
 import { showToast } from '@/toast'
 import type { useExplorerState } from './useExplorerState'
+import type { ChartType } from '@/model/period'
 
 export function useDataAvailability(
   state: ReturnType<typeof useExplorerState>
@@ -136,7 +137,7 @@ export function useDataAvailability(
   /**
    * Get the year 2000 start date formatted for the given chart type
    */
-  const getYear2000Start = (chartType: string): string => {
+  const getYear2000Start = (chartType: ChartType): string => {
     switch (chartType) {
       case 'yearly':
         return '2000'

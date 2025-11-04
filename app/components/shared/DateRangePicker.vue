@@ -52,6 +52,12 @@ const effectiveSliderStart = computed(() => {
       const y = parseInt(label.substring(0, 4))
       return y >= 2000
     })
+    if (!year2000OrLater) {
+      console.warn(
+        `[DateRangePicker] No years >= 2000 available for free user. Falling back to ${props.sliderStart}. Available years:`,
+        availableStartYears.value
+      )
+    }
     return year2000OrLater || props.sliderStart
   }
 
