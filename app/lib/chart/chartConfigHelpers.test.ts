@@ -3,7 +3,8 @@
  */
 
 import { describe, it, expect, vi } from 'vitest'
-import type { Chart, TooltipItem } from 'chart.js'
+import type { Chart, TooltipItem, Scale, CoreScaleOptions } from 'chart.js'
+import type { Context } from 'chartjs-plugin-datalabels'
 import {
   createBackgroundPlugin,
   createOnResizeHandler,
@@ -229,7 +230,7 @@ describe('chartConfigHelpers', () => {
       const context = {
         dataset: { label: 'Test Dataset' },
         parsed: { y: 100 } as unknown as ChartErrorDataPoint
-      } as TooltipItem<'line'>
+      } as any as TooltipItem<'line'> // eslint-disable-line @typescript-eslint/no-explicit-any
 
       const result = callbacks.label(context)
 
@@ -242,7 +243,7 @@ describe('chartConfigHelpers', () => {
       const context = {
         dataset: { label: 'Test' },
         parsed: { y: 100, yMin: 90, yMax: 110 } as unknown as ChartErrorDataPoint
-      } as TooltipItem<'line'>
+      } as any as TooltipItem<'line'> // eslint-disable-line @typescript-eslint/no-explicit-any
 
       const result = callbacks.label(context)
 
@@ -254,7 +255,7 @@ describe('chartConfigHelpers', () => {
       const context = {
         dataset: {},
         parsed: { y: 100 } as unknown as ChartErrorDataPoint
-      } as TooltipItem<'line'>
+      } as any as TooltipItem<'line'> // eslint-disable-line @typescript-eslint/no-explicit-any
 
       const result = callbacks.label(context)
 
@@ -266,7 +267,7 @@ describe('chartConfigHelpers', () => {
       const context = {
         dataset: { label: 'Test' },
         parsed: { y: 0.5 } as unknown as ChartErrorDataPoint
-      } as TooltipItem<'line'>
+      } as any as TooltipItem<'line'> // eslint-disable-line @typescript-eslint/no-explicit-any
 
       const result = callbacks.label(context)
 
@@ -278,7 +279,7 @@ describe('chartConfigHelpers', () => {
       const context = {
         dataset: { label: 'Test' },
         parsed: { y: 100, yMinMin: 85, yMaxMax: 115 } as unknown as ChartErrorDataPoint
-      } as TooltipItem<'line'>
+      } as any as TooltipItem<'line'> // eslint-disable-line @typescript-eslint/no-explicit-any
 
       const result = callbacks.label(context)
 
@@ -558,7 +559,7 @@ describe('chartConfigHelpers', () => {
 
     it('should format y-axis ticks correctly', () => {
       const config = createScalesConfig(mockData, false, false, true, 'auto')
-      const mockScale = {} as unknown as ReturnType<typeof createScalesConfig>['y']
+      const mockScale = {} as any as Scale<CoreScaleOptions> // eslint-disable-line @typescript-eslint/no-explicit-any
 
       const result = config.y.ticks.callback.call(mockScale, 1000)
 
@@ -568,7 +569,7 @@ describe('chartConfigHelpers', () => {
 
     it('should handle percentage formatting in y-axis ticks', () => {
       const config = createScalesConfig(mockData, false, true, true, 'auto')
-      const mockScale = {} as unknown as ReturnType<typeof createScalesConfig>['y']
+      const mockScale = {} as any as Scale<CoreScaleOptions> // eslint-disable-line @typescript-eslint/no-explicit-any
 
       const result = config.y.ticks.callback.call(mockScale, 0.5)
 
