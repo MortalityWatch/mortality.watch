@@ -24,11 +24,17 @@ import { useDataQualityTable } from '~/composables/useDataQualityTable'
 import type { DataQualityReport, CountryQuality } from '~/composables/useDataQualityFilters'
 
 // Mock $fetch globally
-;(global as any).$fetch = vi.fn()
+interface GlobalWithMocks {
+  $fetch: ReturnType<typeof vi.fn>
+  useToast: ReturnType<typeof vi.fn>
+}
+
+const globalMock = global as unknown as GlobalWithMocks
+globalMock.$fetch = vi.fn()
 
 // Mock useToast composable - needs to be global
 const mockToastAdd = vi.fn()
-;(global as any).useToast = vi.fn(() => ({
+globalMock.useToast = vi.fn(() => ({
   add: mockToastAdd
 }))
 
@@ -474,12 +480,12 @@ describe('admin data-quality page', () => {
         const filteredCountries = computed(() => [mockCountry])
         const overrides = useDataQualityOverrides(filteredCountries)
 
-        vi.mocked((global as any).$fetch).mockResolvedValue({ success: true })
+        vi.mocked(globalMock.$fetch).mockResolvedValue({ success: true })
 
         await overrides.cycleOverrideStatus(mockCountry)
         await nextTick()
 
-        expect(global.$fetch).toHaveBeenCalledWith('/api/admin/data-quality-override', {
+        expect(globalMock.$fetch).toHaveBeenCalledWith('/api/admin/data-quality-override', {
           method: 'POST',
           body: {
             iso3c: 'USA',
@@ -495,12 +501,12 @@ describe('admin data-quality page', () => {
         const filteredCountries = computed(() => [mockCountry])
         const overrides = useDataQualityOverrides(filteredCountries)
 
-        vi.mocked((global as any).$fetch).mockResolvedValue({ success: true })
+        vi.mocked(globalMock.$fetch).mockResolvedValue({ success: true })
 
         await overrides.cycleOverrideStatus(mockCountry)
         await nextTick()
 
-        expect(global.$fetch).toHaveBeenCalledWith('/api/admin/data-quality-override', {
+        expect(globalMock.$fetch).toHaveBeenCalledWith('/api/admin/data-quality-override', {
           method: 'POST',
           body: {
             iso3c: 'USA',
@@ -516,12 +522,12 @@ describe('admin data-quality page', () => {
         const filteredCountries = computed(() => [mockCountry])
         const overrides = useDataQualityOverrides(filteredCountries)
 
-        vi.mocked((global as any).$fetch).mockResolvedValue({ success: true })
+        vi.mocked(globalMock.$fetch).mockResolvedValue({ success: true })
 
         await overrides.cycleOverrideStatus(mockCountry)
         await nextTick()
 
-        expect(global.$fetch).toHaveBeenCalledWith('/api/admin/data-quality-override', {
+        expect(globalMock.$fetch).toHaveBeenCalledWith('/api/admin/data-quality-override', {
           method: 'POST',
           body: {
             iso3c: 'USA',
@@ -542,12 +548,12 @@ describe('admin data-quality page', () => {
         const filteredCountries = computed(() => countries)
         const overrides = useDataQualityOverrides(filteredCountries)
 
-        vi.mocked((global as any).$fetch).mockResolvedValue({ success: true })
+        vi.mocked(globalMock.$fetch).mockResolvedValue({ success: true })
 
         await overrides.cycleJurisdictionOverride('United States')
         await nextTick()
 
-        expect((global as any).$fetch).toHaveBeenCalledTimes(2)
+        expect(globalMock.$fetch).toHaveBeenCalledTimes(2)
         expect(countries[0]!.overrideStatus).toBe('muted')
         expect(countries[1]!.overrideStatus).toBe('muted')
       })
@@ -556,12 +562,12 @@ describe('admin data-quality page', () => {
         const filteredCountries = computed(() => [createMockCountry()])
         const overrides = useDataQualityOverrides(filteredCountries)
 
-        vi.mocked((global as any).$fetch).mockResolvedValue({ success: true })
+        vi.mocked(globalMock.$fetch).mockResolvedValue({ success: true })
 
         overrides.cycleJurisdictionOverride('Non-existent')
         await nextTick()
 
-        expect((global as any).$fetch).not.toHaveBeenCalled()
+        expect(globalMock.$fetch).not.toHaveBeenCalled()
       })
 
       it('should cycle based on most common status', async () => {
@@ -573,7 +579,7 @@ describe('admin data-quality page', () => {
         const filteredCountries = computed(() => countries)
         const overrides = useDataQualityOverrides(filteredCountries)
 
-        vi.mocked((global as any).$fetch).mockResolvedValue({ success: true })
+        vi.mocked(globalMock.$fetch).mockResolvedValue({ success: true })
 
         // Most common is 'muted' (2 out of 3), so should cycle to 'hidden'
         await overrides.cycleJurisdictionOverride('United States')
@@ -654,7 +660,7 @@ describe('admin data-quality page', () => {
         const filteredCountries = computed(() => [mockCountry])
         const overrides = useDataQualityOverrides(filteredCountries)
 
-        vi.mocked((global as any).$fetch).mockRejectedValue(new Error('Network error'))
+        vi.mocked(globalMock.$fetch).mockRejectedValue(new Error('Network error'))
 
         await overrides.cycleOverrideStatus(mockCountry)
         await nextTick()
@@ -857,7 +863,7 @@ describe('admin data-quality page', () => {
       const filters = useDataQualityFilters(report)
       const overrides = useDataQualityOverrides(filters.filteredCountries)
 
-      vi.mocked((global as any).$fetch).mockResolvedValue({ success: true })
+      vi.mocked(globalMock.$fetch).mockResolvedValue({ success: true })
 
       // Start with all countries
       expect(filters.filteredCountries.value).toHaveLength(3)
