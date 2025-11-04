@@ -1,11 +1,7 @@
 /**
  * Tests for Chart Configuration Generation
- *
- * Note: Type checking disabled for this test file due to complex Chart.js type definitions
- * that don't properly expose runtime-accessible configuration properties
  */
 
-// @ts-nocheck
 import { describe, it, expect } from 'vitest'
 import type { Chart } from 'chart.js'
 import {
@@ -243,7 +239,8 @@ describe('chartConfig', () => {
           0
         )
 
-        expect(config.options.plugins.showLogo).toBe(true)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        expect((config.options.plugins as any).showLogo).toBe(true)
       })
 
       it('should enforce watermark for tier 1 users', () => {
@@ -262,7 +259,8 @@ describe('chartConfig', () => {
           1
         )
 
-        expect(config.options.plugins.showLogo).toBe(true)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        expect((config.options.plugins as any).showLogo).toBe(true)
       })
 
       it('should allow watermark removal for Pro users (tier 2)', () => {
@@ -281,7 +279,8 @@ describe('chartConfig', () => {
           2
         )
 
-        expect(config.options.plugins.showLogo).toBe(false)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        expect((config.options.plugins as any).showLogo).toBe(false)
       })
     })
 
@@ -404,10 +403,10 @@ describe('chartConfig', () => {
           }
         } as unknown as Chart
 
-        config.options.onResize(mockChart)
+        config.options.onResize!(mockChart)
 
-        expect(mockChart.options.plugins.title.font).toBeDefined()
-        expect(mockChart.options.plugins.datalabels.font).toBeDefined()
+        expect(mockChart.options.plugins!.title!.font).toBeDefined()
+        expect(mockChart.options.plugins!.datalabels!.font).toBeDefined()
       })
     })
   })
@@ -432,40 +431,42 @@ describe('chartConfig', () => {
         const data = createMockChartData()
         const config = makeMatrixChartConfig(data, false, false, false, false, true, false, false)
 
-        expect(config.options.scales.x.type).toBe('category')
-        expect(config.options.scales.x.labels).toEqual(data.labels)
+        expect(config.options.scales!.x!.type).toBe('category')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        expect((config.options.scales!.x as any).labels).toEqual(data.labels)
       })
 
       it('should configure y-axis with category type and offset', () => {
         const data = createMockChartData()
         const config = makeMatrixChartConfig(data, false, false, false, false, true, false, false)
 
-        expect(config.options.scales.y.type).toBe('category')
-        expect(config.options.scales.y.offset).toBe(true)
+        expect(config.options.scales!.y!.type).toBe('category')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        expect((config.options.scales!.y as any).offset).toBe(true)
       })
 
       it('should set y-axis title to "Jurisdiction"', () => {
         const data = createMockChartData()
         const config = makeMatrixChartConfig(data, false, false, false, false, true, false, false)
 
-        expect(config.options.scales.y.title.text).toBe('Jurisdiction')
-        expect(config.options.scales.y.title.display).toBe(true)
+        expect(config.options.scales!.y!.title!.text).toBe('Jurisdiction')
+        expect(config.options.scales!.y!.title!.display).toBe(true)
       })
 
       it('should set x-axis title from data', () => {
         const data = createMockChartData({ xtitle: 'Time Period' })
         const config = makeMatrixChartConfig(data, false, false, false, false, true, false, false)
 
-        expect(config.options.scales.x.title.text).toBe('Time Period')
-        expect(config.options.scales.x.title.display).toBe(true)
+        expect(config.options.scales!.x!.title!.text).toBe('Time Period')
+        expect(config.options.scales!.x!.title!.display).toBe(true)
       })
 
       it('should disable grid display', () => {
         const data = createMockChartData()
         const config = makeMatrixChartConfig(data, false, false, false, false, true, false, false)
 
-        expect(config.options.scales.x.grid.display).toBe(false)
-        expect(config.options.scales.y.grid.display).toBe(false)
+        expect(config.options.scales!.x!.grid!.display).toBe(false)
+        expect(config.options.scales!.y!.grid!.display).toBe(false)
       })
     })
 
@@ -482,7 +483,7 @@ describe('chartConfig', () => {
 
         expect(config.data.datasets).toBeDefined()
         expect(config.data.datasets.length).toBe(1)
-        expect(config.data.datasets[0].data).toBeDefined()
+        expect(config.data.datasets[0]!.data).toBeDefined()
       })
 
       it('should create data points with x, y, and v properties', () => {
@@ -492,7 +493,7 @@ describe('chartConfig', () => {
         })
         const config = makeMatrixChartConfig(data, false, false, false, false, true, false, false)
 
-        const dataPoint = config.data.datasets[0].data[0]
+        const dataPoint = config.data.datasets[0]!.data[0]
         expect(dataPoint).toHaveProperty('x')
         expect(dataPoint).toHaveProperty('y')
         expect(dataPoint).toHaveProperty('v')
@@ -508,7 +509,7 @@ describe('chartConfig', () => {
         })
         const config = makeMatrixChartConfig(data, false, false, false, false, true, false, false)
 
-        const dataPoints = config.data.datasets[0].data
+        const dataPoints = config.data.datasets[0]!.data
         expect(dataPoints.every((pt: { country: string }) => pt.country === 'USA')).toBe(true)
       })
     })
@@ -518,21 +519,21 @@ describe('chartConfig', () => {
         const data = createMockChartData()
         const config = makeMatrixChartConfig(data, false, false, false, false, true, false, false)
 
-        expect(config.data.datasets[0].backgroundColor).toBeInstanceOf(Function)
+        expect(config.data.datasets[0]!.backgroundColor).toBeInstanceOf(Function)
       })
 
       it('should configure border color callback', () => {
         const data = createMockChartData()
         const config = makeMatrixChartConfig(data, false, false, false, false, true, false, false)
 
-        expect(config.data.datasets[0].borderColor).toBeInstanceOf(Function)
+        expect(config.data.datasets[0]!.borderColor).toBeInstanceOf(Function)
       })
 
       it('should set border width', () => {
         const data = createMockChartData()
         const config = makeMatrixChartConfig(data, false, false, false, false, true, false, false)
 
-        expect(config.data.datasets[0].borderWidth).toBe(1)
+        expect(config.data.datasets[0]!.borderWidth).toBe(1)
       })
     })
 
@@ -541,14 +542,14 @@ describe('chartConfig', () => {
         const data = createMockChartData()
         const config = makeMatrixChartConfig(data, false, false, false, false, true, false, false)
 
-        expect(config.data.datasets[0].width).toBeInstanceOf(Function)
+        expect(config.data.datasets[0]!.width).toBeInstanceOf(Function)
       })
 
       it('should configure height callback', () => {
         const data = createMockChartData()
         const config = makeMatrixChartConfig(data, false, false, false, false, true, false, false)
 
-        expect(config.data.datasets[0].height).toBeInstanceOf(Function)
+        expect(config.data.datasets[0]!.height).toBeInstanceOf(Function)
       })
 
       it('should calculate width based on label count', () => {
@@ -558,7 +559,8 @@ describe('chartConfig', () => {
           chartArea: { width: 600, height: 400 }
         } as unknown as Chart
 
-        const width = config.data.datasets[0].width({ chart: mockChart })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const width = (config.data.datasets[0]!.width as any)({ chart: mockChart })
 
         expect(width).toBe(200) // 600 / 3 labels
       })
@@ -569,7 +571,7 @@ describe('chartConfig', () => {
         const data = createMockChartData()
         const config = makeMatrixChartConfig(data, false, false, false, false, true, false, false)
 
-        expect(config.options.plugins.datalabels.display).toBeInstanceOf(Function)
+        expect(config.options.plugins!.datalabels!.display).toBeInstanceOf(Function)
       })
 
       it('should hide labels when disabled', () => {
@@ -581,7 +583,7 @@ describe('chartConfig', () => {
           dataIndex: 0
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const shouldDisplay = config.options.plugins.datalabels.display(context as any)
+        const shouldDisplay = (config.options.plugins!.datalabels!.display as any)(context)
 
         expect(shouldDisplay).toBe(false)
       })
@@ -595,7 +597,7 @@ describe('chartConfig', () => {
           dataIndex: 0
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const shouldDisplay = config.options.plugins.datalabels.display(context as any)
+        const shouldDisplay = (config.options.plugins!.datalabels!.display as any)(context)
 
         expect(shouldDisplay).toBe(false)
       })
@@ -616,7 +618,8 @@ describe('chartConfig', () => {
           true
         )
 
-        const color = config.options.plugins.datalabels.color()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const color = (config.options.plugins!.datalabels!.color as any)()
 
         expect(color).toBe('#ffffff')
       })
@@ -637,7 +640,8 @@ describe('chartConfig', () => {
           false
         )
 
-        const color = config.options.plugins.datalabels.color()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const color = (config.options.plugins!.datalabels!.color as any)()
 
         expect(color).toBe('#000000')
       })
@@ -646,7 +650,8 @@ describe('chartConfig', () => {
         const data = createMockChartData()
         const config = makeMatrixChartConfig(data, false, false, false, true, true, false, false)
 
-        const formatted = config.options.plugins.datalabels.formatter({ v: 0.5 })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const formatted = (config.options.plugins!.datalabels!.formatter as any)({ v: 0.5 })
 
         expect(formatted).toContain('%')
       })
@@ -657,7 +662,8 @@ describe('chartConfig', () => {
         })
         const config = makeMatrixChartConfig(data, false, false, false, true, true, false, false)
 
-        const formatted = config.options.plugins.datalabels.formatter({ v: 0.12345 })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const formatted = (config.options.plugins!.datalabels!.formatter as any)({ v: 0.12345 })
 
         expect(formatted).toBeDefined()
       })
@@ -740,7 +746,8 @@ describe('chartConfig', () => {
       })
       const config = makeMatrixChartConfig(data, false, false, false, false, true, false, false)
 
-      expect(config.options?.scales?.x?.labels?.length).toBe(50)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((config.options?.scales?.x as any)?.labels?.length).toBe(50)
     })
   })
 })
