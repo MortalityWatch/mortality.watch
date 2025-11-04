@@ -63,7 +63,6 @@ const emit = defineEmits<{
         :slider-value="props.sliderValue"
         :labels="props.labels"
         :chart-type="props.chartType"
-        :show-from-picker="true"
         @update:slider-start="emit('sliderStartChanged', $event)"
         @slider-changed="emit('dateSliderChanged', $event)"
       />

@@ -328,26 +328,8 @@ const currentRange = computed(() => {
       :disabled="disabled"
     />
     <div class="mt-2 flex justify-between text-xs text-gray-500 dark:text-gray-400">
-      <span :class="{ 'opacity-40': minAllowedIndex > 0 }">{{ labels[0] }}</span>
+      <span>{{ labels[0] }}</span>
       <span>{{ labels[labels.length - 1] }}</span>
-    </div>
-
-    <!-- Restricted date notice for public users -->
-    <div
-      v-if="!hasExtendedTimeAccess && minAllowedIndex > 0"
-      class="mt-2 text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1"
-    >
-      <Icon
-        name="i-lucide-lock"
-        class="w-3 h-3"
-      />
-      <span>Data before {{ labels[minAllowedIndex]?.substring(0, 4) }} - </span>
-      <NuxtLink
-        to="/signup"
-        class="text-primary hover:underline font-medium"
-      >
-        Sign up free
-      </NuxtLink>
     </div>
   </div>
 </template>

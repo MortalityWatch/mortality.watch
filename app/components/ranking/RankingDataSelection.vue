@@ -70,7 +70,6 @@ const emit = defineEmits<{
         :labels="props.sliderValues"
         :chart-type="(props.selectedPeriodOfTime?.value || 'yearly') as ChartType"
         :disabled="props.isUpdating"
-        :show-from-picker="false"
         data-tour="ranking-date-range"
         @update:slider-start="emit('update:sliderStart', $event)"
         @slider-changed="emit('sliderChanged', $event)"

@@ -17,7 +17,7 @@
  * making explorer.vue more focused and maintainable.
  */
 
-import { reactive, ref, computed } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import type { Ref, ComputedRef } from 'vue'
 import type { useExplorerState } from '@/composables/useExplorerState'
 import type { useExplorerHelpers } from '@/composables/useExplorerHelpers'
@@ -55,9 +55,33 @@ export function useExplorerDataOrchestration(
 
   // Data state
   let dataset: DatasetRaw
+
+  /**
+   * All available date labels for selected countries/chart type
+   * Example (fluseason): ['1950/51', '1951/52', ..., '2024/25']
+   * Updated when data is fetched from server
+   */
   const allChartLabels = ref<string[]>([])
+
+  /**
+   * Yearly representation of all labels (for calculating indices)
+   * - For yearly charts: same as allChartLabels
+   * - For other types: year portion only ['2010', '2011', ...]
+   * Used by getStartIndex() to find where sliderStart begins
+   */
   const allYearlyChartLabels = ref<string[]>([])
+
+  /**
+   * Unique years available (filtered to DEFAULT_BASELINE_YEAR for baseline selection)
+   * Used for baseline period picker dropdown
+   */
   const allYearlyChartLabelsUnique = ref<string[]>([])
+
+  /**
+   * Chart data for current selection (filtered by dateFrom/dateTo)
+   * WARNING: labels here are a SUBSET of allChartLabels
+   * Do NOT use for slider range - use filteredChartLabels instead
+   */
   const allChartData = reactive<AllChartData>({
     labels: [],
     data: {},
@@ -126,10 +150,25 @@ export function useExplorerDataOrchestration(
     chartOptions.showLogarithmicOption = !helpers.isMatrixChartStyle() && !state.isExcess.value
   }
 
-  // Reset main date range
+  /**
+   * Initialize or validate the main date range (dateFrom/dateTo)
+   *
+   * Called after data is fetched to ensure dateFrom/dateTo are valid.
+   *
+   * IMPORTANT: Uses filteredChartLabels (respects sliderStart), NOT allChartData.labels
+   * This ensures the initial range starts from sliderStart when possible.
+   *
+   * Logic:
+   * 1. If current dateFrom/dateTo are valid, keep them (preserve user selection)
+   * 2. Otherwise, set to sliderStart (if data exists) or first available date
+   * 3. Try to preserve year when chart type changes (e.g., yearly → fluseason)
+   *
+   * TODO (Phase 12): Replace with computed defaultDateRange + watchers
+   * This function has circular dependency issues with allChartData.labels
+   */
   const resetDates = () => {
-    if (!allChartData || !allChartData.labels) return
-    const labels = allChartData.labels
+    // Use filteredChartLabels (respects sliderStart) instead of allChartData.labels
+    const labels = filteredChartLabels.value
     if (labels.length === 0) return
 
     // Only reset if values are missing or don't match
@@ -388,9 +427,35 @@ export function useExplorerDataOrchestration(
     isUpdating.value = false
   }
 
+  /**
+   * Filtered labels respecting sliderStart setting
+   *
+   * This represents the FULL RANGE that should be available on the slider,
+   * starting from the user's chosen sliderStart year (default: 2010).
+   *
+   * Example:
+   * - allChartLabels: ['1950/51', ..., '2024/25'] (all data)
+   * - sliderStart: '2010'
+   * - filteredChartLabels: ['2010/11', ..., '2024/25'] (from 2010 onwards)
+   *
+   * Used by:
+   * - Explorer DateRangePicker for slider range
+   * - resetDates() for initial date selection
+   *
+   * Note: The actual selected range (dateFrom/dateTo) can be a subset of this.
+   */
+  const filteredChartLabels = computed(() => {
+    if (!allChartLabels.value || allChartLabels.value.length === 0) return []
+    if (!allYearlyChartLabels.value || allYearlyChartLabels.value.length === 0) return allChartLabels.value
+
+    const startIndex = getStartIndex(allYearlyChartLabels.value, state.sliderStart.value)
+    return allChartLabels.value.slice(startIndex)
+  })
+
   return {
     // Data state
     allChartLabels,
+    filteredChartLabels,
     allYearlyChartLabels,
     allYearlyChartLabelsUnique,
     allChartData,

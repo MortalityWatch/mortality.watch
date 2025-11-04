@@ -472,7 +472,8 @@ describe('useExplorerDataOrchestration', () => {
         mockDisplayColors
       )
 
-      orchestration.allChartData.labels = ['2020', '2021', '2022', '2023']
+      orchestration.allChartLabels.value = ['2020', '2021', '2022', '2023']
+      orchestration.allYearlyChartLabels.value = ['2020', '2021', '2022', '2023']
       mockState.dateFrom.value = '2099'
       mockState.dateTo.value = '2023'
 
@@ -489,7 +490,8 @@ describe('useExplorerDataOrchestration', () => {
         mockDisplayColors
       )
 
-      orchestration.allChartData.labels = ['2020', '2021', '2022', '2023']
+      orchestration.allChartLabels.value = ['2020', '2021', '2022', '2023']
+      orchestration.allYearlyChartLabels.value = ['2020', '2021', '2022', '2023']
       mockState.dateFrom.value = '2020'
       mockState.dateTo.value = '2099'
 
@@ -522,7 +524,8 @@ describe('useExplorerDataOrchestration', () => {
         mockDisplayColors
       )
 
-      orchestration.allChartData.labels = ['2020', '2021', '2022', '2023']
+      orchestration.allChartLabels.value = ['2020', '2021', '2022', '2023']
+      orchestration.allYearlyChartLabels.value = ['2020', '2021', '2022', '2023']
       mockState.dateFrom.value = undefined
       mockState.dateTo.value = undefined
 
