@@ -63,7 +63,7 @@ vi.mock('./useDateRangeCalculations', () => ({
       },
       findClosestYearLabel: (targetYear: string, preferLast = false) => {
         const labels = visibleLabels.value
-        const yearLabels = labels.filter(l => l.startsWith(targetYear))
+        const yearLabels = labels.filter((l: string) => l.startsWith(targetYear))
         if (yearLabels.length === 0) return null
         return preferLast ? yearLabels[yearLabels.length - 1] : yearLabels[0]
       },
@@ -72,7 +72,7 @@ vi.mock('./useDateRangeCalculations', () => ({
         const labels = visibleLabels.value
         if (labels.includes(currentDate)) return currentDate
         const year = currentDate.substring(0, 4)
-        const matching = labels.filter(l => l.startsWith(year))
+        const matching = labels.filter((l: string) => l.startsWith(year))
         if (matching.length === 0) return null
         return preferLast ? matching[matching.length - 1] : matching[0]
       },
