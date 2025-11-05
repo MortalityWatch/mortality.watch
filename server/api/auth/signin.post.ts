@@ -6,6 +6,7 @@ import {
   generateToken,
   setAuthToken
 } from '../../utils/auth'
+import { AuthSuccessResponseSchema } from '../../schemas'
 
 const signinSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -82,9 +83,10 @@ export default defineEventHandler(async (event) => {
   // Return user without password hash
   const { passwordHash: _passwordHash, ...userWithoutPassword } = user
 
-  return {
-    success: true,
+  const response = {
+    success: true as const,
     user: userWithoutPassword,
     message: 'Signed in successfully'
   }
+  return AuthSuccessResponseSchema.parse(response)
 })

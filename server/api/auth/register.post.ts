@@ -6,6 +6,7 @@ import {
   generateRandomToken
 } from '../../utils/auth'
 import { sendVerificationEmail } from '../../utils/email'
+import { RegisterResponseSchema } from '../../schemas'
 
 const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -100,10 +101,11 @@ export default defineEventHandler(async (event) => {
   // Return user without password hash
   const { passwordHash: _passwordHash, ...userWithoutPassword } = newUser
 
-  return {
-    success: true,
+  const response = {
+    success: true as const,
     user: userWithoutPassword,
     message: 'Account created successfully. Please check your email to verify your account.',
     requiresVerification: true
   }
+  return RegisterResponseSchema.parse(response)
 })
