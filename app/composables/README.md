@@ -454,6 +454,310 @@ This diagram shows the dependency relationships between major composables:
 3. **Orchestrator composables**: `useExplorerDataOrchestration` composes multiple others
 4. **Injected dependencies**: Higher-level composables inject state rather than importing
 
+### Detailed Dependency Graph
+
+Below is a comprehensive view of composable relationships, showing the full dependency tree:
+
+```
+Pages/Components
+│
+├─> useExplorerDataOrchestration (Orchestrator - Phase 9.2, 10.3, 12e)
+│   ├─> useChartDataFetcher (Data fetching - Phase 10.3)
+│   ├─> useDateRangeValidation (Date validation)
+│   ├─> useExplorerState (Injected - Phase 9.1)
+│   │   └─> useUrlState (URL sync - leaf)
+│   └─> useExplorerHelpers (Injected)
+│
+├─> useRankingData (Data management - Phase 10.1.2, 10.3)
+│   ├─> useChartDataFetcher (Shared data fetching)
+│   ├─> usePeriodFormat (Date formatting)
+│   ├─> useJurisdictionFilter (Filtering)
+│   └─> useRankingState (Injected)
+│       └─> useUrlState (URL sync - leaf)
+│
+├─> useExplorerChartActions (UI actions - Phase 5a)
+│   └─> useSaveChart (Save functionality - Phase 0)
+│
+├─> Data Quality Composables (Phase 12g - Admin page)
+│   ├─> useDataQualityFilters (Filter logic - leaf)
+│   ├─> useDataQualityOverrides (Override management - leaf)
+│   └─> useDataQualityTable (Table state - leaf)
+│
+└─> Independent Composables (No dependencies)
+    ├─> useAuth (Authentication)
+    ├─> useTheme (Theme management)
+    ├─> useLoading (Loading state)
+    ├─> usePagination (Pagination)
+    ├─> useExplorerColors (Color management)
+    ├─> useDataAvailability (Data checks)
+    ├─> useCountryFilter (Country filtering)
+    ├─> useFeatureAccess (Feature gating)
+    └─> useIncognitoMode (Privacy mode)
+```
+
+### Composable Dependency Matrix
+
+This table provides a quick reference for understanding composable relationships:
+
+| Composable | Depends On | Used By | Category | Phase |
+|------------|------------|---------|----------|-------|
+| **useUrlState** | None | useExplorerState, useRankingState | State (leaf) | Early |
+| **useChartDataFetcher** | None | useExplorerDataOrchestration, useRankingData | Data (leaf) | 10.3 |
+| **useExplorerState** | useUrlState | useExplorerDataOrchestration, explorer.vue | State | 9.1 |
+| **useRankingState** | useUrlState | useRankingData, ranking.vue | State | 10.1 |
+| **useExplorerHelpers** | None (injected refs) | useExplorerDataOrchestration | Utilities | 9.2 |
+| **useDateRangeValidation** | None | useExplorerDataOrchestration | Utilities | - |
+| **usePeriodFormat** | None | useRankingData | Utilities | - |
+| **useJurisdictionFilter** | None | useRankingData | Utilities | - |
+| **useExplorerDataOrchestration** | useChartDataFetcher, useDateRangeValidation, useExplorerState (inj), useExplorerHelpers (inj) | explorer.vue | Data (orchestrator) | 9.2, 10.3 |
+| **useRankingData** | useChartDataFetcher, usePeriodFormat, useJurisdictionFilter, useRankingState (inj) | ranking.vue | Data (orchestrator) | 10.1.2 |
+| **useSaveChart** | None | useExplorerChartActions | Actions (leaf) | 0 |
+| **useExplorerChartActions** | useSaveChart | explorer.vue | Actions | 5a |
+| **useExplorerColors** | None | explorer.vue | UI State | - |
+| **useDataQualityFilters** | None | data-quality.vue | Data Quality | 12g |
+| **useDataQualityOverrides** | None | data-quality.vue | Data Quality | 12g |
+| **useDataQualityTable** | None | data-quality.vue | Data Quality | 12g |
+| **useAuth** | None | Multiple pages | Auth | Early |
+| **useTheme** | None | App layout | UI State | - |
+| **useLoading** | None | Multiple components | UI State | - |
+| **usePagination** | None | Table components | UI State | - |
+
+**Legend**:
+- **(inj)** = Dependency injected via parameters (not imported)
+- **leaf** = No dependencies on other composables
+- **orchestrator** = Composes multiple other composables
+
+### Composition Patterns
+
+#### Pattern 1: Data Orchestration with Dependency Injection
+
+Large orchestrator composables use dependency injection to compose smaller utilities:
+
+```typescript
+// Orchestrator accepts state and helpers as parameters (injected)
+export function useExplorerDataOrchestration(
+  state: ReturnType<typeof useExplorerState>,
+  helpers: ReturnType<typeof useExplorerHelpers>,
+  allCountries: Ref<Record<string, Country>>,
+  displayColors: ComputedRef<string[]>
+) {
+  // Compose utility composables internally
+  const dataFetcher = useChartDataFetcher()
+  const { getValidatedRange } = useDateRangeValidation()
+
+  // Business logic that coordinates everything
+  // ...
+}
+```
+
+**Benefits**:
+- Testable: Can inject mock dependencies
+- Flexible: Can reuse helpers across different contexts
+- Clear: Dependencies are explicit in function signature
+- No circular imports
+
+#### Pattern 2: Shared Data Fetching
+
+Multiple orchestrators share common data fetching logic via `useChartDataFetcher`:
+
+```typescript
+// Both explorer and ranking use the same data fetching
+const dataFetcher = useChartDataFetcher()
+
+// Eliminates 250-350 lines of duplicated code
+// Ensures consistent error handling and loading states
+```
+
+**Benefits**:
+- DRY: Single source of truth for data fetching
+- Consistency: Same behavior across pages
+- Maintainability: Fix bugs in one place
+
+#### Pattern 3: URL-First State Management
+
+State composables use `useUrlState` as their foundation:
+
+```typescript
+export function useExplorerState() {
+  // All state backed by URL
+  const countries = useUrlState('c', ['USA'])
+  const chartType = useUrlState('t', 'yearly')
+
+  // URL is source of truth
+  // Enables shareable links and browser navigation
+}
+```
+
+**Benefits**:
+- Shareable: Copy URL to share exact state
+- Navigable: Back/forward buttons work
+- Bookmarkable: Save URLs for later
+- Single source of truth
+
+#### Pattern 4: Thin UI Action Wrappers
+
+Action composables delegate to specialized composables:
+
+```typescript
+export function useExplorerChartActions(state, chartData) {
+  // Delegate to specialized save composable
+  const saveChart = useSaveChart({ chartType: 'explorer' })
+
+  // Thin wrappers for UI actions
+  const copyChartLink = async () => { /* simple logic */ }
+  const screenshotChart = () => { /* simple logic */ }
+
+  return { copyChartLink, screenshotChart, ...saveChart }
+}
+```
+
+**Benefits**:
+- Separation: UI logic separate from business logic
+- Reusability: Save logic shared across pages
+- Simplicity: Each function does one thing
+
+#### Pattern 5: Isolated Domain Composables
+
+Data quality composables are independent and focused:
+
+```typescript
+// Each handles a specific concern
+useDataQualityFilters  // Search, status, source filtering
+useDataQualityOverrides // Mute/hide country overrides
+useDataQualityTable    // Sorting, pagination
+
+// No cross-dependencies - truly modular
+```
+
+**Benefits**:
+- Modularity: Each can be tested in isolation
+- Clarity: Single responsibility per composable
+- Maintainability: Changes don't ripple across codebase
+
+### Anti-patterns to Avoid
+
+#### 1. Circular Dependencies
+```typescript
+// BAD: Circular import
+// useA.ts
+import { useB } from './useB'
+export function useA() {
+  const b = useB() // useB imports useA - circular!
+}
+```
+
+**Solution**: Use dependency injection or shared state composables.
+
+#### 2. Direct DOM Access
+```typescript
+// BAD: Accessing DOM directly
+export function useBadExample() {
+  const element = document.querySelector('#my-element')
+  // Tightly coupled to DOM structure
+}
+
+// GOOD: Accept ref as parameter
+export function useGoodExample(elementRef: Ref<HTMLElement>) {
+  // Work with Vue ref instead
+}
+```
+
+#### 3. Business Logic in UI Actions
+```typescript
+// BAD: Complex logic in action composable
+export function useChartActions() {
+  const saveChart = async () => {
+    // 100 lines of validation, transformation, API calls
+    // Should be in a separate composable!
+  }
+}
+
+// GOOD: Delegate to specialized composable
+export function useChartActions() {
+  const { saveToDB } = useSaveChart()
+  const saveChart = () => saveToDB(state)
+}
+```
+
+#### 4. Importing State Instead of Injecting
+```typescript
+// BAD: Hard-coded dependency
+export function useDataProcessor() {
+  const state = useExplorerState() // Can't test with different state
+}
+
+// GOOD: Accept state as parameter
+export function useDataProcessor(
+  state: ReturnType<typeof useExplorerState>
+) {
+  // Now testable with mock state
+}
+```
+
+#### 5. Multiple Responsibilities
+```typescript
+// BAD: Composable doing too much
+export function useEverything() {
+  // Data fetching
+  // Filtering
+  // Sorting
+  // Pagination
+  // Export
+  // Save
+  // ALL IN ONE!
+}
+
+// GOOD: Split into focused composables
+useDataFetcher()
+useFilters()
+useSorting()
+usePagination()
+useExport()
+useSave()
+```
+
+### Future Composables (Phase 15+)
+
+The following composables are planned for future phases:
+
+#### useErrorRecovery (Phase 15b)
+**Purpose**: Centralized error handling with retry logic
+
+**Planned usage**:
+```typescript
+const { withRetry, handleError } = useErrorRecovery()
+
+// Wrap data fetching with automatic retry
+await withRetry(() => fetchData())
+```
+
+**Will be used by**:
+- useChartDataFetcher
+- useRankingData
+- useDataQualityOverrides
+
+#### useFormValidation (Phase 15c)
+**Purpose**: Reusable form validation logic
+
+**Planned usage**:
+```typescript
+const { validate, errors, isValid } = useFormValidation(schema)
+```
+
+**Will be used by**:
+- Auth forms (login, signup)
+- Profile forms
+- Admin forms
+- Chart save modal
+
+#### Integration Notes
+
+When these composables are implemented:
+1. Update dependency matrix to include them
+2. Add to dependency graph
+3. Update orchestrator composables to use them
+4. Ensure they follow the leaf composable pattern (minimal dependencies)
+
 ## Patterns and Best Practices
 
 ### Naming Conventions
