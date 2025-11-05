@@ -26,20 +26,18 @@ import ExplorerSettings from '@/components/explorer/ExplorerSettings.vue'
 import ExplorerChartActions from '@/components/explorer/ExplorerChartActions.vue'
 import SaveModal from '@/components/SaveModal.vue'
 
-// Feature access for tier-based features (currently unused but may be needed in the future)
-// const { can, getFeatureUpgradeUrl } = useFeatureAccess()
-
 // Auth state for conditional features
 const { isAuthenticated } = useAuth()
 
 // Tutorial for first-time users
 const { autoStartTutorial } = useTutorial()
 
-// Phase 9.2: Centralized state management with validation
+// Centralized state management with validation
 const state = useExplorerState()
 
-// Phase 9.4: Data availability checks with auto-correction
-const _availability = useDataAvailability(state)
+// Data availability checks with auto-correction
+// Composable runs watchers for auto-correction (side effects)
+useDataAvailability(state)
 
 // Dynamic OG images based on current chart state
 const chartState = computed(() => ({
@@ -50,7 +48,6 @@ const chartState = computed(() => ({
   ageGroups: state.ageGroups.value,
   chartStyle: state.chartStyle.value
 }))
-
 const { ogImageUrl, ogTitle, ogDescription } = useChartOgImage(chartState)
 
 useSeoMeta({
@@ -320,6 +317,7 @@ const chartActions: any = useExplorerChartActions(state as any, dataOrchestratio
 const {
   copyChartLink,
   screenshotChart,
+  downloadChart,
   saveToDB,
   exportCSV,
   exportJSON,
@@ -339,12 +337,6 @@ const showSaveModal = computed({
     _showSaveModal.value = val
   }
 })
-
-// Download chart as PNG (for social media/OG image)
-const downloadChart = () => {
-  const url = window.location.href.replaceAll('/?', '/chart.png?').replaceAll('/explorer?', '/chart.png?')
-  window.open(url, '_blank')
-}
 </script>
 
 <template>
