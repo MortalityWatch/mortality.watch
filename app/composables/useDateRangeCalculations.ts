@@ -10,6 +10,7 @@
 
 import type { ChartType } from '~/model/period'
 import type { Ref, ComputedRef } from 'vue'
+import { ChartPeriod } from '~/model/period'
 
 export interface DateRangeCalculations {
   // Available data (from metadata/fetch)
@@ -39,6 +40,11 @@ export interface DateRangeCalculations {
  *
  * For non-premium users, we restrict data access to year 2000 or later.
  * Different chart types have different label formats for the year 2000.
+ *
+ * Note: midyear/fluseason return '1999/00' (not '2000/01') because:
+ * - The period spans late 1999 to early 2000, so it includes year 2000 data
+ * - Using '2000/01' would exclude the entire year 2000 (starts late 2000)
+ * - This is the earliest period that contains any year 2000 data
  */
 const getYear2000Start = (chartType: ChartType): string => {
   switch (chartType) {
@@ -46,7 +52,7 @@ const getYear2000Start = (chartType: ChartType): string => {
       return '2000'
     case 'midyear':
     case 'fluseason':
-      return '1999/00' // These periods span two years, starting in 1999
+      return '1999/00' // Earliest period containing year 2000 data
     case 'quarterly':
       return '2000 Q1'
     case 'monthly':
@@ -65,15 +71,25 @@ const getYear2000Start = (chartType: ChartType): string => {
 /**
  * Get starting index for sliderStart within allLabels
  *
+ * Uses ChartPeriod for smart index lookup with automatic fallback.
+ * This handles cases where sliderStart (e.g., "2010") doesn't exactly match
+ * label format (e.g., "2010/11" for fluseason).
+ *
  * @param allLabels - All available labels (must be sorted chronologically)
- * @param sliderStart - The start date for the slider
+ * @param sliderStart - The start date for the slider (null returns 0)
+ * @param chartType - Chart type for proper period handling
  * @returns Index where sliderStart begins, or 0 if not found
  */
-const getStartIndex = (allLabels: string[], sliderStart: string | null): number => {
+const getStartIndex = (
+  allLabels: string[],
+  sliderStart: string | null,
+  chartType: ChartType
+): number => {
   if (!sliderStart || allLabels.length === 0) return 0
 
-  const idx = allLabels.indexOf(sliderStart)
-  return idx >= 0 ? idx : 0
+  // Use ChartPeriod for smart index lookup with fallback
+  const period = new ChartPeriod(allLabels, chartType)
+  return period.indexOf(sliderStart)
 }
 
 /**
@@ -155,7 +171,7 @@ export function useDateRangeCalculations(
     if (labels.length === 0) return []
 
     // Apply sliderStart filter
-    const startIndex = getStartIndex(labels, sliderStart.value)
+    const startIndex = getStartIndex(labels, sliderStart.value, chartType.value as ChartType)
     let filtered = labels.slice(startIndex)
 
     // Apply year 2000 restriction for non-premium users
@@ -166,7 +182,11 @@ export function useDateRangeCalculations(
         if (minIndex >= 0) {
           filtered = filtered.slice(minIndex)
         } else {
-          // If exact minDate not found, filter by year >= 2000
+          // Fallback: Filter by year >= 2000 if exact minDate not found
+          // This safety net handles edge cases where:
+          // 1. effectiveMinDate format doesn't match actual label format
+          // 2. Data is incomplete and effectiveMinDate isn't in the dataset
+          // In normal operation with complete data, this branch shouldn't execute
           filtered = filtered.filter((label) => {
             const year = parseInt(label.substring(0, 4))
             return year >= 2000
