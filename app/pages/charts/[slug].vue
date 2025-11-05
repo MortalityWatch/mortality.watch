@@ -188,6 +188,7 @@
 
 <script setup lang="ts">
 import { handleSilentError } from '@/lib/errors/errorHandler'
+import { showToast } from '@/toast'
 
 interface Chart {
   id: number
@@ -277,10 +278,9 @@ async function shareChart() {
 
 function copyToClipboard(text: string) {
   navigator.clipboard.writeText(text).then(() => {
-    // TODO: Show toast notification
-    console.log('Link copied to clipboard!')
+    showToast('Link copied to clipboard!', 'success')
   }).catch(() => {
-    console.error('Failed to copy')
+    showToast('Failed to copy link', 'error')
   })
 }
 
