@@ -53,11 +53,10 @@ async function handleSubmit() {
   }
 }
 
-const isFormValid = computed(() => {
-  return passwordState.currentPassword
-    && passwordState.newPassword
-    && passwordState.confirmPassword
-})
+// Watch for changes to clear errors as user types
+watch(passwordState, () => {
+  clearErrors()
+}, { deep: true })
 </script>
 
 <template>
@@ -173,7 +172,7 @@ const isFormValid = computed(() => {
         <UButton
           type="submit"
           :loading="savingPassword"
-          :disabled="savingPassword || !isFormValid"
+          :disabled="savingPassword"
         >
           Update Password
         </UButton>
