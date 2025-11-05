@@ -180,17 +180,27 @@ export function useExplorerDataOrchestration(
     const labels = dateRangeCalc.visibleLabels.value
     if (labels.length === 0) return
 
-    // If current range is valid, preserve it
-    if (dateRangeCalc.isValidDate(state.dateFrom.value ?? '') && dateRangeCalc.isValidDate(state.dateTo.value ?? '')) {
-      return
-    }
-
     // Get default range from composable
     const { from: defaultFrom, to: defaultTo } = dateRangeCalc.getDefaultRange()
 
+    // If default range is empty, we can't do anything yet
+    if (!defaultFrom || !defaultTo) return
+
+    // Check if current range is valid
+    const currentFrom = state.dateFrom.value
+    const currentTo = state.dateTo.value
+    const hasValidRange = currentFrom && currentTo
+      && dateRangeCalc.isValidDate(currentFrom)
+      && dateRangeCalc.isValidDate(currentTo)
+
+    // If current range is valid, preserve it
+    if (hasValidRange) {
+      return
+    }
+
     // Try to preserve user's selection by matching years
-    const matchedFrom = dateRangeCalc.matchDateToLabel(state.dateFrom.value, false) ?? defaultFrom
-    const matchedTo = dateRangeCalc.matchDateToLabel(state.dateTo.value, true) ?? defaultTo
+    const matchedFrom = dateRangeCalc.matchDateToLabel(currentFrom, false) ?? defaultFrom
+    const matchedTo = dateRangeCalc.matchDateToLabel(currentTo, true) ?? defaultTo
 
     // Validate the matched range
     const period = new ChartPeriod(labels, state.chartType.value as ChartType)
@@ -201,10 +211,10 @@ export function useExplorerDataOrchestration(
     )
 
     // Update state only if values changed
-    if (validatedRange.from !== state.dateFrom.value || !state.dateFrom.value) {
+    if (validatedRange.from !== currentFrom) {
       state.dateFrom.value = validatedRange.from
     }
-    if (validatedRange.to !== state.dateTo.value || !state.dateTo.value) {
+    if (validatedRange.to !== currentTo) {
       state.dateTo.value = validatedRange.to
     }
   })
