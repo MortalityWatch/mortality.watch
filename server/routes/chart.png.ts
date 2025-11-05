@@ -2,7 +2,7 @@ import { decodeChartState } from '../../app/lib/chartState'
 import { renderPlaceholderChart, renderChart } from '../utils/chartRenderer'
 import { makeChartConfig } from '../../app/lib/chart/chartConfig'
 import type { ChartStyle } from '../../app/lib/chart/chartTypes'
-import { getAllChartData, loadCountryMetadata, updateDataset, getAllChartLabels } from '../../app/lib/data'
+import { dataLoader } from '../services/dataLoader'
 import type { AllChartData, CountryData } from '../../app/model'
 import { getFilteredChartData } from '../../app/lib/chart/filtering'
 import { getChartColors } from '../../app/colors'
@@ -79,19 +79,19 @@ export default defineEventHandler(async (event) => {
     // Queue the chart rendering to limit concurrency
     const buffer = await chartRenderQueue.enqueue(async () => {
       try {
-      // 1. Load country metadata (ensures metadata is cached for data fetching)
-        const allCountries = await loadCountryMetadata({ filterCountries: state.countries })
+      // 1. Load country metadata using DataLoaderService
+        const allCountries = await dataLoader.loadCountryMetadata({ filterCountries: state.countries })
 
-        // 2. Load raw dataset with all necessary parameters
-        const rawData = await updateDataset(
-          state.chartType,
-          state.countries,
-          state.ageGroups
-        )
+        // 2. Load raw dataset using DataLoaderService
+        const rawData = await dataLoader.loadMortalityData({
+          chartType: state.chartType,
+          countries: state.countries,
+          ageGroups: state.ageGroups
+        })
 
-        // 3. Get all chart labels
+        // 3. Get all chart labels using DataLoaderService
         const isAsmrType = state.type.startsWith('asmr')
-        const allLabels = getAllChartLabels(
+        const allLabels = dataLoader.getAllChartLabels(
           rawData,
           isAsmrType,
           state.ageGroups,
@@ -99,7 +99,7 @@ export default defineEventHandler(async (event) => {
           state.chartType
         )
 
-        // 4. Fetch raw chart data
+        // 4. Fetch raw chart data using DataLoaderService
         const dataKey = state.type === 'cmr'
           ? 'cmr'
           : state.type === 'asmr'
@@ -110,19 +110,19 @@ export default defineEventHandler(async (event) => {
                 ? 'deaths'
                 : 'population'
 
-        const allChartData: AllChartData = await getAllChartData(
-          dataKey as keyof CountryData,
-          state.chartType,
+        const allChartData: AllChartData = await dataLoader.getAllChartData({
+          dataKey: dataKey as keyof CountryData,
+          chartType: state.chartType,
           rawData,
           allLabels,
-          0, // startDateIndex - full range for OG images
-          state.cumulative,
-          state.ageGroups,
-          state.countries,
-          state.showBaseline ? state.baselineMethod : undefined,
-          state.baselineDateFrom,
-          state.baselineDateTo
-        )
+          startDateIndex: 0, // full range for OG images
+          cumulative: state.cumulative,
+          ageGroupFilter: state.ageGroups,
+          countryCodeFilter: state.countries,
+          baselineMethod: state.showBaseline ? state.baselineMethod : undefined,
+          baselineDateFrom: state.baselineDateFrom,
+          baselineDateTo: state.baselineDateTo
+        })
 
         // 5. Get chart colors
         const colors = getChartColors()
