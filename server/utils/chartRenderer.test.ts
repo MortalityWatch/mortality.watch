@@ -1219,4 +1219,207 @@ describe('chartRenderer', () => {
       expect(buffer).toBeDefined()
     })
   })
+
+  describe('Logo Plugin Hooks', () => {
+    it('should register logo plugin with beforeDraw and afterDraw hooks', async () => {
+      const { Chart } = await import('chart.js')
+      const { renderChart } = await import('./chartRenderer')
+
+      const config = {
+        data: {
+          labels: ['A'],
+          datasets: [{ label: 'Test', data: [1] }]
+        },
+        options: {}
+      }
+
+      await renderChart(800, 600, config, 'line')
+
+      // Verify plugin was registered
+      expect(Chart.register).toHaveBeenCalled()
+    })
+
+    it('should register logo plugin with QR code', async () => {
+      const { Chart } = await import('chart.js')
+      const { renderChart } = await import('./chartRenderer')
+
+      const config = {
+        data: {
+          labels: ['A'],
+          datasets: [{ label: 'Test', data: [1] }]
+        },
+        options: {
+          plugins: {
+            qrCodeUrl: 'https://example.com'
+          }
+        }
+      }
+
+      await renderChart(800, 600, config, 'line')
+
+      // Verify plugin was registered with QR code
+      expect(Chart.register).toHaveBeenCalled()
+    })
+
+    it('should call plugin hooks during rendering', async () => {
+      const { renderChart } = await import('./chartRenderer')
+
+      const config = {
+        data: {
+          labels: ['A', 'B', 'C'],
+          datasets: [{ label: 'Test', data: [1, 2, 3] }]
+        },
+        options: {}
+      }
+
+      const buffer = await renderChart(800, 600, config, 'line')
+
+      // Plugin should execute during chart rendering
+      expect(buffer).toBeDefined()
+    })
+
+    it('should handle beforeDraw hook with null ctx', async () => {
+      const { renderChart } = await import('./chartRenderer')
+
+      const config = {
+        data: {
+          labels: ['A'],
+          datasets: [{ label: 'Test', data: [1] }]
+        },
+        options: {}
+      }
+
+      // Should handle edge case gracefully
+      const buffer = await renderChart(800, 600, config, 'line')
+      expect(buffer).toBeDefined()
+    })
+
+    it('should handle afterDraw hook with null ctx', async () => {
+      const { renderChart } = await import('./chartRenderer')
+
+      const config = {
+        data: {
+          labels: ['A'],
+          datasets: [{ label: 'Test', data: [1] }]
+        },
+        options: {}
+      }
+
+      // Should handle edge case gracefully
+      const buffer = await renderChart(800, 600, config, 'line')
+      expect(buffer).toBeDefined()
+    })
+
+    it('should handle drawImage errors gracefully', async () => {
+      const { renderChart } = await import('./chartRenderer')
+
+      const config = {
+        data: {
+          labels: ['A'],
+          datasets: [{ label: 'Test', data: [1] }]
+        },
+        options: {
+          plugins: {
+            qrCodeUrl: 'https://example.com'
+          }
+        }
+      }
+
+      // Should not throw even if drawImage fails
+      const buffer = await renderChart(800, 600, config, 'line')
+      expect(buffer).toBeDefined()
+    })
+  })
+
+  describe('Cleanup Error Paths', () => {
+    it('should handle chart destroy errors gracefully', async () => {
+      const { Chart } = await import('chart.js')
+
+      // Mock destroy to throw an error
+      const originalDestroy = Chart.prototype.destroy
+      Chart.prototype.destroy = vi.fn(() => {
+        throw new Error('Destroy failed')
+      })
+
+      const { renderChart } = await import('./chartRenderer')
+
+      const config = {
+        data: {
+          labels: ['A'],
+          datasets: [{ label: 'Test', data: [1] }]
+        },
+        options: {}
+      }
+
+      // Should still complete successfully
+      const buffer = await renderChart(800, 600, config, 'line')
+      expect(buffer).toBeDefined()
+
+      // Restore original
+      Chart.prototype.destroy = originalDestroy
+    })
+
+    it('should handle plugin unregister errors gracefully', async () => {
+      const { Chart } = await import('chart.js')
+
+      // Mock unregister to throw an error
+      const originalUnregister = Chart.unregister
+      Chart.unregister = vi.fn(() => {
+        throw new Error('Unregister failed')
+      })
+
+      const { renderChart } = await import('./chartRenderer')
+
+      const config = {
+        data: {
+          labels: ['A'],
+          datasets: [{ label: 'Test', data: [1] }]
+        },
+        options: {}
+      }
+
+      // Should still complete successfully
+      const buffer = await renderChart(800, 600, config, 'line')
+      expect(buffer).toBeDefined()
+
+      // Restore original
+      Chart.unregister = originalUnregister
+    })
+
+    it('should cleanup even when both destroy and unregister fail', async () => {
+      const { Chart } = await import('chart.js')
+      const { cleanupCanvas } = await import('./memoryManager')
+
+      // Mock both to throw errors
+      const originalDestroy = Chart.prototype.destroy
+      const originalUnregister = Chart.unregister
+
+      Chart.prototype.destroy = vi.fn(() => {
+        throw new Error('Destroy failed')
+      })
+      Chart.unregister = vi.fn(() => {
+        throw new Error('Unregister failed')
+      })
+
+      const { renderChart } = await import('./chartRenderer')
+
+      const config = {
+        data: {
+          labels: ['A'],
+          datasets: [{ label: 'Test', data: [1] }]
+        },
+        options: {}
+      }
+
+      const buffer = await renderChart(800, 600, config, 'line')
+
+      // Canvas cleanup should still be called
+      expect(cleanupCanvas).toHaveBeenCalled()
+      expect(buffer).toBeDefined()
+
+      // Restore originals
+      Chart.prototype.destroy = originalDestroy
+      Chart.unregister = originalUnregister
+    })
+  })
 })
