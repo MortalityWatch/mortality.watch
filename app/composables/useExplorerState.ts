@@ -1,4 +1,5 @@
 import { computed, reactive, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useUrlState } from '@/composables/useUrlState'
 import { Defaults, stateFieldEncoders } from '@/lib/state/stateSerializer'
 import type { AllChartData, DatasetRaw } from '@/model'
@@ -24,6 +25,9 @@ import { showToast } from '@/toast'
  * scattered business logic across the codebase.
  */
 export function useExplorerState() {
+  // Get route once at setup time (cannot be called inside functions/watchers)
+  const route = useRoute()
+
   // URL State - Core Settings
   const countries = useUrlState(
     stateFieldEncoders.countries.key,
@@ -57,14 +61,13 @@ export function useExplorerState() {
   )
 
   // URL State - Date Range
-  // Note: Defaults are undefined to let StateComputed calculate proper format based on chart type
   const dateFrom = useUrlState<string | undefined>(
     stateFieldEncoders.dateFrom.key,
-    undefined
+    Defaults.dateFrom
   )
   const dateTo = useUrlState<string | undefined>(
     stateFieldEncoders.dateTo.key,
-    undefined
+    Defaults.dateTo
   )
   const sliderStart = useUrlState(
     stateFieldEncoders.sliderStart.key,
@@ -320,6 +323,23 @@ export function useExplorerState() {
     return result.data
   }
 
+  // ============================================================================
+  // HELPER - Check if field is set by user (exists in URL)
+  // ============================================================================
+
+  /**
+   * Check if a state field has been explicitly set by the user.
+   * Uses URL presence to determine if user touched the field.
+   *
+   * @param field - The state field name (e.g., 'dateFrom', 'baselineDateFrom')
+   * @returns true if the field exists in the URL (user has set it)
+   */
+  const isUserSet = (field: keyof typeof stateFieldEncoders): boolean => {
+    const urlKey = stateFieldEncoders[field]?.key
+    if (!urlKey) return false
+    return urlKey in route.query
+  }
+
   return {
     // Core settings
     countries,
@@ -366,7 +386,10 @@ export function useExplorerState() {
     currentState,
     isValid,
     errors,
-    getValidatedState
+    getValidatedState,
+
+    // Helper functions
+    isUserSet
   }
 }
 

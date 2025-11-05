@@ -118,8 +118,9 @@ export function useDateRangeCalculations(
   /**
    * Available labels: All labels from data
    * This is the full dataset before any filtering
+   * Filter out any undefined/null values for safety
    */
-  const availableLabels = computed(() => allLabels.value || [])
+  const availableLabels = computed(() => (allLabels.value || []).filter(l => l != null))
 
   /**
    * Available range: Min and max dates from availableLabels
@@ -188,6 +189,7 @@ export function useDateRangeCalculations(
           // 2. Data is incomplete and effectiveMinDate isn't in the dataset
           // In normal operation with complete data, this branch shouldn't execute
           filtered = filtered.filter((label) => {
+            if (!label || typeof label !== 'string') return false
             const year = parseInt(label.substring(0, 4))
             return year >= 2000
           })
@@ -241,7 +243,11 @@ export function useDateRangeCalculations(
     if (labels.length === 0) return null
 
     const targetYearNum = parseInt(targetYear)
-    const availableYears = Array.from(new Set(labels.map(l => parseInt(l.substring(0, 4)))))
+    const availableYears = Array.from(new Set(
+      labels
+        .filter(l => l && typeof l === 'string')
+        .map(l => parseInt(l.substring(0, 4)))
+    ))
 
     // Find the closest year
     const closestYear = availableYears.reduce((prev, curr) =>
@@ -288,7 +294,8 @@ export function useDateRangeCalculations(
   /**
    * Get default date range based on visibleLabels
    *
-   * Returns the full visible range (first to last label).
+   * Returns the last N periods (where N = DEFAULT_PERIODS from config).
+   * Falls back to full range if fewer labels are available.
    *
    * @returns Object with from and to dates
    */
@@ -299,10 +306,40 @@ export function useDateRangeCalculations(
       return { from: '', to: '' }
     }
 
-    return {
-      from: labels[0]!,
+    // Calculate default periods based on chart type
+    // Target: approximately 10 years of recent data
+    const type = chartType.value as ChartType
+    let DEFAULT_PERIODS: number
+
+    if (type === 'weekly' || type.startsWith('weekly_')) {
+      DEFAULT_PERIODS = 520 // 10 years of weeks
+    } else if (type === 'monthly') {
+      DEFAULT_PERIODS = 120 // 10 years of months
+    } else if (type === 'quarterly') {
+      DEFAULT_PERIODS = 40 // 10 years of quarters
+    } else {
+      // yearly, midyear, fluseason
+      DEFAULT_PERIODS = 10 // 10 years
+    }
+
+    const startIndex = Math.max(0, labels.length - DEFAULT_PERIODS)
+
+    const result = {
+      from: labels[startIndex]!,
       to: labels[labels.length - 1]!
     }
+
+    // Debug logging
+    console.log('[getDefaultRange]', {
+      totalLabels: labels.length,
+      DEFAULT_PERIODS,
+      startIndex,
+      result,
+      firstLabel: labels[0],
+      lastLabel: labels[labels.length - 1]
+    })
+
+    return result
   }
 
   return {

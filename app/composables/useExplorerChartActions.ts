@@ -52,6 +52,18 @@ export function useExplorerChartActions(
     }
   }
 
+  // Download chart as PNG via server-side rendering (for social media/OG images)
+  const downloadChart = () => {
+    try {
+      const url = window.location.href
+        .replaceAll('/?', '/chart.png?')
+        .replaceAll('/explorer?', '/chart.png?')
+      window.open(url, '_blank')
+    } catch (error) {
+      handleError(error, 'Failed to download chart', 'downloadChart')
+    }
+  }
+
   // Save chart functionality using composable
   const {
     showSaveModal,
@@ -272,6 +284,7 @@ export function useExplorerChartActions(
     // Actions
     copyChartLink,
     screenshotChart,
+    downloadChart,
     saveChart,
     saveToDB,
     exportCSV,

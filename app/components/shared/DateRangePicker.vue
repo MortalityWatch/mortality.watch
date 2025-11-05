@@ -18,50 +18,18 @@ const emit = defineEmits<{
   'slider-changed': [value: string[]]
 }>()
 
-// Feature access for extended time periods
+// Feature access for extended time periods (for display purposes only)
 const { can } = useFeatureAccess()
-const hasExtendedTimeAccess = computed(() => can('EXTENDED_TIME_PERIODS'))
+const hasExtendedTimeAccess = can('EXTENDED_TIME_PERIODS')
 
-// For users without extended access, restrict to year 2000+
-const availableStartYears = computed(() => {
-  if (hasExtendedTimeAccess.value) {
-    return props.allYearlyChartLabelsUnique || []
+// Filter available years based on feature access
+// Non-premium users can only access data from 2000 onwards
+const availableYears = computed(() => {
+  if (hasExtendedTimeAccess) {
+    return props.allYearlyChartLabelsUnique
   }
-
-  // Filter to only years >= 2000
-  return (props.allYearlyChartLabelsUnique || []).filter((label) => {
-    const year = parseInt(label.substring(0, 4))
-    return year >= 2000
-  })
-})
-
-// Ensure sliderStart is within allowed range
-const effectiveSliderStart = computed(() => {
-  if (!props.sliderStart || !props.allYearlyChartLabelsUnique?.length) {
-    return props.sliderStart
-  }
-
-  if (hasExtendedTimeAccess.value) {
-    return props.sliderStart
-  }
-
-  // For non-premium users, if current sliderStart is before 2000, use first available year >= 2000
-  const year = parseInt(props.sliderStart.substring(0, 4))
-  if (year < 2000) {
-    const year2000OrLater = availableStartYears.value.find((label) => {
-      const y = parseInt(label.substring(0, 4))
-      return y >= 2000
-    })
-    if (!year2000OrLater) {
-      console.warn(
-        `[DateRangePicker] No years >= 2000 available for free user. Falling back to ${props.sliderStart}. Available years:`,
-        availableStartYears.value
-      )
-    }
-    return year2000OrLater || props.sliderStart
-  }
-
-  return props.sliderStart
+  // Restrict to year 2000 and later for non-premium users
+  return props.allYearlyChartLabelsUnique.filter(year => parseInt(year) >= 2000)
 })
 </script>
 
@@ -75,8 +43,8 @@ const effectiveSliderStart = computed(() => {
       <div class="flex items-center gap-2">
         <label class="text-sm font-medium whitespace-nowrap">From</label>
         <USelectMenu
-          :model-value="effectiveSliderStart"
-          :items="availableStartYears"
+          :model-value="props.sliderStart"
+          :items="availableYears"
           placeholder="Start"
           size="sm"
           class="w-24"
@@ -126,7 +94,7 @@ const effectiveSliderStart = computed(() => {
             :color="specialColor()"
             :min-range="0"
             :disabled="props.disabled || false"
-            :delay-emit="true"
+            :delay-emit="false"
             @slider-changed="emit('slider-changed', $event)"
           />
         </div>

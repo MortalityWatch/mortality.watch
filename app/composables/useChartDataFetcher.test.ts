@@ -596,7 +596,7 @@ describe('useChartDataFetcher', () => {
       )
     })
 
-    it('should use provided baselineStartIdx when given', async () => {
+    it('should always load all data (ignore baselineStartIdx)', async () => {
       const fetcher = useChartDataFetcher()
 
       await fetcher.fetchChartData({
@@ -608,12 +608,14 @@ describe('useChartDataFetcher', () => {
         baselineStartIdx: 5
       })
 
+      // Now we always pass 0 as startDateIndex to load ALL data
+      // Filtering happens later at display time
       expect(fetchAllChartData).toHaveBeenCalledWith(
         'cmr',
         'yearly',
         mockDataset,
         mockLabels,
-        5,
+        0, // Always 0, not baselineStartIdx
         false,
         ['all'],
         ['USA'],

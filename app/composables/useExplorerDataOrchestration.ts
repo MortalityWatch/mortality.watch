@@ -11,14 +11,15 @@
  * Provides:
  * - Data fetching orchestration (updateData)
  * - Data filtering (updateFilteredData)
- * - Date validation and reset (resetDates, resetBaselineDates)
+ * - Reactive date validation (via watchers)
+ * - Computed baseline range (baselineRange)
  * - Chart options configuration (configureOptions)
  *
  * This separates data orchestration concerns from UI component logic,
  * making explorer.vue more focused and maintainable.
  */
 
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import type { Ref, ComputedRef } from 'vue'
 import type { useExplorerState } from '@/composables/useExplorerState'
 import type { useExplorerHelpers } from '@/composables/useExplorerHelpers'
@@ -39,8 +40,7 @@ import {
   compress
 } from '@/lib/compression/compress.browser'
 import { DEFAULT_BASELINE_YEAR } from '@/lib/constants'
-
-const MIN_BASELINE_SPAN = 3
+import { calculateBaselineRange } from '@/lib/baseline/calculateBaselineRange'
 
 export function useExplorerDataOrchestration(
   state: ReturnType<typeof useExplorerState>,
@@ -84,13 +84,42 @@ export function useExplorerDataOrchestration(
   /**
    * Unique years available (filtered to DEFAULT_BASELINE_YEAR for baseline selection)
    * Used for baseline period picker dropdown
+   * Now uses availableLabels from useDateRangeCalculations to avoid manual parsing
    */
-  const allYearlyChartLabelsUnique = ref<string[]>([])
+  const allYearlyChartLabelsUnique = computed(() => {
+    const labels = dateRangeCalc.availableLabels.value
+    if (labels.length === 0) return []
+
+    if (state.chartType.value === 'yearly') {
+      return labels.filter(x => parseInt(x) <= DEFAULT_BASELINE_YEAR)
+    } else {
+      const yearLabels = Array.from(
+        labels.filter(v => v && typeof v === 'string').map(v => v.substring(0, 4))
+      )
+      return Array.from(new Set(yearLabels)).filter(x => parseInt(x) <= DEFAULT_BASELINE_YEAR)
+    }
+  })
+
+  /**
+   * Computed baseline range - provides default baseline dates without polluting URL
+   * Uses chart-type-aware baseline year as the reference point, independent of sliderStart
+   * - Yearly: 2017 → 2017, 2018, 2019
+   * - Fluseason/Midyear: 2016 → 2016/17, 2017/18, 2018/19 (pre-pandemic)
+   * This ensures baseline stays constant when user changes the data range slider
+   * Only syncs to URL when user explicitly changes baseline via slider
+   */
+  const baselineRange = computed(() => {
+    return calculateBaselineRange(
+      state.chartType.value,
+      allChartLabels.value,
+      allYearlyChartLabels.value
+    )
+  })
 
   /**
    * Chart data for current selection (filtered by dateFrom/dateTo)
    * WARNING: labels here are a SUBSET of allChartLabels
-   * Do NOT use for slider range - use filteredChartLabels instead
+   * Do NOT use for slider range - use visibleLabels instead
    */
   const allChartData = reactive<AllChartData>({
     labels: [],
@@ -161,36 +190,53 @@ export function useExplorerDataOrchestration(
   }
 
   /**
-   * Initialize or validate the main date range (dateFrom/dateTo)
+   * Watch for data availability and initialize dates reactively
    *
-   * Date Range Refactor: Now uses useDateRangeCalculations utilities
-   * Phase 13a: Simplified by extracting helper functions to reduce complexity
+   * Date Range Refactor: Replaced resetDates() with reactive watcher
    *
-   * Called after data is fetched to ensure dateFrom/dateTo are valid.
-   *
-   * IMPORTANT: Uses visibleLabels (respects sliderStart + feature gating), NOT allChartData.labels
-   * This ensures the initial range starts from sliderStart when possible.
+   * This watcher automatically validates and initializes dates when:
+   * 1. Data is first loaded (visibleLabels becomes available)
+   * 2. Chart type changes (may invalidate current selection)
+   * 3. sliderStart changes (visible range changes)
    *
    * Logic:
    * 1. If current dateFrom/dateTo are valid, keep them (preserve user selection)
    * 2. Otherwise, set to default range (first to last visible label)
    * 3. Try to preserve year when chart type changes (e.g., yearly → fluseason)
    */
-  const resetDates = () => {
+  watch([dateRangeCalc.visibleLabels, state.chartType], () => {
     const labels = dateRangeCalc.visibleLabels.value
     if (labels.length === 0) return
-
-    // If current range is valid, preserve it
-    if (dateRangeCalc.isValidDate(state.dateFrom.value ?? '') && dateRangeCalc.isValidDate(state.dateTo.value ?? '')) {
-      return
-    }
 
     // Get default range from composable
     const { from: defaultFrom, to: defaultTo } = dateRangeCalc.getDefaultRange()
 
+    // If default range is empty, we can't do anything yet
+    if (!defaultFrom || !defaultTo) return
+
+    // Check if current range is valid
+    const currentFrom = state.dateFrom.value
+    const currentTo = state.dateTo.value
+    const hasValidRange = currentFrom && currentTo
+      && dateRangeCalc.isValidDate(currentFrom)
+      && dateRangeCalc.isValidDate(currentTo)
+
+    // If current range is valid, preserve it
+    if (hasValidRange) {
+      return
+    }
+
+    // Don't auto-initialize dates if user never set them (keeps URL clean)
+    // The chart will use visibleLabels range when dates are undefined
+    const userNeverSetDates = !state.isUserSet('dateFrom') && !state.isUserSet('dateTo')
+    if (userNeverSetDates) {
+      return
+    }
+
+    // If user set invalid dates, correct them
     // Try to preserve user's selection by matching years
-    const matchedFrom = dateRangeCalc.matchDateToLabel(state.dateFrom.value, false) ?? defaultFrom
-    const matchedTo = dateRangeCalc.matchDateToLabel(state.dateTo.value, true) ?? defaultTo
+    const matchedFrom = dateRangeCalc.matchDateToLabel(currentFrom, false) ?? defaultFrom
+    const matchedTo = dateRangeCalc.matchDateToLabel(currentTo, true) ?? defaultTo
 
     // Validate the matched range
     const period = new ChartPeriod(labels, state.chartType.value as ChartType)
@@ -201,53 +247,33 @@ export function useExplorerDataOrchestration(
     )
 
     // Update state only if values changed
-    if (validatedRange.from !== state.dateFrom.value || !state.dateFrom.value) {
+    if (validatedRange.from !== currentFrom) {
       state.dateFrom.value = validatedRange.from
     }
-    if (validatedRange.to !== state.dateTo.value || !state.dateTo.value) {
+    if (validatedRange.to !== currentTo) {
       state.dateTo.value = validatedRange.to
     }
-  }
-
-  // Reset baseline date range
-  const resetBaselineDates = () => {
-    if (!allChartLabels.value || !allYearlyChartLabels.value) return
-    const labels = allChartLabels.value.slice(
-      getStartIndex(allYearlyChartLabels.value, state.sliderStart.value)
-    )
-    if (labels.length === 0) return
-
-    // Validate baseline range with minimum span requirement
-    const defaultFrom = labels[0]!
-    const defaultToIndex = Math.min(labels.length - 1, MIN_BASELINE_SPAN)
-    const defaultTo = labels[defaultToIndex]!
-
-    const period = new ChartPeriod(labels, state.chartType.value as ChartType)
-    const validatedRange = getValidatedRange(
-      { from: state.baselineDateFrom.value ?? defaultFrom, to: state.baselineDateTo.value ?? defaultTo },
-      period,
-      { from: defaultFrom, to: defaultTo },
-      MIN_BASELINE_SPAN
-    )
-
-    if (validatedRange.from !== state.baselineDateFrom.value || !state.baselineDateFrom.value) {
-      state.baselineDateFrom.value = validatedRange.from
-    }
-    if (validatedRange.to !== state.baselineDateTo.value || !state.baselineDateTo.value) {
-      state.baselineDateTo.value = validatedRange.to
-    }
-
-    // Start Select - reset to default if current value is invalid
-    if (state.sliderStart.value && !allYearlyChartLabelsUnique.value?.includes(state.sliderStart.value)) {
-      state.sliderStart.value = '2010'
-    }
-  }
+  })
 
   // Update filtered chart data
   const updateFilteredData = async () => {
     if (!allChartData || !allChartData.labels || !allChartData.data) {
       return { datasets: [], labels: [] }
     }
+
+    // Use default range (last ~10 years) when dates are undefined
+    // This ensures chart shows a reasonable recent window without polluting URL
+    const defaultRange = dateRangeCalc.getDefaultRange()
+    const visibleRange = dateRangeCalc.visibleRange.value
+
+    // Fall back to visible range if default range is empty (data not loaded yet)
+    const effectiveDateFrom = state.dateFrom.value ?? (defaultRange.from || visibleRange?.min)
+    const effectiveDateTo = state.dateTo.value ?? (defaultRange.to || visibleRange?.max)
+
+    // Use baselineRange when baseline dates are undefined
+    // This prevents baseline dates from polluting URL on initial load
+    const effectiveBaselineFrom = state.baselineDateFrom.value ?? baselineRange.value?.from
+    const effectiveBaselineTo = state.baselineDateTo.value ?? baselineRange.value?.to
 
     return await getFilteredChartData(
       state.countries.value,
@@ -259,12 +285,12 @@ export function useExplorerDataOrchestration(
       state.cumulative.value,
       state.showBaseline.value,
       state.baselineMethod.value,
-      state.baselineDateFrom.value,
-      state.baselineDateTo.value,
+      effectiveBaselineFrom,
+      effectiveBaselineTo,
       state.showTotal.value,
       state.chartType.value,
-      state.dateFrom.value,
-      state.dateTo.value,
+      effectiveDateFrom,
+      effectiveDateTo,
       helpers.isBarChartStyle(),
       allCountries.value, // This is the country metadata, not the selected countries
       helpers.isErrorBarType(),
@@ -311,8 +337,8 @@ export function useExplorerDataOrchestration(
         ageGroups: ageGroupsForFetch.value, // Use memoized age groups
         dataKey: key,
         baselineMethod: state.baselineMethod.value,
-        baselineDateFrom: state.baselineDateFrom.value,
-        baselineDateTo: state.baselineDateTo.value,
+        baselineDateFrom: state.baselineDateFrom.value ?? baselineRange.value?.from,
+        baselineDateTo: state.baselineDateTo.value ?? baselineRange.value?.to,
         baselineStartIdx: undefined, // Will be calculated from labels
         cumulative: helpers.showCumPi(),
         baseKeys: helpers.getBaseKeysForType(),
@@ -328,30 +354,29 @@ export function useExplorerDataOrchestration(
       dataset = result.dataset
       allChartLabels.value = result.allLabels
 
-      // Process yearly labels
+      // Process yearly labels (for index calculations)
+      // Note: allYearlyChartLabelsUnique is now a computed property
       if (state.chartType.value === 'yearly') {
         allYearlyChartLabels.value = allChartLabels.value
-        allYearlyChartLabelsUnique.value = allChartLabels.value.filter(
-          x => parseInt(x) <= DEFAULT_BASELINE_YEAR
-        )
       } else {
         allYearlyChartLabels.value = Array.from(
-          allChartLabels.value.map(v => v.substring(0, 4))
+          allChartLabels.value.filter(v => v && typeof v === 'string').map(v => v.substring(0, 4))
         )
-        allYearlyChartLabelsUnique.value = Array.from(
-          new Set(allYearlyChartLabels.value)
-        ).filter(x => parseInt(x) <= DEFAULT_BASELINE_YEAR)
       }
 
-      // Update validated baseline dates from result
-      state.baselineDateFrom.value = result.baselineDateFrom
-      state.baselineDateTo.value = result.baselineDateTo
+      // Only update baseline dates in URL if user has explicitly set them
+      // Otherwise keep them undefined to avoid polluting URL
+      if (state.isUserSet('baselineDateFrom')) {
+        state.baselineDateFrom.value = result.baselineDateFrom
+      }
+      if (state.isUserSet('baselineDateTo')) {
+        state.baselineDateTo.value = result.baselineDateTo
+      }
 
       Object.assign(allChartData, result.chartData)
-      resetDates()
+      // Note: Date validation now handled by reactive watcher
     } else if (shouldUpdateDataset) {
       // Update chart data only (reuse existing dataset)
-      resetBaselineDates()
 
       // Use memoized dataKey for performance
       const key = dataKey.value
@@ -366,8 +391,8 @@ export function useExplorerDataOrchestration(
         ageGroups: ageGroupsForFetch.value, // Use memoized age groups
         dataKey: key,
         baselineMethod: state.baselineMethod.value,
-        baselineDateFrom: state.baselineDateFrom.value,
-        baselineDateTo: state.baselineDateTo.value,
+        baselineDateFrom: state.baselineDateFrom.value ?? baselineRange.value?.from,
+        baselineDateTo: state.baselineDateTo.value ?? baselineRange.value?.to,
         baselineStartIdx: getStartIndex(allYearlyChartLabels.value || [], state.sliderStart.value),
         cumulative: helpers.showCumPi(),
         baseKeys: helpers.getBaseKeysForType(),
@@ -379,12 +404,17 @@ export function useExplorerDataOrchestration(
         return
       }
 
-      // Update validated baseline dates from result
-      state.baselineDateFrom.value = result.baselineDateFrom
-      state.baselineDateTo.value = result.baselineDateTo
+      // Only update state if user explicitly set baseline dates (not using computed defaults)
+      // This prevents baseline dates from polluting URL on initial load
+      if (state.isUserSet('baselineDateFrom')) {
+        state.baselineDateFrom.value = result.baselineDateFrom
+      }
+      if (state.isUserSet('baselineDateTo')) {
+        state.baselineDateTo.value = result.baselineDateTo
+      }
 
       Object.assign(allChartData, result.chartData)
-      resetDates()
+      // Note: Date validation now handled by reactive watcher
     }
 
     // Update filtered chart datasets
@@ -404,9 +434,9 @@ export function useExplorerDataOrchestration(
   }
 
   /**
-   * Filtered labels respecting sliderStart and feature gating
+   * Visible labels respecting sliderStart and feature gating
    *
-   * Date Range Refactor: Now provided by useDateRangeCalculations.visibleLabels
+   * Date Range Refactor: Directly expose useDateRangeCalculations.visibleLabels
    *
    * This represents the FULL RANGE that should be available on the slider,
    * starting from the user's chosen sliderStart year (default: 2010) and
@@ -420,16 +450,16 @@ export function useExplorerDataOrchestration(
    *
    * Used by:
    * - Explorer DateRangePicker for slider range
-   * - resetDates() for initial date selection
+   * - Watcher for initial date selection
    *
    * Note: The actual selected range (dateFrom/dateTo) can be a subset of this.
    */
-  const filteredChartLabels = dateRangeCalc.visibleLabels
+  const visibleLabels = dateRangeCalc.visibleLabels
 
   return {
     // Data state
     allChartLabels,
-    filteredChartLabels,
+    visibleLabels,
     allYearlyChartLabels,
     allYearlyChartLabelsUnique,
     allChartData,
@@ -449,8 +479,10 @@ export function useExplorerDataOrchestration(
     // Functions
     updateData,
     updateFilteredData,
-    resetDates,
-    resetBaselineDates,
-    configureOptions
+    configureOptions,
+
+    // Date range helpers
+    getDefaultRange: dateRangeCalc.getDefaultRange,
+    baselineRange
   }
 }

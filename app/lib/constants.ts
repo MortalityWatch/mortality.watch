@@ -6,8 +6,24 @@ import { getWindow } from './utils/dom'
 
 /**
  * Default baseline year for mortality data comparisons
+ * For yearly charts: 2017, 2018, 2019
+ * For fluseason/midyear charts: 2016/17, 2017/18, 2018/19 (starts at 2016)
  */
 export const DEFAULT_BASELINE_YEAR = 2017
+
+/**
+ * Get baseline year based on chart type
+ * Returns the appropriate baseline start year for different chart types
+ */
+export function getBaselineYear(chartType: string): number {
+  // Fluseason and midyear use split-year periods (e.g., 2016/17)
+  // To get pre-pandemic baseline (avoiding 2019/20, 2020/21), start at 2016
+  if (chartType === 'fluseason' || chartType === 'midyear') {
+    return 2016
+  }
+  // Yearly and all other types use 2017
+  return DEFAULT_BASELINE_YEAR
+}
 
 /**
  * Viewport breakpoints for responsive design

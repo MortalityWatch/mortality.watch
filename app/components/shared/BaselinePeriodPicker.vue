@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import DateSlider from '@/components/charts/DateSlider.vue'
 import { specialColor } from '@/colors'
 import type { ChartType } from '@/model/period'
@@ -18,14 +18,67 @@ const emit = defineEmits<{
 
 // Period length management
 const periodLengthOptions = [
-  { label: '2 years', value: 2 },
   { label: '3 years', value: 3 },
   { label: '5 years', value: 5 },
   { label: '10 years', value: 10 },
   { label: 'Custom', value: 0 }
 ]
 
-const selectedPeriodLength = ref(periodLengthOptions.find(o => o.value === 3) || periodLengthOptions[0])
+// Get default period length based on baseline method
+// ETS needs at least 10 years of data to work properly
+const getDefaultPeriodLength = (method: string): number => {
+  if (method === 'exp') return 10 // ETS requires 10 years
+  return 3 // Default for other methods
+}
+
+const selectedPeriodLength = ref(
+  periodLengthOptions.find(o => o.value === getDefaultPeriodLength(props.baselineMethod)) || periodLengthOptions[0]
+)
+
+// Watch for baseline method changes to update default period length
+// Always preserve user's Custom selection (value === 0)
+watch(() => props.baselineMethod, (newMethod) => {
+  // Don't change if user has selected Custom
+  if (!selectedPeriodLength.value || selectedPeriodLength.value.value === 0) return
+
+  const defaultLength = getDefaultPeriodLength(newMethod)
+  if (selectedPeriodLength.value.value !== defaultLength) {
+    selectedPeriodLength.value = periodLengthOptions.find(o => o.value === defaultLength) || periodLengthOptions[0]!
+  }
+})
+
+// Watch for period length changes to recalculate baseline dates
+// When user changes period length or when method changes (triggering period length change),
+// we need to adjust the baseline slider to match the new period length
+watch(() => selectedPeriodLength.value?.value, (newLength, oldLength) => {
+  // Skip if Custom (0) or if this is the initial value
+  if (!newLength || newLength === 0 || oldLength === undefined) return
+
+  // Calculate new baseline range based on the period length
+  // Keep the start date, adjust the end date
+  if (props.sliderValue && props.sliderValue.length === 2) {
+    const startDate = props.sliderValue[0]
+    if (!startDate || !props.labels.length) return
+
+    const startIdx = props.labels.indexOf(startDate)
+    if (startIdx === -1) return
+
+    // Calculate new end index based on period length
+    // For yearly charts: 3 years = 3 labels (2017, 2018, 2019)
+    // For weekly charts: 3 years = ~156 labels
+    const uniqueYears = Array.from(new Set(props.labels.filter(l => l).map(l => l.substring(0, 4))))
+    const labelsPerYear = Math.round(props.labels.length / uniqueYears.length)
+    const periodIndices = newLength * labelsPerYear - 1 // -1 for inclusive range
+
+    const newEndIdx = Math.min(startIdx + periodIndices, props.labels.length - 1)
+    const newEndDate = props.labels[newEndIdx]
+
+    if (newEndDate && newEndDate !== props.sliderValue[1]) {
+      // Emit the new range
+      emit('slider-changed', [startDate, newEndDate])
+    }
+  }
+}, { flush: 'post' })
 
 const baselineMinRange = (method: string) => method === 'mean' ? 0 : 2
 

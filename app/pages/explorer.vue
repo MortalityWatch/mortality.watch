@@ -26,20 +26,18 @@ import ExplorerSettings from '@/components/explorer/ExplorerSettings.vue'
 import ExplorerChartActions from '@/components/explorer/ExplorerChartActions.vue'
 import SaveModal from '@/components/SaveModal.vue'
 
-// Feature access for tier-based features (currently unused but may be needed in the future)
-// const { can, getFeatureUpgradeUrl } = useFeatureAccess()
-
 // Auth state for conditional features
 const { isAuthenticated } = useAuth()
 
 // Tutorial for first-time users
 const { autoStartTutorial } = useTutorial()
 
-// Phase 9.2: Centralized state management with validation
+// Centralized state management with validation
 const state = useExplorerState()
 
-// Phase 9.4: Data availability checks with auto-correction
-const _availability = useDataAvailability(state)
+// Data availability checks with auto-correction
+// Composable runs watchers for auto-correction (side effects)
+useDataAvailability(state)
 
 // Dynamic OG images based on current chart state
 const chartState = computed(() => ({
@@ -50,7 +48,6 @@ const chartState = computed(() => ({
   ageGroups: state.ageGroups.value,
   chartStyle: state.chartStyle.value
 }))
-
 const { ogImageUrl, ogTitle, ogDescription } = useChartOgImage(chartState)
 
 useSeoMeta({
@@ -60,7 +57,7 @@ useSeoMeta({
   twitterCard: 'summary_large_image'
 })
 
-// Helper Functions - use composable
+// Type predicates and computed helpers based on state
 const {
   isAsmrType,
   isPopulationType,
@@ -88,20 +85,30 @@ const {
   state.chartType
 )
 
-// Computed
-const sliderValue = computed(() => [state.dateFrom.value, state.dateTo.value])
+// Adapter: Convert separate date refs to array format for DateSlider component
+// Uses default range (~10 years of recent data) when dates are undefined
+const sliderValue = computed(() => {
+  const defaultRange = dataOrchestration.getDefaultRange()
+
+  // If user has set dates, use them; otherwise use defaults (if available)
+  // Convert empty strings to undefined so DateSlider handles initial state correctly
+  const from = state.dateFrom.value ?? (defaultRange.from || undefined)
+  const to = state.dateTo.value ?? (defaultRange.to || undefined)
+
+  return [from, to]
+})
 
 // Get color mode for theme reactivity
 const colorMode = useColorMode()
 
-// Phase 5a: Colors management extracted to composable
+// Colors management extracted to composable
 const { displayColors } = useExplorerColors(
   state.countries,
   state.userColors,
   colorMode
 )
 
-// Load Data - must be declared before data orchestration composable
+// Bootstrap data - loaded here and passed to data orchestration composable
 const allCountries = ref<Record<string, Country>>({})
 const isDataLoaded = ref(false)
 const allAgeGroups = computed(() => {
@@ -115,7 +122,7 @@ const allAgeGroups = computed(() => {
   return Array.from(result)
 })
 
-// Phase 9.2: Data orchestration composable
+// Data orchestration composable
 const dataOrchestration = useExplorerDataOrchestration(
   state,
   {
@@ -138,7 +145,7 @@ const dataOrchestration = useExplorerDataOrchestration(
   displayColors
 )
 
-// Destructure data orchestration (prefix unused with _ to satisfy linter)
+// Destructure data orchestration (some values accessed via dataOrchestration.*)
 const {
   allChartLabels: _allChartLabels,
   allYearlyChartLabels: _allYearlyChartLabels,
@@ -180,7 +187,7 @@ const baselineSliderChanged = async (val: string[]) => {
 
 // Labels for the date range slider - full range from sliderStart to end
 // The sliderValue (dateFrom/dateTo) determines which portion is selected
-const labels = computed(() => dataOrchestration.filteredChartLabels.value || [])
+const labels = computed(() => dataOrchestration.visibleLabels.value || [])
 
 // Make Chart resizeable - use composable
 const {
@@ -237,7 +244,7 @@ const handleUpdate = async (key: string) => {
   }
 }
 
-// Prevent concurrent updates
+// Prevent concurrent updates using queue pattern
 let isCurrentlyUpdating = false
 let pendingUpdateKey: string | null = null
 
@@ -263,8 +270,7 @@ const update = async (key: string) => {
   }
 }
 
-// Phase 9.2: Event handlers replaced with direct state updates
-// Helper function for state updates with nextTick
+// Helper: Update state, wait for DOM update, then trigger data refresh
 const updateStateAndRefresh = async (updateFn: () => void, key: string) => {
   updateFn()
   await nextTick()
@@ -276,6 +282,13 @@ const handleChartPresetChanged = (v: string) => {
   state.chartPreset.value = v
   applyPresetSize(v)
 }
+
+// Watch for date range changes from URL/slider and trigger chart update
+watch([() => state.dateFrom.value, () => state.dateTo.value], () => {
+  if (isDataLoaded.value) {
+    update('dateRange')
+  }
+})
 
 onMounted(async () => {
   // Initialize data - load all, client-side filtering happens via useCountryFilter
@@ -313,13 +326,13 @@ onMounted(async () => {
   autoStartTutorial()
 })
 
-// Phase 5a: Chart actions extracted to composable
 // Note: Using 'any' type to avoid excessive type recursion with State proxy
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const chartActions: any = useExplorerChartActions(state as any, dataOrchestration.chartData as any)
 const {
   copyChartLink,
   screenshotChart,
+  downloadChart,
   saveToDB,
   exportCSV,
   exportJSON,
@@ -339,12 +352,6 @@ const showSaveModal = computed({
     _showSaveModal.value = val
   }
 })
-
-// Download chart as PNG (for social media/OG image)
-const downloadChart = () => {
-  const url = window.location.href.replaceAll('/?', '/chart.png?').replaceAll('/explorer?', '/chart.png?')
-  window.open(url, '_blank')
-}
 </script>
 
 <template>
@@ -423,6 +430,7 @@ const downloadChart = () => {
             :colors="displayColors"
             :show-prediction-interval-disabled="showPredictionIntervalDisabled"
             :show-total-option="dataOrchestration.chartOptions.showTotalOption"
+            :baseline-range="dataOrchestration.baselineRange.value"
             @type-changed="(v) => updateStateAndRefresh(() => state.type.value = v, '_type')"
             @chart-type-changed="(v) => updateStateAndRefresh(() => state.chartType.value = v, '_chartType')"
             @chart-style-changed="(v) => updateStateAndRefresh(() => state.chartStyle.value = v, '_chartStyle')"
