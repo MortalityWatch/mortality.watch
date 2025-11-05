@@ -50,7 +50,7 @@ const localPublic = computed({
 const typeLabel = computed(() => props.type === 'ranking' ? 'Ranking' : 'Chart')
 const typeLabelLower = computed(() => typeLabel.value.toLowerCase())
 
-const handleOpenModal = () => {
+const handleOpenModal = (): void => {
   // Reset form and open
   emit('update:name', '')
   emit('update:description', '')

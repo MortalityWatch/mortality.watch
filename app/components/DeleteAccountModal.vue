@@ -30,20 +30,20 @@ const isConfirmValid = computed(() => {
   return confirmText.value.toLowerCase() === 'delete my account'
 })
 
-function nextStep() {
+function nextStep(): void {
   if (step.value === 1 && isConfirmValid.value) {
     step.value = 2
   }
 }
 
-function previousStep() {
+function previousStep(): void {
   if (step.value === 2) {
     step.value = 1
     password.value = ''
   }
 }
 
-async function confirmDeletion() {
+async function confirmDeletion(): Promise<void> {
   if (!password.value) {
     toast.add({
       title: 'Password required',
@@ -76,7 +76,7 @@ async function confirmDeletion() {
   }
 }
 
-function handleClose() {
+function handleClose(): void {
   if (!deleting.value) {
     emit('close')
   }

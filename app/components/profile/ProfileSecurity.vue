@@ -19,7 +19,7 @@ const passwordState = reactive({
 
 const savingPassword = ref(false)
 
-async function handleSubmit() {
+async function handleSubmit(): Promise<void> {
   savingPassword.value = true
   try {
     emit('change-password', {
