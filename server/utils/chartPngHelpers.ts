@@ -181,7 +181,7 @@ export function getDataKey(type: string): string {
  */
 export async function transformChartData(
   state: ReturnType<typeof decodeChartState>,
-  allCountries: Awaited<ReturnType<typeof loadCountryMetadata>>,
+  allCountries: Awaited<ReturnType<typeof dataLoader.loadCountryMetadata>>,
   allLabels: string[],
   allChartData: AllChartData,
   chartUrl: string,
