@@ -5,6 +5,7 @@ const { user, isAuthenticated } = useAuth()
 const toast = useToast()
 const sending = ref(false)
 const dismissed = ref(false)
+const { withRetry } = useErrorRecovery()
 
 const showBanner = computed(() => {
   return isAuthenticated.value && user.value && !user.value.emailVerified && !dismissed.value
@@ -13,8 +14,12 @@ const showBanner = computed(() => {
 async function resendVerification(): Promise<void> {
   sending.value = true
   try {
-    await $fetch('/api/auth/resend-verification', {
+    await withRetry(() => $fetch('/api/auth/resend-verification', {
       method: 'POST'
+    }), {
+      maxRetries: 3,
+      exponentialBackoff: true,
+      context: 'resendVerification'
     })
     toast.add({
       title: 'Verification email sent',

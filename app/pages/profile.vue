@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { handleError } from '@/lib/errors/errorHandler'
-
 definePageMeta({
   middleware: 'auth'
 })
@@ -8,6 +6,7 @@ definePageMeta({
 const { user, updateProfile, refreshSession } = useAuth()
 const toast = useToast()
 const route = useRoute()
+const { withRetry, handleError } = useErrorRecovery()
 
 const savingProfile = ref(false)
 const savingPassword = ref(false)
@@ -42,7 +41,11 @@ onMounted(async () => {
 async function saveProfile(profile: { firstName: string, lastName: string, displayName: string }) {
   savingProfile.value = true
   try {
-    await updateProfile(profile)
+    await withRetry(() => updateProfile(profile), {
+      maxRetries: 3,
+      exponentialBackoff: true,
+      context: 'saveProfile'
+    })
     toast.add({
       title: 'Profile updated',
       description: 'Your profile has been saved',
@@ -67,9 +70,13 @@ async function changePassword(passwords: { currentPassword: string, newPassword:
 
   savingPassword.value = true
   try {
-    await updateProfile({
+    await withRetry(() => updateProfile({
       currentPassword: passwords.currentPassword,
       newPassword: passwords.newPassword
+    }), {
+      maxRetries: 3,
+      exponentialBackoff: true,
+      context: 'changePassword'
     })
     toast.add({
       title: 'Password changed',
@@ -86,8 +93,12 @@ async function changePassword(passwords: { currentPassword: string, newPassword:
 async function exportData() {
   exportingData.value = true
   try {
-    const response = await $fetch('/api/user/export-data', {
+    const response = await withRetry(() => $fetch('/api/user/export-data', {
       method: 'GET'
+    }), {
+      maxRetries: 3,
+      exponentialBackoff: true,
+      context: 'exportData'
     })
 
     // Convert response to JSON blob and download
