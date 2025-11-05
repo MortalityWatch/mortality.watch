@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
       url: session.url
     }
   } catch (error) {
-    console.error('Error creating portal session:', error)
+    logger.error('Error creating portal session:', error instanceof Error ? error : new Error(String(error)))
 
     // Re-throw if it's already an H3 error
     if (error && typeof error === 'object' && 'statusCode' in error) {

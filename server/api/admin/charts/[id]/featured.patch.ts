@@ -57,7 +57,7 @@ export default defineEventHandler(async (event) => {
       throw err
     }
 
-    console.error('Error updating featured status:', err)
+    logger.error('Error updating featured status:', err instanceof Error ? err : new Error(String(err)))
     throw createError({
       statusCode: 500,
       message: 'Failed to update featured status'

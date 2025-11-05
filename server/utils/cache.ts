@@ -11,6 +11,7 @@
 
 import { promises as fs, existsSync } from 'fs'
 import { join, dirname } from 'path'
+import { logger } from './logger'
 
 const CACHE_BASE_DIR = '.data/cache'
 const CACHE_MORTALITY_DIR = join(CACHE_BASE_DIR, 'mortality')
@@ -28,7 +29,7 @@ export class FilesystemCache {
     try {
       await fs.mkdir(dir, { recursive: true })
     } catch (error) {
-      console.warn(`Failed to create cache directory ${dir}:`, error)
+      logger.warn('Failed to create cache directory', { dir, error })
     }
   }
 
@@ -77,7 +78,7 @@ export class FilesystemCache {
       try {
         return await fs.readFile(path, 'utf-8')
       } catch (error) {
-        console.warn(`Failed to read cached mortality data from ${path}:`, error)
+        logger.warn('Failed to read cached mortality data', { path, error })
       }
     }
 
@@ -99,7 +100,7 @@ export class FilesystemCache {
       await this.ensureCacheDir(dirname(path))
       await fs.writeFile(path, data, 'utf-8')
     } catch (error) {
-      console.warn(`Failed to write mortality data to cache ${path}:`, error)
+      logger.warn('Failed to write mortality data to cache', { path, error })
     }
   }
 
@@ -113,7 +114,7 @@ export class FilesystemCache {
       try {
         return await fs.readFile(path, 'utf-8')
       } catch (error) {
-        console.warn(`Failed to read cached metadata from ${path}:`, error)
+        logger.warn('Failed to read cached metadata', { path, error })
       }
     }
 
@@ -130,7 +131,7 @@ export class FilesystemCache {
       await this.ensureCacheDir(dirname(path))
       await fs.writeFile(path, data, 'utf-8')
     } catch (error) {
-      console.warn(`Failed to write metadata to cache ${path}:`, error)
+      logger.warn('Failed to write metadata to cache', { path, error })
     }
   }
 
@@ -140,9 +141,9 @@ export class FilesystemCache {
   async clearAll(): Promise<void> {
     try {
       await fs.rm(CACHE_BASE_DIR, { recursive: true, force: true })
-      console.log('Cache cleared successfully')
+      logger.info('Cache cleared successfully')
     } catch (error) {
-      console.warn('Failed to clear cache:', error)
+      logger.warn('Failed to clear cache', { error })
     }
   }
 
@@ -173,7 +174,7 @@ export class FilesystemCache {
         await fs.unlink(metadataPath)
       }
     } catch (error) {
-      console.warn('Failed to clear expired cache:', error)
+      logger.warn('Failed to clear expired cache', { error })
     }
   }
 

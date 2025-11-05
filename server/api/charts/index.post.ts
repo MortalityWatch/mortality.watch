@@ -71,7 +71,7 @@ export default defineEventHandler(async (event) => {
       chart: result[0]
     }
   } catch (err) {
-    console.error('Error saving chart:', err)
+    logger.error('Error saving chart:', err instanceof Error ? err : new Error(String(err)))
     throw createError({
       statusCode: 500,
       message: 'Failed to save chart'

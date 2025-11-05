@@ -69,7 +69,7 @@ export default defineEventHandler(async (event) => {
       }
     }
   } catch (error) {
-    console.error('Error syncing subscription:', error)
+    logger.error('Error syncing subscription:', error instanceof Error ? error : new Error(String(error)))
     throw createError({
       statusCode: 500,
       message: 'Failed to sync subscription'

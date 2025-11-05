@@ -49,7 +49,7 @@ export default defineEventHandler(async (event) => {
         webhookSecret
       )
     } catch (err) {
-      console.error('Webhook signature verification failed:', err)
+      logger.error('Webhook signature verification failed:', err instanceof Error ? err : new Error(String(err)))
       throw createError({
         statusCode: 400,
         message: 'Invalid signature'
@@ -64,7 +64,7 @@ export default defineEventHandler(async (event) => {
       .get()
 
     if (existingEvent) {
-      console.log(`Webhook event ${stripeEvent.id} already processed, skipping`)
+      logger.info(`Webhook event ${stripeEvent.id} already processed, skipping`)
       return { received: true, duplicate: true }
     }
 
@@ -92,7 +92,7 @@ export default defineEventHandler(async (event) => {
       return { received: true }
     } catch (processingError) {
       // Log processing error
-      console.error('Error processing webhook:', processingError)
+      logger.error('Error processing webhook', processingError instanceof Error ? processingError : new Error(String(processingError)))
 
       await db
         .update(webhookEvents)
@@ -107,7 +107,7 @@ export default defineEventHandler(async (event) => {
       throw processingError
     }
   } catch (error) {
-    console.error('Webhook handler error:', error)
+    logger.error('Webhook handler error:', error instanceof Error ? error : new Error(String(error)))
 
     // Still return 200 if it's a duplicate or already logged error
     // to prevent Stripe from retrying
@@ -153,12 +153,12 @@ async function processWebhookEvent(event: Stripe.Event) {
     case 'customer.created': {
       // Log customer creation for debugging
       const customer = event.data.object as Stripe.Customer
-      console.log(`Customer created: ${customer.id}`, customer.metadata)
+      logger.info(`Customer created: ${customer.id}`, customer.metadata)
       break
     }
 
     default:
-      console.log(`Unhandled webhook event type: ${event.type}`)
+      logger.info(`Unhandled webhook event type: ${event.type}`)
   }
 }
 
@@ -171,13 +171,13 @@ async function handleCheckoutSessionCompleted(
 ) {
   const userId = session.metadata?.userId
   if (!userId) {
-    console.error('No userId in checkout session metadata')
+    logger.error('No userId in checkout session metadata')
     return
   }
 
   const subscriptionId = session.subscription as string
   if (!subscriptionId) {
-    console.error('No subscription ID in checkout session')
+    logger.error('No subscription ID in checkout session')
     return
   }
 
@@ -191,7 +191,7 @@ async function handleCheckoutSessionCompleted(
     const existingUser = await getUserIdByCustomerId(customerId)
     if (!existingUser) {
       // This is a new customer, create the subscription record which will store the customer ID
-      console.log(`Linking new customer ${customerId} to user ${userId}`)
+      logger.info(`Linking new customer ${customerId} to user ${userId}`)
     }
   }
 
@@ -205,13 +205,13 @@ async function handleCheckoutSessionCompleted(
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   const customerId = getCustomerIdFromSubscription(subscription)
   if (!customerId) {
-    console.error('No customer ID in subscription')
+    logger.error('No customer ID in subscription')
     return
   }
 
   const userId = await getUserIdByCustomerId(customerId)
   if (!userId) {
-    console.error(`No user found for customer ${customerId}`)
+    logger.error(`No user found for customer ${customerId}`)
     return
   }
 
@@ -225,13 +225,13 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   const customerId = getCustomerIdFromSubscription(subscription)
   if (!customerId) {
-    console.error('No customer ID in subscription')
+    logger.error('No customer ID in subscription')
     return
   }
 
   const userId = await getUserIdByCustomerId(customerId)
   if (!userId) {
-    console.error(`No user found for customer ${customerId}`)
+    logger.error(`No user found for customer ${customerId}`)
     return
   }
 
@@ -248,7 +248,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   // Downgrade user tier to free
   await db.update(users).set({ tier: USER_TIER.FREE }).where(eq(users.id, userId))
 
-  console.log(`Subscription canceled for user ${userId}`)
+  logger.info(`Subscription canceled for user ${userId}`)
 }
 
 /**
@@ -266,18 +266,18 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
 
   const customerId = getCustomerIdFromSubscription(subscription)
   if (!customerId) {
-    console.error('No customer ID in subscription')
+    logger.error('No customer ID in subscription')
     return
   }
 
   const userId = await getUserIdByCustomerId(customerId)
   if (!userId) {
-    console.error(`No user found for customer ${customerId}`)
+    logger.error(`No user found for customer ${customerId}`)
     return
   }
 
   await upsertSubscription(userId, subscription)
-  console.log(`Payment succeeded for user ${userId}`)
+  logger.info(`Payment succeeded for user ${userId}`)
 }
 
 /**
@@ -295,13 +295,13 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
 
   const customerId = getCustomerIdFromSubscription(subscription)
   if (!customerId) {
-    console.error('No customer ID in subscription')
+    logger.error('No customer ID in subscription')
     return
   }
 
   const userId = await getUserIdByCustomerId(customerId)
   if (!userId) {
-    console.error(`No user found for customer ${customerId}`)
+    logger.error(`No user found for customer ${customerId}`)
     return
   }
 
@@ -314,7 +314,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     })
     .where(eq(subscriptions.userId, userId))
 
-  console.log(`Payment failed for user ${userId}`)
+  logger.info(`Payment failed for user ${userId}`)
 }
 
 /**
@@ -400,7 +400,7 @@ async function upsertSubscription(userId: number, subscription: Stripe.Subscript
   const tier: 0 | 1 | 2 = status === 'active' || status === 'trialing' ? USER_TIER.PRO : USER_TIER.FREE
   await db.update(users).set({ tier }).where(eq(users.id, userId))
 
-  console.log(
+  logger.info(
     `Subscription ${subscription.id} upserted for user ${userId} with tier ${tier}`
   )
 }

@@ -1,3 +1,5 @@
+import { logger } from './logger'
+
 /**
  * Circuit Breaker Pattern
  *
@@ -75,7 +77,7 @@ export class CircuitBreaker {
       // Check if we should try half-open
       if (this.shouldAttemptReset()) {
         this.state = CircuitState.HALF_OPEN
-        console.log(`[CircuitBreaker:${this.name}] State: HALF_OPEN (testing service)`)
+        logger.info(`[CircuitBreaker:${this.name}] State: HALF_OPEN (testing service)`)
       } else {
         throw new Error(`Circuit breaker is OPEN for ${this.name}. Service unavailable.`)
       }
@@ -104,7 +106,7 @@ export class CircuitBreaker {
         this.state = CircuitState.CLOSED
         this.stats.failures = 0
         this.stats.successes = 0
-        console.log(`[CircuitBreaker:${this.name}] State: CLOSED (service recovered)`)
+        logger.info(`[CircuitBreaker:${this.name}] State: CLOSED (service recovered)`)
       }
     }
   }
@@ -129,7 +131,7 @@ export class CircuitBreaker {
     if (this.state === CircuitState.CLOSED || this.state === CircuitState.HALF_OPEN) {
       if (this.stats.failures >= this.config.failureThreshold) {
         this.state = CircuitState.OPEN
-        console.log(
+        logger.info(
           `[CircuitBreaker:${this.name}] State: OPEN (${this.stats.failures} failures)`
         )
       }
@@ -173,7 +175,7 @@ export class CircuitBreaker {
       lastFailure: null,
       lastSuccess: null
     }
-    console.log(`[CircuitBreaker:${this.name}] Manually reset to CLOSED`)
+    logger.info(`[CircuitBreaker:${this.name}] Manually reset to CLOSED`)
   }
 
   /**

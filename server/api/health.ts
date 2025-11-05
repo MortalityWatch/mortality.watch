@@ -88,7 +88,7 @@ export default defineEventHandler(async (event) => {
     setResponseStatus(event, statusCode)
     return health
   } catch (error) {
-    console.error('Health check failed:', error)
+    logger.error('Health check failed:', error instanceof Error ? error : new Error(String(error)))
 
     return {
       status: 'error',
