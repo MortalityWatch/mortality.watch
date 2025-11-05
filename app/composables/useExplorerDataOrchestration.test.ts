@@ -39,6 +39,22 @@ vi.mock('./useDateRangeValidation', () => ({
   }))
 }))
 
+vi.mock('./useDateRangeCalculations', () => ({
+  useDateRangeCalculations: vi.fn(() => ({
+    availableLabels: computed(() => []),
+    availableRange: computed(() => null),
+    visibleLabels: computed(() => []),
+    visibleRange: computed(() => null),
+    selectedRange: computed(() => ({ from: null, to: null })),
+    isValidDate: vi.fn(() => false),
+    getDefaultRange: vi.fn(() => ({ from: '', to: '' })),
+    findClosestYearLabel: vi.fn(() => null),
+    matchDateToLabel: vi.fn(() => null),
+    hasExtendedTimeAccess: computed(() => true),
+    effectiveMinDate: computed(() => null)
+  }))
+}))
+
 vi.mock('@/lib/chart', () => ({
   getFilteredChartData: vi.fn()
 }))

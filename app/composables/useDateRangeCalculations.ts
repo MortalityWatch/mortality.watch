@@ -14,18 +14,18 @@ import type { Ref, ComputedRef } from 'vue'
 export interface DateRangeCalculations {
   // Available data (from metadata/fetch)
   availableLabels: ComputedRef<string[]>
-  availableRange: ComputedRef<{ min: string; max: string } | null>
+  availableRange: ComputedRef<{ min: string, max: string } | null>
 
   // Visible on slider (respects sliderStart + feature gating)
   visibleLabels: ComputedRef<string[]>
-  visibleRange: ComputedRef<{ min: string; max: string } | null>
+  visibleRange: ComputedRef<{ min: string, max: string } | null>
 
   // Currently selected
-  selectedRange: ComputedRef<{ from: string | null; to: string | null }>
+  selectedRange: ComputedRef<{ from: string | null, to: string | null }>
 
   // Utilities
   isValidDate: (date: string) => boolean
-  getDefaultRange: () => { from: string; to: string }
+  getDefaultRange: () => { from: string, to: string }
   findClosestYearLabel: (targetYear: string, preferLast?: boolean) => string | null
   matchDateToLabel: (currentDate: string | null | undefined, preferLast: boolean) => string | null
 
@@ -272,7 +272,7 @@ export function useDateRangeCalculations(
    *
    * @returns Object with from and to dates
    */
-  const getDefaultRange = (): { from: string; to: string } => {
+  const getDefaultRange = (): { from: string, to: string } => {
     const labels = visibleLabels.value
 
     if (labels.length === 0) {
