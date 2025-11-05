@@ -315,6 +315,7 @@ export class DataLoaderService {
         // Type assertion needed: cd is Record<string, unknown> from getDataForCountry()
         // but Dataset expects DatasetEntry (StringEntryFields & NumberEntryFields).
         // The data structure matches at runtime after parsing from CSV.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         data[ag][iso3c] = cd as any
       }
     }
