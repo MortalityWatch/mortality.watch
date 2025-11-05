@@ -124,6 +124,18 @@ export default defineEventHandler(async (event) => {
 
 /**
  * Process different webhook event types
+ *
+ * Phase 13a: Event processors extracted for better organization and testability
+ *
+ * Delegates to specific handler functions based on event type:
+ * - checkout.session.completed: Links customer and creates initial subscription
+ * - customer.subscription.created/updated: Updates subscription details
+ * - customer.subscription.deleted: Cancels subscription and downgrades tier
+ * - invoice.payment_succeeded: Confirms payment and updates subscription
+ * - invoice.payment_failed: Marks subscription as past_due
+ * - customer.created: Logs customer creation for debugging
+ *
+ * @param event - Stripe webhook event
  */
 async function processWebhookEvent(event: Stripe.Event) {
   switch (event.type) {
@@ -163,8 +175,13 @@ async function processWebhookEvent(event: Stripe.Event) {
 }
 
 /**
- * Handle checkout.session.completed
- * Creates or activates subscription when checkout is completed
+ * Handle checkout.session.completed event
+ *
+ * Creates or activates subscription when checkout is completed.
+ * Links the Stripe customer to the user and creates the subscription record.
+ *
+ * @param session - Stripe checkout session object
+ * @returns Promise that resolves when subscription is created
  */
 async function handleCheckoutSessionCompleted(
   session: Stripe.Checkout.Session
@@ -199,8 +216,13 @@ async function handleCheckoutSessionCompleted(
 }
 
 /**
- * Handle customer.subscription.updated
- * Updates subscription status, plan, and billing period
+ * Handle customer.subscription.created and customer.subscription.updated events
+ *
+ * Updates subscription status, plan, and billing period.
+ * Handles both new subscriptions and updates to existing ones.
+ *
+ * @param subscription - Stripe subscription object
+ * @returns Promise that resolves when subscription is updated
  */
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   const customerId = getCustomerIdFromSubscription(subscription)
@@ -219,8 +241,13 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 }
 
 /**
- * Handle customer.subscription.deleted
- * Marks subscription as canceled and downgrades user tier
+ * Handle customer.subscription.deleted event
+ *
+ * Marks subscription as canceled and downgrades user tier to FREE.
+ * Maintains idempotency by checking if subscription already exists.
+ *
+ * @param subscription - Stripe subscription object
+ * @returns Promise that resolves when subscription is canceled
  */
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   const customerId = getCustomerIdFromSubscription(subscription)
@@ -252,8 +279,13 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 }
 
 /**
- * Handle invoice.payment_succeeded
- * Confirms successful payment and extends subscription period
+ * Handle invoice.payment_succeeded event
+ *
+ * Confirms successful payment and extends subscription period.
+ * Retrieves full subscription details and updates local database.
+ *
+ * @param invoice - Stripe invoice object
+ * @returns Promise that resolves when subscription is updated
  */
 async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
   const subscriptionId = getSubscriptionIdFromInvoice(invoice)
@@ -281,8 +313,13 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
 }
 
 /**
- * Handle invoice.payment_failed
- * Marks subscription as past_due
+ * Handle invoice.payment_failed event
+ *
+ * Marks subscription as past_due when payment fails.
+ * Subscription status is updated to reflect payment failure.
+ *
+ * @param invoice - Stripe invoice object
+ * @returns Promise that resolves when subscription status is updated
  */
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   const subscriptionId = getSubscriptionIdFromInvoice(invoice)
@@ -319,7 +356,20 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
 
 /**
  * Upsert subscription record
- * Creates or updates subscription with full details
+ *
+ * Creates or updates subscription with full details including:
+ * - Subscription status and plan type
+ * - Billing period dates
+ * - Cancellation information
+ * - Trial period if applicable
+ *
+ * Also updates user tier (FREE/PRO) based on subscription status.
+ * Maintains idempotency by checking for existing subscription.
+ *
+ * @param userId - User ID to associate subscription with
+ * @param subscription - Stripe subscription object
+ * @returns Promise that resolves when subscription is saved
+ * @throws Error if customer ID is missing
  */
 async function upsertSubscription(userId: number, subscription: Stripe.Subscription) {
   const status = mapStripeStatus(subscription.status)
@@ -407,6 +457,11 @@ async function upsertSubscription(userId: number, subscription: Stripe.Subscript
 
 /**
  * Get user ID by Stripe customer ID
+ *
+ * Looks up the user associated with a Stripe customer ID.
+ *
+ * @param customerId - Stripe customer ID
+ * @returns User ID if found, null otherwise
  */
 async function getUserIdByCustomerId(customerId: string): Promise<number | null> {
   const subscription = await db
@@ -420,7 +475,14 @@ async function getUserIdByCustomerId(customerId: string): Promise<number | null>
 
 /**
  * Type guard to extract subscription ID from invoice
- * Handles Stripe's polymorphic subscription field
+ *
+ * Handles Stripe's polymorphic subscription field which can be:
+ * - string (subscription ID)
+ * - Subscription object
+ * - null/undefined
+ *
+ * @param invoice - Stripe invoice object
+ * @returns Subscription ID if present, null otherwise
  */
 function getSubscriptionIdFromInvoice(invoice: Stripe.Invoice): string | null {
   // Stripe Invoice subscription field is not properly typed in the SDK
@@ -439,6 +501,14 @@ function getSubscriptionIdFromInvoice(invoice: Stripe.Invoice): string | null {
 
 /**
  * Type guard to extract customer ID from subscription
+ *
+ * Handles Stripe's polymorphic customer field which can be:
+ * - string (customer ID)
+ * - Customer object
+ * - null/undefined
+ *
+ * @param subscription - Stripe subscription object
+ * @returns Customer ID if present, null otherwise
  */
 function getCustomerIdFromSubscription(subscription: Stripe.Subscription): string | null {
   if (!subscription.customer) {
