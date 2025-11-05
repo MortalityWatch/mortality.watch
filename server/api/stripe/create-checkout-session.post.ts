@@ -3,6 +3,7 @@ import { requireAuth } from '../../utils/auth'
 import { getStripe, STRIPE_PRICE_IDS } from '../../utils/stripe'
 import { db, subscriptions } from '#db'
 import { eq } from 'drizzle-orm'
+import { CheckoutSessionResponseSchema } from '../../schemas'
 
 const requestSchema = z.object({
   plan: z.enum(['monthly', 'yearly']),
@@ -81,10 +82,11 @@ export default defineEventHandler(async (event) => {
       }
     })
 
-    return {
+    const response = {
       sessionId: session.id,
       url: session.url
     }
+    return CheckoutSessionResponseSchema.parse(response)
   } catch (error) {
     logger.error('Error creating checkout session:', error instanceof Error ? error : new Error(String(error)))
     throw createError({
