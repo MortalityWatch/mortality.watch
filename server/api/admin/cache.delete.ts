@@ -1,4 +1,5 @@
 import { clearChartCache } from '../../utils/chartCache'
+import { CacheClearResponseSchema } from '../../schemas'
 
 /**
  * Admin API: Clear chart cache
@@ -20,11 +21,12 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    return {
-      success: true,
+    const response = {
+      success: true as const,
       cleared: result.cleared,
       message: `Successfully cleared ${result.cleared} cached charts`
     }
+    return CacheClearResponseSchema.parse(response)
   } catch (err) {
     console.error('Error clearing chart cache:', err)
     throw createError({

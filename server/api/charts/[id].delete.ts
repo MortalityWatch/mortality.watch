@@ -1,6 +1,7 @@
 import { db } from '../../utils/db'
 import { savedCharts } from '../../../db/schema'
 import { eq } from 'drizzle-orm'
+import { ChartDeleteResponseSchema } from '../../schemas'
 
 /**
  * DELETE /api/charts/:id
@@ -42,10 +43,11 @@ export default defineEventHandler(async (event) => {
 
     await db.delete(savedCharts).where(eq(savedCharts.id, chartId))
 
-    return {
-      success: true,
+    const response = {
+      success: true as const,
       message: 'Chart deleted successfully'
     }
+    return ChartDeleteResponseSchema.parse(response)
   } catch (err) {
     console.error('Error deleting chart:', err)
     throw createError({

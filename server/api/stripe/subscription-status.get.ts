@@ -1,6 +1,7 @@
 import { requireAuth } from '../../utils/auth'
 import { db, subscriptions } from '#db'
 import { eq } from 'drizzle-orm'
+import { SubscriptionStatusResponseSchema } from '../../schemas'
 
 export default defineEventHandler(async (event) => {
   // Require authentication
@@ -15,11 +16,12 @@ export default defineEventHandler(async (event) => {
       .get()
 
     if (!subscription) {
-      return {
+      const response = {
         hasSubscription: false,
         subscription: null,
         tier: user.tier
       }
+      return SubscriptionStatusResponseSchema.parse(response)
     }
 
     // Check if subscription is active or trialing
@@ -36,7 +38,7 @@ export default defineEventHandler(async (event) => {
       )
     }
 
-    return {
+    const response = {
       hasSubscription: true,
       subscription: {
         id: subscription.id,
@@ -52,6 +54,7 @@ export default defineEventHandler(async (event) => {
       },
       tier: user.tier
     }
+    return SubscriptionStatusResponseSchema.parse(response)
   } catch (error) {
     console.error('Error fetching subscription status:', error)
     throw createError({

@@ -4,6 +4,7 @@ import Papa from 'papaparse'
 import type { CountryRaw } from '@/model/country'
 import { getStalenessStatus, isSourceIgnored } from '../../../server/config/staleness'
 import { dataQualityOverrides } from '#db'
+import { DataQualityResponseSchema } from '../../schemas'
 
 /**
  * Admin API: Get data quality and freshness report
@@ -107,12 +108,13 @@ export default defineEventHandler(async (event) => {
       )
     }
 
-    return {
-      success: true,
+    const response = {
+      success: true as const,
       timestamp: new Date().toISOString(),
       summary,
       countries
     }
+    return DataQualityResponseSchema.parse(response)
   } catch (err) {
     console.error('Error fetching data quality report:', err)
     throw createError({
