@@ -9,7 +9,7 @@
  * but with different type signatures. Type assertions are necessary and documented below.
  */
 
-import type { ChartConfiguration, ChartType as ChartJsType } from 'chart.js'
+import type { ChartType as ChartJsType } from 'chart.js'
 import {
   Chart,
   CategoryScale,
