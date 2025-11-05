@@ -231,7 +231,7 @@ async function onSubmit() {
       method: 'POST',
       body: payload
     }), {
-      maxRetries: 2,
+      maxRetries: 3,
       exponentialBackoff: true,
       context: 'contactForm',
       onlyRetryableErrors: true
@@ -247,18 +247,7 @@ async function onSubmit() {
       color: 'success'
     })
   } catch (err: unknown) {
-    // Type guard for error object
-    const error = err as { statusCode?: number, data?: { message?: string } }
-
-    // Handle specific error cases
-    if (error.statusCode === 429) {
-      errorMessage.value = 'Too many submissions. Please try again later.'
-    } else if (error.statusCode === 400) {
-      errorMessage.value = error.data?.message || 'Invalid form data. Please check your inputs.'
-    } else {
-      errorMessage.value = 'Failed to send message. Please try again later.'
-    }
-
+    errorMessage.value = 'Failed to send message. Please try again later.'
     handleError(err, errorMessage.value, 'contactForm')
   } finally {
     isSubmitting.value = false

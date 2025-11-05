@@ -55,7 +55,7 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
 
   try {
     await withRetry(() => signUp(event.data.email, event.data.password, '', '', tosAccepted.value), {
-      maxRetries: 2,
+      maxRetries: 3,
       exponentialBackoff: true,
       context: 'signup'
     })

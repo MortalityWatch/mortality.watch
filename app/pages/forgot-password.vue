@@ -42,7 +42,7 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
   try {
     email.value = event.data.email
     await withRetry(() => forgotPassword(event.data.email), {
-      maxRetries: 2,
+      maxRetries: 3,
       exponentialBackoff: true,
       context: 'forgotPassword'
     })

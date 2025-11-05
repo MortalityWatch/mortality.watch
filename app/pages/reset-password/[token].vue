@@ -47,7 +47,7 @@ type Schema = z.output<typeof schema>
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   try {
     await withRetry(() => resetPassword(token.value, event.data.password), {
-      maxRetries: 2,
+      maxRetries: 3,
       exponentialBackoff: true,
       context: 'resetPassword'
     })

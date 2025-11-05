@@ -62,7 +62,7 @@ async function confirmDeletion() {
         password: password.value
       }
     }), {
-      maxRetries: 2,
+      maxRetries: 3,
       exponentialBackoff: true,
       context: 'deleteAccount'
     })

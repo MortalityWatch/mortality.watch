@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { handleError } from '@/lib/errors/errorHandler'
-
 definePageMeta({
   middleware: 'auth'
 })
@@ -8,7 +6,7 @@ definePageMeta({
 const { user, updateProfile, refreshSession } = useAuth()
 const toast = useToast()
 const route = useRoute()
-const { withRetry } = useErrorRecovery()
+const { withRetry, handleError } = useErrorRecovery()
 
 const savingProfile = ref(false)
 const savingPassword = ref(false)
@@ -44,7 +42,7 @@ async function saveProfile(profile: { firstName: string, lastName: string, displ
   savingProfile.value = true
   try {
     await withRetry(() => updateProfile(profile), {
-      maxRetries: 2,
+      maxRetries: 3,
       exponentialBackoff: true,
       context: 'saveProfile'
     })
@@ -76,7 +74,7 @@ async function changePassword(passwords: { currentPassword: string, newPassword:
       currentPassword: passwords.currentPassword,
       newPassword: passwords.newPassword
     }), {
-      maxRetries: 2,
+      maxRetries: 3,
       exponentialBackoff: true,
       context: 'changePassword'
     })
