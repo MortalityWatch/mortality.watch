@@ -14,6 +14,7 @@ useSeoMeta({
 const { signUp } = useAuth()
 const router = useRouter()
 const { formError, handleAuthError, clearError } = useAuthError()
+const { withRetry } = useErrorRecovery()
 const tosAccepted = ref(false)
 
 const fields = [{
@@ -53,7 +54,11 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
   }
 
   try {
-    await signUp(event.data.email, event.data.password, '', '', tosAccepted.value)
+    await withRetry(() => signUp(event.data.email, event.data.password, '', '', tosAccepted.value), {
+      maxRetries: 2,
+      exponentialBackoff: true,
+      context: 'signup'
+    })
 
     // Redirect to verification page with email
     await router.push({

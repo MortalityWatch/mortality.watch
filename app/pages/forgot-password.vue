@@ -14,6 +14,7 @@ useSeoMeta({
 const { forgotPassword } = useAuth()
 const toast = useToast()
 const { formError, handleAuthError, clearError } = useAuthError()
+const { withRetry } = useErrorRecovery()
 
 const submitted = ref(false)
 const email = ref('')
@@ -40,7 +41,11 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
 
   try {
     email.value = event.data.email
-    await forgotPassword(event.data.email)
+    await withRetry(() => forgotPassword(event.data.email), {
+      maxRetries: 2,
+      exponentialBackoff: true,
+      context: 'forgotPassword'
+    })
     submitted.value = true
     toast.add({
       title: 'Check your email',

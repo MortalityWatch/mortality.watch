@@ -15,6 +15,7 @@ const confirmText = ref('')
 const step = ref<1 | 2>(1)
 const deleting = ref(false)
 const toast = useToast()
+const { withRetry } = useErrorRecovery()
 
 // Reset state when modal is closed
 watch(() => props.open, (isOpen) => {
@@ -55,11 +56,15 @@ async function confirmDeletion() {
 
   deleting.value = true
   try {
-    await $fetch('/api/user/account', {
+    await withRetry(() => $fetch('/api/user/account', {
       method: 'DELETE',
       body: {
         password: password.value
       }
+    }), {
+      maxRetries: 2,
+      exponentialBackoff: true,
+      context: 'deleteAccount'
     })
 
     toast.add({

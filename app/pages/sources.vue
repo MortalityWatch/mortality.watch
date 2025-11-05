@@ -130,32 +130,41 @@ watch(searchQuery, () => {
   currentPage.value = 1
 })
 
+const { withRetry, handleError } = useErrorRecovery()
+
 const loadData = async () => {
   try {
     isLoading.value = true
     error.value = null
 
-    // Fetch metadata CSV using dataLoader (same as admin dashboard)
-    const metadataText = await dataLoader.fetchMetadata()
-    const allMeta = Papa.parse(metadataText, {
-      header: true,
-      skipEmptyLines: true
-    }).data as CountryRaw[]
+    // Fetch metadata CSV with automatic retry
+    await withRetry(async () => {
+      const metadataText = await dataLoader.fetchMetadata()
+      const allMeta = Papa.parse(metadataText, {
+        header: true,
+        skipEmptyLines: true
+      }).data as CountryRaw[]
 
-    products.value = allMeta.map(r => ({
-      id: `${r.iso3c}_${r.type}_${r.age_groups}`,
-      iso3c: r.iso3c,
-      jurisdiction: r.jurisdiction,
-      country: `<div><strong>${r.jurisdiction}</strong><br/><span class="font-mono text-xs text-gray-600 dark:text-gray-400">${r.iso3c}</span></div>`,
-      min_date: r.min_date.replaceAll('-', '/'),
-      max_date: r.max_date.replaceAll('-', '/'),
-      type: getDataTypeDescription(r.type),
-      age_groups: r.age_groups,
-      source: getSourceDescription(r.source)
-    }))
+      products.value = allMeta.map(r => ({
+        id: `${r.iso3c}_${r.type}_${r.age_groups}`,
+        iso3c: r.iso3c,
+        jurisdiction: r.jurisdiction,
+        country: `<div><strong>${r.jurisdiction}</strong><br/><span class="font-mono text-xs text-gray-600 dark:text-gray-400">${r.iso3c}</span></div>`,
+        min_date: r.min_date.replaceAll('-', '/'),
+        max_date: r.max_date.replaceAll('-', '/'),
+        type: getDataTypeDescription(r.type),
+        age_groups: r.age_groups,
+        source: getSourceDescription(r.source)
+      }))
+    }, {
+      maxRetries: 3,
+      exponentialBackoff: true,
+      context: 'loadSourcesData'
+    })
+
     isLoading.value = false
   } catch (err) {
-    console.error('Failed to load country metadata:', err)
+    handleError(err, 'Failed to load data sources. Please try again.', 'loadSourcesData')
     error.value = 'Failed to load data sources. Please try again.'
     isLoading.value = false
   }

@@ -185,6 +185,7 @@ const showSuccess = ref(false)
 const errorMessage = ref('')
 const toast = useToast()
 const route = useRoute()
+const { withRetry, handleError } = useErrorRecovery()
 
 // Determine if user is on a page with chart data
 const currentChartUrl = computed(() => {
@@ -225,10 +226,15 @@ async function onSubmit() {
       payload.chartUrl = currentChartUrl.value
     }
 
-    // Send to API
-    await $fetch('/api/contact', {
+    // Send to API with automatic retry for transient failures
+    await withRetry(() => $fetch('/api/contact', {
       method: 'POST',
       body: payload
+    }), {
+      maxRetries: 2,
+      exponentialBackoff: true,
+      context: 'contactForm',
+      onlyRetryableErrors: true
     })
 
     // Show success state
@@ -241,8 +247,6 @@ async function onSubmit() {
       color: 'success'
     })
   } catch (err: unknown) {
-    console.error('Contact form error:', err)
-
     // Type guard for error object
     const error = err as { statusCode?: number, data?: { message?: string } }
 
@@ -255,12 +259,7 @@ async function onSubmit() {
       errorMessage.value = 'Failed to send message. Please try again later.'
     }
 
-    // Show error toast
-    toast.add({
-      title: 'Failed to send message',
-      description: errorMessage.value,
-      color: 'error'
-    })
+    handleError(err, errorMessage.value, 'contactForm')
   } finally {
     isSubmitting.value = false
   }
