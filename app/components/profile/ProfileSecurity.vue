@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { User } from '#db/schema'
+import { passwordChangeSchema } from '~/schemas/profile'
 
 type AuthUser = Omit<User, 'passwordHash'>
 
@@ -17,9 +18,19 @@ const passwordState = reactive({
   confirmPassword: ''
 })
 
+// Initialize form validation
+const { validate, clearErrors, getError } = useFormValidation(passwordChangeSchema)
+
 const savingPassword = ref(false)
 
-async function handleSubmit(): Promise<void> {
+async function handleSubmit() {
+  // Validate form before submission
+  const result = validate(passwordState)
+
+  if (!result.valid) {
+    return
+  }
+
   savingPassword.value = true
   try {
     emit('change-password', {
@@ -36,16 +47,16 @@ async function handleSubmit(): Promise<void> {
     passwordState.currentPassword = ''
     passwordState.newPassword = ''
     passwordState.confirmPassword = ''
+    clearErrors()
   } finally {
     savingPassword.value = false
   }
 }
 
-const isFormValid = computed(() => {
-  return passwordState.currentPassword
-    && passwordState.newPassword
-    && passwordState.confirmPassword
-})
+// Watch for changes to clear errors as user types
+watch(passwordState, () => {
+  clearErrors()
+}, { deep: true })
 </script>
 
 <template>
@@ -79,8 +90,18 @@ const isFormValid = computed(() => {
           placeholder="Enter current password"
           autocomplete="current-password"
           name="currentPassword"
+          :error="!!getError('currentPassword')"
         />
-        <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+        <p
+          v-if="getError('currentPassword')"
+          class="mt-1.5 text-xs text-red-600 dark:text-red-400"
+        >
+          {{ getError('currentPassword') }}
+        </p>
+        <p
+          v-else
+          class="mt-1.5 text-xs text-gray-500 dark:text-gray-400"
+        >
           Enter your current password to verify your identity
         </p>
       </div>
@@ -101,8 +122,18 @@ const isFormValid = computed(() => {
           placeholder="Enter new password"
           autocomplete="new-password"
           name="newPassword"
+          :error="!!getError('newPassword')"
         />
-        <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+        <p
+          v-if="getError('newPassword')"
+          class="mt-1.5 text-xs text-red-600 dark:text-red-400"
+        >
+          {{ getError('newPassword') }}
+        </p>
+        <p
+          v-else
+          class="mt-1.5 text-xs text-gray-500 dark:text-gray-400"
+        >
           Choose a strong password with at least 8 characters
         </p>
       </div>
@@ -121,8 +152,18 @@ const isFormValid = computed(() => {
           placeholder="Confirm new password"
           autocomplete="new-password"
           name="confirmPassword"
+          :error="!!getError('confirmPassword')"
         />
-        <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+        <p
+          v-if="getError('confirmPassword')"
+          class="mt-1.5 text-xs text-red-600 dark:text-red-400"
+        >
+          {{ getError('confirmPassword') }}
+        </p>
+        <p
+          v-else
+          class="mt-1.5 text-xs text-gray-500 dark:text-gray-400"
+        >
           Re-enter your new password to confirm
         </p>
       </div>
@@ -131,7 +172,7 @@ const isFormValid = computed(() => {
         <UButton
           type="submit"
           :loading="savingPassword"
-          :disabled="savingPassword || !isFormValid"
+          :disabled="savingPassword"
         >
           Update Password
         </UButton>

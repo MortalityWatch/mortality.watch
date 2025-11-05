@@ -5,7 +5,7 @@ export interface DateRange {
   to: string
 }
 
-export interface ValidationResult {
+export interface DateRangeValidationResult {
   isValid: boolean
   correctedRange: DateRange
 }
@@ -27,7 +27,7 @@ export function useDateRangeValidation() {
     period: ChartPeriod,
     defaultRange: DateRange,
     minSpan?: number
-  ): ValidationResult {
+  ): DateRangeValidationResult {
     if (period.length === 0) {
       return {
         isValid: false,
