@@ -10,7 +10,18 @@ useSeoMeta({
 
 const { user } = useAuth()
 
-// TODO: Fetch actual stats from API when needed
+/**
+ * Admin Dashboard Statistics
+ *
+ * Currently using static mock data as a placeholder for the admin dashboard UI.
+ * These stats can be enhanced in the future when analytics tracking is implemented.
+ *
+ * To implement real stats, create an API endpoint at /api/admin/stats that returns:
+ * - Total user count from the database
+ * - Today's signups (filtered by createdAt date)
+ * - Pro subscriber count (filtered by subscription status)
+ * - Total saved charts count
+ */
 const stats = ref([
   {
     label: 'Total Users',
