@@ -45,3 +45,4 @@ logs
 
 # Husky
 .husky/_/
+core
