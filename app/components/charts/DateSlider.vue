@@ -86,11 +86,13 @@ watch(() => props.periodLength, (newPeriodLength) => {
 
   const periodIndices = calculatePeriodIndices(newPeriodLength)
   const currentSpan = (sliderIndices.value[1] ?? 0) - (sliderIndices.value[0] ?? 0)
+  // Expected span is periodIndices - 1 for inclusive range
+  const expectedSpan = periodIndices - 1
 
   // If current span doesn't match desired period, adjust
-  if (Math.abs(currentSpan - periodIndices) > 1) {
+  if (Math.abs(currentSpan - expectedSpan) > 1) {
     isUpdatingFromProp.value = true
-    const newEndIdx = Math.min((sliderIndices.value[0] ?? 0) + periodIndices, props.labels.length - 1)
+    const newEndIdx = Math.min((sliderIndices.value[0] ?? 0) + expectedSpan, props.labels.length - 1)
     sliderIndices.value = [sliderIndices.value[0] ?? 0, newEndIdx]
     prevIndices.value = [...sliderIndices.value]
     nextTick(() => {
@@ -152,7 +154,7 @@ const calculatePeriodIndices = (years: number): number => {
   if (years === 0 || !props.labels.length) return 0
 
   // Count unique years in labels
-  const uniqueYears = Array.from(new Set(props.labels.map(l => l.substring(0, 4))))
+  const uniqueYears = Array.from(new Set(props.labels.filter(l => l).map(l => l.substring(0, 4))))
   const labelsPerYear = Math.round(props.labels.length / uniqueYears.length)
 
   const result = years * labelsPerYear
@@ -193,11 +195,13 @@ watch(sliderIndices, (newIndices) => {
 
       if (startMoved && !endMoved) {
         // Start handle moved - adjust end handle
-        const newIdx1 = Math.min(idx0 + periodIndices, props.labels.length - 1)
+        // Subtract 1 because we want inclusive range (e.g., 3 years = indices 0,1,2 not 0,1,2,3)
+        const newIdx1 = Math.min(idx0 + periodIndices - 1, props.labels.length - 1)
         idx1 = newIdx1
       } else if (endMoved && !startMoved) {
         // End handle moved - adjust start handle
-        const newIdx0 = Math.max(idx1 - periodIndices, 0)
+        // Add 1 because we want inclusive range
+        const newIdx0 = Math.max(idx1 - periodIndices + 1, 0)
         idx0 = newIdx0
       }
 

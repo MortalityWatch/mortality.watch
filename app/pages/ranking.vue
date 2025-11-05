@@ -164,11 +164,17 @@ const metaData = computed(() => {
 // DATA ORCHESTRATION - useRankingData composable
 // ============================================================================
 
+// Additional state refs for compatibility
+const hasLoaded = ref(false)
+const sliderStart = ref('2020')
+
 const {
   allLabels,
+  visibleLabels,
   result,
   labels,
   allYearlyChartLabelsUnique,
+  baselineRange,
   isUpdating,
   updateProgress,
   initialLoadDone,
@@ -177,15 +183,11 @@ const {
   sliderChanged,
   baselineSliderChanged,
   periodOfTimeChanged
-} = useRankingData(state, metaData)
+} = useRankingData(state, metaData, sliderStart)
 
-// Additional state refs for compatibility
-const hasLoaded = ref(false)
-const sliderStart = ref('2020')
-
-// Computed: slider values
-const sliderValues = computed(() => {
-  return allLabels.value
+// Computed: date picker labels (renamed from sliderValues for consistency with Explorer)
+const datePickerLabels = computed(() => {
+  return visibleLabels.value || []
 })
 
 const sliderValue = computed({
@@ -193,8 +195,25 @@ const sliderValue = computed({
   set: (val: string[]) => sliderChanged(val)
 })
 
+// Use user-set baseline dates from URL if available, otherwise use computed defaults
 const baselineSliderValue = computed({
-  get: () => [state.baselineDateFrom.value, state.baselineDateTo.value],
+  get: () => {
+    const fromUrl = state.baselineDateFrom.value
+    const toUrl = state.baselineDateTo.value
+
+    // If both are set in URL, use them
+    if (fromUrl && toUrl) {
+      return [fromUrl, toUrl]
+    }
+
+    // Otherwise use computed baseline range (won't pollute URL)
+    if (baselineRange.value) {
+      return [baselineRange.value.from, baselineRange.value.to]
+    }
+
+    // Fallback to empty array if no baseline available yet
+    return []
+  },
   set: (val: string[]) => baselineSliderChanged(val)
 })
 
@@ -386,7 +405,7 @@ const copyRankingLink = () => {
             :all-yearly-chart-labels-unique="allYearlyChartLabelsUnique"
             :all-labels="allLabels"
             :slider-value="sliderValue"
-            :slider-values="sliderValues"
+            :labels="datePickerLabels"
             :is-updating="isUpdating"
             :selected-baseline-method="selectedBaselineMethod"
             data-tour="ranking-data-selection-mobile"
@@ -437,7 +456,7 @@ const copyRankingLink = () => {
             :all-yearly-chart-labels-unique="allYearlyChartLabelsUnique"
             :all-labels="allLabels"
             :slider-value="sliderValue"
-            :slider-values="sliderValues"
+            :labels="datePickerLabels"
             :is-updating="isUpdating"
             :selected-baseline-method="selectedBaselineMethod"
             data-tour="ranking-data-selection"

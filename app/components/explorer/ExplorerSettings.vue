@@ -10,6 +10,7 @@ const props = defineProps<{
   colors: string[]
   showPredictionIntervalDisabled: boolean
   showTotalOption: boolean
+  baselineRange: { from: string, to: string } | null
 }>()
 
 const emit = defineEmits<{
@@ -40,10 +41,25 @@ const emit = defineEmits<{
 // Computed values derived from state
 const isPopulationType = computed(() => props.state.type.value === 'population')
 const isMatrixChartStyle = computed(() => props.state.chartStyle.value === 'matrix')
-const baselineSliderValue = computed(() => [
-  props.state.baselineDateFrom.value,
-  props.state.baselineDateTo.value
-])
+
+// Use user-set baseline dates from URL if available, otherwise use computed defaults
+const baselineSliderValue = computed(() => {
+  const fromUrl = props.state.baselineDateFrom.value
+  const toUrl = props.state.baselineDateTo.value
+
+  // If both are set in URL, use them
+  if (fromUrl && toUrl) {
+    return [fromUrl, toUrl]
+  }
+
+  // Otherwise use computed baseline range (won't pollute URL)
+  if (props.baselineRange) {
+    return [props.baselineRange.from, props.baselineRange.to]
+  }
+
+  // Fallback to empty array if no baseline available yet
+  return []
+})
 </script>
 
 <template>

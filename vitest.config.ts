@@ -34,7 +34,6 @@ export default defineConfig({
         'app/globals/**',
         'app/types/**',
         // Composables that require Nuxt runtime
-        'app/composables/darkTheme.ts',
         'app/composables/useIncognitoMode.ts',
         'app/composables/useChartDataLoader.ts',
         'app/composables/useChartOgImage.ts',

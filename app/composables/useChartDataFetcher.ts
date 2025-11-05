@@ -154,18 +154,22 @@ export function useChartDataFetcher() {
         config.baselineDateTo
       )
 
-      // Step 4: Get baseline start index
-      const baselineStartIdx
-        = config.baselineStartIdx
-          ?? getBaselineStartIndex(allLabels, config.chartType, baselineFrom)
+      // Step 4: Get baseline start index (no longer used for data fetching)
+      // We now load all data and filter at display time
+      // const baselineStartIdx = config.baselineStartIdx ?? getBaselineStartIndex(allLabels, config.chartType, baselineFrom)
 
       // Step 5: Fetch processed chart data
+      // IMPORTANT: Pass 0 as startDateIndex to load ALL available data
+      // Filtering for display range happens later in updateFilteredData
+      // This ensures allChartData contains the full dataset for slider interaction
+      const dataStartIndex = 0
+
       const chartData = await fetchAllChartData(
         config.dataKey,
         config.chartType,
         dataset,
         allLabels,
-        baselineStartIdx,
+        dataStartIndex, // Load all data, filter at display time
         config.cumulative ?? false,
         config.ageGroups,
         config.countries,

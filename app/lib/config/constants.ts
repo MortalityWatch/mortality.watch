@@ -15,7 +15,7 @@ export const DATA_CONFIG = {
    * Start year for ranking data analysis
    * Used in useRankingData composable for date range calculations
    */
-  RANKING_START_YEAR: 2020,
+  RANKING_START_YEAR: 2010,
 
   /**
    * End year for ranking data analysis

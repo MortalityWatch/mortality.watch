@@ -12,7 +12,7 @@ const props = defineProps<{
   allYearlyChartLabelsUnique: string[]
   allLabels: string[]
   sliderValue: string[]
-  sliderValues: string[]
+  labels: string[] // Renamed from sliderValues for consistency with Explorer
   isUpdating: boolean
   selectedBaselineMethod?: { label: string, name: string, value: string }
   dataTour?: string
@@ -67,7 +67,7 @@ const emit = defineEmits<{
         :slider-start="props.sliderStart"
         :all-yearly-chart-labels-unique="props.allYearlyChartLabelsUnique"
         :slider-value="props.sliderValue"
-        :labels="props.sliderValues"
+        :labels="props.labels"
         :chart-type="(props.selectedPeriodOfTime?.value || 'yearly') as ChartType"
         :disabled="props.isUpdating"
         data-tour="ranking-date-range"

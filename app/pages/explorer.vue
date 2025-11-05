@@ -86,7 +86,17 @@ const {
 )
 
 // Adapter: Convert separate date refs to array format for DateSlider component
-const sliderValue = computed(() => [state.dateFrom.value, state.dateTo.value])
+// Uses default range (~10 years of recent data) when dates are undefined
+const sliderValue = computed(() => {
+  const defaultRange = dataOrchestration.getDefaultRange()
+
+  // If user has set dates, use them; otherwise use defaults (if available)
+  // Convert empty strings to undefined so DateSlider handles initial state correctly
+  const from = state.dateFrom.value ?? (defaultRange.from || undefined)
+  const to = state.dateTo.value ?? (defaultRange.to || undefined)
+
+  return [from, to]
+})
 
 // Get color mode for theme reactivity
 const colorMode = useColorMode()
@@ -273,6 +283,13 @@ const handleChartPresetChanged = (v: string) => {
   applyPresetSize(v)
 }
 
+// Watch for date range changes from URL/slider and trigger chart update
+watch([() => state.dateFrom.value, () => state.dateTo.value], () => {
+  if (isDataLoaded.value) {
+    update('dateRange')
+  }
+})
+
 onMounted(async () => {
   // Initialize data - load all, client-side filtering happens via useCountryFilter
   const allMetadata = await loadCountryMetadata()
@@ -413,6 +430,7 @@ const showSaveModal = computed({
             :colors="displayColors"
             :show-prediction-interval-disabled="showPredictionIntervalDisabled"
             :show-total-option="dataOrchestration.chartOptions.showTotalOption"
+            :baseline-range="dataOrchestration.baselineRange.value"
             @type-changed="(v) => updateStateAndRefresh(() => state.type.value = v, '_type')"
             @chart-type-changed="(v) => updateStateAndRefresh(() => state.chartType.value = v, '_chartType')"
             @chart-style-changed="(v) => updateStateAndRefresh(() => state.chartStyle.value = v, '_chartStyle')"

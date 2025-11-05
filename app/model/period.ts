@@ -33,6 +33,9 @@ export class ChartPeriod {
    * Returns a valid index even if exact match not found
    */
   indexOf(date: string): number {
+    // Safety check: handle empty/undefined dates
+    if (!date || typeof date !== 'string') return 0
+
     const idx = this.labels.indexOf(date)
     if (idx !== -1) return idx
 
@@ -52,8 +55,11 @@ export class ChartPeriod {
    * Returns index of closest matching date
    */
   findClosestDateIndex(date: string): number {
+    // Safety check: handle empty/undefined dates
+    if (!date || typeof date !== 'string' || date.length < 4) return 0
+
     const year = date.substring(0, 4)
-    const yearMatches = this.labels.filter(l => l.startsWith(year))
+    const yearMatches = this.labels.filter(l => l && l.startsWith(year))
 
     if (yearMatches.length > 0) {
       const firstMatch = yearMatches[0]
@@ -63,7 +69,7 @@ export class ChartPeriod {
     // Find nearest year
     const targetYear = parseInt(year)
     const availableYears = Array.from(
-      new Set(this.labels.map(l => parseInt(l.substring(0, 4))))
+      new Set(this.labels.filter(l => l && typeof l === 'string').map(l => parseInt(l.substring(0, 4))))
     )
     const closestYear = availableYears.reduce((prev, curr) =>
       Math.abs(curr - targetYear) < Math.abs(prev - targetYear) ? curr : prev
@@ -77,6 +83,9 @@ export class ChartPeriod {
    * Find closest date label (returns the label string)
    */
   findClosestDate(date: string): string {
+    // Safety check: handle empty/undefined dates
+    if (!date || typeof date !== 'string') return this.labels[0] || ''
+
     const idx = this.findClosestDateIndex(date)
     return this.labels[idx] || this.labels[0] || ''
   }

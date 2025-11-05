@@ -48,14 +48,17 @@ export const StandardPopulationEnum = z.enum([
 ])
 
 export const BaselineMethodEnum = z.enum([
+  'naive',
   'mean',
-  'linear',
-  'spline'
+  'median',
+  'lin_reg',
+  'exp'
 ])
 
 export const ChartStyleEnum = z.enum([
   'line',
-  'bar'
+  'bar',
+  'matrix'
 ])
 
 export const DecimalPrecisionEnum = z.enum([

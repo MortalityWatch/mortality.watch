@@ -21,6 +21,9 @@ import { handleError } from '@/lib/errors/errorHandler'
 import { processCountryRow } from '@/lib/ranking/dataProcessing'
 import type { TableRow } from '@/lib/ranking/types'
 import { useChartDataFetcher } from '@/composables/useChartDataFetcher'
+import { useDateRangeCalculations } from '@/composables/useDateRangeCalculations'
+import { useDateRangeValidation } from '@/composables/useDateRangeValidation'
+import { calculateBaselineRange } from '@/lib/baseline/calculateBaselineRange'
 import { DATA_CONFIG, UI_CONFIG } from '@/lib/config/constants'
 
 const RANKING_START_YEAR = DATA_CONFIG.RANKING_START_YEAR
@@ -28,7 +31,8 @@ const RANKING_END_YEAR = DATA_CONFIG.RANKING_END_YEAR
 
 export function useRankingData(
   state: ReturnType<typeof useRankingState>,
-  metaData: ComputedRef<Record<string, Country>>
+  metaData: ComputedRef<Record<string, Country>>,
+  sliderStart: Ref<string>
 ) {
   const { getPeriodStart, getPeriodEnd } = usePeriodFormat()
   const { shouldShowCountry } = useJurisdictionFilter()
@@ -59,14 +63,108 @@ export function useRankingData(
   const total_row_key = DATA_CONFIG.TOTAL_ROW_KEY
 
   // ============================================================================
+  // DATE RANGE CALCULATIONS - Feature gating and filtering
+  // ============================================================================
+
+  // Date range calculations (single source of truth for date logic)
+  const dateRangeCalc = useDateRangeCalculations(
+    computed(() => state.periodOfTime.value || 'yearly'),
+    sliderStart,
+    state.dateFrom,
+    state.dateTo,
+    allLabels
+  )
+
+  // Validation
+  const { getValidatedRange } = useDateRangeValidation()
+
+  /**
+   * Watch for data availability and validate dates reactively
+   *
+   * Similar to Explorer's date watcher - ensures dates are valid when:
+   * 1. Data is first loaded (visibleLabels becomes available)
+   * 2. Chart type changes (may invalidate current selection)
+   * 3. sliderStart changes (visible range changes)
+   *
+   * Logic:
+   * 1. If current dateFrom/dateTo are valid, keep them (preserve user selection)
+   * 2. Otherwise, correct invalid dates to closest valid dates
+   * 3. Try to preserve year when chart type changes
+   */
+  watch([dateRangeCalc.visibleLabels, computed(() => state.periodOfTime.value)], () => {
+    const labels = dateRangeCalc.visibleLabels.value
+    if (labels.length === 0) return
+
+    // Get default range from composable
+    const { from: defaultFrom, to: defaultTo } = dateRangeCalc.getDefaultRange()
+
+    // If default range is empty, we can't do anything yet
+    if (!defaultFrom || !defaultTo) return
+
+    // Check if current range is valid
+    const currentFrom = state.dateFrom.value
+    const currentTo = state.dateTo.value
+    const hasValidRange = currentFrom && currentTo
+      && dateRangeCalc.isValidDate(currentFrom)
+      && dateRangeCalc.isValidDate(currentTo)
+
+    // If current range is valid, preserve it
+    if (hasValidRange) {
+      return
+    }
+
+    // Don't auto-initialize dates if user never set them (keeps URL clean)
+    const userNeverSetDates = currentFrom === undefined && currentTo === undefined
+    if (userNeverSetDates) {
+      return
+    }
+
+    // If user set invalid dates, correct them
+    // Try to preserve user's selection by matching years
+    const matchedFrom = dateRangeCalc.matchDateToLabel(currentFrom, false) ?? defaultFrom
+    const matchedTo = dateRangeCalc.matchDateToLabel(currentTo, true) ?? defaultTo
+
+    // Validate the matched range
+    const period = new ChartPeriod(labels, state.periodOfTime.value as ChartType)
+    const validatedRange = getValidatedRange(
+      { from: matchedFrom, to: matchedTo },
+      period,
+      { from: defaultFrom, to: defaultTo }
+    )
+
+    // Update state only if values changed
+    if (validatedRange.from !== currentFrom) {
+      state.dateFrom.value = validatedRange.from
+    }
+    if (validatedRange.to !== currentTo) {
+      state.dateTo.value = validatedRange.to
+    }
+  })
+
+  // ============================================================================
   // COMPUTED - Derived Values
   // ============================================================================
 
+  // Note: visibleLabels is now provided by dateRangeCalc and respects feature gating
+  // allYearlyChartLabelsUnique still needs manual computation for unique years
   const allYearlyChartLabelsUnique = computed(() => {
+    const visibleLabels = dateRangeCalc.visibleLabels.value
     const allYearlyChartLabels = Array.from(
-      allLabels.value.map(v => v.substring(0, 4))
+      visibleLabels.filter(v => v).map(v => v.substring(0, 4))
     )
     return Array.from(new Set(allYearlyChartLabels))
+  })
+
+  /**
+   * Computed baseline range
+   * Provides smart defaults for baseline period based on chart type and available data
+   */
+  const baselineRange = computed(() => {
+    return calculateBaselineRange(
+      state.periodOfTime.value || 'yearly',
+      allLabels.value,
+      allYearlyChartLabelsUnique.value
+    )
   })
 
   const key = (): keyof CountryData =>
@@ -363,11 +461,13 @@ export function useRankingData(
   return {
     // Data
     allLabels,
+    visibleLabels: dateRangeCalc.visibleLabels, // Feature-gated labels for UI
     allChartData,
     result,
     labels,
     visibleCountryCodes,
     allYearlyChartLabelsUnique,
+    baselineRange,
 
     // Loading state
     isUpdating,

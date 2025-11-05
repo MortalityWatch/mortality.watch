@@ -94,6 +94,24 @@ vi.mock('vue-router', () => ({
   }))
 }))
 
+// Mock useDateRangeCalculations
+// This mock needs to pass through allLabels to visibleLabels since we're testing with premium features
+vi.mock('./useDateRangeCalculations', () => ({
+  useDateRangeCalculations: vi.fn((_chartType, _sliderStart, _dateFrom, _dateTo, allLabels) => ({
+    visibleLabels: allLabels, // Pass through - premium user has access to all labels
+    availableLabels: allLabels,
+    availableRange: computed(() => null),
+    visibleRange: computed(() => null),
+    selectedRange: computed(() => ({ from: null, to: null })),
+    isValidDate: vi.fn(() => true),
+    getDefaultRange: vi.fn(() => ({ from: '', to: '' })),
+    findClosestYearLabel: vi.fn(() => null),
+    matchDateToLabel: vi.fn(() => null),
+    hasExtendedTimeAccess: computed(() => true),
+    effectiveMinDate: computed(() => null)
+  }))
+}))
+
 describe('useRankingData', () => {
   let mockState: ReturnType<typeof useRankingState>
   let mockMetaData: ReturnType<typeof computed<Record<string, Country>>>
@@ -172,7 +190,7 @@ describe('useRankingData', () => {
 
   describe('initialization', () => {
     it('should initialize with empty data', () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       expect(ranking.allLabels.value).toEqual([])
       expect(ranking.result.value).toEqual([])
@@ -180,13 +198,13 @@ describe('useRankingData', () => {
     })
 
     it('should initialize loading state', () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       expect(ranking.isUpdating.value).toBe(false)
     })
 
     it('should expose progress from data fetcher', () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       mockDataFetcher.updateProgress.value = 50
 
@@ -200,7 +218,7 @@ describe('useRankingData', () => {
 
   describe('fetchChartData', () => {
     it('should fetch CMR data by default', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       await ranking.loadData()
 
@@ -213,7 +231,7 @@ describe('useRankingData', () => {
     })
 
     it('should fetch ASMR data when enabled', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       mockState.showASMR.value = true
 
@@ -228,7 +246,7 @@ describe('useRankingData', () => {
     })
 
     it('should filter countries by ASMR availability', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       mockState.showASMR.value = true
 
@@ -241,7 +259,7 @@ describe('useRankingData', () => {
     })
 
     it('should include all countries for CMR', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       mockState.showASMR.value = false
 
@@ -252,7 +270,7 @@ describe('useRankingData', () => {
     })
 
     it('should pass correct baseline configuration', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       mockState.baselineMethod.value = 'lin_reg'
       mockState.baselineDateFrom.value = '2015'
@@ -270,7 +288,7 @@ describe('useRankingData', () => {
     })
 
     it('should pass cumulative flag', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       mockState.cumulative.value = true
 
@@ -284,7 +302,7 @@ describe('useRankingData', () => {
     })
 
     it('should handle null response', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       mockDataFetcher.fetchChartData.mockResolvedValue(null)
 
@@ -303,7 +321,7 @@ describe('useRankingData', () => {
 
   describe('loading state', () => {
     it('should set isUpdating during load', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       mockDataFetcher.fetchChartData.mockImplementation(
         () => new Promise(resolve => setTimeout(() => resolve({
@@ -322,7 +340,7 @@ describe('useRankingData', () => {
     })
 
     it('should not load if already updating', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       mockDataFetcher.fetchChartData.mockImplementation(
         () => new Promise(resolve => setTimeout(resolve, 100))
@@ -337,7 +355,7 @@ describe('useRankingData', () => {
     })
 
     it('should set initialLoadDone after first load', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       expect(ranking.initialLoadDone.value).toBe(false)
 
@@ -347,7 +365,7 @@ describe('useRankingData', () => {
     })
 
     it('should reset loading state on error', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       mockDataFetcher.fetchChartData.mockRejectedValue(new Error('Fetch failed'))
 
@@ -363,7 +381,7 @@ describe('useRankingData', () => {
 
   describe('table processing', () => {
     it('should process country rows', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       await ranking.loadData()
 
@@ -372,7 +390,7 @@ describe('useRankingData', () => {
     })
 
     it('should filter out countries without data', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       vi.mocked(processCountryRow)
         .mockReturnValueOnce({ row: { iso3c: 'USA' } as any, hasData: true })
@@ -385,7 +403,7 @@ describe('useRankingData', () => {
     })
 
     it('should add total row when showTotals is true', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       mockState.showTotals.value = true
 
@@ -395,7 +413,7 @@ describe('useRankingData', () => {
     })
 
     it('should show only total when showTotalsOnly is true', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       mockState.showTotalsOnly.value = true
 
@@ -405,7 +423,7 @@ describe('useRankingData', () => {
     })
 
     it('should track visible country codes', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       vi.mocked(processCountryRow)
         .mockReturnValueOnce({ row: { iso3c: 'USA' } as any, hasData: true })
@@ -418,7 +436,7 @@ describe('useRankingData', () => {
     })
 
     it('should reset progress after processing', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       mockDataFetcher.updateProgress.value = 50
 
@@ -434,7 +452,7 @@ describe('useRankingData', () => {
 
   describe('date range management', () => {
     it('should calculate date range using ChartPeriod', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       mockState.dateFrom.value = '2021'
       mockState.dateTo.value = '2023'
@@ -445,7 +463,7 @@ describe('useRankingData', () => {
     })
 
     it('should handle date changes', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       await ranking.loadData()
 
@@ -456,7 +474,7 @@ describe('useRankingData', () => {
     })
 
     it('should handle baseline date changes', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       await ranking.loadData()
 
@@ -467,7 +485,7 @@ describe('useRankingData', () => {
     })
 
     it('should provide period start helper', () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       const start = ranking.startPeriod()
 
@@ -475,7 +493,7 @@ describe('useRankingData', () => {
     })
 
     it('should provide period end helper', () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       const end = ranking.endPeriod()
 
@@ -489,7 +507,7 @@ describe('useRankingData', () => {
 
   describe('period type changes', () => {
     it('should reset dates when period type changes', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       await ranking.loadData()
 
@@ -503,7 +521,7 @@ describe('useRankingData', () => {
     })
 
     it('should update baseline dates on period change', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       await ranking.loadData()
 
@@ -526,7 +544,7 @@ describe('useRankingData', () => {
 
   describe('explorer link generation', () => {
     it('should generate explorer link for specific countries', () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       const link = ranking.explorerLink(['USA', 'GBR'])
 
@@ -535,7 +553,7 @@ describe('useRankingData', () => {
     })
 
     it('should use visible countries if none specified', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       vi.mocked(processCountryRow)
         .mockReturnValueOnce({ row: { iso3c: 'USA' } as any, hasData: true })
@@ -550,7 +568,7 @@ describe('useRankingData', () => {
     })
 
     it('should limit to 20 countries', () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       const manyCodes = Array.from({ length: 50 }, (_, i) => `C${i}`)
       const link = ranking.explorerLink(manyCodes)
@@ -561,7 +579,7 @@ describe('useRankingData', () => {
     })
 
     it('should include current state parameters', () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       mockState.periodOfTime.value = 'monthly'
       mockState.standardPopulation.value = 'esp2013'
@@ -581,7 +599,7 @@ describe('useRankingData', () => {
 
   describe('error handling', () => {
     it('should handle fetch errors', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       const error = new Error('Fetch failed')
       mockDataFetcher.fetchChartData.mockRejectedValue(error)
@@ -596,7 +614,7 @@ describe('useRankingData', () => {
     })
 
     it('should handle missing data gracefully', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       mockDataFetcher.fetchChartData.mockResolvedValue({
         allLabels: ['2020'],
@@ -613,7 +631,7 @@ describe('useRankingData', () => {
     })
 
     it('should reset loading state on error', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       mockDataFetcher.fetchChartData.mockRejectedValue(new Error('Error'))
 
@@ -629,7 +647,7 @@ describe('useRankingData', () => {
 
   describe('watchers', () => {
     it('should reload data when period type changes', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       await ranking.loadData()
 
@@ -644,7 +662,7 @@ describe('useRankingData', () => {
     })
 
     it('should reload data when ASMR toggle changes', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       await ranking.loadData()
 
@@ -658,7 +676,7 @@ describe('useRankingData', () => {
     })
 
     it('should reload data when baseline method changes', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       await ranking.loadData()
 
@@ -672,7 +690,7 @@ describe('useRankingData', () => {
     })
 
     it('should reload data when date range changes', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       await ranking.loadData()
 
@@ -686,7 +704,7 @@ describe('useRankingData', () => {
     })
 
     it('should reload data when display options change', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       await ranking.loadData()
 
@@ -706,7 +724,7 @@ describe('useRankingData', () => {
 
   describe('computed values', () => {
     it('should compute allYearlyChartLabelsUnique', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       mockDataFetcher.fetchChartData.mockResolvedValue({
         allLabels: ['2020-01', '2020-02', '2021-01', '2021-02'],
@@ -730,7 +748,7 @@ describe('useRankingData', () => {
   describe('edge cases', () => {
     it('should handle empty metadata', async () => {
       const emptyMetaData = computed(() => ({}))
-      const ranking = useRankingData(mockState, emptyMetaData)
+      const ranking = useRankingData(mockState, emptyMetaData, ref('2020'))
 
       // When metadata is empty, there should be no countries to process
       // So the result should reflect that
@@ -742,7 +760,7 @@ describe('useRankingData', () => {
     })
 
     it('should handle empty chart data', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       mockDataFetcher.fetchChartData.mockResolvedValue({
         allLabels: [],
@@ -757,7 +775,7 @@ describe('useRankingData', () => {
     })
 
     it('should handle invalid date range', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       mockState.dateFrom.value = '2099'
       mockState.dateTo.value = '2100'
@@ -769,7 +787,7 @@ describe('useRankingData', () => {
     })
 
     it('should handle cumulative mode', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       mockState.cumulative.value = true
 
@@ -783,7 +801,7 @@ describe('useRankingData', () => {
     })
 
     it('should handle different standard populations', async () => {
-      const ranking = useRankingData(mockState, mockMetaData)
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       mockState.standardPopulation.value = 'esp2013'
       mockState.showASMR.value = true

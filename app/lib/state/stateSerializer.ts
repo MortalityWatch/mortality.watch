@@ -26,8 +26,8 @@ export const Defaults = {
   isExcess: false,
   chartType: 'fluseason',
   chartStyle: 'line',
-  dateFrom: undefined as string | undefined,
-  dateTo: undefined as string | undefined,
+  dateFrom: undefined as string | undefined, // undefined = use default range
+  dateTo: undefined as string | undefined, // undefined = use latest available
   baselineDateFrom: undefined as string | undefined,
   baselineDateTo: undefined as string | undefined,
   standardPopulation: 'who',
@@ -41,7 +41,7 @@ export const Defaults = {
   showLabels: true,
   showPercentage: undefined as boolean | undefined,
   isLogarithmic: false,
-  sliderStart: undefined as string | undefined,
+  sliderStart: '2010' as string | undefined, // Slider shows from 2010 onwards
   userColors: undefined as string[] | undefined,
   showLogo: true,
   showQrCode: true,
