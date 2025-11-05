@@ -91,7 +91,7 @@ const sliderValue = computed(() => [state.dateFrom.value, state.dateTo.value])
 // Get color mode for theme reactivity
 const colorMode = useColorMode()
 
-// Phase 5a: Colors management extracted to composable
+// Colors management extracted to composable
 const { displayColors } = useExplorerColors(
   state.countries,
   state.userColors,
@@ -112,7 +112,7 @@ const allAgeGroups = computed(() => {
   return Array.from(result)
 })
 
-// Phase 9.2: Data orchestration composable
+// Data orchestration composable
 const dataOrchestration = useExplorerDataOrchestration(
   state,
   {
