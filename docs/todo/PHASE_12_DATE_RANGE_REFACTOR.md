@@ -197,21 +197,21 @@ const labels = computed(() => dataRangeCalc.visibleLabels.value);
 
 ### Step 7: Migration & Cleanup
 
-1. ✅ Run full test suite - 1473/1473 tests passing
+1. ✅ Run full test suite - 1468/1468 tests passing (5 tests removed - see below)
 2. ⚠️ Manual testing of all date-related features - Recommended for production deployment
 3. **Remove deprecated code:**
-   - ⚠️ `filteredChartLabels` - Kept as reference to `dateRangeCalc.visibleLabels` (not duplicate)
-   - ⚠️ `resetDates()` function - Kept for now (watcher-based approach is future improvement)
+   - ✅ `filteredChartLabels` - REMOVED (renamed to `visibleLabels` for clarity)
+   - ✅ `resetDates()` function - REMOVED (replaced with reactive watcher - commit 2ba1c41)
    - ✅ Duplicate feature gating logic - Removed from DateSlider.vue
 4. ✅ Update documentation - DATE_RANGE_ARCHITECTURE.md updated
-5. ⏳ Performance audit - Basic review done, no concerns identified
+5. ✅ Performance audit - Basic review done, no concerns identified
 
 ## Success Criteria
 
 - [x] All date calculations in single composable
 - [x] No circular dependencies
 - [x] Feature gating centralized
-- [x] Tests passing (1473/1473)
+- [x] Tests passing (1468/1468 - reduced from 1473 after removing 5 resetDates tests)
 - [x] No behavior regressions
 - [x] Code is easier to understand
 - [x] Future changes require editing fewer files
@@ -249,11 +249,11 @@ const labels = computed(() => dataRangeCalc.visibleLabels.value);
 - `app/composables/useDataAvailability.ts` - Metadata availability (separate concern)
 - `docs/architecture/DATE_RANGE_ARCHITECTURE.md` - ✅ Updated architecture docs
 
-## Future Improvements (Optional)
+## Completed Improvements
 
-The following improvements were identified during planning but deferred as optional enhancements:
+The following improvements were originally identified as "optional" but have been completed:
 
-### 1. Watcher-Based Date Initialization
+### 1. ✅ Watcher-Based Date Initialization - COMPLETED (Commit 2ba1c41)
 
 **Goal**: Replace `resetDates()` function with reactive watchers
 
@@ -262,26 +262,53 @@ The following improvements were identified during planning but deferred as optio
 - Eliminate explicit validation calls
 - Cleaner separation of concerns
 
-**Approach** (from Step 3 in original plan):
+**Implementation** (in `useExplorerDataOrchestration.ts:179-210`):
 ```typescript
-// Watch for data load, initialize if needed
-watch([dateRangeCalc.availableLabels], () => {
-  if (!state.dateFrom.value && dateRangeCalc.availableLabels.value.length > 0) {
-    const defaultRange = dateRangeCalc.getDefaultRange()
-    state.dateFrom.value = defaultRange.from
-    state.dateTo.value = defaultRange.to
-  }
-})
+// Watch for data availability and initialize dates reactively
+watch([dateRangeCalc.visibleLabels, state.chartType], () => {
+  const labels = dateRangeCalc.visibleLabels.value
+  if (labels.length === 0) return
 
-// Watch for chart type changes, validate dates
-watch([state.chartType], () => {
-  if (state.dateFrom.value && !dateRangeCalc.isValidDate(state.dateFrom.value)) {
-    state.dateFrom.value = dateRangeCalc.matchDateToLabel(state.dateFrom.value, false)
+  // If current range is valid, preserve it
+  if (dateRangeCalc.isValidDate(state.dateFrom.value ?? '') &&
+      dateRangeCalc.isValidDate(state.dateTo.value ?? '')) {
+    return
+  }
+
+  // Get default range and try to preserve user's selection
+  const { from: defaultFrom, to: defaultTo } = dateRangeCalc.getDefaultRange()
+  const matchedFrom = dateRangeCalc.matchDateToLabel(state.dateFrom.value, false) ?? defaultFrom
+  const matchedTo = dateRangeCalc.matchDateToLabel(state.dateTo.value, true) ?? defaultTo
+
+  // Validate and update state
+  const period = new ChartPeriod(labels, state.chartType.value as ChartType)
+  const validatedRange = getValidatedRange(
+    { from: matchedFrom, to: matchedTo },
+    period,
+    { from: defaultFrom, to: defaultTo }
+  )
+
+  if (validatedRange.from !== state.dateFrom.value || !state.dateFrom.value) {
+    state.dateFrom.value = validatedRange.from
+  }
+  if (validatedRange.to !== state.dateTo.value || !state.dateTo.value) {
+    state.dateTo.value = validatedRange.to
   }
 })
 ```
 
-**Status**: Not blocking, current approach works well
+**Results**:
+- ✅ Removed `resetDates()` function entirely
+- ✅ Removed 5 explicit unit tests (now integration-tested)
+- ✅ Cleaner API (fewer exported functions)
+- ✅ Fully reactive validation
+- ✅ All tests passing (1468/1468)
+
+**Status**: ✅ **COMPLETED** - Worth doing, improves architecture
+
+## Future Improvements (Still Optional)
+
+The following improvements were identified but remain as optional enhancements:
 
 ### 2. Dedicated Unit Tests
 
