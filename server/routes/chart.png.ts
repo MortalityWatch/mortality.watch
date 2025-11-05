@@ -8,7 +8,7 @@ import {
   parseQueryParams,
   getDimensions,
   generateChartTitle,
-  setChartResponseHeaders,
+  getChartResponseHeaders,
   fetchChartData,
   transformChartData,
   generateChartConfig,
@@ -50,7 +50,7 @@ export default defineEventHandler(async (event) => {
     const cachedBuffer = await getCachedChart(cacheKey)
     if (cachedBuffer) {
       // Return cached version with 7-day Cache-Control
-      setChartResponseHeaders(event, cachedBuffer, state.countries, true)
+      setResponseHeaders(event, getChartResponseHeaders(cachedBuffer, state.countries, true))
       return cachedBuffer
     }
 
@@ -98,7 +98,7 @@ export default defineEventHandler(async (event) => {
     })
 
     // Set response headers with 7-day cache
-    setChartResponseHeaders(event, buffer, state.countries, false)
+    setResponseHeaders(event, getChartResponseHeaders(buffer, state.countries, false))
 
     return buffer
   } catch (error) {

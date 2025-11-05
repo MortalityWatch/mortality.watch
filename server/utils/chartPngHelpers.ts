@@ -83,25 +83,24 @@ export function generateCountriesFilename(countries: string[]): string {
 }
 
 /**
- * Configure response headers for chart PNG
- * @param event - H3 event object
+ * Generate response headers for chart PNG
  * @param buffer - PNG buffer
  * @param countries - Array of country codes/names
  * @param cacheHit - Whether response is from cache
+ * @returns Headers object for chart PNG response
  */
-export function setChartResponseHeaders(
-  event: H3Event,
+export function getChartResponseHeaders(
   buffer: Buffer,
   countries: string[],
   cacheHit: boolean
-): void {
-  setResponseHeaders(event, {
+): Record<string, string> {
+  return {
     'Content-Type': 'image/png',
     'Content-Length': buffer.length.toString(),
     'Cache-Control': 'public, max-age=604800, immutable', // 7 days
     'X-Cache': cacheHit ? 'HIT' : 'MISS',
     'Content-Disposition': `inline; filename="mortality-chart-${generateCountriesFilename(countries)}.png"`
-  })
+  }
 }
 
 /**
@@ -155,21 +154,19 @@ export async function fetchChartData(state: ReturnType<typeof decodeChartState>)
  * @param type - Chart type (cmr, asmr, le, deaths, population)
  * @returns Data key for chart data fetching
  */
-function getDataKey(type: string): string {
-  switch (type) {
-    case 'cmr':
-      return 'cmr'
-    case 'le':
-      return 'le'
-    case 'deaths':
-      return 'deaths'
-    default:
-      if (type.startsWith('asmr')) {
-        const standardPopulation = type.split('_')[1] || 'esp2013'
-        return `asmr_${standardPopulation}`
-      }
-      return 'population'
+export function getDataKey(type: string): string {
+  if (type.startsWith('asmr')) {
+    const standardPopulation = type.split('_')[1] || 'esp2013'
+    return `asmr_${standardPopulation}`
   }
+
+  const typeMap: Record<string, string> = {
+    cmr: 'cmr',
+    le: 'le',
+    deaths: 'deaths'
+  }
+
+  return typeMap[type] || 'population'
 }
 
 /**
