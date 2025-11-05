@@ -207,7 +207,7 @@ const currentPageName = computed(() => {
 })
 
 // Submit handler
-async function onSubmit() {
+async function onSubmit(): Promise<void> {
   errorMessage.value = ''
   isSubmitting.value = true
 
@@ -267,7 +267,7 @@ async function onSubmit() {
 }
 
 // Reset form
-function resetForm() {
+function resetForm(): void {
   formState.name = ''
   formState.email = ''
   formState.subject = ''

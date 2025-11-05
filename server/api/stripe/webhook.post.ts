@@ -49,7 +49,7 @@ export default defineEventHandler(async (event) => {
         webhookSecret
       )
     } catch (err) {
-      console.error('Webhook signature verification failed:', err)
+      logger.error('Webhook signature verification failed:', err instanceof Error ? err : new Error(String(err)))
       throw createError({
         statusCode: 400,
         message: 'Invalid signature'
@@ -64,7 +64,7 @@ export default defineEventHandler(async (event) => {
       .get()
 
     if (existingEvent) {
-      console.log(`Webhook event ${stripeEvent.id} already processed, skipping`)
+      logger.info(`Webhook event ${stripeEvent.id} already processed, skipping`)
       return { received: true, duplicate: true }
     }
 
@@ -92,7 +92,7 @@ export default defineEventHandler(async (event) => {
       return { received: true }
     } catch (processingError) {
       // Log processing error
-      console.error('Error processing webhook:', processingError)
+      logger.error('Error processing webhook', processingError instanceof Error ? processingError : new Error(String(processingError)))
 
       await db
         .update(webhookEvents)
@@ -107,7 +107,7 @@ export default defineEventHandler(async (event) => {
       throw processingError
     }
   } catch (error) {
-    console.error('Webhook handler error:', error)
+    logger.error('Webhook handler error:', error instanceof Error ? error : new Error(String(error)))
 
     // Still return 200 if it's a duplicate or already logged error
     // to prevent Stripe from retrying
@@ -124,6 +124,18 @@ export default defineEventHandler(async (event) => {
 
 /**
  * Process different webhook event types
+ *
+ * Phase 13a: Event processors extracted for better organization and testability
+ *
+ * Delegates to specific handler functions based on event type:
+ * - checkout.session.completed: Links customer and creates initial subscription
+ * - customer.subscription.created/updated: Updates subscription details
+ * - customer.subscription.deleted: Cancels subscription and downgrades tier
+ * - invoice.payment_succeeded: Confirms payment and updates subscription
+ * - invoice.payment_failed: Marks subscription as past_due
+ * - customer.created: Logs customer creation for debugging
+ *
+ * @param event - Stripe webhook event
  */
 async function processWebhookEvent(event: Stripe.Event) {
   switch (event.type) {
@@ -153,31 +165,36 @@ async function processWebhookEvent(event: Stripe.Event) {
     case 'customer.created': {
       // Log customer creation for debugging
       const customer = event.data.object as Stripe.Customer
-      console.log(`Customer created: ${customer.id}`, customer.metadata)
+      logger.info(`Customer created: ${customer.id}`, customer.metadata)
       break
     }
 
     default:
-      console.log(`Unhandled webhook event type: ${event.type}`)
+      logger.info(`Unhandled webhook event type: ${event.type}`)
   }
 }
 
 /**
- * Handle checkout.session.completed
- * Creates or activates subscription when checkout is completed
+ * Handle checkout.session.completed event
+ *
+ * Creates or activates subscription when checkout is completed.
+ * Links the Stripe customer to the user and creates the subscription record.
+ *
+ * @param session - Stripe checkout session object
+ * @returns Promise that resolves when subscription is created
  */
 async function handleCheckoutSessionCompleted(
   session: Stripe.Checkout.Session
 ) {
   const userId = session.metadata?.userId
   if (!userId) {
-    console.error('No userId in checkout session metadata')
+    logger.error('No userId in checkout session metadata')
     return
   }
 
   const subscriptionId = session.subscription as string
   if (!subscriptionId) {
-    console.error('No subscription ID in checkout session')
+    logger.error('No subscription ID in checkout session')
     return
   }
 
@@ -191,7 +208,7 @@ async function handleCheckoutSessionCompleted(
     const existingUser = await getUserIdByCustomerId(customerId)
     if (!existingUser) {
       // This is a new customer, create the subscription record which will store the customer ID
-      console.log(`Linking new customer ${customerId} to user ${userId}`)
+      logger.info(`Linking new customer ${customerId} to user ${userId}`)
     }
   }
 
@@ -199,19 +216,24 @@ async function handleCheckoutSessionCompleted(
 }
 
 /**
- * Handle customer.subscription.updated
- * Updates subscription status, plan, and billing period
+ * Handle customer.subscription.created and customer.subscription.updated events
+ *
+ * Updates subscription status, plan, and billing period.
+ * Handles both new subscriptions and updates to existing ones.
+ *
+ * @param subscription - Stripe subscription object
+ * @returns Promise that resolves when subscription is updated
  */
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   const customerId = getCustomerIdFromSubscription(subscription)
   if (!customerId) {
-    console.error('No customer ID in subscription')
+    logger.error('No customer ID in subscription')
     return
   }
 
   const userId = await getUserIdByCustomerId(customerId)
   if (!userId) {
-    console.error(`No user found for customer ${customerId}`)
+    logger.error(`No user found for customer ${customerId}`)
     return
   }
 
@@ -219,19 +241,24 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 }
 
 /**
- * Handle customer.subscription.deleted
- * Marks subscription as canceled and downgrades user tier
+ * Handle customer.subscription.deleted event
+ *
+ * Marks subscription as canceled and downgrades user tier to FREE.
+ * Maintains idempotency by checking if subscription already exists.
+ *
+ * @param subscription - Stripe subscription object
+ * @returns Promise that resolves when subscription is canceled
  */
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   const customerId = getCustomerIdFromSubscription(subscription)
   if (!customerId) {
-    console.error('No customer ID in subscription')
+    logger.error('No customer ID in subscription')
     return
   }
 
   const userId = await getUserIdByCustomerId(customerId)
   if (!userId) {
-    console.error(`No user found for customer ${customerId}`)
+    logger.error(`No user found for customer ${customerId}`)
     return
   }
 
@@ -248,12 +275,17 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   // Downgrade user tier to free
   await db.update(users).set({ tier: USER_TIER.FREE }).where(eq(users.id, userId))
 
-  console.log(`Subscription canceled for user ${userId}`)
+  logger.info(`Subscription canceled for user ${userId}`)
 }
 
 /**
- * Handle invoice.payment_succeeded
- * Confirms successful payment and extends subscription period
+ * Handle invoice.payment_succeeded event
+ *
+ * Confirms successful payment and extends subscription period.
+ * Retrieves full subscription details and updates local database.
+ *
+ * @param invoice - Stripe invoice object
+ * @returns Promise that resolves when subscription is updated
  */
 async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
   const subscriptionId = getSubscriptionIdFromInvoice(invoice)
@@ -266,23 +298,28 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
 
   const customerId = getCustomerIdFromSubscription(subscription)
   if (!customerId) {
-    console.error('No customer ID in subscription')
+    logger.error('No customer ID in subscription')
     return
   }
 
   const userId = await getUserIdByCustomerId(customerId)
   if (!userId) {
-    console.error(`No user found for customer ${customerId}`)
+    logger.error(`No user found for customer ${customerId}`)
     return
   }
 
   await upsertSubscription(userId, subscription)
-  console.log(`Payment succeeded for user ${userId}`)
+  logger.info(`Payment succeeded for user ${userId}`)
 }
 
 /**
- * Handle invoice.payment_failed
- * Marks subscription as past_due
+ * Handle invoice.payment_failed event
+ *
+ * Marks subscription as past_due when payment fails.
+ * Subscription status is updated to reflect payment failure.
+ *
+ * @param invoice - Stripe invoice object
+ * @returns Promise that resolves when subscription status is updated
  */
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   const subscriptionId = getSubscriptionIdFromInvoice(invoice)
@@ -295,13 +332,13 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
 
   const customerId = getCustomerIdFromSubscription(subscription)
   if (!customerId) {
-    console.error('No customer ID in subscription')
+    logger.error('No customer ID in subscription')
     return
   }
 
   const userId = await getUserIdByCustomerId(customerId)
   if (!userId) {
-    console.error(`No user found for customer ${customerId}`)
+    logger.error(`No user found for customer ${customerId}`)
     return
   }
 
@@ -314,12 +351,25 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     })
     .where(eq(subscriptions.userId, userId))
 
-  console.log(`Payment failed for user ${userId}`)
+  logger.info(`Payment failed for user ${userId}`)
 }
 
 /**
  * Upsert subscription record
- * Creates or updates subscription with full details
+ *
+ * Creates or updates subscription with full details including:
+ * - Subscription status and plan type
+ * - Billing period dates
+ * - Cancellation information
+ * - Trial period if applicable
+ *
+ * Also updates user tier (FREE/PRO) based on subscription status.
+ * Maintains idempotency by checking for existing subscription.
+ *
+ * @param userId - User ID to associate subscription with
+ * @param subscription - Stripe subscription object
+ * @returns Promise that resolves when subscription is saved
+ * @throws Error if customer ID is missing
  */
 async function upsertSubscription(userId: number, subscription: Stripe.Subscription) {
   const status = mapStripeStatus(subscription.status)
@@ -400,13 +450,18 @@ async function upsertSubscription(userId: number, subscription: Stripe.Subscript
   const tier: 0 | 1 | 2 = status === 'active' || status === 'trialing' ? USER_TIER.PRO : USER_TIER.FREE
   await db.update(users).set({ tier }).where(eq(users.id, userId))
 
-  console.log(
+  logger.info(
     `Subscription ${subscription.id} upserted for user ${userId} with tier ${tier}`
   )
 }
 
 /**
  * Get user ID by Stripe customer ID
+ *
+ * Looks up the user associated with a Stripe customer ID.
+ *
+ * @param customerId - Stripe customer ID
+ * @returns User ID if found, null otherwise
  */
 async function getUserIdByCustomerId(customerId: string): Promise<number | null> {
   const subscription = await db
@@ -420,7 +475,14 @@ async function getUserIdByCustomerId(customerId: string): Promise<number | null>
 
 /**
  * Type guard to extract subscription ID from invoice
- * Handles Stripe's polymorphic subscription field
+ *
+ * Handles Stripe's polymorphic subscription field which can be:
+ * - string (subscription ID)
+ * - Subscription object
+ * - null/undefined
+ *
+ * @param invoice - Stripe invoice object
+ * @returns Subscription ID if present, null otherwise
  */
 function getSubscriptionIdFromInvoice(invoice: Stripe.Invoice): string | null {
   // Stripe Invoice subscription field is not properly typed in the SDK
@@ -439,6 +501,14 @@ function getSubscriptionIdFromInvoice(invoice: Stripe.Invoice): string | null {
 
 /**
  * Type guard to extract customer ID from subscription
+ *
+ * Handles Stripe's polymorphic customer field which can be:
+ * - string (customer ID)
+ * - Customer object
+ * - null/undefined
+ *
+ * @param subscription - Stripe subscription object
+ * @returns Customer ID if present, null otherwise
  */
 function getCustomerIdFromSubscription(subscription: Stripe.Subscription): string | null {
   if (!subscription.customer) {

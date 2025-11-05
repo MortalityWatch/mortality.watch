@@ -1,3 +1,5 @@
+import { logger } from './logger'
+
 /**
  * Memory Management Utilities
  *
@@ -70,7 +72,7 @@ export function cleanupCanvas(canvas: CanvasLike) {
       }
     }
   } catch (error) {
-    console.warn('Error cleaning up canvas:', error)
+    logger.warn('Error cleaning up canvas', { error })
   }
 }
 
@@ -107,7 +109,7 @@ export function isMemoryPressure(thresholdMB: number = 1024): boolean {
 export function logMemoryUsage(label: string) {
   const usage = getMemoryUsage()
   if (usage && import.meta.dev) {
-    console.log(`[Memory] ${label}:`, usage)
+    logger.info(`[Memory] ${label}:`, usage)
   }
 }
 

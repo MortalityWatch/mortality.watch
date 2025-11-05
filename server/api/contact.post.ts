@@ -114,14 +114,14 @@ export default defineEventHandler(async (event) => {
     })
 
     // Log successful submission
-    console.log(`[Contact] Message from ${name} (${email}) sent to ${supportEmail}`)
+    logger.info(`[Contact] Message from ${name} (${email}) sent to ${supportEmail}`)
 
     return {
       success: true,
       message: 'Your message has been sent successfully.'
     }
   } catch (error) {
-    console.error('[Contact] Failed to send email:', error)
+    logger.error('Failed to send contact form email', error instanceof Error ? error : new Error(String(error)))
 
     // Throw error to be handled by error handler
     throw createError({

@@ -35,7 +35,7 @@ const colorModeLabel = computed(() => {
   return 'System theme'
 })
 
-function toggleColorMode() {
+function toggleColorMode(): void {
   // Cycle: light -> dark -> system -> light
   const current = colorMode.preference
   if (current === 'light') {
@@ -54,7 +54,7 @@ const isRankingPage = computed(() => route.path === '/ranking')
 const showHelpButton = computed(() => isExplorerPage.value || isRankingPage.value)
 
 // Determine which tutorial to start based on current page
-const handleHelpClick = () => {
+const handleHelpClick = (): void => {
   if (isRankingPage.value) {
     startTutorial('ranking')
   } else {

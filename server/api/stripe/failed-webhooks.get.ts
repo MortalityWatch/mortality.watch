@@ -40,7 +40,7 @@ export default defineEventHandler(async (event) => {
       events: failedEvents
     }
   } catch (error) {
-    console.error('Error fetching failed webhooks:', error)
+    logger.error('Error fetching failed webhooks:', error instanceof Error ? error : new Error(String(error)))
     throw createError({
       statusCode: 500,
       message: 'Failed to fetch webhook events'

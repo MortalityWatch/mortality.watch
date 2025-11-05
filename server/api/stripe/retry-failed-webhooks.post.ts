@@ -46,7 +46,7 @@ export default defineEventHandler(async (event) => {
         // Reset the processing error to allow Stripe to retry on next webhook delivery
         // In production, you'd want to actually re-process the event here
         // by calling the appropriate handler based on event type
-        console.log(`Retrying webhook event ${failedEvent.stripeEventId}`)
+        logger.info(`Retrying webhook event ${failedEvent.stripeEventId}`)
 
         // Clear the error to allow retry
         await db
@@ -63,7 +63,7 @@ export default defineEventHandler(async (event) => {
           eventId: failedEvent.stripeEventId,
           error: errorMessage
         })
-        console.error(`Failed to retry webhook ${failedEvent.stripeEventId}:`, error)
+        logger.error(`Failed to retry webhook ${failedEvent.stripeEventId}:`, error instanceof Error ? error : new Error(String(error)))
       }
     }
 
@@ -74,7 +74,7 @@ export default defineEventHandler(async (event) => {
       errors: errors.length > 0 ? errors : undefined
     }
   } catch (error) {
-    console.error('Error retrying failed webhooks:', error)
+    logger.error('Error retrying failed webhooks:', error instanceof Error ? error : new Error(String(error)))
     throw createError({
       statusCode: 500,
       message: 'Failed to retry webhook events'

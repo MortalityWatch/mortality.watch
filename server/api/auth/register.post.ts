@@ -6,6 +6,7 @@ import {
   generateRandomToken
 } from '../../utils/auth'
 import { sendVerificationEmail } from '../../utils/email'
+import { RegisterResponseSchema } from '../../schemas'
 
 const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -92,7 +93,7 @@ export default defineEventHandler(async (event) => {
   try {
     await sendVerificationEmail(newUser.email, verificationToken)
   } catch (error) {
-    console.error('Failed to send verification email:', error)
+    logger.error('Failed to send verification email:', error instanceof Error ? error : new Error(String(error)))
     // User is created but can use resend functionality from check-email page
     // Still return success so they get to check-email page
   }
@@ -100,10 +101,11 @@ export default defineEventHandler(async (event) => {
   // Return user without password hash
   const { passwordHash: _passwordHash, ...userWithoutPassword } = newUser
 
-  return {
-    success: true,
+  const response = {
+    success: true as const,
     user: userWithoutPassword,
     message: 'Account created successfully. Please check your email to verify your account.',
     requiresVerification: true
   }
+  return RegisterResponseSchema.parse(response)
 })

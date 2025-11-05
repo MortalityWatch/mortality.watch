@@ -27,7 +27,7 @@ watch(() => props.user, (newUser) => {
   }
 }, { immediate: true })
 
-function handleSubmit() {
+function handleSubmit(): void {
   emit('update:profile', {
     firstName: profileState.firstName,
     lastName: profileState.lastName,

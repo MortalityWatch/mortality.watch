@@ -1,12 +1,15 @@
 /**
  * Server-side Chart Renderer
  *
+ * Phase 13a: Enhanced type safety with proper interfaces
+ *
  * Registers Chart.js components and plugins for server-side rendering
  *
  * Note: This module uses node-canvas which provides browser-compatible Canvas APIs
  * but with different type signatures. Type assertions are necessary and documented below.
  */
 
+import type { ChartType as ChartJsType } from 'chart.js'
 import {
   Chart,
   CategoryScale,
@@ -31,14 +34,63 @@ import ChartDataLabels from 'chartjs-plugin-datalabels'
 import { MatrixController, MatrixElement } from 'chartjs-chart-matrix'
 import QRCode from 'qrcode'
 import { withTimeout, cleanupCanvas } from './memoryManager'
+import { logger } from './logger'
 
-// node-canvas Image type (compatible with CanvasImageSource but has different types)
+/**
+ * node-canvas Image type
+ * Compatible with CanvasImageSource at runtime but has different TypeScript types
+ */
 type CanvasImage = Awaited<ReturnType<typeof loadImage>>
 
-// ChartInstance type for server-side rendering
-// node-canvas context is runtime-compatible with Chart.js but has type incompatibilities
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type ServerChart = any
+/**
+ * Server-side chart configuration interface
+ *
+ * Extends the basic chart config structure with server-specific properties.
+ * Uses Record<string, unknown> for flexibility while maintaining type safety.
+ */
+interface ServerChartConfig {
+  type?: ChartJsType | 'matrix'
+  data?: {
+    labels?: string[]
+    datasets?: Array<Record<string, unknown>>
+  }
+  options?: {
+    responsive?: boolean
+    animation?: boolean | Record<string, unknown>
+    devicePixelRatio?: number
+    plugins?: Record<string, unknown>
+    scales?: Record<string, unknown>
+    [key: string]: unknown
+  }
+  [key: string]: unknown
+}
+
+/**
+ * Server Chart instance type
+ *
+ * Phase 13a: Improved type safety while maintaining runtime compatibility
+ *
+ * node-canvas context is runtime-compatible with Chart.js but TypeScript
+ * types are incompatible. This interface documents the contract while
+ * allowing necessary type assertions for node-canvas integration.
+ *
+ * We can't use Chart.js types directly because:
+ * 1. node-canvas CanvasRenderingContext2D differs from browser version
+ * 2. Chart.js expects browser Canvas types
+ * 3. At runtime everything works, but TypeScript can't verify this
+ */
+interface ServerChart {
+  /** Chart.js destroy method for cleanup */
+  destroy(): void
+  /** Chart.js update method to re-render */
+  update(): void
+  /** Chart width in pixels */
+  width: number
+  /** Chart height in pixels */
+  height: number
+  /** Canvas rendering context (node-canvas compatible) */
+  ctx: unknown
+}
 
 // Register Chart.js components and plugins
 Chart.register(
@@ -112,7 +164,7 @@ const createLogoPlugin = (logoImage: CanvasImage, qrImage: CanvasImage | null) =
           // node-canvas Image is compatible with Canvas API but TypeScript doesn't recognize it
           ctx.drawImage(logoImage as unknown as CanvasImageSource, 10, 10, w, h)
         } catch (err) {
-          console.error('Failed to draw logo:', err)
+          logger.error('Failed to draw logo', err instanceof Error ? err : new Error(String(err)))
         }
       }
 
@@ -123,7 +175,7 @@ const createLogoPlugin = (logoImage: CanvasImage, qrImage: CanvasImage | null) =
           // node-canvas Image is compatible with Canvas API but TypeScript doesn't recognize it
           ctx.drawImage(qrImage as unknown as CanvasImageSource, chart.width - s, 0, s, s)
         } catch (err) {
-          console.error('Failed to draw QR code:', err)
+          logger.error('Failed to draw QR code', err instanceof Error ? err : new Error(String(err)))
         }
       }
     }
@@ -142,15 +194,23 @@ export function createChartCanvas(width: number, height: number) {
 
 /**
  * Render a chart with the given configuration
+ *
+ * Phase 13a: Enhanced type safety with ServerChartConfig interface
+ *
+ * @param width - Canvas width in pixels
+ * @param height - Canvas height in pixels
+ * @param chartConfig - Chart.js configuration object
+ * @param chartType - Chart type (line, bar, or matrix)
+ * @returns PNG buffer of rendered chart
  */
 export async function renderChart(
   width: number,
   height: number,
-  chartConfig: Record<string, unknown>,
+  chartConfig: ServerChartConfig,
   chartType: 'line' | 'bar' | 'matrix' = 'line'
 ): Promise<Buffer> {
   const { canvas, ctx } = createChartCanvas(width, height)
-  let chart: ServerChart = null
+  let chart: ServerChart | null = null
   let logoPlugin: { id: string } | null = null
 
   try {
@@ -162,10 +222,10 @@ export async function renderChart(
 
         // Pre-load QR code if URL provided
         let qrImage: CanvasImage | null = null
-        const qrCodeUrl = ((chartConfig.options as Record<string, unknown>)?.plugins as Record<string, unknown>)?.qrCodeUrl
-        if (qrCodeUrl) {
+        const qrCodeUrl = chartConfig.options?.plugins?.qrCodeUrl
+        if (qrCodeUrl && typeof qrCodeUrl === 'string') {
           try {
-            const qrSrc = await QRCode.toDataURL(qrCodeUrl as string, {
+            const qrSrc = await QRCode.toDataURL(qrCodeUrl, {
               color: {
                 dark: '#000000', // Black for server-side rendering (default)
                 light: '#00000000' // Transparent background
@@ -174,7 +234,7 @@ export async function renderChart(
             })
             qrImage = await loadImage(qrSrc)
           } catch (err) {
-            console.error('Failed to generate QR code:', err)
+            logger.error('Failed to generate QR code', err instanceof Error ? err : new Error(String(err)))
           }
         }
 
@@ -183,24 +243,25 @@ export async function renderChart(
         Chart.register(logoPlugin)
 
         // Merge config with server-specific overrides
-        // node-canvas context is compatible with Chart.js but TypeScript types differ
-        // We need to cast the config to avoid strict type checking
-        const serverConfig = {
+        // Type assertion needed: node-canvas context is runtime-compatible with Chart.js
+        // but TypeScript types differ. The config structure matches Chart.js expectations.
+        const serverConfig: ServerChartConfig = {
           ...chartConfig,
           type: chartType,
           options: {
-            ...((chartConfig.options as Record<string, unknown>) || {}),
+            ...(chartConfig.options || {}),
             responsive: false,
             animation: false,
             devicePixelRatio: 2
           },
-          // Ensure data property is included for Chart.js constructor
-          data: (chartConfig as ServerChart).data || { labels: [], datasets: [] }
-        } as ServerChart
+          data: chartConfig.data || { labels: [], datasets: [] }
+        }
 
         // Create Chart instance
-        // node-canvas context is runtime-compatible but has type incompatibilities with Chart.js
-        chart = new Chart(ctx as ServerChart, serverConfig)
+        // Type assertion needed: node-canvas context is runtime-compatible but has type incompatibilities
+        // At runtime, node-canvas provides the same API as browser Canvas
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        chart = new Chart(ctx as any, serverConfig as any) as ServerChart
 
         // Wait for chart to complete rendering (now synchronous)
         await new Promise(resolve => setTimeout(resolve, 100))
@@ -215,12 +276,13 @@ export async function renderChart(
     )
   } finally {
     // Cleanup: destroy chart and unregister plugin
-    if (chart) {
+    if (chart !== null) {
       try {
         // Chart.js destroy method exists and works at runtime
-        chart.destroy()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(chart as any).destroy()
       } catch (err) {
-        console.warn('Error destroying chart:', err)
+        logger.warn('Error destroying chart', { error: err })
       }
     }
 
@@ -228,7 +290,7 @@ export async function renderChart(
       try {
         Chart.unregister(logoPlugin)
       } catch (err) {
-        console.warn('Error unregistering logo plugin:', err)
+        logger.warn('Error unregistering logo plugin', { error: err })
       }
     }
 
@@ -239,14 +301,20 @@ export async function renderChart(
 
 /**
  * Render a simple placeholder chart
- * Used when data fetching fails or for testing
+ *
+ * Used when data fetching fails or for testing.
+ *
+ * @param width - Canvas width in pixels
+ * @param height - Canvas height in pixels
+ * @param title - Chart title
+ * @returns PNG buffer of rendered placeholder chart
  */
 export async function renderPlaceholderChart(
   width: number,
   height: number,
   title: string
 ): Promise<Buffer> {
-  const config = {
+  const config: ServerChartConfig = {
     type: 'line',
     data: {
       labels: ['2020', '2021', '2022', '2023', '2024'],

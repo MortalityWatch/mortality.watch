@@ -1,5 +1,6 @@
 import { db } from '../../utils/db'
 import { savedCharts } from '../../../db/schema'
+import { ChartSaveResponseSchema } from '../../schemas'
 
 /**
  * POST /api/charts
@@ -66,12 +67,13 @@ export default defineEventHandler(async (event) => {
       viewCount: 0
     }).returning()
 
-    return {
-      success: true,
+    const response = {
+      success: true as const,
       chart: result[0]
     }
+    return ChartSaveResponseSchema.parse(response)
   } catch (err) {
-    console.error('Error saving chart:', err)
+    logger.error('Error saving chart:', err instanceof Error ? err : new Error(String(err)))
     throw createError({
       statusCode: 500,
       message: 'Failed to save chart'

@@ -1,3 +1,5 @@
+import { logger } from '../utils/logger'
+
 interface ErrorWithStatus extends Error {
   statusCode?: number
   status?: number
@@ -5,10 +7,9 @@ interface ErrorWithStatus extends Error {
 
 export default defineNitroPlugin((nitroApp) => {
   nitroApp.hooks.hook('error', (error: ErrorWithStatus, { event }) => {
-    console.error('Server error:', {
+    logger.error('Server error', error, {
       url: event?.path,
-      statusCode: error.statusCode,
-      message: error.message
+      statusCode: error.statusCode
     })
   })
 
@@ -16,7 +17,7 @@ export default defineNitroPlugin((nitroApp) => {
     // Add custom error handler to each request
     event.context.$errorHandler = (error: ErrorWithStatus) => {
       // Log the full error server-side
-      console.error('Request error:', error)
+      logger.error('Request error', error instanceof Error ? error : new Error(String(error)))
 
       // In production, don't expose stack traces
       const isProduction = process.env.NODE_ENV === 'production'
