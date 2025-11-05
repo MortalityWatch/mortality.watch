@@ -132,6 +132,79 @@ export function useExplorerDataOrchestration(
     return helpers.isAsmrType() ? ['all'] : state.ageGroups.value
   })
 
+  /**
+   * Find the closest available year in labels
+   *
+   * @param labels - Available date labels
+   * @param targetYear - Target year to find
+   * @param preferLast - If true, return last label for year; otherwise return first
+   * @returns Closest matching label
+   */
+  const findClosestYearLabel = (labels: string[], targetYear: string, preferLast: boolean = false): string => {
+    const targetYearNum = parseInt(targetYear)
+    const availableYears = Array.from(new Set(labels.map(l => parseInt(l.substring(0, 4)))))
+
+    // Find the closest year
+    const closestYear = availableYears.reduce((prev, curr) =>
+      Math.abs(curr - targetYearNum) < Math.abs(prev - targetYearNum) ? curr : prev
+    )
+
+    // Find labels for that year
+    const yearLabels = labels.filter(l => l.startsWith(closestYear.toString()))
+    return preferLast ? yearLabels[yearLabels.length - 1]! : yearLabels[0]!
+  }
+
+  /**
+   * Match a date to the closest available label by year
+   *
+   * @param labels - Available date labels
+   * @param currentDate - Current date to match
+   * @param preferLast - If true, prefer last label of year; otherwise prefer first
+   * @returns Matched label or null if currentDate is null/undefined
+   */
+  const matchDateToLabel = (labels: string[], currentDate: string | null | undefined, preferLast: boolean): string | null => {
+    if (!currentDate) return null
+
+    // If exact match exists, return it
+    if (labels.includes(currentDate)) return currentDate
+
+    // Try to find label with same year
+    const year = currentDate.substring(0, 4)
+    const matchingLabels = labels.filter(l => l.startsWith(year))
+
+    if (matchingLabels.length > 0) {
+      return preferLast ? matchingLabels[matchingLabels.length - 1]! : matchingLabels[0]!
+    }
+
+    // Fall back to closest year
+    return findClosestYearLabel(labels, year, preferLast)
+  }
+
+  /**
+   * Check if current date range is valid
+   *
+   * @param labels - Available date labels
+   * @param dateFrom - Start date
+   * @param dateTo - End date
+   * @returns true if both dates are valid and present in labels
+   */
+  const isDateRangeValid = (labels: string[], dateFrom: string | null, dateTo: string | null): boolean => {
+    return !!(dateFrom && dateTo && labels.includes(dateFrom) && labels.includes(dateTo))
+  }
+
+  /**
+   * Get default date range based on slider start
+   *
+   * @param labels - Available date labels
+   * @returns Object with defaultFrom and defaultTo
+   */
+  const getDefaultDateRange = (labels: string[]): { defaultFrom: string, defaultTo: string } => {
+    const sliderStartStr = getSeasonString(state.chartType.value, Number(state.sliderStart.value))
+    const defaultFrom = labels.includes(sliderStartStr) ? sliderStartStr : labels[0]!
+    const defaultTo = labels[labels.length - 1]!
+    return { defaultFrom, defaultTo }
+  }
+
   // Configure chart options based on current state
   const configureOptions = () => {
     chartOptions.showTotalOption = state.isExcess.value && helpers.isBarChartStyle()
@@ -153,6 +226,8 @@ export function useExplorerDataOrchestration(
   /**
    * Initialize or validate the main date range (dateFrom/dateTo)
    *
+   * Phase 13a: Simplified by extracting helper functions to reduce complexity
+   *
    * Called after data is fetched to ensure dateFrom/dateTo are valid.
    *
    * IMPORTANT: Uses filteredChartLabels (respects sliderStart), NOT allChartData.labels
@@ -162,69 +237,32 @@ export function useExplorerDataOrchestration(
    * 1. If current dateFrom/dateTo are valid, keep them (preserve user selection)
    * 2. Otherwise, set to sliderStart (if data exists) or first available date
    * 3. Try to preserve year when chart type changes (e.g., yearly → fluseason)
-   *
-   * TODO (Phase 12): Replace with computed defaultDateRange + watchers
-   * This function has circular dependency issues with allChartData.labels
    */
   const resetDates = () => {
-    // Use filteredChartLabels (respects sliderStart) instead of allChartData.labels
     const labels = filteredChartLabels.value
     if (labels.length === 0) return
 
-    // Only reset if values are missing or don't match
-    // Don't reset if user has manually selected a different range
-    if (state.dateFrom.value && state.dateTo.value && labels.includes(state.dateFrom.value) && labels.includes(state.dateTo.value)) {
-      // Values are valid, don't change them
+    // If current range is valid, preserve it
+    if (isDateRangeValid(labels, state.dateFrom.value, state.dateTo.value)) {
       return
     }
 
-    // Date Slider - validate and correct range
-    const sliderStartStr = getSeasonString(state.chartType.value, Number(state.sliderStart.value))
-    const defaultFrom = labels.includes(sliderStartStr) ? sliderStartStr : labels[0]!
-    const defaultTo = labels[labels.length - 1]!
+    // Get default range based on slider start
+    const { defaultFrom, defaultTo } = getDefaultDateRange(labels)
 
-    // Try to preserve user's selection by finding matching labels based on year
-    let currentFrom = state.dateFrom.value
-    let currentTo = state.dateTo.value
+    // Try to preserve user's selection by matching years
+    const matchedFrom = matchDateToLabel(labels, state.dateFrom.value, false) ?? defaultFrom
+    const matchedTo = matchDateToLabel(labels, state.dateTo.value, true) ?? defaultTo
 
-    // Helper function to find closest year in labels
-    const findClosestYear = (targetYear: string, preferLast: boolean = false): string => {
-      const targetYearNum = parseInt(targetYear)
-      const availableYears = Array.from(new Set(labels.map(l => parseInt(l.substring(0, 4)))))
-
-      // Find the closest year
-      const closestYear = availableYears.reduce((prev, curr) =>
-        Math.abs(curr - targetYearNum) < Math.abs(prev - targetYearNum) ? curr : prev
-      )
-
-      // Find labels for that year
-      const yearLabels = labels.filter(l => l.startsWith(closestYear.toString()))
-      return preferLast ? yearLabels[yearLabels.length - 1]! : yearLabels[0]!
-    }
-
-    // If current values don't exist in new labels, try to find closest match by year
-    if (currentFrom && !labels.includes(currentFrom)) {
-      const fromYear = currentFrom.substring(0, 4)
-      const matchingLabel = labels.find(l => l.startsWith(fromYear))
-      // If exact year doesn't exist, find closest year instead of falling back to default
-      currentFrom = matchingLabel || findClosestYear(fromYear, false)
-    }
-
-    if (currentTo && !labels.includes(currentTo)) {
-      const toYear = currentTo.substring(0, 4)
-      // Find the last label that starts with the year (to prefer end of year)
-      const matchingLabels = labels.filter(l => l.startsWith(toYear))
-      // If exact year doesn't exist, find closest year instead of falling back to default
-      currentTo = (matchingLabels.length > 0 ? matchingLabels[matchingLabels.length - 1] : findClosestYear(toYear, true))!
-    }
-
+    // Validate the matched range
     const period = new ChartPeriod(labels, state.chartType.value as ChartType)
     const validatedRange = getValidatedRange(
-      { from: currentFrom ?? defaultFrom, to: currentTo ?? defaultTo },
+      { from: matchedFrom, to: matchedTo },
       period,
       { from: defaultFrom, to: defaultTo }
     )
 
+    // Update state only if values changed
     if (validatedRange.from !== state.dateFrom.value || !state.dateFrom.value) {
       state.dateFrom.value = validatedRange.from
     }
