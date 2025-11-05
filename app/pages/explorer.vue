@@ -57,7 +57,7 @@ useSeoMeta({
   twitterCard: 'summary_large_image'
 })
 
-// Helper Functions - use composable
+// Type predicates and computed helpers based on state
 const {
   isAsmrType,
   isPopulationType,
@@ -85,7 +85,7 @@ const {
   state.chartType
 )
 
-// Computed
+// Adapter: Convert separate date refs to array format for DateSlider component
 const sliderValue = computed(() => [state.dateFrom.value, state.dateTo.value])
 
 // Get color mode for theme reactivity
@@ -98,7 +98,7 @@ const { displayColors } = useExplorerColors(
   colorMode
 )
 
-// Load Data - must be declared before data orchestration composable
+// Bootstrap data - loaded here and passed to data orchestration composable
 const allCountries = ref<Record<string, Country>>({})
 const isDataLoaded = ref(false)
 const allAgeGroups = computed(() => {
@@ -135,7 +135,7 @@ const dataOrchestration = useExplorerDataOrchestration(
   displayColors
 )
 
-// Destructure data orchestration (prefix unused with _ to satisfy linter)
+// Destructure data orchestration (some values accessed via dataOrchestration.*)
 const {
   allChartLabels: _allChartLabels,
   allYearlyChartLabels: _allYearlyChartLabels,
@@ -234,7 +234,7 @@ const handleUpdate = async (key: string) => {
   }
 }
 
-// Prevent concurrent updates
+// Prevent concurrent updates using queue pattern
 let isCurrentlyUpdating = false
 let pendingUpdateKey: string | null = null
 
@@ -260,8 +260,7 @@ const update = async (key: string) => {
   }
 }
 
-// Phase 9.2: Event handlers replaced with direct state updates
-// Helper function for state updates with nextTick
+// Helper: Update state, wait for DOM update, then trigger data refresh
 const updateStateAndRefresh = async (updateFn: () => void, key: string) => {
   updateFn()
   await nextTick()
@@ -310,7 +309,6 @@ onMounted(async () => {
   autoStartTutorial()
 })
 
-// Phase 5a: Chart actions extracted to composable
 // Note: Using 'any' type to avoid excessive type recursion with State proxy
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const chartActions: any = useExplorerChartActions(state as any, dataOrchestration.chartData as any)
