@@ -14,7 +14,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { useExplorerDataOrchestration } from './useExplorerDataOrchestration'
 import type { useExplorerState } from './useExplorerState'
 import type { useExplorerHelpers } from './useExplorerHelpers'
@@ -485,102 +485,24 @@ describe('useExplorerDataOrchestration', () => {
   })
 
   // ============================================================================
-  // RESET DATES
+  // DATE VALIDATION (via reactive watcher)
   // ============================================================================
 
-  describe('resetDates', () => {
-    it('should not reset if dates are valid', () => {
-      const orchestration = useExplorerDataOrchestration(
-        mockState,
-        mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
-      )
-
-      orchestration.allChartData.labels = ['2020', '2021', '2022', '2023']
-      mockState.dateFrom.value = '2020'
-      mockState.dateTo.value = '2023'
-
-      const originalFrom = mockState.dateFrom.value
-      const originalTo = mockState.dateTo.value
-
-      orchestration.resetDates()
-
-      expect(mockState.dateFrom.value).toBe(originalFrom)
-      expect(mockState.dateTo.value).toBe(originalTo)
-    })
-
-    it('should reset if from date is invalid', () => {
-      const orchestration = useExplorerDataOrchestration(
-        mockState,
-        mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
-      )
-
-      orchestration.allChartLabels.value = ['2020', '2021', '2022', '2023']
-      orchestration.allYearlyChartLabels.value = ['2020', '2021', '2022', '2023']
-      mockState.dateFrom.value = '2099'
-      mockState.dateTo.value = '2023'
-
-      orchestration.resetDates()
-
-      expect(mockState.dateFrom.value).not.toBe('2099')
-    })
-
-    it('should reset if to date is invalid', () => {
-      const orchestration = useExplorerDataOrchestration(
-        mockState,
-        mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
-      )
-
-      orchestration.allChartLabels.value = ['2020', '2021', '2022', '2023']
-      orchestration.allYearlyChartLabels.value = ['2020', '2021', '2022', '2023']
-      mockState.dateFrom.value = '2020'
-      mockState.dateTo.value = '2099'
-
-      orchestration.resetDates()
-
-      expect(mockState.dateTo.value).not.toBe('2099')
-    })
-
-    it('should handle empty labels', () => {
-      const orchestration = useExplorerDataOrchestration(
-        mockState,
-        mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
-      )
-
-      orchestration.allChartData.labels = []
-
-      orchestration.resetDates()
-
-      // Should not crash
-      expect(true).toBe(true)
-    })
-
-    it('should handle undefined dates', () => {
-      const orchestration = useExplorerDataOrchestration(
-        mockState,
-        mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
-      )
-
-      orchestration.allChartLabels.value = ['2020', '2021', '2022', '2023']
-      orchestration.allYearlyChartLabels.value = ['2020', '2021', '2022', '2023']
-      mockState.dateFrom.value = undefined
-      mockState.dateTo.value = undefined
-
-      orchestration.resetDates()
-
-      expect(mockState.dateFrom.value).toBeDefined()
-      expect(mockState.dateTo.value).toBeDefined()
-    })
-  })
+  /**
+   * Note: Date validation is now handled by a reactive watcher that triggers when:
+   * - visibleLabels changes (data loaded)
+   * - chartType changes (may invalidate current selection)
+   *
+   * The watcher automatically:
+   * 1. Preserves valid dates
+   * 2. Resets invalid dates to default range
+   * 3. Tries to preserve year when chart type changes
+   *
+   * This functionality is tested through integration tests in the explorer page tests,
+   * and indirectly through the updateData tests below.
+   *
+   * Previous resetDates() function was replaced with reactive watcher in Phase 12 cleanup.
+   */
 
   // ============================================================================
   // RESET BASELINE DATES

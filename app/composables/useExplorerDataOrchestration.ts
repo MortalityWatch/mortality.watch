@@ -11,14 +11,15 @@
  * Provides:
  * - Data fetching orchestration (updateData)
  * - Data filtering (updateFilteredData)
- * - Date validation and reset (resetDates, resetBaselineDates)
+ * - Reactive date validation (via watchers)
+ * - Baseline date reset (resetBaselineDates)
  * - Chart options configuration (configureOptions)
  *
  * This separates data orchestration concerns from UI component logic,
  * making explorer.vue more focused and maintainable.
  */
 
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import type { Ref, ComputedRef } from 'vue'
 import type { useExplorerState } from '@/composables/useExplorerState'
 import type { useExplorerHelpers } from '@/composables/useExplorerHelpers'
@@ -90,7 +91,7 @@ export function useExplorerDataOrchestration(
   /**
    * Chart data for current selection (filtered by dateFrom/dateTo)
    * WARNING: labels here are a SUBSET of allChartLabels
-   * Do NOT use for slider range - use filteredChartLabels instead
+   * Do NOT use for slider range - use visibleLabels instead
    */
   const allChartData = reactive<AllChartData>({
     labels: [],
@@ -161,22 +162,21 @@ export function useExplorerDataOrchestration(
   }
 
   /**
-   * Initialize or validate the main date range (dateFrom/dateTo)
+   * Watch for data availability and initialize dates reactively
    *
-   * Date Range Refactor: Now uses useDateRangeCalculations utilities
-   * Phase 13a: Simplified by extracting helper functions to reduce complexity
+   * Date Range Refactor: Replaced resetDates() with reactive watcher
    *
-   * Called after data is fetched to ensure dateFrom/dateTo are valid.
-   *
-   * IMPORTANT: Uses visibleLabels (respects sliderStart + feature gating), NOT allChartData.labels
-   * This ensures the initial range starts from sliderStart when possible.
+   * This watcher automatically validates and initializes dates when:
+   * 1. Data is first loaded (visibleLabels becomes available)
+   * 2. Chart type changes (may invalidate current selection)
+   * 3. sliderStart changes (visible range changes)
    *
    * Logic:
    * 1. If current dateFrom/dateTo are valid, keep them (preserve user selection)
    * 2. Otherwise, set to default range (first to last visible label)
    * 3. Try to preserve year when chart type changes (e.g., yearly → fluseason)
    */
-  const resetDates = () => {
+  watch([dateRangeCalc.visibleLabels, state.chartType], () => {
     const labels = dateRangeCalc.visibleLabels.value
     if (labels.length === 0) return
 
@@ -207,7 +207,7 @@ export function useExplorerDataOrchestration(
     if (validatedRange.to !== state.dateTo.value || !state.dateTo.value) {
       state.dateTo.value = validatedRange.to
     }
-  }
+  })
 
   // Reset baseline date range
   const resetBaselineDates = () => {
@@ -348,7 +348,7 @@ export function useExplorerDataOrchestration(
       state.baselineDateTo.value = result.baselineDateTo
 
       Object.assign(allChartData, result.chartData)
-      resetDates()
+      // Note: Date validation now handled by reactive watcher
     } else if (shouldUpdateDataset) {
       // Update chart data only (reuse existing dataset)
       resetBaselineDates()
@@ -384,7 +384,7 @@ export function useExplorerDataOrchestration(
       state.baselineDateTo.value = result.baselineDateTo
 
       Object.assign(allChartData, result.chartData)
-      resetDates()
+      // Note: Date validation now handled by reactive watcher
     }
 
     // Update filtered chart datasets
@@ -404,9 +404,9 @@ export function useExplorerDataOrchestration(
   }
 
   /**
-   * Filtered labels respecting sliderStart and feature gating
+   * Visible labels respecting sliderStart and feature gating
    *
-   * Date Range Refactor: Now provided by useDateRangeCalculations.visibleLabels
+   * Date Range Refactor: Directly expose useDateRangeCalculations.visibleLabels
    *
    * This represents the FULL RANGE that should be available on the slider,
    * starting from the user's chosen sliderStart year (default: 2010) and
@@ -420,16 +420,16 @@ export function useExplorerDataOrchestration(
    *
    * Used by:
    * - Explorer DateRangePicker for slider range
-   * - resetDates() for initial date selection
+   * - Watcher for initial date selection
    *
    * Note: The actual selected range (dateFrom/dateTo) can be a subset of this.
    */
-  const filteredChartLabels = dateRangeCalc.visibleLabels
+  const visibleLabels = dateRangeCalc.visibleLabels
 
   return {
     // Data state
     allChartLabels,
-    filteredChartLabels,
+    visibleLabels,
     allYearlyChartLabels,
     allYearlyChartLabelsUnique,
     allChartData,
@@ -449,7 +449,6 @@ export function useExplorerDataOrchestration(
     // Functions
     updateData,
     updateFilteredData,
-    resetDates,
     resetBaselineDates,
     configureOptions
   }

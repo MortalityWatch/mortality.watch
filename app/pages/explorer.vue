@@ -180,7 +180,7 @@ const baselineSliderChanged = async (val: string[]) => {
 
 // Labels for the date range slider - full range from sliderStart to end
 // The sliderValue (dateFrom/dateTo) determines which portion is selected
-const labels = computed(() => dataOrchestration.filteredChartLabels.value || [])
+const labels = computed(() => dataOrchestration.visibleLabels.value || [])
 
 // Make Chart resizeable - use composable
 const {
