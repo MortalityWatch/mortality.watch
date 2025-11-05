@@ -6,6 +6,7 @@ import {
   MIN_BASELINE_THRESHOLD
 } from '@/lib/mortality/dataValidation'
 import { cumulativeSum, round } from '@/utils'
+import { last } from '@/lib/utils/array'
 import type { TableRow, ProcessCountryRowOptions } from './types'
 
 /**
@@ -120,18 +121,18 @@ export function processCountryRow(options: ProcessCountryRowOptions): { row: Tab
     const filteredExcessCumUpper = excessCumUpper.filter(v => v != null && !isNaN(v))
     const filteredExcessCumLower = excessCumLower.filter(v => v != null && !isNaN(v))
 
-    row[totalRowKey] = filteredExcessCum.last()
-    row[`${totalRowKey}_l`] = filteredExcessCumLower.last()
-    row[`${totalRowKey}_u`] = filteredExcessCumUpper.last()
+    row[totalRowKey] = last(filteredExcessCum)
+    row[`${totalRowKey}_l`] = last(filteredExcessCumLower)
+    row[`${totalRowKey}_u`] = last(filteredExcessCumUpper)
   } else {
     // For absolute mode, use cumulative sum as total
     const filteredCumMetric = (cumMetric || []).filter(v => v != null && !isNaN(v))
     const filteredCumMetricLower = (cumMetricLower || []).filter(v => v != null && !isNaN(v))
     const filteredCumMetricUpper = (cumMetricUpper || []).filter(v => v != null && !isNaN(v))
 
-    row[totalRowKey] = filteredCumMetric.last()
-    row[`${totalRowKey}_l`] = filteredCumMetricLower.last()
-    row[`${totalRowKey}_u`] = filteredCumMetricUpper.last()
+    row[totalRowKey] = last(filteredCumMetric)
+    row[`${totalRowKey}_l`] = last(filteredCumMetricLower)
+    row[`${totalRowKey}_u`] = last(filteredCumMetricUpper)
   }
 
   const metricVal: number[] = (cumulative ? cumMetric : metric) as number[]

@@ -11,20 +11,4 @@
  */
 
 // Re-export everything from the new modular structure
-// Keep the prototype extension for now but mark as deprecated
-// This will be removed in a future version
-import { last } from './lib/utils/array'
-
 export * from './lib/utils'
-
-// For backward compatibility with code using .last()
-// Note: Array prototype extension removed to avoid pollution
-// Use the `last()` function instead: last(myArray)
-declare global {
-  interface Array<T> {
-    last(): T | undefined
-  }
-}
-Array.prototype.last = function () {
-  return last(this)
-}
