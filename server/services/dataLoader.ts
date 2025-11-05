@@ -28,8 +28,10 @@ import { Country, CountryData, stringKeys, numberKeys } from '../../app/model'
 import { getObjectOfArrays, prefillUndefined, fromYearMonthString, left, right } from '../../app/utils'
 import { filesystemCache } from '../utils/cache'
 
-const S3_BASE = 'https://s3.mortality.watch/data/mortality'
-const CACHE_DIR = '.data/cache/mortality'
+// Configuration constants - can be overridden via environment variables
+const S3_BASE = process.env.MORTALITY_DATA_S3_BASE || 'https://s3.mortality.watch/data/mortality'
+const CACHE_DIR = process.env.MORTALITY_DATA_CACHE_DIR || '.data/cache/mortality'
+const FETCH_TIMEOUT_MS = parseInt(process.env.MORTALITY_DATA_FETCH_TIMEOUT || '30000', 10)
 
 /**
  * Parameters for loading mortality data
@@ -258,6 +260,11 @@ export class DataLoaderService {
   /**
    * Get all chart data with optional baseline calculations
    *
+   * NOTE: Baseline calculation parameters (baselineMethod, baselineDateFrom, baselineDateTo)
+   * are accepted but not currently implemented. Baseline calculations require external API calls
+   * and will be added in a future update. For now, baseline-related parameters are preserved
+   * for API compatibility but have no effect on the returned data.
+   *
    * @param params - Chart data parameters
    * @returns All chart data with labels and metadata
    */
@@ -312,9 +319,14 @@ export class DataLoaderService {
           continue
         }
 
-        // Type assertion needed: cd is Record<string, unknown> from getDataForCountry()
-        // but Dataset expects DatasetEntry (StringEntryFields & NumberEntryFields).
-        // The data structure matches at runtime after parsing from CSV.
+        // Type assertion: getDataForCountry() returns Record<string, unknown> which contains
+        // the parsed CSV data transformed by getObjectOfArrays(). This data has the shape
+        // of DatasetEntry (StringEntryFields & NumberEntryFields) at runtime, with all fields
+        // from the CountryData model converted to arrays. The type system cannot infer this
+        // transformation statically, so we cast through 'any' after runtime validation:
+        // - Data is validated by CountryData constructor during CSV parsing
+        // - getObjectOfArrays() transforms validated objects into array format
+        // - Structure matches Dataset requirements (verified by extensive test suite)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         data[ag][iso3c] = cd as any
       }
@@ -355,8 +367,12 @@ export class DataLoaderService {
       }
     }
 
-    // Note: Baseline calculations would go here if needed
-    // Skipping for now as it requires external API calls
+    // TODO: Baseline calculations not yet implemented
+    // When implemented, this section will:
+    // 1. Calculate baseline values based on baselineMethod (e.g., 'average', 'median')
+    // 2. Apply date range filters (baselineDateFrom, baselineDateTo)
+    // 3. Add baseline data to the Dataset for comparison
+    // This requires external API calls or additional data processing logic
 
     return { data, labels, notes: { noData, noAsmr } }
   }
@@ -379,7 +395,11 @@ export class DataLoaderService {
       }
 
       if (this.useLocalCacheOnly) {
-        throw new Error('Local metadata file not found. Run "npm run download-data" to cache data locally.')
+        throw new Error(
+          `Local metadata file not found at: ${localPath}\n`
+          + 'Please run "npm run download-data" to cache data locally.\n'
+          + 'Alternatively, set NUXT_PUBLIC_USE_LOCAL_CACHE=false to fetch from S3.'
+        )
       }
 
       console.warn(`Local metadata file not found, fetching from S3`)
@@ -396,11 +416,15 @@ export class DataLoaderService {
     // Fetch from S3
     const url = `${S3_BASE}/world_meta.csv`
     const response = await fetch(url, {
-      signal: AbortSignal.timeout(30000)
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)
     })
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch metadata: ${response.status} ${response.statusText}`)
+      throw new Error(
+        `Failed to fetch metadata from S3: ${response.status} ${response.statusText}\n`
+        + `URL: ${url}\n`
+        + 'This may indicate a network issue or that the data file is not available.'
+      )
     }
 
     const data = await response.text()
@@ -438,7 +462,12 @@ export class DataLoaderService {
         }
 
         if (this.useLocalCacheOnly) {
-          throw new Error(`Local file not found: ${path}. Run "npm run download-data" to cache data locally.`)
+          throw new Error(
+            `Local mortality data file not found at: ${localPath}\n`
+            + `Missing: ${country}/${chartType}/${ageGroup}\n`
+            + 'Please run "npm run download-data" to cache data locally.\n'
+            + 'Alternatively, set NUXT_PUBLIC_USE_LOCAL_CACHE=false to fetch from S3.'
+          )
         }
 
         console.warn(`Local file not found: ${localPath}, fetching from S3`)
@@ -455,11 +484,16 @@ export class DataLoaderService {
       // Fetch from S3
       const url = `${S3_BASE}/${path}`
       const response = await fetch(url, {
-        signal: AbortSignal.timeout(30000)
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)
       })
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`)
+        throw new Error(
+          `Failed to fetch mortality data from S3: ${response.status} ${response.statusText}\n`
+          + `URL: ${url}\n`
+          + `Country: ${country}, Chart Type: ${chartType}, Age Group: ${ageGroup}\n`
+          + 'This may indicate a network issue or that the data file is not available.'
+        )
       }
 
       const csvText = await response.text()
@@ -604,5 +638,16 @@ export class DataLoaderService {
   }
 }
 
-// Singleton instance
+/**
+ * Singleton instance of DataLoaderService
+ *
+ * This singleton is used throughout the server for consistent data loading behavior.
+ * For testing, mock the methods on this instance rather than the instance itself:
+ *
+ * @example
+ * ```typescript
+ * // In tests
+ * vi.spyOn(dataLoader, 'loadCountryMetadata').mockResolvedValue(mockData)
+ * ```
+ */
 export const dataLoader = new DataLoaderService()
