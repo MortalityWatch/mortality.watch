@@ -14,7 +14,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed } from 'vue'
 import { useExplorerDataOrchestration } from './useExplorerDataOrchestration'
 import type { useExplorerState } from './useExplorerState'
 import type { useExplorerHelpers } from './useExplorerHelpers'
