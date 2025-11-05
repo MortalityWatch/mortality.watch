@@ -39,6 +39,52 @@ vi.mock('./useDateRangeValidation', () => ({
   }))
 }))
 
+vi.mock('./useDateRangeCalculations', () => ({
+  useDateRangeCalculations: vi.fn((chartType, sliderStart, dateFrom, dateTo, allLabels) => {
+    // Make the mock functional so tests work properly
+    const visibleLabels = computed(() => allLabels.value || [])
+
+    return {
+      availableLabels: computed(() => allLabels.value || []),
+      availableRange: computed(() => {
+        const labels = allLabels.value || []
+        return labels.length > 0 ? { min: labels[0], max: labels[labels.length - 1] } : null
+      }),
+      visibleLabels,
+      visibleRange: computed(() => {
+        const labels = visibleLabels.value
+        return labels.length > 0 ? { min: labels[0], max: labels[labels.length - 1] } : null
+      }),
+      selectedRange: computed(() => ({ from: dateFrom.value ?? null, to: dateTo.value ?? null })),
+      isValidDate: (date: string) => visibleLabels.value.includes(date),
+      getDefaultRange: () => {
+        const labels = visibleLabels.value
+        return labels.length > 0 ? { from: labels[0], to: labels[labels.length - 1] } : { from: '', to: '' }
+      },
+      findClosestYearLabel: (targetYear: string, preferLast = false) => {
+        const labels = visibleLabels.value
+        const yearLabels = labels.filter((l: string) => l.startsWith(targetYear))
+        if (yearLabels.length === 0) return null
+        return preferLast ? yearLabels[yearLabels.length - 1] : yearLabels[0]
+      },
+      matchDateToLabel: (currentDate: string | null | undefined, preferLast: boolean) => {
+        if (!currentDate) return null
+        const labels = visibleLabels.value
+        if (labels.includes(currentDate)) return currentDate
+        const year = currentDate.substring(0, 4)
+        const matching = labels.filter((l: string) => l.startsWith(year))
+        if (matching.length === 0) return null
+        return preferLast ? matching[matching.length - 1] : matching[0]
+      },
+      hasExtendedTimeAccess: computed(() => true),
+      effectiveMinDate: computed(() => {
+        const labels = allLabels.value || []
+        return labels.length > 0 ? labels[0] : null
+      })
+    }
+  })
+}))
+
 vi.mock('@/lib/chart', () => ({
   getFilteredChartData: vi.fn()
 }))

@@ -1,6 +1,7 @@
 /**
  * Explorer Data Orchestration Composable
  *
+ * Date Range Refactor: Now uses useDateRangeCalculations for all date logic
  * Phase 12e: Added computed() memoization for expensive calculations
  * Phase 10.3: Refactored to use shared useChartDataFetcher composable
  *
@@ -31,7 +32,7 @@ import { useChartDataFetcher } from '@/composables/useChartDataFetcher'
 import { getFilteredChartData } from '@/lib/chart'
 import type { MortalityChartData } from '@/lib/chart/chartTypes'
 import { useDateRangeValidation } from '@/composables/useDateRangeValidation'
-import { getSeasonString } from '@/model/baseline'
+import { useDateRangeCalculations } from '@/composables/useDateRangeCalculations'
 import { UI_CONFIG } from '@/lib/config/constants'
 import {
   arrayBufferToBase64,
@@ -62,6 +63,15 @@ export function useExplorerDataOrchestration(
    * Updated when data is fetched from server
    */
   const allChartLabels = ref<string[]>([])
+
+  // Date range calculations (single source of truth for date logic)
+  const dateRangeCalc = useDateRangeCalculations(
+    state.chartType,
+    state.sliderStart,
+    state.dateFrom,
+    state.dateTo,
+    allChartLabels
+  )
 
   /**
    * Yearly representation of all labels (for calculating indices)
@@ -132,79 +142,6 @@ export function useExplorerDataOrchestration(
     return helpers.isAsmrType() ? ['all'] : state.ageGroups.value
   })
 
-  /**
-   * Find the closest available year in labels
-   *
-   * @param labels - Available date labels
-   * @param targetYear - Target year to find
-   * @param preferLast - If true, return last label for year; otherwise return first
-   * @returns Closest matching label
-   */
-  const findClosestYearLabel = (labels: string[], targetYear: string, preferLast: boolean = false): string => {
-    const targetYearNum = parseInt(targetYear)
-    const availableYears = Array.from(new Set(labels.map(l => parseInt(l.substring(0, 4)))))
-
-    // Find the closest year
-    const closestYear = availableYears.reduce((prev, curr) =>
-      Math.abs(curr - targetYearNum) < Math.abs(prev - targetYearNum) ? curr : prev
-    )
-
-    // Find labels for that year
-    const yearLabels = labels.filter(l => l.startsWith(closestYear.toString()))
-    return preferLast ? yearLabels[yearLabels.length - 1]! : yearLabels[0]!
-  }
-
-  /**
-   * Match a date to the closest available label by year
-   *
-   * @param labels - Available date labels
-   * @param currentDate - Current date to match
-   * @param preferLast - If true, prefer last label of year; otherwise prefer first
-   * @returns Matched label or null if currentDate is null/undefined
-   */
-  const matchDateToLabel = (labels: string[], currentDate: string | null | undefined, preferLast: boolean): string | null => {
-    if (!currentDate) return null
-
-    // If exact match exists, return it
-    if (labels.includes(currentDate)) return currentDate
-
-    // Try to find label with same year
-    const year = currentDate.substring(0, 4)
-    const matchingLabels = labels.filter(l => l.startsWith(year))
-
-    if (matchingLabels.length > 0) {
-      return preferLast ? matchingLabels[matchingLabels.length - 1]! : matchingLabels[0]!
-    }
-
-    // Fall back to closest year
-    return findClosestYearLabel(labels, year, preferLast)
-  }
-
-  /**
-   * Check if current date range is valid
-   *
-   * @param labels - Available date labels
-   * @param dateFrom - Start date
-   * @param dateTo - End date
-   * @returns true if both dates are valid and present in labels
-   */
-  const isDateRangeValid = (labels: string[], dateFrom: string | null, dateTo: string | null): boolean => {
-    return !!(dateFrom && dateTo && labels.includes(dateFrom) && labels.includes(dateTo))
-  }
-
-  /**
-   * Get default date range based on slider start
-   *
-   * @param labels - Available date labels
-   * @returns Object with defaultFrom and defaultTo
-   */
-  const getDefaultDateRange = (labels: string[]): { defaultFrom: string, defaultTo: string } => {
-    const sliderStartStr = getSeasonString(state.chartType.value, Number(state.sliderStart.value))
-    const defaultFrom = labels.includes(sliderStartStr) ? sliderStartStr : labels[0]!
-    const defaultTo = labels[labels.length - 1]!
-    return { defaultFrom, defaultTo }
-  }
-
   // Configure chart options based on current state
   const configureOptions = () => {
     chartOptions.showTotalOption = state.isExcess.value && helpers.isBarChartStyle()
@@ -226,33 +163,34 @@ export function useExplorerDataOrchestration(
   /**
    * Initialize or validate the main date range (dateFrom/dateTo)
    *
+   * Date Range Refactor: Now uses useDateRangeCalculations utilities
    * Phase 13a: Simplified by extracting helper functions to reduce complexity
    *
    * Called after data is fetched to ensure dateFrom/dateTo are valid.
    *
-   * IMPORTANT: Uses filteredChartLabels (respects sliderStart), NOT allChartData.labels
+   * IMPORTANT: Uses visibleLabels (respects sliderStart + feature gating), NOT allChartData.labels
    * This ensures the initial range starts from sliderStart when possible.
    *
    * Logic:
    * 1. If current dateFrom/dateTo are valid, keep them (preserve user selection)
-   * 2. Otherwise, set to sliderStart (if data exists) or first available date
+   * 2. Otherwise, set to default range (first to last visible label)
    * 3. Try to preserve year when chart type changes (e.g., yearly → fluseason)
    */
   const resetDates = () => {
-    const labels = filteredChartLabels.value
+    const labels = dateRangeCalc.visibleLabels.value
     if (labels.length === 0) return
 
     // If current range is valid, preserve it
-    if (isDateRangeValid(labels, state.dateFrom.value, state.dateTo.value)) {
+    if (dateRangeCalc.isValidDate(state.dateFrom.value ?? '') && dateRangeCalc.isValidDate(state.dateTo.value ?? '')) {
       return
     }
 
-    // Get default range based on slider start
-    const { defaultFrom, defaultTo } = getDefaultDateRange(labels)
+    // Get default range from composable
+    const { from: defaultFrom, to: defaultTo } = dateRangeCalc.getDefaultRange()
 
     // Try to preserve user's selection by matching years
-    const matchedFrom = matchDateToLabel(labels, state.dateFrom.value, false) ?? defaultFrom
-    const matchedTo = matchDateToLabel(labels, state.dateTo.value, true) ?? defaultTo
+    const matchedFrom = dateRangeCalc.matchDateToLabel(state.dateFrom.value, false) ?? defaultFrom
+    const matchedTo = dateRangeCalc.matchDateToLabel(state.dateTo.value, true) ?? defaultTo
 
     // Validate the matched range
     const period = new ChartPeriod(labels, state.chartType.value as ChartType)
@@ -466,15 +404,19 @@ export function useExplorerDataOrchestration(
   }
 
   /**
-   * Filtered labels respecting sliderStart setting
+   * Filtered labels respecting sliderStart and feature gating
+   *
+   * Date Range Refactor: Now provided by useDateRangeCalculations.visibleLabels
    *
    * This represents the FULL RANGE that should be available on the slider,
-   * starting from the user's chosen sliderStart year (default: 2010).
+   * starting from the user's chosen sliderStart year (default: 2010) and
+   * respecting year 2000 restriction for non-premium users.
    *
    * Example:
    * - allChartLabels: ['1950/51', ..., '2024/25'] (all data)
    * - sliderStart: '2010'
-   * - filteredChartLabels: ['2010/11', ..., '2024/25'] (from 2010 onwards)
+   * - hasExtendedTimeAccess: false
+   * - visibleLabels: ['2010/11', ..., '2024/25'] (from max(2010, 2000) onwards)
    *
    * Used by:
    * - Explorer DateRangePicker for slider range
@@ -482,13 +424,7 @@ export function useExplorerDataOrchestration(
    *
    * Note: The actual selected range (dateFrom/dateTo) can be a subset of this.
    */
-  const filteredChartLabels = computed(() => {
-    if (!allChartLabels.value || allChartLabels.value.length === 0) return []
-    if (!allYearlyChartLabels.value || allYearlyChartLabels.value.length === 0) return allChartLabels.value
-
-    const startIndex = getStartIndex(allYearlyChartLabels.value, state.sliderStart.value)
-    return allChartLabels.value.slice(startIndex)
-  })
+  const filteredChartLabels = dateRangeCalc.visibleLabels
 
   return {
     // Data state
