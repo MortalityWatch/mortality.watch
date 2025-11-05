@@ -15,24 +15,13 @@ const props = defineProps<{
 }>()
 const emit = defineEmits(['sliderChanged', 'periodLengthChanged'])
 
-// Feature access for date restrictions
-const { can } = useFeatureAccess()
-const hasExtendedTimeAccess = computed(() => can('EXTENDED_TIME_PERIODS'))
-
-// Calculate the minimum allowed index for public users (year 2000+)
-const minAllowedIndex = computed(() => {
-  if (hasExtendedTimeAccess.value) {
-    return 0 // Free tier users can access all data
-  }
-
-  // Find the first label that is >= 2000
-  const firstAllowedIndex = props.labels.findIndex((label) => {
-    const year = parseInt(label.substring(0, 4))
-    return year >= 2000
-  })
-
-  return firstAllowedIndex >= 0 ? firstAllowedIndex : 0
-})
+/**
+ * Date Range Refactor: Removed minAllowedIndex logic
+ *
+ * The labels prop is now pre-filtered by useDateRangeCalculations.visibleLabels
+ * which already applies feature gating (year 2000 restriction for non-premium users).
+ * No need to filter again here.
+ */
 
 // Track if user is actively dragging the slider (only used when delayEmit is true)
 const isDragging = ref(false)
@@ -194,15 +183,6 @@ watch(sliderIndices, (newIndices) => {
     let idx0 = newIndices[0] ?? 0
     let idx1 = newIndices[1] ?? props.labels.length - 1
 
-    // Enforce minimum date restriction for public users
-    const restrictedMinIdx = minAllowedIndex.value
-    if (idx0 < restrictedMinIdx) {
-      idx0 = restrictedMinIdx
-    }
-    if (idx1 < restrictedMinIdx) {
-      idx1 = restrictedMinIdx
-    }
-
     // Handle fixed period length mode
     if (props.periodLength && props.periodLength > 0) {
       const periodIndices = calculatePeriodIndices(props.periodLength)
@@ -313,7 +293,7 @@ const currentRange = computed(() => {
     <USlider
       v-if="singleValue"
       v-model="sliderIndices[0]"
-      :min="minAllowedIndex"
+      :min="0"
       :max="labels.length - 1"
       :step="1"
       :disabled="disabled"
@@ -322,7 +302,7 @@ const currentRange = computed(() => {
     <USlider
       v-else
       v-model="sliderIndices"
-      :min="minAllowedIndex"
+      :min="0"
       :max="labels.length - 1"
       :step="1"
       :disabled="disabled"
