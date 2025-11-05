@@ -56,7 +56,7 @@ export default defineEventHandler(async (event) => {
     }
     return SubscriptionStatusResponseSchema.parse(response)
   } catch (error) {
-    console.error('Error fetching subscription status:', error)
+    logger.error('Error fetching subscription status:', error instanceof Error ? error : new Error(String(error)))
     throw createError({
       statusCode: 500,
       message: 'Failed to fetch subscription status'

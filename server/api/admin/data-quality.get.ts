@@ -116,7 +116,7 @@ export default defineEventHandler(async (event) => {
     }
     return DataQualityResponseSchema.parse(response)
   } catch (err) {
-    console.error('Error fetching data quality report:', err)
+    logger.error('Error fetching data quality report', err instanceof Error ? err : new Error(String(err)))
     throw createError({
       statusCode: 500,
       message: err instanceof Error ? err.message : 'Failed to fetch data quality report'

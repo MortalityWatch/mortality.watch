@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
 
     return result
   } catch (err) {
-    console.error('Error running staleness check:', err)
+    logger.error('Error running staleness check', err instanceof Error ? err : new Error(String(err)))
     throw createError({
       statusCode: 500,
       message: err instanceof Error ? err.message : 'Failed to run staleness check'

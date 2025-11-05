@@ -26,7 +26,7 @@ interface StaleCountry {
 }
 
 export async function checkDataStaleness() {
-  console.log('[Data Staleness Check] Starting check...')
+  logger.info('[Data Staleness Check] Starting check...')
 
   try {
     // Fetch metadata
@@ -61,11 +61,11 @@ export async function checkDataStaleness() {
       }
     }
 
-    console.log(`[Data Staleness Check] Found ${staleCountries.length} stale countries`)
+    logger.info(`[Data Staleness Check] Found ${staleCountries.length} stale countries`)
 
     // If no stale countries, we're done
     if (staleCountries.length === 0) {
-      console.log('[Data Staleness Check] All data is fresh. No alerts needed.')
+      logger.info('[Data Staleness Check] All data is fresh. No alerts needed.')
       return {
         success: true,
         staleCount: 0,
@@ -85,7 +85,7 @@ export async function checkDataStaleness() {
       .all()
 
     if (admins.length === 0) {
-      console.warn('[Data Staleness Check] No admin users found to send alerts')
+      logger.warn('[Data Staleness Check] No admin users found to send alerts')
       return {
         success: true,
         staleCount: staleCountries.length,
@@ -104,15 +104,15 @@ export async function checkDataStaleness() {
           subject: `⚠️ Data Staleness Alert - ${staleCountries.length} countries need attention`,
           html
         })
-        console.log(`[Data Staleness Check] Alert sent to: ${admin.email}`)
+        logger.info(`[Data Staleness Check] Alert sent to: ${admin.email}`)
       } catch (emailError) {
-        console.error(`[Data Staleness Check] Failed to send alert to ${admin.email}:`, emailError)
+        logger.error(`[Data Staleness Check] Failed to send alert to ${admin.email}:`, emailError instanceof Error ? emailError : new Error(String(emailError)))
       }
     })
 
     await Promise.allSettled(emailPromises)
 
-    console.log(`[Data Staleness Check] Completed. Alerts sent to ${admins.length} admin(s)`)
+    logger.info(`[Data Staleness Check] Completed. Alerts sent to ${admins.length} admin(s)`)
 
     return {
       success: true,
@@ -121,7 +121,7 @@ export async function checkDataStaleness() {
       message: `Found ${staleCountries.length} stale countries, notified ${admins.length} admin(s)`
     }
   } catch (error) {
-    console.error('[Data Staleness Check] Error:', error)
+    logger.error('[Data Staleness Check] Error:', error instanceof Error ? error : new Error(String(error)))
     throw error
   }
 }

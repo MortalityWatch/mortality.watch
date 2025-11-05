@@ -31,6 +31,7 @@ import ChartDataLabels from 'chartjs-plugin-datalabels'
 import { MatrixController, MatrixElement } from 'chartjs-chart-matrix'
 import QRCode from 'qrcode'
 import { withTimeout, cleanupCanvas } from './memoryManager'
+import { logger } from './logger'
 
 // node-canvas Image type (compatible with CanvasImageSource but has different types)
 type CanvasImage = Awaited<ReturnType<typeof loadImage>>
@@ -112,7 +113,7 @@ const createLogoPlugin = (logoImage: CanvasImage, qrImage: CanvasImage | null) =
           // node-canvas Image is compatible with Canvas API but TypeScript doesn't recognize it
           ctx.drawImage(logoImage as unknown as CanvasImageSource, 10, 10, w, h)
         } catch (err) {
-          console.error('Failed to draw logo:', err)
+          logger.error('Failed to draw logo', err instanceof Error ? err : new Error(String(err)))
         }
       }
 
@@ -123,7 +124,7 @@ const createLogoPlugin = (logoImage: CanvasImage, qrImage: CanvasImage | null) =
           // node-canvas Image is compatible with Canvas API but TypeScript doesn't recognize it
           ctx.drawImage(qrImage as unknown as CanvasImageSource, chart.width - s, 0, s, s)
         } catch (err) {
-          console.error('Failed to draw QR code:', err)
+          logger.error('Failed to draw QR code', err instanceof Error ? err : new Error(String(err)))
         }
       }
     }
@@ -174,7 +175,7 @@ export async function renderChart(
             })
             qrImage = await loadImage(qrSrc)
           } catch (err) {
-            console.error('Failed to generate QR code:', err)
+            logger.error('Failed to generate QR code', err instanceof Error ? err : new Error(String(err)))
           }
         }
 
@@ -220,7 +221,7 @@ export async function renderChart(
         // Chart.js destroy method exists and works at runtime
         chart.destroy()
       } catch (err) {
-        console.warn('Error destroying chart:', err)
+        logger.warn('Error destroying chart', { error: err })
       }
     }
 
@@ -228,7 +229,7 @@ export async function renderChart(
       try {
         Chart.unregister(logoPlugin)
       } catch (err) {
-        console.warn('Error unregistering logo plugin:', err)
+        logger.warn('Error unregistering logo plugin', { error: err })
       }
     }
 

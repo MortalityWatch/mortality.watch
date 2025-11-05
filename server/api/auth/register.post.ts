@@ -93,7 +93,7 @@ export default defineEventHandler(async (event) => {
   try {
     await sendVerificationEmail(newUser.email, verificationToken)
   } catch (error) {
-    console.error('Failed to send verification email:', error)
+    logger.error('Failed to send verification email:', error instanceof Error ? error : new Error(String(error)))
     // User is created but can use resend functionality from check-email page
     // Still return success so they get to check-email page
   }

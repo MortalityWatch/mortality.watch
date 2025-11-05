@@ -88,7 +88,7 @@ export default defineEventHandler(async (event) => {
     }
     return CheckoutSessionResponseSchema.parse(response)
   } catch (error) {
-    console.error('Error creating checkout session:', error)
+    logger.error('Error creating checkout session:', error instanceof Error ? error : new Error(String(error)))
     throw createError({
       statusCode: 500,
       message: 'Failed to create checkout session'

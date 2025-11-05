@@ -13,6 +13,7 @@
 
 // Uncomment when Sentry is set up:
 import * as Sentry from '@sentry/node'
+import { logger } from './logger'
 
 interface ErrorContext {
   user?: string
@@ -34,7 +35,7 @@ class ErrorTracker {
     const sentryDsn = process.env.SENTRY_DSN
 
     if (!sentryDsn) {
-      console.warn('[ErrorTracking] SENTRY_DSN not configured, using console logging')
+      logger.warn('[ErrorTracking] SENTRY_DSN not configured, using console logging')
       return
     }
 
@@ -59,9 +60,9 @@ class ErrorTracker {
       })
 
       this.initialized = true
-      console.log('[ErrorTracking] Sentry initialized')
+      logger.info('[ErrorTracking] Sentry initialized')
     } catch (error) {
-      console.error('[ErrorTracking] Failed to initialize Sentry:', error)
+      logger.error('Failed to initialize Sentry', error instanceof Error ? error : new Error(String(error)))
     }
   }
 
@@ -72,7 +73,7 @@ class ErrorTracker {
     const errorObj = typeof error === 'string' ? new Error(error) : error
 
     // Log to console in all environments
-    console.error('[Error]', errorObj, context)
+    logger.error('Error captured', errorObj, context as Record<string, unknown>)
 
     if (!this.initialized) {
       return
@@ -98,7 +99,8 @@ class ErrorTracker {
    * Capture a message (non-error event)
    */
   captureMessage(message: string, level: 'info' | 'warning' | 'error' = 'info', context?: ErrorContext) {
-    console.log(`[${level.toUpperCase()}]`, message, context)
+    const formattedMessage = `[${level.toUpperCase()}] ${message}`
+    logger.info(formattedMessage, context as Record<string, unknown>)
 
     if (!this.initialized) {
       return

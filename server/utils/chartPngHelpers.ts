@@ -44,7 +44,7 @@ export function parseQueryParams(query: Record<string, unknown>): Record<string,
       // Merge compressed state into query params (compressed takes precedence)
       queryParams = { ...query, ...compressedState }
     } catch (err) {
-      console.error('Failed to decompress qr parameter:', err)
+      logger.error('Failed to decompress qr parameter:', err instanceof Error ? err : new Error(String(err)))
       // Fall back to using query params as-is
     }
   }

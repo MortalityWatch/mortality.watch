@@ -86,7 +86,7 @@ export default defineEventHandler(async (event) => {
         // 5. Render the chart
         return await renderChart(width, height, config, state.chartStyle as ChartStyle)
       } catch (dataError) {
-        console.error('Error fetching/rendering chart data:', dataError)
+        logger.error('Error fetching/rendering chart data:', dataError instanceof Error ? dataError : new Error(String(dataError)))
         // Fall back to placeholder on data errors
         return await renderPlaceholderChart(width, height, title)
       }
@@ -94,7 +94,7 @@ export default defineEventHandler(async (event) => {
 
     // Save to filesystem cache (async, non-blocking)
     saveCachedChart(cacheKey, buffer).catch((err) => {
-      console.error('Failed to save chart to cache:', err)
+      logger.error('Failed to save chart to cache:', err instanceof Error ? err : new Error(String(err)))
     })
 
     // Set response headers with 7-day cache
@@ -102,7 +102,7 @@ export default defineEventHandler(async (event) => {
 
     return buffer
   } catch (error) {
-    console.error('Error generating chart:', error)
+    logger.error('Error generating chart:', error instanceof Error ? error : new Error(String(error)))
 
     throw createError({
       statusCode: 500,
