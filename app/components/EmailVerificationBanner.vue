@@ -10,7 +10,7 @@ const showBanner = computed(() => {
   return isAuthenticated.value && user.value && !user.value.emailVerified && !dismissed.value
 })
 
-async function resendVerification() {
+async function resendVerification(): Promise<void> {
   sending.value = true
   try {
     await $fetch('/api/auth/resend-verification', {
@@ -28,7 +28,7 @@ async function resendVerification() {
   }
 }
 
-function dismiss() {
+function dismiss(): void {
   dismissed.value = true
 }
 </script>

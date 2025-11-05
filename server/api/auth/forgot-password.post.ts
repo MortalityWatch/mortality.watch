@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
 
   // Send password reset email (don't await - send in background)
   sendPasswordResetEmail(user.email, resetToken).catch((error) => {
-    console.error('Failed to send password reset email:', error)
+    logger.error('Failed to send password reset email:', error instanceof Error ? error : new Error(String(error)))
     // Don't throw error - we don't want to reveal if user exists
   })
 

@@ -19,7 +19,7 @@ const rawEmail = route.query.email as string || ''
 const emailValidation = z.string().email().safeParse(rawEmail)
 const email = emailValidation.success ? rawEmail : ''
 
-async function resendVerification() {
+async function resendVerification(): Promise<void> {
   if (!email) {
     toast.add({
       title: 'Error',
