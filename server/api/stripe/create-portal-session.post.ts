@@ -3,6 +3,7 @@ import { requireAuth } from '../../utils/auth'
 import { getStripe } from '../../utils/stripe'
 import { db, subscriptions } from '#db'
 import { eq } from 'drizzle-orm'
+import { PortalSessionResponseSchema } from '../../schemas'
 
 const requestSchema = z.object({
   returnUrl: z.string().url()
@@ -49,11 +50,12 @@ export default defineEventHandler(async (event) => {
       return_url: returnUrl
     })
 
-    return {
+    const response = {
       url: session.url
     }
+    return PortalSessionResponseSchema.parse(response)
   } catch (error) {
-    console.error('Error creating portal session:', error)
+    logger.error('Error creating portal session:', error instanceof Error ? error : new Error(String(error)))
 
     // Re-throw if it's already an H3 error
     if (error && typeof error === 'object' && 'statusCode' in error) {

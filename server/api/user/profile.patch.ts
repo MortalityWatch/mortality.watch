@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { db, users } from '#db'
 import { eq } from 'drizzle-orm'
 import { requireAuth, hashPassword } from '../../utils/auth'
+import { ProfileUpdateResponseSchema } from '../../schemas'
 
 const updateProfileSchema = z.object({
   firstName: z.string().min(1, 'First name is required').max(50, 'First name is too long').optional(),
@@ -136,9 +137,10 @@ export default defineEventHandler(async (event) => {
   // Return user without password hash
   const { passwordHash: _passwordHash, ...userWithoutPassword } = updatedUser
 
-  return {
-    success: true,
+  const response = {
+    success: true as const,
     user: userWithoutPassword,
     message: 'Profile updated successfully'
   }
+  return ProfileUpdateResponseSchema.parse(response)
 })

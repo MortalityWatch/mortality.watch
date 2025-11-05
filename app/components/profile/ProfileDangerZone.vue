@@ -16,16 +16,16 @@ const { signOut } = useAuth()
 const deletingAccount = ref(false)
 const showDeleteModal = ref(false)
 
-function handleSignOut() {
+function handleSignOut(): void {
   signOut()
 }
 
-function openDeleteModal() {
+function openDeleteModal(): void {
   showDeleteModal.value = true
   emit('delete-account')
 }
 
-async function handleAccountDeleted() {
+async function handleAccountDeleted(): Promise<void> {
   showDeleteModal.value = false
   // Sign out and redirect will be handled by parent
   await signOut()

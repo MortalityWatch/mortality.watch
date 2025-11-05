@@ -32,7 +32,39 @@ import {
   createScalesConfig
 } from './config'
 
-// Public API
+/**
+ * Creates a chart configuration based on the specified style and data type.
+ *
+ * This is the main entry point for generating Chart.js configurations.
+ * It routes to the appropriate configuration builder based on the chart style.
+ *
+ * @param style - The chart style ('bar', 'line', or 'matrix')
+ * @param data - Raw chart data containing datasets and labels
+ * @param isDeathsType - Whether the data represents death counts
+ * @param isExcess - Whether to show excess mortality
+ * @param isLE - Whether the data represents life expectancy
+ * @param isPopulationType - Whether the data represents population counts
+ * @param showLabels - Whether to display data labels on the chart
+ * @param showPercentage - Whether to format values as percentages
+ * @param showPi - Whether to show prediction intervals
+ * @returns Chart.js configuration object
+ *
+ * @example
+ * ```typescript
+ * const config = makeChartConfig(
+ *   'bar',
+ *   mortalityData,
+ *   true,
+ *   true,
+ *   false,
+ *   false,
+ *   true,
+ *   false,
+ *   true
+ * )
+ * // Returns bar chart configuration with excess mortality and prediction intervals
+ * ```
+ */
 export const makeChartConfig = (
   style: ChartStyle,
   data: Array<Record<string, unknown>>,
@@ -69,6 +101,46 @@ export const makeChartConfig = (
   ) as unknown as Record<string, unknown>
 }
 
+/**
+ * Creates a bar or line chart configuration for mortality data.
+ *
+ * Generates a complete Chart.js configuration with responsive layout, custom plugins,
+ * scales, and data formatting. Supports feature gating for Pro users who can hide
+ * watermarks and QR codes.
+ *
+ * @param data - Structured mortality chart data with datasets and labels
+ * @param isExcess - Whether to display excess mortality calculations
+ * @param showPi - Whether to show prediction intervals/error bars
+ * @param showPercentage - Whether to format values as percentages
+ * @param isDeathsType - Whether the data represents death counts (affects decimal display)
+ * @param isPopulationType - Whether the data represents population (affects decimal display)
+ * @param showQrCode - Whether to display QR code overlay (default: true)
+ * @param showLogo - Whether to display logo watermark (default: true)
+ * @param decimals - Decimal precision: 'auto', '0', '1', '2', or '3' (default: 'auto')
+ * @param isDark - Whether to use dark mode styling
+ * @param userTier - User subscription tier for feature gating (tier 2+ can hide watermarks)
+ * @param showCaption - Whether to display chart caption (default: true)
+ * @returns Complete Chart.js configuration object with plugins, scales, and data
+ *
+ * @example
+ * ```typescript
+ * const config = makeBarLineChartConfig(
+ *   mortalityData,
+ *   true,  // isExcess
+ *   true,  // showPi
+ *   false, // showPercentage
+ *   true,  // isDeathsType
+ *   false, // isPopulationType
+ *   true,  // showQrCode
+ *   true,  // showLogo
+ *   'auto',
+ *   false, // isDark
+ *   2,     // userTier (Pro)
+ *   true   // showCaption
+ * )
+ * // Returns bar/line chart with excess mortality, prediction intervals, and watermark
+ * ```
+ */
 export const makeBarLineChartConfig = (
   data: MortalityChartData,
   isExcess: boolean,
@@ -137,6 +209,54 @@ export const makeBarLineChartConfig = (
   }
 }
 
+/**
+ * Creates a matrix/heatmap chart configuration for mortality data.
+ *
+ * Extends the bar/line configuration with matrix-specific features including:
+ * - Custom x/y categorical scales
+ * - Dynamic tile coloring based on gradient palettes
+ * - Local vs global min/max normalization
+ * - Configurable data labels with smart formatting
+ *
+ * Matrix charts are ideal for visualizing data across multiple jurisdictions and time periods.
+ *
+ * @param data - Structured mortality chart data with datasets and labels
+ * @param isExcess - Whether to display excess mortality (affects color palette)
+ * @param isLE - Whether the data represents life expectancy (affects formatting)
+ * @param showPi - Whether to show prediction intervals
+ * @param showPercentage - Whether to format values as percentages
+ * @param showLabels - Whether to display data labels on matrix tiles
+ * @param isDeathsType - Whether the data represents death counts (affects normalization)
+ * @param isPopulationType - Whether the data represents population (affects normalization)
+ * @param showQrCode - Whether to display QR code overlay (default: true)
+ * @param showLogo - Whether to display logo watermark (default: true)
+ * @param isDark - Whether to use dark mode styling (affects label colors)
+ * @param decimals - Decimal precision: 'auto', '0', '1', '2', or '3' (default: 'auto')
+ * @param userTier - User subscription tier for feature gating
+ * @param showCaption - Whether to display chart caption (default: true)
+ * @returns Chart.js matrix configuration with custom scales and tile coloring
+ *
+ * @example
+ * ```typescript
+ * const config = makeMatrixChartConfig(
+ *   mortalityData,
+ *   true,  // isExcess
+ *   false, // isLE
+ *   false, // showPi
+ *   true,  // showPercentage
+ *   true,  // showLabels
+ *   false, // isDeathsType
+ *   false, // isPopulationType
+ *   true,  // showQrCode
+ *   true,  // showLogo
+ *   true,  // isDark
+ *   '1',   // decimals
+ *   1,     // userTier
+ *   true   // showCaption
+ * )
+ * // Returns heatmap with excess mortality percentage and data labels
+ * ```
+ */
 export const makeMatrixChartConfig = (
   data: MortalityChartData,
   isExcess: boolean,
@@ -272,6 +392,45 @@ export const makeMatrixChartConfig = (
   return config
 }
 
+/**
+ * Transforms mortality chart data into matrix format.
+ *
+ * Converts the standard chart data structure (datasets with arrays of values)
+ * into matrix data points with x, y coordinates and values. Also calculates:
+ * - Global minimum and maximum values across all data
+ * - Local minimum and maximum values per jurisdiction
+ *
+ * This data structure is required for the Chart.js matrix plugin and supports
+ * both global and local normalization for heatmap coloring.
+ *
+ * @param chartData - Source mortality chart data with datasets and labels
+ * @returns Matrix data with flattened data points and min/max statistics
+ *
+ * @example
+ * ```typescript
+ * const matrixData = makeMatrixData({
+ *   datasets: [
+ *     { label: 'USA', data: [100, 200, 150] },
+ *     { label: 'CAN', data: [90, 180, 140] }
+ *   ],
+ *   labels: ['2020', '2021', '2022']
+ * })
+ * // Returns:
+ * // {
+ * //   data: [
+ * //     { country: 'USA', x: '2020', y: 'USA', v: 100 },
+ * //     { country: 'USA', x: '2021', y: 'USA', v: 200 },
+ * //     ...
+ * //   ],
+ * //   min: 90,
+ * //   max: 200,
+ * //   localMinMax: {
+ * //     'USA': { min: 100, max: 200 },
+ * //     'CAN': { min: 90, max: 180 }
+ * //   }
+ * // }
+ * ```
+ */
 const makeMatrixData = (chartData: MortalityChartData): MatrixData => {
   const data: MortalityMatrixDataPoint[] = []
   let min = Number.MAX_SAFE_INTEGER

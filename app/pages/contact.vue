@@ -185,6 +185,7 @@ const showSuccess = ref(false)
 const errorMessage = ref('')
 const toast = useToast()
 const route = useRoute()
+const { withRetry, handleError } = useErrorRecovery()
 
 // Determine if user is on a page with chart data
 const currentChartUrl = computed(() => {
@@ -207,7 +208,7 @@ const currentPageName = computed(() => {
 })
 
 // Submit handler
-async function onSubmit() {
+async function onSubmit(): Promise<void> {
   errorMessage.value = ''
   isSubmitting.value = true
 
@@ -225,10 +226,15 @@ async function onSubmit() {
       payload.chartUrl = currentChartUrl.value
     }
 
-    // Send to API
-    await $fetch('/api/contact', {
+    // Send to API with automatic retry for transient failures
+    await withRetry(() => $fetch('/api/contact', {
       method: 'POST',
       body: payload
+    }), {
+      maxRetries: 3,
+      exponentialBackoff: true,
+      context: 'contactForm',
+      onlyRetryableErrors: true
     })
 
     // Show success state
@@ -241,33 +247,15 @@ async function onSubmit() {
       color: 'success'
     })
   } catch (err: unknown) {
-    console.error('Contact form error:', err)
-
-    // Type guard for error object
-    const error = err as { statusCode?: number, data?: { message?: string } }
-
-    // Handle specific error cases
-    if (error.statusCode === 429) {
-      errorMessage.value = 'Too many submissions. Please try again later.'
-    } else if (error.statusCode === 400) {
-      errorMessage.value = error.data?.message || 'Invalid form data. Please check your inputs.'
-    } else {
-      errorMessage.value = 'Failed to send message. Please try again later.'
-    }
-
-    // Show error toast
-    toast.add({
-      title: 'Failed to send message',
-      description: errorMessage.value,
-      color: 'error'
-    })
+    errorMessage.value = 'Failed to send message. Please try again later.'
+    handleError(err, errorMessage.value, 'contactForm')
   } finally {
     isSubmitting.value = false
   }
 }
 
 // Reset form
-function resetForm() {
+function resetForm(): void {
   formState.name = ''
   formState.email = ''
   formState.subject = ''

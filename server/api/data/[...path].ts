@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
         })
         return data
       } catch (error) {
-        console.error(`Error reading local file ${localPath}:`, error)
+        logger.error(`Error reading local file ${localPath}:`, error instanceof Error ? error : new Error(String(error)))
         // Fall through to S3 fetch (unless local-only mode)
       }
     }
@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // If local file doesn't exist in dev, warn and fall back to S3
-    console.warn(`Local file not found: ${localPath}, fetching from S3`)
+    logger.warn(`Local file not found: ${localPath}, fetching from S3`)
   }
 
   // Production: Check TTL-based cache first

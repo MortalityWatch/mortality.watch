@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import { logger } from './logger'
 
 // Lazy-load Resend to avoid initialization errors during build
 let resend: Resend | null = null
@@ -25,9 +26,7 @@ export async function sendEmail({ to, subject, html }: EmailOptions) {
     // Use Resend test email in development if domain not verified
     const fromEmail = process.env.EMAIL_FROM || 'Mortality Watch <onboarding@resend.dev>'
 
-    console.log(`[Email] Sending to: ${to}`)
-    console.log(`[Email] From: ${fromEmail}`)
-    console.log(`[Email] Subject: ${subject}`)
+    logger.info('Sending email', { to, from: fromEmail, subject })
 
     const { data, error } = await getResend().emails.send({
       from: fromEmail,
@@ -37,14 +36,14 @@ export async function sendEmail({ to, subject, html }: EmailOptions) {
     })
 
     if (error) {
-      console.error('[Email] Sending failed:', JSON.stringify(error, null, 2))
+      logger.error('Email sending failed', new Error(error.message || JSON.stringify(error)), { to, subject })
       throw new Error(`Failed to send email: ${error.message || JSON.stringify(error)}`)
     }
 
-    console.log('[Email] Sent successfully:', data)
+    logger.info('Email sent successfully', { to, messageId: data?.id })
     return data
   } catch (error) {
-    console.error('[Email] Error:', error)
+    logger.error('Email error', error instanceof Error ? error : new Error(String(error)), { to, subject })
     throw error
   }
 }

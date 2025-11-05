@@ -127,7 +127,7 @@ const error = ref('')
 const success = ref(false)
 
 // Open modal
-function openModal() {
+function openModal(): void {
   // Check if user is authenticated
   if (!isAuthenticated.value) {
     navigateTo('/login?redirect=' + encodeURIComponent(route.path))
@@ -149,12 +149,12 @@ function openModal() {
 }
 
 // Close modal
-function closeModal() {
+function closeModal(): void {
   isOpen.value = false
 }
 
 // Save chart
-async function saveChart() {
+async function saveChart(): Promise<void> {
   if (!chartName.value.trim()) {
     error.value = 'Chart name is required'
     return

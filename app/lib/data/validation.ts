@@ -9,7 +9,20 @@ import { z } from 'zod'
 import Papa from 'papaparse'
 import type { CountryRaw, CountryDataRaw } from '@/model/country'
 
-// Zod schema for country metadata validation
+/**
+ * Zod schema for country metadata validation
+ *
+ * Validates the structure of country metadata records from CSV files.
+ * Each field is required and must match the expected format.
+ *
+ * @property {string} iso3c - Three-letter country code (e.g., "USA", "GBR")
+ * @property {string} jurisdiction - Country/region name (e.g., "United States")
+ * @property {string} min_date - Earliest available data date
+ * @property {string} max_date - Latest available data date
+ * @property {string} type - Data type indicator
+ * @property {string} age_groups - Available age group categories
+ * @property {string} source - Data source identifier
+ */
 const CountryRawSchema = z.object({
   iso3c: z.string().min(3).max(3),
   jurisdiction: z.string().min(1),
@@ -20,7 +33,26 @@ const CountryRawSchema = z.object({
   source: z.string()
 })
 
-// Zod schema for country data validation
+/**
+ * Zod schema for country mortality data validation
+ *
+ * Validates the structure of mortality data records from CSV files.
+ * All numeric fields are stored as strings in the CSV and will be
+ * parsed to numbers during processing.
+ *
+ * @property {string} iso3c - Three-letter country code
+ * @property {string} population - Population count (as string)
+ * @property {string} date - Date/period of the data record
+ * @property {string} type - Data type indicator
+ * @property {string} source - Primary data source identifier
+ * @property {string} source_asmr - ASMR data source identifier
+ * @property {string} deaths - Total deaths count (as string)
+ * @property {string} cmr - Crude mortality rate (as string)
+ * @property {string} asmr_who - Age-standardized mortality rate (WHO standard)
+ * @property {string} asmr_esp - Age-standardized mortality rate (European standard)
+ * @property {string} asmr_usa - Age-standardized mortality rate (US standard)
+ * @property {string} asmr_country - Age-standardized mortality rate (country-specific standard)
+ */
 const CountryDataRawSchema = z.object({
   iso3c: z.string().min(3).max(3),
   population: z.string(),
@@ -36,6 +68,15 @@ const CountryDataRawSchema = z.object({
   asmr_country: z.string()
 })
 
+/**
+ * Result of a validation operation
+ *
+ * @template T - The type of data being validated
+ * @property {boolean} success - Whether validation succeeded
+ * @property {T} [data] - Validated data (present if success is true)
+ * @property {z.ZodError} [errors] - Validation errors (present if success is false)
+ * @property {boolean} [usedCache] - Whether cached data was used as fallback
+ */
 interface ValidationResult<T> {
   success: boolean
   data?: T
@@ -43,18 +84,88 @@ interface ValidationResult<T> {
   usedCache?: boolean
 }
 
+/**
+ * In-memory cache for validation fallback
+ *
+ * Stores the last successfully validated CSV data to use as a fallback
+ * when new data fails validation. This ensures the application remains
+ * functional even when data quality issues occur.
+ *
+ * @property {string} [metadata] - Cached metadata CSV text
+ * @property {Map<string, string>} mortalityData - Cached mortality data CSVs by key
+ */
 interface ValidationCache {
   metadata?: string
   mortalityData: Map<string, string>
 }
 
-// In-memory cache for fallback data
+/**
+ * In-memory cache for fallback data
+ *
+ * Stores successfully validated data to use as a fallback when
+ * subsequent validations fail. This provides resilience against
+ * temporary data quality issues.
+ */
 const validationCache: ValidationCache = {
   mortalityData: new Map()
 }
 
 /**
- * Validate and parse metadata CSV with fallback
+ * Validate and parse country metadata CSV with graceful fallback
+ *
+ * This function validates country metadata from CSV format using Zod schemas.
+ * It employs a lenient validation strategy:
+ * 1. Parse CSV and validate each row individually
+ * 2. Accept partial success (some valid rows)
+ * 3. Fall back to cached data if all rows fail
+ * 4. Only fail if no valid data and no cache available
+ *
+ * **Validation Logic:**
+ * - Uses PapaParse for CSV parsing with header row detection
+ * - Validates each row against CountryRawSchema
+ * - Collects valid rows and logs warnings for invalid ones
+ * - Success if at least one row is valid
+ *
+ * **Caching Strategy:**
+ * - Updates cache on successful validation
+ * - Falls back to cache if all rows fail
+ * - Cache is in-memory and persists for application lifetime
+ *
+ * **Valid Input Example:**
+ * ```csv
+ * iso3c,jurisdiction,min_date,max_date,type,age_groups,source
+ * USA,United States,2010-01-01,2024-12-31,weekly,all,cdc
+ * ```
+ *
+ * **Invalid Input Example:**
+ * ```csv
+ * iso3c,jurisdiction,min_date,max_date,type,age_groups,source
+ * US,United States,2010-01-01,2024-12-31,weekly,all,cdc  # iso3c too short
+ * ```
+ *
+ * **Error Handling:**
+ * - CSV parsing errors are logged but don't fail immediately
+ * - Row validation errors are collected and logged
+ * - Returns cached data on total failure
+ * - Throws error only if no data available and no cache
+ *
+ * @param {string} csvText - Raw CSV text containing country metadata
+ * @returns {Promise<ValidationResult<CountryRaw[]>>} Validation result with data or errors
+ *
+ * @example
+ * ```typescript
+ * const csvText = await fetchMetadataCSV()
+ * const result = await validateMetadata(csvText)
+ *
+ * if (result.success) {
+ *   console.log(`Validated ${result.data.length} countries`)
+ *   if (result.usedCache) {
+ *     console.warn('Using cached data due to validation issues')
+ *   }
+ * } else {
+ *   console.error('Validation failed:', result.errors)
+ * }
+ * ```
  */
 export async function validateMetadata(
   csvText: string
@@ -150,7 +261,67 @@ export async function validateMetadata(
 }
 
 /**
- * Validate and parse mortality data CSV with fallback
+ * Validate and parse mortality data CSV with graceful fallback
+ *
+ * This function validates mortality data from CSV format using Zod schemas.
+ * It uses a lenient validation strategy similar to validateMetadata but with
+ * per-country caching for better granularity.
+ *
+ * **Validation Logic:**
+ * - Parses CSV with explicit delimiter and newline settings
+ * - Validates each row against CountryDataRawSchema
+ * - Accepts partial success (at least one valid row)
+ * - Falls back to cached data for this specific country/chart/age combination
+ *
+ * **Caching Strategy:**
+ * - Cache key format: `{country}/{chartType}/{ageGroup}`
+ * - Example: "USA/weekly/all" or "GBR/yearly/0-14"
+ * - Each combination cached independently
+ * - Cache persists in-memory for application lifetime
+ *
+ * **Valid Input Example:**
+ * ```csv
+ * iso3c,population,date,type,source,source_asmr,deaths,cmr,asmr_who,asmr_esp,asmr_usa,asmr_country
+ * USA,331449281,2020-01-01,weekly,cdc,who,50000,15.09,14.5,14.3,14.8,14.6
+ * ```
+ *
+ * **Invalid Input Example:**
+ * ```csv
+ * iso3c,population,date,type,source,source_asmr,deaths,cmr,asmr_who,asmr_esp,asmr_usa,asmr_country
+ * US,331449281,2020-01-01,weekly,cdc,who,50000,15.09,14.5,14.3,14.8,14.6  # iso3c too short
+ * ```
+ *
+ * **Error Handling:**
+ * - CSV parsing errors logged with sample errors
+ * - Row validation errors collected and logged with context
+ * - Returns cached data on total failure
+ * - Throws error only if no valid data and no cache available
+ *
+ * **Security Considerations:**
+ * - All numeric values kept as strings during validation
+ * - No eval() or dynamic code execution
+ * - Schema enforces expected field names and types
+ *
+ * @param {string} csvText - Raw CSV text containing mortality data
+ * @param {string} country - Country ISO3C code (e.g., "USA")
+ * @param {string} chartType - Chart type (e.g., "weekly", "yearly")
+ * @param {string} ageGroup - Age group identifier (e.g., "all", "0-14")
+ * @returns {Promise<ValidationResult<CountryDataRaw[]>>} Validation result with data or errors
+ *
+ * @example
+ * ```typescript
+ * const csvText = await fetchMortalityData('USA', 'weekly', 'all')
+ * const result = await validateMortalityData(csvText, 'USA', 'weekly', 'all')
+ *
+ * if (result.success) {
+ *   console.log(`Validated ${result.data.length} data points`)
+ *   if (result.usedCache) {
+ *     console.warn('Using cached data for USA/weekly/all')
+ *   }
+ * } else {
+ *   console.error('Validation failed:', result.errors)
+ * }
+ * ```
  */
 export async function validateMortalityData(
   csvText: string,
@@ -255,7 +426,38 @@ export async function validateMortalityData(
 }
 
 /**
- * Clear validation cache (useful for testing)
+ * Clear all validation cache
+ *
+ * Removes all cached validation data from memory. This is primarily
+ * useful for testing scenarios where you need to reset state between
+ * test cases, or for forcing fresh validation in development.
+ *
+ * **Use Cases:**
+ * - Unit testing: Reset cache between tests
+ * - Development: Force re-validation of data
+ * - Memory management: Clear cache if needed (rare)
+ *
+ * **Important Notes:**
+ * - This clears both metadata and mortality data caches
+ * - Next validation will have no fallback until new data is cached
+ * - Should NOT be called in normal production flow
+ * - Cache will be repopulated on next successful validation
+ *
+ * @example
+ * ```typescript
+ * // In a test suite
+ * afterEach(() => {
+ *   clearValidationCache()
+ * })
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Force fresh validation
+ * clearValidationCache()
+ * const result = await validateMetadata(newCsvData)
+ * // This will fail immediately if newCsvData is invalid (no cache fallback)
+ * ```
  */
 export function clearValidationCache() {
   delete validationCache.metadata

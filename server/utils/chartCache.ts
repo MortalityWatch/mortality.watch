@@ -1,4 +1,5 @@
 import { promises as fs } from 'node:fs'
+import { logger } from './logger'
 import { join } from 'node:path'
 import { createHash } from 'node:crypto'
 import { CACHE_CONFIG } from '@/lib/config/constants'
@@ -42,7 +43,7 @@ async function ensureCacheDir(): Promise<void> {
   try {
     await fs.mkdir(CACHE_DIR, { recursive: true })
   } catch (err) {
-    console.error('Failed to create cache directory:', err)
+    logger.error('Failed to create cache directory:', err instanceof Error ? err : new Error(String(err)))
   }
 }
 
@@ -83,7 +84,7 @@ export async function saveCachedChart(
     const filePath = join(CACHE_DIR, `${cacheKey}.png`)
     await fs.writeFile(filePath, buffer)
   } catch (err) {
-    console.error('Failed to save chart to cache:', err)
+    logger.error('Failed to save chart to cache:', err instanceof Error ? err : new Error(String(err)))
     // Non-fatal error - just log it
   }
 }
@@ -103,7 +104,7 @@ export async function clearChartCache(): Promise<{ cleared: number, error?: stri
         await fs.unlink(join(CACHE_DIR, file))
         cleared++
       } catch {
-        console.error(`Failed to delete cached file ${file}`)
+        logger.error(`Failed to delete cached file ${file}`)
       }
     }
 

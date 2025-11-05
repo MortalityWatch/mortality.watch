@@ -75,7 +75,7 @@ export default defineEventHandler(async (event) => {
       }
     }
   } catch (error) {
-    console.error('Error setting data quality override:', error)
+    logger.error('Error setting data quality override', error instanceof Error ? error : new Error(String(error)))
     throw createError({
       statusCode: 500,
       message: error instanceof Error ? error.message : 'Failed to set override'

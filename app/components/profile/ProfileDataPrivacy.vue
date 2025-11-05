@@ -12,7 +12,7 @@ const emit = defineEmits<{
   'export-data': []
 }>()
 
-function handleExportData() {
+function handleExportData(): void {
   emit('export-data')
 }
 </script>

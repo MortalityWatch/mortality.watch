@@ -57,7 +57,7 @@ export default defineEventHandler(async (event) => {
       .all()
 
     if (admins.length === 0) {
-      console.warn('No admin users found to send data quality alert')
+      logger.warn('No admin users found to send data quality alert')
       return { success: true, message: 'No admin users to notify' }
     }
 
@@ -144,9 +144,9 @@ export default defineEventHandler(async (event) => {
           subject: `⚠️ Data Quality Alert - ${escapeHtml(dataType)}`,
           html
         })
-        console.log(`Data quality alert sent to admin: ${admin.email}`)
+        logger.info(`Data quality alert sent to admin: ${admin.email}`)
       } catch (emailError) {
-        console.error(`Failed to send alert to ${admin.email}:`, emailError)
+        logger.error(`Failed to send alert to ${admin.email}`, emailError instanceof Error ? emailError : new Error(String(emailError)))
       }
     })
 
@@ -157,7 +157,7 @@ export default defineEventHandler(async (event) => {
       message: `Alert sent to ${admins.length} admin(s)`
     }
   } catch (err) {
-    console.error('Error sending data quality alert:', err)
+    logger.error('Error sending data quality alert', err instanceof Error ? err : new Error(String(err)))
     throw createError({
       statusCode: 500,
       message: err instanceof Error ? err.message : 'Failed to send alert'

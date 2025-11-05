@@ -12,12 +12,12 @@ watch(() => props.colors, (newColors) => {
   localColors.value = [...newColors]
 }, { deep: true })
 
-const handleColorUpdate = (index: number, value: string) => {
+const handleColorUpdate = (index: number, value: string): void => {
   localColors.value[index] = value
   emit('colorsChanged', [...localColors.value])
 }
 
-const reset = () => emit('colorsChanged', undefined)
+const reset = (): void => emit('colorsChanged', undefined)
 </script>
 
 <template>

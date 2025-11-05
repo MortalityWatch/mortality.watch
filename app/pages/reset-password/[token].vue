@@ -16,6 +16,7 @@ const { resetPassword } = useAuth()
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
+const { withRetry } = useErrorRecovery()
 
 const token = computed(() => route.params.token as string)
 
@@ -45,7 +46,11 @@ type Schema = z.output<typeof schema>
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   try {
-    await resetPassword(token.value, event.data.password)
+    await withRetry(() => resetPassword(token.value, event.data.password), {
+      maxRetries: 3,
+      exponentialBackoff: true,
+      context: 'resetPassword'
+    })
     toast.add({
       title: 'Password reset successful',
       description: 'You have been signed in with your new password',
