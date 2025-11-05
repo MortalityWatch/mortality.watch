@@ -15,9 +15,7 @@
 import { readFileSync, existsSync } from 'fs'
 import { join } from 'path'
 import type {
-  Country,
   CountryRaw,
-  CountryData,
   CountryDataRaw,
   DatasetRaw,
   AllChartData,
@@ -25,9 +23,9 @@ import type {
   NumberEntryFields,
   NumberArray,
   StringArray
-} from '~/app/model'
-import { stringKeys, numberKeys } from '~/app/model'
-import { getObjectOfArrays, prefillUndefined, fromYearMonthString, left, right } from '~/app/utils'
+} from '../../app/model'
+import { Country, CountryData, stringKeys, numberKeys } from '../../app/model'
+import { getObjectOfArrays, prefillUndefined, fromYearMonthString, left, right } from '../../app/utils'
 import { filesystemCache } from '../utils/cache'
 
 const S3_BASE = 'https://s3.mortality.watch/data/mortality'
@@ -122,7 +120,7 @@ export class DataLoaderService {
 
         // Convert to Country class instance
         const CountryConstructor = Country as unknown as new (raw: CountryRaw) => Country
-        const parsedObj = new CountryConstructor(rawObj as CountryRaw)
+        const parsedObj = new CountryConstructor(rawObj as unknown as CountryRaw)
         const iso = parsedObj.iso3c
 
         // Apply filter if provided
@@ -245,7 +243,7 @@ export class DataLoaderService {
     for (const ag of ageGroups) {
       for (const iso3c of countryCodes) {
         if (!rawData[ag] || !rawData[ag][iso3c]) continue
-        rawData[ag][iso3c].forEach((el) => {
+        rawData[ag][iso3c].forEach((el: CountryData) => {
           if (el[type as keyof CountryData] !== undefined) {
             allLabels.add(el.date)
           }
@@ -298,11 +296,14 @@ export class DataLoaderService {
 
         if (!data[ag]) data[ag] = {}
 
+        const dataKeyStr = dataKey as string
+        const dataValues = cd ? (cd[dataKeyStr as keyof CountryData] as number[] | undefined) : undefined
+
         if (
           !cd
-          || (!baselineMethod && cd[dataKey].filter(x => x).length === 0)
+          || (!baselineMethod && dataValues && dataValues.filter((x: number) => x).length === 0)
         ) {
-          if (dataKey.startsWith('asmr')) {
+          if (dataKeyStr.startsWith('asmr')) {
             noAsmr.add(iso3c)
           } else {
             if (!noData[iso3c]) noData[iso3c] = new Set<string>()
@@ -311,7 +312,10 @@ export class DataLoaderService {
           continue
         }
 
-        data[ag][iso3c] = cd
+        // Type assertion needed: cd is Record<string, unknown> from getDataForCountry()
+        // but Dataset expects DatasetEntry (StringEntryFields & NumberEntryFields).
+        // The data structure matches at runtime after parsing from CSV.
+        data[ag][iso3c] = cd as any
       }
     }
 
@@ -478,11 +482,11 @@ export class DataLoaderService {
     const lines = csvText.trim().split('\n')
     if (lines.length === 0) return []
 
-    const headers = lines[0].split(',').map(h => h.trim())
+    const headers = lines[0]!.split(',').map(h => h.trim())
     const results: Record<string, unknown>[] = []
 
     for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',')
+      const values = lines[i]!.split(',')
       const obj: Record<string, unknown> = {}
 
       headers.forEach((header, index) => {
@@ -515,7 +519,7 @@ export class DataLoaderService {
     ) => CountryData
 
     for (const rawObj of rawObjects) {
-      const parsedObj = new CountryDataConstructor(rawObj as CountryDataRaw, ageGroup, chartType)
+      const parsedObj = new CountryDataConstructor(rawObj as unknown as CountryDataRaw, ageGroup, chartType)
       if (!parsedObj.iso3c) continue
       data.push(parsedObj)
     }
