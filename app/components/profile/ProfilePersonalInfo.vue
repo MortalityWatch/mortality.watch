@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { User } from '#db/schema'
+import { personalInfoSchema } from '~/schemas/profile'
 
 type AuthUser = Omit<User, 'passwordHash'>
 
@@ -18,6 +19,9 @@ const profileState = reactive({
   displayName: ''
 })
 
+// Initialize form validation
+const { validate, clearErrors, getError } = useFormValidation(personalInfoSchema)
+
 // Initialize profile form with user data
 watch(() => props.user, (newUser) => {
   if (newUser) {
@@ -25,9 +29,18 @@ watch(() => props.user, (newUser) => {
     profileState.lastName = newUser.lastName || ''
     profileState.displayName = newUser.displayName || ''
   }
+  // Clear errors when user data changes
+  clearErrors()
 }, { immediate: true })
 
 function handleSubmit() {
+  // Validate form before submission
+  const result = validate(profileState)
+
+  if (!result.valid) {
+    return
+  }
+
   emit('update:profile', {
     firstName: profileState.firstName,
     lastName: profileState.lastName,
@@ -66,8 +79,18 @@ function handleSubmit() {
           type="text"
           placeholder="Your Display Name"
           name="displayName"
+          :error="!!getError('displayName')"
         />
-        <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+        <p
+          v-if="getError('displayName')"
+          class="mt-1.5 text-xs text-red-600 dark:text-red-400"
+        >
+          {{ getError('displayName') }}
+        </p>
+        <p
+          v-else
+          class="mt-1.5 text-xs text-gray-500 dark:text-gray-400"
+        >
           This name will be shown on charts you create. If not set, we'll use your first name.
         </p>
       </div>
@@ -85,7 +108,14 @@ function handleSubmit() {
           type="text"
           placeholder="Your first name"
           name="firstName"
+          :error="!!getError('firstName')"
         />
+        <p
+          v-if="getError('firstName')"
+          class="mt-1.5 text-xs text-red-600 dark:text-red-400"
+        >
+          {{ getError('firstName') }}
+        </p>
       </div>
 
       <div>
@@ -101,7 +131,14 @@ function handleSubmit() {
           type="text"
           placeholder="Your last name"
           name="lastName"
+          :error="!!getError('lastName')"
         />
+        <p
+          v-if="getError('lastName')"
+          class="mt-1.5 text-xs text-red-600 dark:text-red-400"
+        >
+          {{ getError('lastName') }}
+        </p>
       </div>
 
       <div class="flex justify-end pt-2">
