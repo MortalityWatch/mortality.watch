@@ -1,7 +1,7 @@
 /**
  * Data Quality Overrides Composable
  *
- * Phase 12g: Extracted from data-quality.vue page
+ * Data quality page composable
  *
  * Provides:
  * - Override status management (monitor/muted/hidden)

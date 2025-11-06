@@ -13,7 +13,7 @@ import { showToast } from '@/toast'
 /**
  * Explorer State Management Composable
  *
- * Phase 9.1: Centralized state management with validation
+ * State management with validation for the explorer page
  *
  * Provides:
  * - All URL state refs (maintaining URL-first architecture)

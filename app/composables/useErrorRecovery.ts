@@ -1,7 +1,7 @@
 /**
  * useErrorRecovery Composable
  *
- * Phase 15b: Unified error recovery and retry logic for consistent error handling
+ * Error recovery and retry logic
  *
  * Provides:
  * - Automatic retry with exponential backoff

@@ -101,7 +101,7 @@ const sliderValue = computed(() => {
 // Get color mode for theme reactivity
 const colorMode = useColorMode()
 
-// Colors management extracted to composable
+// Colors management
 const { displayColors } = useExplorerColors(
   state.countries,
   state.userColors,

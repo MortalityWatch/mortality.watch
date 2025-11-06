@@ -1,7 +1,7 @@
 /**
  * Chart Data Fetcher Composable
  *
- * Phase 10.3: Extract shared data fetching logic from useExplorerDataOrchestration
+ * Shared data fetching logic for chart composables
  * and useRankingData composables.
  *
  * Provides:

@@ -7,8 +7,6 @@ import type { StateProperties } from './stateProperties'
 
 /**
  * Handles state serialization/deserialization from URL
- *
- * Updated in Phase 9.3 to use StateProperties directly (no more @ts-expect-error!)
  */
 export class StateSerialization {
   constructor(

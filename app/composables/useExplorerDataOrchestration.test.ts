@@ -506,7 +506,7 @@ describe('useExplorerDataOrchestration', () => {
    * This functionality is tested through integration tests in the explorer page tests,
    * and indirectly through the updateData tests below.
    *
-   * Previous resetDates() function was replaced with reactive watcher in Phase 12 cleanup.
+   * resetDates() function was replaced with reactive watcher.
    */
 
   // ============================================================================

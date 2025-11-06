@@ -1,7 +1,7 @@
 /**
  * useSaveChart composable
  *
- * Phase 0: Extract duplicated "save chart" logic from explorer.vue and ranking.vue
+ * Shared save chart functionality
  * Provides generic modal state management, save functions, and API integration
  * for saving charts and rankings to the database.
  */

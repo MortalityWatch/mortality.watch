@@ -1,11 +1,8 @@
 /**
  * Date Range Calculations Composable
  *
- * Provides single source of truth for all date-related calculations in the explorer.
+ * Single source of truth for all date-related calculations in the explorer.
  * Consolidates feature gating logic from DateRangePicker, DateSlider, and useDataAvailability.
- *
- * Phase: Date Range Architecture Refactor
- * Goal: Eliminate circular dependencies and centralize date logic
  */
 
 import type { ChartType } from '~/model/period'

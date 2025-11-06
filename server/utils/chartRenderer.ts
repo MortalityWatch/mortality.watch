@@ -1,8 +1,6 @@
 /**
  * Server-side Chart Renderer
  *
- * Phase 13a: Enhanced type safety with proper interfaces
- *
  * Registers Chart.js components and plugins for server-side rendering
  *
  * Note: This module uses node-canvas which provides browser-compatible Canvas APIs
@@ -67,8 +65,6 @@ interface ServerChartConfig {
 
 /**
  * Server Chart instance type
- *
- * Phase 13a: Improved type safety while maintaining runtime compatibility
  *
  * node-canvas context is runtime-compatible with Chart.js but TypeScript
  * types are incompatible. This interface documents the contract while
@@ -194,8 +190,6 @@ export function createChartCanvas(width: number, height: number) {
 
 /**
  * Render a chart with the given configuration
- *
- * Phase 13a: Enhanced type safety with ServerChartConfig interface
  *
  * @param width - Canvas width in pixels
  * @param height - Canvas height in pixels

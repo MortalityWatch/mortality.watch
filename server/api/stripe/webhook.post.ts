@@ -125,8 +125,6 @@ export default defineEventHandler(async (event) => {
 /**
  * Process different webhook event types
  *
- * Phase 13a: Event processors extracted for better organization and testability
- *
  * Delegates to specific handler functions based on event type:
  * - checkout.session.completed: Links customer and creates initial subscription
  * - customer.subscription.created/updated: Updates subscription details

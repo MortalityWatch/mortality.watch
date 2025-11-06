@@ -10,10 +10,7 @@ import type { StateHelpers } from './StateHelpers'
 /**
  * StateComputed - Computed properties and derived values
  *
- * Phase 4a: Extracted from State.ts
- * - All computed property logic
- * - Methods that derive values from StateData
- * - No direct state mutation (read-only operations)
+ * All computed property logic with no direct state mutation (read-only operations).
  *
  * This class handles:
  * - Conditional defaults (e.g., chartStyle defaults based on isExcess)

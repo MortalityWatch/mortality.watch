@@ -3,12 +3,9 @@ import type { Country, DatasetRaw, AllChartData } from '@/model'
 import type { MortalityChartData } from '@/lib/chart/chartTypes'
 
 /**
- * StateData - Core data properties without Proxy complexity
+ * StateData - Core data properties
  *
- * Phase 4a: Extracted from State.ts
- * - Simple getters/setters
- * - No reactive Proxy wrapper
- * - All data properties from State.ts
+ * Simple getters/setters without reactive Proxy wrapper.
  *
  * This class holds the raw data that the application works with:
  * - Chart configuration (countries, date ranges, display options)

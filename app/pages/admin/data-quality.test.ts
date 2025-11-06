@@ -1,19 +1,12 @@
 /**
  * Unit tests for admin data-quality page
  *
- * Phase 14a: Comprehensive test coverage
- *
- * Tests cover:
+ * Test coverage:
  * - Component rendering and initialization
  * - Filtering logic (country, date range, quality scores)
  * - Override management (CRUD operations)
  * - Table features (pagination, sorting, selection)
  * - Edge cases (empty states, errors, loading)
- *
- * This page was refactored in Phase 12g to use focused composables:
- * - useDataQualityFilters: Filter logic
- * - useDataQualityOverrides: Override management
- * - useDataQualityTable: Table configuration
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
