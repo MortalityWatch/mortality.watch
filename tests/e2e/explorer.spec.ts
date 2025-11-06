@@ -93,8 +93,21 @@ test.describe('Explorer Page', () => {
     await page.waitForLoadState('networkidle')
     await page.waitForSelector('canvas#chart', { timeout: 10000 })
 
+    // Close welcome/tutorial modal if present
+    try {
+      const closeButton = page.getByRole('button', { name: '×' }).or(page.getByText('×'))
+      await closeButton.first().click({ timeout: 2000, force: true })
+      await page.waitForTimeout(500)
+    } catch {
+      // Tutorial not present, continue
+    }
+
     // Verify initial state: no excess in URL
     expect(page.url()).not.toContain('e=1')
+
+    // Click on the Display tab to reveal the excess toggle
+    await page.getByRole('button', { name: 'Display' }).click()
+    await page.waitForTimeout(300) // Wait for tab content to render
 
     // Find and click the Excess toggle
     const excessToggle = page.locator('[data-testid="excess-toggle"]')
