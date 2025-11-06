@@ -272,13 +272,6 @@ const update = async (key: string) => {
   }
 }
 
-// Helper: Update state, wait for DOM update, then trigger data refresh
-const updateStateAndRefresh = async (updateFn: () => void, key: string) => {
-  updateFn()
-  await nextTick()
-  update(key)
-}
-
 // Special handler for chart preset (local state, not URL)
 const handleChartPresetChanged = (v: string) => {
   state.chartPreset.value = v
@@ -307,12 +300,37 @@ const handleStateChange = async (field: string, value: unknown, refreshKey: stri
 }
 
 // Specific handlers for different controls
+// Core chart configuration
 const handleExcessChanged = (v: boolean) => handleStateChange('isExcess', v, '_isExcess')
 const handleBaselineChanged = (v: boolean) => handleStateChange('showBaseline', v, '_showBaseline')
 const handlePredictionIntervalChanged = (v: boolean) => handleStateChange('showPredictionInterval', v, '_showPredictionInterval')
 const handleTypeChanged = (v: string) => handleStateChange('type', v, '_type')
 const handleChartTypeChanged = (v: string) => handleStateChange('chartType', v, '_chartType')
 const handleChartStyleChanged = (v: string) => handleStateChange('chartStyle', v, '_chartStyle')
+
+// Data selection
+const handleCountriesChanged = (v: string[]) => handleStateChange('countries', v, '_countries')
+const handleAgeGroupsChanged = (v: string[]) => handleStateChange('ageGroups', v, '_ageGroups')
+const handleStandardPopulationChanged = (v: string) => handleStateChange('standardPopulation', v, '_standardPopulation')
+
+// Baseline configuration
+const handleBaselineMethodChanged = (v: string) => handleStateChange('baselineMethod', v, '_baselineMethod')
+
+// Display options
+const handleShowLabelsChanged = (v: boolean) => handleStateChange('showLabels', v, '_showLabels')
+const handleMaximizeChanged = (v: boolean) => handleStateChange('maximize', v, '_maximize')
+const handleIsLogarithmicChanged = (v: boolean) => handleStateChange('isLogarithmic', v, '_isLogarithmic')
+
+// Excess mode options
+const handleShowPercentageChanged = (v: boolean) => handleStateChange('showPercentage', v, '_showPercentage')
+const handleCumulativeChanged = (v: boolean) => handleStateChange('cumulative', v, '_cumulative')
+const handleShowTotalChanged = (v: boolean) => handleStateChange('showTotal', v, '_showTotal')
+
+// Colors
+const handleUserColorsChanged = (v: string[] | undefined) => handleStateChange('userColors', v, '_userColors')
+
+// Slider start
+const handleSliderStartChanged = (v: string | undefined) => handleStateChange('sliderStart', v, '_sliderStart')
 
 // Watch for date range changes from URL/slider and trigger chart update
 watch([() => state.dateFrom.value, () => state.dateTo.value], () => {
@@ -442,9 +460,9 @@ const showSaveModal = computed({
         :slider-start="state.sliderStart.value"
         :all-yearly-chart-labels-unique="dataOrchestration.allYearlyChartLabelsUnique.value"
         :chart-type="state.chartType.value as ChartType"
-        @countries-changed="(v) => updateStateAndRefresh(() => state.countries.value = v, '_countries')"
-        @age-groups-changed="(v) => updateStateAndRefresh(() => state.ageGroups.value = v, '_ageGroups')"
-        @slider-start-changed="(v) => updateStateAndRefresh(() => state.sliderStart.value = v, '_sliderStart')"
+        @countries-changed="handleCountriesChanged"
+        @age-groups-changed="handleAgeGroupsChanged"
+        @slider-start-changed="handleSliderStartChanged"
         @date-slider-changed="dateSliderChanged"
       />
 
@@ -489,20 +507,20 @@ const showSaveModal = computed({
             @type-changed="handleTypeChanged"
             @chart-type-changed="handleChartTypeChanged"
             @chart-style-changed="handleChartStyleChanged"
-            @standard-population-changed="(v) => updateStateAndRefresh(() => state.standardPopulation.value = v, '_standardPopulation')"
+            @standard-population-changed="handleStandardPopulationChanged"
             @is-excess-changed="handleExcessChanged"
             @show-baseline-changed="handleBaselineChanged"
-            @baseline-method-changed="(v) => updateStateAndRefresh(() => state.baselineMethod.value = v, '_baselineMethod')"
+            @baseline-method-changed="handleBaselineMethodChanged"
             @baseline-slider-value-changed="baselineSliderChanged"
             @show-prediction-interval-changed="handlePredictionIntervalChanged"
-            @show-labels-changed="(v) => updateStateAndRefresh(() => state.showLabels.value = v, '_showLabels')"
-            @maximize-changed="(v) => updateStateAndRefresh(() => state.maximize.value = v, '_maximize')"
-            @is-logarithmic-changed="(v) => updateStateAndRefresh(() => state.isLogarithmic.value = v, '_isLogarithmic')"
-            @show-percentage-changed="(v) => updateStateAndRefresh(() => state.showPercentage.value = v, '_showPercentage')"
-            @cumulative-changed="(v) => updateStateAndRefresh(() => state.cumulative.value = v, '_cumulative')"
-            @show-total-changed="(v) => updateStateAndRefresh(() => state.showTotal.value = v, '_showTotal')"
-            @slider-start-changed="(v) => updateStateAndRefresh(() => state.sliderStart.value = v, '_sliderStart')"
-            @user-colors-changed="(v) => updateStateAndRefresh(() => state.userColors.value = v, '_userColors')"
+            @show-labels-changed="handleShowLabelsChanged"
+            @maximize-changed="handleMaximizeChanged"
+            @is-logarithmic-changed="handleIsLogarithmicChanged"
+            @show-percentage-changed="handleShowPercentageChanged"
+            @cumulative-changed="handleCumulativeChanged"
+            @show-total-changed="handleShowTotalChanged"
+            @slider-start-changed="handleSliderStartChanged"
+            @user-colors-changed="handleUserColorsChanged"
             @chart-preset-changed="handleChartPresetChanged"
             @show-logo-changed="(v) => { state.showLogo.value = v; nextTick() }"
             @show-qr-code-changed="(v) => { state.showQrCode.value = v; nextTick() }"
