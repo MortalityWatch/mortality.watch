@@ -97,7 +97,7 @@ function handleClose(): void {
     <UCard>
       <template #header>
         <div class="flex items-center gap-3">
-          <div class="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
+          <div class="shrink-0 w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
             <UIcon
               name="i-lucide-alert-triangle"
               class="w-5 h-5 text-red-600 dark:text-red-400"

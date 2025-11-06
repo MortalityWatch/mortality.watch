@@ -6,7 +6,7 @@
       <div class="flex items-center gap-4">
         <UIcon
           name="i-lucide-loader-2"
-          class="w-8 h-8 animate-spin text-primary flex-shrink-0"
+          class="w-8 h-8 animate-spin text-primary shrink-0"
         />
         <div class="min-w-0">
           <p class="text-lg font-semibold whitespace-nowrap">

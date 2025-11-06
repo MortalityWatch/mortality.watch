@@ -43,7 +43,7 @@ const emit = defineEmits<{
         >
           <UIcon
             name="i-lucide-link"
-            class="w-4 h-4 flex-shrink-0"
+            class="w-4 h-4 shrink-0"
           />
           <div class="flex-1 text-left">
             <div class="text-sm font-medium">
@@ -68,7 +68,7 @@ const emit = defineEmits<{
           >
             <UIcon
               name="i-lucide-image"
-              class="w-4 h-4 flex-shrink-0"
+              class="w-4 h-4 shrink-0"
             />
             <div class="flex-1 text-left">
               <div class="text-sm font-medium">
@@ -94,7 +94,7 @@ const emit = defineEmits<{
           >
             <UIcon
               name="i-lucide-download"
-              class="w-4 h-4 flex-shrink-0"
+              class="w-4 h-4 shrink-0"
             />
             <div class="flex-1 text-left">
               <div class="text-sm font-medium">
@@ -122,7 +122,7 @@ const emit = defineEmits<{
           >
             <UIcon
               name="i-lucide-sheet"
-              class="w-4 h-4 flex-shrink-0"
+              class="w-4 h-4 shrink-0"
             />
             <div class="flex-1 text-left">
               <div class="text-sm font-medium">
@@ -151,7 +151,7 @@ const emit = defineEmits<{
           >
             <UIcon
               name="i-lucide-braces"
-              class="w-4 h-4 flex-shrink-0"
+              class="w-4 h-4 shrink-0"
             />
             <div class="flex-1 text-left">
               <div class="text-sm font-medium">
@@ -181,7 +181,7 @@ const emit = defineEmits<{
           >
             <UIcon
               name="i-lucide-bar-chart-3"
-              class="w-4 h-4 flex-shrink-0"
+              class="w-4 h-4 shrink-0"
             />
             <div class="flex-1 text-left">
               <div class="text-sm font-medium">Show in Explorer</div>
@@ -206,7 +206,7 @@ const emit = defineEmits<{
             >
               <UIcon
                 name="i-lucide-bookmark"
-                class="w-4 h-4 flex-shrink-0"
+                class="w-4 h-4 shrink-0"
               />
               <div class="flex-1 text-left">
                 <div class="text-sm font-medium">

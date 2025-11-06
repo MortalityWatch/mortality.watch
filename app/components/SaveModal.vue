@@ -68,7 +68,7 @@ const handleOpenModal = (): void => {
     >
       <UIcon
         name="i-lucide-save"
-        class="w-4 h-4 flex-shrink-0"
+        class="w-4 h-4 shrink-0"
       />
       <div class="flex-1 text-left">
         <div class="text-sm font-medium">

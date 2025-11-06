@@ -21,7 +21,7 @@
           <div class="flex gap-3">
             <Icon
               name="i-lucide-save"
-              class="w-6 h-6 text-primary-600 dark:text-primary-400 flex-shrink-0"
+              class="w-6 h-6 text-primary-600 dark:text-primary-400 shrink-0"
             />
             <div>
               <h3 class="font-semibold mb-1">
@@ -36,7 +36,7 @@
           <div class="flex gap-3">
             <Icon
               name="i-lucide-palette"
-              class="w-6 h-6 text-primary-600 dark:text-primary-400 flex-shrink-0"
+              class="w-6 h-6 text-primary-600 dark:text-primary-400 shrink-0"
             />
             <div>
               <h3 class="font-semibold mb-1">
@@ -51,7 +51,7 @@
           <div class="flex gap-3">
             <Icon
               name="i-lucide-chart-line"
-              class="w-6 h-6 text-primary-600 dark:text-primary-400 flex-shrink-0"
+              class="w-6 h-6 text-primary-600 dark:text-primary-400 shrink-0"
             />
             <div>
               <h3 class="font-semibold mb-1">
@@ -66,7 +66,7 @@
           <div class="flex gap-3">
             <Icon
               name="i-lucide-file-spreadsheet"
-              class="w-6 h-6 text-primary-600 dark:text-primary-400 flex-shrink-0"
+              class="w-6 h-6 text-primary-600 dark:text-primary-400 shrink-0"
             />
             <div>
               <h3 class="font-semibold mb-1">
@@ -81,7 +81,7 @@
           <div class="flex gap-3">
             <Icon
               name="i-lucide-calendar"
-              class="w-6 h-6 text-primary-600 dark:text-primary-400 flex-shrink-0"
+              class="w-6 h-6 text-primary-600 dark:text-primary-400 shrink-0"
             />
             <div>
               <h3 class="font-semibold mb-1">
@@ -96,7 +96,7 @@
           <div class="flex gap-3">
             <Icon
               name="i-lucide-share-2"
-              class="w-6 h-6 text-primary-600 dark:text-primary-400 flex-shrink-0"
+              class="w-6 h-6 text-primary-600 dark:text-primary-400 shrink-0"
             />
             <div>
               <h3 class="font-semibold mb-1">
@@ -163,7 +163,7 @@
           <div class="flex gap-3">
             <Icon
               name="i-lucide-image-off"
-              class="w-6 h-6 text-amber-600 dark:text-amber-400 flex-shrink-0"
+              class="w-6 h-6 text-amber-600 dark:text-amber-400 shrink-0"
             />
             <div>
               <h3 class="font-semibold mb-1">
@@ -178,7 +178,7 @@
           <div class="flex gap-3">
             <Icon
               name="i-lucide-scan-line"
-              class="w-6 h-6 text-amber-600 dark:text-amber-400 flex-shrink-0"
+              class="w-6 h-6 text-amber-600 dark:text-amber-400 shrink-0"
             />
             <div>
               <h3 class="font-semibold mb-1">
@@ -193,7 +193,7 @@
           <div class="flex gap-3">
             <Icon
               name="i-lucide-activity"
-              class="w-6 h-6 text-amber-600 dark:text-amber-400 flex-shrink-0"
+              class="w-6 h-6 text-amber-600 dark:text-amber-400 shrink-0"
             />
             <div>
               <h3 class="font-semibold mb-1">
@@ -208,7 +208,7 @@
           <div class="flex gap-3">
             <Icon
               name="i-lucide-trending-up"
-              class="w-6 h-6 text-amber-600 dark:text-amber-400 flex-shrink-0"
+              class="w-6 h-6 text-amber-600 dark:text-amber-400 shrink-0"
             />
             <div>
               <h3 class="font-semibold mb-1">
@@ -223,7 +223,7 @@
           <div class="flex gap-3">
             <Icon
               name="i-lucide-calculator"
-              class="w-6 h-6 text-amber-600 dark:text-amber-400 flex-shrink-0"
+              class="w-6 h-6 text-amber-600 dark:text-amber-400 shrink-0"
             />
             <div>
               <h3 class="font-semibold mb-1">
@@ -238,7 +238,7 @@
           <div class="flex gap-3">
             <Icon
               name="i-lucide-headphones"
-              class="w-6 h-6 text-amber-600 dark:text-amber-400 flex-shrink-0"
+              class="w-6 h-6 text-amber-600 dark:text-amber-400 shrink-0"
             />
             <div>
               <h3 class="font-semibold mb-1">

@@ -433,7 +433,7 @@ const copyRankingLink = () => {
         </div>
 
         <!-- Right Sidebar (Desktop only) - contains Data Selection + Settings -->
-        <div class="hidden lg:flex lg:flex-col lg:gap-4 lg:order-2 lg:w-[420px] flex-shrink-0">
+        <div class="hidden lg:flex lg:flex-col lg:gap-4 lg:order-2 lg:w-[420px] shrink-0">
           <RankingDataSelection
             v-model:selected-jurisdiction-type="selectedJurisdictionType"
             v-model:slider-start="sliderStart"

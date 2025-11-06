@@ -19,7 +19,7 @@
         <div class="flex items-start gap-3">
           <Icon
             name="i-lucide-check-circle"
-            class="w-6 h-6 text-green-500 flex-shrink-0 mt-0.5"
+            class="w-6 h-6 text-green-500 shrink-0 mt-0.5"
           />
           <div>
             <h3 class="text-lg font-semibold mb-1">
