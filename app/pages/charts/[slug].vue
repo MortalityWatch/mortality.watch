@@ -80,12 +80,24 @@
           >
           <div
             v-else
-            class="aspect-video flex items-center justify-center text-gray-400"
+            class="aspect-video flex flex-col items-center justify-center text-gray-400 gap-4"
           >
             <Icon
               name="i-lucide-bar-chart-2"
               class="w-16 h-16"
             />
+            <p
+              v-if="chart.chartType === 'ranking'"
+              class="text-sm"
+            >
+              Preview not available for ranking charts yet
+            </p>
+            <p
+              v-else
+              class="text-sm"
+            >
+              Chart preview unavailable
+            </p>
           </div>
         </div>
       </UCard>
@@ -115,19 +127,6 @@
             class="w-5 h-5"
           />
           Share
-        </UButton>
-
-        <UButton
-          to="/charts"
-          color="neutral"
-          variant="ghost"
-          size="lg"
-        >
-          <Icon
-            name="i-lucide-arrow-left"
-            class="w-5 h-5"
-          />
-          Back to Gallery
         </UButton>
       </div>
 
@@ -189,6 +188,8 @@
 <script setup lang="ts">
 import { handleSilentError } from '@/lib/errors/errorHandler'
 import { showToast } from '@/toast'
+import { encodeChartState } from '@/lib/chartState'
+import type { ChartState } from '@/lib/chartState'
 
 interface Chart {
   id: number
@@ -200,8 +201,8 @@ interface Chart {
   thumbnailUrl: string | null
   isFeatured: boolean
   viewCount: number
-  createdAt: number
-  updatedAt: number
+  createdAt: string
+  updatedAt: string
   authorName: string
 }
 
@@ -210,19 +211,28 @@ const slug = route.params.slug as string
 
 // Fetch chart data
 const { data: chart, pending, error } = await useFetch<Chart>(
-  `/api/charts/${slug}`
+  `/api/charts/slug/${slug}`
 )
 
 // Generate chart image URL from state
 const chartImageUrl = computed(() => {
   if (!chart.value) return null
 
+  // For ranking charts, use thumbnail if available (ranking.png endpoint not yet implemented)
+  if (chart.value.chartType === 'ranking') {
+    return chart.value.thumbnailUrl || null
+  }
+
+  // For explorer charts, generate image URL from state
   try {
-    const state = JSON.parse(chart.value.chartState)
+    const state = JSON.parse(chart.value.chartState) as Partial<ChartState>
+    const encodedState = encodeChartState(state)
     const params = new URLSearchParams()
 
-    Object.entries(state).forEach(([key, value]) => {
-      if (value !== null && value !== undefined) {
+    Object.entries(encodedState).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        value.forEach(v => params.append(key, v))
+      } else {
         params.set(key, String(value))
       }
     })
@@ -239,12 +249,15 @@ function getRemixUrl() {
   if (!chart.value) return '/explorer'
 
   try {
-    const state = JSON.parse(chart.value.chartState)
+    const state = JSON.parse(chart.value.chartState) as Partial<ChartState>
     const baseUrl = chart.value.chartType === 'explorer' ? '/explorer' : '/ranking'
-
+    const encodedState = encodeChartState(state)
     const params = new URLSearchParams()
-    Object.entries(state).forEach(([key, value]) => {
-      if (value !== null && value !== undefined) {
+
+    Object.entries(encodedState).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        value.forEach(v => params.append(key, v))
+      } else {
         params.set(key, String(value))
       }
     })
@@ -285,16 +298,16 @@ function copyToClipboard(text: string) {
 }
 
 // Format dates
-function formatDate(timestamp: number) {
-  return new Date(timestamp * 1000).toLocaleDateString('en-US', {
+function formatDate(dateString: string) {
+  return new Date(dateString).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
   })
 }
 
-function formatDateTime(timestamp: number) {
-  return new Date(timestamp * 1000).toLocaleDateString('en-US', {
+function formatDateTime(dateString: string) {
+  return new Date(dateString).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
