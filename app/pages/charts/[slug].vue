@@ -116,19 +116,6 @@
           />
           Share
         </UButton>
-
-        <UButton
-          to="/charts"
-          color="neutral"
-          variant="ghost"
-          size="lg"
-        >
-          <Icon
-            name="i-lucide-arrow-left"
-            class="w-5 h-5"
-          />
-          Back to Gallery
-        </UButton>
       </div>
 
       <!-- Chart Details -->
@@ -200,8 +187,8 @@ interface Chart {
   thumbnailUrl: string | null
   isFeatured: boolean
   viewCount: number
-  createdAt: number
-  updatedAt: number
+  createdAt: string
+  updatedAt: string
   authorName: string
 }
 
@@ -285,16 +272,16 @@ function copyToClipboard(text: string) {
 }
 
 // Format dates
-function formatDate(timestamp: number) {
-  return new Date(timestamp * 1000).toLocaleDateString('en-US', {
+function formatDate(dateString: string) {
+  return new Date(dateString).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
   })
 }
 
-function formatDateTime(timestamp: number) {
-  return new Date(timestamp * 1000).toLocaleDateString('en-US', {
+function formatDateTime(dateString: string) {
+  return new Date(dateString).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
