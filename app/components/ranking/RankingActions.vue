@@ -3,7 +3,6 @@
  * RankingActions Component
  *
  * Displays action buttons for the ranking page (Explorer link, Save ranking).
- * Extracted from ranking.vue as part of Phase 5b refactoring.
  */
 
 interface Props {

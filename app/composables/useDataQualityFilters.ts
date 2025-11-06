@@ -1,7 +1,7 @@
 /**
  * Data Quality Filters Composable
  *
- * Phase 12g: Extracted from data-quality.vue page
+ * Data quality page composable
  *
  * Provides:
  * - Search query management

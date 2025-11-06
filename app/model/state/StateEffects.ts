@@ -4,10 +4,7 @@ import type { StateHelpers } from './StateHelpers'
 /**
  * StateEffects - Side effect handlers
  *
- * Phase 4a: Extracted from State.ts
- * - Side effects that were previously in Proxy setters
- * - Clear, explicit side effect triggers
- * - No hidden behavior
+ * Provides clear, explicit side effect triggers with no hidden behavior.
  *
  * This class handles:
  * - Property change reactions (e.g., reset age groups when type changes)

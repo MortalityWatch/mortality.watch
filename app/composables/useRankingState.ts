@@ -1,8 +1,6 @@
 /**
  * Ranking State Management Composable
  *
- * Phase 9.1: Centralized state management with validation for ranking page
- *
  * Provides:
  * - All URL state refs (maintaining URL-first architecture)
  * - Real-time validation using Zod schema

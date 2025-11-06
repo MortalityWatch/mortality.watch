@@ -1,10 +1,7 @@
 /**
  * Configuration Constants
  *
- * Phase 1: Centralized configuration to eliminate magic numbers and strings
- *
- * This file consolidates all hardcoded values that appear throughout the codebase
- * into a single source of truth, making them easier to maintain and modify.
+ * Single source of truth for all configuration values used throughout the codebase.
  */
 
 /**
@@ -53,7 +50,6 @@ export const CACHE_CONFIG = {
 
   /**
    * Time-to-live for metadata cache (1 day in milliseconds)
-   * Reserved for future Phase 2 metadata caching implementation
    */
   METADATA_CACHE_TTL: 24 * 60 * 60 * 1000
 } as const

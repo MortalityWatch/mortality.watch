@@ -1,10 +1,7 @@
 /**
  * Date/Period Type Model
  *
- * Phase 8.5.3: Eliminates brittle string array + indexOf pattern
- *
- * Encapsulates date label management and provides smart fallback logic
- * for handling date ranges across different chart types (yearly/monthly/weekly).
+ * Handles date ranges across different chart types (yearly/monthly/weekly).
  */
 
 export type ChartType

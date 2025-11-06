@@ -2,13 +2,14 @@
 /**
  * Ranking Page
  *
- * Phase 12e: Added computed() memoization for expensive calculations
- * Phase 10.1: Refactored to use composables for cleaner architecture
+ * Displays excess mortality rankings with sorting and filtering.
+ *
+ * Composables:
  * - useRankingState: Centralized state management
  * - useRankingData: Data fetching and processing
  * - useRankingTableSort: Table sorting logic
  *
- * Phase 5b: Extracted UI components to reduce page size
+ * Components:
  * - RankingHeader: Page title and description
  * - RankingActions: Action buttons (Explorer link, Save ranking)
  * - RankingSaveModal: Save ranking modal dialog
@@ -237,13 +238,13 @@ const {
   getTotalPages
 } = useRankingTableSort()
 
-// Memoized sorting and pagination (Phase 12e)
+// Memoized sorting and pagination
 const sortedResult = computed(() => getSortedResult(result.value))
 const paginatedResult = computed(() => getPaginatedResult(sortedResult.value))
 const totalPages = computed(() => getTotalPages(sortedResult.value))
 
 // ============================================================================
-// HELPER FUNCTIONS - Memoized (Phase 12e)
+// HELPER FUNCTIONS - Memoized
 // ============================================================================
 
 // Memoized title computation for performance
@@ -312,7 +313,7 @@ watch(
   { flush: 'post' } // Run after component updates
 )
 
-// Phase 0: Save Ranking functionality using composable
+// Save Ranking functionality using composable
 const {
   showSaveModal,
   savingChart: savingRanking,
@@ -324,7 +325,7 @@ const {
   saveToDB: saveToDBComposable
 } = useSaveChart({ chartType: 'ranking' })
 
-// Memoized ranking state serialization (Phase 12e)
+// Memoized ranking state serialization
 const rankingStateData = computed(() => ({
   // Main type selection
   a: showASMR.value,

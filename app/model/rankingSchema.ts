@@ -1,8 +1,6 @@
 /**
  * Ranking State Schema Validation
  *
- * Phase 9.1: Centralized state validation for ranking page using Zod
- *
  * Provides:
  * - Field-level validation (types, required fields)
  * - Cross-field validation (business rules)

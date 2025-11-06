@@ -31,8 +31,7 @@ test.describe('Explorer Page', () => {
     // Wait for any interaction (this test may need adjustment based on actual UI)
     await page.waitForLoadState('networkidle')
 
-    // Note: This is a basic check - actual interaction tests
-    // will be added after Phase 2 UI fixes are complete
+    // Basic check - interaction tests can be added as needed
     await expect(page).toHaveURL(/\/explorer/)
   })
 

@@ -5,10 +5,7 @@ import type { StateComputed } from './StateComputed'
 /**
  * StateValidation - Validation logic and data integrity checks
  *
- * Phase 4a: Extracted from State.ts
- * - All validation methods
- * - Pure functions with no side effects
- * - Data consistency checks
+ * Pure functions with no side effects for data consistency.
  *
  * This class handles:
  * - Date range validation

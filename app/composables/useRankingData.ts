@@ -1,16 +1,11 @@
 /**
  * Ranking Data Management Composable
  *
- * Phase 16-B: Completed ranking page modernization - fully reactive date validation
- * - Integrated useDateRangeCalculations for consistent date logic
- * - Removed manual maybeResetBaselineSlider() in favor of reactive watcher
- * - Date validation now fully automatic (matches explorer page pattern)
- *
- * Phase 10.3: Refactored to use shared useChartDataFetcher composable
- *
- * Previous phases:
- * - Phase 10.1.2: Extract data fetching and processing logic from ranking.vue
- * - Similar to useExplorerDataOrchestration (Phase 9.2) but for ranking page
+ * Manages data fetching and processing for the ranking page:
+ * - Uses useDateRangeCalculations for consistent date logic
+ * - Fully reactive date validation with automatic resets
+ * - Shares useChartDataFetcher composable for data fetching
+ * - Similar to useExplorerDataOrchestration but for ranking page
  */
 
 import { ref, computed, watch, onMounted, type ComputedRef } from 'vue'
@@ -371,8 +366,8 @@ export function useRankingData(
   /**
    * Handle period type changes
    *
-   * Phase 16: Date resets are now handled directly (no longer using maybeResetBaselineSlider)
-   * Reactive watcher ensures validation happens automatically
+   * Resets dates to defaults for the new period type.
+   * Reactive watcher ensures validation happens automatically.
    */
   const periodOfTimeChanged = (val: { label: string, name: string, value: string }) => {
     state.periodOfTime.value = val.value

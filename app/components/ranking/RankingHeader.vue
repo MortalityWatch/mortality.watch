@@ -3,8 +3,6 @@
  * RankingHeader Component
  *
  * Displays the page title and description for the ranking page.
- * Extracted from ranking.vue as part of Phase 5b refactoring.
- * Updated to use PageHeader component for consistency.
  */
 </script>
 

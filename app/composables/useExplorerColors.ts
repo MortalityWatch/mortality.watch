@@ -5,7 +5,7 @@ import { getColorScale } from '@/lib/chart/chartColors'
 /**
  * Explorer Colors Composable
  *
- * Phase 5a: Extracted from explorer.vue to reduce page size
+ * Color management for the explorer page
  *
  * Manages chart color selection with:
  * - Theme-aware default colors

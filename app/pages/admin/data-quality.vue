@@ -2,12 +2,10 @@
 /**
  * Data Quality Admin Page
  *
- * Phase 12g: Refactored to use focused composables
+ * Composables:
  * - useDataQualityFilters: Filter logic
  * - useDataQualityOverrides: Override management
  * - useDataQualityTable: Table configuration
- *
- * This reduces page complexity and improves maintainability.
  */
 
 import { ref, onMounted } from 'vue'

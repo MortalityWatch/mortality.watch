@@ -6,7 +6,8 @@ import { CACHE_CONFIG } from '@/lib/config/constants'
 
 /**
  * Chart filesystem cache for rendered PNG images
- * Implements 7-day TTL caching strategy for Phase 10
+ *
+ * 7-day TTL caching strategy
  */
 
 const CACHE_DIR = '.data/cache/charts'

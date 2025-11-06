@@ -3,8 +3,6 @@ import type { StateProperties } from './stateProperties'
 
 /**
  * Helper methods for state - type predicates and utilities
- *
- * Updated in Phase 9.3 to use StateProperties instead of dynamic property binding
  */
 export class StateHelpers {
   constructor(private props: StateProperties) {}

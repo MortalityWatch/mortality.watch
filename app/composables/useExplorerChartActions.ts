@@ -9,7 +9,7 @@ import type { MortalityChartData } from '@/lib/chart/chartTypes'
 /**
  * Explorer Chart Actions Composable
  *
- * Phase 5a: Extracted from explorer.vue to reduce page size
+ * Chart actions for the explorer page
  *
  * Provides chart action functions:
  * - Copy chart link to clipboard

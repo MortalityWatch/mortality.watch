@@ -1,12 +1,8 @@
 /**
  * Explorer Data Orchestration Composable
  *
- * Date Range Refactor: Now uses useDateRangeCalculations for all date logic
- * Phase 12e: Added computed() memoization for expensive calculations
- * Phase 10.3: Refactored to use shared useChartDataFetcher composable
- *
- * Previous phases:
- * - Phase 9.2: Extract data fetching and filtering logic from explorer.vue
+ * Orchestrates data fetching and filtering logic for the explorer page.
+ * Uses useDateRangeCalculations for all date logic.
  *
  * Provides:
  * - Data fetching orchestration (updateData)
@@ -158,7 +154,7 @@ export function useExplorerDataOrchestration(
     return base + encodeURIComponent(encodedQuery)
   }
 
-  // Memoized computations (Phase 12e) - cache expensive calculations
+  // Memoized computations
   const dataKey = computed(() => {
     return getKeyForType(
       state.type.value,
