@@ -81,21 +81,12 @@ export class StateEffects {
 
   /**
    * Handle excess mode toggle
-   * - Update chart style default
-   * - Reset cumulative and percentage options
+   * NOTE: State changes now handled by StateResolver in explorer.vue
+   * This handler kept for backward compatibility but logic moved to constraints
    */
-  onIsExcessChange(newIsExcess: boolean): void {
-    if (newIsExcess) {
-      // When enabling excess mode:
-      // - Chart style defaults to 'bar' (handled by computed property)
-      // - Logarithmic is disabled (handled by computed property)
-    } else {
-      // When disabling excess mode:
-      // - Reset cumulative mode
-      this.data.cumulative = false
-      // - Reset percentage display
-      this.data.showPercentage = false
-    }
+  onIsExcessChange(_newIsExcess: boolean): void {
+    // State resolution now handled by StateResolver
+    // Constraints are defined in app/lib/state/constraints.ts
   }
 
   /**

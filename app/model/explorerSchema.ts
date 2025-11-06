@@ -136,11 +136,12 @@ export const explorerStateSchema = explorerStateBaseSchema.superRefine(
       })
     }
 
-    // Rule 2: Can't show both excess and baseline simultaneously
-    if (data.isExcess && data.showBaseline) {
+    // Rule 2: Excess mode REQUIRES baseline to be ON
+    // NOTE: StateResolver enforces this as a hard constraint (priority 2)
+    if (data.isExcess && !data.showBaseline) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Cannot show baseline in excess mode',
+        message: 'Excess mode requires baseline to be enabled',
         path: ['showBaseline']
       })
     }
@@ -262,8 +263,10 @@ export const explorerStateSchema = explorerStateBaseSchema.superRefine(
       })
     }
 
-    // Rule 7: Prediction intervals only available with baseline
-    if (data.showPredictionInterval && !data.showBaseline) {
+    // Rule 7: Prediction intervals require baseline OR excess mode
+    // In excess mode, baseline is always ON (enforced by StateResolver)
+    // In normal mode, baseline must be explicitly enabled
+    if (data.showPredictionInterval && !data.showBaseline && !data.isExcess) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'Prediction intervals require baseline to be enabled',

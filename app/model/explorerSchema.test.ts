@@ -84,12 +84,12 @@ describe('explorerSchema', () => {
     })
   })
 
-  describe('Rule 2: Cannot show both excess and baseline', () => {
-    it('should accept excess without baseline', () => {
+  describe('Rule 2: Excess mode requires baseline', () => {
+    it('should accept excess WITH baseline', () => {
       const state = createValidState()
       state.isExcess = true
-      state.showBaseline = false
-      state.showPredictionInterval = false // Prediction intervals require baseline
+      state.showBaseline = true
+      state.showPredictionInterval = false // PI can be OFF in excess mode
       const result = explorerStateSchema.safeParse(state)
       expect(result.success).toBe(true)
     })
@@ -102,14 +102,15 @@ describe('explorerSchema', () => {
       expect(result.success).toBe(true)
     })
 
-    it('should reject excess with baseline', () => {
+    it('should reject excess WITHOUT baseline', () => {
       const state = createValidState()
       state.isExcess = true
-      state.showBaseline = true
+      state.showBaseline = false
+      state.showPredictionInterval = false
       const result = explorerStateSchema.safeParse(state)
       expect(result.success).toBe(false)
       if (!result.success) {
-        expect(result.error.issues[0]?.message).toContain('Cannot show baseline in excess')
+        expect(result.error.issues[0]?.message).toContain('Excess mode requires baseline')
       }
     })
   })
@@ -323,19 +324,30 @@ describe('explorerSchema', () => {
     })
   })
 
-  describe('Rule 7: Prediction intervals require baseline', () => {
+  describe('Rule 7: Prediction intervals require baseline OR excess mode', () => {
     it('should accept prediction intervals with baseline', () => {
       const state = createValidState()
       state.showPredictionInterval = true
       state.showBaseline = true
+      state.isExcess = false
       const result = explorerStateSchema.safeParse(state)
       expect(result.success).toBe(true)
     })
 
-    it('should reject prediction intervals without baseline', () => {
+    it('should accept prediction intervals in excess mode (baseline always ON)', () => {
+      const state = createValidState()
+      state.showPredictionInterval = true
+      state.showBaseline = true // Required by Rule 2
+      state.isExcess = true
+      const result = explorerStateSchema.safeParse(state)
+      expect(result.success).toBe(true)
+    })
+
+    it('should reject prediction intervals without baseline (normal mode)', () => {
       const state = createValidState()
       state.showPredictionInterval = true
       state.showBaseline = false
+      state.isExcess = false
       const result = explorerStateSchema.safeParse(state)
       expect(result.success).toBe(false)
       if (!result.success) {
