@@ -14,17 +14,18 @@ test.describe('Sources Page', () => {
   test('should display tabs for different source types', async ({ page }) => {
     await page.goto('/sources')
     await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(1000) // Give tabs time to render
 
-    // Should have mortality tab (default)
-    const mortalityTab = page.getByRole('tab', { name: /mortality/i })
+    // Should have mortality tab (default) - match full label text
+    const mortalityTab = page.getByRole('tab', { name: /Mortality Data/i })
     await expect(mortalityTab).toBeVisible()
 
     // Should have population tab
-    const populationTab = page.getByRole('tab', { name: /population/i })
+    const populationTab = page.getByRole('tab', { name: /Population Data/i })
     await expect(populationTab).toBeVisible()
 
     // Should have standard tab
-    const standardTab = page.getByRole('tab', { name: /standard/i })
+    const standardTab = page.getByRole('tab', { name: /Standard Populations/i })
     await expect(standardTab).toBeVisible()
   })
 
@@ -51,9 +52,10 @@ test.describe('Sources Page', () => {
   test('should update URL when switching tabs', async ({ page }) => {
     await page.goto('/sources')
     await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(1000) // Give tabs time to render
 
-    // Click population tab
-    const populationTab = page.getByRole('tab', { name: /population/i })
+    // Click population tab - use full label text
+    const populationTab = page.getByRole('tab', { name: /Population Data/i })
     await populationTab.click()
     await page.waitForTimeout(500)
 
@@ -61,7 +63,7 @@ test.describe('Sources Page', () => {
     expect(page.url()).toContain('tab=population')
 
     // Click standard tab
-    const standardTab = page.getByRole('tab', { name: /standard/i })
+    const standardTab = page.getByRole('tab', { name: /Standard Populations/i })
     await standardTab.click()
     await page.waitForTimeout(500)
 
@@ -86,7 +88,7 @@ test.describe('Sources Page', () => {
     expect(secondUrl).toContain('tab=population')
 
     // Verify population tab is active
-    const populationTab = page.getByRole('tab', { name: /population/i })
+    const populationTab = page.getByRole('tab', { name: /Population Data/i })
     await expect(populationTab).toHaveAttribute('aria-selected', 'true')
 
     // Navigate to standard tab with pagination
@@ -115,7 +117,7 @@ test.describe('Sources Page', () => {
 
     // Should be back to initial state
     expect(page.url()).toBe(initialUrl)
-    const mortalityTab = page.getByRole('tab', { name: /mortality/i })
+    const mortalityTab = page.getByRole('tab', { name: /Mortality Data/i })
     await expect(mortalityTab).toHaveAttribute('aria-selected', 'true')
 
     // Go forward (should go to population)

@@ -57,14 +57,14 @@ test.describe('Explorer Page', () => {
 
     const initialUrl = page.url()
 
-    // Navigate to a different state (change chart type to calendar)
+    // Navigate to a different state (change chart type to monthly)
     // This simulates user changing settings, which updates URL
-    await page.goto('/explorer?c=USA&c=SWE&ct=calendar&t=asmr')
+    await page.goto('/explorer?c=USA&c=SWE&ct=monthly&t=asmr')
     await page.waitForLoadState('networkidle')
     await page.waitForSelector('canvas#chart', { timeout: 10000 })
 
     const secondUrl = page.url()
-    expect(secondUrl).toContain('ct=calendar')
+    expect(secondUrl).toContain('ct=monthly')
 
     // Go back using browser navigation
     await page.goBack()
@@ -81,6 +81,6 @@ test.describe('Explorer Page', () => {
 
     // URL should be back to second state
     expect(page.url()).toBe(secondUrl)
-    expect(page.url()).toContain('ct=calendar')
+    expect(page.url()).toContain('ct=monthly')
   })
 })
