@@ -97,8 +97,7 @@ test.describe('Explorer Page', () => {
     expect(page.url()).not.toContain('e=1')
 
     // Find and click the Excess toggle
-    // The toggle might be a button, checkbox, or custom toggle component
-    const excessToggle = page.locator('[data-testid="excess-toggle"], button:has-text("Excess"), input[type="checkbox"]').first()
+    const excessToggle = page.locator('[data-testid="excess-toggle"]')
 
     // Click the excess toggle ONCE
     await excessToggle.click()
