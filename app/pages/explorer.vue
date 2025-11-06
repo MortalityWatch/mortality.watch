@@ -3,7 +3,8 @@ import {
   computed,
   nextTick,
   onMounted,
-  ref
+  ref,
+  watch
 } from 'vue'
 import { useChartResize } from '@/composables/useChartResize'
 import { useExplorerHelpers } from '@/composables/useExplorerHelpers'
@@ -31,6 +32,9 @@ const { isAuthenticated } = useAuth()
 
 // Tutorial for first-time users
 const { autoStartTutorial } = useTutorial()
+
+// Route for watching URL changes
+const route = useRoute()
 
 // Centralized state management with validation
 const state = useExplorerState()
@@ -289,6 +293,23 @@ watch([() => state.dateFrom.value, () => state.dateTo.value], () => {
     update('dateRange')
   }
 })
+
+// Watch route.query changes to handle browser back/forward navigation
+// This ensures the chart re-renders when users navigate using browser buttons
+watch(
+  () => route.query,
+  (newQuery, oldQuery) => {
+    // Only trigger if:
+    // 1. Initial load is done
+    // 2. Query actually changed
+    // 3. Not currently updating (prevents cascading updates)
+    if (isDataLoaded.value && oldQuery && JSON.stringify(newQuery) !== JSON.stringify(oldQuery) && !isCurrentlyUpdating) {
+      // Trigger a full data update to refresh the chart based on new URL state
+      update('_countries')
+    }
+  },
+  { flush: 'post', deep: true } // Run after component updates, watch deep for nested changes
+)
 
 onMounted(async () => {
   // Initialize data - load all, client-side filtering happens via useCountryFilter
