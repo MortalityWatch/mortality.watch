@@ -37,9 +37,26 @@
         :url="getFeatureUpgradeUrl(feature)"
         :cta="getFeatureUpgradeCTA(feature)"
       >
-        <!-- Default disabled state: just show the content but disabled -->
-        <div class="opacity-50 pointer-events-none">
-          <slot />
+        <!-- Default disabled state: grayed out with interactive overlay -->
+        <div class="relative">
+          <!-- Content (grayed out) -->
+          <div class="opacity-50">
+            <slot />
+          </div>
+
+          <!-- Overlay that blocks ALL interaction (mouse + keyboard) -->
+          <div
+            class="absolute inset-0 cursor-not-allowed group"
+            :title="getUpgradeMessage(feature)"
+          >
+            <!-- Optional: Show lock icon on hover -->
+            <div class="absolute inset-0 bg-gray-900/5 dark:bg-gray-100/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <UIcon
+                name="i-heroicons-lock-closed"
+                class="text-gray-400 dark:text-gray-500 size-4"
+              />
+            </div>
+          </div>
         </div>
       </slot>
     </div>
