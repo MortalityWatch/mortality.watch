@@ -285,16 +285,16 @@ const handleChartPresetChanged = (v: string) => {
   applyPresetSize(v)
 }
 
-// State resolver handler for excess toggle
-// Uses StateResolver to handle cascading state changes
-const handleExcessChanged = async (v: boolean) => {
+// Generic StateResolver handler for any state change
+// Handles cascading constraints and atomic URL updates
+const handleStateChange = async (field: string, value: unknown, refreshKey: string) => {
   const { StateResolver } = await import('@/lib/state/StateResolver')
   const router = useRouter()
   const route = useRoute()
 
   // 1. Resolve state with constraints
   const resolved = StateResolver.resolveChange(
-    { field: 'isExcess', value: v, source: 'user' },
+    { field, value, source: 'user' },
     state.getCurrentStateValues(),
     state.getUserOverrides()
   )
@@ -303,8 +303,16 @@ const handleExcessChanged = async (v: boolean) => {
   await StateResolver.applyResolvedState(resolved, route, router)
 
   // 3. Trigger chart refresh
-  await update('_isExcess')
+  await update(refreshKey)
 }
+
+// Specific handlers for different controls
+const handleExcessChanged = (v: boolean) => handleStateChange('isExcess', v, '_isExcess')
+const handleBaselineChanged = (v: boolean) => handleStateChange('showBaseline', v, '_showBaseline')
+const handlePredictionIntervalChanged = (v: boolean) => handleStateChange('showPredictionInterval', v, '_showPredictionInterval')
+const handleTypeChanged = (v: string) => handleStateChange('type', v, '_type')
+const handleChartTypeChanged = (v: string) => handleStateChange('chartType', v, '_chartType')
+const handleChartStyleChanged = (v: string) => handleStateChange('chartStyle', v, '_chartStyle')
 
 // Watch for date range changes from URL/slider and trigger chart update
 watch([() => state.dateFrom.value, () => state.dateTo.value], () => {
@@ -466,15 +474,15 @@ const showSaveModal = computed({
             :show-prediction-interval-disabled="showPredictionIntervalDisabled"
             :show-total-option="dataOrchestration.chartOptions.showTotalOption"
             :baseline-range="dataOrchestration.baselineRange.value"
-            @type-changed="(v) => updateStateAndRefresh(() => state.type.value = v, '_type')"
-            @chart-type-changed="(v) => updateStateAndRefresh(() => state.chartType.value = v, '_chartType')"
-            @chart-style-changed="(v) => updateStateAndRefresh(() => state.chartStyle.value = v, '_chartStyle')"
+            @type-changed="handleTypeChanged"
+            @chart-type-changed="handleChartTypeChanged"
+            @chart-style-changed="handleChartStyleChanged"
             @standard-population-changed="(v) => updateStateAndRefresh(() => state.standardPopulation.value = v, '_standardPopulation')"
             @is-excess-changed="handleExcessChanged"
-            @show-baseline-changed="(v) => updateStateAndRefresh(() => state.showBaseline.value = v, '_showBaseline')"
+            @show-baseline-changed="handleBaselineChanged"
             @baseline-method-changed="(v) => updateStateAndRefresh(() => state.baselineMethod.value = v, '_baselineMethod')"
             @baseline-slider-value-changed="baselineSliderChanged"
-            @show-prediction-interval-changed="(v) => updateStateAndRefresh(() => state.showPredictionInterval.value = v, '_showPredictionInterval')"
+            @show-prediction-interval-changed="handlePredictionIntervalChanged"
             @show-labels-changed="(v) => updateStateAndRefresh(() => state.showLabels.value = v, '_showLabels')"
             @maximize-changed="(v) => updateStateAndRefresh(() => state.maximize.value = v, '_maximize')"
             @is-logarithmic-changed="(v) => updateStateAndRefresh(() => state.isLogarithmic.value = v, '_isLogarithmic')"
