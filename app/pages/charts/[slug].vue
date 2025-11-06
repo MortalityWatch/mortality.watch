@@ -210,7 +210,7 @@ const slug = route.params.slug as string
 
 // Fetch chart data
 const { data: chart, pending, error } = await useFetch<Chart>(
-  `/api/charts/${slug}`
+  `/api/charts/slug/${slug}`
 )
 
 // Generate chart image URL from state

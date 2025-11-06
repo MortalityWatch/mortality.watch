@@ -1,7 +1,7 @@
-import { db } from '../../utils/db'
-import { savedCharts, users } from '../../../db/schema'
+import { db } from '../../../utils/db'
+import { savedCharts, users } from '../../../../db/schema'
 import { eq, and, sql } from 'drizzle-orm'
-import { logger } from '../../utils/logger'
+import { logger } from '../../../utils/logger'
 
 /**
  * GET /api/charts/:slug
