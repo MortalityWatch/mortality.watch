@@ -302,7 +302,14 @@ describe('useRankingData', () => {
     })
 
     it('should handle null response with ASMR mode', async () => {
-      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
+      const asmrState = {
+        ...mockState,
+        showASMR: computed({
+          get: () => true,
+          set: () => {}
+        })
+      }
+      const ranking = useRankingData(asmrState, mockMetaData, ref('2020'))
 
       mockDataFetcher.fetchChartData.mockResolvedValue(null)
 
