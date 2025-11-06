@@ -248,5 +248,67 @@ describe('DataTransformationPipeline', () => {
       expect(result[2]?.yMin).toBeCloseTo(1.867, 2)
       expect(result[2]?.yMax).toBeCloseTo(2.133, 2)
     })
+
+    it('should transform cumulative percentage error bar data with excess', () => {
+      // Simulating excess data where:
+      // - deaths = [100, 110, 120]
+      // - deaths_baseline = [90, 100, 110]
+      // - deaths_excess = deaths - deaths_baseline = [10, 10, 10]
+      // When cumulative + percentage is enabled:
+      // - cumulative(deaths_excess) = [10, 20, 30]
+      // - cumulative(deaths_baseline) = [90, 190, 300]
+      // - percentage = cumulative(deaths_excess) / cumulative(deaths_baseline)
+      const data = {
+        deaths_excess: [10, 10, 10],
+        deaths_excess_lower: [8, 8, 8],
+        deaths_excess_upper: [12, 12, 12],
+        deaths_baseline: [90, 100, 110],
+        deaths_baseline_lower: [85, 95, 105],
+        deaths_baseline_upper: [95, 105, 115]
+      }
+      const config = {
+        showPercentage: true,
+        cumulative: true,
+        showTotal: false,
+        showCumPi: true,
+        isAsmrType: false
+      }
+
+      const result = pipeline.transformErrorBarData(config, data, 'deaths_excess')
+
+      expect(result).toHaveLength(3)
+      // Cumulative excess: [10, 20, 30]
+      // Cumulative baseline: [90, 190, 300]
+      // Percentage: [10/90, 20/190, 30/300] = [0.111, 0.105, 0.1]
+      expect(result[0]?.y).toBeCloseTo(0.111, 3)
+      expect(result[1]?.y).toBeCloseTo(0.105, 3)
+      expect(result[2]?.y).toBe(0.1)
+    })
+
+    it('should transform cumulative total percentage error bar data with excess', () => {
+      const data = {
+        deaths_excess: [10, 10, 10],
+        deaths_excess_lower: [8, 8, 8],
+        deaths_excess_upper: [12, 12, 12],
+        deaths_baseline: [90, 100, 110],
+        deaths_baseline_lower: [85, 95, 105],
+        deaths_baseline_upper: [95, 105, 115]
+      }
+      const config = {
+        showPercentage: true,
+        cumulative: true,
+        showTotal: true,
+        showCumPi: true,
+        isAsmrType: false
+      }
+
+      const result = pipeline.transformErrorBarData(config, data, 'deaths_excess')
+
+      expect(result).toHaveLength(1)
+      // Total excess: 30
+      // Total baseline: 300
+      // Percentage: 30/300 = 0.1
+      expect(result[0]?.y).toBe(0.1)
+    })
   })
 })
