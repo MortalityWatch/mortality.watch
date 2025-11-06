@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { getSourceDescription } from '~/lib/data'
 import { getDataTypeDescription } from '~/utils'
 import { usePagination } from '~/composables/usePagination'
+import { useBrowserNavigation } from '~/composables/useBrowserNavigation'
 import { dataLoader } from '~/lib/dataLoader'
 import Papa from 'papaparse'
 import type { CountryRaw } from '~/model/country'
@@ -128,6 +129,22 @@ watch(itemsPerPage, (newLimit) => {
 // Watch for search query changes and reset to page 1
 watch(searchQuery, () => {
   currentPage.value = 1
+})
+
+// Handle browser back/forward navigation
+// Updates tab and page state when URL changes from browser navigation
+useBrowserNavigation({
+  queryParams: ['tab', 'page', 'limit'],
+  onNavigate: () => {
+    // Sync state from URL
+    activeTab.value = (route.query.tab as string) || 'mortality'
+    currentPage.value = parseInt(route.query.page as string) || 1
+    if (route.query.limit) {
+      itemsPerPage.value = parseInt(route.query.limit as string)
+    }
+  },
+  isReady: computed(() => !isLoading.value),
+  isUpdating: isLoading
 })
 
 const { withRetry, handleError } = useErrorRecovery()

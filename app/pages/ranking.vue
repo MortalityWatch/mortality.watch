@@ -15,9 +15,9 @@
  * - RankingSaveModal: Save ranking modal dialog
  */
 
-import { computed, ref, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, ref, onMounted } from 'vue'
 import { loadCountryMetadata } from '@/lib/data'
+import { useBrowserNavigation } from '@/composables/useBrowserNavigation'
 import type { Country } from '@/model'
 import type { ChartType } from '@/model/period'
 import {
@@ -136,9 +136,6 @@ const jurisdictionTypeItems = jurisdictionTypes.map(x => ({
   name: x.name,
   value: x.value
 }))
-
-// Router access
-const route = useRoute()
 
 // ============================================================================
 // METADATA - Load country metadata
@@ -293,25 +290,14 @@ onMounted(() => {
   autoStartTutorial('ranking')
 })
 
-// Watch route.query changes for date/baseline updates
-watch(
-  [
-    () => route.query.df, // slider from date
-    () => route.query.dt, // slider to date
-    () => route.query.bf, // baseline from date
-    () => route.query.bt // baseline to date
-  ],
-  (newVal, oldVal) => {
-    // Only trigger if:
-    // 1. Initial load is done
-    // 2. Values actually changed (oldVal exists and differs)
-    // 3. Not already updating (prevents cascading reloads)
-    if (initialLoadDone.value && oldVal && JSON.stringify(newVal) !== JSON.stringify(oldVal) && !isUpdating.value) {
-      loadData()
-    }
-  },
-  { flush: 'post' } // Run after component updates
-)
+// Handle browser back/forward navigation
+// Watches date/baseline query params and reloads data when they change
+useBrowserNavigation({
+  queryParams: ['df', 'dt', 'bf', 'bt'],
+  onNavigate: loadData,
+  isReady: initialLoadDone,
+  isUpdating: isUpdating
+})
 
 // Save Ranking functionality using composable
 const {

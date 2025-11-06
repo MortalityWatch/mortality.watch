@@ -48,4 +48,42 @@ test.describe('Explorer Page', () => {
     const chart = page.locator('canvas#chart')
     await expect(chart).toBeVisible()
   })
+
+  test('should update chart on browser back/forward navigation', async ({ page }) => {
+    // Start with default countries
+    await page.goto('/explorer')
+    await page.waitForLoadState('networkidle')
+    await page.waitForSelector('canvas#chart', { timeout: 10000 })
+
+    // Capture initial URL (with defaults applied)
+    const initialUrl = page.url()
+
+    // Navigate to a different state - use different countries which will definitely change the URL
+    // This simulates user changing settings, which updates URL
+    await page.goto('/explorer?c=GBR&c=FRA&t=asmr')
+    await page.waitForLoadState('networkidle')
+    await page.waitForSelector('canvas#chart', { timeout: 10000 })
+
+    // Capture second URL (should have different countries)
+    const secondUrl = page.url()
+    expect(secondUrl).toContain('c=GBR')
+    expect(secondUrl).toContain('c=FRA')
+
+    // Go back using browser navigation
+    await page.goBack()
+    await page.waitForLoadState('networkidle')
+    await page.waitForSelector('canvas#chart', { timeout: 10000 })
+
+    // URL should be back to initial state
+    expect(page.url()).toBe(initialUrl)
+
+    // Go forward again
+    await page.goForward()
+    await page.waitForLoadState('networkidle')
+    await page.waitForSelector('canvas#chart', { timeout: 10000 })
+
+    // URL should be back to second state
+    expect(page.url()).toBe(secondUrl)
+    expect(page.url()).toContain('c=GBR')
+  })
 })

@@ -3,7 +3,8 @@ import {
   computed,
   nextTick,
   onMounted,
-  ref
+  ref,
+  watch
 } from 'vue'
 import { useChartResize } from '@/composables/useChartResize'
 import { useExplorerHelpers } from '@/composables/useExplorerHelpers'
@@ -13,6 +14,7 @@ import { useExplorerDataOrchestration } from '@/composables/useExplorerDataOrche
 import { useExplorerColors } from '@/composables/useExplorerColors'
 import { useExplorerChartActions } from '@/composables/useExplorerChartActions'
 import { useTutorial } from '@/composables/useTutorial'
+import { useBrowserNavigation } from '@/composables/useBrowserNavigation'
 import type {
   Country
 } from '@/model'
@@ -288,6 +290,18 @@ watch([() => state.dateFrom.value, () => state.dateTo.value], () => {
   if (isDataLoaded.value) {
     update('dateRange')
   }
+})
+
+// Handle browser back/forward navigation
+// Watches all chart-affecting query params and triggers update when they change
+useBrowserNavigation({
+  queryParams: [
+    'c', 't', 'ct', 'e', 'cs', 'df', 'dt', 'ss', 'bf', 'bt',
+    'sp', 'ag', 'sb', 'bm', 'ce', 'st', 'pi', 'p', 'lg'
+  ],
+  onNavigate: () => update('_countries'),
+  isReady: isDataLoaded,
+  isUpdating: computed(() => isCurrentlyUpdating)
 })
 
 onMounted(async () => {
