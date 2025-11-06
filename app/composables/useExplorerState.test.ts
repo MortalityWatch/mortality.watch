@@ -153,32 +153,29 @@ describe('useExplorerState', () => {
       expect(current.showBaseline).toBe(true)
     })
 
-    it('should detect validation errors', async () => {
+    it('should accept valid state (excess requires baseline)', async () => {
       const state = useExplorerState()
 
-      // Force invalid state - excess with baseline shown
+      // Valid state - excess with baseline (excess REQUIRES baseline)
       state.isExcess.value = true
       state.showBaseline.value = true
 
       await nextTick()
 
-      // Auto-fix runs immediately and corrects the error
-      // So by the time we check, the error is already fixed
-      await nextTick()
-
-      // Auto-fix should have corrected this
-      expect(state.showBaseline.value).toBe(false)
-      // And no errors should remain
+      // This is a valid combination
+      expect(state.showBaseline.value).toBe(true)
+      expect(state.isExcess.value).toBe(true)
       expect(state.errors.value).toHaveLength(0)
+      expect(state.isValid.value).toBe(true)
     })
   })
 
   // ============================================================================
-  // AUTO-FIX: EXCESS MODE
+  // VALIDATION: EXCESS MODE
   // ============================================================================
 
-  describe('auto-fix: excess mode', () => {
-    it('should disable baseline when excess mode is enabled', async () => {
+  describe('validation: excess mode', () => {
+    it('should allow baseline when excess mode is enabled (excess requires baseline)', async () => {
       const state = useExplorerState()
 
       state.showBaseline.value = true
@@ -186,42 +183,32 @@ describe('useExplorerState', () => {
 
       await nextTick()
 
-      // Access errors to trigger validation
-      void state.errors.value // Trigger validation
-
-      await nextTick()
-
-      expect(state.showBaseline.value).toBe(false)
+      // This is valid - excess requires baseline to be on
+      expect(state.showBaseline.value).toBe(true)
+      expect(state.isExcess.value).toBe(true)
+      expect(state.isValid.value).toBe(true)
     })
 
-    it('should disable prediction intervals when baseline is disabled', async () => {
+    it('should detect invalid state when baseline is disabled but excess is on', async () => {
       const state = useExplorerState()
 
-      state.showBaseline.value = true
-      state.showPredictionInterval.value = true
-      state.isExcess.value = false
-
-      // Disable baseline
       state.showBaseline.value = false
+      state.isExcess.value = true
 
       await nextTick()
 
-      // Access errors to trigger validation
-      void state.errors.value // Trigger validation
-
-      await nextTick()
-
-      // Prediction intervals should be auto-disabled
-      expect(state.showPredictionInterval.value).toBe(false)
+      // This is invalid - excess requires baseline
+      expect(state.isValid.value).toBe(false)
+      expect(state.errors.value.length).toBeGreaterThan(0)
     })
   })
 
   // ============================================================================
-  // AUTO-FIX: POPULATION TYPE
+  // VALIDATION: POPULATION TYPE
   // ============================================================================
 
-  describe('auto-fix: population type', () => {
-    it('should disable baseline for population type', async () => {
+  describe('validation: population type', () => {
+    it('should detect invalid state when baseline is enabled for population type', async () => {
       const state = useExplorerState()
 
       state.showBaseline.value = true
@@ -229,15 +216,12 @@ describe('useExplorerState', () => {
 
       await nextTick()
 
-      // Access errors to trigger validation
-      void state.errors.value // Trigger validation
-
-      await nextTick()
-
-      expect(state.showBaseline.value).toBe(false)
+      // This is invalid - population doesn't support baseline
+      expect(state.isValid.value).toBe(false)
+      expect(state.errors.value.length).toBeGreaterThan(0)
     })
 
-    it('should disable excess for population type', async () => {
+    it('should detect invalid state when excess is enabled for population type', async () => {
       const state = useExplorerState()
 
       state.isExcess.value = true
@@ -245,21 +229,18 @@ describe('useExplorerState', () => {
 
       await nextTick()
 
-      // Access errors to trigger validation
-      void state.errors.value // Trigger validation
-
-      await nextTick()
-
-      expect(state.isExcess.value).toBe(false)
+      // This is invalid - population doesn't support excess
+      expect(state.isValid.value).toBe(false)
+      expect(state.errors.value.length).toBeGreaterThan(0)
     })
   })
 
   // ============================================================================
-  // AUTO-FIX: DATE VALIDATION
+  // VALIDATION: DATE VALIDATION
   // ============================================================================
 
-  describe('auto-fix: date validation', () => {
-    it('should reset invalid date formats', async () => {
+  describe('validation: date formats', () => {
+    it('should detect invalid date formats', async () => {
       const state = useExplorerState()
 
       // Set invalid date format for chart type
@@ -268,34 +249,25 @@ describe('useExplorerState', () => {
 
       await nextTick()
 
-      // Access errors to trigger validation
-      void state.errors.value // Trigger validation
-
-      await nextTick()
-
-      // Should be reset to undefined
-      expect(state.dateFrom.value).toBeUndefined()
-      expect(state.dateTo.value).toBeUndefined()
+      // Validation should detect the invalid dates
+      // Note: useExplorerState no longer auto-fixes - StateResolver handles that during user interactions
+      expect(state.dateFrom.value).toBe('INVALID')
+      expect(state.dateTo.value).toBe('INVALID')
+      expect(state.isValid.value).toBe(false)
     })
 
-    it('should reset invalid baseline dates', async () => {
+    it('should allow undefined dates', async () => {
       const state = useExplorerState()
 
-      state.baselineDateFrom.value = 'INVALID'
-      state.baselineDateTo.value = 'INVALID'
+      state.baselineDateFrom.value = undefined
+      state.baselineDateTo.value = undefined
 
       await nextTick()
 
-      // Access errors to trigger validation
-      void state.errors.value // Trigger validation
-
-      await nextTick()
-
-      // Note: Baseline dates are not currently validated for format in the schema
-      // They can be set to any string value
-      // If this behavior changes in the future, update this test
-      expect(state.baselineDateFrom.value).toBe('INVALID')
-      expect(state.baselineDateTo.value).toBe('INVALID')
+      // Undefined dates are valid (will use defaults from data availability)
+      expect(state.baselineDateFrom.value).toBeUndefined()
+      expect(state.baselineDateTo.value).toBeUndefined()
+      expect(state.isValid.value).toBe(true)
     })
   })
 
@@ -630,18 +602,17 @@ describe('useExplorerState', () => {
     it('should handle conflicting state changes', async () => {
       const state = useExplorerState()
 
-      // Enable both excess and baseline (conflicting)
-      state.showBaseline.value = true
+      // Enable excess mode (requires baseline)
       state.isExcess.value = true
+      state.showBaseline.value = true
 
       await nextTick()
 
-      // Auto-fix runs immediately
-      await nextTick()
+      // StateResolver will ensure this is valid (excess requires baseline)
+      expect(state.showBaseline.value).toBe(true)
+      expect(state.isExcess.value).toBe(true)
 
-      // Auto-fix should have resolved conflict
-      expect(state.showBaseline.value).toBe(false)
-      // And no errors should remain
+      // No validation errors with this combination
       expect(state.errors.value).toHaveLength(0)
     })
   })
@@ -654,25 +625,27 @@ describe('useExplorerState', () => {
     it('should not show duplicate error toasts', async () => {
       const state = useExplorerState()
 
-      // Trigger same error multiple times
+      // Set excess mode (baseline is required)
       state.isExcess.value = true
       state.showBaseline.value = true
 
       await nextTick()
       await nextTick()
 
-      // Auto-fix should have corrected this
-      expect(state.showBaseline.value).toBe(false)
+      // This is a valid state (excess requires baseline)
+      expect(state.showBaseline.value).toBe(true)
+      expect(state.isExcess.value).toBe(true)
 
-      // Try to trigger the same error again
-      state.showBaseline.value = true
+      // No validation errors
+      expect(state.errors.value).toHaveLength(0)
+
+      // Change to a different valid state
+      state.isExcess.value = false
 
       await nextTick()
-      await nextTick()
 
-      // Should be auto-fixed again
-      expect(state.showBaseline.value).toBe(false)
-      // Note: The toast mock can be checked to ensure it was only called once per unique error
+      // Still valid
+      expect(state.errors.value).toHaveLength(0)
     })
   })
 

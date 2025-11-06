@@ -15,7 +15,7 @@ import type {
   NumberEntryFields
 } from '@/model'
 import type { MortalityChartData } from '@/lib/chart/chartTypes'
-import type { StateProperties } from '@/model/state/stateProperties'
+import type { ExplorerState } from '@/model/explorerSchema'
 import type { ChartType } from '@/model/period'
 
 /**
@@ -40,7 +40,7 @@ export class DataService {
    * @param helpers - Helper functions
    */
   async updateData(
-    props: StateProperties,
+    props: ExplorerState,
     allCountries: Record<string, Country>,
     dataset: DatasetRaw | undefined,
     allChartLabels: Ref<string[] | undefined>,
@@ -127,7 +127,7 @@ export class DataService {
    * @param helpers - Helper functions
    */
   async getFilteredData(
-    props: StateProperties,
+    props: ExplorerState,
     allCountries: Record<string, Country>,
     colors: string[],
     allChartDataLabels: string[],
@@ -163,11 +163,11 @@ export class DataService {
       helpers.isErrorBarType(),
       colors,
       helpers.isMatrixChartStyle(),
-      props.showPercentage,
+      props.showPercentage ?? false,
       helpers.showCumPi(),
       helpers.isAsmrType(),
-      props.maximize,
-      props.showLabels,
+      props.maximize ?? false,
+      props.showLabels ?? true,
       '', // URL generation placeholder
       props.isLogarithmic,
       helpers.isPopulationType(),
