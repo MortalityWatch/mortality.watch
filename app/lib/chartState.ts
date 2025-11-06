@@ -31,6 +31,7 @@ export interface ChartState {
   sliderStart?: string
   userColors?: string[]
   decimals?: string
+  darkMode?: boolean
 }
 
 /**

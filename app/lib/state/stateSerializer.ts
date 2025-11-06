@@ -46,7 +46,8 @@ export const Defaults = {
   showLogo: true,
   showQrCode: true,
   showCaption: true,
-  decimals: 'auto'
+  decimals: 'auto',
+  darkMode: false
 }
 
 export type ChartStateInput = typeof Defaults
@@ -77,5 +78,6 @@ export const stateFieldEncoders = {
   decimals: { key: 'dec' },
   showLogo: { key: 'l', encode: encodeBool, decode: decodeBool },
   showQrCode: { key: 'qr', encode: encodeBool, decode: decodeBool },
-  showCaption: { key: 'cap', encode: encodeBool, decode: decodeBool }
+  showCaption: { key: 'cap', encode: encodeBool, decode: decodeBool },
+  darkMode: { key: 'dm', encode: encodeBool, decode: decodeBool }
 }
