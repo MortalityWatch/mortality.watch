@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Helper script to reset the database
 # This is useful during development when you need a fresh start
@@ -9,13 +9,19 @@ set -e
 echo "⚠️  WARNING: This will DELETE ALL DATA in the database!"
 echo "This script is intended for development use only."
 echo ""
-read -p "Are you sure you want to continue? (yes/no): " -r
+printf "Are you sure you want to continue? (yes/no): "
+read -r REPLY
 echo ""
 
-if [[ ! $REPLY =~ ^[Yy]es$ ]]; then
-  echo "❌ Aborted."
-  exit 1
-fi
+case "$REPLY" in
+  [Yy]es)
+    # Continue with script
+    ;;
+  *)
+    echo "❌ Aborted."
+    exit 1
+    ;;
+esac
 
 # Remove the database file if it exists
 DB_PATH="./.data/mortality.db"
