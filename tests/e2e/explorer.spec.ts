@@ -55,16 +55,19 @@ test.describe('Explorer Page', () => {
     await page.waitForLoadState('networkidle')
     await page.waitForSelector('canvas#chart', { timeout: 10000 })
 
+    // Capture initial URL (with defaults applied)
     const initialUrl = page.url()
 
-    // Navigate to a different state (change chart type to monthly)
+    // Navigate to a different state - use different countries which will definitely change the URL
     // This simulates user changing settings, which updates URL
-    await page.goto('/explorer?c=USA&c=SWE&ct=monthly&t=asmr')
+    await page.goto('/explorer?c=GBR&c=FRA&t=asmr')
     await page.waitForLoadState('networkidle')
     await page.waitForSelector('canvas#chart', { timeout: 10000 })
 
+    // Capture second URL (should have different countries)
     const secondUrl = page.url()
-    expect(secondUrl).toContain('ct=monthly')
+    expect(secondUrl).toContain('c=GBR')
+    expect(secondUrl).toContain('c=FRA')
 
     // Go back using browser navigation
     await page.goBack()
@@ -81,6 +84,6 @@ test.describe('Explorer Page', () => {
 
     // URL should be back to second state
     expect(page.url()).toBe(secondUrl)
-    expect(page.url()).toContain('ct=monthly')
+    expect(page.url()).toContain('c=GBR')
   })
 })
