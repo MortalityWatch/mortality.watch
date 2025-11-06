@@ -334,7 +334,19 @@ useBrowserNavigation({
 })
 
 onMounted(async () => {
-  // Initialize data - load all, client-side filtering happens via useCountryFilter
+  // 1. FIRST: Resolve initial state from URL + apply constraints
+  const { StateResolver } = await import('@/lib/state/StateResolver')
+  const route = useRoute()
+  const router = useRouter()
+
+  const resolved = StateResolver.resolveInitial(route)
+
+  // Apply resolved state to URL if constraints changed anything
+  if (resolved.changedFields.length > 0) {
+    await StateResolver.applyResolvedState(resolved, route, router)
+  }
+
+  // 2. THEN: Load country metadata - load all, client-side filtering happens via useCountryFilter
   const allMetadata = await loadCountryMetadata()
 
   // Apply client-side filtering
