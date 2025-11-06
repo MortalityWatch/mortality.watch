@@ -224,8 +224,8 @@ describe('DataTransformationPipeline', () => {
         key1_lower: [8, 18, 28],
         key1_upper: [12, 22, 32],
         key1_baseline: [5, 10, 15],
-        key1_lower_baseline: [4, 9, 14],
-        key1_upper_baseline: [6, 11, 16]
+        key1_baseline_lower: [4, 9, 14],
+        key1_baseline_upper: [6, 11, 16]
       }
       const config = {
         showPercentage: true,
@@ -239,14 +239,11 @@ describe('DataTransformationPipeline', () => {
 
       expect(result).toHaveLength(3)
       // [10, 20, 30] / [5, 10, 15] = [2, 2, 2]
-      // [8, 18, 28] / [5, 10, 15] = [1.6, 1.8, 1.867]
-      // [12, 22, 32] / [5, 10, 15] = [2.4, 2.2, 2.133]
-      expect(result[0]).toMatchObject({ x: 0, y: 2, yMin: 1.6, yMax: 2.4 })
-      expect(result[1]).toMatchObject({ x: 1, y: 2, yMin: 1.8, yMax: 2.2 })
-      expect(result[2]?.x).toBe(2)
-      expect(result[2]?.y).toBe(2)
-      expect(result[2]?.yMin).toBeCloseTo(1.867, 2)
-      expect(result[2]?.yMax).toBeCloseTo(2.133, 2)
+      // [8, 18, 28] / [4, 9, 14] = [2, 2, 2]
+      // [12, 22, 32] / [6, 11, 16] = [2, 2, 2]
+      expect(result[0]).toMatchObject({ x: 0, y: 2, yMin: 2, yMax: 2 })
+      expect(result[1]).toMatchObject({ x: 1, y: 2, yMin: 2, yMax: 2 })
+      expect(result[2]).toMatchObject({ x: 2, y: 2, yMin: 2, yMax: 2 })
     })
   })
 })

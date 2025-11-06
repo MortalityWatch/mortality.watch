@@ -98,5 +98,37 @@ describe('PercentageTransformStrategy', () => {
 
       expect(result).toBe('asmr_esp_baseline')
     })
+
+    it('should handle excess with lower confidence interval', () => {
+      const key = 'deaths_excess_lower'
+
+      const result = strategy.getBaselineKey(false, key)
+
+      expect(result).toBe('deaths_baseline_lower')
+    })
+
+    it('should handle excess with upper confidence interval', () => {
+      const key = 'deaths_excess_upper'
+
+      const result = strategy.getBaselineKey(false, key)
+
+      expect(result).toBe('deaths_baseline_upper')
+    })
+
+    it('should handle ASMR excess with lower confidence interval', () => {
+      const key = 'asmr_who_excess_lower'
+
+      const result = strategy.getBaselineKey(true, key)
+
+      expect(result).toBe('asmr_who_baseline_lower')
+    })
+
+    it('should handle ASMR excess with upper confidence interval', () => {
+      const key = 'asmr_who_excess_upper'
+
+      const result = strategy.getBaselineKey(true, key)
+
+      expect(result).toBe('asmr_who_baseline_upper')
+    })
   })
 })
