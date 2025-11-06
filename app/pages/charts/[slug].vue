@@ -149,7 +149,7 @@
                 :color="chart.chartType === 'explorer' ? 'info' : 'success'"
                 variant="subtle"
               >
-                {{ chart.chartType }}
+                {{ chart.chartType === 'explorer' ? 'Explorer' : 'Ranking' }}
               </UBadge>
             </dd>
           </div>

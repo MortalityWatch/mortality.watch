@@ -177,7 +177,7 @@
                 variant="subtle"
                 size="xs"
               >
-                {{ chart.chartType }}
+                {{ chart.chartType === 'explorer' ? 'Explorer' : 'Ranking' }}
               </UBadge>
             </div>
           </div>
