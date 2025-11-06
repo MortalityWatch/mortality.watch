@@ -138,6 +138,7 @@ export const explorerStateSchema = explorerStateBaseSchema.superRefine(
 
     // Rule 2: Excess mode REQUIRES baseline to be ON
     // NOTE: StateResolver enforces this as a hard constraint (priority 2)
+    // Bar chart style is a soft default (priority 0) - user can override
     if (data.isExcess && !data.showBaseline) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
