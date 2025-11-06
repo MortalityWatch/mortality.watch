@@ -355,7 +355,8 @@ export class StateResolver {
   static async applyResolvedState(
     resolved: ResolvedState,
     route: RouteLocationNormalizedLoaded,
-    router: Router
+    router: Router,
+    options: { replaceHistory?: boolean } = {}
   ): Promise<void> {
     // Build complete query object with ALL changes at once
     const newQuery: Record<string, string | string[]> = {}
@@ -389,7 +390,11 @@ export class StateResolver {
       }
     }
 
-    // Single router.push with all changes - prevents race conditions
-    await router.push({ query: newQuery })
+    // Use router.replace() for initial state (no history entry) or router.push() for user actions
+    if (options.replaceHistory) {
+      await router.replace({ query: newQuery })
+    } else {
+      await router.push({ query: newQuery })
+    }
   }
 }
