@@ -211,4 +211,15 @@ async function toggleFeatured(chartId: number, newValue: boolean) {
     togglingFeatured.value = null
   }
 }
+
+// Page head
+useHead({
+  title: 'Chart Gallery',
+  meta: [
+    {
+      name: 'description',
+      content: 'Explore published mortality visualizations from our community'
+    }
+  ]
+})
 </script>
