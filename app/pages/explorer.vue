@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import {
   computed,
-  nextTick,
   onMounted,
   ref,
   watch
@@ -332,6 +331,63 @@ const handleUserColorsChanged = (v: string[] | undefined) => handleStateChange('
 // Slider start
 const handleSliderStartChanged = (v: string | undefined) => handleStateChange('sliderStart', v, '_sliderStart')
 
+// Chart appearance (no data refresh needed, just URL sync)
+const handleShowLogoChanged = async (v: boolean) => {
+  const { StateResolver } = await import('@/lib/state/StateResolver')
+  const router = useRouter()
+  const route = useRoute()
+
+  const resolved = StateResolver.resolveChange(
+    { field: 'showLogo', value: v, source: 'user' },
+    state.getCurrentStateValues(),
+    state.getUserOverrides()
+  )
+
+  await StateResolver.applyResolvedState(resolved, route, router)
+}
+
+const handleShowQrCodeChanged = async (v: boolean) => {
+  const { StateResolver } = await import('@/lib/state/StateResolver')
+  const router = useRouter()
+  const route = useRoute()
+
+  const resolved = StateResolver.resolveChange(
+    { field: 'showQrCode', value: v, source: 'user' },
+    state.getCurrentStateValues(),
+    state.getUserOverrides()
+  )
+
+  await StateResolver.applyResolvedState(resolved, route, router)
+}
+
+const handleShowCaptionChanged = async (v: boolean) => {
+  const { StateResolver } = await import('@/lib/state/StateResolver')
+  const router = useRouter()
+  const route = useRoute()
+
+  const resolved = StateResolver.resolveChange(
+    { field: 'showCaption', value: v, source: 'user' },
+    state.getCurrentStateValues(),
+    state.getUserOverrides()
+  )
+
+  await StateResolver.applyResolvedState(resolved, route, router)
+}
+
+const handleDecimalsChanged = async (v: string) => {
+  const { StateResolver } = await import('@/lib/state/StateResolver')
+  const router = useRouter()
+  const route = useRoute()
+
+  const resolved = StateResolver.resolveChange(
+    { field: 'decimals', value: v, source: 'user' },
+    state.getCurrentStateValues(),
+    state.getUserOverrides()
+  )
+
+  await StateResolver.applyResolvedState(resolved, route, router)
+}
+
 // Watch for date range changes from URL/slider and trigger chart update
 watch([() => state.dateFrom.value, () => state.dateTo.value], () => {
   if (isDataLoaded.value) {
@@ -522,10 +578,10 @@ const showSaveModal = computed({
             @slider-start-changed="handleSliderStartChanged"
             @user-colors-changed="handleUserColorsChanged"
             @chart-preset-changed="handleChartPresetChanged"
-            @show-logo-changed="(v) => { state.showLogo.value = v; nextTick() }"
-            @show-qr-code-changed="(v) => { state.showQrCode.value = v; nextTick() }"
-            @show-caption-changed="(v: boolean) => { state.showCaption.value = v; nextTick() }"
-            @decimals-changed="(v) => { state.decimals.value = v; nextTick() }"
+            @show-logo-changed="handleShowLogoChanged"
+            @show-qr-code-changed="handleShowQrCodeChanged"
+            @show-caption-changed="handleShowCaptionChanged"
+            @decimals-changed="handleDecimalsChanged"
           />
 
           <ExplorerChartActions
