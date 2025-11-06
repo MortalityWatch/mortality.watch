@@ -301,15 +301,30 @@ describe('useRankingData', () => {
       )
     })
 
-    it('should handle null response', async () => {
+    it('should handle null response with ASMR error message when ASMR is enabled', async () => {
       const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
+      mockState.showASMR.value = true
       mockDataFetcher.fetchChartData.mockResolvedValue(null)
 
       await ranking.loadData()
 
       expect(showToast).toHaveBeenCalledWith(
         'No ASMR data for selected countries. Please select CMR',
+        'warning'
+      )
+    })
+
+    it('should handle null response with CMR error message when CMR is enabled', async () => {
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
+
+      mockState.showASMR.value = false
+      mockDataFetcher.fetchChartData.mockResolvedValue(null)
+
+      await ranking.loadData()
+
+      expect(showToast).toHaveBeenCalledWith(
+        'No data available for selected countries',
         'warning'
       )
     })
