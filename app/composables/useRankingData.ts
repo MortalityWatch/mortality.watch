@@ -251,7 +251,10 @@ export function useRankingData(
     })
 
     if (!result) {
-      showToast('No ASMR data for selected countries. Please select CMR', 'warning')
+      const errorMessage = state.showASMR.value
+        ? 'No ASMR data for selected countries. Please select CMR'
+        : 'No data available for selected countries'
+      showToast(errorMessage, 'warning')
       return null
     }
 

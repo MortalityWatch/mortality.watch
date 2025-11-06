@@ -301,7 +301,7 @@ describe('useRankingData', () => {
       )
     })
 
-    it('should handle null response', async () => {
+    it('should handle null response with ASMR mode', async () => {
       const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       mockDataFetcher.fetchChartData.mockResolvedValue(null)
@@ -310,6 +310,26 @@ describe('useRankingData', () => {
 
       expect(showToast).toHaveBeenCalledWith(
         'No ASMR data for selected countries. Please select CMR',
+        'warning'
+      )
+    })
+
+    it('should handle null response with CMR mode', async () => {
+      const cmrState = {
+        ...mockState,
+        showASMR: computed({
+          get: () => false,
+          set: () => {}
+        })
+      }
+      const ranking = useRankingData(cmrState, mockMetaData, ref('2020'))
+
+      mockDataFetcher.fetchChartData.mockResolvedValue(null)
+
+      await ranking.loadData()
+
+      expect(showToast).toHaveBeenCalledWith(
+        'No data available for selected countries',
         'warning'
       )
     })
