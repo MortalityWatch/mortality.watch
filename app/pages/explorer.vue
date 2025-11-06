@@ -14,6 +14,7 @@ import { useExplorerDataOrchestration } from '@/composables/useExplorerDataOrche
 import { useExplorerColors } from '@/composables/useExplorerColors'
 import { useExplorerChartActions } from '@/composables/useExplorerChartActions'
 import { useTutorial } from '@/composables/useTutorial'
+import { useBrowserNavigation } from '@/composables/useBrowserNavigation'
 import type {
   Country
 } from '@/model'
@@ -32,9 +33,6 @@ const { isAuthenticated } = useAuth()
 
 // Tutorial for first-time users
 const { autoStartTutorial } = useTutorial()
-
-// Route for watching URL changes
-const route = useRoute()
 
 // Centralized state management with validation
 const state = useExplorerState()
@@ -294,22 +292,17 @@ watch([() => state.dateFrom.value, () => state.dateTo.value], () => {
   }
 })
 
-// Watch route.query changes to handle browser back/forward navigation
-// This ensures the chart re-renders when users navigate using browser buttons
-watch(
-  () => route.query,
-  (newQuery, oldQuery) => {
-    // Only trigger if:
-    // 1. Initial load is done
-    // 2. Query actually changed
-    // 3. Not currently updating (prevents cascading updates)
-    if (isDataLoaded.value && oldQuery && JSON.stringify(newQuery) !== JSON.stringify(oldQuery) && !isCurrentlyUpdating) {
-      // Trigger a full data update to refresh the chart based on new URL state
-      update('_countries')
-    }
-  },
-  { flush: 'post', deep: true } // Run after component updates, watch deep for nested changes
-)
+// Handle browser back/forward navigation
+// Watches all chart-affecting query params and triggers update when they change
+useBrowserNavigation({
+  queryParams: [
+    'c', 't', 'ct', 'e', 'cs', 'df', 'dt', 'ss', 'bf', 'bt',
+    'sp', 'ag', 'sb', 'bm', 'ce', 'st', 'pi', 'p', 'lg'
+  ],
+  onNavigate: () => update('_countries'),
+  isReady: isDataLoaded,
+  isUpdating: computed(() => isCurrentlyUpdating)
+})
 
 onMounted(async () => {
   // Initialize data - load all, client-side filtering happens via useCountryFilter

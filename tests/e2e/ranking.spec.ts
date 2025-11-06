@@ -138,4 +138,39 @@ test.describe('Ranking Page', () => {
     // URL should be preserved
     expect(page.url()).toBe(urlWithParams)
   })
+
+  test('should update rankings on browser back/forward navigation', async ({ page }) => {
+    // Start with default date range
+    await page.goto('/ranking')
+    await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(2000)
+
+    const initialUrl = page.url()
+
+    // Navigate to a different date range
+    await page.goto('/ranking?df=2020-01-01&dt=2020-12-31')
+    await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(2000)
+
+    const secondUrl = page.url()
+    expect(secondUrl).toContain('df=2020-01-01')
+    expect(secondUrl).toContain('dt=2020-12-31')
+
+    // Go back using browser navigation
+    await page.goBack()
+    await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(2000)
+
+    // URL should be back to initial state
+    expect(page.url()).toBe(initialUrl)
+
+    // Go forward again
+    await page.goForward()
+    await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(2000)
+
+    // URL should be back to second state
+    expect(page.url()).toBe(secondUrl)
+    expect(page.url()).toContain('df=2020-01-01')
+  })
 })
