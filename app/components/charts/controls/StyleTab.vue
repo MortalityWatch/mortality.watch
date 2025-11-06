@@ -53,25 +53,6 @@ const emit = defineEmits<{
           @update:model-value="emit('update:selectedDecimals', $event)"
         />
       </div>
-      <template #disabled>
-        <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 opacity-50">
-          <label class="text-sm font-medium whitespace-nowrap">
-            Number Precision
-            <FeatureBadge
-              feature="CUSTOM_DECIMALS"
-              class="ml-2"
-            />
-          </label>
-          <UInputMenu
-            :model-value="props.selectedDecimals"
-            :items="props.decimalPrecisionsWithLabels"
-            placeholder="Select decimal precision"
-            size="sm"
-            class="flex-1"
-            disabled
-          />
-        </div>
-      </template>
     </FeatureGate>
 
     <!-- Feature gate: Only registered users can customize colors -->
@@ -94,23 +75,6 @@ const emit = defineEmits<{
           />
         </div>
       </div>
-      <template #disabled="{ message }">
-        <div
-          v-if="!props.isMatrixChartStyle"
-          class="px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 opacity-50"
-        >
-          <label class="block mb-2 text-sm font-medium">
-            Colors
-            <FeatureBadge
-              feature="CUSTOM_COLORS"
-              class="ml-2"
-            />
-          </label>
-          <p class="text-xs text-gray-500 dark:text-gray-400">
-            {{ message }}
-          </p>
-        </div>
-      </template>
     </FeatureGate>
   </div>
 </template>
