@@ -149,15 +149,15 @@ test.describe('Ranking Page', () => {
     const initialUrl = page.url()
 
     // Navigate to a different date range using period format
-    // The app uses period format like '2019/20' for yearly data
-    await page.goto('/ranking?df=2019/20&dt=2019/20')
+    // Use a different range (2021-2022) from the default (2020-2023)
+    await page.goto('/ranking?df=2021/22&dt=2022/23')
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(2000)
 
-    // Capture second URL - check it contains the period we navigated to
+    // Capture second URL - it should contain the periods we navigated to
     const secondUrl = page.url()
-    expect(secondUrl).toContain('df=2019')
-    expect(secondUrl).toContain('dt=2019')
+    expect(secondUrl).toContain('df=2021')
+    expect(secondUrl).toContain('dt=2022')
 
     // Go back using browser navigation
     await page.goBack()
@@ -174,6 +174,6 @@ test.describe('Ranking Page', () => {
 
     // URL should be back to second state
     expect(page.url()).toBe(secondUrl)
-    expect(secondUrl).toContain('df=2019')
+    expect(secondUrl).toContain('df=2021')
   })
 })
