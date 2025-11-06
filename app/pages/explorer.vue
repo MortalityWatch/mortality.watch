@@ -410,7 +410,7 @@ const showSaveModal = computed({
       <!-- Main content area with responsive layout -->
       <div class="flex flex-col gap-3 xl:flex-row xl:items-start xl:gap-4">
         <!-- Chart section - takes up available space on large screens -->
-        <div class="flex-1 min-w-0 flex-shrink-0">
+        <div class="flex-1 min-w-0 shrink-0">
           <ExplorerChartContainer
             ref="chartContainer"
             :countries="state.countries.value"
@@ -436,7 +436,7 @@ const showSaveModal = computed({
         </div>
 
         <!-- Settings section - fixed width on large screens -->
-        <div class="w-full xl:w-[420px] flex-shrink-0">
+        <div class="w-full xl:w-[420px] shrink-0">
           <ExplorerSettings
             :state="state"
             :labels="labels"

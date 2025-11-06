@@ -122,7 +122,7 @@
         <div class="flex items-center gap-6">
           <!-- Thumbnail -->
           <div
-            class="flex-shrink-0 w-32 h-20 bg-gray-100 dark:bg-gray-800 rounded overflow-hidden"
+            class="shrink-0 w-32 h-20 bg-gray-100 dark:bg-gray-800 rounded overflow-hidden"
           >
             <img
               v-if="chart.thumbnailUrl"
