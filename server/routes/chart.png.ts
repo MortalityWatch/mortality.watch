@@ -83,8 +83,8 @@ export default defineEventHandler(async (event) => {
           chartUrl
         )
 
-        // 5. Render the chart
-        return await renderChart(width, height, config, state.chartStyle as ChartStyle)
+        // 5. Render the chart with dark mode setting
+        return await renderChart(width, height, config, state.chartStyle as ChartStyle, state.darkMode || false)
       } catch (dataError) {
         logger.error('Error fetching/rendering chart data:', dataError instanceof Error ? dataError : new Error(String(dataError)))
         // Fall back to placeholder on data errors
