@@ -167,6 +167,13 @@ export const FEATURES = {
     category: 'branding'
   },
 
+  SHOW_CAPTION: {
+    tier: TIERS.PRO,
+    name: 'Show Caption',
+    description: 'Display chart caption with metadata',
+    category: 'branding'
+  },
+
   ADVANCED_LE: {
     tier: TIERS.PRO,
     name: 'Advanced Life Expectancy',

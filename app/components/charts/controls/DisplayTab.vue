@@ -262,10 +262,34 @@ const chartPresetModel = computed({
             <USwitch v-model="showLabelsModel" />
           </div>
 
-          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <label class="text-sm font-medium whitespace-nowrap">Show Caption</label>
-            <USwitch v-model="showCaptionModel" />
-          </div>
+          <!-- Feature gate: Only Pro users can show caption -->
+          <FeatureGate feature="SHOW_CAPTION">
+            <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+              <label class="text-sm font-medium whitespace-nowrap">
+                Show Caption
+                <FeatureBadge
+                  feature="SHOW_CAPTION"
+                  class="ml-2"
+                />
+              </label>
+              <USwitch v-model="showCaptionModel" />
+            </div>
+            <template #disabled>
+              <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 opacity-50">
+                <label class="text-sm font-medium whitespace-nowrap">
+                  Show Caption
+                  <FeatureBadge
+                    feature="SHOW_CAPTION"
+                    class="ml-2"
+                  />
+                </label>
+                <USwitch
+                  v-model="showCaptionModel"
+                  disabled
+                />
+              </div>
+            </template>
+          </FeatureGate>
 
           <div
             v-if="props.showMaximizeOption"
