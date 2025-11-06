@@ -1,6 +1,11 @@
 /**
  * Ranking Data Management Composable
  *
+ * Phase 16-B: Completed ranking page modernization - fully reactive date validation
+ * - Integrated useDateRangeCalculations for consistent date logic
+ * - Removed manual maybeResetBaselineSlider() in favor of reactive watcher
+ * - Date validation now fully automatic (matches explorer page pattern)
+ *
  * Phase 10.3: Refactored to use shared useChartDataFetcher composable
  *
  * Previous phases:
@@ -15,7 +20,7 @@ import { ChartPeriod, type ChartType } from '@/model/period'
 import { getKeyForType } from '@/model'
 import { usePeriodFormat } from '@/composables/usePeriodFormat'
 import { useJurisdictionFilter } from '@/composables/useJurisdictionFilter'
-import { defaultBaselineFromDate, defaultBaselineToDate, getSeasonString } from '@/model/baseline'
+import { defaultBaselineToDate, getSeasonString } from '@/model/baseline'
 import { showToast } from '@/toast'
 import { handleError } from '@/lib/errors/errorHandler'
 import { processCountryRow } from '@/lib/ranking/dataProcessing'
@@ -55,9 +60,6 @@ export function useRankingData(
   // Progress tracking from data fetcher (for getAllChartData operation)
   const updateProgress = dataFetcher.updateProgress
   const initialLoadDone = ref(false)
-
-  // Slider management
-  let sliderValueNeedsUpdate = false
 
   // Table row key
   const total_row_key = DATA_CONFIG.TOTAL_ROW_KEY
@@ -183,29 +185,6 @@ export function useRankingData(
   // ============================================================================
 
   /**
-   * Reset baseline slider to default values if needed
-   */
-  const maybeResetBaselineSlider = () => {
-    if (!sliderValueNeedsUpdate) return
-
-    const newFrom = startPeriod()
-    const newTo = endPeriod()
-    const newBaselineFrom
-      = defaultBaselineFromDate(
-        state.periodOfTime.value || 'yearly',
-        allLabels.value,
-        state.baselineMethod.value || 'mean'
-      ) || ''
-    const newBaselineTo = defaultBaselineToDate(state.periodOfTime.value || 'yearly') || ''
-
-    state.dateFrom.value = newFrom
-    state.dateTo.value = newTo
-    state.baselineDateFrom.value = newBaselineFrom
-    state.baselineDateTo.value = newBaselineTo
-    sliderValueNeedsUpdate = false
-  }
-
-  /**
    * Create explorer link for a country or countries
    * Limits to 20 countries to avoid URL/API limitations
    *
@@ -283,7 +262,6 @@ export function useRankingData(
 
     // Update local state
     allLabels.value = result.allLabels
-    maybeResetBaselineSlider()
 
     return result.chartData
   }
@@ -392,10 +370,12 @@ export function useRankingData(
 
   /**
    * Handle period type changes
+   *
+   * Phase 16: Date resets are now handled directly (no longer using maybeResetBaselineSlider)
+   * Reactive watcher ensures validation happens automatically
    */
   const periodOfTimeChanged = (val: { label: string, name: string, value: string }) => {
     state.periodOfTime.value = val.value
-    sliderValueNeedsUpdate = true
 
     // Reset dates to defaults for new period type
     const defaultFrom = getPeriodStart(RANKING_START_YEAR, val.value)

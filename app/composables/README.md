@@ -133,19 +133,21 @@ Composables that handle data fetching, processing, and orchestration.
 **Purpose**: Manages data fetching and processing for ranking tables
 
 **Key Functions**:
-- `updateRankingData()` - Fetch and process ranking data
-- `maybeResetBaselineSlider()` - Update baseline range on changes
-- `getVisibleCountries()` - Apply jurisdiction filters
+- `loadData()` - Fetch and process ranking data
+- `sliderChanged()` - Handle date range slider updates
+- `periodOfTimeChanged()` - Handle chart type changes with automatic date reset
 
-**Returns**: Table rows, labels, loading state
+**Returns**: Table rows, labels, loading state, explorer links
 
 **Dependencies**:
 - `useChartDataFetcher` (data fetching)
+- `useDateRangeCalculations` (date logic, Phase 16-B)
+- `useDateRangeValidation` (validation, Phase 16-B)
 - `usePeriodFormat` (date formatting)
 - `useJurisdictionFilter` (filtering)
 - `useRankingState` (injected)
 
-**Phase**: 10.1.2, 10.3
+**Phase**: 10.1.2, 10.3, 16-B (modernization complete)
 
 ---
 
