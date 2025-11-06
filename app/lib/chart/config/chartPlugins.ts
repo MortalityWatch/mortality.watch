@@ -180,6 +180,7 @@ export function createPluginsConfig(
       isDark
     ),
     ...(showQrCode && data.url ? { qrCodeUrl: data.url } : {}),
-    showLogo
+    showLogo,
+    isDarkMode: isDark
   }
 }

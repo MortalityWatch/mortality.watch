@@ -1,5 +1,4 @@
 import type { Chart } from 'chart.js'
-import { getIsDark } from '~/composables/useTheme'
 
 const newImage = (src: string): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {
@@ -10,9 +9,6 @@ const newImage = (src: string): Promise<HTMLImageElement> => {
   })
 }
 
-// Helper function to safely get dark theme state
-const getIsDarkTheme = () => getIsDark()
-
 // Cache for QR code images to prevent flickering
 const qrCodeCache = new Map<string, HTMLImageElement>()
 
@@ -21,7 +17,7 @@ export const clearQRCodeCache = () => {
   qrCodeCache.clear()
 }
 
-const drawQRCode = async (chart: Chart, url: string) => {
+const drawQRCode = async (chart: Chart, url: string, isDarkMode: boolean) => {
   const { ctx } = chart
   if (!ctx) return
 
@@ -29,7 +25,6 @@ const drawQRCode = async (chart: Chart, url: string) => {
   const { default: QRCode } = await import('qrcode')
 
   // QR code should be white in dark mode, black in light mode
-  const isDarkMode = getIsDarkTheme()
   const qrColor = isDarkMode ? '#ffffff' : '#000000'
   const cacheKey = `${url}|${qrColor}`
 
@@ -61,9 +56,11 @@ export const getQRCodePlugin = () => {
   return {
     id: 'QRCodePlugin',
     afterDraw: async (chart: Chart) => {
-      const url = chart.options.plugins?.qrCodeUrl
+      const plugins = chart.options.plugins as { qrCodeUrl?: string, isDarkMode?: boolean }
+      const url = plugins?.qrCodeUrl
+      const isDarkMode = plugins?.isDarkMode ?? false
       if (url) {
-        await drawQRCode(chart, url)
+        await drawQRCode(chart, url, isDarkMode)
       }
     }
   }
