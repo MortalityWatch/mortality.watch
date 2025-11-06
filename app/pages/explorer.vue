@@ -285,6 +285,27 @@ const handleChartPresetChanged = (v: string) => {
   applyPresetSize(v)
 }
 
+// State resolver handler for excess toggle
+// Uses StateResolver to handle cascading state changes
+const handleExcessChanged = async (v: boolean) => {
+  const { StateResolver } = await import('@/lib/state/StateResolver')
+  const router = useRouter()
+  const route = useRoute()
+
+  // 1. Resolve state with constraints
+  const resolved = StateResolver.resolveChange(
+    { field: 'isExcess', value: v, source: 'user' },
+    state.getCurrentStateValues(),
+    state.getUserOverrides()
+  )
+
+  // 2. Apply all changes to URL atomically
+  await StateResolver.applyResolvedState(resolved, route, router)
+
+  // 3. Trigger chart refresh
+  await update('_isExcess')
+}
+
 // Watch for date range changes from URL/slider and trigger chart update
 watch([() => state.dateFrom.value, () => state.dateTo.value], () => {
   if (isDataLoaded.value) {
@@ -449,7 +470,7 @@ const showSaveModal = computed({
             @chart-type-changed="(v) => updateStateAndRefresh(() => state.chartType.value = v, '_chartType')"
             @chart-style-changed="(v) => updateStateAndRefresh(() => state.chartStyle.value = v, '_chartStyle')"
             @standard-population-changed="(v) => updateStateAndRefresh(() => state.standardPopulation.value = v, '_standardPopulation')"
-            @is-excess-changed="(v) => updateStateAndRefresh(() => state.isExcess.value = v, '_isExcess')"
+            @is-excess-changed="handleExcessChanged"
             @show-baseline-changed="(v) => updateStateAndRefresh(() => state.showBaseline.value = v, '_showBaseline')"
             @baseline-method-changed="(v) => updateStateAndRefresh(() => state.baselineMethod.value = v, '_baselineMethod')"
             @baseline-slider-value-changed="baselineSliderChanged"

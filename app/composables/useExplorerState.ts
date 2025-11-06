@@ -8,7 +8,6 @@ import {
   explorerStateSchema,
   type ExplorerState
 } from '@/model/explorerSchema'
-import { showToast } from '@/toast'
 
 /**
  * Explorer State Management Composable
@@ -216,8 +215,10 @@ export function useExplorerState() {
   // ============================================================================
 
   // Track the last set of error messages to avoid duplicate toasts
-  let lastShownErrors = new Set<string>()
+  const lastShownErrors = new Set<string>()
 
+  // NOTE: Validation errors are now handled by StateResolver (app/lib/state/StateResolver.ts)
+  // This watcher only logs validation errors for debugging edge cases
   watch(
     errors,
     (newErrors) => {
@@ -227,86 +228,22 @@ export function useExplorerState() {
       }
 
       // Log validation errors for debugging
-      console.warn('[useExplorerState] Validation errors:', newErrors)
+      console.warn('[useExplorerState] Validation errors detected:', newErrors)
       console.warn('[useExplorerState] Current state:', {
         dateFrom: dateFrom.value,
         dateTo: dateTo.value,
         baselineDateFrom: baselineDateFrom.value,
         baselineDateTo: baselineDateTo.value,
-        chartType: chartType.value
+        chartType: chartType.value,
+        isExcess: isExcess.value,
+        showBaseline: showBaseline.value,
+        showPredictionInterval: showPredictionInterval.value
       })
 
-      // Auto-fix: Can't show baseline in excess mode
-      const excessBaselineError = newErrors.find(e =>
-        e.message.includes('Cannot show baseline in excess')
-      )
-      if (excessBaselineError) {
-        showBaseline.value = false
-        return // Exit early after auto-fix
-      }
-
-      // Auto-fix: Prediction intervals require baseline
-      const predictionIntervalError = newErrors.find(e =>
-        e.message.includes('require baseline')
-      )
-      if (predictionIntervalError) {
-        showPredictionInterval.value = false
-        return // Exit early after auto-fix
-      }
-
-      // Auto-fix: Population doesn't support baseline
-      const populationBaselineError = newErrors.find(e =>
-        e.message.includes('Population metric does not support baseline')
-      )
-      if (populationBaselineError) {
-        showBaseline.value = false
-        return // Exit early after auto-fix
-      }
-
-      // Auto-fix: Population doesn't support excess
-      const populationExcessError = newErrors.find(e =>
-        e.message.includes('Population metric does not support excess')
-      )
-      if (populationExcessError) {
-        isExcess.value = false
-        return // Exit early after auto-fix
-      }
-
-      // Auto-fix: Invalid date format for chart type
-      const dateFormatError = newErrors.find(e =>
-        e.message.includes('Date format must be')
-      )
-      if (dateFormatError) {
-        // Clear invalid dates - they will be recalculated by resetDates()
-        dateFrom.value = undefined
-        dateTo.value = undefined
-        return // Exit early after auto-fix
-      }
-
-      // Auto-fix: Baseline period must end before data period
-      const baselineBeforeDataError = newErrors.find(e =>
-        e.message.includes('Baseline period must end before data period')
-      )
-      if (baselineBeforeDataError) {
-        // Reset baseline dates - they will be recalculated
-        baselineDateFrom.value = undefined
-        baselineDateTo.value = undefined
-        return // Exit early after auto-fix
-      }
-
-      // For errors that can't be auto-fixed, notify user only once per unique error
-      const errorMessages = new Set(newErrors.map(e => e.message))
-
-      // Only show toasts for errors we haven't shown before
-      errorMessages.forEach((errorMsg) => {
-        if (!lastShownErrors.has(errorMsg)) {
-          lastShownErrors.add(errorMsg)
-          showToast(errorMsg, 'warning')
-        }
-      })
-
-      // Clean up old errors that are no longer present
-      lastShownErrors = new Set(Array.from(lastShownErrors).filter(msg => errorMessages.has(msg)))
+      // NOTE: All auto-fix logic removed - StateResolver handles constraint resolution
+      // If you see validation errors here, it means:
+      // 1. StateResolver constraints need updating (app/lib/state/constraints.ts), OR
+      // 2. Zod schema validation rules need updating (app/model/explorerSchema.ts)
     },
     { immediate: false }
   )
@@ -338,6 +275,62 @@ export function useExplorerState() {
     const urlKey = stateFieldEncoders[field]?.key
     if (!urlKey) return false
     return urlKey in route.query
+  }
+
+  /**
+   * Get set of fields explicitly set by user in URL
+   * Used by StateResolver to determine which fields can be overridden by constraints
+   *
+   * @returns Set of field names that are present in URL
+   */
+  const getUserOverrides = (): Set<string> => {
+    const overrides = new Set<string>()
+
+    for (const [field, encoder] of Object.entries(stateFieldEncoders)) {
+      if (encoder?.key && encoder.key in route.query) {
+        overrides.add(field)
+      }
+    }
+
+    return overrides
+  }
+
+  /**
+   * Get current state as plain object for StateResolver
+   * Extracts all ref values into a plain object
+   *
+   * @returns Plain object with all current state values
+   */
+  const getCurrentStateValues = (): Record<string, unknown> => {
+    return {
+      countries: countries.value,
+      type: type.value,
+      chartType: chartType.value,
+      chartStyle: chartStyle.value,
+      ageGroups: ageGroups.value,
+      standardPopulation: standardPopulation.value,
+      isExcess: isExcess.value,
+      showBaseline: showBaseline.value,
+      showPredictionInterval: showPredictionInterval.value,
+      cumulative: cumulative.value,
+      showPercentage: showPercentage.value,
+      showTotal: showTotal.value,
+      maximize: maximize.value,
+      isLogarithmic: isLogarithmic.value,
+      showLabels: showLabels.value,
+      baselineMethod: baselineMethod.value,
+      baselineDateFrom: baselineDateFrom.value,
+      baselineDateTo: baselineDateTo.value,
+      dateFrom: dateFrom.value,
+      dateTo: dateTo.value,
+      sliderStart: sliderStart.value,
+      userColors: userColors.value,
+      decimals: decimals.value,
+      showLogo: showLogo.value,
+      showQrCode: showQrCode.value,
+      showCaption: showCaption.value,
+      chartPreset: chartPreset.value
+    }
   }
 
   return {
@@ -389,7 +382,9 @@ export function useExplorerState() {
     getValidatedState,
 
     // Helper functions
-    isUserSet
+    isUserSet,
+    getUserOverrides,
+    getCurrentStateValues
   }
 }
 
