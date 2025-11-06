@@ -1,5 +1,17 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import type Stripe from 'stripe'
+import type { H3Event } from 'h3'
+
+// Type for the webhook handler function
+type WebhookHandler = (event: H3Event) => Promise<{ received: boolean, duplicate?: boolean }>
+
+// Type for logger mock
+interface LoggerMock {
+  info: ReturnType<typeof vi.fn>
+  error: ReturnType<typeof vi.fn>
+  warn: ReturnType<typeof vi.fn>
+  debug: ReturnType<typeof vi.fn>
+}
 
 // Mock the stripe utilities
 const mockStripe = {
@@ -36,23 +48,23 @@ vi.mock('#db', () => ({
 // Mock Nuxt/h3 utilities
 const mockGetHeader = vi.fn()
 const mockReadRawBody = vi.fn()
-const mockCreateError = vi.fn((error) => error)
+const mockCreateError = vi.fn(error => error)
 
 // Logger mock
-global.logger = {
+;(global as unknown as { logger: LoggerMock }).logger = {
   info: vi.fn(),
   error: vi.fn(),
   warn: vi.fn(),
   debug: vi.fn()
-} as any
+}
 
 vi.stubGlobal('getHeader', mockGetHeader)
 vi.stubGlobal('readRawBody', mockReadRawBody)
 vi.stubGlobal('createError', mockCreateError)
-vi.stubGlobal('defineEventHandler', (handler: any) => handler)
+vi.stubGlobal('defineEventHandler', (handler: WebhookHandler) => handler)
 
 describe('Stripe Webhook Handler', () => {
-  let webhookHandler: any
+  let webhookHandler: WebhookHandler
 
   beforeEach(async () => {
     vi.clearAllMocks()
@@ -95,14 +107,14 @@ describe('Stripe Webhook Handler', () => {
       mockGetHeader.mockReturnValue(null)
       mockReadRawBody.mockResolvedValue('{}')
 
-      const event = {} as any
+      const event = {} as H3Event
 
       try {
         await webhookHandler(event)
         expect.fail('Should have thrown an error')
-      } catch (error: any) {
-        expect(error.statusCode).toBe(400)
-        expect(error.message).toBe('Missing stripe-signature header')
+      } catch (error: unknown) {
+        expect((error as { statusCode: number }).statusCode).toBe(400)
+        expect((error as { message: string }).message).toBe('Missing stripe-signature header')
       }
     })
 
@@ -110,14 +122,14 @@ describe('Stripe Webhook Handler', () => {
       mockGetHeader.mockReturnValue('test-signature')
       mockReadRawBody.mockResolvedValue(null)
 
-      const event = {} as any
+      const event = {} as H3Event
 
       try {
         await webhookHandler(event)
         expect.fail('Should have thrown an error')
-      } catch (error: any) {
-        expect(error.statusCode).toBe(400)
-        expect(error.message).toBe('Missing request body')
+      } catch (error: unknown) {
+        expect((error as { statusCode: number }).statusCode).toBe(400)
+        expect((error as { message: string }).message).toBe('Missing request body')
       }
     })
 
@@ -128,14 +140,14 @@ describe('Stripe Webhook Handler', () => {
         throw new Error('Invalid signature')
       })
 
-      const event = {} as any
+      const event = {} as H3Event
 
       try {
         await webhookHandler(event)
         expect.fail('Should have thrown an error')
-      } catch (error: any) {
-        expect(error.statusCode).toBe(400)
-        expect(error.message).toBe('Invalid signature')
+      } catch (error: unknown) {
+        expect((error as { statusCode: number }).statusCode).toBe(400)
+        expect((error as { message: string }).message).toBe('Invalid signature')
       }
 
       expect(logger.error).toHaveBeenCalledWith(
@@ -168,7 +180,7 @@ describe('Stripe Webhook Handler', () => {
 
       mockStripe.webhooks.constructEvent.mockReturnValue(stripeEvent)
 
-      const result = await webhookHandler({} as any)
+      const result = await webhookHandler({} as H3Event)
 
       expect(result).toEqual({ received: true })
       expect(mockStripe.webhooks.constructEvent).toHaveBeenCalledWith(
@@ -190,7 +202,7 @@ describe('Stripe Webhook Handler', () => {
         api_version: '2025-10-29.clover',
         created: 1234567890,
         data: {
-          object: {} as any
+          object: {} as Stripe.Customer
         },
         livemode: false,
         pending_webhooks: 0,
@@ -210,7 +222,7 @@ describe('Stripe Webhook Handler', () => {
       }
       mockDb.select.mockReturnValue(selectChain)
 
-      const result = await webhookHandler({} as any)
+      const result = await webhookHandler({} as H3Event)
 
       expect(result).toEqual({ received: true, duplicate: true })
       expect(logger.info).toHaveBeenCalledWith(
@@ -230,7 +242,7 @@ describe('Stripe Webhook Handler', () => {
         api_version: '2025-10-29.clover',
         created: 1234567890,
         data: {
-          object: {} as any
+          object: {} as Stripe.Customer
         },
         livemode: false,
         pending_webhooks: 0,
@@ -250,7 +262,7 @@ describe('Stripe Webhook Handler', () => {
       }
       mockDb.select.mockReturnValue(selectChain)
 
-      const result = await webhookHandler({} as any)
+      const result = await webhookHandler({} as H3Event)
 
       expect(result).toEqual({ received: true })
       expect(mockDb.insert).toHaveBeenCalled()
@@ -275,12 +287,12 @@ describe('Stripe Webhook Handler', () => {
         subscription: 'sub_123'
       }
 
-      const stripeEvent: any = {
+      const stripeEvent: Stripe.Event = {
         id: 'evt_checkout_123',
         object: 'event',
         api_version: '2025-10-29.clover',
         created: 1234567890,
-        data: { object: session },
+        data: { object: session as unknown as Stripe.Checkout.Session },
         livemode: false,
         pending_webhooks: 0,
         request: null,
@@ -290,7 +302,7 @@ describe('Stripe Webhook Handler', () => {
       mockStripe.webhooks.constructEvent.mockReturnValue(stripeEvent)
       mockStripe.subscriptions.retrieve.mockResolvedValue(subscription)
 
-      const result = await webhookHandler({} as any)
+      const result = await webhookHandler({} as H3Event)
 
       expect(result).toEqual({ received: true })
       expect(mockStripe.subscriptions.retrieve).toHaveBeenCalledWith('sub_123')
@@ -307,12 +319,12 @@ describe('Stripe Webhook Handler', () => {
         items: { object: 'list', data: [{ price: { id: 'price_monthly' } }], has_more: false, url: '' }
       }
 
-      const stripeEvent: any = {
+      const stripeEvent: Stripe.Event = {
         id: 'evt_sub_created_123',
         object: 'event',
         api_version: '2025-10-29.clover',
         created: 1234567890,
-        data: { object: subscription },
+        data: { object: subscription as unknown as Stripe.Subscription },
         livemode: false,
         pending_webhooks: 0,
         request: null,
@@ -335,7 +347,7 @@ describe('Stripe Webhook Handler', () => {
       }
       mockDb.select.mockReturnValue(selectChain)
 
-      const result = await webhookHandler({} as any)
+      const result = await webhookHandler({} as H3Event)
 
       expect(result).toEqual({ received: true })
       expect(mockDb.insert).toHaveBeenCalled()
@@ -351,12 +363,12 @@ describe('Stripe Webhook Handler', () => {
         status: 'canceled'
       }
 
-      const stripeEvent: any = {
+      const stripeEvent: Stripe.Event = {
         id: 'evt_sub_deleted_123',
         object: 'event',
         api_version: '2025-10-29.clover',
         created: 1234567890,
-        data: { object: subscription },
+        data: { object: subscription as unknown as Stripe.Subscription },
         livemode: false,
         pending_webhooks: 0,
         request: null,
@@ -379,7 +391,7 @@ describe('Stripe Webhook Handler', () => {
       }
       mockDb.select.mockReturnValue(selectChain)
 
-      const result = await webhookHandler({} as any)
+      const result = await webhookHandler({} as H3Event)
 
       expect(result).toEqual({ received: true })
       expect(mockDb.update).toHaveBeenCalled()
@@ -400,12 +412,12 @@ describe('Stripe Webhook Handler', () => {
         items: { object: 'list', data: [{ price: { id: 'price_monthly' } }], has_more: false, url: '' }
       }
 
-      const stripeEvent: any = {
+      const stripeEvent: Stripe.Event = {
         id: 'evt_payment_succeeded_123',
         object: 'event',
         api_version: '2025-10-29.clover',
         created: 1234567890,
-        data: { object: invoice },
+        data: { object: invoice as unknown as Stripe.Invoice },
         livemode: false,
         pending_webhooks: 0,
         request: null,
@@ -429,7 +441,7 @@ describe('Stripe Webhook Handler', () => {
       }
       mockDb.select.mockReturnValue(selectChain)
 
-      const result = await webhookHandler({} as any)
+      const result = await webhookHandler({} as H3Event)
 
       expect(result).toEqual({ received: true })
       expect(mockStripe.subscriptions.retrieve).toHaveBeenCalledWith('sub_123')
@@ -448,12 +460,12 @@ describe('Stripe Webhook Handler', () => {
         items: { object: 'list', data: [{ price: { id: 'price_monthly' } }], has_more: false, url: '' }
       }
 
-      const stripeEvent: any = {
+      const stripeEvent: Stripe.Event = {
         id: 'evt_payment_failed_123',
         object: 'event',
         api_version: '2025-10-29.clover',
         created: 1234567890,
-        data: { object: invoice },
+        data: { object: invoice as unknown as Stripe.Invoice },
         livemode: false,
         pending_webhooks: 0,
         request: null,
@@ -477,7 +489,7 @@ describe('Stripe Webhook Handler', () => {
       }
       mockDb.select.mockReturnValue(selectChain)
 
-      const result = await webhookHandler({} as any)
+      const result = await webhookHandler({} as H3Event)
 
       expect(result).toEqual({ received: true })
       expect(logger.info).toHaveBeenCalledWith('Payment failed for user 1')
@@ -491,12 +503,12 @@ describe('Stripe Webhook Handler', () => {
       mockReadRawBody.mockResolvedValue('{"type":"customer.subscription.created"}')
 
       const subscription = { id: 'sub_123', customer: 'cus_123', status: 'active' }
-      const stripeEvent: any = {
+      const stripeEvent: Stripe.Event = {
         id: 'evt_db_error_123',
         object: 'event',
         api_version: '2025-10-29.clover',
         created: 1234567890,
-        data: { object: subscription },
+        data: { object: subscription as unknown as Stripe.Subscription },
         livemode: false,
         pending_webhooks: 0,
         request: null,
@@ -515,11 +527,11 @@ describe('Stripe Webhook Handler', () => {
       mockDb.select.mockReturnValue(selectChain)
 
       try {
-        await webhookHandler({} as any)
+        await webhookHandler({} as H3Event)
         expect.fail('Should have thrown an error')
-      } catch (error: any) {
-        expect(error.statusCode).toBe(500)
-        expect(error.message).toBe('Webhook processing failed')
+      } catch (error: unknown) {
+        expect((error as { statusCode: number }).statusCode).toBe(500)
+        expect((error as { message: string }).message).toBe('Webhook processing failed')
       }
 
       expect(logger.error).toHaveBeenCalledWith(
@@ -537,11 +549,11 @@ describe('Stripe Webhook Handler', () => {
       })
 
       try {
-        await webhookHandler({} as any)
+        await webhookHandler({} as H3Event)
         expect.fail('Should have thrown an error')
-      } catch (error: any) {
-        expect(error.statusCode).toBe(400)
-        expect(error.message).toBe('Invalid signature')
+      } catch (error: unknown) {
+        expect((error as { statusCode: number }).statusCode).toBe(400)
+        expect((error as { message: string }).message).toBe('Invalid signature')
       }
     })
   })
