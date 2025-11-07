@@ -5,7 +5,7 @@ describe('rankingSchema', () => {
   // Helper to create a valid base state
   const createValidState = (): RankingState => ({
     periodOfTime: 'fluseason',
-    jurisdictionType: 'country',
+    jurisdictionType: 'countries',
     showASMR: true,
     showTotals: true,
     showTotalsOnly: false,
