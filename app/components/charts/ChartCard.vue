@@ -85,7 +85,7 @@
           />
           {{ chart.authorName }}
         </span>
-        <span v-if="chart.isPublic || variant === 'gallery'">
+        <span>
           <Icon
             name="i-lucide-eye"
             class="w-3 h-3 inline"
@@ -105,127 +105,72 @@
       </UBadge>
     </div>
 
-    <!-- Footer (not shown on homepage) -->
+    <!-- Footer -->
     <template
-      v-if="variant !== 'homepage'"
+      v-if="showFooter"
       #footer
     >
       <div class="space-y-2">
         <!-- Action buttons -->
         <div class="flex gap-2">
-          <!-- Gallery variant buttons -->
-          <template v-if="variant === 'gallery'">
-            <UButton
-              :to="getChartLink()"
-              color="primary"
-              variant="outline"
-              size="sm"
-              block
-            >
-              <Icon
-                name="i-lucide-eye"
-                class="w-4 h-4"
-              />
-              View Chart
-            </UButton>
-            <UButton
-              :to="getRemixUrl()"
-              color="neutral"
-              variant="outline"
-              size="sm"
-              block
-            >
-              <Icon
-                name="i-lucide-copy"
-                class="w-4 h-4"
-              />
-              Remix
-            </UButton>
-          </template>
-
-          <!-- My Charts variant buttons -->
-          <template v-else-if="variant === 'my-charts'">
-            <UButton
-              :to="getRemixUrl()"
-              color="primary"
-              variant="outline"
-              size="sm"
-              class="flex-1"
-            >
-              <Icon
-                name="i-lucide-eye"
-                class="w-4 h-4"
-              />
-              View
-            </UButton>
-            <UButton
-              v-if="chart.isPublic && chart.slug"
-              :to="getChartLink()"
-              color="neutral"
-              variant="outline"
-              size="sm"
-              class="flex-1"
-            >
-              <Icon
-                name="i-lucide-external-link"
-                class="w-4 h-4"
-              />
-              Public Page
-            </UButton>
-            <UButton
-              color="error"
-              variant="ghost"
-              size="sm"
-              icon="i-lucide-trash-2"
-              @click="$emit('delete', chart.id)"
+          <!-- View button -->
+          <UButton
+            :to="getChartLink()"
+            color="primary"
+            variant="outline"
+            size="sm"
+            block
+          >
+            <Icon
+              name="i-lucide-eye"
+              class="w-4 h-4"
             />
-          </template>
+            View
+          </UButton>
 
-          <!-- Admin Featured Charts variant buttons -->
-          <template v-else-if="variant === 'admin'">
-            <UButton
-              :to="getChartLink()"
-              color="primary"
-              variant="outline"
-              size="sm"
-              block
-            >
-              <Icon
-                name="i-lucide-eye"
-                class="w-4 h-4"
-              />
-              View
-            </UButton>
-            <UButton
-              :to="getRemixUrl()"
-              color="neutral"
-              variant="outline"
-              size="sm"
-              block
-            >
-              <Icon
-                name="i-lucide-external-link"
-                class="w-4 h-4"
-              />
-              Open
-            </UButton>
-          </template>
+          <!-- Remix button -->
+          <UButton
+            :to="getRemixUrl()"
+            color="neutral"
+            variant="outline"
+            size="sm"
+            block
+          >
+            <Icon
+              name="i-lucide-copy"
+              class="w-4 h-4"
+            />
+            Remix
+          </UButton>
+
+          <!-- Delete button (owner or admin) -->
+          <UButton
+            v-if="isOwner || isAdmin"
+            color="error"
+            variant="ghost"
+            size="sm"
+            @click="handleDelete"
+          >
+            <Icon
+              name="i-lucide-trash-2"
+              class="w-4 h-4"
+            />
+          </UButton>
         </div>
 
-        <!-- Admin: Feature Toggle -->
-        <div
-          v-if="showAdminToggle && (variant === 'my-charts' ? chart.isPublic : true)"
-          class="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700"
-        >
-          <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-            {{ chart.isFeatured ? 'Featured' : 'Feature' }}
-          </span>
-          <USwitch
-            :model-value="chart.isFeatured"
-            :loading="isToggling"
-            @update:model-value="(value: boolean) => $emit('toggle-featured', chart.id, value)"
-          />
-        </div>
+        <!-- Chart Controls (owner or admin) -->
+        <ChartsChartControls
+          v-if="isOwner || isAdmin"
+          :is-public="chart.isPublic"
+          :is-featured="chart.isFeatured"
+          :is-owner="isOwner"
+          :is-admin="isAdmin"
+          :is-toggling-public="isTogglingPublic"
+          :is-toggling-featured="isTogglingFeatured"
+          variant="card"
+          @toggle-public="(value: boolean) => $emit('toggle-public', chart.id, value)"
+          @toggle-featured="(value: boolean) => $emit('toggle-featured', chart.id, value)"
+        />
       </div>
     </template>
   </UCard>
@@ -245,27 +190,40 @@ interface Chart {
   isFeatured: boolean
   isPublic?: boolean
   viewCount: number
-  createdAt: number
-  updatedAt: number
+  createdAt: number | string | Date
+  updatedAt: number | string | Date
   authorName: string
 }
 
 interface Props {
   chart: Chart
   variant: 'homepage' | 'gallery' | 'my-charts' | 'admin'
-  showAdminToggle?: boolean
-  isToggling?: boolean
+  isOwner?: boolean
+  isAdmin?: boolean
+  isTogglingFeatured?: boolean
+  isTogglingPublic?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  showAdminToggle: false,
-  isToggling: false
+  isOwner: false,
+  isAdmin: false,
+  isTogglingFeatured: false,
+  isTogglingPublic: false
 })
 
-defineEmits<{
+const emit = defineEmits<{
   'delete': [chartId: number]
   'toggle-featured': [chartId: number, value: boolean]
+  'toggle-public': [chartId: number, value: boolean]
 }>()
+
+// Show footer if not homepage variant
+const showFooter = computed(() => props.variant !== 'homepage')
+
+// Handle delete button click
+function handleDelete() {
+  emit('delete', props.chart.id)
+}
 
 // Get the public chart link (/charts/:slug)
 function getChartLink() {
@@ -320,8 +278,22 @@ function getThumbnailUrl() {
 }
 
 // Format date for my-charts
-function formatDate(timestamp: number) {
-  return new Date(timestamp * 1000).toLocaleDateString('en-US', {
+function formatDate(value: number | string | Date) {
+  // Handle different date formats from API
+  let date: Date
+  if (value instanceof Date) {
+    date = value
+  } else if (typeof value === 'string') {
+    date = new Date(value)
+  } else if (typeof value === 'number') {
+    // Check if it's Unix timestamp (seconds) or milliseconds
+    // Unix timestamps are typically 10 digits, milliseconds are 13
+    date = value < 10000000000 ? new Date(value * 1000) : new Date(value)
+  } else {
+    return 'Invalid date'
+  }
+
+  return date.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric'

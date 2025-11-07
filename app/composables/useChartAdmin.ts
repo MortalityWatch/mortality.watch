@@ -1,11 +1,12 @@
 import { handleApiError } from '@/lib/errors/errorHandler'
 
 /**
- * Composable for admin chart operations
- * Handles toggling featured status and other admin functions
+ * Composable for chart admin operations
+ * Handles toggling featured (admin only) and public status (owner or admin)
  */
 export function useChartAdmin() {
   const togglingFeatured = ref<number | null>(null)
+  const togglingPublic = ref<number | null>(null)
 
   /**
    * Toggle featured status for a chart (admin only)
@@ -39,8 +40,42 @@ export function useChartAdmin() {
     }
   }
 
+  /**
+   * Toggle public status for a chart (owner or admin)
+   * @param chartId - The ID of the chart to toggle
+   * @param newValue - The new public status
+   * @param charts - Optional ref to charts array to update local state
+   */
+  async function togglePublic(
+    chartId: number,
+    newValue: boolean,
+    charts?: Ref<Array<{ id: number, isPublic?: boolean }>>
+  ) {
+    togglingPublic.value = chartId
+    try {
+      await $fetch(`/api/admin/charts/${chartId}/public`, {
+        method: 'PATCH',
+        body: { isPublic: newValue }
+      })
+
+      // Update local state if charts ref provided
+      if (charts?.value) {
+        const chart = charts.value.find(c => c.id === chartId)
+        if (chart) {
+          chart.isPublic = newValue
+        }
+      }
+    } catch (err) {
+      handleApiError(err, 'update public status', 'togglePublic')
+    } finally {
+      togglingPublic.value = null
+    }
+  }
+
   return {
     togglingFeatured,
-    toggleFeatured
+    togglingPublic,
+    toggleFeatured,
+    togglePublic
   }
 }

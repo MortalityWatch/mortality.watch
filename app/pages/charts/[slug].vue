@@ -181,6 +181,29 @@
           </div>
         </dl>
       </UCard>
+
+      <!-- Chart Controls (Owner or Admin) -->
+      <UCard
+        v-if="(isOwner || isAdmin) && chart"
+        class="mt-8"
+      >
+        <template #header>
+          <h2 class="text-xl font-semibold">
+            {{ isAdmin && !isOwner ? 'Admin Controls' : 'Chart Settings' }}
+          </h2>
+        </template>
+
+        <ChartsChartControls
+          :is-public="chart.isPublic ?? false"
+          :is-featured="chart.isFeatured"
+          :is-owner="!!isOwner"
+          :is-admin="isAdmin"
+          :is-toggling-public="togglingPublic === chart.id"
+          :is-toggling-featured="togglingFeatured === chart.id"
+          @toggle-public="handleTogglePublic"
+          @toggle-featured="handleToggleFeatured"
+        />
+      </UCard>
     </div>
   </div>
 </template>
@@ -191,6 +214,10 @@ import { showToast } from '@/toast'
 import { encodeChartState } from '@/lib/chartState'
 import type { ChartState } from '@/lib/chartState'
 
+const { user } = useAuth()
+const isAdmin = computed(() => user.value?.role === 'admin')
+const isOwner = computed(() => chart.value && user.value && chart.value.userId === user.value.id)
+
 interface Chart {
   id: number
   name: string
@@ -200,10 +227,12 @@ interface Chart {
   chartState: string
   thumbnailUrl: string | null
   isFeatured: boolean
+  isPublic?: boolean
   viewCount: number
   createdAt: string
   updatedAt: string
   authorName: string
+  userId: number
 }
 
 const route = useRoute()
@@ -213,6 +242,41 @@ const slug = route.params.slug as string
 const { data: chart, pending, error } = await useFetch<Chart>(
   `/api/charts/slug/${slug}`
 )
+
+// Use shared admin composable
+const { togglingFeatured, togglingPublic, toggleFeatured: toggleFeaturedStatus, togglePublic: togglePublicStatus } = useChartAdmin()
+
+async function handleToggleFeatured(newValue: boolean) {
+  if (!chart.value) return
+
+  // Optimistic update
+  const oldValue = chart.value.isFeatured
+  chart.value.isFeatured = newValue
+
+  try {
+    await toggleFeaturedStatus(chart.value.id, newValue)
+  } catch {
+    // Revert on error
+    chart.value.isFeatured = oldValue
+  }
+}
+
+async function handleTogglePublic(newValue: boolean) {
+  if (!chart.value) return
+
+  // Optimistic update
+  const oldValue = chart.value.isPublic
+  chart.value.isPublic = newValue
+
+  try {
+    await togglePublicStatus(chart.value.id, newValue)
+  } catch {
+    // Revert on error
+    if (chart.value.isPublic !== undefined) {
+      chart.value.isPublic = oldValue
+    }
+  }
+}
 
 // Generate chart image URL from state
 const chartImageUrl = computed(() => {

@@ -44,9 +44,13 @@
         :key="chart.id"
         :chart="chart"
         variant="gallery"
-        :show-admin-toggle="isAdmin"
-        :is-toggling="togglingFeatured === chart.id"
-        @toggle-featured="toggleFeatured"
+        :is-owner="isOwner(chart)"
+        :is-admin="isAdmin"
+        :is-toggling-featured="togglingFeatured === chart.id"
+        :is-toggling-public="togglingPublic === chart.id"
+        @delete="deleteChart"
+        @toggle-featured="handleToggleFeatured"
+        @toggle-public="handleTogglePublic"
       />
     </div>
 
@@ -81,6 +85,8 @@
 </template>
 
 <script setup lang="ts">
+import { handleApiError } from '@/lib/errors/errorHandler'
+
 const { user } = useAuth()
 const isAdmin = computed(() => user.value?.role === 'admin')
 
@@ -93,10 +99,12 @@ interface Chart {
   chartState: string
   thumbnailUrl: string | null
   isFeatured: boolean
+  isPublic: boolean
   viewCount: number
   createdAt: number
   updatedAt: number
   authorName: string
+  userId: number
 }
 
 interface Pagination {
@@ -122,7 +130,7 @@ const {
 } = useChartFilters()
 
 // Fetch charts
-const { data, pending, error } = await useFetch<{
+const { data, pending, error, refresh } = await useFetch<{
   charts: Chart[]
   pagination: Pagination
 }>('/api/charts', {
@@ -133,11 +141,40 @@ const { data, pending, error } = await useFetch<{
 const charts = computed(() => data.value?.charts || [])
 const pagination = computed(() => data.value?.pagination)
 
-// Use shared admin composable
-const { togglingFeatured, toggleFeatured: toggleFeaturedStatus } = useChartAdmin()
+// Check if current user owns a chart
+function isOwner(chart: Chart) {
+  return user.value?.id === chart.userId
+}
 
-function toggleFeatured(chartId: number, newValue: boolean) {
-  toggleFeaturedStatus(chartId, newValue, charts)
+// Use shared admin composable
+const { togglingFeatured, togglingPublic, toggleFeatured: toggleFeaturedStatus, togglePublic: togglePublicStatus } = useChartAdmin()
+
+async function handleToggleFeatured(chartId: number, newValue: boolean) {
+  await toggleFeaturedStatus(chartId, newValue)
+  await refresh()
+}
+
+async function handleTogglePublic(chartId: number, newValue: boolean) {
+  await togglePublicStatus(chartId, newValue)
+  await refresh()
+}
+
+// Delete chart (admin only in gallery)
+async function deleteChart(chartId: number) {
+  if (!isAdmin.value) return
+
+  if (!confirm('Are you sure you want to delete this chart?')) {
+    return
+  }
+
+  try {
+    await $fetch(`/api/charts/${chartId}`, {
+      method: 'DELETE'
+    })
+    await refresh()
+  } catch (err) {
+    handleApiError(err, 'delete chart', 'deleteChart')
+  }
 }
 
 // Page head

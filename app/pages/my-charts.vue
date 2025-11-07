@@ -45,10 +45,13 @@
         :key="chart.id"
         :chart="chart"
         variant="my-charts"
-        :show-admin-toggle="isAdmin"
-        :is-toggling="togglingFeatured === chart.id"
+        :is-owner="true"
+        :is-admin="isAdmin"
+        :is-toggling-featured="togglingFeatured === chart.id"
+        :is-toggling-public="togglingPublic === chart.id"
         @delete="deleteChart"
-        @toggle-featured="toggleFeatured"
+        @toggle-featured="handleToggleFeatured"
+        @toggle-public="handleTogglePublic"
       />
     </div>
 
@@ -64,8 +67,24 @@
       />
     </div>
 
-    <!-- Empty State -->
-    <UCard v-else-if="!pending">
+    <!-- No Results (Filtered) -->
+    <UCard v-else-if="charts && charts.length > 0 && filteredCharts && filteredCharts.length === 0">
+      <div class="text-center py-16 px-4">
+        <UIcon
+          name="i-lucide-search-x"
+          class="w-20 h-20 mx-auto text-gray-300 dark:text-gray-600 mb-6"
+        />
+        <h3 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-3">
+          No charts match your filters
+        </h3>
+        <p class="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+          Try adjusting your filter settings to see more results.
+        </p>
+      </div>
+    </UCard>
+
+    <!-- Empty State (No Charts) -->
+    <UCard v-else-if="!pending && (!charts || charts.length === 0)">
       <div class="text-center py-16 px-4">
         <UIcon
           name="i-lucide-bar-chart-3"
@@ -206,9 +225,15 @@ async function deleteChart(chartId: number) {
 }
 
 // Use shared admin composable
-const { togglingFeatured, toggleFeatured: toggleFeaturedStatus } = useChartAdmin()
+const { togglingFeatured, togglingPublic, toggleFeatured: toggleFeaturedStatus, togglePublic: togglePublicStatus } = useChartAdmin()
 
-function toggleFeatured(chartId: number, newValue: boolean) {
-  toggleFeaturedStatus(chartId, newValue, charts)
+async function handleToggleFeatured(chartId: number, newValue: boolean) {
+  await toggleFeaturedStatus(chartId, newValue)
+  await refresh()
+}
+
+async function handleTogglePublic(chartId: number, newValue: boolean) {
+  await togglePublicStatus(chartId, newValue)
+  await refresh()
 }
 </script>
