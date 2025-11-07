@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { handleError } from '@/lib/errors/errorHandler'
+import { formatChartDate } from '@/lib/utils/dates'
 
 const { getSubscriptionStatus, manageSubscription, subscribe } = useStripe()
 
@@ -168,7 +169,7 @@ onActivated(() => {
               {{ subscriptionStatus.subscription.cancelAtPeriodEnd ? 'Active Until' : 'Renews On' }}
             </label>
             <p class="text-base text-gray-900 dark:text-gray-100">
-              {{ new Date(subscriptionStatus.subscription.currentPeriodEnd).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}
+              {{ formatChartDate(subscriptionStatus.subscription.currentPeriodEnd, 'en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}
             </p>
             <p
               v-if="subscriptionStatus.subscription.daysRemaining !== null"

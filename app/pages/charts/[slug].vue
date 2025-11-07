@@ -213,6 +213,7 @@ import { handleSilentError } from '@/lib/errors/errorHandler'
 import { showToast } from '@/toast'
 import { encodeChartState } from '@/lib/chartState'
 import type { ChartState } from '@/lib/chartState'
+import { formatChartDate } from '@/lib/utils/dates'
 
 const { user } = useAuth()
 const isAdmin = computed(() => user.value?.role === 'admin')
@@ -361,9 +362,9 @@ function copyToClipboard(text: string) {
   })
 }
 
-// Format dates
+// Format dates using utility
 function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString('en-US', {
+  return formatChartDate(dateString, 'en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
@@ -371,7 +372,7 @@ function formatDate(dateString: string) {
 }
 
 function formatDateTime(dateString: string) {
-  return new Date(dateString).toLocaleDateString('en-US', {
+  return formatChartDate(dateString, 'en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
