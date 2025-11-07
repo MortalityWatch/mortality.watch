@@ -24,7 +24,7 @@ const hasExtendedTimeAccess = can('EXTENDED_TIME_PERIODS')
 
 // Show all years but disable pre-2000 for non-premium users
 const availableYears = computed(() => {
-  return props.allYearlyChartLabelsUnique.map(year => {
+  return props.allYearlyChartLabelsUnique.map((year) => {
     const yearNum = parseInt(year)
     const isDisabled = !hasExtendedTimeAccess && yearNum < 2000
 
