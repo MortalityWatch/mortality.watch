@@ -26,6 +26,7 @@ import ExplorerChartContainer from '@/components/explorer/ExplorerChartContainer
 import ExplorerSettings from '@/components/explorer/ExplorerSettings.vue'
 import ExplorerChartActions from '@/components/explorer/ExplorerChartActions.vue'
 import SaveModal from '@/components/SaveModal.vue'
+import { generateExplorerTitle } from '@/lib/utils/chartTitles'
 
 // Auth state for conditional features
 const { isAuthenticated } = useAuth()
@@ -459,7 +460,7 @@ onMounted(async () => {
 
 // Note: Using 'any' type to avoid excessive type recursion with State proxy
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const chartActions: any = useExplorerChartActions(state as any, dataOrchestration.chartData as any)
+const chartActions: any = useExplorerChartActions(state as any, dataOrchestration.chartData as any, allCountries)
 const {
   copyChartLink,
   screenshotChart,
@@ -483,6 +484,19 @@ const showSaveModal = computed({
     _showSaveModal.value = val
   }
 })
+
+// Generate default title for explorer charts
+const getDefaultExplorerTitle = () => {
+  return generateExplorerTitle({
+    countries: state.countries.value,
+    allCountries: allCountries.value,
+    type: state.type.value,
+    isExcess: state.isExcess.value,
+    ageGroups: state.ageGroups.value,
+    dateFrom: state.dateFrom.value,
+    dateTo: state.dateTo.value
+  })
+}
 </script>
 
 <template>
@@ -609,6 +623,7 @@ const showSaveModal = computed({
                 :error="saveError"
                 :success="saveSuccess"
                 type="chart"
+                :generate-default-title="getDefaultExplorerTitle"
                 data-tour="save-button"
                 @save="saveToDB"
               />

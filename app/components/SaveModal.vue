@@ -15,8 +15,10 @@ const props = withDefaults(defineProps<{
   error: string | null
   success: boolean
   type?: 'chart' | 'ranking'
+  generateDefaultTitle?: () => string
 }>(), {
-  type: 'chart'
+  type: 'chart',
+  generateDefaultTitle: undefined
 })
 
 const emit = defineEmits<{
@@ -51,8 +53,9 @@ const typeLabel = computed(() => props.type === 'ranking' ? 'Ranking' : 'Chart')
 const typeLabelLower = computed(() => typeLabel.value.toLowerCase())
 
 const handleOpenModal = (): void => {
-  // Reset form and open
-  emit('update:name', '')
+  // Generate default title if function provided, otherwise reset to empty
+  const defaultTitle = props.generateDefaultTitle ? props.generateDefaultTitle() : ''
+  emit('update:name', defaultTitle)
   emit('update:description', '')
   emit('update:isPublic', false)
   localShow.value = true
