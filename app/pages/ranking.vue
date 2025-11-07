@@ -40,6 +40,7 @@ import RankingHeader from '@/components/ranking/RankingHeader.vue'
 import RankingDataSelection from '@/components/ranking/RankingDataSelection.vue'
 import SaveModal from '@/components/SaveModal.vue'
 import ChartActions from '@/components/charts/ChartActions.vue'
+import Papa from 'papaparse'
 
 definePageMeta({
   ssr: false
@@ -447,6 +448,103 @@ const copyRankingLink = () => {
   }
 }
 
+// Export ranking data as CSV
+const exportCSV = () => {
+  try {
+    if (!result.value || result.value.length === 0) {
+      const toast = useToast()
+      toast.add({ title: 'No data to export', color: 'error' })
+      return
+    }
+
+    // Prepare data rows
+    const rows = result.value.map(row => ({
+      Country: row.iso,
+      Name: row.name,
+      Value: row.value,
+      ...(showPercentage.value && { 'Percentage (%)': row.percentage }),
+      ...(showPI.value && row.ci && Array.isArray(row.ci) && {
+        'CI Lower': row.ci[0],
+        'CI Upper': row.ci[1]
+      })
+    }))
+
+    // Generate CSV
+    const csv = Papa.unparse(rows)
+
+    // Download file
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `ranking-${Date.now()}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+
+    const toast = useToast()
+    toast.add({ title: 'CSV exported successfully!', color: 'success' })
+  } catch (error) {
+    console.error('Failed to export CSV:', error)
+    const toast = useToast()
+    toast.add({ title: 'Failed to export CSV', color: 'error' })
+  }
+}
+
+// Export ranking data as JSON
+const exportJSON = () => {
+  try {
+    if (!result.value || result.value.length === 0) {
+      const toast = useToast()
+      toast.add({ title: 'No data to export', color: 'error' })
+      return
+    }
+
+    // Prepare export data
+    const exportData = {
+      metadata: {
+        title: title.value,
+        subtitle: subtitle.value,
+        exportedAt: new Date().toISOString(),
+        url: window.location.href
+      },
+      data: result.value.map(row => ({
+        iso: row.iso,
+        name: row.name,
+        value: row.value,
+        ...(showPercentage.value && { percentage: row.percentage }),
+        ...(showPI.value && row.ci && Array.isArray(row.ci) && {
+          ci: { lower: row.ci[0], upper: row.ci[1] }
+        })
+      }))
+    }
+
+    // Generate JSON string
+    const json = JSON.stringify(exportData, null, 2)
+
+    // Download file
+    const blob = new Blob([json], { type: 'application/json;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `ranking-${Date.now()}.json`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+
+    const toast = useToast()
+    toast.add({ title: 'JSON exported successfully!', color: 'success' })
+  } catch (error) {
+    console.error('Failed to export JSON:', error)
+    const toast = useToast()
+    toast.add({ title: 'Failed to export JSON', color: 'error' })
+  }
+}
+
 // Watch for state changes to mark ranking as modified
 watch(
   [
@@ -590,6 +688,8 @@ watch(
             data-tour="ranking-actions"
             @copy-link="copyRankingLink"
             @save-chart="navigateTo('/signup')"
+            @export-c-s-v="exportCSV"
+            @export-j-s-o-n="exportJSON"
           >
             <template #title>
               Ranking Actions
@@ -653,6 +753,8 @@ watch(
             :explorer-link="explorerLink()"
             @copy-link="copyRankingLink"
             @save-chart="navigateTo('/signup')"
+            @export-c-s-v="exportCSV"
+            @export-j-s-o-n="exportJSON"
           >
             <template #title>
               Ranking Actions
