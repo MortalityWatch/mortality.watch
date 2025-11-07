@@ -35,7 +35,7 @@
   "dependencies": {
     "@iconify-json/lucide": "^1.2.72",
     "@iconify-json/simple-icons": "^1.2.57",
-    "@nuxt/image": "^1.10.0",
+    "@nuxt/image": "^2.0.0",
     "@nuxt/ui": "^4.1.0",
     "@sentry/node": "^10.23.0",
     "@standard-schema/spec": "^1.0.0",
