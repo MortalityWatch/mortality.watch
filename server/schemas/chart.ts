@@ -66,6 +66,12 @@ export const ChartFeatureUpdateResponseSchema = z.object({
   chart: SavedChartSchema
 })
 
+// Chart visibility update response schema
+export const ChartVisibilityUpdateResponseSchema = z.object({
+  success: z.literal(true),
+  chart: SavedChartSchema
+})
+
 // Export types
 export type SavedChart = z.infer<typeof SavedChartSchema>
 export type SimpleChart = z.infer<typeof SimpleChartSchema>
@@ -74,3 +80,4 @@ export type ChartsListResponse = z.infer<typeof ChartsListResponseSchema>
 export type ChartGetResponse = z.infer<typeof ChartGetResponseSchema>
 export type ChartDeleteResponse = z.infer<typeof ChartDeleteResponseSchema>
 export type ChartFeatureUpdateResponse = z.infer<typeof ChartFeatureUpdateResponseSchema>
+export type ChartVisibilityUpdateResponse = z.infer<typeof ChartVisibilityUpdateResponseSchema>

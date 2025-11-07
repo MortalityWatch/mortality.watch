@@ -212,6 +212,21 @@
           </template>
         </div>
 
+        <!-- Visibility Toggle (My Charts only) -->
+        <div
+          v-if="variant === 'my-charts'"
+          class="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700"
+        >
+          <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {{ chart.isPublic ? 'Public' : 'Private' }}
+          </span>
+          <USwitch
+            :model-value="chart.isPublic"
+            :loading="isTogglingVisibility"
+            @update:model-value="(value: boolean) => $emit('toggle-visibility', chart.id, value)"
+          />
+        </div>
+
         <!-- Admin: Feature Toggle -->
         <div
           v-if="showAdminToggle && (variant === 'my-charts' ? chart.isPublic : true)"
@@ -255,16 +270,19 @@ interface Props {
   variant: 'homepage' | 'gallery' | 'my-charts' | 'admin'
   showAdminToggle?: boolean
   isToggling?: boolean
+  isTogglingVisibility?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   showAdminToggle: false,
-  isToggling: false
+  isToggling: false,
+  isTogglingVisibility: false
 })
 
 defineEmits<{
   'delete': [chartId: number]
   'toggle-featured': [chartId: number, value: boolean]
+  'toggle-visibility': [chartId: number, value: boolean]
 }>()
 
 // Get the public chart link (/charts/:slug)

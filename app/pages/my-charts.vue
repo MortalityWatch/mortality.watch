@@ -39,8 +39,10 @@
         variant="my-charts"
         :show-admin-toggle="isAdmin"
         :is-toggling="togglingFeatured === chart.id"
+        :is-toggling-visibility="togglingVisibility === chart.id"
         @delete="deleteChart"
         @toggle-featured="toggleFeatured"
+        @toggle-visibility="toggleVisibility"
       />
     </div>
 
@@ -135,6 +137,29 @@ async function deleteChart(chartId: number) {
     await refresh()
   } catch (err) {
     handleApiError(err, 'delete chart', 'deleteChart')
+  }
+}
+
+// Toggle visibility status
+const togglingVisibility = ref<number | null>(null)
+
+async function toggleVisibility(chartId: number, newValue: boolean) {
+  togglingVisibility.value = chartId
+  try {
+    await $fetch(`/api/charts/${chartId}`, {
+      method: 'PATCH',
+      body: { isPublic: newValue }
+    })
+
+    // Update local state
+    const chart = charts.value.find(c => c.id === chartId)
+    if (chart) {
+      chart.isPublic = newValue
+    }
+  } catch (err) {
+    handleApiError(err, 'update chart visibility', 'toggleVisibility')
+  } finally {
+    togglingVisibility.value = null
   }
 }
 
