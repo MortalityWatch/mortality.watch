@@ -6,15 +6,11 @@ const props = defineProps<{
   isExcess: boolean
   showBaseline: boolean
   showPredictionInterval: boolean
-  showLabels: boolean
-  showCaption: boolean
   maximize: boolean
   isLogarithmic: boolean
   showPercentage: boolean
   cumulative: boolean
   showTotal: boolean
-  showLogo: boolean
-  showQrCode: boolean
   // Disabled states
   isPopulationType: boolean
   showBaselineOption: boolean
@@ -37,15 +33,11 @@ const emit = defineEmits<{
   'update:isExcess': [value: boolean]
   'update:showBaseline': [value: boolean]
   'update:showPredictionInterval': [value: boolean]
-  'update:showLabels': [value: boolean]
-  'update:showCaption': [value: boolean]
   'update:maximize': [value: boolean]
   'update:isLogarithmic': [value: boolean]
   'update:showPercentage': [value: boolean]
   'update:cumulative': [value: boolean]
   'update:showTotal': [value: boolean]
-  'update:showLogo': [value: boolean]
-  'update:showQrCode': [value: boolean]
   'update:chartPreset': [value: { name: string, value: string, label: string, category: string } | undefined]
 }>()
 
@@ -63,16 +55,6 @@ const showBaselineModel = computed({
 const showPredictionIntervalModel = computed({
   get: () => props.showPredictionInterval,
   set: v => emit('update:showPredictionInterval', v)
-})
-
-const showLabelsModel = computed({
-  get: () => props.showLabels,
-  set: v => emit('update:showLabels', v)
-})
-
-const showCaptionModel = computed({
-  get: () => props.showCaption,
-  set: v => emit('update:showCaption', v)
 })
 
 const maximizeModel = computed({
@@ -98,16 +80,6 @@ const cumulativeModel = computed({
 const showTotalModel = computed({
   get: () => props.showTotal,
   set: v => emit('update:showTotal', v)
-})
-
-const showLogoModel = computed({
-  get: () => props.showLogo,
-  set: v => emit('update:showLogo', v)
-})
-
-const showQrCodeModel = computed({
-  get: () => props.showQrCode,
-  set: v => emit('update:showQrCode', v)
 })
 
 const chartPresetModel = computed({
@@ -185,54 +157,14 @@ const chartPresetModel = computed({
       </div>
     </div>
 
-    <!-- Chart Presentation Section -->
-    <div class="pb-6 border-b border-gray-200 dark:border-gray-700">
+    <!-- Chart Size Section -->
+    <div>
       <h3 class="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4 flex items-center gap-2">
         <span class="w-1 h-4 bg-primary-500 rounded-full" />
-        Chart Presentation
+        Chart Size
       </h3>
       <div class="flex flex-col gap-4">
         <div class="flex flex-wrap gap-4">
-          <UiSwitchRow
-            v-model="showLabelsModel"
-            label="Show Labels"
-          />
-
-          <!-- Feature gate: Only Pro users can show caption -->
-          <FeatureGate feature="SHOW_CAPTION">
-            <UiControlRow>
-              <template #default>
-                <label class="text-sm font-medium whitespace-nowrap">
-                  Show Caption
-                  <FeatureBadge
-                    feature="SHOW_CAPTION"
-                    class="ml-2"
-                  />
-                </label>
-                <USwitch v-model="showCaptionModel" />
-              </template>
-            </UiControlRow>
-            <template #disabled>
-              <UiControlRow>
-                <template #default>
-                  <div class="opacity-50 flex items-center gap-2">
-                    <label class="text-sm font-medium whitespace-nowrap">
-                      Show Caption
-                      <FeatureBadge
-                        feature="SHOW_CAPTION"
-                        class="ml-2"
-                      />
-                    </label>
-                    <USwitch
-                      v-model="showCaptionModel"
-                      disabled
-                    />
-                  </div>
-                </template>
-              </UiControlRow>
-            </template>
-          </FeatureGate>
-
           <UiSwitchRow
             v-if="props.showMaximizeOption"
             v-model="maximizeModel"
@@ -259,47 +191,6 @@ const chartPresetModel = computed({
                 size="sm"
                 class="flex-1"
               />
-            </template>
-          </UiControlRow>
-        </FeatureGate>
-      </div>
-    </div>
-
-    <!-- Branding Section -->
-    <div>
-      <h3 class="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4 flex items-center gap-2">
-        <span class="w-1 h-4 bg-primary-500 rounded-full" />
-        Branding
-      </h3>
-      <div class="flex flex-wrap gap-4">
-        <!-- Feature gate: Only Pro users can hide watermark -->
-        <FeatureGate feature="HIDE_WATERMARK">
-          <UiControlRow>
-            <template #default>
-              <label class="text-sm font-medium whitespace-nowrap">
-                Show Logo
-                <FeatureBadge
-                  feature="HIDE_WATERMARK"
-                  class="ml-2"
-                />
-              </label>
-              <USwitch v-model="showLogoModel" />
-            </template>
-          </UiControlRow>
-        </FeatureGate>
-
-        <!-- Feature gate: Only Pro users can hide QR code -->
-        <FeatureGate feature="HIDE_QR">
-          <UiControlRow>
-            <template #default>
-              <label class="text-sm font-medium whitespace-nowrap">
-                Show QR Code
-                <FeatureBadge
-                  feature="HIDE_QR"
-                  class="ml-2"
-                />
-              </label>
-              <USwitch v-model="showQrCodeModel" />
             </template>
           </UiControlRow>
         </FeatureGate>

@@ -86,7 +86,7 @@ export function getUpgradeUrl(
     }
 
     if (requiredTier === TIERS.PRO) {
-      return userTier === TIERS.PUBLIC ? '/signup' : '/pro'
+      return userTier === TIERS.PUBLIC ? '/signup' : '/subscribe'
     }
   }
 
@@ -95,7 +95,7 @@ export function getUpgradeUrl(
     return '/signup'
   }
 
-  return '/pro'
+  return '/subscribe'
 }
 
 /**

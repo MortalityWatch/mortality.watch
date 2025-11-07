@@ -44,19 +44,25 @@
             <slot />
           </div>
 
-          <!-- Overlay that blocks ALL interaction (mouse + keyboard) -->
-          <div
-            class="absolute inset-0 cursor-not-allowed group"
-            :title="getUpgradeMessage(feature)"
+          <!-- Clickable overlay that redirects to upgrade page -->
+          <NuxtLink
+            :to="getFeatureUpgradeUrl(feature)"
+            class="absolute inset-0 cursor-pointer group"
+            :title="`${getUpgradeMessage(feature)} - Click to upgrade`"
           >
-            <!-- Optional: Show lock icon on hover -->
+            <!-- Show lock icon and upgrade hint on hover -->
             <div class="absolute inset-0 bg-gray-900/5 dark:bg-gray-100/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <UIcon
-                name="i-heroicons-lock-closed"
-                class="text-gray-400 dark:text-gray-500 size-4"
-              />
+              <div class="flex flex-col items-center gap-1">
+                <UIcon
+                  name="i-heroicons-lock-closed"
+                  class="text-gray-400 dark:text-gray-500 size-5"
+                />
+                <span class="text-xs font-medium text-gray-600 dark:text-gray-400">
+                  Click to upgrade
+                </span>
+              </div>
             </div>
-          </div>
+          </NuxtLink>
         </div>
       </slot>
     </div>

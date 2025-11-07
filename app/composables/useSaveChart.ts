@@ -22,6 +22,13 @@ interface SaveResponse {
   }
 }
 
+interface ExistingChart {
+  id: number
+  slug: string | null
+  name: string
+  createdAt: number | null
+}
+
 /**
  * Composable for managing save chart/ranking functionality
  * @param options Configuration options for the save behavior
@@ -44,6 +51,10 @@ export function useSaveChart(options: SaveChartOptions) {
   const savedChartId = ref<string | null>(null)
   const isSaved = ref(false)
   const isModified = ref(false)
+
+  // Duplicate detection state
+  const isDuplicate = ref(false)
+  const existingChart = ref<ExistingChart | null>(null)
 
   // Compute button state
   const buttonLabel = computed(() => {
@@ -72,6 +83,8 @@ export function useSaveChart(options: SaveChartOptions) {
     saveChartPublic.value = false
     saveError.value = ''
     saveSuccess.value = false
+    isDuplicate.value = false
+    existingChart.value = null
   }
 
   /**
@@ -132,9 +145,28 @@ export function useSaveChart(options: SaveChartOptions) {
       if (saveChartPublic.value && response.chart?.slug) {
         navigateTo(`/charts/${response.chart.slug}`)
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(`Failed to save ${entityName}:`, err)
-      saveError.value = err instanceof Error ? err.message : `Failed to save ${entityName}`
+
+      // Check if this is a duplicate error (409 Conflict)
+      // FetchError from ofetch/nuxt has shape: { status, statusCode, statusText, statusMessage, data, message }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const error = err as any
+
+      // Check both statusCode and status (FetchError uses both)
+      const is409 = error?.statusCode === 409 || error?.status === 409
+
+      // Nuxt error responses nest the actual data in error.data.data
+      const errorData = error?.data?.data || error?.data
+      const hasDuplicateFlag = errorData?.duplicate === true
+
+      if (is409 && hasDuplicateFlag) {
+        isDuplicate.value = true
+        existingChart.value = errorData.existingChart || null
+        saveError.value = error.data?.message || error.message || 'You have already saved an identical chart'
+      } else {
+        saveError.value = err instanceof Error ? err.message : `Failed to save ${entityName}`
+      }
     } finally {
       savingChart.value = false
     }
@@ -176,6 +208,10 @@ export function useSaveChart(options: SaveChartOptions) {
     savedChartId,
     buttonLabel,
     isButtonDisabled,
+
+    // Duplicate detection
+    isDuplicate,
+    existingChart,
 
     // Functions
     openSaveModal,

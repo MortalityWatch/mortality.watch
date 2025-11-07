@@ -482,7 +482,9 @@ const {
   buttonLabel,
   isButtonDisabled,
   markAsModified,
-  resetSavedState: _resetSavedState
+  resetSavedState: _resetSavedState,
+  isDuplicate,
+  existingChart
 } = chartActions
 
 // Wrap showSaveModal in computed for proper v-model binding
@@ -665,6 +667,8 @@ watch(
                 :saved-chart-slug="savedChartSlug"
                 :is-button-disabled="isButtonDisabled"
                 :button-label="buttonLabel"
+                :is-duplicate="isDuplicate"
+                :existing-chart="existingChart"
                 type="chart"
                 :generate-default-title="getDefaultExplorerTitle"
                 data-tour="save-button"

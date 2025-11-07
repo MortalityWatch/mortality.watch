@@ -369,7 +369,9 @@ const {
   isButtonDisabled,
   markAsModified,
   resetSavedState: _resetSavedState,
-  saveToDB: saveToDBComposable
+  saveToDB: saveToDBComposable,
+  isDuplicate,
+  existingChart
 } = useSaveChart({
   chartType: 'ranking',
   generateDefaultTitle: () => generateRankingTitle({
@@ -458,7 +460,7 @@ watch(
     selectedDecimalPrecision,
     showTotals,
     showTotalsOnly,
-    showRelative,
+    showPercentage,
     showPI,
     cumulative,
     hideIncomplete,
@@ -609,6 +611,8 @@ watch(
                 :saved-chart-slug="savedChartSlug"
                 :is-button-disabled="isButtonDisabled"
                 :button-label="buttonLabel"
+                :is-duplicate="isDuplicate"
+                :existing-chart="existingChart"
                 type="ranking"
                 :generate-default-title="getDefaultRankingTitle"
                 data-tour="ranking-save-button"
@@ -670,6 +674,8 @@ watch(
                 :saved-chart-slug="savedChartSlug"
                 :is-button-disabled="isButtonDisabled"
                 :button-label="buttonLabel"
+                :is-duplicate="isDuplicate"
+                :existing-chart="existingChart"
                 type="ranking"
                 :generate-default-title="getDefaultRankingTitle"
                 data-tour="ranking-save-button"
