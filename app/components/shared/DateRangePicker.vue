@@ -28,10 +28,22 @@ const availableYears = computed(() => {
     const yearNum = parseInt(year)
     const isDisabled = !hasExtendedTimeAccess && yearNum < 2000
 
+    // For disabled items: add lock icon and apply gray styling
+    if (isDisabled) {
+      return {
+        label: year,
+        value: year,
+        disabled: true,
+        icon: 'i-lucide-lock',
+        class: 'opacity-50 cursor-not-allowed'
+      }
+    }
+
+    // Regular enabled items
     return {
       label: year,
       value: year,
-      disabled: isDisabled
+      disabled: false
     }
   })
 })
@@ -55,24 +67,7 @@ const availableYears = computed(() => {
           :disabled="props.disabled"
           value-key="value"
           @update:model-value="emit('update:sliderStart', $event)"
-        >
-          <template #item="{ item }">
-            <UTooltip
-              v-if="item.disabled"
-              :text="getUpgradeMessage('EXTENDED_TIME_PERIODS')"
-              :popper="{ placement: 'right' }"
-            >
-              <div class="flex items-center gap-2 w-full">
-                <span class="text-gray-400 dark:text-gray-600">{{ item.label }}</span>
-                <UIcon
-                  name="i-lucide-lock"
-                  class="text-gray-400 dark:text-gray-600 shrink-0 size-3"
-                />
-              </div>
-            </UTooltip>
-            <span v-else>{{ item.label }}</span>
-          </template>
-        </USelectMenu>
+        />
         <UPopover>
           <UButton
             icon="i-lucide-info"
