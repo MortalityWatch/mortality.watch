@@ -73,11 +73,27 @@
           class="w-16 h-16 mx-auto text-gray-400 mb-4"
         />
         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-          No charts found
+          No public charts yet
         </h3>
-        <p class="text-gray-600 dark:text-gray-400">
-          Try adjusting your filters or check back later
+        <p class="text-gray-600 dark:text-gray-400 mb-4">
+          {{ hasFilters ? 'Try adjusting your filters or create your own chart to share with the community' : 'Be the first to share a chart! Create a chart and make it public to appear in the gallery.' }}
         </p>
+        <div class="flex gap-3 justify-center">
+          <UButton
+            to="/explorer"
+            color="primary"
+            variant="solid"
+          >
+            Create Explorer Chart
+          </UButton>
+          <UButton
+            to="/ranking"
+            color="primary"
+            variant="outline"
+          >
+            Create Ranking Chart
+          </UButton>
+        </div>
       </div>
     </UCard>
 
@@ -183,6 +199,11 @@ const { data, pending, error } = await useFetch<{
 
 const charts = computed(() => data.value?.charts || [])
 const pagination = computed(() => data.value?.pagination)
+
+// Check if any filters are active
+const hasFilters = computed(() => {
+  return filterType.value !== null || filterFeatured.value !== null
+})
 
 // Reset page when filters change
 watch([sortBy, filterType, filterFeatured], () => {
