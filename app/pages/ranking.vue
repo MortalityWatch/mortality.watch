@@ -451,14 +451,14 @@ const copyRankingLink = () => {
 // Export ranking data as CSV
 const exportCSV = () => {
   try {
-    if (!result.value || result.value.length === 0) {
+    if (!sortedResult.value || sortedResult.value.length === 0) {
       const toast = useToast()
       toast.add({ title: 'No data to export', color: 'error' })
       return
     }
 
     // Prepare data rows
-    const rows = result.value.map(row => ({
+    const rows = sortedResult.value.map(row => ({
       Country: row.iso,
       Name: row.name,
       Value: row.value,
@@ -496,7 +496,7 @@ const exportCSV = () => {
 // Export ranking data as JSON
 const exportJSON = () => {
   try {
-    if (!result.value || result.value.length === 0) {
+    if (!sortedResult.value || sortedResult.value.length === 0) {
       const toast = useToast()
       toast.add({ title: 'No data to export', color: 'error' })
       return
@@ -510,7 +510,7 @@ const exportJSON = () => {
         exportedAt: new Date().toISOString(),
         url: window.location.href
       },
-      data: result.value.map(row => ({
+      data: sortedResult.value.map(row => ({
         iso: row.iso,
         name: row.name,
         value: row.value,
