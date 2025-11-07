@@ -2,9 +2,11 @@ import { showToast } from '@/toast'
 import { handleError } from '@/lib/errors/errorHandler'
 import { useSaveChart } from '@/composables/useSaveChart'
 import { generateChartFilename } from '@/lib/utils/strings'
+import { generateExplorerTitle } from '@/lib/utils/chartTitles'
 import Papa from 'papaparse'
 import type { Ref } from 'vue'
 import type { MortalityChartData } from '@/lib/chart/chartTypes'
+import type { Country } from '@/model'
 
 /**
  * Explorer Chart Actions Composable
@@ -21,7 +23,8 @@ import type { MortalityChartData } from '@/lib/chart/chartTypes'
 export function useExplorerChartActions(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   state: any, // Using any to avoid deep type recursion with State proxy
-  chartData?: Ref<MortalityChartData | undefined> | { value: MortalityChartData | undefined }
+  chartData?: Ref<MortalityChartData | undefined> | { value: MortalityChartData | undefined },
+  allCountries?: Ref<Record<string, Country>> | { value: Record<string, Country> }
 ) {
   // Copy chart link to clipboard
   const copyChartLink = async () => {
@@ -83,7 +86,22 @@ export function useExplorerChartActions(
     saveSuccess,
     openSaveModal: saveChart,
     saveToDB: saveToDBComposable
-  } = useSaveChart({ chartType: 'explorer' })
+  } = useSaveChart({
+    chartType: 'explorer',
+    generateDefaultTitle: () => {
+      // Provide fallback for allCountries if not passed
+      const countries = allCountries?.value || {}
+      return generateExplorerTitle({
+        countries: state.countries.value,
+        allCountries: countries,
+        type: state.type.value,
+        isExcess: state.isExcess.value,
+        ageGroups: state.ageGroups.value,
+        dateFrom: state.dateFrom.value,
+        dateTo: state.dateTo.value
+      })
+    }
+  })
 
   // Wrapper function to serialize state and call composable
   const saveToDB = async () => {

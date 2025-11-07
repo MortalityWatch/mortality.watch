@@ -35,6 +35,7 @@ import { useRankingData } from '@/composables/useRankingData'
 import { useRankingTableSort } from '@/composables/useRankingTableSort'
 import { useCountryFilter } from '@/composables/useCountryFilter'
 import { useSaveChart } from '@/composables/useSaveChart'
+import { generateRankingTitle } from '@/lib/utils/chartTitles'
 import RankingHeader from '@/components/ranking/RankingHeader.vue'
 import RankingDataSelection from '@/components/ranking/RankingDataSelection.vue'
 import SaveModal from '@/components/SaveModal.vue'
@@ -361,7 +362,16 @@ const {
   saveError,
   saveSuccess,
   saveToDB: saveToDBComposable
-} = useSaveChart({ chartType: 'ranking' })
+} = useSaveChart({
+  chartType: 'ranking',
+  generateDefaultTitle: () => generateRankingTitle({
+    jurisdictionType: selectedJurisdictionType.value.value,
+    dateFrom: sliderValue.value[0],
+    dateTo: sliderValue.value[1],
+    showASMR: showASMR.value,
+    showTotalsOnly: showTotalsOnly.value
+  })
+})
 
 // Memoized ranking state serialization
 const rankingStateData = computed(() => ({
@@ -399,6 +409,17 @@ const rankingStateData = computed(() => ({
 // Wrapper function to serialize state and call composable
 const saveToDB = async () => {
   await saveToDBComposable(rankingStateData.value)
+}
+
+// Generate default title for ranking charts
+const getDefaultRankingTitle = () => {
+  return generateRankingTitle({
+    jurisdictionType: selectedJurisdictionType.value.value,
+    dateFrom: sliderValue.value[0],
+    dateTo: sliderValue.value[1],
+    showASMR: showASMR.value,
+    showTotalsOnly: showTotalsOnly.value
+  })
 }
 
 // Chart actions for ranking
@@ -550,6 +571,7 @@ const copyRankingLink = () => {
                 :error="saveError"
                 :success="saveSuccess"
                 type="ranking"
+                :generate-default-title="getDefaultRankingTitle"
                 data-tour="ranking-save-button"
                 @save="saveToDB"
               />
@@ -605,6 +627,7 @@ const copyRankingLink = () => {
                 :error="saveError"
                 :success="saveSuccess"
                 type="ranking"
+                :generate-default-title="getDefaultRankingTitle"
                 data-tour="ranking-save-button"
                 @save="saveToDB"
               />

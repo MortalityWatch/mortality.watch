@@ -12,6 +12,7 @@ import { showToast } from '@/toast'
 interface SaveChartOptions {
   chartType: 'explorer' | 'ranking'
   entityName?: string // 'chart' or 'ranking' (defaults based on chartType)
+  generateDefaultTitle?: () => string // Optional function to generate default title
 }
 
 interface SaveResponse {
@@ -27,7 +28,7 @@ interface SaveResponse {
  * @returns Modal state, save functions, and handlers
  */
 export function useSaveChart(options: SaveChartOptions) {
-  const { chartType, entityName = chartType === 'explorer' ? 'chart' : 'ranking' } = options
+  const { chartType, entityName = chartType === 'explorer' ? 'chart' : 'ranking', generateDefaultTitle } = options
 
   // Modal state management
   const showSaveModal = ref(false)
@@ -40,10 +41,12 @@ export function useSaveChart(options: SaveChartOptions) {
 
   /**
    * Opens the save modal and resets all form state
+   * Auto-populates the title field if generateDefaultTitle is provided
    */
   const openSaveModal = () => {
     showSaveModal.value = true
-    saveChartName.value = ''
+    // Generate default title if function provided
+    saveChartName.value = generateDefaultTitle ? generateDefaultTitle() : ''
     saveChartDescription.value = ''
     saveChartPublic.value = false
     saveError.value = ''
