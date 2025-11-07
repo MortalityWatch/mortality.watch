@@ -19,17 +19,33 @@ const emit = defineEmits<{
 }>()
 
 // Feature access for extended time periods (for display purposes only)
-const { can } = useFeatureAccess()
+const { can, getUpgradeMessage, getFeatureUpgradeCTA, getFeatureUpgradeUrl } = useFeatureAccess()
 const hasExtendedTimeAccess = can('EXTENDED_TIME_PERIODS')
 
-// Filter available years based on feature access
-// Non-premium users can only access data from 2000 onwards
+// Show all years but disable pre-2000 for non-premium users
 const availableYears = computed(() => {
-  if (hasExtendedTimeAccess) {
-    return props.allYearlyChartLabelsUnique
-  }
-  // Restrict to year 2000 and later for non-premium users
-  return props.allYearlyChartLabelsUnique.filter(year => parseInt(year) >= 2000)
+  return props.allYearlyChartLabelsUnique.map((year) => {
+    const yearNum = parseInt(year)
+    const isDisabled = !hasExtendedTimeAccess && yearNum < 2000
+
+    // For disabled items: add lock icon and apply gray styling
+    if (isDisabled) {
+      return {
+        label: year,
+        value: year,
+        disabled: true,
+        icon: 'i-lucide-lock',
+        class: 'opacity-50 cursor-not-allowed'
+      }
+    }
+
+    // Regular enabled items
+    return {
+      label: year,
+      value: year,
+      disabled: false
+    }
+  })
 })
 </script>
 
@@ -49,6 +65,7 @@ const availableYears = computed(() => {
           size="sm"
           class="w-24"
           :disabled="props.disabled"
+          value-key="value"
           @update:model-value="emit('update:sliderStart', $event)"
         />
         <UPopover>
@@ -63,14 +80,15 @@ const availableYears = computed(() => {
             <div class="p-3 space-y-2 max-w-xs">
               <div class="text-xs text-gray-700 dark:text-gray-300">
                 <template v-if="!hasExtendedTimeAccess">
-                  Data before 2000 is restricted.
+                  <div class="mb-2">
+                    {{ getUpgradeMessage('EXTENDED_TIME_PERIODS') }}
+                  </div>
                   <NuxtLink
-                    to="/signup"
+                    :to="getFeatureUpgradeUrl('EXTENDED_TIME_PERIODS')"
                     class="text-primary hover:underline font-medium"
                   >
-                    Register for free
+                    {{ getFeatureUpgradeCTA('EXTENDED_TIME_PERIODS') }} →
                   </NuxtLink>
-                  to access the full historical dataset.
                 </template>
                 <template v-else>
                   Sets the earliest year in the available data range. The slider will start from this year.

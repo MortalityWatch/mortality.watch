@@ -35,7 +35,6 @@ import {
   arrayBufferToBase64,
   compress
 } from '@/lib/compression/compress.browser'
-import { DEFAULT_BASELINE_YEAR } from '@/lib/constants'
 import { calculateBaselineRange } from '@/lib/baseline/calculateBaselineRange'
 
 export function useExplorerDataOrchestration(
@@ -78,21 +77,21 @@ export function useExplorerDataOrchestration(
   const allYearlyChartLabels = ref<string[]>([])
 
   /**
-   * Unique years available (filtered to DEFAULT_BASELINE_YEAR for baseline selection)
-   * Used for baseline period picker dropdown
-   * Now uses availableLabels from useDateRangeCalculations to avoid manual parsing
+   * Unique years available for the date range picker "From" dropdown
+   * Shows ALL available years without filtering
+   * Used by DateRangePicker component
    */
   const allYearlyChartLabelsUnique = computed(() => {
     const labels = dateRangeCalc.availableLabels.value
     if (labels.length === 0) return []
 
     if (state.chartType.value === 'yearly') {
-      return labels.filter(x => parseInt(x) <= DEFAULT_BASELINE_YEAR)
+      return labels
     } else {
       const yearLabels = Array.from(
         labels.filter(v => v && typeof v === 'string').map(v => v.substring(0, 4))
       )
-      return Array.from(new Set(yearLabels)).filter(x => parseInt(x) <= DEFAULT_BASELINE_YEAR)
+      return Array.from(new Set(yearLabels))
     }
   })
 
