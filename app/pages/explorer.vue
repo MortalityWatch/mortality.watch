@@ -89,7 +89,7 @@ const {
 // Adapter: Convert separate date refs to array format for DateSlider component
 // Uses default range (~10 years of recent data) when dates are undefined
 const sliderValue = computed(() => {
-  const defaultRange = dataOrchestration.getDefaultRange()
+  const defaultRange = dataOrchestration.defaultRange.value
 
   // If user has set dates, use them; otherwise use defaults (if available)
   // Convert empty strings to undefined so DateSlider handles initial state correctly

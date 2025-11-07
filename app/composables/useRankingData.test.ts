@@ -104,6 +104,7 @@ vi.mock('./useDateRangeCalculations', () => ({
     visibleRange: computed(() => null),
     selectedRange: computed(() => ({ from: null, to: null })),
     isValidDate: vi.fn(() => true),
+    defaultRange: computed(() => ({ from: '', to: '' })),
     getDefaultRange: vi.fn(() => ({ from: '', to: '' })),
     findClosestYearLabel: vi.fn(() => null),
     matchDateToLabel: vi.fn(() => null),
