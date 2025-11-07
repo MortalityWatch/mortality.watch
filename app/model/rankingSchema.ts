@@ -30,8 +30,18 @@ export const RankingPeriodEnum = z.enum([
 ])
 
 export const JurisdictionTypeEnum = z.enum([
-  'country',
-  'subdivision'
+  'countries',
+  'countries_states',
+  'usa',
+  'can',
+  'eu27',
+  'deu',
+  'af',
+  'as',
+  'eu',
+  'na',
+  'oc',
+  'sa'
 ])
 
 // Export TypeScript types from Zod enums
