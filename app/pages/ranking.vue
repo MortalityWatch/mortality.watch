@@ -39,7 +39,7 @@ import { generateRankingTitle } from '@/lib/utils/chartTitles'
 import RankingHeader from '@/components/ranking/RankingHeader.vue'
 import RankingDataSelection from '@/components/ranking/RankingDataSelection.vue'
 import SaveModal from '@/components/SaveModal.vue'
-import ExplorerChartActions from '@/components/explorer/ExplorerChartActions.vue'
+import ChartActions from '@/components/charts/ChartActions.vue'
 
 definePageMeta({
   ssr: false
@@ -581,7 +581,7 @@ watch(
           />
 
           <!-- Ranking Actions Card -->
-          <ExplorerChartActions
+          <ChartActions
             class="mt-4"
             :show-save-button="!isAuthenticated"
             :show-download-chart="false"
@@ -619,7 +619,7 @@ watch(
                 @save="saveToDB"
               />
             </template>
-          </ExplorerChartActions>
+          </ChartActions>
         </div>
 
         <!-- Settings - Third on mobile only -->
@@ -645,7 +645,7 @@ watch(
           />
 
           <!-- Ranking Actions Card - Mobile -->
-          <ExplorerChartActions
+          <ChartActions
             class="mt-4"
             :show-save-button="!isAuthenticated"
             :show-download-chart="false"
@@ -682,7 +682,7 @@ watch(
                 @save="saveToDB"
               />
             </template>
-          </ExplorerChartActions>
+          </ChartActions>
         </div>
       </div>
     </div>

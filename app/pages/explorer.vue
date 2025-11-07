@@ -24,7 +24,7 @@ import {
 import ExplorerDataSelection from '@/components/explorer/ExplorerDataSelection.vue'
 import ExplorerChartContainer from '@/components/explorer/ExplorerChartContainer.vue'
 import ExplorerSettings from '@/components/explorer/ExplorerSettings.vue'
-import ExplorerChartActions from '@/components/explorer/ExplorerChartActions.vue'
+import ChartActions from '@/components/charts/ChartActions.vue'
 import SaveModal from '@/components/SaveModal.vue'
 import { generateExplorerTitle } from '@/lib/utils/chartTitles'
 
@@ -640,7 +640,7 @@ watch(
             @decimals-changed="handleDecimalsChanged"
           />
 
-          <ExplorerChartActions
+          <ChartActions
             class="mt-3"
             :show-save-button="!isAuthenticated"
             @copy-link="copyChartLink"
@@ -675,7 +675,7 @@ watch(
                 @save="saveToDB"
               />
             </template>
-          </ExplorerChartActions>
+          </ChartActions>
         </div>
       </div>
     </div>
