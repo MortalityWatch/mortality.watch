@@ -279,19 +279,30 @@ async function handleTogglePublic(newValue: boolean) {
   }
 }
 
-// Generate chart image URL from state
+// Get site URL for absolute OG image URLs
+const config = useRuntimeConfig()
+const siteUrl = config.public.siteUrl || 'https://sentry.mortality.watch'
+
+// Generate chart image URL from state (relative for display, absolute for OG)
 const chartImageUrl = computed(() => {
   if (!chart.value) return null
 
-  // For ranking charts, use thumbnail if available (ranking.png endpoint not yet implemented)
-  if (chart.value.chartType === 'ranking') {
-    return chart.value.thumbnailUrl || null
-  }
-
-  // For explorer charts, generate image URL from state
   try {
-    const state = JSON.parse(chart.value.chartState) as Partial<ChartState>
-    const encodedState = encodeChartState(state)
+    const state = JSON.parse(chart.value.chartState)
+
+    // For ranking charts, use ranking.png endpoint
+    if (chart.value.chartType === 'ranking') {
+      const params = new URLSearchParams()
+      Object.entries(state).forEach(([key, value]) => {
+        if (value !== null && value !== undefined) {
+          params.set(key, String(value))
+        }
+      })
+      return `/ranking.png?${params.toString()}&width=1200&height=600`
+    }
+
+    // For explorer charts, encode state using the same encoding as the explorer page
+    const encodedState = encodeChartState(state as Partial<ChartState>)
     const params = new URLSearchParams()
 
     Object.entries(encodedState).forEach(([key, value]) => {
@@ -307,6 +318,12 @@ const chartImageUrl = computed(() => {
     handleSilentError(err, 'chartImageUrl')
     return null
   }
+})
+
+// Absolute URL version for OG meta tags
+const absoluteChartImageUrl = computed(() => {
+  const relativeUrl = chartImageUrl.value
+  return relativeUrl ? `${siteUrl}${relativeUrl}` : null
 })
 
 // Get remix URL
@@ -382,25 +399,12 @@ function formatDateTime(dateString: string) {
 }
 
 // Page meta
-useHead({
-  title: computed(() => chart.value?.name || 'Chart'),
-  meta: [
-    {
-      name: 'description',
-      content: computed(() => chart.value?.description || 'Mortality data visualization')
-    },
-    {
-      property: 'og:title',
-      content: computed(() => chart.value?.name || 'Chart')
-    },
-    {
-      property: 'og:description',
-      content: computed(() => chart.value?.description || 'Mortality data visualization')
-    },
-    {
-      property: 'og:image',
-      content: computed(() => chartImageUrl.value || '')
-    }
-  ]
+useSeoMeta({
+  title: () => chart.value?.name || 'Chart',
+  description: () => chart.value?.description || 'Mortality data visualization',
+  ogTitle: () => chart.value?.name || 'Chart',
+  ogDescription: () => chart.value?.description || 'Mortality data visualization',
+  ogImage: absoluteChartImageUrl,
+  twitterCard: 'summary_large_image'
 })
 </script>
