@@ -359,6 +359,17 @@ const saveToDB = async () => {
   await saveToDBComposable(rankingStateData.value)
 }
 
+// Generate default title for ranking charts
+const getDefaultRankingTitle = () => {
+  return generateRankingTitle({
+    jurisdictionType: selectedJurisdictionType.value.value,
+    dateFrom: sliderValue.value[0],
+    dateTo: sliderValue.value[1],
+    showASMR: showASMR.value,
+    showTotalsOnly: showTotalsOnly.value
+  })
+}
+
 // Chart actions for ranking
 const copyRankingLink = () => {
   if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -508,13 +519,7 @@ const copyRankingLink = () => {
                 :error="saveError"
                 :success="saveSuccess"
                 type="ranking"
-                :generate-default-title="() => generateRankingTitle({
-                  jurisdictionType: selectedJurisdictionType.value,
-                  dateFrom: sliderValue[0],
-                  dateTo: sliderValue[1],
-                  showASMR: showASMR,
-                  showTotalsOnly: showTotalsOnly
-                })"
+                :generate-default-title="getDefaultRankingTitle"
                 data-tour="ranking-save-button"
                 @save="saveToDB"
               />
@@ -570,13 +575,7 @@ const copyRankingLink = () => {
                 :error="saveError"
                 :success="saveSuccess"
                 type="ranking"
-                :generate-default-title="() => generateRankingTitle({
-                  jurisdictionType: selectedJurisdictionType.value,
-                  dateFrom: sliderValue[0],
-                  dateTo: sliderValue[1],
-                  showASMR: showASMR,
-                  showTotalsOnly: showTotalsOnly
-                })"
+                :generate-default-title="getDefaultRankingTitle"
                 data-tour="ranking-save-button"
                 @save="saveToDB"
               />
