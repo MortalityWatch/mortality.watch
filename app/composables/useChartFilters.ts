@@ -1,3 +1,5 @@
+import { UI_CONFIG } from '@/lib/config/constants'
+
 /**
  * Composable for managing chart gallery/list filters
  * Provides reactive filter state and computed query parameters
@@ -15,8 +17,8 @@ export function useChartFilters() {
   const queryParams = computed(() => {
     const params: Record<string, string | number> = {
       sort: sortBy.value,
-      limit: 12,
-      offset: (currentPage.value - 1) * 12
+      limit: UI_CONFIG.CHARTS_PER_PAGE,
+      offset: (currentPage.value - 1) * UI_CONFIG.CHARTS_PER_PAGE
     }
 
     if (filterType.value) {

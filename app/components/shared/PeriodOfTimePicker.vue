@@ -33,16 +33,10 @@ const selectedValue = computed({
 </script>
 
 <template>
-  <div
-    class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+  <UiControlRow
+    label="Period of Time"
     data-tour="period-of-time"
   >
-    <label
-      class="text-sm font-medium whitespace-nowrap"
-      for="periodOfTime"
-    >
-      Period of Time
-    </label>
     <UInputMenu
       id="periodOfTime"
       v-model="selectedValue"
@@ -52,5 +46,5 @@ const selectedValue = computed({
       size="sm"
       class="flex-1"
     />
-  </div>
+  </UiControlRow>
 </template>

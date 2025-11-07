@@ -1,30 +1,40 @@
 <template>
-  <div class="mb-6 flex flex-col sm:flex-row gap-4">
-    <USelectMenu
-      :model-value="selectedSortOption"
-      :options="sortOptions"
-      placeholder="Sort by"
-      class="w-full sm:w-48"
-      @update:model-value="handleSortChange"
-    />
-    <USelectMenu
-      :model-value="selectedTypeOption"
-      :options="typeOptions"
-      placeholder="Chart type"
-      class="w-full sm:w-48"
-      @update:model-value="handleTypeChange"
-    />
-    <USelectMenu
-      :model-value="selectedFeaturedOption"
-      :options="featuredOptions"
-      placeholder="All charts"
-      class="w-full sm:w-48"
-      @update:model-value="handleFeaturedChange"
-    />
+  <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+    <FiltersFilterRow label="Sort By">
+      <USelectMenu
+        :model-value="selectedSortOption"
+        :options="sortOptions"
+        size="sm"
+        class="flex-1"
+        @update:model-value="handleSortChange"
+      />
+    </FiltersFilterRow>
+
+    <FiltersFilterRow label="Chart Type">
+      <USelectMenu
+        :model-value="selectedTypeOption"
+        :options="typeOptions"
+        size="sm"
+        class="flex-1"
+        @update:model-value="handleTypeChange"
+      />
+    </FiltersFilterRow>
+
+    <FiltersFilterRow label="Featured">
+      <USelectMenu
+        :model-value="selectedFeaturedOption"
+        :options="featuredOptions"
+        size="sm"
+        class="flex-1"
+        @update:model-value="handleFeaturedChange"
+      />
+    </FiltersFilterRow>
   </div>
 </template>
 
 <script setup lang="ts">
+import { CHART_FILTERS } from '@/lib/config/constants'
+
 interface FilterOption {
   label: string
   value: string | null
@@ -42,23 +52,10 @@ const emit = defineEmits<{
   'update:filterFeatured': [value: string | null]
 }>()
 
-const sortOptions: FilterOption[] = [
-  { label: 'Featured First', value: 'featured' },
-  { label: 'Most Viewed', value: 'views' },
-  { label: 'Newest', value: 'newest' }
-]
-
-const typeOptions: FilterOption[] = [
-  { label: 'All Types', value: null },
-  { label: 'Explorer', value: 'explorer' },
-  { label: 'Ranking', value: 'ranking' }
-]
-
-const featuredOptions: FilterOption[] = [
-  { label: 'All Charts', value: null },
-  { label: 'Featured Only', value: 'true' },
-  { label: 'Not Featured', value: 'false' }
-]
+// Use filter options from constants (cast from readonly to mutable)
+const sortOptions: FilterOption[] = [...CHART_FILTERS.SORT_OPTIONS] as FilterOption[]
+const typeOptions: FilterOption[] = [...CHART_FILTERS.TYPE_OPTIONS] as FilterOption[]
+const featuredOptions: FilterOption[] = [...CHART_FILTERS.FEATURED_OPTIONS] as FilterOption[]
 
 // Convert primitive values to option objects for USelectMenu
 const selectedSortOption = computed(() =>
@@ -73,21 +70,39 @@ const selectedFeaturedOption = computed(() =>
   featuredOptions.find(opt => opt.value === props.filterFeatured) || featuredOptions[0]
 )
 
+/**
+ * Runtime type guard for FilterOption
+ * Validates that the value is an object with the correct shape
+ */
+function isFilterOption(value: unknown): value is FilterOption {
+  if (typeof value !== 'object' || value === null) {
+    return false
+  }
+
+  const obj = value as Record<string, unknown>
+  return (
+    'label' in obj
+    && 'value' in obj
+    && typeof obj.label === 'string'
+    && (typeof obj.value === 'string' || obj.value === null)
+  )
+}
+
 function handleSortChange(value: unknown) {
-  if (typeof value === 'object' && value !== null && 'value' in value) {
-    emit('update:sortBy', (value as FilterOption).value as string)
+  if (isFilterOption(value) && typeof value.value === 'string') {
+    emit('update:sortBy', value.value)
   }
 }
 
 function handleTypeChange(value: unknown) {
-  if (typeof value === 'object' && value !== null && 'value' in value) {
-    emit('update:filterType', (value as FilterOption).value)
+  if (isFilterOption(value)) {
+    emit('update:filterType', value.value)
   }
 }
 
 function handleFeaturedChange(value: unknown) {
-  if (typeof value === 'object' && value !== null && 'value' in value) {
-    emit('update:filterFeatured', (value as FilterOption).value)
+  if (isFilterOption(value)) {
+    emit('update:filterFeatured', value.value)
   }
 }
 </script>

@@ -178,6 +178,7 @@
 
 <script setup lang="ts">
 import { handleSilentError } from '@/lib/errors/errorHandler'
+import { formatChartDate } from '@/lib/utils/dates'
 
 interface Chart {
   id: number
@@ -279,24 +280,6 @@ function getThumbnailUrl() {
 
 // Format date for my-charts
 function formatDate(value: number | string | Date) {
-  // Handle different date formats from API
-  let date: Date
-  if (value instanceof Date) {
-    date = value
-  } else if (typeof value === 'string') {
-    date = new Date(value)
-  } else if (typeof value === 'number') {
-    // Check if it's Unix timestamp (seconds) or milliseconds
-    // Unix timestamps are typically 10 digits, milliseconds are 13
-    date = value < 10000000000 ? new Date(value * 1000) : new Date(value)
-  } else {
-    return 'Invalid date'
-  }
-
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
+  return formatChartDate(value)
 }
 </script>

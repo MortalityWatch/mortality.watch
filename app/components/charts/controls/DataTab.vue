@@ -39,8 +39,7 @@ const selectedStandardPopulationModel = computed({
 
 <template>
   <div class="flex flex-col gap-4">
-    <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-      <label class="text-sm font-medium whitespace-nowrap">Metric</label>
+    <UiControlRow label="Metric">
       <UInputMenu
         v-model="selectedTypeModel"
         :items="typesWithLabels"
@@ -49,38 +48,27 @@ const selectedStandardPopulationModel = computed({
         size="sm"
         class="flex-1"
       />
-      <UPopover>
-        <UButton
-          icon="i-lucide-info"
-          color="neutral"
-          variant="ghost"
-          size="xs"
-          aria-label="Metric information"
-        />
-        <template #content>
-          <div class="p-3 space-y-2 max-w-xs">
-            <div class="text-xs text-gray-700 dark:text-gray-300">
-              <strong>CMR:</strong> Crude Mortality Rate per 100k<br>
-              <strong>ASMR:</strong> Age-Standardized Mortality Rate per 100k<br>
-              <strong>Life Expectancy:</strong> Expected years of life at birth<br>
-              <strong>Deaths:</strong> Total death counts<br>
-              <strong>Population:</strong> Total population size
-            </div>
-          </div>
-        </template>
-      </UPopover>
-    </div>
+      <template #help>
+        <div class="text-xs text-gray-700 dark:text-gray-300">
+          <strong>CMR:</strong> Crude Mortality Rate per 100k<br>
+          <strong>ASMR:</strong> Age-Standardized Mortality Rate per 100k<br>
+          <strong>Life Expectancy:</strong> Expected years of life at birth<br>
+          <strong>Deaths:</strong> Total death counts<br>
+          <strong>Population:</strong> Total population size
+        </div>
+      </template>
+    </UiControlRow>
 
     <PeriodOfTimePicker
       v-model="selectedChartTypeModel"
       :is-updating="props.isUpdating"
     />
 
-    <div
+    <UiControlRow
       v-if="props.showStandardPopulation"
-      class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+      label="Standard Population"
+      help-content="Reference population used to standardize mortality rates by age structure. Enables fair comparisons across countries and time periods."
     >
-      <label class="text-sm font-medium whitespace-nowrap">Standard Population</label>
       <UInputMenu
         v-model="selectedStandardPopulationModel"
         :items="standardPopulationsWithLabels"
@@ -89,22 +77,6 @@ const selectedStandardPopulationModel = computed({
         size="sm"
         class="flex-1"
       />
-      <UPopover>
-        <UButton
-          icon="i-lucide-info"
-          color="neutral"
-          variant="ghost"
-          size="xs"
-          aria-label="Standard population information"
-        />
-        <template #content>
-          <div class="p-3 space-y-2 max-w-xs">
-            <div class="text-xs text-gray-700 dark:text-gray-300">
-              Reference population used to standardize mortality rates by age structure. Enables fair comparisons across countries and time periods.
-            </div>
-          </div>
-        </template>
-      </UPopover>
-    </div>
+    </UiControlRow>
   </div>
 </template>

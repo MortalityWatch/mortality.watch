@@ -57,13 +57,13 @@
 
     <!-- Pagination -->
     <div
-      v-if="filteredCharts && filteredCharts.length > 12"
+      v-if="filteredCharts && filteredCharts.length > UI_CONFIG.CHARTS_PER_PAGE"
       class="mt-8 flex justify-center"
     >
       <UPagination
         v-model="currentPage"
         :total="filteredCharts.length"
-        :page-count="12"
+        :page-count="UI_CONFIG.CHARTS_PER_PAGE"
       />
     </div>
 
@@ -147,6 +147,9 @@ definePageMeta({
   middleware: 'auth'
 })
 
+// Import constants
+const { UI_CONFIG } = await import('@/lib/config/constants')
+
 // Use shared filter composable
 const {
   sortBy,
@@ -201,8 +204,8 @@ const filteredCharts = computed(() => {
 
 // Paginate filtered results
 const paginatedCharts = computed(() => {
-  const start = (currentPage.value - 1) * 12
-  const end = start + 12
+  const start = (currentPage.value - 1) * UI_CONFIG.CHARTS_PER_PAGE
+  const end = start + UI_CONFIG.CHARTS_PER_PAGE
   return filteredCharts.value.slice(start, end)
 })
 
