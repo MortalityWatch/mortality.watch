@@ -89,23 +89,16 @@ const colorMode = useColorMode()
 const chartWidth = ref<number>(800)
 
 // Calculate effective label visibility based on data density
-// Auto-hide labels if dataPoints > (chartWidth / 20), unless user explicitly wants them shown
+// When showLabels is true: apply auto-hide logic based on data density
+// When showLabels is false: always hide labels (user override)
 const effectiveShowLabels = computed(() => {
   const dataPointCount = getDataPointCount(props.data.labels)
 
-  // If showLabels is explicitly false (user turned it off), always hide
-  // If showLabels is true, apply auto-hide logic based on data density
-  // This allows user override: true = force show, but auto-hide kicks in for high density
+  // Pass undefined when true (enables auto-calculation), false when false (forces hide)
   const userPreference = props.showLabels ? undefined : false
 
   return shouldShowLabels(dataPointCount, chartWidth.value, userPreference)
 })
-
-// Create data object with effective showLabels for chart configuration
-const dataWithEffectiveLabels = computed(() => ({
-  ...props.data,
-  showLabels: effectiveShowLabels.value
-}))
 
 // Make configs reactive so they update when props OR theme changes
 const lineConfig = computed(() => {
@@ -113,7 +106,7 @@ const lineConfig = computed(() => {
   const isDark = colorMode.value === 'dark'
   if (props.chartStyle !== 'line') return undefined
   return makeBarLineChartConfig(
-    dataWithEffectiveLabels.value,
+    { ...props.data, showLabels: effectiveShowLabels.value },
     props.isExcess,
     props.showPredictionInterval,
     props.showPercentage,
@@ -133,7 +126,7 @@ const barConfig = computed(() => {
   const isDark = colorMode.value === 'dark'
   if (props.chartStyle !== 'bar') return undefined
   return makeBarLineChartConfig(
-    dataWithEffectiveLabels.value,
+    { ...props.data, showLabels: effectiveShowLabels.value },
     props.isExcess,
     props.showPredictionInterval,
     props.showPercentage,
@@ -153,7 +146,7 @@ const matrixConfig = computed(() => {
   const isDark = colorMode.value === 'dark'
   if (props.chartStyle !== 'matrix') return undefined
   return makeMatrixChartConfig(
-    dataWithEffectiveLabels.value,
+    { ...props.data, showLabels: effectiveShowLabels.value },
     props.isExcess,
     props.isLifeExpectancyType,
     props.showPredictionInterval,

@@ -49,21 +49,6 @@ export function getDataPointCount(labels: string[]): number {
 }
 
 /**
- * Get chart width from DOM element
- * Falls back to default if chart element not found
- *
- * @param chartElementId - ID of the chart canvas element
- * @returns Chart width in pixels
- */
-export function getChartWidth(chartElementId: string = 'chart'): number {
-  const chartElement = document.getElementById(chartElementId)
-  if (chartElement) {
-    return chartElement.offsetWidth || 800
-  }
-  return 800 // Default fallback width
-}
-
-/**
  * Determine if labels should be shown, checking both data density and user preference
  *
  * This is the main function to use when determining label visibility.
@@ -71,16 +56,15 @@ export function getChartWidth(chartElementId: string = 'chart'): number {
  *
  * @param labels - Array of chart labels
  * @param userShowLabels - User's explicit preference from settings
- * @param chartWidth - Chart width in pixels (optional)
+ * @param chartWidth - Chart width in pixels (optional, defaults to 800)
  * @returns Whether labels should be displayed
  */
 export function calculateLabelVisibility(
   labels: string[],
   userShowLabels: boolean | undefined,
-  chartWidth?: number
+  chartWidth: number = 800
 ): boolean {
   const dataPointCount = getDataPointCount(labels)
-  const width = chartWidth || getChartWidth()
 
-  return shouldShowLabels(dataPointCount, width, userShowLabels)
+  return shouldShowLabels(dataPointCount, chartWidth, userShowLabels)
 }
