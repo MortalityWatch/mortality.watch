@@ -16,9 +16,18 @@ const props = withDefaults(defineProps<{
   success: boolean
   type?: 'chart' | 'ranking'
   generateDefaultTitle?: () => string
+  isSaved?: boolean
+  isModified?: boolean
+  savedChartSlug?: string | null
+  isButtonDisabled?: boolean
+  buttonLabel?: string
 }>(), {
   type: 'chart',
-  generateDefaultTitle: undefined
+  generateDefaultTitle: undefined,
+  isSaved: false,
+  isModified: false,
+  savedChartSlug: null,
+  isButtonDisabled: false
 })
 
 const emit = defineEmits<{
@@ -67,22 +76,39 @@ const handleOpenModal = (): void => {
     <button
       type="button"
       class="chart-option-button"
+      :class="{ 'opacity-60': isButtonDisabled }"
+      :disabled="isButtonDisabled"
       @click="handleOpenModal"
     >
       <UIcon
-        name="i-lucide-save"
+        :name="isSaved && !isModified ? 'i-lucide-check' : 'i-lucide-save'"
         class="w-4 h-4 shrink-0"
       />
       <div class="flex-1 text-left">
         <div class="text-sm font-medium">
-          Save {{ typeLabel }}
+          {{ buttonLabel || `Save ${typeLabel}` }}
           <FeatureBadge
+            v-if="!isSaved"
             feature="SAVE_CHART"
             class="ml-2"
           />
         </div>
         <div class="text-xs text-gray-500 dark:text-gray-400">
-          Bookmark for later access
+          <template v-if="isSaved && !isModified && savedChartSlug">
+            <NuxtLink
+              :to="`/charts/${savedChartSlug}`"
+              class="text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300"
+              @click.stop
+            >
+              View saved chart
+            </NuxtLink>
+          </template>
+          <template v-else-if="isSaved && isModified">
+            Modifications detected
+          </template>
+          <template v-else>
+            Bookmark for later access
+          </template>
         </div>
       </div>
       <UIcon
@@ -170,7 +196,7 @@ const handleOpenModal = (): void => {
           />
           <UButton
             color="primary"
-            :label="`Save ${typeLabel}`"
+            :label="isSaved && isModified ? `Update ${typeLabel}` : `Save ${typeLabel}`"
             :loading="saving"
             :disabled="!name.trim()"
             @click="emit('save')"

@@ -15,7 +15,7 @@
  * - RankingSaveModal: Save ranking modal dialog
  */
 
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, onMounted, watch } from 'vue'
 import { loadCountryMetadata } from '@/lib/data'
 import { useBrowserNavigation } from '@/composables/useBrowserNavigation'
 import type { Country } from '@/model'
@@ -361,6 +361,14 @@ const {
   saveChartPublic: saveRankingPublic,
   saveError,
   saveSuccess,
+  isSaved,
+  isModified,
+  savedChartSlug,
+  savedChartId: _savedChartId,
+  buttonLabel,
+  isButtonDisabled,
+  markAsModified,
+  resetSavedState: _resetSavedState,
   saveToDB: saveToDBComposable
 } = useSaveChart({
   chartType: 'ranking',
@@ -436,6 +444,32 @@ const copyRankingLink = () => {
       .catch(err => console.error('Failed to copy:', err))
   }
 }
+
+// Watch for state changes to mark ranking as modified
+watch(
+  [
+    showASMR,
+    selectedPeriodOfTime,
+    selectedJurisdictionType,
+    sliderValue,
+    selectedBaselineMethod,
+    baselineSliderValue,
+    selectedStandardPopulation,
+    selectedDecimalPrecision,
+    showTotals,
+    showTotalsOnly,
+    showRelative,
+    showPI,
+    cumulative,
+    hideIncomplete,
+    sortField,
+    sortOrder
+  ],
+  () => {
+    markAsModified()
+  },
+  { deep: true }
+)
 </script>
 
 <template>
@@ -570,6 +604,11 @@ const copyRankingLink = () => {
                 :saving="savingRanking"
                 :error="saveError"
                 :success="saveSuccess"
+                :is-saved="isSaved"
+                :is-modified="isModified"
+                :saved-chart-slug="savedChartSlug"
+                :is-button-disabled="isButtonDisabled"
+                :button-label="buttonLabel"
                 type="ranking"
                 :generate-default-title="getDefaultRankingTitle"
                 data-tour="ranking-save-button"
@@ -626,6 +665,11 @@ const copyRankingLink = () => {
                 :saving="savingRanking"
                 :error="saveError"
                 :success="saveSuccess"
+                :is-saved="isSaved"
+                :is-modified="isModified"
+                :saved-chart-slug="savedChartSlug"
+                :is-button-disabled="isButtonDisabled"
+                :button-label="buttonLabel"
                 type="ranking"
                 :generate-default-title="getDefaultRankingTitle"
                 data-tour="ranking-save-button"

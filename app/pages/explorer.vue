@@ -474,7 +474,15 @@ const {
   saveChartDescription,
   saveChartPublic,
   saveError,
-  saveSuccess
+  saveSuccess,
+  isSaved,
+  isModified,
+  savedChartSlug,
+  savedChartId: _savedChartId,
+  buttonLabel,
+  isButtonDisabled,
+  markAsModified,
+  resetSavedState: _resetSavedState
 } = chartActions
 
 // Wrap showSaveModal in computed for proper v-model binding
@@ -497,6 +505,36 @@ const getDefaultExplorerTitle = () => {
     dateTo: state.dateTo.value
   })
 }
+
+// Watch for state changes to mark chart as modified
+watch(
+  [
+    () => state.countries.value,
+    () => state.type.value,
+    () => state.chartType.value,
+    () => state.ageGroups.value,
+    () => state.chartStyle.value,
+    () => state.isExcess.value,
+    () => state.showBaseline.value,
+    () => state.baselineMethod.value,
+    () => state.baselineDateFrom.value,
+    () => state.baselineDateTo.value,
+    () => state.cumulative.value,
+    () => state.showPercentage.value,
+    () => state.showPredictionInterval.value,
+    () => state.showTotal.value,
+    () => state.dateFrom.value,
+    () => state.dateTo.value,
+    () => state.standardPopulation.value,
+    () => state.isLogarithmic.value,
+    () => state.maximize.value,
+    () => state.showLabels.value
+  ],
+  () => {
+    markAsModified()
+  },
+  { deep: true }
+)
 </script>
 
 <template>
@@ -622,6 +660,11 @@ const getDefaultExplorerTitle = () => {
                 :saving="savingChart"
                 :error="saveError"
                 :success="saveSuccess"
+                :is-saved="isSaved"
+                :is-modified="isModified"
+                :saved-chart-slug="savedChartSlug"
+                :is-button-disabled="isButtonDisabled"
+                :button-label="buttonLabel"
                 type="chart"
                 :generate-default-title="getDefaultExplorerTitle"
                 data-tour="save-button"

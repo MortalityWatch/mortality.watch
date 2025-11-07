@@ -6,7 +6,7 @@
  * for saving charts and rankings to the database.
  */
 
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { showToast } from '@/toast'
 
 interface SaveChartOptions {
@@ -38,6 +38,27 @@ export function useSaveChart(options: SaveChartOptions) {
   const saveChartPublic = ref(false)
   const saveError = ref('')
   const saveSuccess = ref(false)
+
+  // Track saved state and modifications
+  const savedChartSlug = ref<string | null>(null)
+  const savedChartId = ref<string | null>(null)
+  const isSaved = ref(false)
+  const isModified = ref(false)
+
+  // Compute button state
+  const buttonLabel = computed(() => {
+    if (isSaved.value && !isModified.value) {
+      return 'Saved!'
+    } else if (isSaved.value && isModified.value) {
+      return 'Update Chart'
+    } else {
+      return `Save ${entityName.charAt(0).toUpperCase() + entityName.slice(1)}`
+    }
+  })
+
+  const isButtonDisabled = computed(() => {
+    return isSaved.value && !isModified.value
+  })
 
   /**
    * Opens the save modal and resets all form state
@@ -89,6 +110,13 @@ export function useSaveChart(options: SaveChartOptions) {
         }
       })
 
+      // Update saved state
+      isSaved.value = true
+      isModified.value = false
+      savedChartSlug.value = response.chart?.slug || null
+      savedChartId.value = response.chart?.id || null
+      saveSuccess.value = true
+
       // Close modal immediately
       showSaveModal.value = false
 
@@ -112,6 +140,25 @@ export function useSaveChart(options: SaveChartOptions) {
     }
   }
 
+  /**
+   * Mark chart as modified after user makes changes
+   */
+  const markAsModified = () => {
+    if (isSaved.value) {
+      isModified.value = true
+    }
+  }
+
+  /**
+   * Reset saved state (e.g., when navigating to new chart)
+   */
+  const resetSavedState = () => {
+    isSaved.value = false
+    isModified.value = false
+    savedChartSlug.value = null
+    savedChartId.value = null
+  }
+
   return {
     // Modal state
     showSaveModal,
@@ -122,9 +169,19 @@ export function useSaveChart(options: SaveChartOptions) {
     saveError,
     saveSuccess,
 
+    // Saved state tracking
+    isSaved,
+    isModified,
+    savedChartSlug,
+    savedChartId,
+    buttonLabel,
+    isButtonDisabled,
+
     // Functions
     openSaveModal,
     closeSaveModal,
-    saveToDB
+    saveToDB,
+    markAsModified,
+    resetSavedState
   }
 }
