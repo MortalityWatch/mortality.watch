@@ -53,7 +53,7 @@ export function useRankingState() {
   })
 
   const jurisdictionType = computed({
-    get: () => (route.query.j as string) || 'countries', // Default to 'countries' (plural) to match jurisdictionTypes values
+    get: () => (route.query.j as string) || 'countries', // Default to 'countries' to match shouldShowCountry expectations
     set: (val: string) => updateQuery({ j: val })
   })
 
@@ -95,7 +95,7 @@ export function useRankingState() {
   })
 
   const hideIncomplete = computed({
-    get: () => !(decodeBool(route.query.i as string) ?? false),
+    get: () => !(decodeBool(route.query.i as string) ?? false), // Default to false = hide incomplete data
     set: (val: boolean) => updateQuery({ i: encodeBool(!val) })
   })
 
@@ -116,24 +116,26 @@ export function useRankingState() {
   })
 
   // Date range
+  // Note: undefined defaults - sliderValue in ranking.vue provides computed defaults
+  // This matches explorer pattern and avoids state/URL conflicts
   const dateFrom = computed({
-    get: () => (route.query.df as string) || '2020/21',
-    set: (val: string) => updateQuery({ df: val })
+    get: () => (route.query.df as string) || undefined,
+    set: (val: string | undefined) => updateQuery({ df: val })
   })
 
   const dateTo = computed({
-    get: () => (route.query.dt as string) || '2023/24',
-    set: (val: string) => updateQuery({ dt: val })
+    get: () => (route.query.dt as string) || undefined,
+    set: (val: string | undefined) => updateQuery({ dt: val })
   })
 
   const baselineDateFrom = computed({
-    get: () => (route.query.bf as string) || '2015/16',
-    set: (val: string) => updateQuery({ bf: val })
+    get: () => (route.query.bf as string) || undefined,
+    set: (val: string | undefined) => updateQuery({ bf: val })
   })
 
   const baselineDateTo = computed({
-    get: () => (route.query.bt as string) || '2019/20',
-    set: (val: string) => updateQuery({ bt: val })
+    get: () => (route.query.bt as string) || undefined,
+    set: (val: string | undefined) => updateQuery({ bt: val })
   })
 
   // ============================================================================
@@ -184,6 +186,12 @@ export function useRankingState() {
         return
       }
 
+      // Skip validation errors when dates are still undefined (initial load)
+      // Also skip if baseline dates are undefined (will use computed defaults)
+      if (!dateFrom.value || !dateTo.value || !baselineDateFrom.value || !baselineDateTo.value) {
+        return
+      }
+
       // Log validation errors for debugging
       console.warn('[useRankingState] Validation errors:', newErrors)
 
@@ -221,6 +229,7 @@ export function useRankingState() {
       errorMessages.forEach((errorMsg) => {
         if (!lastShownErrors.has(errorMsg)) {
           lastShownErrors.add(errorMsg)
+          // showToast will automatically log to console
           showToast(errorMsg, 'warning')
         }
       })

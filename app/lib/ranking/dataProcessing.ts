@@ -169,9 +169,26 @@ export function processCountryRow(options: ProcessCountryRowOptions): { row: Tab
     }
   }
 
-  const shouldInclude
-    = (hideIncomplete && hasData.every(Boolean))
-      || (!hideIncomplete && hasData.includes(true))
+  // Filter logic:
+  // - If hideIncomplete is false: include any country with at least some data
+  // - If hideIncomplete is true: only include if the LAST period (most recent) has data
+  //   (we don't care about missing historical data at the beginning)
+  const shouldInclude = (() => {
+    // If no data at all, exclude
+    if (!hasData.includes(true)) {
+      return false
+    }
+
+    // If hideIncomplete is false, include any country with at least some data
+    if (!hideIncomplete) {
+      return true
+    }
+
+    // If hideIncomplete is true, only check the last period
+    // This filters out countries missing the most recent data
+    const lastPeriodIndex = hasData.length - 1
+    return hasData[lastPeriodIndex] === true
+  })()
 
   return { row: row as TableRow, hasData: shouldInclude }
 }

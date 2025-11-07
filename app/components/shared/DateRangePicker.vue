@@ -94,7 +94,7 @@ const availableYears = computed(() => {
             :color="specialColor()"
             :min-range="0"
             :disabled="props.disabled || false"
-            :delay-emit="false"
+            :delay-emit="true"
             @slider-changed="emit('slider-changed', $event)"
           />
         </div>

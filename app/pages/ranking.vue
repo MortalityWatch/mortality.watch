@@ -164,7 +164,7 @@ const metaData = computed(() => {
 
 // Additional state refs for compatibility
 const hasLoaded = ref(false)
-const sliderStart = ref('2020')
+const sliderStart = ref('2010')
 
 const {
   allLabels,
@@ -178,8 +178,6 @@ const {
   initialLoadDone,
   loadData,
   explorerLink,
-  sliderChanged,
-  baselineSliderChanged,
   periodOfTimeChanged
 } = useRankingData(state, metaData, sliderStart)
 
@@ -188,9 +186,59 @@ const datePickerLabels = computed(() => {
   return visibleLabels.value || []
 })
 
-const sliderValue = computed({
-  get: () => [state.dateFrom.value, state.dateTo.value],
-  set: (val: string[]) => sliderChanged(val)
+// Handle date slider changes - matches explorer.vue pattern
+const dateSliderChanged = async (val: string[]) => {
+  // IMPORTANT: Batch both updates into a single router.push to avoid race condition
+  // where the second update overwrites the first with stale route data
+  const route = useRoute()
+  const router = useRouter()
+  const newQuery = { ...route.query }
+  newQuery.df = val[0]!
+  newQuery.dt = val[1]!
+
+  await router.push({ query: newQuery })
+}
+
+// Handle baseline slider changes - matches explorer.vue pattern
+const baselineSliderChangedWrapper = async (val: string[]) => {
+  // IMPORTANT: Batch both updates into a single router.push to avoid race condition
+  const route = useRoute()
+  const router = useRouter()
+  const newQuery = { ...route.query }
+  newQuery.bf = val[0]!
+  newQuery.bt = val[1]!
+
+  await router.push({ query: newQuery })
+}
+
+// Adapter: Convert separate date refs to array format for DateSlider component
+// Uses default range (2019/20 to latest) when dates are undefined
+const sliderValue = computed((): string[] => {
+  const labels = visibleLabels.value
+
+  // Calculate default range: from 2019/20 (or earliest available) to latest
+  let defaultFrom: string | undefined
+  let defaultTo: string | undefined
+
+  if (labels.length > 0) {
+    // Find the index for 2019/20 (or closest match)
+    const chartType = state.periodOfTime.value || 'fluseason'
+    const targetStart = chartType === 'yearly' ? '2019' : '2019/20'
+
+    // Find index of target start date or closest available
+    const startIndex = labels.findIndex(label => label >= targetStart)
+    const actualStartIndex = startIndex >= 0 ? startIndex : 0
+
+    defaultFrom = labels[actualStartIndex]
+    defaultTo = labels[labels.length - 1]
+  }
+
+  // If user has set dates, use them; otherwise use defaults (if available)
+  const from = state.dateFrom.value ?? (defaultFrom || undefined)
+  const to = state.dateTo.value ?? (defaultTo || undefined)
+
+  // Filter out undefined values
+  return [from, to].filter((d): d is string => d !== undefined)
 })
 
 // Use user-set baseline dates from URL if available, otherwise use computed defaults
@@ -212,11 +260,15 @@ const baselineSliderValue = computed({
     // Fallback to empty array if no baseline available yet
     return []
   },
-  set: (val: string[]) => baselineSliderChanged(val)
+  set: (val: string[]) => baselineSliderChangedWrapper(val)
 })
 
+// Baseline slider respects the sliderStart filter (uses visibleLabels, not allLabels)
+// User can select any baseline range they want - no automatic constraints
 const baselineSliderValues = () => {
-  return allLabels.value
+  // Use visibleLabels (filtered by sliderStart) instead of allLabels
+  // This ensures baseline slider respects the "From" year dropdown filter
+  return visibleLabels.value
 }
 
 // ============================================================================
@@ -397,7 +449,7 @@ const copyRankingLink = () => {
             :selected-baseline-method="selectedBaselineMethod"
             data-tour="ranking-data-selection-mobile"
             @period-of-time-changed="periodOfTimeChanged"
-            @slider-changed="sliderChanged"
+            @slider-changed="dateSliderChanged"
           />
         </div>
 
@@ -448,7 +500,7 @@ const copyRankingLink = () => {
             :selected-baseline-method="selectedBaselineMethod"
             data-tour="ranking-data-selection"
             @period-of-time-changed="periodOfTimeChanged"
-            @slider-changed="sliderChanged"
+            @slider-changed="dateSliderChanged"
           />
 
           <RankingSettings
@@ -468,7 +520,7 @@ const copyRankingLink = () => {
             :baseline-slider-values="baselineSliderValues"
             :green-color="greenColor"
             :chart-type="(selectedPeriodOfTime?.value || 'yearly') as ChartType"
-            @baseline-slider-changed="baselineSliderChanged"
+            @baseline-slider-changed="baselineSliderChangedWrapper"
           />
 
           <!-- Ranking Actions Card -->
@@ -524,7 +576,7 @@ const copyRankingLink = () => {
             :baseline-slider-values="baselineSliderValues"
             :green-color="greenColor"
             :chart-type="(selectedPeriodOfTime?.value || 'yearly') as ChartType"
-            @baseline-slider-changed="baselineSliderChanged"
+            @baseline-slider-changed="baselineSliderChangedWrapper"
           />
 
           <!-- Ranking Actions Card - Mobile -->
