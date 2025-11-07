@@ -28,7 +28,7 @@ export interface TableData {
 
 export interface TableDisplay {
   showTotals: boolean
-  showRelative: boolean
+  showPercentage: boolean
   showPI: boolean
   totalRowKey: string
   selectedBaselineMethod: string
@@ -67,7 +67,7 @@ export interface ProcessCountryRowOptions {
   metaData: Record<string, import('@/model').Country>
   explorerLink: (codes: string[]) => string
   display: {
-    showRelative: boolean
+    showPercentage: boolean
     cumulative: boolean
     hideIncomplete: boolean
   }

@@ -73,7 +73,7 @@ describe('ranking URL state encoding/decoding', () => {
      * - a: showASMR
      * - t: showTotals
      * - to: showTotalsOnly
-     * - r: showRelative
+     * - r: showPercentage
      * - c: cumulative
      * - pi: showPI
      * - i: hideIncomplete (inverted)
@@ -132,7 +132,7 @@ describe('ranking URL state encoding/decoding', () => {
       const state = {
         showASMR: true,
         showTotals: true,
-        showRelative: true,
+        showPercentage: true,
         cumulative: false,
         hideIncomplete: false
       }
@@ -140,7 +140,7 @@ describe('ranking URL state encoding/decoding', () => {
       const params = new URLSearchParams()
       params.set('a', String(encodeBool(state.showASMR)))
       params.set('t', String(encodeBool(state.showTotals)))
-      params.set('r', String(encodeBool(state.showRelative)))
+      params.set('r', String(encodeBool(state.showPercentage)))
       params.set('c', String(encodeBool(state.cumulative)))
       params.set('i', String(encodeBool(!state.hideIncomplete))) // Inverted
 
@@ -158,14 +158,14 @@ describe('ranking URL state encoding/decoding', () => {
       const state = {
         showASMR: decodeBool(params.get('a') || '1'),
         showTotals: decodeBool(params.get('t') || '1'),
-        showRelative: decodeBool(params.get('r') || '1'),
+        showPercentage: decodeBool(params.get('r') || '1'),
         cumulative: decodeBool(params.get('c') || '0'),
         hideIncomplete: !decodeBool(params.get('i') || '0') // Inverted
       }
 
       expect(state.showASMR).toBe(true)
       expect(state.showTotals).toBe(true)
-      expect(state.showRelative).toBe(true)
+      expect(state.showPercentage).toBe(true)
       expect(state.cumulative).toBe(false)
       expect(state.hideIncomplete).toBe(true) // Inverted from i=0
     })
@@ -221,14 +221,14 @@ describe('ranking URL state encoding/decoding', () => {
       const defaults = {
         showASMR: true,
         showTotals: true,
-        showRelative: true,
+        showPercentage: true,
         cumulative: false
       }
 
       // Encode defaults
       expect(encodeBool(defaults.showASMR)).toBe(1)
       expect(encodeBool(defaults.showTotals)).toBe(1)
-      expect(encodeBool(defaults.showRelative)).toBe(1)
+      expect(encodeBool(defaults.showPercentage)).toBe(1)
       expect(encodeBool(defaults.cumulative)).toBe(0)
     })
 

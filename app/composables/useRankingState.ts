@@ -76,7 +76,7 @@ export function useRankingState() {
     set: (val: boolean) => updateQuery({ to: encodeBool(val) })
   })
 
-  const showRelative = computed({
+  const showPercentage = computed({
     get: () => decodeBool(route.query.r as string) ?? true,
     set: (val: boolean) => updateQuery({ r: encodeBool(val) })
   })
@@ -146,7 +146,7 @@ export function useRankingState() {
     showASMR: showASMR.value,
     showTotals: showTotals.value,
     showTotalsOnly: showTotalsOnly.value,
-    showRelative: showRelative.value,
+    showPercentage: showPercentage.value,
     showPI: showPI.value,
     cumulative: cumulative.value,
     hideIncomplete: hideIncomplete.value,
@@ -256,7 +256,7 @@ export function useRankingState() {
     showASMR,
     showTotals,
     showTotalsOnly,
-    showRelative,
+    showPercentage,
     showPI,
     cumulative,
     hideIncomplete,

@@ -160,7 +160,7 @@ describe('ranking/dataProcessing', () => {
         dataLabels: ['2020', '2021', '2022'],
         metaData: createMockMetadata('USA'),
         explorerLink: codes => `/explorer?c=${codes.join(',')}`,
-        display: { showRelative: false, cumulative: false, hideIncomplete: false },
+        display: { showPercentage: false, cumulative: false, hideIncomplete: false },
         totalRowKey: 'TOTAL'
       }
 
@@ -183,7 +183,7 @@ describe('ranking/dataProcessing', () => {
           dataLabels: ['2020'],
           metaData: createMockMetadata(code),
           explorerLink: () => '/',
-          display: { showRelative: false, cumulative: false, hideIncomplete: false },
+          display: { showPercentage: false, cumulative: false, hideIncomplete: false },
           totalRowKey: 'TOTAL'
         }
 
@@ -192,7 +192,7 @@ describe('ranking/dataProcessing', () => {
       })
     })
 
-    it('should calculate absolute values when showRelative is false', () => {
+    it('should calculate absolute values when showPercentage is false', () => {
       const options: ProcessCountryRowOptions = {
         iso3c: 'USA',
         countryData: createMockCountryData([10, 20, 30], [100, 100, 100]),
@@ -201,7 +201,7 @@ describe('ranking/dataProcessing', () => {
         dataLabels: ['2020', '2021', '2022'],
         metaData: createMockMetadata('USA'),
         explorerLink: () => '/',
-        display: { showRelative: false, cumulative: false, hideIncomplete: false },
+        display: { showPercentage: false, cumulative: false, hideIncomplete: false },
         totalRowKey: 'TOTAL'
       }
 
@@ -212,7 +212,7 @@ describe('ranking/dataProcessing', () => {
       expect(row['2022']).toBe(30)
     })
 
-    it('should calculate relative values when showRelative is true', () => {
+    it('should calculate relative values when showPercentage is true', () => {
       const options: ProcessCountryRowOptions = {
         iso3c: 'USA',
         countryData: createMockCountryData([10, 20, 30], [100, 100, 100]),
@@ -221,7 +221,7 @@ describe('ranking/dataProcessing', () => {
         dataLabels: ['2020', '2021', '2022'],
         metaData: createMockMetadata('USA'),
         explorerLink: () => '/',
-        display: { showRelative: true, cumulative: false, hideIncomplete: false },
+        display: { showPercentage: true, cumulative: false, hideIncomplete: false },
         totalRowKey: 'TOTAL'
       }
 
@@ -242,7 +242,7 @@ describe('ranking/dataProcessing', () => {
         dataLabels: ['2020', '2021', '2022'],
         metaData: createMockMetadata('USA'),
         explorerLink: () => '/',
-        display: { showRelative: false, cumulative: true, hideIncomplete: false },
+        display: { showPercentage: false, cumulative: true, hideIncomplete: false },
         totalRowKey: 'TOTAL'
       }
 
@@ -263,7 +263,7 @@ describe('ranking/dataProcessing', () => {
         dataLabels: ['2020', '2021'],
         metaData: createMockMetadata('USA'),
         explorerLink: () => '/',
-        display: { showRelative: false, cumulative: false, hideIncomplete: false },
+        display: { showPercentage: false, cumulative: false, hideIncomplete: false },
         totalRowKey: 'TOTAL'
       }
 
@@ -287,7 +287,7 @@ describe('ranking/dataProcessing', () => {
         dataLabels: ['2020', '2021', '2022'],
         metaData: createMockMetadata('USA'),
         explorerLink: () => '/',
-        display: { showRelative: false, cumulative: false, hideIncomplete: false },
+        display: { showPercentage: false, cumulative: false, hideIncomplete: false },
         totalRowKey: 'TOTAL'
       }
 
@@ -309,7 +309,7 @@ describe('ranking/dataProcessing', () => {
         dataLabels: ['2020', '2021', '2022'],
         metaData: createMockMetadata('USA'),
         explorerLink: () => '/',
-        display: { showRelative: false, cumulative: false, hideIncomplete: false },
+        display: { showPercentage: false, cumulative: false, hideIncomplete: false },
         totalRowKey: 'TOTAL'
       }
 
@@ -333,7 +333,7 @@ describe('ranking/dataProcessing', () => {
         dataLabels: ['2020', '2021', '2022'],
         metaData: createMockMetadata('USA'),
         explorerLink: () => '/',
-        display: { showRelative: false, cumulative: false, hideIncomplete: true },
+        display: { showPercentage: false, cumulative: false, hideIncomplete: true },
         totalRowKey: 'TOTAL'
       }
 
@@ -352,7 +352,7 @@ describe('ranking/dataProcessing', () => {
         dataLabels: ['2020', '2021', '2022'],
         metaData: createMockMetadata('USA'),
         explorerLink: () => '/',
-        display: { showRelative: false, cumulative: false, hideIncomplete: true },
+        display: { showPercentage: false, cumulative: false, hideIncomplete: true },
         totalRowKey: 'TOTAL'
       }
 
@@ -372,7 +372,7 @@ describe('ranking/dataProcessing', () => {
         dataLabels: ['2020', '2021', '2022'],
         metaData: createMockMetadata('USA'),
         explorerLink: () => '/',
-        display: { showRelative: false, cumulative: false, hideIncomplete: false },
+        display: { showPercentage: false, cumulative: false, hideIncomplete: false },
         totalRowKey: 'TOTAL'
       }
 
@@ -391,7 +391,7 @@ describe('ranking/dataProcessing', () => {
         dataLabels: ['2021', '2022', '2023'],
         metaData: createMockMetadata('USA'),
         explorerLink: () => '/',
-        display: { showRelative: false, cumulative: false, hideIncomplete: false },
+        display: { showPercentage: false, cumulative: false, hideIncomplete: false },
         totalRowKey: 'TOTAL'
       }
 

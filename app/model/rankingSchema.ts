@@ -58,7 +58,7 @@ const rankingStateBaseSchema = z.object({
   showASMR: z.boolean(),
   showTotals: z.boolean(),
   showTotalsOnly: z.boolean(),
-  showRelative: z.boolean(),
+  showPercentage: z.boolean(),
   showPI: z.boolean(), // Prediction intervals
   cumulative: z.boolean(),
   hideIncomplete: z.boolean(),

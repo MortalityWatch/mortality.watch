@@ -69,7 +69,7 @@ const {
   showASMR,
   showTotals,
   showTotalsOnly,
-  showRelative,
+  showPercentage,
   showPI,
   cumulative,
   hideIncomplete,
@@ -271,7 +271,7 @@ const subtitle = computed(() => {
 
 const displaySettings = computed(() => ({
   showTotals: showTotals.value,
-  showRelative: showRelative.value,
+  showPercentage: showPercentage.value,
   showPI: showPI.value,
   totalRowKey: 'TOTAL',
   selectedBaselineMethod: selectedBaselineMethod.value?.value || 'mean',
@@ -332,7 +332,7 @@ const rankingStateData = computed(() => ({
   dp: selectedDecimalPrecision.value.value,
   t: showTotals.value,
   to: showTotalsOnly.value,
-  r: showRelative.value,
+  r: showPercentage.value,
   pi: showPI.value,
   c: cumulative.value,
   i: !hideIncomplete.value,
@@ -457,7 +457,7 @@ const copyRankingLink = () => {
             v-model:show-totals="showTotals"
             v-model:show-totals-only="showTotalsOnly"
             v-model:hide-incomplete="hideIncomplete"
-            v-model:show-relative="showRelative"
+            v-model:show-percentage="showPercentage"
             v-model:cumulative="cumulative"
             v-model:show-p-i="showPI"
             v-model:selected-baseline-method="selectedBaselineMethod"
@@ -513,7 +513,7 @@ const copyRankingLink = () => {
             v-model:show-totals="showTotals"
             v-model:show-totals-only="showTotalsOnly"
             v-model:hide-incomplete="hideIncomplete"
-            v-model:show-relative="showRelative"
+            v-model:show-percentage="showPercentage"
             v-model:cumulative="cumulative"
             v-model:show-p-i="showPI"
             v-model:selected-baseline-method="selectedBaselineMethod"
