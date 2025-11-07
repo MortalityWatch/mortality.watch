@@ -10,6 +10,14 @@
       </p>
     </div>
 
+    <!-- Filters and Sort -->
+    <ChartsFiltersChartFilters
+      v-if="charts && charts.length > 0"
+      v-model:sort-by="sortBy"
+      v-model:filter-type="filterType"
+      v-model:filter-featured="filterFeatured"
+    />
+
     <!-- Loading State -->
     <LoadingSpinner
       v-if="pending"
@@ -29,11 +37,11 @@
 
     <!-- Charts Grid -->
     <div
-      v-else-if="charts && charts.length > 0"
+      v-else-if="filteredCharts && filteredCharts.length > 0"
       class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
     >
       <ChartsChartCard
-        v-for="chart in charts"
+        v-for="chart in paginatedCharts"
         :key="chart.id"
         :chart="chart"
         variant="my-charts"
@@ -41,6 +49,18 @@
         :is-toggling="togglingFeatured === chart.id"
         @delete="deleteChart"
         @toggle-featured="toggleFeatured"
+      />
+    </div>
+
+    <!-- Pagination -->
+    <div
+      v-if="filteredCharts && filteredCharts.length > 12"
+      class="mt-8 flex justify-center"
+    >
+      <UPagination
+        v-model="currentPage"
+        :total="filteredCharts.length"
+        :page-count="12"
       />
     </div>
 
@@ -108,6 +128,14 @@ definePageMeta({
   middleware: 'auth'
 })
 
+// Use shared filter composable
+const {
+  sortBy,
+  filterType,
+  filterFeatured,
+  currentPage
+} = useChartFilters()
+
 // Fetch user's charts (filtered by userId on the backend)
 const { data, pending, error, refresh } = await useFetch<{
   charts: Chart[]
@@ -119,6 +147,45 @@ const { data, pending, error, refresh } = await useFetch<{
 })
 
 const charts = computed(() => data.value?.charts || [])
+
+// Apply client-side filtering and sorting
+const filteredCharts = computed(() => {
+  let result = [...charts.value]
+
+  // Filter by chart type
+  if (filterType.value) {
+    result = result.filter(chart => chart.chartType === filterType.value)
+  }
+
+  // Filter by featured status
+  if (filterFeatured.value === 'true') {
+    result = result.filter(chart => chart.isFeatured)
+  } else if (filterFeatured.value === 'false') {
+    result = result.filter(chart => !chart.isFeatured)
+  }
+
+  // Sort
+  if (sortBy.value === 'featured') {
+    result.sort((a, b) => {
+      if (a.isFeatured && !b.isFeatured) return -1
+      if (!a.isFeatured && b.isFeatured) return 1
+      return b.viewCount - a.viewCount
+    })
+  } else if (sortBy.value === 'views') {
+    result.sort((a, b) => b.viewCount - a.viewCount)
+  } else if (sortBy.value === 'newest') {
+    result.sort((a, b) => b.createdAt - a.createdAt)
+  }
+
+  return result
+})
+
+// Paginate filtered results
+const paginatedCharts = computed(() => {
+  const start = (currentPage.value - 1) * 12
+  const end = start + 12
+  return filteredCharts.value.slice(start, end)
+})
 
 // Delete chart
 async function deleteChart(chartId: number) {
@@ -138,26 +205,10 @@ async function deleteChart(chartId: number) {
   }
 }
 
-// Admin: Toggle featured status
-const togglingFeatured = ref<number | null>(null)
+// Use shared admin composable
+const { togglingFeatured, toggleFeatured: toggleFeaturedStatus } = useChartAdmin()
 
-async function toggleFeatured(chartId: number, newValue: boolean) {
-  togglingFeatured.value = chartId
-  try {
-    await $fetch(`/api/admin/charts/${chartId}/featured`, {
-      method: 'PATCH',
-      body: { isFeatured: newValue }
-    })
-
-    // Update local state
-    const chart = charts.value.find(c => c.id === chartId)
-    if (chart) {
-      chart.isFeatured = newValue
-    }
-  } catch (err) {
-    handleApiError(err, 'update featured status', 'toggleFeatured')
-  } finally {
-    togglingFeatured.value = null
-  }
+function toggleFeatured(chartId: number, newValue: boolean) {
+  toggleFeaturedStatus(chartId, newValue, charts)
 }
 </script>
