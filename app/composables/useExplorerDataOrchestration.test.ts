@@ -829,6 +829,7 @@ describe('useExplorerDataOrchestration', () => {
         mockState.isLogarithmic.value,
         false, // isPopulationType
         true, // isDeathsType
+        false, // showZScores
         orchestration.allChartData.labels,
         orchestration.allChartData.data
       )
