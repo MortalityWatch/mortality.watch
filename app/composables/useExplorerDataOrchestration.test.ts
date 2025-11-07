@@ -57,6 +57,10 @@ vi.mock('./useDateRangeCalculations', () => ({
       }),
       selectedRange: computed(() => ({ from: dateFrom.value ?? null, to: dateTo.value ?? null })),
       isValidDate: (date: string) => visibleLabels.value.includes(date),
+      defaultRange: computed(() => {
+        const labels = visibleLabels.value
+        return labels.length > 0 ? { from: labels[0], to: labels[labels.length - 1] } : { from: '', to: '' }
+      }),
       getDefaultRange: () => {
         const labels = visibleLabels.value
         return labels.length > 0 ? { from: labels[0], to: labels[labels.length - 1] } : { from: '', to: '' }

@@ -23,7 +23,8 @@ export interface DateRangeCalculations {
 
   // Utilities
   isValidDate: (date: string) => boolean
-  getDefaultRange: () => { from: string, to: string }
+  defaultRange: ComputedRef<{ from: string, to: string }>
+  getDefaultRange: () => { from: string, to: string } // Deprecated: use defaultRange computed instead
   findClosestYearLabel: (targetYear: string, preferLast?: boolean) => string | null
   matchDateToLabel: (currentDate: string | null | undefined, preferLast: boolean) => string | null
 
@@ -294,9 +295,10 @@ export function useDateRangeCalculations(
    * Returns the last N periods (where N = DEFAULT_PERIODS from config).
    * Falls back to full range if fewer labels are available.
    *
-   * @returns Object with from and to dates
+   * PERFORMANCE: Converted to computed property to prevent redundant calculations
+   * during initialization. Previously called 3x on load, now calculated once.
    */
-  const getDefaultRange = (): { from: string, to: string } => {
+  const defaultRange = computed(() => {
     const labels = visibleLabels.value
 
     if (labels.length === 0) {
@@ -321,23 +323,17 @@ export function useDateRangeCalculations(
 
     const startIndex = Math.max(0, labels.length - DEFAULT_PERIODS)
 
-    const result = {
+    return {
       from: labels[startIndex]!,
       to: labels[labels.length - 1]!
     }
+  })
 
-    // Debug logging
-    console.log('[getDefaultRange]', {
-      totalLabels: labels.length,
-      DEFAULT_PERIODS,
-      startIndex,
-      result,
-      firstLabel: labels[0],
-      lastLabel: labels[labels.length - 1]
-    })
-
-    return result
-  }
+  /**
+   * Backward compatibility wrapper for getDefaultRange
+   * @deprecated Use defaultRange computed property instead for better performance
+   */
+  const getDefaultRange = () => defaultRange.value
 
   return {
     // Available data
@@ -353,7 +349,8 @@ export function useDateRangeCalculations(
 
     // Utilities
     isValidDate,
-    getDefaultRange,
+    defaultRange,
+    getDefaultRange, // Kept for backward compatibility
     findClosestYearLabel,
     matchDateToLabel,
 

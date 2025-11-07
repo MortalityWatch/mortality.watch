@@ -92,8 +92,8 @@ export function useRankingData(
     const labels = dateRangeCalc.visibleLabels.value
     if (labels.length === 0) return
 
-    // Get default range from composable
-    const { from: defaultFrom, to: defaultTo } = dateRangeCalc.getDefaultRange()
+    // Get default range from composable (using computed property for performance)
+    const { from: defaultFrom, to: defaultTo } = dateRangeCalc.defaultRange.value
 
     // If default range is empty, we can't do anything yet
     if (!defaultFrom || !defaultTo) return

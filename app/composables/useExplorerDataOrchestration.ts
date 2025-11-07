@@ -204,8 +204,8 @@ export function useExplorerDataOrchestration(
     const labels = dateRangeCalc.visibleLabels.value
     if (labels.length === 0) return
 
-    // Get default range from composable
-    const { from: defaultFrom, to: defaultTo } = dateRangeCalc.getDefaultRange()
+    // Get default range from composable (using computed property for performance)
+    const { from: defaultFrom, to: defaultTo } = dateRangeCalc.defaultRange.value
 
     // If default range is empty, we can't do anything yet
     if (!defaultFrom || !defaultTo) return
@@ -259,7 +259,7 @@ export function useExplorerDataOrchestration(
 
     // Use default range (last ~10 years) when dates are undefined
     // This ensures chart shows a reasonable recent window without polluting URL
-    const defaultRange = dateRangeCalc.getDefaultRange()
+    const defaultRange = dateRangeCalc.defaultRange.value
     const visibleRange = dateRangeCalc.visibleRange.value
 
     // Fall back to visible range if default range is empty (data not loaded yet)
@@ -478,7 +478,8 @@ export function useExplorerDataOrchestration(
     configureOptions,
 
     // Date range helpers
-    getDefaultRange: dateRangeCalc.getDefaultRange,
+    defaultRange: dateRangeCalc.defaultRange,
+    getDefaultRange: dateRangeCalc.getDefaultRange, // Kept for backward compatibility
     baselineRange
   }
 }
