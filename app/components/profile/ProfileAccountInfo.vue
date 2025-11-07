@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { User } from '#db/schema'
+import { formatChartDate } from '@/lib/utils/dates'
 
 type AuthUser = Omit<User, 'passwordHash'>
 
@@ -60,7 +61,7 @@ defineProps<{
           Member Since
         </label>
         <p class="text-base text-gray-900 dark:text-gray-100">
-          {{ new Date(user.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}
+          {{ formatChartDate(user.createdAt, 'en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}
         </p>
       </div>
     </div>
