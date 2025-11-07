@@ -323,23 +323,10 @@ export function useDateRangeCalculations(
 
     const startIndex = Math.max(0, labels.length - DEFAULT_PERIODS)
 
-    const result = {
+    return {
       from: labels[startIndex]!,
       to: labels[labels.length - 1]!
     }
-
-    // Enhanced debug logging to track call frequency
-    console.log('[defaultRange computed]', {
-      timestamp: new Date().toISOString(),
-      totalLabels: labels.length,
-      DEFAULT_PERIODS,
-      startIndex,
-      result,
-      firstLabel: labels[0],
-      lastLabel: labels[labels.length - 1]
-    })
-
-    return result
   })
 
   /**
