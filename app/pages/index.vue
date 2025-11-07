@@ -92,6 +92,8 @@
           :key="chart.id"
           :chart="chart"
           variant="homepage"
+          :is-owner="false"
+          :is-admin="false"
         />
       </div>
 

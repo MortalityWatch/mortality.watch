@@ -77,9 +77,11 @@ export default defineEventHandler(async (event) => {
         chartState: savedCharts.chartState,
         thumbnailUrl: savedCharts.thumbnailUrl,
         isFeatured: savedCharts.isFeatured,
+        isPublic: savedCharts.isPublic,
         viewCount: savedCharts.viewCount,
         createdAt: savedCharts.createdAt,
         updatedAt: savedCharts.updatedAt,
+        userId: savedCharts.userId,
         author: {
           displayName: users.displayName,
           firstName: users.firstName

@@ -2,6 +2,7 @@ import { db } from '../../utils/db'
 import { savedCharts } from '../../../db/schema'
 import { eq } from 'drizzle-orm'
 import { ChartDeleteResponseSchema } from '../../schemas'
+import { logger } from '../../utils/logger'
 
 /**
  * DELETE /api/charts/:id

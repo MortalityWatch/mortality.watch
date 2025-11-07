@@ -11,26 +11,11 @@
     </div>
 
     <!-- Filters and Sort -->
-    <div class="mb-6 flex flex-col sm:flex-row gap-4">
-      <USelectMenu
-        v-model="sortBy"
-        :options="sortOptions"
-        placeholder="Sort by"
-        class="w-full sm:w-48"
-      />
-      <USelectMenu
-        v-model="filterType"
-        :options="typeOptions"
-        placeholder="Chart type"
-        class="w-full sm:w-48"
-      />
-      <USelectMenu
-        v-model="filterFeatured"
-        :options="featuredOptions"
-        placeholder="All charts"
-        class="w-full sm:w-48"
-      />
-    </div>
+    <ChartsFiltersChartFilters
+      v-model:sort-by="sortBy"
+      v-model:filter-type="filterType"
+      v-model:filter-featured="filterFeatured"
+    />
 
     <!-- Loading State -->
     <LoadingSpinner
@@ -59,9 +44,13 @@
         :key="chart.id"
         :chart="chart"
         variant="gallery"
-        :show-admin-toggle="isAdmin"
-        :is-toggling="togglingFeatured === chart.id"
-        @toggle-featured="toggleFeatured"
+        :is-owner="isOwner(chart)"
+        :is-admin="isAdmin"
+        :is-toggling-featured="togglingFeatured === chart.id"
+        :is-toggling-public="togglingPublic === chart.id"
+        @delete="deleteChart"
+        @toggle-featured="handleToggleFeatured"
+        @toggle-public="handleTogglePublic"
       />
     </div>
 
@@ -110,10 +99,12 @@ interface Chart {
   chartState: string
   thumbnailUrl: string | null
   isFeatured: boolean
+  isPublic: boolean
   viewCount: number
   createdAt: number
   updatedAt: number
   authorName: string
+  userId: number
 }
 
 interface Pagination {
@@ -129,51 +120,17 @@ definePageMeta({
   description: 'Explore published mortality visualizations from our community'
 })
 
-// Filters and sorting
-const sortBy = ref('featured')
-const filterType = ref<string | null>(null)
-const filterFeatured = ref<string | null>(null)
-const currentPage = ref(1)
-
-const sortOptions = [
-  { label: 'Featured First', value: 'featured' },
-  { label: 'Most Viewed', value: 'views' },
-  { label: 'Newest', value: 'newest' }
-]
-
-const typeOptions = [
-  { label: 'All Types', value: null },
-  { label: 'Explorer', value: 'explorer' },
-  { label: 'Ranking', value: 'ranking' }
-]
-
-const featuredOptions = [
-  { label: 'All Charts', value: null },
-  { label: 'Featured Only', value: 'true' },
-  { label: 'Not Featured', value: 'false' }
-]
-
-// Computed query params
-const queryParams = computed(() => {
-  const params: Record<string, string | number> = {
-    sort: sortBy.value,
-    limit: 12,
-    offset: (currentPage.value - 1) * 12
-  }
-
-  if (filterType.value) {
-    params.chartType = filterType.value
-  }
-
-  if (filterFeatured.value) {
-    params.featured = filterFeatured.value
-  }
-
-  return params
-})
+// Use shared filter composable
+const {
+  sortBy,
+  filterType,
+  filterFeatured,
+  currentPage,
+  queryParams
+} = useChartFilters()
 
 // Fetch charts
-const { data, pending, error } = await useFetch<{
+const { data, pending, error, refresh } = await useFetch<{
   charts: Chart[]
   pagination: Pagination
 }>('/api/charts', {
@@ -184,31 +141,39 @@ const { data, pending, error } = await useFetch<{
 const charts = computed(() => data.value?.charts || [])
 const pagination = computed(() => data.value?.pagination)
 
-// Reset page when filters change
-watch([sortBy, filterType, filterFeatured], () => {
-  currentPage.value = 1
-})
+// Check if current user owns a chart
+function isOwner(chart: Chart) {
+  return user.value?.id === chart.userId
+}
 
-// Admin: Toggle featured status
-const togglingFeatured = ref<number | null>(null)
+// Use shared admin composable
+const { togglingFeatured, togglingPublic, toggleFeatured: toggleFeaturedStatus, togglePublic: togglePublicStatus } = useChartAdmin()
 
-async function toggleFeatured(chartId: number, newValue: boolean) {
-  togglingFeatured.value = chartId
+async function handleToggleFeatured(chartId: number, newValue: boolean) {
+  await toggleFeaturedStatus(chartId, newValue)
+  await refresh()
+}
+
+async function handleTogglePublic(chartId: number, newValue: boolean) {
+  await togglePublicStatus(chartId, newValue)
+  await refresh()
+}
+
+// Delete chart (admin only in gallery)
+async function deleteChart(chartId: number) {
+  if (!isAdmin.value) return
+
+  if (!confirm('Are you sure you want to delete this chart?')) {
+    return
+  }
+
   try {
-    await $fetch(`/api/admin/charts/${chartId}/featured`, {
-      method: 'PATCH',
-      body: { isFeatured: newValue }
+    await $fetch(`/api/charts/${chartId}`, {
+      method: 'DELETE'
     })
-
-    // Update local state
-    const chart = charts.value.find(c => c.id === chartId)
-    if (chart) {
-      chart.isFeatured = newValue
-    }
+    await refresh()
   } catch (err) {
-    handleApiError(err, 'update featured status', 'toggleFeatured')
-  } finally {
-    togglingFeatured.value = null
+    handleApiError(err, 'delete chart', 'deleteChart')
   }
 }
 

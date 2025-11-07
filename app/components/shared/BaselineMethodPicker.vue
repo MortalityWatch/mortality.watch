@@ -59,10 +59,7 @@ const selectedValue = computed({
 
 <template>
   <div class="flex flex-col gap-4">
-    <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-      <label class="text-sm font-medium whitespace-nowrap">
-        Method
-      </label>
+    <UiControlRow label="Method">
       <UInputMenu
         v-model="selectedValue"
         :items="baselineMethodsWithLabels"
@@ -71,39 +68,28 @@ const selectedValue = computed({
         size="sm"
         class="flex-1"
       />
-      <UPopover>
-        <UButton
-          icon="i-lucide-info"
-          color="neutral"
-          variant="ghost"
-          size="xs"
-          aria-label="Baseline method information"
-        />
-        <template #content>
-          <div class="p-3 space-y-2 max-w-xs">
-            <div class="text-xs text-gray-700 dark:text-gray-300 space-y-1">
-              <div><strong>Last Value:</strong> Uses the final value from baseline period</div>
-              <div><strong>Average:</strong> Mean of baseline period</div>
-              <div><strong>Median:</strong> Median of baseline period</div>
-              <div>
-                <strong>Linear Regression:</strong> Linear trend projection
-                <FeatureBadge
-                  feature="ALL_BASELINES"
-                  class="ml-1"
-                />
-              </div>
-              <div>
-                <strong>Exponential Smoothing (ETS):</strong> Adaptive trend and seasonality
-                <FeatureBadge
-                  feature="ALL_BASELINES"
-                  class="ml-1"
-                />
-              </div>
-            </div>
+      <template #help>
+        <div class="text-xs text-gray-700 dark:text-gray-300 space-y-1">
+          <div><strong>Last Value:</strong> Uses the final value from baseline period</div>
+          <div><strong>Average:</strong> Mean of baseline period</div>
+          <div><strong>Median:</strong> Median of baseline period</div>
+          <div>
+            <strong>Linear Regression:</strong> Linear trend projection
+            <FeatureBadge
+              feature="ALL_BASELINES"
+              class="ml-1"
+            />
           </div>
-        </template>
-      </UPopover>
-    </div>
+          <div>
+            <strong>Exponential Smoothing (ETS):</strong> Adaptive trend and seasonality
+            <FeatureBadge
+              feature="ALL_BASELINES"
+              class="ml-1"
+            />
+          </div>
+        </div>
+      </template>
+    </UiControlRow>
 
     <!-- Feature upgrade hint for baseline methods -->
     <div

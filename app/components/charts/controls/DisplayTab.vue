@@ -125,81 +125,28 @@ const chartPresetModel = computed({
         Data Analysis
       </h3>
       <div class="flex flex-wrap gap-4">
-        <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-          <label class="text-sm font-medium whitespace-nowrap">Excess</label>
-          <USwitch
-            v-model="isExcessModel"
-            :disabled="props.isPopulationType"
-            data-testid="excess-toggle"
-          />
-          <UPopover>
-            <UButton
-              icon="i-lucide-info"
-              color="neutral"
-              variant="ghost"
-              size="xs"
-              aria-label="Excess mortality information"
-            />
-            <template #content>
-              <div class="p-3 space-y-2 max-w-xs">
-                <div class="text-xs text-gray-700 dark:text-gray-300">
-                  Compares observed mortality to expected baseline. Positive values indicate more deaths than expected, negative values indicate fewer deaths.
-                </div>
-              </div>
-            </template>
-          </UPopover>
-        </div>
+        <UiSwitchRow
+          v-model="isExcessModel"
+          label="Excess"
+          :disabled="props.isPopulationType"
+          test-id="excess-toggle"
+          help-content="Compares observed mortality to expected baseline. Positive values indicate more deaths than expected, negative values indicate fewer deaths."
+        />
 
-        <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-          <label class="text-sm font-medium whitespace-nowrap">Baseline</label>
-          <USwitch
-            v-model="showBaselineModel"
-            :disabled="!props.showBaselineOption"
-          />
-          <UPopover>
-            <UButton
-              icon="i-lucide-info"
-              color="neutral"
-              variant="ghost"
-              size="xs"
-              aria-label="Baseline information"
-            />
-            <template #content>
-              <div class="p-3 space-y-2 max-w-xs">
-                <div class="text-xs text-gray-700 dark:text-gray-300">
-                  Shows the expected mortality level used for comparison. Configure baseline period and method in the Baseline tab.
-                </div>
-              </div>
-            </template>
-          </UPopover>
-        </div>
+        <UiSwitchRow
+          v-model="showBaselineModel"
+          label="Baseline"
+          :disabled="!props.showBaselineOption"
+          help-content="Shows the expected mortality level used for comparison. Configure baseline period and method in the Baseline tab."
+        />
 
-        <div
+        <UiSwitchRow
           v-if="props.showPredictionIntervalOption"
-          class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-        >
-          <label class="text-sm font-medium whitespace-nowrap">95% PI</label>
-          <USwitch
-            v-model="showPredictionIntervalModel"
-            :disabled="props.showPredictionIntervalOptionDisabled"
-          />
-          <UPopover>
-            <UButton
-              icon="i-lucide-info"
-              color="neutral"
-              variant="ghost"
-              size="xs"
-              aria-label="Prediction interval information"
-            />
-            <template #content>
-              <div class="p-3 space-y-2 max-w-xs">
-                <div class="text-xs text-gray-700 dark:text-gray-300">
-                  95% Prediction Interval shows the range of uncertainty around expected values. Values outside this range are statistically significant.
-                </div>
-              </div>
-            </template>
-          </UPopover>
-        </div>
+          v-model="showPredictionIntervalModel"
+          label="95% PI"
+          :disabled="props.showPredictionIntervalOptionDisabled"
+          help-content="95% Prediction Interval shows the range of uncertainty around expected values. Values outside this range are statistically significant."
+        />
       </div>
     </div>
 
@@ -210,43 +157,31 @@ const chartPresetModel = computed({
         Data Transformation
       </h3>
       <div class="flex flex-wrap gap-4">
-        <div
+        <UiSwitchRow
           v-if="props.showPercentageOption"
-          class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-        >
-          <label class="text-sm font-medium whitespace-nowrap">Percentage</label>
-          <USwitch v-model="showPercentageModel" />
-        </div>
+          v-model="showPercentageModel"
+          label="Percentage"
+        />
 
-        <div
+        <UiSwitchRow
           v-if="props.showCumulativeOption"
-          class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-        >
-          <label class="text-sm font-medium whitespace-nowrap">Cumulative</label>
-          <USwitch v-model="cumulativeModel" />
-        </div>
+          v-model="cumulativeModel"
+          label="Cumulative"
+        />
 
-        <div
+        <UiSwitchRow
           v-if="props.showTotalOption"
-          class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-        >
-          <label class="text-sm font-medium whitespace-nowrap">Total</label>
-          <USwitch
-            v-model="showTotalModel"
-            :disabled="props.showTotalOptionDisabled"
-          />
-        </div>
+          v-model="showTotalModel"
+          label="Total"
+          :disabled="props.showTotalOptionDisabled"
+        />
 
-        <div
+        <UiSwitchRow
           v-if="props.showLogarithmicOption"
-          class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-        >
-          <label class="text-sm font-medium whitespace-nowrap">Log Scale</label>
-          <USwitch
-            v-model="isLogarithmicModel"
-            :disabled="!props.showLogarithmicOption"
-          />
-        </div>
+          v-model="isLogarithmicModel"
+          label="Log Scale"
+          :disabled="!props.showLogarithmicOption"
+        />
       </div>
     </div>
 
@@ -258,25 +193,15 @@ const chartPresetModel = computed({
       </h3>
       <div class="flex flex-col gap-4">
         <div class="flex flex-wrap gap-4">
-          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <label class="text-sm font-medium whitespace-nowrap">Show Labels</label>
-            <USwitch v-model="showLabelsModel" />
-          </div>
+          <UiSwitchRow
+            v-model="showLabelsModel"
+            label="Show Labels"
+          />
 
           <!-- Feature gate: Only Pro users can show caption -->
           <FeatureGate feature="SHOW_CAPTION">
-            <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-              <label class="text-sm font-medium whitespace-nowrap">
-                Show Caption
-                <FeatureBadge
-                  feature="SHOW_CAPTION"
-                  class="ml-2"
-                />
-              </label>
-              <USwitch v-model="showCaptionModel" />
-            </div>
-            <template #disabled>
-              <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 opacity-50">
+            <UiControlRow>
+              <template #default>
                 <label class="text-sm font-medium whitespace-nowrap">
                   Show Caption
                   <FeatureBadge
@@ -284,44 +209,58 @@ const chartPresetModel = computed({
                     class="ml-2"
                   />
                 </label>
-                <USwitch
-                  v-model="showCaptionModel"
-                  disabled
-                />
-              </div>
+                <USwitch v-model="showCaptionModel" />
+              </template>
+            </UiControlRow>
+            <template #disabled>
+              <UiControlRow>
+                <template #default>
+                  <div class="opacity-50 flex items-center gap-2">
+                    <label class="text-sm font-medium whitespace-nowrap">
+                      Show Caption
+                      <FeatureBadge
+                        feature="SHOW_CAPTION"
+                        class="ml-2"
+                      />
+                    </label>
+                    <USwitch
+                      v-model="showCaptionModel"
+                      disabled
+                    />
+                  </div>
+                </template>
+              </UiControlRow>
             </template>
           </FeatureGate>
 
-          <div
+          <UiSwitchRow
             v-if="props.showMaximizeOption"
-            class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-          >
-            <label class="text-sm font-medium whitespace-nowrap">Maximize</label>
-            <USwitch
-              v-model="maximizeModel"
-              :disabled="props.showMaximizeOptionDisabled"
-            />
-          </div>
+            v-model="maximizeModel"
+            label="Maximize"
+            :disabled="props.showMaximizeOptionDisabled"
+          />
         </div>
 
         <!-- Feature gate: Only Pro users can customize chart size -->
         <FeatureGate feature="CUSTOM_CHART_SIZE">
-          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <label class="text-sm font-medium whitespace-nowrap">
-              Chart Size
-              <FeatureBadge
-                feature="CUSTOM_CHART_SIZE"
-                class="ml-2"
+          <UiControlRow>
+            <template #default>
+              <label class="text-sm font-medium whitespace-nowrap">
+                Chart Size
+                <FeatureBadge
+                  feature="CUSTOM_CHART_SIZE"
+                  class="ml-2"
+                />
+              </label>
+              <UInputMenu
+                v-model="chartPresetModel"
+                :items="props.chartPresetOptions"
+                placeholder="Select a size"
+                size="sm"
+                class="flex-1"
               />
-            </label>
-            <UInputMenu
-              v-model="chartPresetModel"
-              :items="props.chartPresetOptions"
-              placeholder="Select a size"
-              size="sm"
-              class="flex-1"
-            />
-          </div>
+            </template>
+          </UiControlRow>
         </FeatureGate>
       </div>
     </div>
@@ -335,30 +274,34 @@ const chartPresetModel = computed({
       <div class="flex flex-wrap gap-4">
         <!-- Feature gate: Only Pro users can hide watermark -->
         <FeatureGate feature="HIDE_WATERMARK">
-          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <label class="text-sm font-medium whitespace-nowrap">
-              Show Logo
-              <FeatureBadge
-                feature="HIDE_WATERMARK"
-                class="ml-2"
-              />
-            </label>
-            <USwitch v-model="showLogoModel" />
-          </div>
+          <UiControlRow>
+            <template #default>
+              <label class="text-sm font-medium whitespace-nowrap">
+                Show Logo
+                <FeatureBadge
+                  feature="HIDE_WATERMARK"
+                  class="ml-2"
+                />
+              </label>
+              <USwitch v-model="showLogoModel" />
+            </template>
+          </UiControlRow>
         </FeatureGate>
 
         <!-- Feature gate: Only Pro users can hide QR code -->
         <FeatureGate feature="HIDE_QR">
-          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <label class="text-sm font-medium whitespace-nowrap">
-              Show QR Code
-              <FeatureBadge
-                feature="HIDE_QR"
-                class="ml-2"
-              />
-            </label>
-            <USwitch v-model="showQrCodeModel" />
-          </div>
+          <UiControlRow>
+            <template #default>
+              <label class="text-sm font-medium whitespace-nowrap">
+                Show QR Code
+                <FeatureBadge
+                  feature="HIDE_QR"
+                  class="ml-2"
+                />
+              </label>
+              <USwitch v-model="showQrCodeModel" />
+            </template>
+          </UiControlRow>
         </FeatureGate>
       </div>
     </div>

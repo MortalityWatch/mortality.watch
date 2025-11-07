@@ -1,12 +1,13 @@
 import { db } from '../../../utils/db'
 import { savedCharts, users } from '../../../../db/schema'
-import { eq, and, sql } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { logger } from '../../../utils/logger'
 
 /**
- * GET /api/charts/:slug
+ * GET /api/charts/slug/:slug
  *
- * Get a specific public chart by slug and increment view count
+ * Get a chart by slug (public charts or owner's private charts)
+ * Increments view count for public charts
  */
 export default defineEventHandler(async (event) => {
   const slug = getRouterParam(event, 'slug')
@@ -18,11 +19,15 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // Get current user (optional - not required for public charts)
+  const user = await getCurrentUser(event)
+
   try {
     // Get chart with author info
     const result = await db
       .select({
         id: savedCharts.id,
+        userId: savedCharts.userId,
         name: savedCharts.name,
         description: savedCharts.description,
         slug: savedCharts.slug,
@@ -41,12 +46,7 @@ export default defineEventHandler(async (event) => {
       })
       .from(savedCharts)
       .leftJoin(users, eq(savedCharts.userId, users.id))
-      .where(
-        and(
-          eq(savedCharts.slug, slug),
-          eq(savedCharts.isPublic, true)
-        )
-      )
+      .where(eq(savedCharts.slug, slug))
       .limit(1)
 
     const chart = result[0]
@@ -58,16 +58,27 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Increment view count (async, non-blocking)
-    db.update(savedCharts)
-      .set({ viewCount: sql`${savedCharts.viewCount} + 1` })
-      .where(eq(savedCharts.id, chart.id))
-      .run()
+    // Check access: must be public OR user must be the owner
+    if (!chart.isPublic && chart.userId !== user?.id) {
+      throw createError({
+        statusCode: 404,
+        message: 'Chart not found'
+      })
+    }
+
+    // Increment view count only for public charts (async, non-blocking)
+    if (chart.isPublic) {
+      db.update(savedCharts)
+        .set({ viewCount: sql`${savedCharts.viewCount} + 1` })
+        .where(eq(savedCharts.id, chart.id))
+        .run()
+    }
 
     return {
       ...chart,
       authorName: chart.author?.displayName || chart.author?.firstName || 'Anonymous',
       author: undefined // Remove nested author object
+      // userId is included for ownership checking
     }
   } catch (err) {
     if (err && typeof err === 'object' && 'statusCode' in err) {

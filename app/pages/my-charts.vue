@@ -10,6 +10,14 @@
       </p>
     </div>
 
+    <!-- Filters and Sort -->
+    <ChartsFiltersChartFilters
+      v-if="charts && charts.length > 0"
+      v-model:sort-by="sortBy"
+      v-model:filter-type="filterType"
+      v-model:filter-featured="filterFeatured"
+    />
+
     <!-- Loading State -->
     <LoadingSpinner
       v-if="pending"
@@ -29,23 +37,54 @@
 
     <!-- Charts Grid -->
     <div
-      v-else-if="charts && charts.length > 0"
+      v-else-if="filteredCharts && filteredCharts.length > 0"
       class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
     >
       <ChartsChartCard
-        v-for="chart in charts"
+        v-for="chart in paginatedCharts"
         :key="chart.id"
         :chart="chart"
         variant="my-charts"
-        :show-admin-toggle="isAdmin"
-        :is-toggling="togglingFeatured === chart.id"
+        :is-owner="true"
+        :is-admin="isAdmin"
+        :is-toggling-featured="togglingFeatured === chart.id"
+        :is-toggling-public="togglingPublic === chart.id"
         @delete="deleteChart"
-        @toggle-featured="toggleFeatured"
+        @toggle-featured="handleToggleFeatured"
+        @toggle-public="handleTogglePublic"
       />
     </div>
 
-    <!-- Empty State -->
-    <UCard v-else-if="!pending">
+    <!-- Pagination -->
+    <div
+      v-if="filteredCharts && filteredCharts.length > UI_CONFIG.CHARTS_PER_PAGE"
+      class="mt-8 flex justify-center"
+    >
+      <UPagination
+        v-model="currentPage"
+        :total="filteredCharts.length"
+        :page-count="UI_CONFIG.CHARTS_PER_PAGE"
+      />
+    </div>
+
+    <!-- No Results (Filtered) -->
+    <UCard v-else-if="charts && charts.length > 0 && filteredCharts && filteredCharts.length === 0">
+      <div class="text-center py-16 px-4">
+        <UIcon
+          name="i-lucide-search-x"
+          class="w-20 h-20 mx-auto text-gray-300 dark:text-gray-600 mb-6"
+        />
+        <h3 class="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-3">
+          No charts match your filters
+        </h3>
+        <p class="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+          Try adjusting your filter settings to see more results.
+        </p>
+      </div>
+    </UCard>
+
+    <!-- Empty State (No Charts) -->
+    <UCard v-else-if="!pending && (!charts || charts.length === 0)">
       <div class="text-center py-16 px-4">
         <UIcon
           name="i-lucide-bar-chart-3"
@@ -108,6 +147,17 @@ definePageMeta({
   middleware: 'auth'
 })
 
+// Import constants
+const { UI_CONFIG } = await import('@/lib/config/constants')
+
+// Use shared filter composable
+const {
+  sortBy,
+  filterType,
+  filterFeatured,
+  currentPage
+} = useChartFilters()
+
 // Fetch user's charts (filtered by userId on the backend)
 const { data, pending, error, refresh } = await useFetch<{
   charts: Chart[]
@@ -119,6 +169,45 @@ const { data, pending, error, refresh } = await useFetch<{
 })
 
 const charts = computed(() => data.value?.charts || [])
+
+// Apply client-side filtering and sorting
+const filteredCharts = computed(() => {
+  let result = [...charts.value]
+
+  // Filter by chart type
+  if (filterType.value) {
+    result = result.filter(chart => chart.chartType === filterType.value)
+  }
+
+  // Filter by featured status
+  if (filterFeatured.value === 'true') {
+    result = result.filter(chart => chart.isFeatured)
+  } else if (filterFeatured.value === 'false') {
+    result = result.filter(chart => !chart.isFeatured)
+  }
+
+  // Sort
+  if (sortBy.value === 'featured') {
+    result.sort((a, b) => {
+      if (a.isFeatured && !b.isFeatured) return -1
+      if (!a.isFeatured && b.isFeatured) return 1
+      return b.viewCount - a.viewCount
+    })
+  } else if (sortBy.value === 'views') {
+    result.sort((a, b) => b.viewCount - a.viewCount)
+  } else if (sortBy.value === 'newest') {
+    result.sort((a, b) => b.createdAt - a.createdAt)
+  }
+
+  return result
+})
+
+// Paginate filtered results
+const paginatedCharts = computed(() => {
+  const start = (currentPage.value - 1) * UI_CONFIG.CHARTS_PER_PAGE
+  const end = start + UI_CONFIG.CHARTS_PER_PAGE
+  return filteredCharts.value.slice(start, end)
+})
 
 // Delete chart
 async function deleteChart(chartId: number) {
@@ -138,26 +227,16 @@ async function deleteChart(chartId: number) {
   }
 }
 
-// Admin: Toggle featured status
-const togglingFeatured = ref<number | null>(null)
+// Use shared admin composable
+const { togglingFeatured, togglingPublic, toggleFeatured: toggleFeaturedStatus, togglePublic: togglePublicStatus } = useChartAdmin()
 
-async function toggleFeatured(chartId: number, newValue: boolean) {
-  togglingFeatured.value = chartId
-  try {
-    await $fetch(`/api/admin/charts/${chartId}/featured`, {
-      method: 'PATCH',
-      body: { isFeatured: newValue }
-    })
+async function handleToggleFeatured(chartId: number, newValue: boolean) {
+  await toggleFeaturedStatus(chartId, newValue)
+  await refresh()
+}
 
-    // Update local state
-    const chart = charts.value.find(c => c.id === chartId)
-    if (chart) {
-      chart.isFeatured = newValue
-    }
-  } catch (err) {
-    handleApiError(err, 'update featured status', 'toggleFeatured')
-  } finally {
-    togglingFeatured.value = null
-  }
+async function handleTogglePublic(chartId: number, newValue: boolean) {
+  await togglePublicStatus(chartId, newValue)
+  await refresh()
 }
 </script>

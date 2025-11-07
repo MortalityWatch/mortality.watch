@@ -148,63 +148,50 @@ const options = computed(() => {
 
 <template>
   <div class="flex flex-col gap-4">
-    <div class="px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-      <div class="flex items-center gap-2">
-        <label class="text-sm font-medium whitespace-nowrap">Jurisdictions</label>
-        <UInputMenu
-          v-model="selectedCountries"
-          :items="options"
-          :icon="selectedCountries.length === 1 ? selectedCountries[0]?.icon : undefined"
-          multiple
-          searchable
-          size="sm"
-          class="flex-1"
-          delete-icon="i-lucide-x"
-          :disabled="props.isUpdating"
-          option-icon="icon"
-          @update:model-value="handleCountryChange"
-        />
-        <UPopover>
-          <UButton
-            icon="i-lucide-info"
-            color="neutral"
-            variant="ghost"
-            size="xs"
-            aria-label="Data availability legend"
-          />
-          <template #content>
-            <div class="p-3 space-y-2">
-              <div class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
-                Data Availability
-              </div>
-              <div class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                <UIcon
-                  name="i-lucide-layers"
-                  class="w-4 h-4"
-                />
-                <span>Age-stratified data available</span>
-              </div>
-              <div class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                <UIcon
-                  name="i-lucide-circle"
-                  class="w-4 h-4"
-                />
-                <span>All-ages data only</span>
-              </div>
-              <div class="text-xs text-gray-500 dark:text-gray-400 mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                Age-stratified data is required for ASMR and Life Expectancy metrics
-              </div>
-            </div>
-          </template>
-        </UPopover>
-      </div>
-    </div>
-
-    <div
-      v-if="!props.isAsmrType && !props.isLifeExpectancyType"
-      class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+    <UiControlRow
+      label="Jurisdictions"
+      help-title="Data Availability"
     >
-      <label class="text-sm font-medium whitespace-nowrap">Age Groups</label>
+      <UInputMenu
+        v-model="selectedCountries"
+        :items="options"
+        :icon="selectedCountries.length === 1 ? selectedCountries[0]?.icon : undefined"
+        multiple
+        searchable
+        size="sm"
+        class="flex-1"
+        delete-icon="i-lucide-x"
+        :disabled="props.isUpdating"
+        option-icon="icon"
+        @update:model-value="handleCountryChange"
+      />
+      <template #help>
+        <div class="space-y-2">
+          <div class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+            <UIcon
+              name="i-lucide-layers"
+              class="w-4 h-4"
+            />
+            <span>Age-stratified data available</span>
+          </div>
+          <div class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+            <UIcon
+              name="i-lucide-circle"
+              class="w-4 h-4"
+            />
+            <span>All-ages data only</span>
+          </div>
+          <div class="text-xs text-gray-500 dark:text-gray-400 mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+            Age-stratified data is required for ASMR and Life Expectancy metrics
+          </div>
+        </div>
+      </template>
+    </UiControlRow>
+
+    <UiControlRow
+      v-if="!props.isAsmrType && !props.isLifeExpectancyType"
+      label="Age Groups"
+    >
       <UInputMenu
         v-model="selectedAgeGroups"
         :items="ageGroupOptions"
@@ -217,6 +204,6 @@ const options = computed(() => {
         :disabled="props.isUpdating"
         @update:model-value="handleAgeGroupChange"
       />
-    </div>
+    </UiControlRow>
   </div>
 </template>

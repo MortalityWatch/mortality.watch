@@ -157,7 +157,45 @@ export const UI_CONFIG = {
    * Delay between retry attempts (milliseconds)
    * Exponential backoff may apply on top of this base delay
    */
-  RETRY_DELAY: 1000
+  RETRY_DELAY: 1000,
+
+  /**
+   * Number of charts to display per page in gallery/my-charts
+   */
+  CHARTS_PER_PAGE: 12
+} as const
+
+/**
+ * Chart gallery filter options
+ */
+export const CHART_FILTERS = {
+  /**
+   * Sort options for chart galleries
+   * Maps to backend API sort parameter values
+   */
+  SORT_OPTIONS: [
+    { label: 'Featured', value: 'featured' },
+    { label: 'Most Viewed', value: 'views' },
+    { label: 'Newest', value: 'newest' }
+  ] as const,
+
+  /**
+   * Chart type filter options
+   */
+  TYPE_OPTIONS: [
+    { label: 'All Types', value: null },
+    { label: 'Explorer', value: 'explorer' },
+    { label: 'Ranking', value: 'ranking' }
+  ] as const,
+
+  /**
+   * Featured status filter options
+   */
+  FEATURED_OPTIONS: [
+    { label: 'All Charts', value: null },
+    { label: 'Featured Only', value: 'true' },
+    { label: 'Not Featured', value: 'false' }
+  ] as const
 } as const
 
 /**
@@ -167,3 +205,4 @@ export type DataConfig = typeof DATA_CONFIG
 export type CacheConfig = typeof CACHE_CONFIG
 export type CssClasses = typeof CSS_CLASSES
 export type UiConfig = typeof UI_CONFIG
+export type ChartFilters = typeof CHART_FILTERS
