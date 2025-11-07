@@ -509,11 +509,11 @@ const copyRankingLink = () => {
                 :success="saveSuccess"
                 type="ranking"
                 :generate-default-title="() => generateRankingTitle({
-                  jurisdictionType: selectedJurisdictionType.value.value,
-                  dateFrom: sliderValue.value[0],
-                  dateTo: sliderValue.value[1],
-                  showASMR: showASMR.value,
-                  showTotalsOnly: showTotalsOnly.value
+                  jurisdictionType: selectedJurisdictionType.value,
+                  dateFrom: sliderValue[0],
+                  dateTo: sliderValue[1],
+                  showASMR: showASMR,
+                  showTotalsOnly: showTotalsOnly
                 })"
                 data-tour="ranking-save-button"
                 @save="saveToDB"
@@ -571,11 +571,11 @@ const copyRankingLink = () => {
                 :success="saveSuccess"
                 type="ranking"
                 :generate-default-title="() => generateRankingTitle({
-                  jurisdictionType: selectedJurisdictionType.value.value,
-                  dateFrom: sliderValue.value[0],
-                  dateTo: sliderValue.value[1],
-                  showASMR: showASMR.value,
-                  showTotalsOnly: showTotalsOnly.value
+                  jurisdictionType: selectedJurisdictionType.value,
+                  dateFrom: sliderValue[0],
+                  dateTo: sliderValue[1],
+                  showASMR: showASMR,
+                  showTotalsOnly: showTotalsOnly
                 })"
                 data-tour="ranking-save-button"
                 @save="saveToDB"
