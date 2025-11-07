@@ -137,11 +137,30 @@ export function createZScoreAnnotations(isDark?: boolean) {
     return isDark ? '#6b7280' : '#9ca3af' // gray
   }
 
-  const annotations: Record<string, any> = {}
+  const annotations: Record<string, {
+    type: string
+    yMin: number
+    yMax: number
+    borderColor: string
+    borderWidth: number
+    borderDash: number[]
+    label: {
+      display: boolean
+      content: string
+      position: string
+      backgroundColor: string
+      color: string
+      font: {
+        size: number
+        weight: string
+      }
+      padding: number
+    }
+  }> = {}
 
   // Create annotations for -3, -2, 0, +2, +3
   const sigmaValues = [-3, -2, 0, 2, 3]
-  sigmaValues.forEach(sigma => {
+  sigmaValues.forEach((sigma) => {
     const key = `zscore_${sigma}`
     annotations[key] = {
       type: 'line',
