@@ -39,6 +39,7 @@ import type {
 } from '@/lib/chart/chartTypes'
 import { getLogoPlugin } from '@/lib/chart/logoPlugin'
 import { getQRCodePlugin, clearQRCodeCache } from '@/lib/chart/qrCodePlugin'
+import { shouldShowLabels, getDataPointCount } from '@/lib/chart/labelVisibility'
 
 const props = defineProps<{
   chartStyle: ChartStyle
@@ -84,13 +85,35 @@ const Matrix = createTypedChart('matrix', MatrixController)
 // Get color mode for theme reactivity
 const colorMode = useColorMode()
 
+// Track chart width for auto-hide label logic
+const chartWidth = ref<number>(800)
+
+// Calculate effective label visibility based on data density
+// Auto-hide labels if dataPoints > (chartWidth / 20), unless user explicitly wants them shown
+const effectiveShowLabels = computed(() => {
+  const dataPointCount = getDataPointCount(props.data.labels)
+
+  // If showLabels is explicitly false (user turned it off), always hide
+  // If showLabels is true, apply auto-hide logic based on data density
+  // This allows user override: true = force show, but auto-hide kicks in for high density
+  const userPreference = props.showLabels ? undefined : false
+
+  return shouldShowLabels(dataPointCount, chartWidth.value, userPreference)
+})
+
+// Create data object with effective showLabels for chart configuration
+const dataWithEffectiveLabels = computed(() => ({
+  ...props.data,
+  showLabels: effectiveShowLabels.value
+}))
+
 // Make configs reactive so they update when props OR theme changes
 const lineConfig = computed(() => {
   // Pass isDark to config so text colors update with theme
   const isDark = colorMode.value === 'dark'
   if (props.chartStyle !== 'line') return undefined
   return makeBarLineChartConfig(
-    props.data,
+    dataWithEffectiveLabels.value,
     props.isExcess,
     props.showPredictionInterval,
     props.showPercentage,
@@ -110,7 +133,7 @@ const barConfig = computed(() => {
   const isDark = colorMode.value === 'dark'
   if (props.chartStyle !== 'bar') return undefined
   return makeBarLineChartConfig(
-    props.data,
+    dataWithEffectiveLabels.value,
     props.isExcess,
     props.showPredictionInterval,
     props.showPercentage,
@@ -130,12 +153,12 @@ const matrixConfig = computed(() => {
   const isDark = colorMode.value === 'dark'
   if (props.chartStyle !== 'matrix') return undefined
   return makeMatrixChartConfig(
-    props.data,
+    dataWithEffectiveLabels.value,
     props.isExcess,
     props.isLifeExpectancyType,
     props.showPredictionInterval,
     props.showPercentage,
-    props.showLabels,
+    effectiveShowLabels.value,
     props.isDeathsType,
     props.isPopulationType,
     props.showQrCode,
@@ -180,8 +203,17 @@ onMounted(() => {
 
   const parentContainer = chartCanvas.parentElement
 
+  // Update initial chart width for auto-hide label logic
+  chartWidth.value = parentContainer.offsetWidth || 800
+
   let resizeTimeout: ReturnType<typeof setTimeout> | null = null
   const resizeObserver = new ResizeObserver(() => {
+    // Update chart width for auto-hide label logic
+    const newWidth = parentContainer?.offsetWidth || 800
+    if (newWidth !== chartWidth.value) {
+      chartWidth.value = newWidth
+    }
+
     // Debounce to avoid excessive updates
     if (resizeTimeout) clearTimeout(resizeTimeout)
     resizeTimeout = setTimeout(() => {
