@@ -84,8 +84,18 @@ export function useExplorerChartActions(
     saveChartPublic,
     saveError,
     saveSuccess,
+    isSaved,
+    isModified,
+    savedChartSlug,
+    savedChartId,
+    buttonLabel,
+    isButtonDisabled,
     openSaveModal: saveChart,
-    saveToDB: saveToDBComposable
+    saveToDB: saveToDBComposable,
+    markAsModified,
+    resetSavedState,
+    isDuplicate,
+    existingChart
   } = useSaveChart({
     chartType: 'explorer',
     generateDefaultTitle: () => {
@@ -315,6 +325,8 @@ export function useExplorerChartActions(
     saveToDB,
     exportCSV,
     exportJSON,
+    markAsModified,
+    resetSavedState,
 
     // Save modal state
     showSaveModal,
@@ -323,6 +335,14 @@ export function useExplorerChartActions(
     saveChartDescription,
     saveChartPublic,
     saveError,
-    saveSuccess
+    saveSuccess,
+    isSaved,
+    isModified,
+    savedChartSlug,
+    savedChartId,
+    buttonLabel,
+    isButtonDisabled,
+    isDuplicate,
+    existingChart
   } as const
 }

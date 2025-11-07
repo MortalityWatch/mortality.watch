@@ -24,7 +24,7 @@ import {
 import ExplorerDataSelection from '@/components/explorer/ExplorerDataSelection.vue'
 import ExplorerChartContainer from '@/components/explorer/ExplorerChartContainer.vue'
 import ExplorerSettings from '@/components/explorer/ExplorerSettings.vue'
-import ExplorerChartActions from '@/components/explorer/ExplorerChartActions.vue'
+import ChartActions from '@/components/charts/ChartActions.vue'
 import SaveModal from '@/components/SaveModal.vue'
 import { generateExplorerTitle } from '@/lib/utils/chartTitles'
 
@@ -474,7 +474,17 @@ const {
   saveChartDescription,
   saveChartPublic,
   saveError,
-  saveSuccess
+  saveSuccess,
+  isSaved,
+  isModified,
+  savedChartSlug,
+  savedChartId: _savedChartId,
+  buttonLabel,
+  isButtonDisabled,
+  markAsModified,
+  resetSavedState: _resetSavedState,
+  isDuplicate,
+  existingChart
 } = chartActions
 
 // Wrap showSaveModal in computed for proper v-model binding
@@ -497,6 +507,36 @@ const getDefaultExplorerTitle = () => {
     dateTo: state.dateTo.value
   })
 }
+
+// Watch for state changes to mark chart as modified
+watch(
+  [
+    () => state.countries.value,
+    () => state.type.value,
+    () => state.chartType.value,
+    () => state.ageGroups.value,
+    () => state.chartStyle.value,
+    () => state.isExcess.value,
+    () => state.showBaseline.value,
+    () => state.baselineMethod.value,
+    () => state.baselineDateFrom.value,
+    () => state.baselineDateTo.value,
+    () => state.cumulative.value,
+    () => state.showPercentage.value,
+    () => state.showPredictionInterval.value,
+    () => state.showTotal.value,
+    () => state.dateFrom.value,
+    () => state.dateTo.value,
+    () => state.standardPopulation.value,
+    () => state.isLogarithmic.value,
+    () => state.maximize.value,
+    () => state.showLabels.value
+  ],
+  () => {
+    markAsModified()
+  },
+  { deep: true }
+)
 </script>
 
 <template>
@@ -600,7 +640,7 @@ const getDefaultExplorerTitle = () => {
             @decimals-changed="handleDecimalsChanged"
           />
 
-          <ExplorerChartActions
+          <ChartActions
             class="mt-3"
             :show-save-button="!isAuthenticated"
             @copy-link="copyChartLink"
@@ -622,13 +662,20 @@ const getDefaultExplorerTitle = () => {
                 :saving="savingChart"
                 :error="saveError"
                 :success="saveSuccess"
+                :is-saved="isSaved"
+                :is-modified="isModified"
+                :saved-chart-slug="savedChartSlug"
+                :is-button-disabled="isButtonDisabled"
+                :button-label="buttonLabel"
+                :is-duplicate="isDuplicate"
+                :existing-chart="existingChart"
                 type="chart"
                 :generate-default-title="getDefaultExplorerTitle"
                 data-tour="save-button"
                 @save="saveToDB"
               />
             </template>
-          </ExplorerChartActions>
+          </ChartActions>
         </div>
       </div>
     </div>

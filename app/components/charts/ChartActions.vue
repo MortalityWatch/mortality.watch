@@ -37,6 +37,41 @@ const emit = defineEmits<{
     </template>
     <ClientOnly>
       <div class="flex flex-col">
+        <!-- Save Chart - Primary Action (moved to top) -->
+        <template v-if="$slots['save-button'] || props.showSaveButton">
+          <slot name="save-button">
+            <button
+              v-if="props.showSaveButton"
+              class="chart-option-button opacity-60"
+              data-tour="save-button"
+              @click="emit('saveChart')"
+            >
+              <UIcon
+                name="i-lucide-book-heart"
+                class="w-4 h-4 shrink-0"
+              />
+              <div class="flex-1 text-left">
+                <div class="text-sm font-medium">
+                  Save Chart
+                  <FeatureBadge
+                    feature="SAVE_CHART"
+                    class="ml-2"
+                  />
+                </div>
+                <div class="text-xs text-gray-500 dark:text-gray-400">
+                  Sign up free to save charts
+                </div>
+              </div>
+              <UIcon
+                name="i-lucide-chevron-right"
+                class="w-3 h-3 text-gray-400"
+              />
+            </button>
+          </slot>
+
+          <div class="border-t border-gray-200 dark:border-gray-700" />
+        </template>
+
         <button
           class="chart-option-button"
           @click="emit('copyLink')"
@@ -67,7 +102,7 @@ const emit = defineEmits<{
             @click="emit('downloadChart')"
           >
             <UIcon
-              name="i-lucide-image"
+              name="i-lucide-image-down"
               class="w-4 h-4 shrink-0"
             />
             <div class="flex-1 text-left">
@@ -93,15 +128,15 @@ const emit = defineEmits<{
             @click="emit('screenshot')"
           >
             <UIcon
-              name="i-lucide-download"
+              name="i-lucide-camera"
               class="w-4 h-4 shrink-0"
             />
             <div class="flex-1 text-left">
               <div class="text-sm font-medium">
-                Download Screenshot
+                Screenshot
               </div>
               <div class="text-xs text-gray-500 dark:text-gray-400">
-                Save current view as image
+                Capture current view as image
               </div>
             </div>
             <UIcon
@@ -121,7 +156,7 @@ const emit = defineEmits<{
             @click="canExportData ? emit('exportCSV') : navigateTo('/signup')"
           >
             <UIcon
-              name="i-lucide-sheet"
+              name="i-lucide-file-spreadsheet"
               class="w-4 h-4 shrink-0"
             />
             <div class="flex-1 text-left">
@@ -192,40 +227,6 @@ const emit = defineEmits<{
               class="w-3 h-3 text-gray-400"
             />
           </NuxtLink>
-        </template>
-
-        <template v-if="$slots['save-button'] || props.showSaveButton">
-          <div class="border-t border-gray-200 dark:border-gray-700" />
-
-          <slot name="save-button">
-            <button
-              v-if="props.showSaveButton"
-              class="chart-option-button opacity-60"
-              data-tour="save-button"
-              @click="emit('saveChart')"
-            >
-              <UIcon
-                name="i-lucide-bookmark"
-                class="w-4 h-4 shrink-0"
-              />
-              <div class="flex-1 text-left">
-                <div class="text-sm font-medium">
-                  Save Chart
-                  <FeatureBadge
-                    feature="SAVE_CHART"
-                    class="ml-2"
-                  />
-                </div>
-                <div class="text-xs text-gray-500 dark:text-gray-400">
-                  Sign up free to save charts
-                </div>
-              </div>
-              <UIcon
-                name="i-lucide-chevron-right"
-                class="w-3 h-3 text-gray-400"
-              />
-            </button>
-          </slot>
         </template>
       </div>
     </ClientOnly>

@@ -6,7 +6,7 @@
  * for saving charts and rankings to the database.
  */
 
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { showToast } from '@/toast'
 
 interface SaveChartOptions {
@@ -20,6 +20,13 @@ interface SaveResponse {
     slug?: string
     id?: string
   }
+}
+
+interface ExistingChart {
+  id: number
+  slug: string | null
+  name: string
+  createdAt: number | null
 }
 
 /**
@@ -39,6 +46,31 @@ export function useSaveChart(options: SaveChartOptions) {
   const saveError = ref('')
   const saveSuccess = ref(false)
 
+  // Track saved state and modifications
+  const savedChartSlug = ref<string | null>(null)
+  const savedChartId = ref<string | null>(null)
+  const isSaved = ref(false)
+  const isModified = ref(false)
+
+  // Duplicate detection state
+  const isDuplicate = ref(false)
+  const existingChart = ref<ExistingChart | null>(null)
+
+  // Compute button state
+  const buttonLabel = computed(() => {
+    if (isSaved.value && !isModified.value) {
+      return 'Saved!'
+    } else if (isSaved.value && isModified.value) {
+      return 'Update Chart'
+    } else {
+      return `Save ${entityName.charAt(0).toUpperCase() + entityName.slice(1)}`
+    }
+  })
+
+  const isButtonDisabled = computed(() => {
+    return isSaved.value && !isModified.value
+  })
+
   /**
    * Opens the save modal and resets all form state
    * Auto-populates the title field if generateDefaultTitle is provided
@@ -51,6 +83,8 @@ export function useSaveChart(options: SaveChartOptions) {
     saveChartPublic.value = false
     saveError.value = ''
     saveSuccess.value = false
+    isDuplicate.value = false
+    existingChart.value = null
   }
 
   /**
@@ -89,6 +123,13 @@ export function useSaveChart(options: SaveChartOptions) {
         }
       })
 
+      // Update saved state
+      isSaved.value = true
+      isModified.value = false
+      savedChartSlug.value = response.chart?.slug || null
+      savedChartId.value = response.chart?.id || null
+      saveSuccess.value = true
+
       // Close modal immediately
       showSaveModal.value = false
 
@@ -104,12 +145,50 @@ export function useSaveChart(options: SaveChartOptions) {
       if (saveChartPublic.value && response.chart?.slug) {
         navigateTo(`/charts/${response.chart.slug}`)
       }
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(`Failed to save ${entityName}:`, err)
-      saveError.value = err instanceof Error ? err.message : `Failed to save ${entityName}`
+
+      // Check if this is a duplicate error (409 Conflict)
+      // FetchError from ofetch/nuxt has shape: { status, statusCode, statusText, statusMessage, data, message }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const error = err as any
+
+      // Check both statusCode and status (FetchError uses both)
+      const is409 = error?.statusCode === 409 || error?.status === 409
+
+      // Nuxt error responses nest the actual data in error.data.data
+      const errorData = error?.data?.data || error?.data
+      const hasDuplicateFlag = errorData?.duplicate === true
+
+      if (is409 && hasDuplicateFlag) {
+        isDuplicate.value = true
+        existingChart.value = errorData.existingChart || null
+        saveError.value = error.data?.message || error.message || 'You have already saved an identical chart'
+      } else {
+        saveError.value = err instanceof Error ? err.message : `Failed to save ${entityName}`
+      }
     } finally {
       savingChart.value = false
     }
+  }
+
+  /**
+   * Mark chart as modified after user makes changes
+   */
+  const markAsModified = () => {
+    if (isSaved.value) {
+      isModified.value = true
+    }
+  }
+
+  /**
+   * Reset saved state (e.g., when navigating to new chart)
+   */
+  const resetSavedState = () => {
+    isSaved.value = false
+    isModified.value = false
+    savedChartSlug.value = null
+    savedChartId.value = null
   }
 
   return {
@@ -122,9 +201,23 @@ export function useSaveChart(options: SaveChartOptions) {
     saveError,
     saveSuccess,
 
+    // Saved state tracking
+    isSaved,
+    isModified,
+    savedChartSlug,
+    savedChartId,
+    buttonLabel,
+    isButtonDisabled,
+
+    // Duplicate detection
+    isDuplicate,
+    existingChart,
+
     // Functions
     openSaveModal,
     closeSaveModal,
-    saveToDB
+    saveToDB,
+    markAsModified,
+    resetSavedState
   }
 }

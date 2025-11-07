@@ -6,6 +6,13 @@
  * Used by both explorer and ranking pages.
  */
 
+interface ExistingChart {
+  id: number
+  slug: string | null
+  name: string
+  createdAt: number | null
+}
+
 const props = withDefaults(defineProps<{
   modelValue: boolean
   saving: boolean
@@ -16,9 +23,22 @@ const props = withDefaults(defineProps<{
   success: boolean
   type?: 'chart' | 'ranking'
   generateDefaultTitle?: () => string
+  isSaved?: boolean
+  isModified?: boolean
+  savedChartSlug?: string | null
+  isButtonDisabled?: boolean
+  buttonLabel?: string
+  isDuplicate?: boolean
+  existingChart?: ExistingChart | null
 }>(), {
   type: 'chart',
-  generateDefaultTitle: undefined
+  generateDefaultTitle: undefined,
+  isSaved: false,
+  isModified: false,
+  savedChartSlug: null,
+  isButtonDisabled: false,
+  isDuplicate: false,
+  existingChart: null
 })
 
 const emit = defineEmits<{
@@ -67,22 +87,39 @@ const handleOpenModal = (): void => {
     <button
       type="button"
       class="chart-option-button"
+      :class="{ 'opacity-60': isButtonDisabled }"
+      :disabled="isButtonDisabled"
       @click="handleOpenModal"
     >
       <UIcon
-        name="i-lucide-save"
+        :name="isSaved && !isModified ? 'i-lucide-check' : 'i-lucide-book-heart'"
         class="w-4 h-4 shrink-0"
       />
       <div class="flex-1 text-left">
         <div class="text-sm font-medium">
-          Save {{ typeLabel }}
+          {{ buttonLabel || `Save ${typeLabel}` }}
           <FeatureBadge
+            v-if="!isSaved"
             feature="SAVE_CHART"
             class="ml-2"
           />
         </div>
         <div class="text-xs text-gray-500 dark:text-gray-400">
-          Bookmark for later access
+          <template v-if="isSaved && !isModified && savedChartSlug">
+            <NuxtLink
+              :to="`/charts/${savedChartSlug}`"
+              class="text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300"
+              @click.stop
+            >
+              View saved chart
+            </NuxtLink>
+          </template>
+          <template v-else-if="isSaved && isModified">
+            Modifications detected
+          </template>
+          <template v-else>
+            Bookmark for later access
+          </template>
         </div>
       </div>
       <UIcon
@@ -142,9 +179,49 @@ const handleOpenModal = (): void => {
             </div>
           </UFormField>
 
+          <!-- Duplicate Warning -->
+          <UAlert
+            v-if="isDuplicate && existingChart"
+            color="warning"
+            variant="subtle"
+            title="This chart already exists in your library"
+          >
+            <template #description>
+              <div class="space-y-3">
+                <p class="text-sm">
+                  You've already saved a {{ typeLabelLower }} with this exact configuration as
+                  <strong>"{{ existingChart.name }}"</strong>.
+                </p>
+                <div class="flex gap-3">
+                  <NuxtLink
+                    v-if="existingChart.slug"
+                    :to="`/charts/${existingChart.slug}`"
+                    class="inline-flex items-center gap-1.5 text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
+                  >
+                    <UIcon
+                      name="i-lucide-eye"
+                      class="w-4 h-4"
+                    />
+                    View saved {{ typeLabelLower }}
+                  </NuxtLink>
+                  <NuxtLink
+                    to="/my-charts"
+                    class="inline-flex items-center gap-1.5 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                  >
+                    <UIcon
+                      name="i-lucide-book-heart"
+                      class="w-4 h-4"
+                    />
+                    View all saved charts
+                  </NuxtLink>
+                </div>
+              </div>
+            </template>
+          </UAlert>
+
           <!-- Error Message -->
           <UAlert
-            v-if="error"
+            v-else-if="error"
             color="error"
             variant="subtle"
             :title="error"
@@ -170,7 +247,7 @@ const handleOpenModal = (): void => {
           />
           <UButton
             color="primary"
-            :label="`Save ${typeLabel}`"
+            :label="isSaved && isModified ? `Update ${typeLabel}` : `Save ${typeLabel}`"
             :loading="saving"
             :disabled="!name.trim()"
             @click="emit('save')"
