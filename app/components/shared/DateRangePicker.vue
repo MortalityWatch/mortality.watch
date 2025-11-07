@@ -56,7 +56,7 @@ const availableYears = computed(() => {
           value-key="value"
           @update:model-value="emit('update:sliderStart', $event)"
         >
-          <template #option="{ item }">
+          <template #item="{ item }">
             <UTooltip
               v-if="item.disabled"
               :text="getUpgradeMessage('EXTENDED_TIME_PERIODS')"
