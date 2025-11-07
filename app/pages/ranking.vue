@@ -451,23 +451,28 @@ const copyRankingLink = () => {
 // Export ranking data as CSV
 const exportCSV = () => {
   try {
-    if (!sortedResult.value || sortedResult.value.length === 0) {
+    if (!sortedResult.value || sortedResult.value.length === 0 || !labels.value || labels.value.length === 0) {
       const toast = useToast()
       toast.add({ title: 'No data to export', color: 'error' })
       return
     }
 
-    // Prepare data rows
-    const rows = sortedResult.value.map(row => ({
-      Country: row.iso,
-      Name: row.name,
-      Value: row.value,
-      ...(showPercentage.value && { 'Percentage (%)': row.percentage }),
-      ...(showPI.value && row.ci && Array.isArray(row.ci) && {
-        'CI Lower': row.ci[0],
-        'CI Upper': row.ci[1]
-      })
-    }))
+    // Prepare data rows - map each row with country and all period columns
+    const rows = sortedResult.value.map((row) => {
+      const rowData: Record<string, string | number | undefined> = {
+        'Country': row.country,
+        'ISO Code': row.iso2c
+      }
+
+      // Add all period columns
+      if (labels.value) {
+        labels.value.forEach((label) => {
+          rowData[label] = row[label]
+        })
+      }
+
+      return rowData
+    })
 
     // Generate CSV
     const csv = Papa.unparse(rows)
@@ -496,7 +501,7 @@ const exportCSV = () => {
 // Export ranking data as JSON
 const exportJSON = () => {
   try {
-    if (!sortedResult.value || sortedResult.value.length === 0) {
+    if (!sortedResult.value || sortedResult.value.length === 0 || !labels.value || labels.value.length === 0) {
       const toast = useToast()
       toast.add({ title: 'No data to export', color: 'error' })
       return
@@ -507,18 +512,25 @@ const exportJSON = () => {
       metadata: {
         title: title.value,
         subtitle: subtitle.value,
+        periods: labels.value,
         exportedAt: new Date().toISOString(),
         url: window.location.href
       },
-      data: sortedResult.value.map(row => ({
-        iso: row.iso,
-        name: row.name,
-        value: row.value,
-        ...(showPercentage.value && { percentage: row.percentage }),
-        ...(showPI.value && row.ci && Array.isArray(row.ci) && {
-          ci: { lower: row.ci[0], upper: row.ci[1] }
-        })
-      }))
+      data: sortedResult.value.map((row) => {
+        const rowData: Record<string, string | number | undefined> = {
+          country: row.country,
+          isoCode: row.iso2c
+        }
+
+        // Add all period columns
+        if (labels.value) {
+          labels.value.forEach((label) => {
+            rowData[label] = row[label]
+          })
+        }
+
+        return rowData
+      })
     }
 
     // Generate JSON string
