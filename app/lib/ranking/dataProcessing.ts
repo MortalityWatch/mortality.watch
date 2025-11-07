@@ -64,7 +64,7 @@ export function processCountryRow(options: ProcessCountryRowOptions): { row: Tab
     dataLabels,
     metaData,
     explorerLink,
-    display: { showRelative, cumulative, hideIncomplete },
+    display: { showPercentage, cumulative, hideIncomplete },
     totalRowKey
   } = options
 
@@ -109,7 +109,7 @@ export function processCountryRow(options: ProcessCountryRowOptions): { row: Tab
   )
 
   // Calculate relative excess if needed
-  if (showRelative) {
+  if (showPercentage) {
     const { excessCum, excessCumLower, excessCumUpper } = calculateRelativeExcessArrays(
       cumMetric,
       cumMetricLower,
@@ -143,7 +143,7 @@ export function processCountryRow(options: ProcessCountryRowOptions): { row: Tab
     const label = dataLabels[i]
     if (!label) continue
 
-    if (showRelative) {
+    if (showPercentage) {
       const metVal = metricVal[i]
       const metLower = metricLower[i]
       const metUpper = metricUpper[i]

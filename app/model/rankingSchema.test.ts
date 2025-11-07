@@ -9,7 +9,7 @@ describe('rankingSchema', () => {
     showASMR: true,
     showTotals: true,
     showTotalsOnly: false,
-    showRelative: true,
+    showPercentage: true,
     showPI: false,
     cumulative: false,
     hideIncomplete: true,

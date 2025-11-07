@@ -318,7 +318,7 @@ export function useRankingData(
           metaData: metaData.value,
           explorerLink,
           display: {
-            showRelative: state.showRelative.value,
+            showPercentage: state.showPercentage.value,
             cumulative: state.cumulative.value,
             hideIncomplete: state.hideIncomplete.value
           },
@@ -417,7 +417,7 @@ export function useRankingData(
       () => state.dateTo.value,
       () => state.baselineDateFrom.value,
       () => state.baselineDateTo.value,
-      () => state.showRelative.value,
+      () => state.showPercentage.value,
       () => state.showTotals.value,
       () => state.showTotalsOnly.value,
       () => state.hideIncomplete.value

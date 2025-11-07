@@ -157,7 +157,7 @@ const selectedItemsPerPage = computed(() =>
                   row[label] as number
                     / (row[label] === Number.MIN_SAFE_INTEGER
                       ? 1
-                      : display.showRelative
+                      : display.showPercentage
                         ? 1
                         : label === 'TOTAL'
                           ? 1000
@@ -167,7 +167,7 @@ const selectedItemsPerPage = computed(() =>
             >
               <span v-if="row[label] !== Number.MIN_SAFE_INTEGER">
                 {{
-                  display.showRelative
+                  display.showPercentage
                     ? asPercentage(row[label] as number, decimalPlaces, '')
                     : roundToStr(row[label] as number, decimalPlaces)
                 }}
@@ -181,7 +181,7 @@ const selectedItemsPerPage = computed(() =>
                   {{
                     row[`${label}_l`] === Number.MIN_SAFE_INTEGER
                       ? ''
-                      : display.showRelative
+                      : display.showPercentage
                         ? `[${asPercentage(row[`${label}_l`] as number, decimalPlaces, '')}, ${asPercentage(row[`${label}_u`] as number, decimalPlaces, '')}]`
                         : `[${roundToStr(row[`${label}_l`] as number, decimalPlaces)}, ${roundToStr(row[`${label}_u`] as number, decimalPlaces)}]`
                   }}
@@ -196,7 +196,7 @@ const selectedItemsPerPage = computed(() =>
                   row['TOTAL'] as number
                     / (row['TOTAL'] === Number.MIN_SAFE_INTEGER
                       ? 1
-                      : display.showRelative
+                      : display.showPercentage
                         ? 1
                         : 1000)
                 )
@@ -204,7 +204,7 @@ const selectedItemsPerPage = computed(() =>
             >
               <span v-if="row['TOTAL'] !== Number.MIN_SAFE_INTEGER">
                 {{
-                  display.showRelative
+                  display.showPercentage
                     ? asPercentage(row['TOTAL'] as number, decimalPlaces, '')
                     : roundToStr(row['TOTAL'] as number, decimalPlaces)
                 }}
@@ -215,7 +215,7 @@ const selectedItemsPerPage = computed(() =>
                   {{
                     row[`TOTAL_l`] === Number.MIN_SAFE_INTEGER
                       ? ''
-                      : display.showRelative
+                      : display.showPercentage
                         ? `[${asPercentage(row[`TOTAL_l`] as number, decimalPlaces, '')}, ${asPercentage(row[`TOTAL_u`] as number, decimalPlaces, '')}]`
                         : `[${roundToStr(row[`TOTAL_l`] as number, decimalPlaces)}, ${roundToStr(row[`TOTAL_u`] as number, decimalPlaces)}]`
                   }}
@@ -261,7 +261,7 @@ const selectedItemsPerPage = computed(() =>
     </div>
 
     <div class="mt-4 text-sm text-gray-600 dark:text-gray-400">
-      {{ display.showRelative ? '' : 'per 100,000 population · ' }}{{ display.subtitle }}
+      {{ display.showPercentage ? '' : 'per 100,000 population · ' }}{{ display.subtitle }}
     </div>
   </div>
 </template>

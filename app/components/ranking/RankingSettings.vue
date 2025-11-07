@@ -13,7 +13,7 @@ interface Props {
   showTotals: boolean
   showTotalsOnly: boolean
   hideIncomplete: boolean
-  showRelative: boolean
+  showPercentage: boolean
   cumulative: boolean
   showPI: boolean
   selectedBaselineMethod: { label: string, name: string, value: string }
@@ -35,7 +35,7 @@ const emit = defineEmits<{
   'update:showTotals': [value: boolean]
   'update:showTotalsOnly': [value: boolean]
   'update:hideIncomplete': [value: boolean]
-  'update:showRelative': [value: boolean]
+  'update:showPercentage': [value: boolean]
   'update:cumulative': [value: boolean]
   'update:showPI': [value: boolean]
   'update:selectedBaselineMethod': [value: { label: string, name: string, value: string }]
@@ -69,9 +69,9 @@ const hideIncompleteLocal = computed({
   set: val => emit('update:hideIncomplete', val)
 })
 
-const showRelativeLocal = computed({
-  get: () => props.showRelative,
-  set: val => emit('update:showRelative', val)
+const showPercentageLocal = computed({
+  get: () => props.showPercentage,
+  set: val => emit('update:showPercentage', val)
 })
 
 const cumulativeLocal = computed({
@@ -205,8 +205,8 @@ const activeTab = ref('metric')
         </div>
 
         <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-          <label class="text-sm font-medium whitespace-nowrap">Relative</label>
-          <USwitch v-model="showRelativeLocal" />
+          <label class="text-sm font-medium whitespace-nowrap">Percentage</label>
+          <USwitch v-model="showPercentageLocal" />
         </div>
 
         <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">

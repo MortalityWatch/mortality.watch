@@ -136,7 +136,7 @@ describe('useRankingData', () => {
       cumulative: ref(false),
       dateFrom: ref('2010'),
       dateTo: ref('2024'),
-      showRelative: ref(false),
+      showPercentage: ref(false),
       showTotals: ref(false),
       showTotalsOnly: ref(false),
       hideIncomplete: ref(false)
@@ -725,7 +725,7 @@ describe('useRankingData', () => {
 
       vi.clearAllMocks()
 
-      mockState.showRelative.value = true
+      mockState.showPercentage.value = true
 
       await nextTick()
 
