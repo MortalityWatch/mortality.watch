@@ -18,8 +18,8 @@ describe('rankingSchema', () => {
     decimalPrecision: '1',
     dateFrom: '2020/21',
     dateTo: '2023/24',
-    baselineDateFrom: '2015/16',
-    baselineDateTo: '2019/20'
+    baselineDateFrom: '2015/16', // Optional: Can be undefined to use computed defaults
+    baselineDateTo: '2019/20' // Optional: Can be undefined to use computed defaults
   })
 
   describe('base validation', () => {
@@ -253,16 +253,14 @@ describe('rankingSchema', () => {
       expect(result.success).toBe(true)
     })
 
-    it('should reject baseline overlapping data period', () => {
+    it('should allow baseline overlapping data period', () => {
+      // Users are free to select any baseline range they want
       const state = createValidState()
       state.baselineDateFrom = '2020/21'
       state.baselineDateTo = '2021/22'
       state.dateFrom = '2020/21'
       const result = rankingStateSchema.safeParse(state)
-      expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.error.issues[0]?.message).toContain('Baseline period must be before data period')
-      }
+      expect(result.success).toBe(true)
     })
   })
 

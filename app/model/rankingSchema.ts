@@ -31,17 +31,20 @@ export const RankingPeriodEnum = z.enum([
 
 export const JurisdictionTypeEnum = z.enum([
   'countries',
+  'subdivision',
   'countries_states',
   'usa',
   'can',
+  'aus',
+  'eu',
   'eu27',
-  'deu',
+  'europe',
+  'na',
+  'sa',
+  'oc',
   'af',
   'as',
-  'eu',
-  'na',
-  'oc',
-  'sa'
+  'deu'
 ])
 
 // Export TypeScript types from Zod enums
@@ -79,10 +82,10 @@ const rankingStateBaseSchema = z.object({
   decimalPrecision: DecimalPrecisionEnum,
 
   // Date range
-  dateFrom: z.string(),
-  dateTo: z.string(),
-  baselineDateFrom: z.string(),
-  baselineDateTo: z.string()
+  dateFrom: z.string().optional(),
+  dateTo: z.string().optional(),
+  baselineDateFrom: z.string().optional(),
+  baselineDateTo: z.string().optional()
 })
 
 // ============================================================================
@@ -127,11 +130,11 @@ export const rankingStateSchema = rankingStateBaseSchema.superRefine(
       })
     }
 
-    // Rule 5: Date format must match period type
+    // Rule 5: Date format must match period type (only validate if dates are set)
     const yearlyPattern = /^\d{4}$/
     const fluseasonPattern = /^\d{4}\/\d{2}$/
 
-    if (data.periodOfTime === 'yearly' && !yearlyPattern.test(data.dateFrom)) {
+    if (data.dateFrom && data.periodOfTime === 'yearly' && !yearlyPattern.test(data.dateFrom)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: `Date format must be YYYY for yearly periods (got: ${data.dateFrom})`,
@@ -139,7 +142,7 @@ export const rankingStateSchema = rankingStateBaseSchema.superRefine(
       })
     }
 
-    if (data.periodOfTime === 'yearly' && !yearlyPattern.test(data.dateTo)) {
+    if (data.dateTo && data.periodOfTime === 'yearly' && !yearlyPattern.test(data.dateTo)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: `Date format must be YYYY for yearly periods (got: ${data.dateTo})`,
@@ -148,7 +151,8 @@ export const rankingStateSchema = rankingStateBaseSchema.superRefine(
     }
 
     if (
-      (data.periodOfTime === 'fluseason' || data.periodOfTime === 'midyear' || data.periodOfTime === 'quarterly')
+      data.dateFrom
+      && (data.periodOfTime === 'fluseason' || data.periodOfTime === 'midyear' || data.periodOfTime === 'quarterly')
       && !fluseasonPattern.test(data.dateFrom)
     ) {
       ctx.addIssue({
@@ -159,7 +163,8 @@ export const rankingStateSchema = rankingStateBaseSchema.superRefine(
     }
 
     if (
-      (data.periodOfTime === 'fluseason' || data.periodOfTime === 'midyear' || data.periodOfTime === 'quarterly')
+      data.dateTo
+      && (data.periodOfTime === 'fluseason' || data.periodOfTime === 'midyear' || data.periodOfTime === 'quarterly')
       && !fluseasonPattern.test(data.dateTo)
     ) {
       ctx.addIssue({
@@ -169,8 +174,8 @@ export const rankingStateSchema = rankingStateBaseSchema.superRefine(
       })
     }
 
-    // Rule 6: dateFrom must be before or equal to dateTo
-    if (data.dateFrom > data.dateTo) {
+    // Rule 6: dateFrom must be before or equal to dateTo (only if both are set)
+    if (data.dateFrom && data.dateTo && data.dateFrom > data.dateTo) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'Start date must be before or equal to end date',
@@ -178,14 +183,8 @@ export const rankingStateSchema = rankingStateBaseSchema.superRefine(
       })
     }
 
-    // Rule 7: Baseline dates must be before data dates
-    if (data.baselineDateFrom >= data.dateFrom) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Baseline period must be before data period',
-        path: ['baselineDateFrom']
-      })
-    }
+    // Note: We intentionally do NOT validate that baseline must be before data period
+    // Users are free to select any baseline range they want for their calculations
   }
 )
 

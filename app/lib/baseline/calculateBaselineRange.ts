@@ -37,11 +37,17 @@ export function calculateBaselineRange(
   }
 
   // Get chart-type-aware baseline year (2016 for fluseason/midyear, 2017 for others)
-  const baselineYear = getBaselineYear(chartType)
+  const preferredBaselineYear = getBaselineYear(chartType)
+  const baselineYear = preferredBaselineYear
+
+  // NOTE: Baseline calculation is independent of user's selected date range
+  // This matches explorer behavior - baseline stays constant regardless of data slider position
+  // The preferred baseline year (2016 for fluseason, 2017 for yearly) is used unless
+  // that year doesn't exist in the data, in which case we fall back to earliest available
+
   const baselineYearStr = baselineYear.toString()
 
   // Find labels around the baseline year
-  // This is independent of sliderStart, so baseline won't change when user adjusts data range
   const baselineIndex = allYearlyChartLabels.findIndex(year =>
     year === baselineYearStr || year.startsWith(baselineYearStr + '/')
   )

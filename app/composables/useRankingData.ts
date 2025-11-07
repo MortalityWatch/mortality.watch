@@ -143,11 +143,12 @@ export function useRankingData(
   // ============================================================================
 
   // Note: visibleLabels is now provided by dateRangeCalc and respects feature gating
-  // allYearlyChartLabelsUnique still needs manual computation for unique years
+  // allYearlyChartLabelsUnique uses availableLabels (unfiltered) for the dropdown options
+  // This ensures the "From" dropdown shows all available years, not just those after sliderStart
   const allYearlyChartLabelsUnique = computed(() => {
-    const visibleLabels = dateRangeCalc.visibleLabels.value
+    const availableLabels = dateRangeCalc.availableLabels.value
     const allYearlyChartLabels = Array.from(
-      visibleLabels.filter(v => v).map(v => v.substring(0, 4))
+      availableLabels.filter(v => v).map(v => v.substring(0, 4))
     )
     return Array.from(new Set(allYearlyChartLabels))
   })
@@ -155,6 +156,7 @@ export function useRankingData(
   /**
    * Computed baseline range
    * Provides smart defaults for baseline period based on chart type and available data
+   * Uses preferred baseline year (2016 for fluseason, 2017 for yearly) - independent of user's date range
    */
   const baselineRange = computed(() => {
     return calculateBaselineRange(
@@ -283,13 +285,27 @@ export function useRankingData(
       updateProgress.value = 0
 
       // Calculate date range indices using ChartPeriod
-      const dateFrom = state.dateFrom.value
-      const dateTo = state.dateTo.value
+      // Use computed defaults if dates are not set in URL
       const chartType = state.periodOfTime.value || 'yearly'
-      const period = new ChartPeriod(
-        allChartData.value?.labels || [],
-        chartType as ChartType
-      )
+      const allLabelsArray = allChartData.value?.labels || []
+
+      // Early exit if no labels available
+      if (allLabelsArray.length === 0) {
+        isUpdating.value = false
+        return
+      }
+
+      const period = new ChartPeriod(allLabelsArray, chartType as ChartType)
+
+      // Compute defaults: from 2019/20 (or earliest) to latest
+      const targetStart = chartType === 'yearly' ? '2019' : '2019/20'
+      const defaultStartIndex = allLabelsArray.findIndex(label => label >= targetStart)
+      const defaultFrom = allLabelsArray[defaultStartIndex >= 0 ? defaultStartIndex : 0]
+      const defaultTo = allLabelsArray[allLabelsArray.length - 1]
+
+      const dateFrom = state.dateFrom.value ?? defaultFrom
+      const dateTo = state.dateTo.value ?? defaultTo
+
       const startIndex = period.indexOf(dateFrom || '')
       const endIndex = period.indexOf(dateTo || '') + 1
 
@@ -308,6 +324,8 @@ export function useRankingData(
       }
 
       const dataKey = key()
+      const hideIncomplete = state.hideIncomplete.value
+
       for (const [iso3c, countryData] of Object.entries(allChartData.value.data.all)) {
         const { row, hasData } = processCountryRow({
           iso3c,
@@ -320,7 +338,7 @@ export function useRankingData(
           display: {
             showPercentage: state.showPercentage.value,
             cumulative: state.cumulative.value,
-            hideIncomplete: state.hideIncomplete.value
+            hideIncomplete
           },
           totalRowKey: total_row_key
         })
@@ -349,22 +367,6 @@ export function useRankingData(
   // ============================================================================
   // EVENT HANDLERS
   // ============================================================================
-
-  /**
-   * Handle date slider changes
-   */
-  const sliderChanged = (val: string[]) => {
-    state.dateFrom.value = val[0] || ''
-    state.dateTo.value = val[1] || ''
-  }
-
-  /**
-   * Handle baseline slider changes
-   */
-  const baselineSliderChanged = (val: string[]) => {
-    state.baselineDateFrom.value = val[0] || ''
-    state.baselineDateTo.value = val[1] || ''
-  }
 
   /**
    * Handle period type changes
@@ -455,8 +457,6 @@ export function useRankingData(
     // Methods
     loadData,
     explorerLink,
-    sliderChanged,
-    baselineSliderChanged,
     periodOfTimeChanged,
 
     // Helpers

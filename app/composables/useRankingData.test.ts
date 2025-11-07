@@ -477,27 +477,11 @@ describe('useRankingData', () => {
       expect(ranking.labels.value).toEqual(['2021', '2022', '2023'])
     })
 
-    it('should handle date changes', async () => {
-      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
+    // Note: Date slider changes are now handled directly in ranking.vue via router.push
+    // No need to test sliderChanged here since it's removed from the composable
 
-      await ranking.loadData()
-
-      ranking.sliderChanged(['2022', '2023'])
-
-      expect(mockState.dateFrom.value).toBe('2022')
-      expect(mockState.dateTo.value).toBe('2023')
-    })
-
-    it('should handle baseline date changes', async () => {
-      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
-
-      await ranking.loadData()
-
-      ranking.baselineSliderChanged(['2015', '2019'])
-
-      expect(mockState.baselineDateFrom.value).toBe('2015')
-      expect(mockState.baselineDateTo.value).toBe('2019')
-    })
+    // Note: Baseline slider changes are also handled directly in ranking.vue via router.push
+    // No need to test baselineSliderChanged here since it's removed from the composable
 
     it('should provide period start helper', () => {
       const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
