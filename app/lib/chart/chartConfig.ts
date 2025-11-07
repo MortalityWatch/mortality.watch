@@ -191,6 +191,7 @@ export const makeBarLineChartConfig = (
         showQrCode,
         showLogo,
         showCaption,
+        data.ytitle.includes('Z-Score'), // Detect Z-scores from ytitle
         isDark
       ),
       scales: createScalesConfig(

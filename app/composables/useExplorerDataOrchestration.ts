@@ -300,6 +300,7 @@ export function useExplorerDataOrchestration(
       state.isLogarithmic.value,
       helpers.isPopulationType(),
       helpers.isDeathsType(),
+      state.showZScores?.value ?? false,
       allChartData.labels,
       allChartData.data
     )

@@ -7,6 +7,7 @@ import type { ChartErrorDataPoint } from '../chartTypes'
 import { PercentageTransformStrategy } from './PercentageTransformStrategy'
 import { CumulativeTransformStrategy } from './CumulativeTransformStrategy'
 import { TotalTransformStrategy } from './TotalTransformStrategy'
+import { ZScoreTransformStrategy } from './ZScoreTransformStrategy'
 
 interface TransformConfig {
   showPercentage: boolean
@@ -14,6 +15,7 @@ interface TransformConfig {
   showTotal: boolean
   showCumPi: boolean
   isAsmrType: boolean
+  showZScores?: boolean
 }
 
 /**
@@ -53,6 +55,7 @@ export class DataTransformationPipeline {
   private percentageStrategy = new PercentageTransformStrategy()
   private cumulativeStrategy = new CumulativeTransformStrategy()
   private totalStrategy = new TotalTransformStrategy()
+  private zscoreStrategy = new ZScoreTransformStrategy()
 
   /**
    * Transform simple data (non-error-bar data)
@@ -63,6 +66,15 @@ export class DataTransformationPipeline {
     key: string
   ): number[] {
     const dataRow = data[key] ?? []
+
+    // Z-scores take priority over other transformations
+    // Z-scores are pre-calculated by the R stats API and stored as <metric>_zscore
+    if (config.showZScores) {
+      const zscoreKey = this.zscoreStrategy.getZScoreKey(config.isAsmrType, key)
+      const zscoreData = data[zscoreKey] ?? []
+      console.log('[pipeline] Using z-scores:', { key, zscoreKey, hasData: zscoreData.length > 0, sample: zscoreData.slice(0, 5) })
+      return zscoreData
+    }
 
     if (config.showPercentage) {
       const blKey = this.percentageStrategy.getBaselineKey(config.isAsmrType, key)

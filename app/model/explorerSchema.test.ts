@@ -24,6 +24,7 @@ describe('explorerSchema', () => {
     maximize: false,
     showLabels: true,
     isLogarithmic: false,
+    showZScores: false,
     decimals: 'auto'
   })
 

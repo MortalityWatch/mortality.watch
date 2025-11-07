@@ -234,6 +234,7 @@ export async function transformChartData(
     state.isLogarithmic,
     isPopulationType,
     isDeathsType,
+    state.showZScores ?? false,
     allLabels,
     allChartData.data
   )

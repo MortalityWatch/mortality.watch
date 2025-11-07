@@ -29,6 +29,7 @@ export interface ChartState {
   showLabels: boolean
   showPercentage?: boolean
   isLogarithmic: boolean
+  showZScores?: boolean
   sliderStart?: string
   userColors?: string[]
   decimals?: string

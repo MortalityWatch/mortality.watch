@@ -11,6 +11,9 @@ const props = defineProps<{
   showPercentage: boolean
   cumulative: boolean
   showTotal: boolean
+  showLogo: boolean
+  showQrCode: boolean
+  showZScores?: boolean
   // Disabled states
   isPopulationType: boolean
   showBaselineOption: boolean
@@ -24,6 +27,7 @@ const props = defineProps<{
   showPercentageOption: boolean
   showCumulativeOption: boolean
   showTotalOption: boolean
+  showZScoresOption?: boolean
   // Chart preset
   chartPreset?: { name: string, value: string, label: string, category: string }
   chartPresetOptions: { name: string, value: string, label: string, category: string }[]
@@ -38,6 +42,9 @@ const emit = defineEmits<{
   'update:showPercentage': [value: boolean]
   'update:cumulative': [value: boolean]
   'update:showTotal': [value: boolean]
+  'update:showLogo': [value: boolean]
+  'update:showQrCode': [value: boolean]
+  'update:showZScores': [value: boolean]
   'update:chartPreset': [value: { name: string, value: string, label: string, category: string } | undefined]
 }>()
 
@@ -82,6 +89,21 @@ const showTotalModel = computed({
   set: v => emit('update:showTotal', v)
 })
 
+const showLogoModel = computed({
+  get: () => props.showLogo,
+  set: v => emit('update:showLogo', v)
+})
+
+const showQrCodeModel = computed({
+  get: () => props.showQrCode,
+  set: v => emit('update:showQrCode', v)
+})
+
+const showZScoresModel = computed({
+  get: () => props.showZScores || false,
+  set: v => emit('update:showZScores', v)
+})
+
 const chartPresetModel = computed({
   get: () => props.chartPreset,
   set: v => emit('update:chartPreset', v)
@@ -119,6 +141,26 @@ const chartPresetModel = computed({
           :disabled="props.showPredictionIntervalOptionDisabled"
           help-content="95% Prediction Interval shows the range of uncertainty around expected values. Values outside this range are statistically significant."
         />
+
+        <FeatureGate
+          v-if="props.showZScoresOption"
+          feature="Z_SCORES"
+        >
+          <UiSwitchRow
+            v-model="showZScoresModel"
+            label="Z-Scores"
+            help-content="Shows how many standard deviations each value is from the baseline mean. Values beyond ±2 are statistically significant (95% confidence)."
+            feature="Z_SCORES"
+          />
+          <template #disabled>
+            <UiSwitchRow
+              v-model="showZScoresModel"
+              label="Z-Scores"
+              disabled
+              feature="Z_SCORES"
+            />
+          </template>
+        </FeatureGate>
       </div>
     </div>
 

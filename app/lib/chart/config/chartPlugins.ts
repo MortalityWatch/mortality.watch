@@ -126,6 +126,49 @@ export function createDatalabelsConfig(
 }
 
 /**
+ * Create Z-score reference lines annotation config
+ * Shows reference lines at -3, -2, 0, +2, +3 standard deviations
+ */
+export function createZScoreAnnotations(isDark?: boolean) {
+  const lineColor = (sigma: number) => {
+    // Red for ±3σ, Yellow for ±2σ, Gray for 0
+    if (Math.abs(sigma) === 3) return isDark ? '#ef4444' : '#dc2626' // red
+    if (Math.abs(sigma) === 2) return isDark ? '#eab308' : '#ca8a04' // yellow
+    return isDark ? '#6b7280' : '#9ca3af' // gray
+  }
+
+  const annotations: Record<string, any> = {}
+
+  // Create annotations for -3, -2, 0, +2, +3
+  const sigmaValues = [-3, -2, 0, 2, 3]
+  sigmaValues.forEach(sigma => {
+    const key = `zscore_${sigma}`
+    annotations[key] = {
+      type: 'line',
+      yMin: sigma,
+      yMax: sigma,
+      borderColor: lineColor(sigma),
+      borderWidth: sigma === 0 ? 1.5 : 1,
+      borderDash: sigma === 0 ? [] : [5, 5],
+      label: {
+        display: true,
+        content: sigma === 0 ? '0σ' : `${sigma > 0 ? '+' : ''}${sigma}σ`,
+        position: 'end',
+        backgroundColor: 'transparent',
+        color: lineColor(sigma),
+        font: {
+          size: 10,
+          weight: 'normal'
+        },
+        padding: 2
+      }
+    }
+  })
+
+  return annotations
+}
+
+/**
  * Create plugins configuration
  */
 export function createPluginsConfig(
@@ -138,9 +181,10 @@ export function createPluginsConfig(
   showQrCode: boolean,
   showLogo: boolean,
   showCaption: boolean = true,
+  showZScores: boolean = false,
   isDark?: boolean
 ) {
-  return {
+  const basePlugins = {
     title: {
       display: true,
       text: data.title,
@@ -183,4 +227,16 @@ export function createPluginsConfig(
     showLogo,
     isDarkMode: isDark
   }
+
+  // Add Z-score annotations if enabled
+  if (showZScores) {
+    return {
+      ...basePlugins,
+      annotation: {
+        annotations: createZScoreAnnotations(isDark)
+      }
+    }
+  }
+
+  return basePlugins
 }
