@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import {
   computed,
-  nextTick,
   onMounted,
   ref,
   watch
@@ -272,29 +271,22 @@ const update = async (key: string) => {
   }
 }
 
-// Helper: Update state, wait for DOM update, then trigger data refresh
-const updateStateAndRefresh = async (updateFn: () => void, key: string) => {
-  updateFn()
-  await nextTick()
-  update(key)
-}
-
 // Special handler for chart preset (local state, not URL)
 const handleChartPresetChanged = (v: string) => {
   state.chartPreset.value = v
   applyPresetSize(v)
 }
 
-// State resolver handler for excess toggle
-// Uses StateResolver to handle cascading state changes
-const handleExcessChanged = async (v: boolean) => {
+// Generic StateResolver handler for any state change
+// Handles cascading constraints and atomic URL updates
+const handleStateChange = async (field: string, value: unknown, refreshKey: string) => {
   const { StateResolver } = await import('@/lib/state/StateResolver')
   const router = useRouter()
   const route = useRoute()
 
   // 1. Resolve state with constraints
   const resolved = StateResolver.resolveChange(
-    { field: 'isExcess', value: v, source: 'user' },
+    { field, value, source: 'user' },
     state.getCurrentStateValues(),
     state.getUserOverrides()
   )
@@ -303,7 +295,97 @@ const handleExcessChanged = async (v: boolean) => {
   await StateResolver.applyResolvedState(resolved, route, router)
 
   // 3. Trigger chart refresh
-  await update('_isExcess')
+  await update(refreshKey)
+}
+
+// Specific handlers for different controls
+// Core chart configuration
+const handleExcessChanged = (v: boolean) => handleStateChange('isExcess', v, '_isExcess')
+const handleBaselineChanged = (v: boolean) => handleStateChange('showBaseline', v, '_showBaseline')
+const handlePredictionIntervalChanged = (v: boolean) => handleStateChange('showPredictionInterval', v, '_showPredictionInterval')
+const handleTypeChanged = (v: string) => handleStateChange('type', v, '_type')
+const handleChartTypeChanged = (v: string) => handleStateChange('chartType', v, '_chartType')
+const handleChartStyleChanged = (v: string) => handleStateChange('chartStyle', v, '_chartStyle')
+
+// Data selection
+const handleCountriesChanged = (v: string[]) => handleStateChange('countries', v, '_countries')
+const handleAgeGroupsChanged = (v: string[]) => handleStateChange('ageGroups', v, '_ageGroups')
+const handleStandardPopulationChanged = (v: string) => handleStateChange('standardPopulation', v, '_standardPopulation')
+
+// Baseline configuration
+const handleBaselineMethodChanged = (v: string) => handleStateChange('baselineMethod', v, '_baselineMethod')
+
+// Display options
+const handleShowLabelsChanged = (v: boolean) => handleStateChange('showLabels', v, '_showLabels')
+const handleMaximizeChanged = (v: boolean) => handleStateChange('maximize', v, '_maximize')
+const handleIsLogarithmicChanged = (v: boolean) => handleStateChange('isLogarithmic', v, '_isLogarithmic')
+
+// Excess mode options
+const handleShowPercentageChanged = (v: boolean) => handleStateChange('showPercentage', v, '_showPercentage')
+const handleCumulativeChanged = (v: boolean) => handleStateChange('cumulative', v, '_cumulative')
+const handleShowTotalChanged = (v: boolean) => handleStateChange('showTotal', v, '_showTotal')
+
+// Colors
+const handleUserColorsChanged = (v: string[] | undefined) => handleStateChange('userColors', v, '_userColors')
+
+// Slider start
+const handleSliderStartChanged = (v: string | undefined) => handleStateChange('sliderStart', v, '_sliderStart')
+
+// Chart appearance (no data refresh needed, just URL sync)
+const handleShowLogoChanged = async (v: boolean) => {
+  const { StateResolver } = await import('@/lib/state/StateResolver')
+  const router = useRouter()
+  const route = useRoute()
+
+  const resolved = StateResolver.resolveChange(
+    { field: 'showLogo', value: v, source: 'user' },
+    state.getCurrentStateValues(),
+    state.getUserOverrides()
+  )
+
+  await StateResolver.applyResolvedState(resolved, route, router)
+}
+
+const handleShowQrCodeChanged = async (v: boolean) => {
+  const { StateResolver } = await import('@/lib/state/StateResolver')
+  const router = useRouter()
+  const route = useRoute()
+
+  const resolved = StateResolver.resolveChange(
+    { field: 'showQrCode', value: v, source: 'user' },
+    state.getCurrentStateValues(),
+    state.getUserOverrides()
+  )
+
+  await StateResolver.applyResolvedState(resolved, route, router)
+}
+
+const handleShowCaptionChanged = async (v: boolean) => {
+  const { StateResolver } = await import('@/lib/state/StateResolver')
+  const router = useRouter()
+  const route = useRoute()
+
+  const resolved = StateResolver.resolveChange(
+    { field: 'showCaption', value: v, source: 'user' },
+    state.getCurrentStateValues(),
+    state.getUserOverrides()
+  )
+
+  await StateResolver.applyResolvedState(resolved, route, router)
+}
+
+const handleDecimalsChanged = async (v: string) => {
+  const { StateResolver } = await import('@/lib/state/StateResolver')
+  const router = useRouter()
+  const route = useRoute()
+
+  const resolved = StateResolver.resolveChange(
+    { field: 'decimals', value: v, source: 'user' },
+    state.getCurrentStateValues(),
+    state.getUserOverrides()
+  )
+
+  await StateResolver.applyResolvedState(resolved, route, router)
 }
 
 // Watch for date range changes from URL/slider and trigger chart update
@@ -326,7 +408,21 @@ useBrowserNavigation({
 })
 
 onMounted(async () => {
-  // Initialize data - load all, client-side filtering happens via useCountryFilter
+  // 1. FIRST: Resolve initial state from URL + apply constraints
+  // Use router.replace() to preserve browser history (no new history entry)
+  const { StateResolver } = await import('@/lib/state/StateResolver')
+  const route = useRoute()
+  const router = useRouter()
+
+  const resolved = StateResolver.resolveInitial(route)
+
+  // Apply resolved state to URL if constraints changed anything
+  // Use replaceHistory to avoid creating new history entry (preserves back/forward)
+  if (resolved.changedFields.length > 0) {
+    await StateResolver.applyResolvedState(resolved, route, router, { replaceHistory: true })
+  }
+
+  // 2. THEN: Load country metadata - load all, client-side filtering happens via useCountryFilter
   const allMetadata = await loadCountryMetadata()
 
   // Apply client-side filtering
@@ -422,9 +518,9 @@ const showSaveModal = computed({
         :slider-start="state.sliderStart.value"
         :all-yearly-chart-labels-unique="dataOrchestration.allYearlyChartLabelsUnique.value"
         :chart-type="state.chartType.value as ChartType"
-        @countries-changed="(v) => updateStateAndRefresh(() => state.countries.value = v, '_countries')"
-        @age-groups-changed="(v) => updateStateAndRefresh(() => state.ageGroups.value = v, '_ageGroups')"
-        @slider-start-changed="(v) => updateStateAndRefresh(() => state.sliderStart.value = v, '_sliderStart')"
+        @countries-changed="handleCountriesChanged"
+        @age-groups-changed="handleAgeGroupsChanged"
+        @slider-start-changed="handleSliderStartChanged"
         @date-slider-changed="dateSliderChanged"
       />
 
@@ -466,28 +562,28 @@ const showSaveModal = computed({
             :show-prediction-interval-disabled="showPredictionIntervalDisabled"
             :show-total-option="dataOrchestration.chartOptions.showTotalOption"
             :baseline-range="dataOrchestration.baselineRange.value"
-            @type-changed="(v) => updateStateAndRefresh(() => state.type.value = v, '_type')"
-            @chart-type-changed="(v) => updateStateAndRefresh(() => state.chartType.value = v, '_chartType')"
-            @chart-style-changed="(v) => updateStateAndRefresh(() => state.chartStyle.value = v, '_chartStyle')"
-            @standard-population-changed="(v) => updateStateAndRefresh(() => state.standardPopulation.value = v, '_standardPopulation')"
+            @type-changed="handleTypeChanged"
+            @chart-type-changed="handleChartTypeChanged"
+            @chart-style-changed="handleChartStyleChanged"
+            @standard-population-changed="handleStandardPopulationChanged"
             @is-excess-changed="handleExcessChanged"
-            @show-baseline-changed="(v) => updateStateAndRefresh(() => state.showBaseline.value = v, '_showBaseline')"
-            @baseline-method-changed="(v) => updateStateAndRefresh(() => state.baselineMethod.value = v, '_baselineMethod')"
+            @show-baseline-changed="handleBaselineChanged"
+            @baseline-method-changed="handleBaselineMethodChanged"
             @baseline-slider-value-changed="baselineSliderChanged"
-            @show-prediction-interval-changed="(v) => updateStateAndRefresh(() => state.showPredictionInterval.value = v, '_showPredictionInterval')"
-            @show-labels-changed="(v) => updateStateAndRefresh(() => state.showLabels.value = v, '_showLabels')"
-            @maximize-changed="(v) => updateStateAndRefresh(() => state.maximize.value = v, '_maximize')"
-            @is-logarithmic-changed="(v) => updateStateAndRefresh(() => state.isLogarithmic.value = v, '_isLogarithmic')"
-            @show-percentage-changed="(v) => updateStateAndRefresh(() => state.showPercentage.value = v, '_showPercentage')"
-            @cumulative-changed="(v) => updateStateAndRefresh(() => state.cumulative.value = v, '_cumulative')"
-            @show-total-changed="(v) => updateStateAndRefresh(() => state.showTotal.value = v, '_showTotal')"
-            @slider-start-changed="(v) => updateStateAndRefresh(() => state.sliderStart.value = v, '_sliderStart')"
-            @user-colors-changed="(v) => updateStateAndRefresh(() => state.userColors.value = v, '_userColors')"
+            @show-prediction-interval-changed="handlePredictionIntervalChanged"
+            @show-labels-changed="handleShowLabelsChanged"
+            @maximize-changed="handleMaximizeChanged"
+            @is-logarithmic-changed="handleIsLogarithmicChanged"
+            @show-percentage-changed="handleShowPercentageChanged"
+            @cumulative-changed="handleCumulativeChanged"
+            @show-total-changed="handleShowTotalChanged"
+            @slider-start-changed="handleSliderStartChanged"
+            @user-colors-changed="handleUserColorsChanged"
             @chart-preset-changed="handleChartPresetChanged"
-            @show-logo-changed="(v) => { state.showLogo.value = v; nextTick() }"
-            @show-qr-code-changed="(v) => { state.showQrCode.value = v; nextTick() }"
-            @show-caption-changed="(v: boolean) => { state.showCaption.value = v; nextTick() }"
-            @decimals-changed="(v) => { state.decimals.value = v; nextTick() }"
+            @show-logo-changed="handleShowLogoChanged"
+            @show-qr-code-changed="handleShowQrCodeChanged"
+            @show-caption-changed="handleShowCaptionChanged"
+            @decimals-changed="handleDecimalsChanged"
           />
 
           <ExplorerChartActions

@@ -81,9 +81,10 @@ const excessModeDefaults: StateConstraint = {
   when: state => state.isExcess === true,
   apply: {
     showPredictionInterval: false, // DEFAULT off (but user can turn back on)
-    showPercentage: true // DEFAULT on (but user can turn off)
+    showPercentage: true, // DEFAULT on (but user can turn off)
+    chartStyle: 'bar' // DEFAULT to bar chart (but user can change)
   },
-  reason: 'Excess mode defaults: PI off, percentage on (user can override)',
+  reason: 'Excess mode defaults: PI off, percentage on, bar chart style (user can override)',
   allowUserOverride: true,
   priority: 0
 }

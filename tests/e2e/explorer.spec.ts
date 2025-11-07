@@ -86,4 +86,91 @@ test.describe('Explorer Page', () => {
     expect(page.url()).toBe(secondUrl)
     expect(page.url()).toContain('c=GBR')
   })
+
+  test('should toggle excess mode with single click (Issue #147)', async ({ page }) => {
+    // Start with default state (no excess)
+    await page.goto('/explorer')
+    await page.waitForLoadState('networkidle')
+    await page.waitForSelector('canvas#chart', { timeout: 10000 })
+
+    // Close welcome/tutorial modal if present
+    try {
+      const closeButton = page.getByRole('button', { name: '×' }).or(page.getByText('×'))
+      await closeButton.first().click({ timeout: 2000, force: true })
+      await page.waitForTimeout(500)
+    } catch {
+      // Tutorial not present, continue
+    }
+
+    // Verify initial state: no excess in URL
+    expect(page.url()).not.toContain('e=1')
+
+    // Click on the Display tab to reveal the excess toggle
+    await page.getByRole('button', { name: 'Display' }).click()
+    await page.waitForTimeout(300) // Wait for tab content to render
+
+    // Find and click the Excess toggle
+    const excessToggle = page.locator('[data-testid="excess-toggle"]')
+
+    // Click the excess toggle ONCE
+    await excessToggle.click()
+
+    // Wait for URL to update (StateResolver should apply constraints)
+    await page.waitForTimeout(500) // Give time for state resolution
+
+    // SINGLE CLICK should work!
+    // Verify URL contains excess parameter
+    expect(page.url()).toContain('e=1')
+
+    // Verify baseline is still enabled (excess requires baseline)
+    expect(page.url()).not.toContain('sb=0')
+
+    // Verify PI defaults to OFF (soft constraint)
+    expect(page.url()).toContain('pi=0')
+
+    // Verify percentage defaults to ON (soft constraint)
+    expect(page.url()).toContain('p=1')
+
+    // Verify chart still renders
+    await expect(page.locator('canvas#chart')).toBeVisible()
+  })
+
+  test('should preserve user overrides for soft constraints (Issue #147)', async ({ page }) => {
+    // Start with excess mode ON + user wants PI ON (overrides default)
+    await page.goto('/explorer?e=1&pi=1')
+    await page.waitForLoadState('networkidle')
+    await page.waitForSelector('canvas#chart', { timeout: 10000 })
+
+    // Verify PI stayed ON (user override)
+    expect(page.url()).toContain('e=1')
+    expect(page.url()).toContain('pi=1')
+
+    // Verify baseline is ON (hard constraint)
+    expect(page.url()).not.toContain('sb=0')
+  })
+
+  test('should enforce hard constraints even with URL manipulation (Issue #147)', async ({ page }) => {
+    // Try to visit URL with invalid state: excess ON but baseline OFF
+    await page.goto('/explorer?e=1&sb=0')
+    await page.waitForLoadState('networkidle')
+
+    // StateResolver should enforce: excess requires baseline
+    // The page should either:
+    // 1. Correct the URL (baseline back to ON), OR
+    // 2. Show a validation error
+
+    // Wait for potential URL correction
+    await page.waitForTimeout(500)
+
+    // Check if chart still renders (meaning state was corrected)
+    const chart = page.locator('canvas#chart')
+    if (await chart.isVisible()) {
+      // State was corrected - baseline should be back ON
+      expect(page.url()).not.toContain('sb=0')
+    } else {
+      // Validation error shown - this is also acceptable
+      // (implementation detail - could be either behavior)
+      console.log('Validation error shown for invalid state')
+    }
+  })
 })

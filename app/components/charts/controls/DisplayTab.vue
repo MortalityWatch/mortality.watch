@@ -130,6 +130,7 @@ const chartPresetModel = computed({
           <USwitch
             v-model="isExcessModel"
             :disabled="props.isPopulationType"
+            data-testid="excess-toggle"
           />
           <UPopover>
             <UButton
