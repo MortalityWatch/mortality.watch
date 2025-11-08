@@ -35,7 +35,7 @@ export function detectView(params: Record<string, unknown>): ViewType {
   }
 
   // Priority 3: Explicit view parameter (future-proof)
-  if (params.view && isValidView(params.view)) {
+  if (params.view && typeof params.view === 'string' && isValidView(params.view)) {
     return params.view as ViewType
   }
 

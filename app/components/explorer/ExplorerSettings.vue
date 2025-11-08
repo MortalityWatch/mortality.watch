@@ -2,6 +2,9 @@
 import { computed } from 'vue'
 import MortalityChartControlsSecondary from '@/components/charts/MortalityChartControlsSecondary.vue'
 import type { useExplorerState } from '@/composables/useExplorerState'
+import { VIEWS } from '@/lib/state/views'
+import { isVisible } from '@/lib/state/viewHelpers'
+import type { ExplorerStateValues } from '@/lib/state/viewTypes'
 
 const props = defineProps<{
   state: ReturnType<typeof useExplorerState>
@@ -37,6 +40,47 @@ const emit = defineEmits<{
   showCaptionChanged: [value: boolean]
   decimalsChanged: [value: string]
 }>()
+
+// Get current view configuration
+const currentView = computed(() => VIEWS[props.state.view.value])
+
+// Build current state values for view helper functions
+const currentStateValues = computed<ExplorerStateValues>(() => ({
+  countries: props.state.countries.value,
+  type: props.state.type.value,
+  chartType: props.state.chartType.value,
+  chartStyle: props.state.chartStyle.value,
+  ageGroups: props.state.ageGroups.value,
+  standardPopulation: props.state.standardPopulation.value,
+  showPredictionInterval: props.state.showPredictionInterval.value,
+  showBaseline: props.state.showBaseline.value,
+  baselineMethod: props.state.baselineMethod.value,
+  baselineDateFrom: props.state.baselineDateFrom.value,
+  baselineDateTo: props.state.baselineDateTo.value,
+  cumulative: props.state.cumulative.value,
+  showPercentage: props.state.showPercentage.value,
+  showTotal: props.state.showTotal.value,
+  maximize: props.state.maximize.value,
+  isLogarithmic: props.state.isLogarithmic.value,
+  showLabels: props.state.showLabels.value,
+  showLogo: props.state.showLogo.value,
+  showQrCode: props.state.showQrCode.value,
+  showCaption: props.state.showCaption.value,
+  decimals: props.state.decimals.value,
+  dateFrom: props.state.dateFrom.value,
+  dateTo: props.state.dateTo.value,
+  sliderStart: props.state.sliderStart.value,
+  userColors: props.state.userColors.value,
+  chartPreset: props.state.chartPreset.value
+}))
+
+// UI visibility based on view configuration
+const showLogarithmicOption = computed(() => isVisible(currentView.value.ui.logarithmic, currentStateValues.value))
+const showMaximizeOption = computed(() => isVisible(currentView.value.ui.maximize, currentStateValues.value))
+const showPercentageOption = computed(() => isVisible(currentView.value.ui.percentage, currentStateValues.value))
+const showCumulativeOption = computed(() => isVisible(currentView.value.ui.cumulative, currentStateValues.value))
+const showTotalOption = computed(() => isVisible(currentView.value.ui.showTotal, currentStateValues.value))
+const showPredictionIntervalOption = computed(() => isVisible(currentView.value.ui.predictionInterval, currentStateValues.value))
 
 // Computed values derived from state
 const isPopulationType = computed(() => props.state.type.value === 'population')
@@ -96,20 +140,16 @@ const baselineSliderValue = computed(() => {
       :show-percentage="props.state.showPercentage.value || false"
       :cumulative="props.state.cumulative.value"
       :show-total="props.state.showTotal.value"
-      :show-logarithmic-option="!isMatrixChartStyle && !props.state.isExcess.value"
-      :show-maximize-option="
-        !(props.state.isExcess.value && props.state.chartStyle.value === 'line') && !isMatrixChartStyle
-      "
+      :show-logarithmic-option="showLogarithmicOption"
+      :show-maximize-option="showMaximizeOption"
       :show-maximize-option-disabled="
         props.state.isLogarithmic.value || (props.state.isExcess.value && !props.showTotalOption)
       "
-      :show-percentage-option="props.state.isExcess.value"
-      :show-cumulative-option="props.state.isExcess.value"
-      :show-total-option="props.state.isExcess.value && props.state.chartStyle.value === 'bar'"
+      :show-percentage-option="showPercentageOption"
+      :show-cumulative-option="showCumulativeOption"
+      :show-total-option="showTotalOption"
       :show-total-option-disabled="!props.state.cumulative.value"
-      :show-prediction-interval-option="
-        props.state.showBaseline.value || (props.state.isExcess.value && !isMatrixChartStyle)
-      "
+      :show-prediction-interval-option="showPredictionIntervalOption"
       :show-prediction-interval-option-disabled="props.showPredictionIntervalDisabled"
       :is-matrix-chart-style="isMatrixChartStyle"
       :colors="props.colors"
