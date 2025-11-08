@@ -5,6 +5,7 @@
 import { computed, unref, type MaybeRef } from 'vue'
 import { chartStateToQueryString, type ChartState } from '@/lib/chartState'
 import { types, chartTypes } from '@/model'
+import { inferIsExcessFromFlags } from '@/lib/state/viewHelpers'
 import countries from 'i18n-iso-countries'
 import en from 'i18n-iso-countries/langs/en.json'
 
@@ -46,8 +47,11 @@ export function useChartOgImage(state: MaybeRef<Partial<ChartState>>) {
       countries.getName(code, 'en') || code
     ).join(', ') || 'multiple countries'
 
-    // NOTE: isExcess removed from ChartState - detect from view-specific flags
-    const isExcess = currentState.cumulative || currentState.showPercentage
+    // NOTE: isExcess removed from ChartState - use helper to infer from flags
+    const isExcess = inferIsExcessFromFlags({
+      cumulative: currentState.cumulative,
+      showPercentage: currentState.showPercentage
+    })
     const excess = isExcess ? 'Excess' : ''
     const type = currentState.type || 'mortality'
 

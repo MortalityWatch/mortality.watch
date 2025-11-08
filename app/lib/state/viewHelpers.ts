@@ -134,3 +134,37 @@ export function isChartStyleCompatible(
   if (!viewConfig.compatibleChartStyles) return true
   return viewConfig.compatibleChartStyles.includes(chartStyle as ChartStyle)
 }
+
+/**
+ * Infer if excess mode is active from state flags
+ *
+ * Since isExcess is now a computed property derived from view,
+ * this helper provides a consistent way to determine excess mode
+ * from state flags in contexts where view is not available
+ * (e.g., server-side rendering, data services).
+ *
+ * Logic: Excess mode is active if cumulative OR showPercentage is enabled.
+ * These flags are only available in excess view, so their presence
+ * indicates excess mode.
+ *
+ * @param state - Object with cumulative and showPercentage flags
+ * @returns true if excess mode should be active, false otherwise
+ *
+ * @example
+ * ```typescript
+ * // Server-side: infer excess from ChartState
+ * const isExcess = inferIsExcessFromFlags({
+ *   cumulative: state.cumulative,
+ *   showPercentage: state.showPercentage
+ * })
+ *
+ * // Client-side: prefer using view directly
+ * const isExcess = state.view.value === 'excess'
+ * ```
+ */
+export function inferIsExcessFromFlags(state: {
+  cumulative?: boolean
+  showPercentage?: boolean
+}): boolean {
+  return Boolean(state.cumulative || state.showPercentage)
+}

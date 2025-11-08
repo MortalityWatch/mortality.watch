@@ -416,7 +416,6 @@ describe('useExplorerDataOrchestration', () => {
 
       expect(orchestration.chartOptions.showLogarithmicOption).toBe(false)
     })
-
   })
 
   // ============================================================================

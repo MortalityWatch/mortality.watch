@@ -6,6 +6,7 @@ import { getFilteredChartData } from '../../app/lib/chart/filtering'
 import { getChartColors } from '../../app/colors'
 import { decompress, base64ToArrayBuffer } from '../../app/lib/compression/compress.node'
 import { makeChartConfig } from '../../app/lib/chart/chartConfig'
+import { inferIsExcessFromFlags } from '../../app/lib/state/viewHelpers'
 import type { ChartStyle } from '../../app/lib/chart/chartTypes'
 
 /**
@@ -197,9 +198,11 @@ export async function transformChartData(
   const isPopulationType = state.type === 'population'
   const isLE = state.type === 'le'
 
-  // NOTE: isExcess removed from ChartState - detect from view-specific state flags
-  // Cumulative is only available in excess view, so if cumulative is enabled, it's excess mode
-  const isExcess = Boolean(state.cumulative || state.showPercentage)
+  // NOTE: isExcess removed from ChartState - use helper to infer from flags
+  const isExcess = inferIsExcessFromFlags({
+    cumulative: state.cumulative,
+    showPercentage: state.showPercentage
+  })
 
   const chartData = await getFilteredChartData(
     state.countries,
@@ -256,8 +259,11 @@ export function generateChartConfig(
   isPopulationType: boolean,
   chartUrl: string
 ) {
-  // NOTE: isExcess removed from ChartState - detect from view-specific state flags
-  const isExcess = Boolean(state.cumulative || state.showPercentage)
+  // NOTE: isExcess removed from ChartState - use helper to infer from flags
+  const isExcess = inferIsExcessFromFlags({
+    cumulative: state.cumulative,
+    showPercentage: state.showPercentage
+  })
 
   const config = makeChartConfig(
     state.chartStyle as ChartStyle,
