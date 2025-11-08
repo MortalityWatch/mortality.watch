@@ -143,7 +143,7 @@ const showInviteCodeCard = computed(() => {
           <UButton
             v-if="inviteCode"
             variant="ghost"
-            color="gray"
+            color="neutral"
             :disabled="applying || validating"
             @click="inviteCode = ''; codeInfo = null"
           >

@@ -169,8 +169,8 @@ async function deactivateCode(code: InviteCode) {
 
     // Update local state
     const index = codes.value.findIndex(c => c.id === code.id)
-    if (index !== -1) {
-      codes.value[index].isActive = false
+    if (index !== -1 && codes.value[index]) {
+      codes.value[index]!.isActive = false
     }
 
     toast.add({

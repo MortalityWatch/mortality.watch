@@ -335,6 +335,9 @@ export async function getCurrentUser(event: H3Event) {
   }
 
   // Return user without password hash
+  if (!user) {
+    return null
+  }
   const { passwordHash: _passwordHash, ...userWithoutPassword } = user
   return userWithoutPassword
 }
