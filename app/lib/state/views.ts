@@ -4,7 +4,7 @@
  * Defines all available view types and their UI/constraint configurations
  */
 
-import type { ViewConfig, ViewType, UIElement } from './viewTypes'
+import type { ViewConfig, ViewType, UIElement, UICondition } from './viewTypes'
 
 /** Helper functions for common UI element patterns */
 const hidden = (): UIElement => ({
@@ -19,7 +19,7 @@ const required = (value: boolean): UIElement => ({
   visibility: { type: 'visible', toggleable: false, value }
 })
 
-const conditional = (when: UIElement['visibility'] extends { type: 'conditional'; when: infer W } ? W : never): UIElement => ({
+const conditional = (when: UICondition): UIElement => ({
   visibility: { type: 'conditional', when }
 })
 
@@ -47,19 +47,19 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       labels: toggleable(),
       cumulative: hidden(),
       percentage: hidden(),
-      showTotal: hidden(),
+      showTotal: hidden()
     },
 
     defaults: {
       chartStyle: 'line',
       showBaseline: false,
-      isLogarithmic: false,
+      isLogarithmic: false
     },
 
     constraints: [
       // Baseline OFF disables PI
       {
-        when: (s) => s.showBaseline === false,
+        when: s => s.showBaseline === false,
         apply: { showPredictionInterval: false },
         reason: 'Prediction intervals require baseline',
         allowUserOverride: false,
@@ -67,7 +67,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       }
     ],
 
-    compatibleMetrics: ['cmr', 'asmr', 'le', 'deaths'],
+    compatibleMetrics: ['cmr', 'asmr', 'le', 'deaths']
   },
 
   /**
@@ -95,7 +95,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
           { field: 'chartStyle', is: 'bar' },
           { field: 'cumulative', is: true }
         ]
-      }),
+      })
     },
 
     defaults: {
@@ -104,7 +104,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       showPredictionInterval: false,
       showPercentage: true,
       cumulative: false,
-      isLogarithmic: false,
+      isLogarithmic: false
     },
 
     constraints: [
@@ -126,7 +126,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       },
       // Cumulative OFF disables showTotal
       {
-        when: (s) => s.cumulative === false,
+        when: s => s.cumulative === false,
         apply: { showTotal: false },
         reason: 'Show total requires cumulative mode',
         allowUserOverride: false,
@@ -134,7 +134,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       }
     ],
 
-    compatibleMetrics: ['cmr', 'asmr', 'deaths'], // no LE, no population
+    compatibleMetrics: ['cmr', 'asmr', 'deaths'] // no LE, no population
   },
 
   /**
@@ -156,13 +156,13 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       percentage: hidden(),
       showTotal: hidden(),
       zScoreThreshold: toggleable(),
-      significanceLevel: toggleable(),
+      significanceLevel: toggleable()
     },
 
     defaults: {
       chartStyle: 'matrix', // force heatmap
       zScoreThreshold: 2.0,
-      significanceLevel: 0.05,
+      significanceLevel: 0.05
     },
 
     constraints: [
@@ -177,6 +177,6 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
     ],
 
     compatibleMetrics: ['cmr'], // maybe only crude
-    compatibleChartStyles: ['matrix'],
-  },
+    compatibleChartStyles: ['matrix']
+  }
 }

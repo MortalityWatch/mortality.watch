@@ -8,7 +8,9 @@ import type {
   ViewType,
   UIElement,
   UICondition,
-  ExplorerStateValues
+  ExplorerStateValues,
+  MetricType,
+  ChartStyle
 } from './viewTypes'
 import { VIEWS } from './views'
 
@@ -113,22 +115,22 @@ export function getCurrentViewConfig(view: ViewType) {
  * Check if a metric is compatible with a view
  */
 export function isMetricCompatible(
-  metric: string,
+  metric: MetricType | string,
   view: ViewType
 ): boolean {
   const viewConfig = VIEWS[view]
   if (!viewConfig.compatibleMetrics) return true
-  return viewConfig.compatibleMetrics.includes(metric as any)
+  return viewConfig.compatibleMetrics.includes(metric as MetricType)
 }
 
 /**
  * Check if a chart style is compatible with a view
  */
 export function isChartStyleCompatible(
-  chartStyle: string,
+  chartStyle: ChartStyle | string,
   view: ViewType
 ): boolean {
   const viewConfig = VIEWS[view]
   if (!viewConfig.compatibleChartStyles) return true
-  return viewConfig.compatibleChartStyles.includes(chartStyle as any)
+  return viewConfig.compatibleChartStyles.includes(chartStyle as ChartStyle)
 }

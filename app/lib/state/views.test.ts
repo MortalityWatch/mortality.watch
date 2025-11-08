@@ -42,10 +42,14 @@ describe('View Configurations', () => {
 
     it('has correct UI visibility rules', () => {
       expect(config.ui.baseline.visibility.type).toBe('visible')
-      expect(config.ui.baseline.visibility.toggleable).toBe(true)
+      if (config.ui.baseline.visibility.type === 'visible') {
+        expect(config.ui.baseline.visibility.toggleable).toBe(true)
+      }
 
       expect(config.ui.logarithmic.visibility.type).toBe('visible')
-      expect(config.ui.logarithmic.visibility.toggleable).toBe(true)
+      if (config.ui.logarithmic.visibility.type === 'visible') {
+        expect(config.ui.logarithmic.visibility.toggleable).toBe(true)
+      }
 
       expect(config.ui.maximize.visibility.type).toBe('visible')
 
@@ -77,9 +81,11 @@ describe('View Configurations', () => {
 
     it('requires baseline to be ON', () => {
       expect(config.ui.baseline.visibility.type).toBe('visible')
-      expect(config.ui.baseline.visibility.toggleable).toBe(false)
-      if (config.ui.baseline.visibility.type === 'visible' && !config.ui.baseline.visibility.toggleable) {
-        expect(config.ui.baseline.visibility.value).toBe(true)
+      if (config.ui.baseline.visibility.type === 'visible') {
+        expect(config.ui.baseline.visibility.toggleable).toBe(false)
+        if (!config.ui.baseline.visibility.toggleable) {
+          expect(config.ui.baseline.visibility.value).toBe(true)
+        }
       }
     })
 
@@ -199,7 +205,7 @@ describe('View Configurations', () => {
     it('mortality is the only default view (null urlParam)', () => {
       const defaultViews = Object.values(VIEWS).filter(v => v.urlParam === null)
       expect(defaultViews.length).toBe(1)
-      expect(defaultViews[0].id).toBe('mortality')
+      expect(defaultViews[0]?.id).toBe('mortality')
     })
 
     it('all views have at least one compatible metric', () => {

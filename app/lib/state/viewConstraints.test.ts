@@ -6,7 +6,6 @@
 
 import { describe, it, expect } from 'vitest'
 import { getViewConstraints } from './viewConstraints'
-import type { ViewType } from './viewTypes'
 
 describe('viewConstraints', () => {
   describe('getViewConstraints', () => {
@@ -49,8 +48,8 @@ describe('viewConstraints', () => {
 
       // Check for a constraint that disables showTotal when cumulative is false
       const totalConstraint = constraints.find(c =>
-        c.apply.showTotal === false &&
-        typeof c.when === 'function'
+        c.apply.showTotal === false
+        && typeof c.when === 'function'
       )
       expect(totalConstraint).toBeDefined()
     })

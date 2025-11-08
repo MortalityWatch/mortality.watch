@@ -18,7 +18,7 @@ import type { ViewType } from './viewTypes'
  * @param params - URL query parameters
  * @returns The detected view type
  */
-export function detectView(params: Record<string, any>): ViewType {
+export function detectView(params: Record<string, unknown>): ViewType {
   // Priority 1: Z-score (most specific)
   if (params.zs === '1') {
     return 'zscore'

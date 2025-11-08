@@ -25,30 +25,30 @@ export type MetricType = 'cmr' | 'asmr' | 'le' | 'deaths' | 'population'
 /**
  * Conditions for conditional visibility
  */
-export type UICondition =
-  | { field: 'chartStyle'; is: ChartStyle }
-  | { field: 'chartStyle'; isNot: ChartStyle }
-  | { field: 'showBaseline'; is: boolean }
-  | { field: 'cumulative'; is: boolean }
-  | { and: UICondition[] }
-  | { or: UICondition[] }
+export type UICondition
+  = | { field: 'chartStyle', is: ChartStyle }
+    | { field: 'chartStyle', isNot: ChartStyle }
+    | { field: 'showBaseline', is: boolean }
+    | { field: 'cumulative', is: boolean }
+    | { and: UICondition[] }
+    | { or: UICondition[] }
 
 /**
  * UI Element Visibility Rules
  */
-export type VisibilityRule =
-  | { type: 'hidden' }                                    // Never rendered
-  | { type: 'visible'; toggleable: true }                 // User can toggle
-  | { type: 'visible'; toggleable: false; value: boolean } // Forced value
-  | { type: 'conditional'; when: UICondition }            // Conditional rendering
+export type VisibilityRule
+  = | { type: 'hidden' } // Never rendered
+    | { type: 'visible', toggleable: true } // User can toggle
+    | { type: 'visible', toggleable: false, value: boolean } // Forced value
+    | { type: 'conditional', when: UICondition } // Conditional rendering
 
 /**
  * Element that can be disabled
  */
-export type DisableableElement =
-  | { disabled: false }
-  | { disabled: true; reason: string }
-  | { disabled: 'conditional'; when: UICondition }
+export type DisableableElement
+  = | { disabled: false }
+    | { disabled: true, reason: string }
+    | { disabled: 'conditional', when: UICondition }
 
 /**
  * Complete UI element configuration
