@@ -82,16 +82,16 @@ export class StateResolver {
       })
     }
 
-    // 2.5. Detect and add view to state (derived from URL params)
+    // 3. Detect and add view to state (derived from URL params)
     const view = detectView(route.query)
     state.view = view
 
-    // 3. Apply constraints (including view-specific constraints)
+    // 4. Apply constraints (including view-specific constraints)
     const constrainedState = this.applyConstraints(state, userOverrides, log)
 
     log.after = { ...constrainedState }
 
-    // 4. Log resolution
+    // 5. Log resolution
     this.logResolution(log, 'INITIAL')
 
     return {
