@@ -81,13 +81,15 @@
     <div class="mb-6 flex flex-col sm:flex-row gap-4">
       <USelectMenu
         v-model="filterFeatured"
-        :options="featuredFilterOptions"
+        :items="featuredFilterOptions"
+        value-key="value"
         placeholder="All charts"
         class="w-full sm:w-48"
       />
       <USelectMenu
         v-model="filterType"
-        :options="typeOptions"
+        :items="typeOptions"
+        value-key="value"
         placeholder="All types"
         class="w-full sm:w-48"
       />
