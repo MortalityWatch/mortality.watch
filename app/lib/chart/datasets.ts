@@ -101,10 +101,11 @@ export const getDatasets = (
   }
 
   if (config.display.view === 'zscore') {
+    const firstAg = ags[0]
     console.log('[datasets] Z-Score view active, checking data structure:', {
       transformConfig,
-      firstAg: ags[0],
-      sampleCountryKeys: data[ags[0]] ? Object.keys(data[ags[0]] || {}).slice(0, 2) : []
+      firstAg,
+      sampleCountryKeys: firstAg && data[firstAg] ? Object.keys(data[firstAg]).slice(0, 2) : []
     })
   }
 
