@@ -1,0 +1,134 @@
+/**
+ * View Helper Functions
+ *
+ * Utility functions for working with view configurations and UI elements
+ */
+
+import type {
+  ViewType,
+  UIElement,
+  UICondition,
+  ExplorerStateValues
+} from './viewTypes'
+import { VIEWS } from './views'
+
+/**
+ * Check if a UI element is visible given current state
+ */
+export function isVisible(
+  element: UIElement,
+  state: ExplorerStateValues
+): boolean {
+  const rule = element.visibility
+
+  switch (rule.type) {
+    case 'hidden':
+      return false
+
+    case 'visible':
+      return true
+
+    case 'conditional':
+      return evaluateCondition(rule.when, state)
+  }
+}
+
+/**
+ * Check if a UI element has a required (forced) value
+ */
+export function isRequired(element: UIElement): boolean {
+  return (
+    element.visibility.type === 'visible'
+    && !element.visibility.toggleable
+  )
+}
+
+/**
+ * Get the default/required value for a UI element
+ */
+export function getDefaultValue(element: UIElement): unknown {
+  if (element.visibility.type === 'visible' && !element.visibility.toggleable) {
+    return element.visibility.value
+  }
+  return undefined
+}
+
+/**
+ * Check if a UI element is disabled given current state
+ */
+export function isDisabled(
+  element: UIElement,
+  state: ExplorerStateValues
+): boolean {
+  if (!element.disabled) return false
+
+  if (element.disabled.disabled === false) return false
+  if (element.disabled.disabled === true) return true
+
+  return evaluateCondition(element.disabled.when, state)
+}
+
+/**
+ * Get the reason why an element is disabled
+ */
+export function getDisabledReason(element: UIElement): string | null {
+  if (element.disabled && element.disabled.disabled === true) {
+    return element.disabled.reason
+  }
+  return null
+}
+
+/**
+ * Evaluate a UI condition against current state
+ */
+export function evaluateCondition(
+  condition: UICondition,
+  state: ExplorerStateValues
+): boolean {
+  if ('field' in condition) {
+    const value = state[condition.field]
+    if ('is' in condition) return value === condition.is
+    if ('isNot' in condition) return value !== condition.isNot
+  }
+
+  if ('and' in condition) {
+    return condition.and.every(c => evaluateCondition(c, state))
+  }
+
+  if ('or' in condition) {
+    return condition.or.some(c => evaluateCondition(c, state))
+  }
+
+  return false
+}
+
+/**
+ * Get the current view configuration
+ */
+export function getCurrentViewConfig(view: ViewType) {
+  return VIEWS[view]
+}
+
+/**
+ * Check if a metric is compatible with a view
+ */
+export function isMetricCompatible(
+  metric: string,
+  view: ViewType
+): boolean {
+  const viewConfig = VIEWS[view]
+  if (!viewConfig.compatibleMetrics) return true
+  return viewConfig.compatibleMetrics.includes(metric as any)
+}
+
+/**
+ * Check if a chart style is compatible with a view
+ */
+export function isChartStyleCompatible(
+  chartStyle: string,
+  view: ViewType
+): boolean {
+  const viewConfig = VIEWS[view]
+  if (!viewConfig.compatibleChartStyles) return true
+  return viewConfig.compatibleChartStyles.includes(chartStyle as any)
+}
