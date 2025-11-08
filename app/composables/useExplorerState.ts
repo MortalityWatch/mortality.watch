@@ -8,6 +8,8 @@ import {
   explorerStateSchema,
   type ExplorerState
 } from '@/model/explorerSchema'
+import { detectView } from '@/lib/state/viewDetector'
+import type { ViewType } from '@/lib/state/viewTypes'
 
 /**
  * Explorer State Management Composable
@@ -172,6 +174,17 @@ export function useExplorerState() {
   const chartHeight = ref<number | undefined>(undefined)
 
   // ============================================================================
+  // VIEW - Derived from URL parameters
+  // ============================================================================
+
+  /**
+   * Current view type, derived from URL params (e, zs, etc.)
+   */
+  const view = computed<ViewType>(() => {
+    return detectView(route.query)
+  })
+
+  // ============================================================================
   // VALIDATION - Gather complete state and validate
   // ============================================================================
 
@@ -334,6 +347,9 @@ export function useExplorerState() {
   }
 
   return {
+    // View (derived from URL)
+    view,
+
     // Core settings
     countries,
     chartType,
