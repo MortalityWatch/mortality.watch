@@ -7,7 +7,8 @@ import { sql } from 'drizzle-orm'
  * Tier 1: Free - Default for new users
  * Tier 2: Pro (PAID)
  */
-export const users = sqliteTable(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const users: any = sqliteTable(
   'users',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
@@ -37,6 +38,7 @@ export const users = sqliteTable(
     }),
     tosAcceptedAt: integer('tos_accepted_at', { mode: 'timestamp' }),
     lastLogin: integer('last_login', { mode: 'timestamp' }),
+    invitedByCodeId: integer('invited_by_code_id').references(() => inviteCodes.id),
     createdAt: integer('created_at', { mode: 'timestamp' })
       .notNull()
       .default(sql`(unixepoch())`),
@@ -228,6 +230,36 @@ export const dataQualityOverrides = sqliteTable(
   })
 )
 
+/**
+ * Invite codes table - stores invite codes for beta access and marketing
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const inviteCodes: any = sqliteTable(
+  'invite_codes',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    code: text('code').notNull().unique(),
+    createdBy: integer('created_by').references(() => users.id),
+    maxUses: integer('max_uses').notNull().default(1),
+    currentUses: integer('current_uses').notNull().default(0),
+    expiresAt: integer('expires_at', { mode: 'timestamp' }),
+    grantsProUntil: integer('grants_pro_until', { mode: 'timestamp' }), // All codes grant Pro (tier 2)
+    notes: text('notes'),
+    isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+    createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`)
+  },
+  table => ({
+    codeIdx: index('idx_invite_codes_code').on(table.code),
+    activeIdx: index('idx_invite_codes_active').on(table.isActive),
+    expiresIdx: index('idx_invite_codes_expires').on(table.expiresAt)
+  })
+)
+
 // Type exports for use in application code
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
@@ -246,3 +278,6 @@ export type NewSession = typeof sessions.$inferInsert
 
 export type DataQualityOverride = typeof dataQualityOverrides.$inferSelect
 export type NewDataQualityOverride = typeof dataQualityOverrides.$inferInsert
+
+export type InviteCode = typeof inviteCodes.$inferSelect
+export type NewInviteCode = typeof inviteCodes.$inferInsert

@@ -302,7 +302,7 @@ export async function getCurrentUser(event: H3Event) {
   }
 
   // Get user from database
-  const user = await db
+  let user = await db
     .select()
     .from(users)
     .where(eq(users.id, payload.userId))
@@ -312,7 +312,32 @@ export async function getCurrentUser(event: H3Event) {
     return null
   }
 
+  // Check and expire trial subscriptions on-demand
+  try {
+    const { checkAndExpireTrialSubscription } = await import('./inviteCode')
+    const wasDowngraded = await checkAndExpireTrialSubscription(user.id)
+
+    // If user was downgraded, fetch fresh user data to get updated tier
+    if (wasDowngraded) {
+      user = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, payload.userId))
+        .get()
+
+      if (!user) {
+        return null
+      }
+    }
+  } catch (error) {
+    // Log error but don't block authentication
+    console.error('Error checking trial expiration:', error)
+  }
+
   // Return user without password hash
+  if (!user) {
+    return null
+  }
   const { passwordHash: _passwordHash, ...userWithoutPassword } = user
   return userWithoutPassword
 }

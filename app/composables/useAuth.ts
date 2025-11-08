@@ -9,7 +9,7 @@ interface UseAuthReturn {
   tier: ComputedRef<0 | 1 | 2>
   loading: Ref<boolean>
   signIn: (email: string, password: string, remember?: boolean) => Promise<void>
-  signUp: (email: string, password: string, firstName: string, lastName: string, tosAccepted: boolean) => Promise<void>
+  signUp: (email: string, password: string, firstName: string, lastName: string, tosAccepted: boolean, inviteCode?: string) => Promise<void>
   signOut: () => Promise<void>
   updateProfile: (data: {
     firstName?: string
@@ -57,16 +57,16 @@ export function useAuth(): UseAuthReturn {
   }
 
   /**
-   * Sign up with email, password, firstName, lastName, and TOS acceptance
+   * Sign up with email, password, firstName, lastName, TOS acceptance, and optional invite code
    */
-  async function signUp(email: string, password: string, firstName: string, lastName: string, tosAccepted: boolean) {
+  async function signUp(email: string, password: string, firstName: string, lastName: string, tosAccepted: boolean, inviteCode?: string) {
     loading.value = true
     try {
       const response = await $fetch<{ success: boolean, user: AuthUser }>(
         '/api/auth/register',
         {
           method: 'POST',
-          body: { email, password, firstName, lastName, tosAccepted }
+          body: { email, password, firstName, lastName, tosAccepted, inviteCode }
         }
       )
       user.value = response.user
