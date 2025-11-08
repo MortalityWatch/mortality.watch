@@ -7,7 +7,8 @@ import { sql } from 'drizzle-orm'
  * Tier 1: Free - Default for new users
  * Tier 2: Pro (PAID)
  */
-export const users: ReturnType<typeof sqliteTable> = sqliteTable(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const users: any = sqliteTable(
   'users',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
@@ -232,7 +233,8 @@ export const dataQualityOverrides = sqliteTable(
 /**
  * Invite codes table - stores invite codes for beta access and marketing
  */
-export const inviteCodes: ReturnType<typeof sqliteTable> = sqliteTable(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const inviteCodes: any = sqliteTable(
   'invite_codes',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
