@@ -48,6 +48,8 @@ export function useChartOgImage(state: MaybeRef<Partial<ChartState>>) {
     ).join(', ') || 'multiple countries'
 
     // NOTE: isExcess removed from ChartState - use helper to infer from flags
+    // We can't use view-based detection here because ChartState (used for OG images)
+    // doesn't include the view property. Instead we infer excess mode from cumulative/showPercentage.
     const isExcess = inferIsExcessFromFlags({
       cumulative: currentState.cumulative,
       showPercentage: currentState.showPercentage

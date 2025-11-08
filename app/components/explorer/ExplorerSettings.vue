@@ -74,6 +74,9 @@ const currentStateValues = computed<ExplorerStateValues>(() => ({
 }))
 
 // UI visibility based on view configuration
+// NOTE: This is a partial implementation - only some UI elements are wired to view config.
+// Complete UI wiring (including disabled states, forced values, etc.) will be implemented
+// in the state library refactor. See docs/state-library-refactor-plan.md for details.
 const showLogarithmicOption = computed(() => isVisible(currentView.value.ui.logarithmic, currentStateValues.value))
 const showMaximizeOption = computed(() => isVisible(currentView.value.ui.maximize, currentStateValues.value))
 const showPercentageOption = computed(() => isVisible(currentView.value.ui.percentage, currentStateValues.value))

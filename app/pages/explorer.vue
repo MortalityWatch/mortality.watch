@@ -302,6 +302,9 @@ const handleStateChange = async (field: string, value: unknown, refreshKey: stri
 
 // Specific handlers for different controls
 // Core chart configuration
+// TODO: This handler bypasses StateResolver and manually manipulates URL.
+// Should be refactored to use StateResolver.resolveViewChange() for proper
+// view transitions with constraint application. See docs/state-library-refactor-plan.md
 // Special handler for excess toggle - manipulates view URL parameter
 const handleExcessChanged = async (v: boolean) => {
   const router = useRouter()

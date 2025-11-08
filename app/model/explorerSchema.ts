@@ -230,10 +230,24 @@ export const explorerStateSchema = explorerStateBaseSchema.superRefine(
       })
     }
 
-    // Note: Most UI/business rules are now enforced by the view system:
-    // - View constraints (views.ts) - UI visibility, required values
-    // - State constraints (constraints.ts) - Cross-field business rules
-    // - This schema focuses on data-level validation only
+    // NOTE: Separation of concerns for validation:
+    //
+    // Zod Schema (this file):
+    // - Data-level validation (types, formats, required fields)
+    // - Prevents invalid data from entering the system
+    // - Runs once on initial load to catch malformed URLs
+    // - Example: "dateFrom must be YYYY format for yearly charts"
+    //
+    // State Constraints (constraints.ts):
+    // - Business rule enforcement (cross-field dependencies)
+    // - Runs on every state change to maintain consistency
+    // - Example: "if baseline is off, then prediction interval must be off"
+    //
+    // View System (views.ts):
+    // - UI visibility and defaults per view
+    // - Example: "excess view hides logarithmic option"
+    //
+    // This schema focuses ONLY on data-level validation to catch malformed URLs early.
   }
 )
 
