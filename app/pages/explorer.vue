@@ -301,7 +301,26 @@ const handleStateChange = async (field: string, value: unknown, refreshKey: stri
 
 // Specific handlers for different controls
 // Core chart configuration
-const handleExcessChanged = (v: boolean) => handleStateChange('isExcess', v, '_isExcess')
+// Special handler for excess toggle - manipulates view URL parameter
+const handleExcessChanged = async (v: boolean) => {
+  const router = useRouter()
+  const route = useRoute()
+  const currentQuery = { ...route.query }
+
+  if (v) {
+    // Enable excess view: add e=1 to URL
+    currentQuery.e = '1'
+  } else {
+    // Disable excess view: remove e from URL
+    delete currentQuery.e
+  }
+
+  // Navigate with updated query params
+  await router.push({ path: route.path, query: currentQuery })
+
+  // Trigger chart refresh
+  await update('_isExcess')
+}
 const handleBaselineChanged = (v: boolean) => handleStateChange('showBaseline', v, '_showBaseline')
 const handlePredictionIntervalChanged = (v: boolean) => handleStateChange('showPredictionInterval', v, '_showPredictionInterval')
 const handleTypeChanged = (v: string) => handleStateChange('type', v, '_type')
