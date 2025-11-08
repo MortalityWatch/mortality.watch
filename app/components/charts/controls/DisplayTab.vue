@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-const { can, tier } = useFeatureAccess()
-
 const props = defineProps<{
   // Boolean switches
   isExcess: boolean
