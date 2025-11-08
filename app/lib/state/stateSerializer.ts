@@ -23,7 +23,6 @@ export const decodeString = (str: string | undefined): string | undefined => {
 export const Defaults = {
   countries: ['USA', 'SWE'],
   type: 'asmr',
-  isExcess: false,
   chartType: 'fluseason',
   chartStyle: 'line',
   dateFrom: undefined as string | undefined, // undefined = use default range
@@ -56,7 +55,7 @@ export const stateFieldEncoders = {
   countries: { key: 'c' },
   type: { key: 't' },
   chartType: { key: 'ct' },
-  isExcess: { key: 'e', encode: encodeBool, decode: decodeBool },
+  // Note: 'e' param now handled by view system (see viewDetector.ts)
   chartStyle: { key: 'cs' },
   dateFrom: { key: 'df' },
   dateTo: { key: 'dt' },

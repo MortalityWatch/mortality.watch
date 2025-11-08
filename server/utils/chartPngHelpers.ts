@@ -6,6 +6,7 @@ import { getFilteredChartData } from '../../app/lib/chart/filtering'
 import { getChartColors } from '../../app/colors'
 import { decompress, base64ToArrayBuffer } from '../../app/lib/compression/compress.node'
 import { makeChartConfig } from '../../app/lib/chart/chartConfig'
+import { inferIsExcessFromFlags } from '../../app/lib/state/viewHelpers'
 import type { ChartStyle } from '../../app/lib/chart/chartTypes'
 
 /**
@@ -197,12 +198,18 @@ export async function transformChartData(
   const isPopulationType = state.type === 'population'
   const isLE = state.type === 'le'
 
+  // NOTE: isExcess removed from ChartState - use helper to infer from flags
+  const isExcess = inferIsExcessFromFlags({
+    cumulative: state.cumulative,
+    showPercentage: state.showPercentage
+  })
+
   const chartData = await getFilteredChartData(
     state.countries,
     state.standardPopulation,
     state.ageGroups,
     state.showPredictionInterval,
-    state.isExcess,
+    isExcess,
     state.type,
     state.cumulative,
     state.showBaseline,
@@ -252,11 +259,17 @@ export function generateChartConfig(
   isPopulationType: boolean,
   chartUrl: string
 ) {
+  // NOTE: isExcess removed from ChartState - use helper to infer from flags
+  const isExcess = inferIsExcessFromFlags({
+    cumulative: state.cumulative,
+    showPercentage: state.showPercentage
+  })
+
   const config = makeChartConfig(
     state.chartStyle as ChartStyle,
     chartData as unknown as Array<Record<string, unknown>>,
     isDeathsType,
-    state.isExcess,
+    isExcess,
     isLE,
     isPopulationType,
     state.showLabels,

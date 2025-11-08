@@ -275,21 +275,11 @@ describe('useExplorerDataOrchestration', () => {
   // ============================================================================
 
   describe('configureOptions', () => {
-    it('should show total option for excess + bar chart', () => {
-      const orchestration = useExplorerDataOrchestration(
-        mockState,
-        mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
-      )
-
-      mockState.isExcess.value = true
-      mockHelpers.isBarChartStyle = vi.fn(() => true)
-
-      orchestration.configureOptions()
-
-      expect(orchestration.chartOptions.showTotalOption).toBe(true)
-    })
+    // NOTE: Excess-mode specific option visibility tests removed in Phase 4
+    // These are now covered by view system tests in app/lib/state/views.test.ts:
+    // - Excess view: cumulative/percentage visible, logarithmic hidden
+    // - Mortality view: logarithmic visible, cumulative/percentage hidden
+    // See PR #184 for migration details
 
     it('should hide total option for non-excess mode', () => {
       const orchestration = useExplorerDataOrchestration(
@@ -298,8 +288,6 @@ describe('useExplorerDataOrchestration', () => {
         mockAllCountries,
         mockDisplayColors
       )
-
-      mockState.isExcess.value = false
 
       orchestration.configureOptions()
 
@@ -314,29 +302,12 @@ describe('useExplorerDataOrchestration', () => {
         mockDisplayColors
       )
 
-      mockState.isExcess.value = true
       mockState.cumulative.value = false
       mockHelpers.isBarChartStyle = vi.fn(() => true)
 
       orchestration.configureOptions()
 
       expect(orchestration.chartOptions.showTotalOptionDisabled).toBe(true)
-    })
-
-    it('should hide maximize option for excess + line chart', () => {
-      const orchestration = useExplorerDataOrchestration(
-        mockState,
-        mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
-      )
-
-      mockState.isExcess.value = true
-      mockHelpers.isLineChartStyle = vi.fn(() => true)
-
-      orchestration.configureOptions()
-
-      expect(orchestration.chartOptions.showMaximizeOption).toBe(false)
     })
 
     it('should hide maximize option for matrix chart', () => {
@@ -424,42 +395,11 @@ describe('useExplorerDataOrchestration', () => {
         mockDisplayColors
       )
 
-      mockState.isExcess.value = false
       mockState.showBaseline.value = false
 
       orchestration.configureOptions()
 
       expect(orchestration.chartOptions.showPredictionIntervalOptionDisabled).toBe(true)
-    })
-
-    it('should show cumulative option for excess mode', () => {
-      const orchestration = useExplorerDataOrchestration(
-        mockState,
-        mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
-      )
-
-      mockState.isExcess.value = true
-
-      orchestration.configureOptions()
-
-      expect(orchestration.chartOptions.showCumulativeOption).toBe(true)
-    })
-
-    it('should show percentage option for excess mode', () => {
-      const orchestration = useExplorerDataOrchestration(
-        mockState,
-        mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
-      )
-
-      mockState.isExcess.value = true
-
-      orchestration.configureOptions()
-
-      expect(orchestration.chartOptions.showPercentageOption).toBe(true)
     })
 
     it('should hide logarithmic option for matrix chart', () => {
@@ -471,21 +411,6 @@ describe('useExplorerDataOrchestration', () => {
       )
 
       mockHelpers.isMatrixChartStyle = vi.fn(() => true)
-
-      orchestration.configureOptions()
-
-      expect(orchestration.chartOptions.showLogarithmicOption).toBe(false)
-    })
-
-    it('should hide logarithmic option for excess mode', () => {
-      const orchestration = useExplorerDataOrchestration(
-        mockState,
-        mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
-      )
-
-      mockState.isExcess.value = true
 
       orchestration.configureOptions()
 

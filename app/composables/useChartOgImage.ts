@@ -5,6 +5,7 @@
 import { computed, unref, type MaybeRef } from 'vue'
 import { chartStateToQueryString, type ChartState } from '@/lib/chartState'
 import { types, chartTypes } from '@/model'
+import { inferIsExcessFromFlags } from '@/lib/state/viewHelpers'
 import countries from 'i18n-iso-countries'
 import en from 'i18n-iso-countries/langs/en.json'
 
@@ -46,7 +47,14 @@ export function useChartOgImage(state: MaybeRef<Partial<ChartState>>) {
       countries.getName(code, 'en') || code
     ).join(', ') || 'multiple countries'
 
-    const excess = currentState.isExcess ? 'Excess' : ''
+    // NOTE: isExcess removed from ChartState - use helper to infer from flags
+    // We can't use view-based detection here because ChartState (used for OG images)
+    // doesn't include the view property. Instead we infer excess mode from cumulative/showPercentage.
+    const isExcess = inferIsExcessFromFlags({
+      cumulative: currentState.cumulative,
+      showPercentage: currentState.showPercentage
+    })
+    const excess = isExcess ? 'Excess' : ''
     const type = currentState.type || 'mortality'
 
     return `${excess} ${type} data for ${countryNames}. Interactive charts and analysis from MortalityWatch.`
