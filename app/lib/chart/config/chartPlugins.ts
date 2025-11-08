@@ -127,12 +127,12 @@ export function createDatalabelsConfig(
 
 /**
  * Create Z-score reference lines annotation config
- * Shows reference lines at -3, -2, 0, +2, +3 standard deviations
+ * Shows reference lines at -2, 0, +2, +4 standard deviations (EuroMOMO style)
  */
 export function createZScoreAnnotations(isDark?: boolean) {
   const lineColor = (sigma: number) => {
-    // Red for ±3σ, Yellow for ±2σ, Gray for 0
-    if (Math.abs(sigma) === 3) return isDark ? '#ef4444' : '#dc2626' // red
+    // Red for +4σ, Yellow for ±2σ, Gray for 0
+    if (sigma === 4) return isDark ? '#ef4444' : '#dc2626' // red
     if (Math.abs(sigma) === 2) return isDark ? '#eab308' : '#ca8a04' // yellow
     return isDark ? '#6b7280' : '#9ca3af' // gray
   }
@@ -158,8 +158,8 @@ export function createZScoreAnnotations(isDark?: boolean) {
     }
   }> = {}
 
-  // Create annotations for -3, -2, 0, +2, +3
-  const sigmaValues = [-3, -2, 0, 2, 3]
+  // Create annotations for -2, 0, +2, +4 (EuroMOMO style)
+  const sigmaValues = [-2, 0, 2, 4]
   sigmaValues.forEach((sigma) => {
     const key = `zscore_${sigma}`
     annotations[key] = {

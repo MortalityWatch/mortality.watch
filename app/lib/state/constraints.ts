@@ -30,6 +30,7 @@ export const DEFAULT_VALUES: Record<string, unknown> = {
   cumulative: false,
   showPercentage: false,
   showTotal: false,
+  showZScores: false,
   maximize: false,
   isLogarithmic: false,
   showLabels: true,
@@ -133,6 +134,23 @@ const cumulativeOffConstraints: StateConstraint = {
   priority: 1
 }
 
+/**
+ * Z-scores constraints
+ * Z-scores are incompatible with excess mode, percentage, and baseline display
+ */
+const zScoresConstraints: StateConstraint = {
+  when: state => state.showZScores === true,
+  apply: {
+    isExcess: false,
+    showPercentage: false,
+    cumulative: false,
+    showBaseline: false  // Hide baseline line when showing z-scores
+  },
+  reason: 'Z-scores are incompatible with excess mode, percentage, and baseline display',
+  allowUserOverride: false,
+  priority: 2
+}
+
 // ============================================================================
 // CONSTRAINT REGISTRY
 // ============================================================================
@@ -147,6 +165,7 @@ export const STATE_CONSTRAINTS: StateConstraint[] = [
   populationTypeConstraints,
   asmrLeTypeConstraints,
   matrixStyleConstraints,
+  zScoresConstraints,
 
   // Priority 1: Normal business rules
   baselineOffConstraints,

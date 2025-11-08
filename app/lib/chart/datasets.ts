@@ -100,6 +100,14 @@ export const getDatasets = (
     showZScores: config.display.showZScores
   }
 
+  if (config.display.showZScores) {
+    console.log('[datasets] Z-Scores enabled, checking data structure:', {
+      transformConfig,
+      firstAg: ags[0],
+      sampleCountryKeys: data[ags[0]] ? Object.keys(data[ags[0]] || {}).slice(0, 2) : []
+    })
+  }
+
   for (const ag of ags) {
     const agData = data[ag]
     if (!agData) continue
@@ -107,6 +115,19 @@ export const getDatasets = (
       const ds = agData[iso3c]
       if (!ds) continue
       const dsRecord: Record<string, unknown[]> = ds
+
+      if (config.display.showZScores && iso3c === Object.keys(agData)[0]) {
+        const allKeys = Object.keys(dsRecord)
+        const zscoreKeys = allKeys.filter(k => k.includes('zscore'))
+        console.log('[datasets] First country data keys:', {
+          total: allKeys.length,
+          allKeys,
+          zscoreKeys,
+          hasZscoreData: zscoreKeys.length > 0,
+          asmrWhoZscore: dsRecord.asmr_who_zscore,
+          asmrWho: dsRecord.asmr_who
+        })
+      }
       const keys = getKeyForType(
         config.chart.type,
         config.display.showBaseline,

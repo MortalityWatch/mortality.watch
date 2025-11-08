@@ -68,6 +68,7 @@ export const stateFieldEncoders = {
   baselineMethod: { key: 'bm' },
   cumulative: { key: 'ce', encode: encodeBool, decode: decodeBool },
   showTotal: { key: 'st', encode: encodeBool, decode: decodeBool },
+  showZScores: { key: 'zs', encode: encodeBool, decode: decodeBool },
   maximize: { key: 'm', encode: encodeBool, decode: decodeBool },
   showPredictionInterval: { key: 'pi', encode: encodeBool, decode: decodeBool },
   showLabels: { key: 'sl', encode: encodeBool, decode: decodeBool },

@@ -48,7 +48,7 @@ export const stringKeys = [
 type Metric = 'deaths' | 'cmr' | 'asmr_who' | 'asmr_esp' | 'asmr_usa' | 'asmr_country' | 'le'
 
 // Generate metric field combinations
-// Each metric has: base + (baseline|excess) + optional (lower|upper)
+// Each metric has: base + (baseline|excess) + optional (lower|upper) + zscore
 type MetricField
   = | Metric // Base metric (e.g., deaths)
     | `${Metric}_baseline` // Baseline (e.g., deaths_baseline)
@@ -57,10 +57,16 @@ type MetricField
     | `${Metric}_excess` // Excess (e.g., deaths_excess)
     | `${Metric}_excess_lower` // Excess lower bound
     | `${Metric}_excess_upper` // Excess upper bound
+    | `${Metric}_zscore` // Z-score (e.g., deaths_zscore)
+
+// Computed fields that are added during processing (optional)
+type ComputedMetricField = `${Metric}_zscore`
 
 // NumberEntryFields includes all auto-generated metric fields plus population
 export type NumberEntryFields = {
-  [K in MetricField]: NumberArray
+  [K in Exclude<MetricField, ComputedMetricField>]: NumberArray
+} & {
+  [K in ComputedMetricField]?: NumberArray // Z-scores are computed, so optional
 } & {
   population: NumberArray // Special case: population doesn't follow the metric pattern
 }
@@ -90,6 +96,8 @@ for (const metric of metrics) {
   metricFields.push(`${metric}_excess` as MetricField)
   metricFields.push(`${metric}_excess_lower` as MetricField)
   metricFields.push(`${metric}_excess_upper` as MetricField)
+  // Z-score variant
+  metricFields.push(`${metric}_zscore` as MetricField)
 }
 
 // numberKeys includes population plus all auto-generated metric fields

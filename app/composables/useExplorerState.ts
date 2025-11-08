@@ -134,8 +134,10 @@ export function useExplorerState() {
     stateFieldEncoders.isLogarithmic.decode
   )
   const showZScores = useUrlState<boolean>(
-    'showZScores',
-    false
+    stateFieldEncoders.showZScores.key,
+    false,
+    stateFieldEncoders.showZScores.encode,
+    stateFieldEncoders.showZScores.decode
   )
 
   // URL State - Chart Appearance

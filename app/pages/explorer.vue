@@ -428,6 +428,27 @@ const handleDecimalsChanged = async (v: string) => {
   await StateResolver.applyResolvedState(resolved, route, router)
 }
 
+const handleShowZScoresChanged = async (v: boolean) => {
+  // Directly update the state value
+  state.showZScores.value = v
+
+  // Also update via StateResolver for URL sync
+  const { StateResolver } = await import('@/lib/state/StateResolver')
+  const router = useRouter()
+  const route = useRoute()
+
+  const resolved = StateResolver.resolveChange(
+    { field: 'showZScores', value: v, source: 'user' },
+    state.getCurrentStateValues(),
+    state.getUserOverrides()
+  )
+
+  await StateResolver.applyResolvedState(resolved, route, router)
+  // Trigger data refresh since Z-scores require re-fetching with baseline data
+  console.log('[explorer] Triggering chart update for z-scores, showZScores:', state.showZScores.value)
+  update('zscores')
+}
+
 // Watch for date range changes from URL/slider and trigger chart update
 watch([() => state.dateFrom.value, () => state.dateTo.value], () => {
   if (isDataLoaded.value) {
@@ -678,6 +699,7 @@ watch(
             @show-qr-code-changed="handleShowQrCodeChanged"
             @show-caption-changed="handleShowCaptionChanged"
             @decimals-changed="handleDecimalsChanged"
+            @show-z-scores-changed="handleShowZScoresChanged"
           />
 
           <ChartActions

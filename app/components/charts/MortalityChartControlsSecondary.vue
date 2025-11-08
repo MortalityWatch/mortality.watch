@@ -52,6 +52,8 @@ const props = defineProps<{
   showQrCode: boolean
   showCaption: boolean
   decimals: string
+  showZScores?: boolean
+  showZScoresOption?: boolean
 }>()
 
 // Emits
@@ -78,6 +80,7 @@ const emit = defineEmits<{
   showQrCodeChanged: [value: boolean]
   showCaptionChanged: [value: boolean]
   decimalsChanged: [value: string]
+  showZScoresChanged: [value: boolean]
 }>()
 
 // Initialize chart UI state configuration
@@ -240,6 +243,11 @@ const selectedDecimals = computed({
   set: (v: { name: string, value: string, label: string }) => emit('decimalsChanged', v.value)
 })
 
+const showZScores = computed({
+  get: () => props.showZScores || false,
+  set: (v: boolean) => emit('showZScoresChanged', v)
+})
+
 const baselineSliderChanged = (values: string[]) => {
   emit('baselineSliderValueChanged', values)
 }
@@ -335,6 +343,7 @@ const activeTab = ref('data')
         :show-percentage="props.showPercentage || false"
         :cumulative="props.cumulative"
         :show-total="props.showTotal"
+        :show-z-scores="props.showZScores || false"
         :is-population-type="props.isPopulationType"
         :show-baseline-option="showBaselineOption"
         :show-prediction-interval-option-disabled="props.showPredictionIntervalOptionDisabled"
@@ -346,6 +355,7 @@ const activeTab = ref('data')
         :show-percentage-option="props.showPercentageOption"
         :show-cumulative-option="props.showCumulativeOption"
         :show-total-option="props.showTotalOption"
+        :show-z-scores-option="props.showZScoresOption"
         :chart-preset="chartPreset"
         :chart-preset-options="chartPresetOptions"
         @update:is-excess="isExcess = $event"
@@ -356,6 +366,7 @@ const activeTab = ref('data')
         @update:show-percentage="showPercentage = $event"
         @update:cumulative="cumulative = $event"
         @update:show-total="showTotal = $event"
+        @update:show-z-scores="showZScores = $event"
         @update:chart-preset="chartPreset = $event"
       />
 

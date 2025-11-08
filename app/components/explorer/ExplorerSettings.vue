@@ -38,6 +38,7 @@ const emit = defineEmits<{
   showQrCodeChanged: [value: boolean]
   showCaptionChanged: [value: boolean]
   decimalsChanged: [value: string]
+  showZScoresChanged: [value: boolean]
 }>()
 
 // Get current view configuration
@@ -87,6 +88,11 @@ const showPredictionIntervalOption = computed(() => isVisible(currentView.value.
 // Computed values derived from state
 const isPopulationType = computed(() => props.state.type.value === 'population')
 const isMatrixChartStyle = computed(() => props.state.chartStyle.value === 'matrix')
+
+// Debug z-scores
+watchEffect(() => {
+  console.log('[ExplorerSettings] showZScores:', props.state.showZScores?.value)
+})
 
 // Use user-set baseline dates from URL if available, otherwise use computed defaults
 const baselineSliderValue = computed(() => {
@@ -160,6 +166,8 @@ const baselineSliderValue = computed(() => {
       :show-qr-code="props.state.showQrCode.value"
       :show-caption="props.state.showCaption.value"
       :decimals="props.state.decimals.value"
+      :show-z-scores="props.state.showZScores?.value || false"
+      :show-z-scores-option="props.state.showBaseline.value"
       @type-changed="emit('typeChanged', $event)"
       @chart-type-changed="emit('chartTypeChanged', $event)"
       @chart-style-changed="emit('chartStyleChanged', $event)"
@@ -182,6 +190,7 @@ const baselineSliderValue = computed(() => {
       @show-qr-code-changed="emit('showQrCodeChanged', $event)"
       @show-caption-changed="emit('showCaptionChanged', $event)"
       @decimals-changed="emit('decimalsChanged', $event)"
+      @show-z-scores-changed="emit('showZScoresChanged', $event)"
     />
   </UCard>
 </template>

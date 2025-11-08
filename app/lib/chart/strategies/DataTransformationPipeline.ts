@@ -69,10 +69,27 @@ export class DataTransformationPipeline {
 
     // Z-scores take priority over other transformations
     // Z-scores are pre-calculated by the R stats API and stored as <metric>_zscore
-    if (config.showZScores) {
+    // Only apply to main data, not baseline/PI keys
+    if (config.showZScores && !key.includes('baseline') && !key.includes('_lower') && !key.includes('_upper') && !key.includes('excess')) {
       const zscoreKey = this.zscoreStrategy.getZScoreKey(config.isAsmrType, key)
       const zscoreData = data[zscoreKey] ?? []
-      console.log('[pipeline] Using z-scores:', { key, zscoreKey, hasData: zscoreData.length > 0, sample: zscoreData.slice(0, 5) })
+      const availableKeys = Object.keys(data)
+      console.log('[pipeline] Z-Score Transform:', {
+        key,
+        zscoreKey,
+        hasData: zscoreData.length > 0,
+        dataLength: zscoreData.length,
+        sample: zscoreData.slice(0, 10),
+        fullData: zscoreData,
+        availableKeys,
+        isAsmr: config.isAsmrType,
+        allData: data
+      })
+      if (zscoreData.length > 0) {
+        console.log('[pipeline] ✅ RETURNING Z-SCORE DATA:', zscoreData)
+      } else {
+        console.log('[pipeline] ❌ NO Z-SCORE DATA FOUND for key:', zscoreKey)
+      }
       return zscoreData
     }
 

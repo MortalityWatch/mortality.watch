@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+const { can, tier } = useFeatureAccess()
+
 const props = defineProps<{
   // Boolean switches
   isExcess: boolean
@@ -11,8 +13,6 @@ const props = defineProps<{
   showPercentage: boolean
   cumulative: boolean
   showTotal: boolean
-  showLogo: boolean
-  showQrCode: boolean
   showZScores?: boolean
   // Disabled states
   isPopulationType: boolean
@@ -42,8 +42,6 @@ const emit = defineEmits<{
   'update:showPercentage': [value: boolean]
   'update:cumulative': [value: boolean]
   'update:showTotal': [value: boolean]
-  'update:showLogo': [value: boolean]
-  'update:showQrCode': [value: boolean]
   'update:showZScores': [value: boolean]
   'update:chartPreset': [value: { name: string, value: string, label: string, category: string } | undefined]
 }>()
@@ -89,19 +87,19 @@ const showTotalModel = computed({
   set: v => emit('update:showTotal', v)
 })
 
-const showLogoModel = computed({
-  get: () => props.showLogo,
-  set: v => emit('update:showLogo', v)
-})
-
-const showQrCodeModel = computed({
-  get: () => props.showQrCode,
-  set: v => emit('update:showQrCode', v)
-})
-
 const showZScoresModel = computed({
-  get: () => props.showZScores || false,
-  set: v => emit('update:showZScores', v)
+  get: () => {
+    console.log('[DisplayTab] showZScores getter:', {
+      value: props.showZScores,
+      tier: tier.value,
+      canAccess: can('Z_SCORES')
+    })
+    return props.showZScores || false
+  },
+  set: v => {
+    console.log('[DisplayTab] showZScores setter:', v)
+    emit('update:showZScores', v)
+  }
 })
 
 const chartPresetModel = computed({
@@ -141,26 +139,6 @@ const chartPresetModel = computed({
           :disabled="props.showPredictionIntervalOptionDisabled"
           help-content="95% Prediction Interval shows the range of uncertainty around expected values. Values outside this range are statistically significant."
         />
-
-        <FeatureGate
-          v-if="props.showZScoresOption"
-          feature="Z_SCORES"
-        >
-          <UiSwitchRow
-            v-model="showZScoresModel"
-            label="Z-Scores"
-            help-content="Shows how many standard deviations each value is from the baseline mean. Values beyond ±2 are statistically significant (95% confidence)."
-            feature="Z_SCORES"
-          />
-          <template #disabled>
-            <UiSwitchRow
-              v-model="showZScoresModel"
-              label="Z-Scores"
-              disabled
-              feature="Z_SCORES"
-            />
-          </template>
-        </FeatureGate>
       </div>
     </div>
 
@@ -171,6 +149,38 @@ const chartPresetModel = computed({
         Data Transformation
       </h3>
       <div class="flex flex-wrap gap-4">
+        <FeatureGate
+          v-if="props.showZScoresOption"
+          feature="Z_SCORES"
+        >
+          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+            <label class="text-sm font-medium whitespace-nowrap">
+              Z-Scores
+              <FeatureBadge
+                feature="Z_SCORES"
+                class="ml-2"
+              />
+            </label>
+            <USwitch v-model="showZScoresModel" />
+            <UPopover>
+              <UButton
+                icon="i-lucide-info"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                aria-label="Z-score information"
+              />
+              <template #content>
+                <div class="p-3 space-y-2 max-w-xs">
+                  <div class="text-xs text-gray-700 dark:text-gray-300">
+                    Shows how many standard deviations each value is from the baseline mean. Values beyond ±2 are statistically significant (95% confidence).
+                  </div>
+                </div>
+              </template>
+            </UPopover>
+          </div>
+        </FeatureGate>
+
         <UiSwitchRow
           v-if="props.showPercentageOption"
           v-model="showPercentageModel"
