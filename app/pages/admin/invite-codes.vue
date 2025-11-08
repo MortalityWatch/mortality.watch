@@ -239,13 +239,13 @@ function getCodeStatus(code: InviteCode) {
   return 'Active'
 }
 
-function getStatusColor(status: string) {
+function getStatusColor(status: string): 'success' | 'warning' | 'error' | 'neutral' {
   switch (status) {
     case 'Active': return 'success'
     case 'Full': return 'warning'
     case 'Expired': return 'error'
-    case 'Inactive': return 'gray'
-    default: return 'gray'
+    case 'Inactive': return 'neutral'
+    default: return 'neutral'
   }
 }
 
