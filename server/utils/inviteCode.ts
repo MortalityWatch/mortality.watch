@@ -23,9 +23,9 @@ import type { InviteCode } from '../../db/schema'
  * generateInviteCode()        // Returns: "X4R8-N6Q1"
  */
 export function generateInviteCode(prefix?: string): string {
-  // Generate 8 random characters (4 bytes = 8 hex chars, convert to base36)
+  // Generate 8 random characters (4 bytes to hex, then convert to base36-like)
   const randomPart = randomBytes(4)
-    .toString('base36')
+    .toString('hex')
     .toUpperCase()
     .substring(0, 8)
 
