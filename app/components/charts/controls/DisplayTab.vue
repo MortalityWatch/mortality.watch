@@ -13,7 +13,6 @@ const props = defineProps<{
   showPercentage: boolean
   cumulative: boolean
   showTotal: boolean
-  showZScores?: boolean
   // Disabled states
   isPopulationType: boolean
   showBaselineOption: boolean
@@ -27,7 +26,6 @@ const props = defineProps<{
   showPercentageOption: boolean
   showCumulativeOption: boolean
   showTotalOption: boolean
-  showZScoresOption?: boolean
   // Chart preset
   chartPreset?: { name: string, value: string, label: string, category: string }
   chartPresetOptions: { name: string, value: string, label: string, category: string }[]
@@ -42,7 +40,6 @@ const emit = defineEmits<{
   'update:showPercentage': [value: boolean]
   'update:cumulative': [value: boolean]
   'update:showTotal': [value: boolean]
-  'update:showZScores': [value: boolean]
   'update:chartPreset': [value: { name: string, value: string, label: string, category: string } | undefined]
 }>()
 
@@ -85,21 +82,6 @@ const cumulativeModel = computed({
 const showTotalModel = computed({
   get: () => props.showTotal,
   set: v => emit('update:showTotal', v)
-})
-
-const showZScoresModel = computed({
-  get: () => {
-    console.log('[DisplayTab] showZScores getter:', {
-      value: props.showZScores,
-      tier: tier.value,
-      canAccess: can('Z_SCORES')
-    })
-    return props.showZScores || false
-  },
-  set: v => {
-    console.log('[DisplayTab] showZScores setter:', v)
-    emit('update:showZScores', v)
-  }
 })
 
 const chartPresetModel = computed({
@@ -149,38 +131,6 @@ const chartPresetModel = computed({
         Data Transformation
       </h3>
       <div class="flex flex-wrap gap-4">
-        <FeatureGate
-          v-if="props.showZScoresOption"
-          feature="Z_SCORES"
-        >
-          <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-            <label class="text-sm font-medium whitespace-nowrap">
-              Z-Scores
-              <FeatureBadge
-                feature="Z_SCORES"
-                class="ml-2"
-              />
-            </label>
-            <USwitch v-model="showZScoresModel" />
-            <UPopover>
-              <UButton
-                icon="i-lucide-info"
-                color="neutral"
-                variant="ghost"
-                size="xs"
-                aria-label="Z-score information"
-              />
-              <template #content>
-                <div class="p-3 space-y-2 max-w-xs">
-                  <div class="text-xs text-gray-700 dark:text-gray-300">
-                    Shows how many standard deviations each value is from the baseline mean. Values beyond ±2 are statistically significant (95% confidence).
-                  </div>
-                </div>
-              </template>
-            </UPopover>
-          </div>
-        </FeatureGate>
-
         <UiSwitchRow
           v-if="props.showPercentageOption"
           v-model="showPercentageModel"

@@ -200,7 +200,7 @@ export function createPluginsConfig(
   showQrCode: boolean,
   showLogo: boolean,
   showCaption: boolean = true,
-  showZScores: boolean = false,
+  view: string = 'mortality',
   isDark?: boolean
 ) {
   const basePlugins = {
@@ -247,8 +247,8 @@ export function createPluginsConfig(
     isDarkMode: isDark
   }
 
-  // Add Z-score annotations if enabled
-  if (showZScores) {
+  // Add Z-score annotations if in zscore view
+  if (view === 'zscore') {
     return {
       ...basePlugins,
       annotation: {

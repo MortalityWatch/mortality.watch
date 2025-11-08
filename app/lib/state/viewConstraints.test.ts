@@ -54,16 +54,16 @@ describe('viewConstraints', () => {
       expect(totalConstraint).toBeDefined()
     })
 
-    it('generates constraint for matrix chart in zscore view', () => {
+    it('generates baseline constraint for zscore view', () => {
       const constraints = getViewConstraints('zscore')
 
-      const matrixConstraint = constraints.find(c =>
-        c.apply.chartStyle === 'matrix'
+      const baselineConstraint = constraints.find(c =>
+        c.apply.showBaseline === true
       )
 
-      expect(matrixConstraint).toBeDefined()
-      expect(matrixConstraint?.priority).toBe(2)
-      expect(matrixConstraint?.allowUserOverride).toBe(false)
+      expect(baselineConstraint).toBeDefined()
+      expect(baselineConstraint?.priority).toBe(2)
+      expect(baselineConstraint?.allowUserOverride).toBe(false)
     })
 
     it('hard constraints have priority 2 and no user override', () => {
@@ -123,15 +123,20 @@ describe('viewConstraints', () => {
       expect(piConstraint).toBeDefined()
     })
 
-    it('zscore view has chart style constraint', () => {
+    it('zscore view has baseline and logarithmic constraints', () => {
       const constraints = getViewConstraints('zscore')
 
-      // Z-score should force matrix chart
-      const matrixConstraint = constraints.find(c =>
-        c.apply.chartStyle === 'matrix'
+      // Z-score should require baseline
+      const baselineConstraint = constraints.find(c =>
+        c.apply.showBaseline === true
       )
+      expect(baselineConstraint).toBeDefined()
 
-      expect(matrixConstraint).toBeDefined()
+      // Z-score should disable logarithmic
+      const logConstraint = constraints.find(c =>
+        c.apply.isLogarithmic === false
+      )
+      expect(logConstraint).toBeDefined()
     })
   })
 })

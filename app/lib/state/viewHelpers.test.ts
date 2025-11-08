@@ -350,12 +350,12 @@ describe('viewHelpers', () => {
     })
 
     it('returns true for compatible chart styles', () => {
-      expect(isChartStyleCompatible('matrix', 'zscore')).toBe(true)
+      expect(isChartStyleCompatible('line', 'zscore')).toBe(true)
+      expect(isChartStyleCompatible('bar', 'zscore')).toBe(true)
     })
 
     it('returns false for incompatible chart styles', () => {
-      expect(isChartStyleCompatible('line', 'zscore')).toBe(false)
-      expect(isChartStyleCompatible('bar', 'zscore')).toBe(false)
+      expect(isChartStyleCompatible('matrix', 'zscore')).toBe(false)
     })
   })
 })

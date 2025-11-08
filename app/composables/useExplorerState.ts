@@ -133,12 +133,6 @@ export function useExplorerState() {
     stateFieldEncoders.isLogarithmic.encode,
     stateFieldEncoders.isLogarithmic.decode
   )
-  const showZScores = useUrlState<boolean>(
-    stateFieldEncoders.showZScores.key,
-    false,
-    stateFieldEncoders.showZScores.encode,
-    stateFieldEncoders.showZScores.decode
-  )
 
   // URL State - Chart Appearance
   const userColors = useUrlState<string[] | undefined>(
@@ -215,7 +209,6 @@ export function useExplorerState() {
     maximize: maximize.value,
     showLabels: showLabels.value,
     isLogarithmic: isLogarithmic.value,
-    showZScores: showZScores.value,
     decimals: decimals.value
   }))
 
@@ -336,7 +329,6 @@ export function useExplorerState() {
       showTotal: showTotal.value,
       maximize: maximize.value,
       isLogarithmic: isLogarithmic.value,
-      showZScores: showZScores.value,
       showLabels: showLabels.value,
       baselineMethod: baselineMethod.value,
       baselineDateFrom: baselineDateFrom.value,
@@ -385,7 +377,6 @@ export function useExplorerState() {
     showLabels,
     showPercentage,
     isLogarithmic,
-    showZScores,
 
     // Chart appearance
     userColors,

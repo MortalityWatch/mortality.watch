@@ -15,7 +15,7 @@ interface TransformConfig {
   showTotal: boolean
   showCumPi: boolean
   isAsmrType: boolean
-  showZScores?: boolean
+  view?: string
 }
 
 /**
@@ -70,7 +70,7 @@ export class DataTransformationPipeline {
     // Z-scores take priority over other transformations
     // Z-scores are pre-calculated by the R stats API and stored as <metric>_zscore
     // Only apply to main data, not baseline/PI keys
-    if (config.showZScores && !key.includes('baseline') && !key.includes('_lower') && !key.includes('_upper') && !key.includes('excess')) {
+    if (config.view === 'zscore' && !key.includes('baseline') && !key.includes('_lower') && !key.includes('_upper') && !key.includes('excess')) {
       const zscoreKey = this.zscoreStrategy.getZScoreKey(config.isAsmrType, key)
       const zscoreData = data[zscoreKey] ?? []
       const availableKeys = Object.keys(data)

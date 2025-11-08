@@ -7,6 +7,7 @@ import { getChartColors } from '../../app/colors'
 import { decompress, base64ToArrayBuffer } from '../../app/lib/compression/compress.node'
 import { makeChartConfig } from '../../app/lib/chart/chartConfig'
 import { inferIsExcessFromFlags } from '../../app/lib/state/viewHelpers'
+import { detectView } from '../../app/lib/state/viewDetector'
 import type { ChartStyle } from '../../app/lib/chart/chartTypes'
 
 /**
@@ -178,6 +179,7 @@ export function getDataKey(type: string): string {
  * @param allChartData - Raw chart data
  * @param chartUrl - Chart URL for QR code
  * @param isAsmrType - Whether chart is ASMR type
+ * @param queryParams - Original query parameters for view detection
  * @returns Filtered and formatted chart data
  */
 export async function transformChartData(
@@ -186,7 +188,8 @@ export async function transformChartData(
   allLabels: string[],
   allChartData: AllChartData,
   chartUrl: string,
-  isAsmrType: boolean
+  isAsmrType: boolean,
+  queryParams: Record<string, unknown>
 ) {
   const colors = getChartColors()
 
@@ -203,6 +206,9 @@ export async function transformChartData(
     cumulative: state.cumulative,
     showPercentage: state.showPercentage
   })
+
+  // Detect view from query parameters
+  const view = detectView(queryParams)
 
   const chartData = await getFilteredChartData(
     state.countries,
@@ -234,7 +240,7 @@ export async function transformChartData(
     state.isLogarithmic,
     isPopulationType,
     isDeathsType,
-    state.showZScores ?? false,
+    view,
     allLabels,
     allChartData.data
   )

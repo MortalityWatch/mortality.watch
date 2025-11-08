@@ -96,7 +96,7 @@ export const getChartLabels = (
   baselineDateTo: string,
   showTotal: boolean,
   chartType: string,
-  showZScores?: boolean
+  view?: string
 ): ChartLabels => {
   const title = []
   let subtitle = ''
@@ -114,8 +114,8 @@ export const getChartLabels = (
 
   if (cumulative) title.push('Cumulative')
 
-  // Z-scores override standard labels
-  if (showZScores) {
+  // Z-score view overrides standard labels
+  if (view === 'zscore') {
     title.push('Z-Score Analysis')
     title.push(ag)
     ytitle = 'Z-Score (Standard Deviations)'

@@ -164,6 +164,7 @@ describe('useExplorerDataOrchestration', () => {
       dateTo: ref('2023'),
       sliderStart: ref('2010'),
       chartStyle: ref('line'),
+      view: ref('mortality'),
       isUserSet: vi.fn(() => false)
     } as any
 
@@ -829,7 +830,7 @@ describe('useExplorerDataOrchestration', () => {
         mockState.isLogarithmic.value,
         false, // isPopulationType
         true, // isDeathsType
-        false, // showZScores
+        'mortality', // view
         orchestration.allChartData.labels,
         orchestration.allChartData.data
       )

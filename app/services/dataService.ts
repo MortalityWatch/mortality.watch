@@ -179,7 +179,7 @@ export class DataService {
       props.isLogarithmic,
       helpers.isPopulationType(),
       helpers.isDeathsType(),
-      false, // showZScores - not used in admin/import contexts
+      'mortality', // view - default to mortality in admin/import contexts
       allChartDataLabels,
       allChartDataData
     )

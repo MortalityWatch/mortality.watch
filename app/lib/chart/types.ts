@@ -17,7 +17,7 @@ export interface DataTransformationConfig {
     showCumPi: boolean
     showBaseline: boolean
     showPredictionInterval: boolean
-    showZScores: boolean
+    view: string
   }
 
   /** Chart configuration */
