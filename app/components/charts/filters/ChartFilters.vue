@@ -3,7 +3,7 @@
     <FiltersFilterRow label="Sort By">
       <USelectMenu
         :model-value="selectedSortOption"
-        :options="sortOptions"
+        :items="sortOptions"
         size="sm"
         class="flex-1"
         @update:model-value="handleSortChange"
@@ -13,7 +13,7 @@
     <FiltersFilterRow label="Chart Type">
       <USelectMenu
         :model-value="selectedTypeOption"
-        :options="typeOptions"
+        :items="typeOptions"
         size="sm"
         class="flex-1"
         @update:model-value="handleTypeChange"
@@ -23,7 +23,7 @@
     <FiltersFilterRow label="Featured">
       <USelectMenu
         :model-value="selectedFeaturedOption"
-        :options="featuredOptions"
+        :items="featuredOptions"
         size="sm"
         class="flex-1"
         @update:model-value="handleFeaturedChange"
