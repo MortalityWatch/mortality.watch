@@ -30,7 +30,6 @@
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx scripts/seed-admin.ts",
     "db:reset": "sh scripts/reset-db.sh",
-    "create-invite-code": "tsx scripts/create-invite-code.ts",
     "prepare": "node -e \"try{require('husky')}catch{}\""
   },
   "dependencies": {

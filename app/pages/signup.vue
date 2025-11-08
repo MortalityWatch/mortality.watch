@@ -13,9 +13,41 @@ useSeoMeta({
 
 const { signUp } = useAuth()
 const router = useRouter()
+const route = useRoute()
 const { formError, handleAuthError, clearError } = useAuthError()
 const { withRetry } = useErrorRecovery()
 const tosAccepted = ref(false)
+
+// Invite code handling
+const inviteCode = ref<string | null>(null)
+const inviteCodeValidating = ref(false)
+const inviteCodeInfo = ref<{ valid: boolean; message?: string; grantsProUntil?: Date } | null>(null)
+
+// Check for invite code in URL params
+onMounted(async () => {
+  const code = route.query.code as string | undefined
+  if (code) {
+    inviteCode.value = code
+    await validateInviteCode(code)
+  }
+})
+
+async function validateInviteCode(code: string) {
+  if (!code) return
+
+  inviteCodeValidating.value = true
+  try {
+    const result = await $fetch<{ valid: boolean; message?: string; grantsProUntil?: Date }>('/api/auth/validate-invite-code', {
+      method: 'POST',
+      body: { code }
+    })
+    inviteCodeInfo.value = result
+  } catch (error) {
+    inviteCodeInfo.value = { valid: false, message: 'Invalid invite code' }
+  } finally {
+    inviteCodeValidating.value = false
+  }
+}
 
 const fields = [{
   name: 'email',
@@ -54,7 +86,7 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
   }
 
   try {
-    await withRetry(() => signUp(event.data.email, event.data.password, '', '', tosAccepted.value), {
+    await withRetry(() => signUp(event.data.email, event.data.password, '', '', tosAccepted.value, inviteCode.value || undefined), {
       maxRetries: 3,
       exponentialBackoff: true,
       context: 'signup'
@@ -73,6 +105,27 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
 
 <template>
   <div>
+    <!-- Invite code success message -->
+    <UAlert
+      v-if="inviteCodeInfo?.valid"
+      color="success"
+      variant="soft"
+      :title="inviteCodeInfo.message || 'Valid invite code'"
+      icon="i-lucide-check-circle"
+      class="mb-6"
+    />
+
+    <!-- Invite code error message -->
+    <UAlert
+      v-else-if="inviteCodeInfo && !inviteCodeInfo.valid"
+      color="warning"
+      variant="soft"
+      :title="inviteCodeInfo.message || 'Invalid invite code'"
+      icon="i-lucide-alert-triangle"
+      class="mb-6"
+    />
+
+    <!-- Form error message -->
     <UAlert
       v-if="formError"
       color="error"

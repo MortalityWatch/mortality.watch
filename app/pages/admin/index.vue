@@ -51,6 +51,12 @@ const stats = ref([
 
 const quickActions = [
   {
+    label: 'Invite Codes',
+    icon: 'i-lucide-ticket',
+    to: '/admin/invite-codes',
+    description: 'Manage invite codes and beta access'
+  },
+  {
     label: 'Featured Charts',
     icon: 'i-lucide-star',
     to: '/admin/featured-charts',

@@ -148,6 +148,9 @@ async function exportData() {
       <!-- Subscription -->
       <SubscriptionCard />
 
+      <!-- Invite Code (only shown if not Pro) -->
+      <InviteCodeCard />
+
       <!-- Personal Information -->
       <ProfilePersonalInfo
         :user="user"
