@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const updates: any = { updatedAt: new Date() }
+  const updates: Record<string, unknown> = { updatedAt: new Date() }
 
   if (result.data.isActive !== undefined) {
     updates.isActive = result.data.isActive
@@ -63,7 +63,7 @@ export default defineEventHandler(async (event) => {
       inviteCode: updatedCode,
       message: 'Invite code updated successfully'
     }
-  } catch (error) {
+  } catch {
     throw createError({
       statusCode: 500,
       message: 'Failed to update invite code'

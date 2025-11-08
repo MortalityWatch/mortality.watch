@@ -1,6 +1,6 @@
 import { db, inviteCodes } from '#db'
 import { requireAdmin } from '../../../utils/auth'
-import { desc, eq } from 'drizzle-orm'
+import { desc } from 'drizzle-orm'
 
 /**
  * Admin API: List all invite codes
@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
       inviteCodes: codes,
       total: codes.length
     }
-  } catch (error) {
+  } catch {
     throw createError({
       statusCode: 500,
       message: 'Failed to fetch invite codes'

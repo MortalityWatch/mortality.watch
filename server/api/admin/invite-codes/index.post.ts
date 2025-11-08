@@ -1,6 +1,5 @@
 import { CreateInviteCodeSchema } from '../../../schemas'
 import { db, inviteCodes } from '#db'
-import { generateInviteCode } from '../../../utils/inviteCode'
 import { requireAdmin } from '../../../utils/auth'
 
 /**

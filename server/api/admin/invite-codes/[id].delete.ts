@@ -39,7 +39,7 @@ export default defineEventHandler(async (event) => {
       success: true,
       message: 'Invite code deactivated successfully'
     }
-  } catch (error) {
+  } catch {
     throw createError({
       statusCode: 500,
       message: 'Failed to deactivate invite code'

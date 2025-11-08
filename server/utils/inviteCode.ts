@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto'
 import { db } from './db'
 import { inviteCodes, users, subscriptions } from '../../db/schema'
-import { eq, and, or, lt, gt, sql } from 'drizzle-orm'
+import { eq, and, sql } from 'drizzle-orm'
 import type { InviteCode } from '../../db/schema'
 
 /**
@@ -202,7 +202,7 @@ export async function createTrialSubscription(
 export async function applyInviteCodeToUser(
   userId: number,
   code: string
-): Promise<{ success: boolean; message: string }> {
+): Promise<{ success: boolean, message: string }> {
   // Validate and consume the code
   const inviteCode = await validateAndConsumeInviteCode(code)
 
