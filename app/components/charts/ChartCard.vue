@@ -271,7 +271,9 @@ function getThumbnailUrl() {
       }
     })
 
-    return `/chart.png?${params.toString()}&width=600&height=337`
+    // Use appropriate endpoint based on chart type
+    const endpoint = props.chart.chartType === 'ranking' ? '/ranking.png' : '/chart.png'
+    return `${endpoint}?${params.toString()}&width=600&height=337`
   } catch (err) {
     handleSilentError(err, 'getThumbnailUrl')
     return '/placeholder-chart.png'

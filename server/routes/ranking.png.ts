@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
     const { width, height } = getDimensions(query as Record<string, unknown>)
 
     // Generate cache key from query parameters (including width/height)
-    const cacheKey = generateCacheKey({ ...queryParams, width, height })
+    const cacheKey = generateCacheKey({ ...queryParams, width, height, type: 'ranking' })
 
     // Check filesystem cache first (7-day TTL)
     const cachedBuffer = await getCachedChart(cacheKey)
@@ -45,14 +45,14 @@ export default defineEventHandler(async (event) => {
     const buffer = await chartRenderQueue.enqueue(async () => {
       let browser
       try {
-        // Build the URL for the explorer page with all query params
+        // Build the URL for the ranking page with all query params
         // Always use localhost for screenshots (can't screenshot external URL from server)
         const baseUrl = 'http://localhost:3000'
 
-        // Remove width/height from query params (not part of chart state)
-        const { width: _w, height: _h, ...chartParams } = queryParams
+        // Remove width/height from query params (not part of ranking state)
+        const { width: _w, height: _h, ...rankingParams } = queryParams
         const params = new URLSearchParams()
-        Object.entries(chartParams).forEach(([key, value]) => {
+        Object.entries(rankingParams).forEach(([key, value]) => {
           if (Array.isArray(value)) {
             value.forEach(v => params.append(key, v))
           } else {
@@ -60,9 +60,9 @@ export default defineEventHandler(async (event) => {
           }
         })
 
-        const explorerUrl = `${baseUrl}/explorer?${params.toString()}`
+        const rankingUrl = `${baseUrl}/ranking?${params.toString()}`
 
-        logger.info('Screenshotting explorer page:', { url: explorerUrl })
+        logger.info('Screenshotting ranking page:', { url: rankingUrl })
 
         // Launch headless browser
         browser = await chromium.launch({
@@ -70,23 +70,25 @@ export default defineEventHandler(async (event) => {
           args: ['--no-sandbox', '--disable-setuid-sandbox']
         })
 
+        // Use a very wide viewport to ensure the full table width is captured
+        // Height doesn't matter since we're screenshotting just the table element
         const context = await browser.newContext({
-          viewport: { width, height },
+          viewport: { width: 2400, height: 1600 },
           deviceScaleFactor: 2 // 2x for high-DPI/retina displays
         })
 
         const page = await context.newPage()
 
-        // Navigate to explorer page with tutorial disabled
-        await page.goto(`${explorerUrl}&skipTutorial=1`, {
+        // Navigate to ranking page with tutorial disabled
+        await page.goto(`${rankingUrl}&skipTutorial=1`, {
           waitUntil: 'networkidle',
           timeout: 30000
         })
 
-        // Wait for the chart canvas to load
-        await page.waitForSelector('canvas', { timeout: 10000 })
+        // Wait for the table to load
+        await page.waitForSelector('table', { timeout: 10000 })
 
-        // Hide everything except the chart container
+        // Hide header, navigation, footer, and dev overlays
         await page.addStyleTag({
           content: `
             header { display: none !important; }
@@ -96,16 +98,14 @@ export default defineEventHandler(async (event) => {
             [data-nuxt-devtools] { display: none !important; }
             .nuxt-devtools-overlay { display: none !important; }
             .nuxt-loading-indicator { display: none !important; }
-            /* Hide everything except the chart */
-            body > div:first-child > div:first-child > div:not(:has(canvas)) { display: none !important; }
           `
         })
 
-        // Find the chart container element and take a screenshot
-        const chartContainer = await page.locator('canvas').first()
+        // Find the table element and take a screenshot of just the table
+        const tableElement = await page.locator('table').first()
 
-        // Take screenshot of just the chart canvas
-        const screenshot = await chartContainer.screenshot({
+        // Take screenshot of just the table element (full height)
+        const screenshot = await tableElement.screenshot({
           type: 'png'
         })
 
@@ -116,14 +116,14 @@ export default defineEventHandler(async (event) => {
         if (browser) {
           await browser.close().catch(() => {})
         }
-        logger.error('Error taking explorer screenshot:', screenshotError instanceof Error ? screenshotError : new Error(String(screenshotError)))
+        logger.error('Error taking ranking screenshot:', screenshotError instanceof Error ? screenshotError : new Error(String(screenshotError)))
         throw screenshotError
       }
     })
 
     // Save to filesystem cache (async, non-blocking)
     saveCachedChart(cacheKey, buffer).catch((err) => {
-      logger.error('Failed to save chart screenshot to cache:', err instanceof Error ? err : new Error(String(err)))
+      logger.error('Failed to save ranking screenshot to cache:', err instanceof Error ? err : new Error(String(err)))
     })
 
     // Set response headers with 7-day cache
@@ -131,11 +131,11 @@ export default defineEventHandler(async (event) => {
 
     return buffer
   } catch (error) {
-    logger.error('Error generating chart screenshot:', error instanceof Error ? error : new Error(String(error)))
+    logger.error('Error generating ranking screenshot:', error instanceof Error ? error : new Error(String(error)))
 
     throw createError({
       statusCode: 500,
-      message: `Failed to generate chart screenshot: ${error instanceof Error ? error.message : 'Unknown error'}`
+      message: `Failed to generate ranking screenshot: ${error instanceof Error ? error.message : 'Unknown error'}`
     })
   }
 })

@@ -454,8 +454,10 @@ onMounted(async () => {
   // Setup resize observer for drag resizing (only if not in Auto mode)
   setupResizeObserver()
 
-  // Auto-start tutorial for first-time users
-  autoStartTutorial()
+  // Auto-start tutorial for first-time users (skip if skipTutorial query param is present)
+  if (!route.query.skipTutorial) {
+    autoStartTutorial()
+  }
 })
 
 // Note: Using 'any' type to avoid excessive type recursion with State proxy

@@ -340,8 +340,11 @@ const displaySettings = computed(() => ({
 // Only load data on client-side after mount
 onMounted(() => {
   hasLoaded.value = true
-  // Auto-start tutorial for first-time users
-  autoStartTutorial('ranking')
+  // Auto-start tutorial for first-time users (skip if skipTutorial query param is present)
+  const route = useRoute()
+  if (!route.query.skipTutorial) {
+    autoStartTutorial('ranking')
+  }
 })
 
 // Handle browser back/forward navigation
