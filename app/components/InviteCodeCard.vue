@@ -5,7 +5,7 @@ const toast = useToast()
 const inviteCode = ref('')
 const applying = ref(false)
 const validating = ref(false)
-const codeInfo = ref<{ valid: boolean; message?: string; grantsProUntil?: Date } | null>(null)
+const codeInfo = ref<{ valid: boolean, message?: string, grantsProUntil?: string } | null>(null)
 
 // Clear validation when user changes the code
 watch(inviteCode, () => {
@@ -20,12 +20,12 @@ async function validateCode() {
 
   validating.value = true
   try {
-    const result = await $fetch<{ valid: boolean; message?: string; grantsProUntil?: Date }>('/api/auth/validate-invite-code', {
+    const result = await $fetch<{ valid: boolean, message?: string, grantsProUntil?: string }>('/api/auth/validate-invite-code', {
       method: 'POST',
       body: { code: inviteCode.value.trim() }
     })
     codeInfo.value = result
-  } catch (error) {
+  } catch {
     codeInfo.value = { valid: false, message: 'Invalid invite code' }
   } finally {
     validating.value = false
@@ -44,7 +44,7 @@ async function applyInviteCode() {
 
   applying.value = true
   try {
-    const result = await $fetch<{ success: boolean; message: string }>('/api/user/apply-invite-code', {
+    const result = await $fetch<{ success: boolean, message: string }>('/api/user/apply-invite-code', {
       method: 'POST',
       body: { code: inviteCode.value.trim() }
     })
@@ -63,8 +63,8 @@ async function applyInviteCode() {
       inviteCode.value = ''
       codeInfo.value = null
     }
-  } catch (error: any) {
-    const errorMessage = error.data?.message || error.message || 'Failed to apply invite code'
+  } catch (error: unknown) {
+    const errorMessage = (error as { data?: { message?: string }, message?: string }).data?.message || (error as { message?: string }).message || 'Failed to apply invite code'
     toast.add({
       title: 'Error',
       description: errorMessage,

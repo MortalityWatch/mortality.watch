@@ -41,24 +41,26 @@ const newCode = ref({
 
 const editForm = ref({
   isActive: true,
-  maxUses: 1,
-  notes: ''
+  maxUses: 1
 })
 
-// Filters
-const activeFilter = ref<'all' | 'active' | 'inactive'>('all')
-const searchQuery = ref('')
+// Clear editingCode when modal closes
+watch(showEditModal, (isOpen) => {
+  if (!isOpen) {
+    editingCode.value = null
+  }
+})
 
 // Load invite codes
 async function loadInviteCodes() {
   loading.value = true
   try {
-    const response = await $fetch<{ success: boolean; inviteCodes: InviteCode[]; total: number }>('/api/admin/invite-codes')
+    const response = await $fetch<{ success: boolean, inviteCodes: InviteCode[], total: number }>('/api/admin/invite-codes')
     codes.value = response.inviteCodes
-  } catch (error: any) {
+  } catch (error: unknown) {
     toast.add({
       title: 'Error',
-      description: error.data?.message || 'Failed to load invite codes',
+      description: (error as { data?: { message?: string } }).data?.message || 'Failed to load invite codes',
       color: 'error'
     })
   } finally {
@@ -66,28 +68,8 @@ async function loadInviteCodes() {
   }
 }
 
-// Filtered codes
-const filteredCodes = computed(() => {
-  let filtered = codes.value
-
-  // Active filter
-  if (activeFilter.value === 'active') {
-    filtered = filtered.filter(code => code.isActive)
-  } else if (activeFilter.value === 'inactive') {
-    filtered = filtered.filter(code => !code.isActive)
-  }
-
-  // Search filter
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase()
-    filtered = filtered.filter(code =>
-      code.code.toLowerCase().includes(query) ||
-      code.notes?.toLowerCase().includes(query)
-    )
-  }
-
-  return filtered
-})
+// Display all codes (no filtering)
+const filteredCodes = computed(() => codes.value)
 
 // Create new invite code
 async function createInviteCode() {
@@ -102,13 +84,12 @@ async function createInviteCode() {
 
   creating.value = true
   try {
-    const response = await $fetch<{ success: boolean; inviteCode: InviteCode }>('/api/admin/invite-codes', {
+    const response = await $fetch<{ success: boolean, inviteCode: InviteCode }>('/api/admin/invite-codes', {
       method: 'POST',
       body: {
         code: newCode.value.code.trim().toUpperCase(),
         maxUses: newCode.value.maxUses,
-        grantsProMonths: newCode.value.grantsProMonths,
-        notes: newCode.value.notes || undefined
+        grantsProMonths: newCode.value.grantsProMonths
       }
     })
 
@@ -128,10 +109,10 @@ async function createInviteCode() {
       notes: ''
     }
     showCreateModal.value = false
-  } catch (error: any) {
+  } catch (error: unknown) {
     toast.add({
       title: 'Error',
-      description: error.data?.message || 'Failed to create invite code',
+      description: (error as { data?: { message?: string } }).data?.message || 'Failed to create invite code',
       color: 'error'
     })
   } finally {
@@ -144,12 +125,11 @@ async function updateInviteCode() {
   if (!editingCode.value) return
 
   try {
-    const response = await $fetch<{ success: boolean; inviteCode: InviteCode }>(`/api/admin/invite-codes/${editingCode.value.id}`, {
+    const response = await $fetch<{ success: boolean, inviteCode: InviteCode }>(`/api/admin/invite-codes/${editingCode.value.id}`, {
       method: 'PATCH',
       body: {
         isActive: editForm.value.isActive,
-        maxUses: editForm.value.maxUses,
-        notes: editForm.value.notes || undefined
+        maxUses: editForm.value.maxUses
       }
     })
 
@@ -167,10 +147,10 @@ async function updateInviteCode() {
 
     showEditModal.value = false
     editingCode.value = null
-  } catch (error: any) {
+  } catch (error: unknown) {
     toast.add({
       title: 'Error',
-      description: error.data?.message || 'Failed to update invite code',
+      description: (error as { data?: { message?: string } }).data?.message || 'Failed to update invite code',
       color: 'error'
     })
   }
@@ -198,10 +178,10 @@ async function deactivateCode(code: InviteCode) {
       description: 'Invite code deactivated',
       color: 'success'
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     toast.add({
       title: 'Error',
-      description: error.data?.message || 'Failed to deactivate code',
+      description: (error as { data?: { message?: string } }).data?.message || 'Failed to deactivate code',
       color: 'error'
     })
   }
@@ -212,8 +192,7 @@ function openEditModal(code: InviteCode) {
   editingCode.value = code
   editForm.value = {
     isActive: code.isActive,
-    maxUses: code.maxUses,
-    notes: code.notes || ''
+    maxUses: code.maxUses
   }
   showEditModal.value = true
 }
@@ -229,13 +208,15 @@ function generateRandomCode() {
 // Copy code to clipboard
 async function copyCode(code: string) {
   try {
-    await navigator.clipboard.writeText(`https://mortality.watch/signup?code=${code}`)
+    // Always use current domain to avoid staging/prod URL mismatches
+    const siteUrl = window.location.origin
+    await navigator.clipboard.writeText(`${siteUrl}/signup?code=${code}`)
     toast.add({
       title: 'Copied!',
       description: 'Signup link copied to clipboard',
       color: 'success'
     })
-  } catch (error) {
+  } catch {
     toast.add({
       title: 'Error',
       description: 'Failed to copy to clipboard',
@@ -293,129 +274,106 @@ onMounted(() => {
       </UButton>
     </div>
 
-    <!-- Filters & Search -->
-    <UCard class="mb-6">
-      <div class="flex flex-col sm:flex-row gap-4">
-        <UInput
-          v-model="searchQuery"
-          icon="i-lucide-search"
-          placeholder="Search codes..."
-          class="flex-1"
-        />
-        <USelectMenu
-          v-model="activeFilter"
-          :options="[
-            { label: 'All Codes', value: 'all' },
-            { label: 'Active Only', value: 'active' },
-            { label: 'Inactive Only', value: 'inactive' }
-          ]"
-          value-attribute="value"
-          option-attribute="label"
-        />
-      </div>
-    </UCard>
-
-    <!-- Codes Table -->
-    <UCard>
-      <div v-if="loading" class="py-12 text-center">
+    <!-- Codes List -->
+    <UCard v-if="loading">
+      <div class="py-12 text-center">
         <LoadingSpinner class="mx-auto mb-2" />
         <p class="text-sm text-gray-500 dark:text-gray-400">
           Loading invite codes...
         </p>
       </div>
+    </UCard>
 
-      <div v-else-if="filteredCodes.length === 0" class="py-12 text-center">
-        <UIcon name="i-lucide-inbox" class="w-12 h-12 mx-auto mb-4 text-gray-400" />
+    <UCard v-else-if="filteredCodes.length === 0">
+      <div class="py-12 text-center">
+        <UIcon
+          name="i-lucide-inbox"
+          class="w-12 h-12 mx-auto mb-4 text-gray-400"
+        />
         <p class="text-gray-600 dark:text-gray-400">
-          {{ searchQuery ? 'No codes found matching your search' : 'No invite codes yet' }}
+          No invite codes yet
         </p>
-      </div>
-
-      <div v-else class="overflow-x-auto">
-        <table class="w-full">
-          <thead class="border-b border-gray-200 dark:border-gray-700">
-            <tr>
-              <th class="text-left py-3 px-4 font-medium text-sm text-gray-600 dark:text-gray-400">Code</th>
-              <th class="text-left py-3 px-4 font-medium text-sm text-gray-600 dark:text-gray-400">Status</th>
-              <th class="text-left py-3 px-4 font-medium text-sm text-gray-600 dark:text-gray-400">Uses</th>
-              <th class="text-left py-3 px-4 font-medium text-sm text-gray-600 dark:text-gray-400">Pro Until</th>
-              <th class="text-left py-3 px-4 font-medium text-sm text-gray-600 dark:text-gray-400">Notes</th>
-              <th class="text-right py-3 px-4 font-medium text-sm text-gray-600 dark:text-gray-400">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="code in filteredCodes"
-              :key="code.id"
-              class="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
-            >
-              <td class="py-3 px-4">
-                <div class="flex items-center gap-2">
-                  <code class="font-mono text-sm font-semibold">{{ code.code }}</code>
-                  <UButton
-                    icon="i-lucide-copy"
-                    size="xs"
-                    variant="ghost"
-                    color="gray"
-                    @click="copyCode(code.code)"
-                  />
-                </div>
-              </td>
-              <td class="py-3 px-4">
-                <UBadge
-                  :color="getStatusColor(getCodeStatus(code))"
-                  variant="subtle"
-                >
-                  {{ getCodeStatus(code) }}
-                </UBadge>
-              </td>
-              <td class="py-3 px-4">
-                <span class="text-sm">{{ code.currentUses }} / {{ code.maxUses }}</span>
-              </td>
-              <td class="py-3 px-4">
-                <span class="text-sm">{{ formatDate(code.grantsProUntil) }}</span>
-              </td>
-              <td class="py-3 px-4">
-                <span class="text-sm text-gray-600 dark:text-gray-400">
-                  {{ code.notes || '—' }}
-                </span>
-              </td>
-              <td class="py-3 px-4">
-                <div class="flex items-center justify-end gap-2">
-                  <UButton
-                    icon="i-lucide-pencil"
-                    size="xs"
-                    variant="ghost"
-                    color="gray"
-                    @click="openEditModal(code)"
-                  />
-                  <UButton
-                    v-if="code.isActive"
-                    icon="i-lucide-x"
-                    size="xs"
-                    variant="ghost"
-                    color="error"
-                    @click="deactivateCode(code)"
-                  />
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
       </div>
     </UCard>
 
-    <!-- Create Modal -->
-    <UModal v-model="showCreateModal">
-      <UCard>
-        <template #header>
-          <h3 class="text-lg font-semibold">
-            Create Invite Code
-          </h3>
-        </template>
+    <div
+      v-else
+      class="space-y-4"
+    >
+      <UCard
+        v-for="code in filteredCodes"
+        :key="code.id"
+      >
+        <div class="flex items-center justify-between">
+          <div class="flex-1 space-y-3">
+            <!-- Code -->
+            <div class="flex items-center gap-3">
+              <code class="font-mono text-lg font-semibold">{{ code.code }}</code>
+              <UBadge
+                :color="getStatusColor(getCodeStatus(code))"
+                variant="subtle"
+              >
+                {{ getCodeStatus(code) }}
+              </UBadge>
+            </div>
 
+            <!-- Details -->
+            <div class="flex gap-6 text-sm text-gray-600 dark:text-gray-400">
+              <div>
+                <span class="font-medium">Uses:</span> {{ code.currentUses }} / {{ code.maxUses }}
+              </div>
+              <div>
+                <span class="font-medium">Pro Until:</span> {{ formatDate(code.grantsProUntil) }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex items-center gap-2">
+            <UButton
+              icon="i-lucide-copy"
+              size="sm"
+              variant="ghost"
+              color="neutral"
+              @click="copyCode(code.code)"
+            >
+              Copy Link
+            </UButton>
+            <UButton
+              icon="i-lucide-pencil"
+              size="sm"
+              variant="ghost"
+              color="neutral"
+              @click="openEditModal(code)"
+            >
+              Edit
+            </UButton>
+            <UButton
+              v-if="code.isActive"
+              icon="i-lucide-x"
+              size="sm"
+              variant="ghost"
+              color="error"
+              @click="deactivateCode(code)"
+            >
+              Deactivate
+            </UButton>
+          </div>
+        </div>
+      </UCard>
+    </div>
+
+    <!-- Create Modal -->
+    <UModal
+      v-model:open="showCreateModal"
+      title="Create Invite Code"
+    >
+      <template #body>
         <div class="space-y-4">
-          <UFormField label="Code" required>
+          <UFormField
+            label="Code"
+            required
+          >
             <div class="flex gap-2">
               <UInput
                 v-model="newCode.code"
@@ -432,7 +390,10 @@ onMounted(() => {
             </div>
           </UFormField>
 
-          <UFormField label="Max Uses" required>
+          <UFormField
+            label="Max Uses"
+            required
+          >
             <UInput
               v-model.number="newCode.maxUses"
               type="number"
@@ -440,7 +401,10 @@ onMounted(() => {
             />
           </UFormField>
 
-          <UFormField label="Pro Access Duration" help="How long users get Pro access (in months)">
+          <UFormField
+            label="Pro Access Duration"
+            help="How long users get Pro access (in months)"
+          >
             <UInput
               v-model.number="newCode.grantsProMonths"
               type="number"
@@ -448,46 +412,38 @@ onMounted(() => {
               max="24"
             />
           </UFormField>
-
-          <UFormField label="Notes" help="Internal notes about this code">
-            <UTextarea
-              v-model="newCode.notes"
-              placeholder="e.g., Beta wave 1, Conference promo, etc."
-              rows="2"
-            />
-          </UFormField>
         </div>
+      </template>
 
-        <template #footer>
-          <div class="flex justify-end gap-2">
-            <UButton
-              variant="ghost"
-              color="gray"
-              @click="showCreateModal = false"
-            >
-              Cancel
-            </UButton>
-            <UButton
-              :loading="creating"
-              @click="createInviteCode"
-            >
-              Create Code
-            </UButton>
-          </div>
-        </template>
-      </UCard>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <UButton
+            variant="ghost"
+            color="neutral"
+            @click="showCreateModal = false"
+          >
+            Cancel
+          </UButton>
+          <UButton
+            :loading="creating"
+            @click="createInviteCode"
+          >
+            Create Code
+          </UButton>
+        </div>
+      </template>
     </UModal>
 
     <!-- Edit Modal -->
-    <UModal v-model="showEditModal">
-      <UCard>
-        <template #header>
-          <h3 class="text-lg font-semibold">
-            Edit Invite Code
-          </h3>
-        </template>
-
-        <div v-if="editingCode" class="space-y-4">
+    <UModal
+      v-model:open="showEditModal"
+      title="Edit Invite Code"
+    >
+      <template #body>
+        <div
+          v-if="editingCode"
+          class="space-y-4"
+        >
           <div class="p-3 bg-gray-100 dark:bg-gray-800 rounded">
             <code class="font-mono text-sm font-semibold">{{ editingCode.code }}</code>
           </div>
@@ -506,30 +462,23 @@ onMounted(() => {
               min="1"
             />
           </UFormField>
-
-          <UFormField label="Notes">
-            <UTextarea
-              v-model="editForm.notes"
-              rows="2"
-            />
-          </UFormField>
         </div>
+      </template>
 
-        <template #footer>
-          <div class="flex justify-end gap-2">
-            <UButton
-              variant="ghost"
-              color="gray"
-              @click="showEditModal = false"
-            >
-              Cancel
-            </UButton>
-            <UButton @click="updateInviteCode">
-              Save Changes
-            </UButton>
-          </div>
-        </template>
-      </UCard>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <UButton
+            variant="ghost"
+            color="neutral"
+            @click="showEditModal = false"
+          >
+            Cancel
+          </UButton>
+          <UButton @click="updateInviteCode">
+            Save Changes
+          </UButton>
+        </div>
+      </template>
     </UModal>
   </div>
 </template>

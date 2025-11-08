@@ -21,7 +21,7 @@ const tosAccepted = ref(false)
 // Invite code handling
 const inviteCode = ref<string | null>(null)
 const inviteCodeValidating = ref(false)
-const inviteCodeInfo = ref<{ valid: boolean; message?: string; grantsProUntil?: Date } | null>(null)
+const inviteCodeInfo = ref<{ valid: boolean, message?: string, grantsProUntil?: string } | null>(null)
 
 // Check for invite code in URL params
 onMounted(async () => {
@@ -37,12 +37,12 @@ async function validateInviteCode(code: string) {
 
   inviteCodeValidating.value = true
   try {
-    const result = await $fetch<{ valid: boolean; message?: string; grantsProUntil?: Date }>('/api/auth/validate-invite-code', {
+    const result = await $fetch<{ valid: boolean, message?: string, grantsProUntil?: string }>('/api/auth/validate-invite-code', {
       method: 'POST',
       body: { code }
     })
     inviteCodeInfo.value = result
-  } catch (error) {
+  } catch {
     inviteCodeInfo.value = { valid: false, message: 'Invalid invite code' }
   } finally {
     inviteCodeValidating.value = false
