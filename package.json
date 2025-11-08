@@ -31,7 +31,6 @@
     "db:seed": "tsx scripts/seed-admin.ts",
     "db:reset": "sh scripts/reset-db.sh",
     "create-invite-code": "tsx scripts/create-invite-code.ts",
-    "create-alpha-user": "tsx scripts/create-alpha-user.ts",
     "prepare": "node -e \"try{require('husky')}catch{}\""
   },
   "dependencies": {
