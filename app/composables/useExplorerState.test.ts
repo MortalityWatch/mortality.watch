@@ -63,6 +63,12 @@ vi.mock('@/toast', () => ({
   showToast: vi.fn()
 }))
 
+vi.mock('vue-router', () => ({
+  useRoute: vi.fn(() => ({
+    query: {} // Default empty query - tests can override if needed
+  }))
+}))
+
 describe('useExplorerState', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -153,87 +159,21 @@ describe('useExplorerState', () => {
       expect(current.showBaseline).toBe(true)
     })
 
-    it('should accept valid state (excess requires baseline)', async () => {
-      const state = useExplorerState()
-
-      // Valid state - excess with baseline (excess REQUIRES baseline)
-      state.isExcess.value = true
-      state.showBaseline.value = true
-
-      await nextTick()
-
-      // This is a valid combination
-      expect(state.showBaseline.value).toBe(true)
-      expect(state.isExcess.value).toBe(true)
-      expect(state.errors.value).toHaveLength(0)
-      expect(state.isValid.value).toBe(true)
-    })
-  })
-
-  // ============================================================================
-  // VALIDATION: EXCESS MODE
-  // ============================================================================
-
-  describe('validation: excess mode', () => {
-    it('should allow baseline when excess mode is enabled (excess requires baseline)', async () => {
-      const state = useExplorerState()
-
-      state.showBaseline.value = true
-      state.isExcess.value = true
-
-      await nextTick()
-
-      // This is valid - excess requires baseline to be on
-      expect(state.showBaseline.value).toBe(true)
-      expect(state.isExcess.value).toBe(true)
-      expect(state.isValid.value).toBe(true)
-    })
-
-    it('should detect invalid state when baseline is disabled but excess is on', async () => {
-      const state = useExplorerState()
-
-      state.showBaseline.value = false
-      state.isExcess.value = true
-
-      await nextTick()
-
-      // This is invalid - excess requires baseline
-      expect(state.isValid.value).toBe(false)
-      expect(state.errors.value.length).toBeGreaterThan(0)
-    })
+    // NOTE: Tests for excess mode validation rules removed
+    // These are now handled by the view system and tested in:
+    // - app/lib/state/viewConstraints.test.ts
+    // - app/lib/state/views.test.ts
   })
 
   // ============================================================================
   // VALIDATION: POPULATION TYPE
   // ============================================================================
 
-  describe('validation: population type', () => {
-    it('should detect invalid state when baseline is enabled for population type', async () => {
-      const state = useExplorerState()
-
-      state.showBaseline.value = true
-      state.type.value = 'population'
-
-      await nextTick()
-
-      // This is invalid - population doesn't support baseline
-      expect(state.isValid.value).toBe(false)
-      expect(state.errors.value.length).toBeGreaterThan(0)
-    })
-
-    it('should detect invalid state when excess is enabled for population type', async () => {
-      const state = useExplorerState()
-
-      state.isExcess.value = true
-      state.type.value = 'population'
-
-      await nextTick()
-
-      // This is invalid - population doesn't support excess
-      expect(state.isValid.value).toBe(false)
-      expect(state.errors.value.length).toBeGreaterThan(0)
-    })
-  })
+  // NOTE: Population type validation tests removed
+  // Business rules like "population doesn't support baseline" are now enforced by:
+  // - StateResolver (app/lib/state/StateResolver.ts)
+  // - State constraints (app/lib/state/constraints.ts)
+  // The Zod schema only validates data-level rules (date formats, required fields, etc.)
 
   // ============================================================================
   // VALIDATION: DATE VALIDATION
@@ -370,11 +310,10 @@ describe('useExplorerState', () => {
     it('should toggle boolean flags', () => {
       const state = useExplorerState()
 
-      state.isExcess.value = !state.isExcess.value
+      // NOTE: isExcess is now a computed property (derived from view), so it cannot be toggled directly
       state.cumulative.value = !state.cumulative.value
       state.maximize.value = !state.maximize.value
 
-      expect(state.isExcess.value).toBe(true)
       expect(state.cumulative.value).toBe(true)
       expect(state.maximize.value).toBe(true)
     })
@@ -599,54 +538,10 @@ describe('useExplorerState', () => {
       expect(state.chartType.value).toBe('yearly')
     })
 
-    it('should handle conflicting state changes', async () => {
-      const state = useExplorerState()
-
-      // Enable excess mode (requires baseline)
-      state.isExcess.value = true
-      state.showBaseline.value = true
-
-      await nextTick()
-
-      // StateResolver will ensure this is valid (excess requires baseline)
-      expect(state.showBaseline.value).toBe(true)
-      expect(state.isExcess.value).toBe(true)
-
-      // No validation errors with this combination
-      expect(state.errors.value).toHaveLength(0)
-    })
-  })
-
-  // ============================================================================
-  // ERROR NOTIFICATION
-  // ============================================================================
-
-  describe('error notification', () => {
-    it('should not show duplicate error toasts', async () => {
-      const state = useExplorerState()
-
-      // Set excess mode (baseline is required)
-      state.isExcess.value = true
-      state.showBaseline.value = true
-
-      await nextTick()
-      await nextTick()
-
-      // This is a valid state (excess requires baseline)
-      expect(state.showBaseline.value).toBe(true)
-      expect(state.isExcess.value).toBe(true)
-
-      // No validation errors
-      expect(state.errors.value).toHaveLength(0)
-
-      // Change to a different valid state
-      state.isExcess.value = false
-
-      await nextTick()
-
-      // Still valid
-      expect(state.errors.value).toHaveLength(0)
-    })
+    // NOTE: Tests for excess mode state handling removed
+    // These validation rules are now handled by the view system and tested in:
+    // - app/lib/state/viewConstraints.test.ts
+    // - app/lib/state/views.test.ts
   })
 
   // ============================================================================

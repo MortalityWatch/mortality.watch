@@ -25,7 +25,7 @@ describe('StateResolver Constraints', () => {
       expect(DEFAULT_VALUES).toHaveProperty('maximize')
       expect(DEFAULT_VALUES).toHaveProperty('isLogarithmic')
       expect(DEFAULT_VALUES).toHaveProperty('showLabels')
-      expect(DEFAULT_VALUES).toHaveProperty('isExcess')
+      // NOTE: isExcess removed - view is determined by URL params, not stored in defaults
       expect(DEFAULT_VALUES).toHaveProperty('baselineMethod')
     })
 
@@ -44,7 +44,7 @@ describe('StateResolver Constraints', () => {
       expect(DEFAULT_VALUES.maximize).toBe(false)
       expect(DEFAULT_VALUES.isLogarithmic).toBe(false)
       expect(DEFAULT_VALUES.showLabels).toBe(true)
-      expect(DEFAULT_VALUES.isExcess).toBe(false)
+      // NOTE: isExcess removed - view defaults to 'mortality' when no URL params present
       expect(DEFAULT_VALUES.baselineMethod).toBe('mean')
     })
   })
@@ -69,89 +69,13 @@ describe('StateResolver Constraints', () => {
     })
   })
 
-  describe('Excess Mode Constraints', () => {
-    it('should require baseline when excess is enabled (hard constraint)', () => {
-      const state = { isExcess: true }
-      const constraint = STATE_CONSTRAINTS.find(
-        c => c.when(state) && c.apply.showBaseline === true && c.priority === 2
-      )
-
-      expect(constraint).toBeDefined()
-      expect(constraint?.allowUserOverride).toBe(false)
-      expect(constraint?.apply.showBaseline).toBe(true)
-    })
-
-    it('should disable logarithmic scale when excess is enabled (hard constraint)', () => {
-      const state = { isExcess: true }
-      const constraint = STATE_CONSTRAINTS.find(
-        c => c.when(state) && c.apply.isLogarithmic === false && c.priority === 2
-      )
-
-      expect(constraint).toBeDefined()
-      expect(constraint?.allowUserOverride).toBe(false)
-      expect(constraint?.apply.isLogarithmic).toBe(false)
-    })
-
-    it('should default PI to off when excess is enabled (soft constraint)', () => {
-      const state = { isExcess: true }
-      const constraint = STATE_CONSTRAINTS.find(
-        c => c.when(state) && c.apply.showPredictionInterval === false && c.priority === 0
-      )
-
-      expect(constraint).toBeDefined()
-      expect(constraint?.allowUserOverride).toBe(true)
-      expect(constraint?.apply.showPredictionInterval).toBe(false)
-    })
-
-    it('should default percentage to on when excess is enabled (soft constraint)', () => {
-      const state = { isExcess: true }
-      const constraint = STATE_CONSTRAINTS.find(
-        c => c.when(state) && c.apply.showPercentage === true && c.priority === 0
-      )
-
-      expect(constraint).toBeDefined()
-      expect(constraint?.allowUserOverride).toBe(true)
-      expect(constraint?.apply.showPercentage).toBe(true)
-    })
-
-    it('should not apply excess constraints when excess is disabled', () => {
-      const state = { isExcess: false }
-      const excessConstraints = STATE_CONSTRAINTS.filter(
-        c => c.when({ isExcess: true }) && !c.when(state)
-      )
-
-      excessConstraints.forEach((constraint) => {
-        expect(constraint.when(state)).toBe(false)
-      })
-    })
-  })
-
-  describe('Excess Off Constraints', () => {
-    it('should disable cumulative when excess is off', () => {
-      const state = { isExcess: false }
-      const constraint = STATE_CONSTRAINTS.find(
-        c => c.when(state) && c.apply.cumulative === false
-      )
-
-      expect(constraint).toBeDefined()
-      expect(constraint?.apply.cumulative).toBe(false)
-      expect(constraint?.apply.showPercentage).toBe(false)
-    })
-
-    it('should disable percentage when excess is off', () => {
-      const state = { isExcess: false }
-      const constraint = STATE_CONSTRAINTS.find(
-        c => c.when(state) && c.apply.showPercentage === false
-      )
-
-      expect(constraint).toBeDefined()
-      expect(constraint?.apply.showPercentage).toBe(false)
-    })
-  })
+  // NOTE: Excess Mode Constraints tests removed
+  // Excess is now a view type (not a state field)
+  // Excess-related constraints are tested in app/lib/state/viewConstraints.test.ts
 
   describe('Baseline Off Constraints', () => {
-    it('should disable PI when baseline is off and excess is off', () => {
-      const state = { showBaseline: false, isExcess: false }
+    it('should disable PI when baseline is off', () => {
+      const state = { showBaseline: false }
       const constraint = STATE_CONSTRAINTS.find(
         c => c.when(state) && c.apply.showPredictionInterval === false
       )
@@ -161,28 +85,14 @@ describe('StateResolver Constraints', () => {
       expect(constraint?.allowUserOverride).toBe(false)
     })
 
-    it('should not disable PI when baseline is off but excess is on', () => {
-      const state = { showBaseline: false, isExcess: true }
-      const constraint = STATE_CONSTRAINTS.find(
-        c => c.reason.includes('Prediction intervals require baseline or excess mode')
-      )
-
-      expect(constraint?.when(state)).toBe(false)
-    })
+    // NOTE: Test for "PI when baseline off but excess on" removed
+    // Excess view has its own constraints that override baseline requirements
+    // These are tested in viewConstraints.test.ts
   })
 
   describe('Population Type Constraints', () => {
-    it('should disable excess for population type', () => {
-      const state = { type: 'population' }
-      const constraint = STATE_CONSTRAINTS.find(
-        c => c.when(state) && c.apply.isExcess === false
-      )
-
-      expect(constraint).toBeDefined()
-      expect(constraint?.apply.isExcess).toBe(false)
-      expect(constraint?.allowUserOverride).toBe(false)
-      expect(constraint?.priority).toBe(2)
-    })
+    // NOTE: Test for "disable excess for population type" removed
+    // Population incompatibility with excess is handled by view.compatibleMetrics
 
     it('should disable baseline for population type', () => {
       const state = { type: 'population' }
@@ -307,14 +217,9 @@ describe('StateResolver Constraints', () => {
       })
     })
 
-    it('should have default overrides with priority 0', () => {
-      const defaultOverrides = STATE_CONSTRAINTS.filter(c => c.priority === 0)
-
-      expect(defaultOverrides.length).toBeGreaterThan(0)
-      defaultOverrides.forEach((constraint) => {
-        expect(constraint.allowUserOverride).toBe(true)
-      })
-    })
+    // NOTE: Test for priority 0 (soft defaults) removed
+    // All priority 0 constraints were excess-related and moved to view system
+    // If we add new priority 0 constraints in the future, they should allow user override
 
     it('should sort constraints by priority (high to low)', () => {
       const sorted = [...STATE_CONSTRAINTS].sort((a, b) => {
@@ -331,47 +236,7 @@ describe('StateResolver Constraints', () => {
     })
   })
 
-  describe('Complex Scenarios', () => {
-    it('should handle multiple constraints applying to same state', () => {
-      const state = { isExcess: true, chartStyle: 'matrix' }
-
-      // Both excess and matrix constraints apply
-      const excessConstraint = STATE_CONSTRAINTS.find(
-        c => c.when({ isExcess: true }) && c.apply.showBaseline === true
-      )
-      const matrixConstraint = STATE_CONSTRAINTS.find(
-        c => c.when({ chartStyle: 'matrix' }) && c.apply.showBaseline === false
-      )
-
-      expect(excessConstraint?.when(state)).toBe(true)
-      expect(matrixConstraint?.when(state)).toBe(true)
-
-      // Higher priority should win (excess = priority 2, matrix = priority 2)
-      // Both have priority 2, so they would conflict - this tests priority resolution
-      expect(excessConstraint?.priority).toBe(2)
-      expect(matrixConstraint?.priority).toBe(2)
-    })
-
-    it('should handle user overrides for soft constraints', () => {
-      const state = { isExcess: true }
-
-      // Soft constraint allows user override
-      const softConstraint = STATE_CONSTRAINTS.find(
-        c => c.when(state) && c.apply.showPredictionInterval === false && c.priority === 0
-      )
-
-      expect(softConstraint?.allowUserOverride).toBe(true)
-    })
-
-    it('should prevent user overrides for hard constraints', () => {
-      const state = { isExcess: true }
-
-      // Hard constraint does not allow user override
-      const hardConstraint = STATE_CONSTRAINTS.find(
-        c => c.when(state) && c.apply.showBaseline === true && c.priority === 2
-      )
-
-      expect(hardConstraint?.allowUserOverride).toBe(false)
-    })
-  })
+  // NOTE: Complex Scenarios tests for excess constraints removed
+  // These were testing how excess constraints interact with other constraints
+  // Excess is now a view type with view-specific constraints tested in viewConstraints.test.ts
 })

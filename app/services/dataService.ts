@@ -142,12 +142,15 @@ export class DataService {
       showCumPi: () => boolean
     }
   ): Promise<MortalityChartData> {
+    // NOTE: isExcess removed from ExplorerState - detect from view-specific flags
+    const isExcess = props.cumulative || (props.showPercentage ?? false)
+
     return await getFilteredChartData(
       props.countries,
       props.standardPopulation,
       props.ageGroups,
       props.showPredictionInterval,
-      props.isExcess,
+      isExcess,
       props.type,
       props.cumulative,
       props.showBaseline,

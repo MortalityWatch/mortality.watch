@@ -33,7 +33,6 @@ export const DEFAULT_VALUES: Record<string, unknown> = {
   maximize: false,
   isLogarithmic: false,
   showLabels: true,
-  isExcess: false,
 
   // Baseline
   baselineMethod: 'mean',
@@ -59,76 +58,32 @@ export const DEFAULT_VALUES: Record<string, unknown> = {
 // ============================================================================
 
 /**
- * Excess mode hard constraints (priority 2)
- * Cannot be overridden by user
- */
-const excessModeHardConstraints: StateConstraint = {
-  when: state => state.isExcess === true,
-  apply: {
-    showBaseline: true, // MUST be ON (excess needs baseline for calculation)
-    isLogarithmic: false // MUST be off (incompatible with excess)
-  },
-  reason: 'Excess mode requires baseline and disables logarithmic scale',
-  allowUserOverride: false,
-  priority: 2
-}
-
-/**
- * Excess mode default overrides (priority 0)
- * User can override these
- */
-const excessModeDefaults: StateConstraint = {
-  when: state => state.isExcess === true,
-  apply: {
-    showPredictionInterval: false, // DEFAULT off (but user can turn back on)
-    showPercentage: true, // DEFAULT on (but user can turn off)
-    chartStyle: 'bar' // DEFAULT to bar chart (but user can change)
-  },
-  reason: 'Excess mode defaults: PI off, percentage on, bar chart style (user can override)',
-  allowUserOverride: true,
-  priority: 0
-}
-
-/**
- * When excess is disabled, reset excess-only features
- */
-const excessOffConstraints: StateConstraint = {
-  when: state => state.isExcess === false,
-  apply: {
-    cumulative: false,
-    showPercentage: false
-  },
-  reason: 'Cumulative and percentage only available in excess mode',
-  allowUserOverride: false,
-  priority: 1
-}
-
-/**
  * Baseline OFF constraints
- * PI requires baseline to be shown
+ * PI requires baseline to be shown (unless in a view that allows it)
+ * Note: Excess view handles this via view-specific constraints
  */
 const baselineOffConstraints: StateConstraint = {
-  when: state => state.showBaseline === false && state.isExcess === false,
+  when: state => state.showBaseline === false,
   apply: {
     showPredictionInterval: false // PI requires baseline
   },
-  reason: 'Prediction intervals require baseline or excess mode',
+  reason: 'Prediction intervals require baseline',
   allowUserOverride: false,
   priority: 1
 }
 
 /**
  * Population type constraints
- * Population doesn't support excess or baseline
+ * Population doesn't support baseline or prediction intervals
+ * Note: Population is not compatible with excess view (handled by view.compatibleMetrics)
  */
 const populationTypeConstraints: StateConstraint = {
   when: state => state.type === 'population',
   apply: {
-    isExcess: false,
     showBaseline: false,
     showPredictionInterval: false
   },
-  reason: 'Population type does not support excess or baseline',
+  reason: 'Population type does not support baseline or prediction intervals',
   allowUserOverride: false,
   priority: 2
 }
@@ -188,16 +143,12 @@ const cumulativeOffConstraints: StateConstraint = {
  */
 export const STATE_CONSTRAINTS: StateConstraint[] = [
   // Priority 2: Hard constraints (cannot be overridden)
-  excessModeHardConstraints,
+  // Note: Excess-related constraints moved to view-based system (views.ts)
   populationTypeConstraints,
   asmrLeTypeConstraints,
   matrixStyleConstraints,
 
   // Priority 1: Normal business rules
   baselineOffConstraints,
-  cumulativeOffConstraints,
-  excessOffConstraints,
-
-  // Priority 0: Default overrides (user can override)
-  excessModeDefaults
+  cumulativeOffConstraints
 ]

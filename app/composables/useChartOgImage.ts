@@ -46,7 +46,9 @@ export function useChartOgImage(state: MaybeRef<Partial<ChartState>>) {
       countries.getName(code, 'en') || code
     ).join(', ') || 'multiple countries'
 
-    const excess = currentState.isExcess ? 'Excess' : ''
+    // NOTE: isExcess removed from ChartState - detect from view-specific flags
+    const isExcess = currentState.cumulative || currentState.showPercentage
+    const excess = isExcess ? 'Excess' : ''
     const type = currentState.type || 'mortality'
 
     return `${excess} ${type} data for ${countryNames}. Interactive charts and analysis from MortalityWatch.`

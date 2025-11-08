@@ -10,7 +10,8 @@ import { Defaults, stateFieldEncoders } from './state/stateSerializer'
 export interface ChartState {
   countries: string[]
   type: string
-  isExcess: boolean
+  // NOTE: isExcess removed - now handled by view system (see viewDetector.ts)
+  // View is derived from URL params (e=1, zs=1, etc.) not stored in state
   chartType: string
   chartStyle: string
   dateFrom?: string

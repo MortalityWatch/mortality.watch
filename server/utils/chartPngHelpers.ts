@@ -197,12 +197,16 @@ export async function transformChartData(
   const isPopulationType = state.type === 'population'
   const isLE = state.type === 'le'
 
+  // NOTE: isExcess removed from ChartState - detect from view-specific state flags
+  // Cumulative is only available in excess view, so if cumulative is enabled, it's excess mode
+  const isExcess = Boolean(state.cumulative || state.showPercentage)
+
   const chartData = await getFilteredChartData(
     state.countries,
     state.standardPopulation,
     state.ageGroups,
     state.showPredictionInterval,
-    state.isExcess,
+    isExcess,
     state.type,
     state.cumulative,
     state.showBaseline,
@@ -252,11 +256,14 @@ export function generateChartConfig(
   isPopulationType: boolean,
   chartUrl: string
 ) {
+  // NOTE: isExcess removed from ChartState - detect from view-specific state flags
+  const isExcess = Boolean(state.cumulative || state.showPercentage)
+
   const config = makeChartConfig(
     state.chartStyle as ChartStyle,
     chartData as unknown as Array<Record<string, unknown>>,
     isDeathsType,
-    state.isExcess,
+    isExcess,
     isLE,
     isPopulationType,
     state.showLabels,
