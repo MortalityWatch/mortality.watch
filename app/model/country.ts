@@ -124,6 +124,12 @@ export class CountryData {
   le_excess: number | undefined
   le_excess_lower: number | undefined
   le_excess_upper: number | undefined
+  deaths_zscore: number | undefined
+  cmr_zscore: number | undefined
+  asmr_who_zscore: number | undefined
+  asmr_esp_zscore: number | undefined
+  asmr_usa_zscore: number | undefined
+  asmr_country_zscore: number | undefined
 
   constructor(obj: CountryDataRaw, age_group: string, chartType: string) {
     this.iso3c = obj.iso3c
