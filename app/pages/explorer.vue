@@ -21,6 +21,7 @@ import type { ChartType } from '@/model/period'
 import {
   loadCountryMetadata
 } from '@/lib/data'
+import { VIEWS } from '@/lib/state/views'
 import ExplorerDataSelection from '@/components/explorer/ExplorerDataSelection.vue'
 import ExplorerChartContainer from '@/components/explorer/ExplorerChartContainer.vue'
 import ExplorerSettings from '@/components/explorer/ExplorerSettings.vue'
@@ -310,9 +311,25 @@ const handleExcessChanged = async (v: boolean) => {
   if (v) {
     // Enable excess view: add e=1 to URL
     currentQuery.e = '1'
+
+    // Apply excess view defaults to URL
+    const excessDefaults = VIEWS.excess.defaults
+    if (excessDefaults.showPredictionInterval === false) {
+      currentQuery.pi = '0'
+    }
+    if (excessDefaults.showPercentage === true) {
+      currentQuery.p = '1'
+    }
   } else {
     // Disable excess view: remove e from URL
     delete currentQuery.e
+
+    // Reset to mortality view defaults
+    const mortalityDefaults = VIEWS.mortality.defaults
+    if (mortalityDefaults.showPercentage === false) {
+      delete currentQuery.p // Remove percentage parameter
+    }
+    // PI can stay (same default in both views)
   }
 
   // Navigate with updated query params
