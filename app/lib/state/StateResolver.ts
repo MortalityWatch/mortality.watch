@@ -13,6 +13,9 @@ import type { RouteLocationNormalizedLoaded, Router } from 'vue-router'
 import { stateFieldEncoders } from '@/lib/state/stateSerializer'
 import { STATE_CONSTRAINTS, DEFAULT_VALUES } from './constraints'
 import type { StateChange, ResolvedState, StateResolutionLog, StateFieldMetadata } from './types'
+import { detectView } from './viewDetector'
+import { getViewConstraints } from './viewConstraints'
+import type { ViewType } from './viewTypes'
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class StateResolver {
@@ -79,7 +82,11 @@ export class StateResolver {
       })
     }
 
-    // 3. Apply constraints
+    // 2.5. Detect and add view to state (derived from URL params)
+    const view = detectView(route.query)
+    state.view = view
+
+    // 3. Apply constraints (including view-specific constraints)
     const constrainedState = this.applyConstraints(state, userOverrides, log)
 
     log.after = { ...constrainedState }
@@ -185,8 +192,15 @@ export class StateResolver {
   ): Record<string, unknown> {
     const newState = { ...state }
 
+    // Detect view from state (or use default)
+    const view = (state.view as ViewType) || 'mortality'
+    const viewConstraints = getViewConstraints(view)
+
+    // Merge view-specific constraints with global constraints
+    const allConstraints = [...viewConstraints, ...STATE_CONSTRAINTS]
+
     // Sort constraints by priority (high to low)
-    const sortedConstraints = [...STATE_CONSTRAINTS].sort((a, b) => {
+    const sortedConstraints = allConstraints.sort((a, b) => {
       const priorityA = a.priority ?? 1
       const priorityB = b.priority ?? 1
       return priorityB - priorityA // Descending
