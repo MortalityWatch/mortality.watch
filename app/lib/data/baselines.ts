@@ -28,9 +28,11 @@ const calculateExcess = (data: DatasetEntry, key: keyof DatasetEntry): void => {
   if (!data[`${key}_excess_upper` as keyof DatasetEntry])
     data[`${key}_excess_upper` as keyof DatasetEntry] = []
 
-  const excess = data[`${key}_excess` as keyof DatasetEntry]
-  const excessLower = data[`${key}_excess_lower` as keyof DatasetEntry]
-  const excessUpper = data[`${key}_excess_upper` as keyof DatasetEntry]
+  const excess = data[`${key}_excess` as keyof DatasetEntry] as NumberArray | undefined
+  const excessLower = data[`${key}_excess_lower` as keyof DatasetEntry] as NumberArray | undefined
+  const excessUpper = data[`${key}_excess_upper` as keyof DatasetEntry] as NumberArray | undefined
+
+  if (!excess || !excessLower || !excessUpper) return
 
   for (let i = 0; i < currentValues.length; i++) {
     const currentValue = currentValues[i] ?? 0
