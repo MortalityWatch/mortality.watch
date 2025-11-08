@@ -7,6 +7,10 @@ import {
 } from '../../utils/auth'
 import { sendVerificationEmail } from '../../utils/email'
 import { RegisterResponseSchema } from '../../schemas'
+import {
+  validateAndConsumeInviteCode,
+  createTrialSubscription
+} from '../../utils/inviteCode'
 
 const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -18,7 +22,8 @@ const registerSchema = z.object({
   lastName: z.string().max(50, 'Last name is too long').optional().default(''),
   tosAccepted: z.boolean().refine(val => val === true, {
     message: 'You must accept the Terms of Service and Privacy Policy'
-  })
+  }),
+  inviteCode: z.string().optional() // Optional invite code from URL param
 })
 
 export default defineEventHandler(async (event) => {
@@ -33,7 +38,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const { email, password, firstName, lastName, tosAccepted } = result.data
+  const { email, password, firstName, lastName, tosAccepted, inviteCode } = result.data
 
   // Verify TOS acceptance (should already be validated by schema, but double-check for security)
   if (!tosAccepted) {
@@ -41,6 +46,31 @@ export default defineEventHandler(async (event) => {
       statusCode: 400,
       message: 'You must accept the Terms of Service and Privacy Policy to create an account'
     })
+  }
+
+  // Validate and consume invite code if provided
+  let userTier = 1 // Default tier
+  let inviteCodeId: number | null = null
+  let proExpiryDate: Date | null = null
+
+  if (inviteCode) {
+    const validatedCode = await validateAndConsumeInviteCode(inviteCode)
+
+    if (!validatedCode) {
+      throw createError({
+        statusCode: 400,
+        message: 'Invalid or expired invite code'
+      })
+    }
+
+    // All invite codes grant Pro access (tier 2)
+    userTier = 2
+    inviteCodeId = validatedCode.id
+
+    // Track Pro expiry
+    if (validatedCode.grantsProUntil) {
+      proExpiryDate = validatedCode.grantsProUntil
+    }
   }
 
   // Check if user already exists
@@ -69,7 +99,7 @@ export default defineEventHandler(async (event) => {
   // Create full name for legacy compatibility (empty if no names provided)
   const fullName = [firstName, lastName].filter(Boolean).join(' ').trim() || null
 
-  // Create user with tier 1 (registered, free)
+  // Create user with tier from invite code (or default tier 1)
   const newUser = await db
     .insert(users)
     .values({
@@ -79,7 +109,8 @@ export default defineEventHandler(async (event) => {
       lastName,
       name: fullName, // Legacy field for backward compatibility
       role: 'user',
-      tier: 1, // Default to tier 1 (registered, free)
+      tier: userTier, // Set tier based on invite code or default to 1
+      invitedByCodeId: inviteCodeId, // Track which code was used
       emailVerified: false,
       verificationToken,
       verificationTokenExpires,
@@ -87,6 +118,11 @@ export default defineEventHandler(async (event) => {
     })
     .returning()
     .get()
+
+  // If invite code grants Pro access with expiry, create trial subscription
+  if (proExpiryDate) {
+    await createTrialSubscription(newUser.id, proExpiryDate)
+  }
 
   // Send verification email - await to ensure it succeeds
   // Note: Auth token is not generated until email is verified

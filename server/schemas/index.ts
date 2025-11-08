@@ -17,3 +17,6 @@ export * from './chart'
 
 // Admin schemas
 export * from './admin'
+
+// Invite code schemas
+export * from './inviteCode'

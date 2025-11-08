@@ -312,6 +312,15 @@ export async function getCurrentUser(event: H3Event) {
     return null
   }
 
+  // Check and expire trial subscriptions on-demand
+  try {
+    const { checkAndExpireTrialSubscription } = await import('./inviteCode')
+    await checkAndExpireTrialSubscription(user.id)
+  } catch (error) {
+    // Log error but don't block authentication
+    console.error('Error checking trial expiration:', error)
+  }
+
   // Return user without password hash
   const { passwordHash: _passwordHash, ...userWithoutPassword } = user
   return userWithoutPassword
