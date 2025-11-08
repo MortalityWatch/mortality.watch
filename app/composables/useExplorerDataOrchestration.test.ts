@@ -298,7 +298,6 @@ describe('useExplorerDataOrchestration', () => {
         mockDisplayColors
       )
 
-
       orchestration.configureOptions()
 
       expect(orchestration.chartOptions.showTotalOption).toBe(false)
@@ -435,7 +434,6 @@ describe('useExplorerDataOrchestration', () => {
         mockDisplayColors
       )
 
-
       orchestration.configureOptions()
 
       expect(orchestration.chartOptions.showCumulativeOption).toBe(true)
@@ -448,7 +446,6 @@ describe('useExplorerDataOrchestration', () => {
         mockAllCountries,
         mockDisplayColors
       )
-
 
       orchestration.configureOptions()
 
@@ -477,7 +474,6 @@ describe('useExplorerDataOrchestration', () => {
         mockAllCountries,
         mockDisplayColors
       )
-
 
       orchestration.configureOptions()
 

@@ -13,7 +13,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { StateResolver } from './StateResolver'
 import type { RouteLocationNormalizedLoaded } from 'vue-router'
-import type { StateChange } from './types'
 
 // Mock stateFieldEncoders
 vi.mock('@/composables/useExplorerState', () => ({

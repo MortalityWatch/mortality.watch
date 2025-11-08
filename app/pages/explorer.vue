@@ -616,7 +616,6 @@ watch(
             :all-yearly-chart-labels-unique="dataOrchestration.allYearlyChartLabelsUnique.value || []"
             :colors="displayColors"
             :show-prediction-interval-disabled="showPredictionIntervalDisabled"
-            :show-total-option="dataOrchestration.chartOptions.showTotalOption"
             :baseline-range="dataOrchestration.baselineRange.value"
             @type-changed="handleTypeChanged"
             @chart-type-changed="handleChartTypeChanged"
