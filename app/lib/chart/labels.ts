@@ -35,6 +35,14 @@ export const getChartLabels = (
   chartType: string,
   view?: string
 ): ChartLabels => {
+  // Derive view from parameters if not explicitly provided
+  // This maintains backward compatibility with isExcess parameter
+  const derivedView: ViewType = view
+    ? (view as ViewType)
+    : isExcess
+      ? 'excess'
+      : 'mortality'
+
   // Build chart context for view-based configuration
   const ctx: ChartContext = {
     countries,
@@ -49,7 +57,7 @@ export const getChartLabels = (
     baselineMethod,
     baselineDateFrom,
     baselineDateTo,
-    view: (view as ViewType) || 'mortality'
+    view: derivedView
   }
 
   // Get chart view configuration
