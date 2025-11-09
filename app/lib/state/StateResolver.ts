@@ -495,7 +495,28 @@ export class StateResolver {
       }
     }
 
+    // Handle special view field (uses e=1, zs=1 instead of state encoder)
+    if (resolved.changedFields.includes('view')) {
+      const view = resolved.state.view as ViewType
+
+      // Remove all view parameters first
+      Reflect.deleteProperty(newQuery, 'e')
+      Reflect.deleteProperty(newQuery, 'zs')
+      Reflect.deleteProperty(newQuery, 'view')
+
+      // Add appropriate parameter for the new view
+      if (view === 'excess') {
+        newQuery.e = '1'
+      } else if (view === 'zscore') {
+        newQuery.zs = '1'
+      }
+      // mortality view has no special parameter (it's the default)
+    }
+
     for (const field of resolved.changedFields) {
+      // Skip 'view' field - handled above with special parameters
+      if (field === 'view') continue
+
       const encoder = stateFieldEncoders[field as keyof typeof stateFieldEncoders]
       if (!encoder) continue
 
