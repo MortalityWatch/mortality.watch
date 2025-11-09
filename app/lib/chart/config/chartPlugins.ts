@@ -27,7 +27,7 @@ import {
 import type { ChartErrorDataPoint, MortalityChartData } from '../chartTypes'
 import { getLabelText } from './chartLabels'
 import { createTooltipCallbacks } from './chartTooltips'
-import { getChartView, type ReferenceLineConfig } from '../chartViews'
+import { getChartView, type ReferenceLineConfig } from '../chartViews/index'
 import type { ViewType } from '../../state/viewTypes'
 
 /**

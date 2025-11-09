@@ -4,7 +4,7 @@
 
 import { baselineMethods, type ChartLabels } from '~/model'
 import { isMobile } from '~/utils'
-import { getChartView, type ChartContext } from './chartViews'
+import { getChartView, type ChartContext } from './chartViews/index'
 import type { ViewType } from '../state/viewTypes'
 
 const getMethodDescription = (baselineMethod: string) =>
