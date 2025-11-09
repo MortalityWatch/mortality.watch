@@ -32,7 +32,7 @@ describe('viewConstraints', () => {
       const constraints = getViewConstraints('excess')
 
       const logarithmicConstraint = constraints.find(c =>
-        c.apply.isLogarithmic === false
+        c.apply.showLogarithmic === false
       )
 
       expect(logarithmicConstraint).toBeDefined()
@@ -106,7 +106,7 @@ describe('viewConstraints', () => {
 
       // Should include baseline and logarithmic constraints
       const baselineConstraint = constraints.find(c => c.apply.showBaseline === true)
-      const logarithmicConstraint = constraints.find(c => c.apply.isLogarithmic === false)
+      const logarithmicConstraint = constraints.find(c => c.apply.showLogarithmic === false)
 
       expect(baselineConstraint).toBeDefined()
       expect(logarithmicConstraint).toBeDefined()
@@ -134,7 +134,7 @@ describe('viewConstraints', () => {
 
       // Z-score should disable logarithmic
       const logConstraint = constraints.find(c =>
-        c.apply.isLogarithmic === false
+        c.apply.showLogarithmic === false
       )
       expect(logConstraint).toBeDefined()
     })

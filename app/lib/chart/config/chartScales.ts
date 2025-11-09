@@ -46,7 +46,7 @@ export function createScalesConfig(
       }
     },
     y: {
-      type: data.isLogarithmic ? 'logarithmic' as const : 'linear' as const,
+      type: data.showLogarithmic ? 'logarithmic' as const : 'linear' as const,
       beginAtZero: data.isMaximized,
       title: {
         display: true,

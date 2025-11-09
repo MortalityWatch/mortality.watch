@@ -23,7 +23,7 @@ describe('explorerSchema', () => {
     showPercentage: false,
     maximize: false,
     showLabels: true,
-    isLogarithmic: false,
+    showLogarithmic: false,
     decimals: 'auto'
   })
 

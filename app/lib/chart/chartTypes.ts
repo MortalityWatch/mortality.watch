@@ -17,7 +17,7 @@ export type MortalityChartData = {
   xtitle: string
   ytitle: string
   isMaximized: boolean
-  isLogarithmic: boolean
+  showLogarithmic: boolean
   showLabels: boolean
   url: string
   showPercentage: boolean

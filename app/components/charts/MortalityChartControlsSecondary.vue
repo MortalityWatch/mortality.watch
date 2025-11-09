@@ -31,7 +31,7 @@ const props = defineProps<{
   showPredictionIntervalDisabled: boolean
   showLabels: boolean
   maximize: boolean
-  isLogarithmic: boolean
+  showLogarithmic: boolean
   showPercentage?: boolean
   cumulative: boolean
   showTotal: boolean
@@ -67,7 +67,7 @@ const emit = defineEmits<{
   showPredictionIntervalChanged: [value: boolean]
   showLabelsChanged: [value: boolean]
   maximizeChanged: [value: boolean]
-  isLogarithmicChanged: [value: boolean]
+  showLogarithmicChanged: [value: boolean]
   showPercentageChanged: [value: boolean]
   cumulativeChanged: [value: boolean]
   showTotalChanged: [value: boolean]
@@ -167,9 +167,9 @@ const maximize = computed({
   set: (v: boolean) => emit('maximizeChanged', v)
 })
 
-const isLogarithmic = computed({
-  get: () => props.isLogarithmic,
-  set: (v: boolean) => emit('isLogarithmicChanged', v)
+const showLogarithmic = computed({
+  get: () => props.showLogarithmic,
+  set: (v: boolean) => emit('showLogarithmicChanged', v)
 })
 
 const showPercentage = computed({
@@ -331,7 +331,7 @@ const activeTab = ref('data')
         :show-baseline="props.showBaseline"
         :show-prediction-interval="props.showPredictionInterval"
         :maximize="props.maximize"
-        :is-logarithmic="props.isLogarithmic"
+        :show-logarithmic="props.showLogarithmic"
         :show-percentage="props.showPercentage || false"
         :cumulative="props.cumulative"
         :show-total="props.showTotal"
@@ -352,7 +352,7 @@ const activeTab = ref('data')
         @update:show-baseline="showBaseline = $event"
         @update:show-prediction-interval="showPredictionInterval = $event"
         @update:maximize="maximize = $event"
-        @update:is-logarithmic="isLogarithmic = $event"
+        @update:is-logarithmic="showLogarithmic = $event"
         @update:show-percentage="showPercentage = $event"
         @update:cumulative="cumulative = $event"
         @update:show-total="showTotal = $event"

@@ -29,7 +29,7 @@ export interface ChartState {
   showPredictionInterval: boolean
   showLabels: boolean
   showPercentage?: boolean
-  isLogarithmic: boolean
+  showLogarithmic: boolean
   sliderStart?: string
   userColors?: string[]
   decimals?: string

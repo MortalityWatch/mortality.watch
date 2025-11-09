@@ -35,6 +35,9 @@ export interface ResolvedState {
   // The actual state values (full field names)
   state: Record<string, unknown>
 
+  // UI state for each field (visibility, disabled state)
+  ui: Record<string, { visible: boolean; disabled: boolean }>
+
   // Metadata for each field
   metadata: Record<string, StateFieldMetadata>
 

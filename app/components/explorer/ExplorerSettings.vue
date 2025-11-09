@@ -27,7 +27,7 @@ const emit = defineEmits<{
   showPredictionIntervalChanged: [value: boolean]
   showLabelsChanged: [value: boolean]
   maximizeChanged: [value: boolean]
-  isLogarithmicChanged: [value: boolean]
+  showLogarithmicChanged: [value: boolean]
   showPercentageChanged: [value: boolean]
   cumulativeChanged: [value: boolean]
   showTotalChanged: [value: boolean]
@@ -60,7 +60,7 @@ const currentStateValues = computed<ExplorerStateValues>(() => ({
   showPercentage: props.state.showPercentage.value,
   showTotal: props.state.showTotal.value,
   maximize: props.state.maximize.value,
-  isLogarithmic: props.state.isLogarithmic.value,
+  showLogarithmic: props.state.showLogarithmic.value,
   showLabels: props.state.showLabels.value,
   showLogo: props.state.showLogo.value,
   showQrCode: props.state.showQrCode.value,
@@ -138,14 +138,14 @@ const baselineSliderValue = computed(() => {
       :show-prediction-interval-disabled="props.showPredictionIntervalDisabled"
       :show-labels="props.state.showLabels.value"
       :maximize="props.state.maximize.value"
-      :is-logarithmic="props.state.isLogarithmic.value"
+      :show-logarithmic="props.state.showLogarithmic.value"
       :show-percentage="props.state.showPercentage.value || false"
       :cumulative="props.state.cumulative.value"
       :show-total="props.state.showTotal.value"
       :show-logarithmic-option="showLogarithmicOption"
       :show-maximize-option="showMaximizeOption"
       :show-maximize-option-disabled="
-        props.state.isLogarithmic.value || (props.state.isExcess.value && !showTotalOption)
+        props.state.showLogarithmic.value || (props.state.isExcess.value && !showTotalOption)
       "
       :show-percentage-option="showPercentageOption"
       :show-cumulative-option="showCumulativeOption"
@@ -171,7 +171,7 @@ const baselineSliderValue = computed(() => {
       @show-prediction-interval-changed="emit('showPredictionIntervalChanged', $event)"
       @show-labels-changed="emit('showLabelsChanged', $event)"
       @maximize-changed="emit('maximizeChanged', $event)"
-      @is-logarithmic-changed="emit('isLogarithmicChanged', $event)"
+      @is-logarithmic-changed="emit('showLogarithmicChanged', $event)"
       @show-percentage-changed="emit('showPercentageChanged', $event)"
       @cumulative-changed="emit('cumulativeChanged', $event)"
       @show-total-changed="emit('showTotalChanged', $event)"

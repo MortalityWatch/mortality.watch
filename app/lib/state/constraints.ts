@@ -31,7 +31,7 @@ export const DEFAULT_VALUES: Record<string, unknown> = {
   showPercentage: false,
   showTotal: false,
   maximize: false,
-  isLogarithmic: false,
+  showLogarithmic: false,
   showLabels: true,
 
   // Baseline
@@ -112,7 +112,7 @@ const matrixStyleConstraints: StateConstraint = {
     showBaseline: false,
     showPredictionInterval: false,
     maximize: false,
-    isLogarithmic: false
+    showLogarithmic: false
   },
   reason: 'Matrix style disables baseline, PI, maximize, and logarithmic',
   allowUserOverride: false,

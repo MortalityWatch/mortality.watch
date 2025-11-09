@@ -7,7 +7,7 @@ const props = defineProps<{
   showBaseline: boolean
   showPredictionInterval: boolean
   maximize: boolean
-  isLogarithmic: boolean
+  showLogarithmic: boolean
   showPercentage: boolean
   cumulative: boolean
   showTotal: boolean
@@ -34,7 +34,7 @@ const emit = defineEmits<{
   'update:showBaseline': [value: boolean]
   'update:showPredictionInterval': [value: boolean]
   'update:maximize': [value: boolean]
-  'update:isLogarithmic': [value: boolean]
+  'update:showLogarithmic': [value: boolean]
   'update:showPercentage': [value: boolean]
   'update:cumulative': [value: boolean]
   'update:showTotal': [value: boolean]
@@ -62,9 +62,9 @@ const maximizeModel = computed({
   set: v => emit('update:maximize', v)
 })
 
-const isLogarithmicModel = computed({
-  get: () => props.isLogarithmic,
-  set: v => emit('update:isLogarithmic', v)
+const showLogarithmicModel = computed({
+  get: () => props.showLogarithmic,
+  set: v => emit('update:showLogarithmic', v)
 })
 
 const showPercentageModel = computed({
@@ -150,7 +150,7 @@ const chartPresetModel = computed({
 
         <UiSwitchRow
           v-if="props.showLogarithmicOption"
-          v-model="isLogarithmicModel"
+          v-model="showLogarithmicModel"
           label="Log Scale"
           :disabled="!props.showLogarithmicOption"
         />

@@ -164,7 +164,7 @@ export const DEFAULT_VALUES: Record<string, any> = {
   showPercentage: false,
   showTotal: false,
   maximize: false,
-  isLogarithmic: false,
+  showLogarithmic: false,
   showLabels: true,
   isExcess: false,
 
@@ -189,7 +189,7 @@ export const STATE_CONSTRAINTS: StateConstraint[] = [
     when: (state) => state.isExcess === true,
     apply: {
       showBaseline: true, // MUST be ON (excess needs baseline for calculation)
-      isLogarithmic: false, // MUST be off (incompatible with excess)
+      showLogarithmic: false, // MUST be off (incompatible with excess)
     },
     reason: "Excess mode requires baseline and disables logarithmic scale",
     allowUserOverride: false,
@@ -255,7 +255,7 @@ export const STATE_CONSTRAINTS: StateConstraint[] = [
       showBaseline: false,
       showPredictionInterval: false,
       maximize: false,
-      isLogarithmic: false,
+      showLogarithmic: false,
     },
     reason: "Matrix style disables baseline, PI, maximize, and logarithmic",
     allowUserOverride: false,
@@ -637,7 +637,7 @@ const getCurrentState = (): Record<string, any> => {
     showPercentage: showPercentage.value,
     showTotal: showTotal.value,
     maximize: maximize.value,
-    isLogarithmic: isLogarithmic.value,
+    showLogarithmic: showLogarithmic.value,
     showLabels: showLabels.value,
     baselineMethod: baselineMethod.value,
     baselineDateFrom: baselineDateFrom.value,
@@ -900,7 +900,7 @@ Update E2E tests to verify:
     countries (c): ['USA', 'SWE'],
     showPredictionInterval (pi): true,     // User set in URL
     showBaseline (sb): true,               // Constraint forced
-    isLogarithmic (lg): false,             // Constraint forced
+    showLogarithmic (lg): false,             // Constraint forced
     ...
   }
   🔧 Changes Applied:
@@ -908,7 +908,7 @@ Update E2E tests to verify:
     countries (c): ['USA'] → ['USA', 'SWE'] [user] Set in URL
     showPredictionInterval (pi): true → true [user] Set in URL
     showBaseline (sb): true → true [constraint] Excess mode requires baseline
-    isLogarithmic (lg): false → false [constraint] Excess mode disables logarithmic
+    showLogarithmic (lg): false → false [constraint] Excess mode disables logarithmic
   👤 User Overrides: ['isExcess', 'countries', 'showPredictionInterval']
 ```
 
@@ -931,7 +931,7 @@ Update E2E tests to verify:
   🔧 Changes Applied:
     isExcess (e): false → true [user] User user action
     showPredictionInterval (pi): true → false [constraint] Excess mode default
-    isLogarithmic (lg): false → false [constraint] Excess mode disables logarithmic
+    showLogarithmic (lg): false → false [constraint] Excess mode disables logarithmic
   👤 User Overrides: ['countries', 'type']
 ```
 
@@ -1048,7 +1048,7 @@ const excessOnConstraint: StateConstraint = {
   apply: {
     showBaseline: true,
     showPredictionInterval: false,
-    isLogarithmic: false,
+    showLogarithmic: false,
   },
   reason:
     "Excess mode requires baseline, defaults PI to off, disables logarithmic",

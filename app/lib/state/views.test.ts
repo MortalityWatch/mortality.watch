@@ -62,7 +62,7 @@ describe('View Configurations', () => {
     it('has correct defaults', () => {
       expect(config.defaults.chartStyle).toBe('line')
       expect(config.defaults.showBaseline).toBe(false)
-      expect(config.defaults.isLogarithmic).toBe(false)
+      expect(config.defaults.showLogarithmic).toBe(false)
     })
 
     it('supports all metrics', () => {
@@ -111,7 +111,7 @@ describe('View Configurations', () => {
       expect(config.defaults.showPredictionInterval).toBe(false)
       expect(config.defaults.showPercentage).toBe(true)
       expect(config.defaults.cumulative).toBe(false)
-      expect(config.defaults.isLogarithmic).toBe(false)
+      expect(config.defaults.showLogarithmic).toBe(false)
     })
 
     it('excludes incompatible metrics', () => {
@@ -133,7 +133,7 @@ describe('View Configurations', () => {
 
       // Should have constraint for logarithmic = false
       const logarithmicConstraint = config.constraints.find(
-        c => c.apply.isLogarithmic === false
+        c => c.apply.showLogarithmic === false
       )
       expect(logarithmicConstraint).toBeDefined()
       expect(logarithmicConstraint?.allowUserOverride).toBe(false)
@@ -171,7 +171,7 @@ describe('View Configurations', () => {
       expect(config.defaults.chartStyle).toBe('line')
       expect(config.defaults.showBaseline).toBe(true)
       expect(config.defaults.showPredictionInterval).toBe(false)
-      expect(config.defaults.isLogarithmic).toBe(false)
+      expect(config.defaults.showLogarithmic).toBe(false)
     })
 
     it('restricts to compatible metrics', () => {
@@ -194,7 +194,7 @@ describe('View Configurations', () => {
 
     it('has constraint to disable logarithmic', () => {
       const logConstraint = config.constraints.find(
-        c => c.apply.isLogarithmic === false
+        c => c.apply.showLogarithmic === false
       )
       expect(logConstraint).toBeDefined()
       expect(logConstraint?.allowUserOverride).toBe(false)

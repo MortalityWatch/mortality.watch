@@ -177,7 +177,7 @@ export class DataService {
       props.maximize ?? false,
       props.showLabels ?? true,
       '', // URL generation placeholder
-      props.isLogarithmic,
+      props.showLogarithmic,
       helpers.isPopulationType(),
       helpers.isDeathsType(),
       'mortality', // view - default to mortality in admin/import contexts

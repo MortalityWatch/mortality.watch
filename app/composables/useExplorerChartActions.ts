@@ -134,7 +134,7 @@ export function useExplorerChartActions(
       dateFrom: state.dateFrom.value,
       dateTo: state.dateTo.value,
       standardPopulation: state.standardPopulation.value,
-      isLogarithmic: state.isLogarithmic.value,
+      showLogarithmic: state.showLogarithmic.value,
       maximize: state.maximize.value,
       showLabels: state.showLabels.value
     }

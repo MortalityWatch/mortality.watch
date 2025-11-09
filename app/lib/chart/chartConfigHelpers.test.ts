@@ -296,7 +296,7 @@ describe('chartConfigHelpers', () => {
       xtitle: 'Year',
       ytitle: 'Deaths',
       isMaximized: false,
-      isLogarithmic: false,
+      showLogarithmic: false,
       showLabels: true,
       url: '',
       showPercentage: false,
@@ -414,7 +414,7 @@ describe('chartConfigHelpers', () => {
       xtitle: 'Year',
       ytitle: 'Deaths',
       isMaximized: false,
-      isLogarithmic: false,
+      showLogarithmic: false,
       showLabels: true,
       url: 'https://example.com',
       showPercentage: false,
@@ -505,7 +505,7 @@ describe('chartConfigHelpers', () => {
       xtitle: 'Year',
       ytitle: 'Deaths per 100k',
       isMaximized: true,
-      isLogarithmic: false,
+      showLogarithmic: false,
       showLabels: true,
       url: '',
       showPercentage: false,
@@ -536,8 +536,8 @@ describe('chartConfigHelpers', () => {
       expect(config.y.title.text).toBe('Deaths per 100k')
     })
 
-    it('should configure y-axis with logarithmic scale when isLogarithmic is true', () => {
-      const logData = { ...mockData, isLogarithmic: true }
+    it('should configure y-axis with logarithmic scale when showLogarithmic is true', () => {
+      const logData = { ...mockData, showLogarithmic: true }
       const config = createScalesConfig(logData, false, false, true, 'auto')
 
       expect(config.y.type).toBe('logarithmic')

@@ -53,7 +53,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
     defaults: {
       chartStyle: 'line',
       showBaseline: false,
-      isLogarithmic: false
+      showLogarithmic: false
     },
 
     constraints: [
@@ -104,7 +104,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       showPredictionInterval: false,
       showPercentage: true,
       cumulative: false,
-      isLogarithmic: false
+      showLogarithmic: false
     },
 
     constraints: [
@@ -119,7 +119,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       // Excess disables logarithmic (priority 2 - hard constraint)
       {
         when: () => true,
-        apply: { isLogarithmic: false },
+        apply: { showLogarithmic: false },
         reason: 'Logarithmic scale not available in excess mode',
         allowUserOverride: false,
         priority: 2
@@ -164,7 +164,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       chartStyle: 'line', // Line chart is default for z-scores
       showBaseline: true, // Required for z-score calculation (but hidden in UI)
       showPredictionInterval: false,
-      isLogarithmic: false
+      showLogarithmic: false
     },
 
     constraints: [
@@ -179,7 +179,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       // Z-scores disable logarithmic scale (priority 2 - hard constraint)
       {
         when: () => true,
-        apply: { isLogarithmic: false },
+        apply: { showLogarithmic: false },
         reason: 'Logarithmic scale not compatible with z-score analysis',
         allowUserOverride: false,
         priority: 2

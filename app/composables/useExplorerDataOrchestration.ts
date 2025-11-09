@@ -173,7 +173,7 @@ export function useExplorerDataOrchestration(
     chartOptions.showMaximizeOption
       = !(state.isExcess.value && helpers.isLineChartStyle()) && !helpers.isMatrixChartStyle()
     chartOptions.showMaximizeOptionDisabled
-      = state.isLogarithmic.value || (state.isExcess.value && !chartOptions.showTotalOption)
+      = state.showLogarithmic.value || (state.isExcess.value && !chartOptions.showTotalOption)
     chartOptions.showBaselineOption = helpers.hasBaseline() && !helpers.isMatrixChartStyle()
     chartOptions.showPredictionIntervalOption
       = chartOptions.showBaselineOption || (state.isExcess.value && !helpers.isMatrixChartStyle())
@@ -297,7 +297,7 @@ export function useExplorerDataOrchestration(
       state.maximize.value,
       state.showLabels.value,
       await makeUrl(),
-      state.isLogarithmic.value,
+      state.showLogarithmic.value,
       helpers.isPopulationType(),
       helpers.isDeathsType(),
       state.view.value,

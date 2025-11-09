@@ -10,6 +10,8 @@ import {
 } from '@/model/explorerSchema'
 import { detectView } from '@/lib/state/viewDetector'
 import type { ViewType } from '@/lib/state/viewTypes'
+import { VIEWS } from '@/lib/state/views'
+import { computeUIState } from '@/lib/state/uiStateComputer'
 
 /**
  * Explorer State Management Composable
@@ -127,11 +129,11 @@ export function useExplorerState() {
     stateFieldEncoders.showPercentage.encode,
     stateFieldEncoders.showPercentage.decode
   )
-  const isLogarithmic = useUrlState<boolean>(
-    stateFieldEncoders.isLogarithmic.key,
+  const showLogarithmic = useUrlState<boolean>(
+    stateFieldEncoders.showLogarithmic.key,
     false,
-    stateFieldEncoders.isLogarithmic.encode,
-    stateFieldEncoders.isLogarithmic.decode
+    stateFieldEncoders.showLogarithmic.encode,
+    stateFieldEncoders.showLogarithmic.decode
   )
 
   // URL State - Chart Appearance
@@ -208,7 +210,7 @@ export function useExplorerState() {
     showPercentage: showPercentage.value,
     maximize: maximize.value,
     showLabels: showLabels.value,
-    isLogarithmic: isLogarithmic.value,
+    showLogarithmic: showLogarithmic.value,
     decimals: decimals.value
   }))
 
@@ -328,7 +330,7 @@ export function useExplorerState() {
       showPercentage: showPercentage.value,
       showTotal: showTotal.value,
       maximize: maximize.value,
-      isLogarithmic: isLogarithmic.value,
+      showLogarithmic: showLogarithmic.value,
       showLabels: showLabels.value,
       baselineMethod: baselineMethod.value,
       baselineDateFrom: baselineDateFrom.value,
@@ -344,6 +346,13 @@ export function useExplorerState() {
       chartPreset: chartPreset.value
     }
   }
+
+  // Compute UI state from current view and state values
+  const ui = computed(() => {
+    const currentView = VIEWS[view.value] || VIEWS.mortality
+    const stateValues = getCurrentStateValues()
+    return computeUIState(currentView, stateValues)
+  })
 
   return {
     // View (derived from URL)
@@ -376,7 +385,7 @@ export function useExplorerState() {
     showPredictionInterval,
     showLabels,
     showPercentage,
-    isLogarithmic,
+    showLogarithmic,
 
     // Chart appearance
     userColors,
@@ -395,6 +404,9 @@ export function useExplorerState() {
     isValid,
     errors,
     getValidatedState,
+
+    // UI state (computed from view config)
+    ui,
 
     // Helper functions
     isUserSet,

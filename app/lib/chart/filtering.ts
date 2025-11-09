@@ -92,7 +92,7 @@ export const getFilteredChartData = async (
   maximize: boolean,
   showLabels: boolean,
   url: string,
-  isLogarithmic: boolean,
+  showLogarithmic: boolean,
   isPopulationType: boolean,
   isDeathsType: boolean,
   view: string,
@@ -172,7 +172,7 @@ export const getFilteredChartData = async (
     showLabels: showLabels,
     url,
     showPercentage,
-    isLogarithmic,
+    showLogarithmic,
     showXOffset: isBarChartStyle || isPopulationType || isDeathsType,
     sources: ds.sources
   }

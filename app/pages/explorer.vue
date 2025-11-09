@@ -229,7 +229,7 @@ const handleUpdate = async (key: string) => {
       '_showPredictionInterval',
       '_showPercentage',
       '_showTotal',
-      '_isLogarithmic',
+      '_showLogarithmic',
       '_maximize',
       '_showLabels',
       '_userColors'
@@ -358,7 +358,7 @@ const handleBaselineMethodChanged = (v: string) => handleStateChange('baselineMe
 // Display options
 const handleShowLabelsChanged = (v: boolean) => handleStateChange('showLabels', v, '_showLabels')
 const handleMaximizeChanged = (v: boolean) => handleStateChange('maximize', v, '_maximize')
-const handleIsLogarithmicChanged = (v: boolean) => handleStateChange('isLogarithmic', v, '_isLogarithmic')
+const handleShowLogarithmicChanged = (v: boolean) => handleStateChange('showLogarithmic', v, '_showLogarithmic')
 
 // Excess mode options
 const handleShowPercentageChanged = (v: boolean) => handleStateChange('showPercentage', v, '_showPercentage')
@@ -569,7 +569,7 @@ watch(
     () => state.dateFrom.value,
     () => state.dateTo.value,
     () => state.standardPopulation.value,
-    () => state.isLogarithmic.value,
+    () => state.showLogarithmic.value,
     () => state.maximize.value,
     () => state.showLabels.value
   ],
@@ -667,7 +667,7 @@ watch(
             @show-prediction-interval-changed="handlePredictionIntervalChanged"
             @show-labels-changed="handleShowLabelsChanged"
             @maximize-changed="handleMaximizeChanged"
-            @is-logarithmic-changed="handleIsLogarithmicChanged"
+            @show-logarithmic-changed="handleShowLogarithmicChanged"
             @show-percentage-changed="handleShowPercentageChanged"
             @cumulative-changed="handleCumulativeChanged"
             @show-total-changed="handleShowTotalChanged"

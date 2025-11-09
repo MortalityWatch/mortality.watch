@@ -16,6 +16,8 @@ import type { StateChange, ResolvedState, StateResolutionLog, StateFieldMetadata
 import { detectView } from './viewDetector'
 import { getViewConstraints } from './viewConstraints'
 import type { ViewType } from './viewTypes'
+import { VIEWS } from './views'
+import { computeUIState } from './uiStateComputer'
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class StateResolver {
@@ -91,11 +93,16 @@ export class StateResolver {
 
     log.after = { ...constrainedState }
 
-    // 5. Log resolution
+    // 5. Compute UI state from view configuration
+    const viewConfig = VIEWS[view as ViewType] || VIEWS.mortality
+    const ui = computeUIState(viewConfig, constrainedState)
+
+    // 6. Log resolution
     this.logResolution(log, 'INITIAL')
 
     return {
       state: constrainedState,
+      ui,
       metadata,
       changedFields: log.changes.map(c => c.field),
       userOverrides,
@@ -165,11 +172,17 @@ export class StateResolver {
 
     log.after = { ...constrainedState }
 
-    // 3. Log resolution
+    // 3. Compute UI state from view configuration
+    const view = (constrainedState.view as ViewType) || 'mortality'
+    const viewConfig = VIEWS[view] || VIEWS.mortality
+    const ui = computeUIState(viewConfig, constrainedState)
+
+    // 4. Log resolution
     this.logResolution(log, 'CHANGE')
 
     return {
       state: constrainedState,
+      ui,
       metadata,
       changedFields: log.changes.map(c => c.field),
       userOverrides,

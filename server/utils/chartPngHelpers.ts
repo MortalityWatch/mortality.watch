@@ -237,7 +237,7 @@ export async function transformChartData(
     state.maximize,
     state.showLabels,
     chartUrl,
-    state.isLogarithmic,
+    state.showLogarithmic,
     isPopulationType,
     isDeathsType,
     view,
