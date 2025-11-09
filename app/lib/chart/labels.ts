@@ -4,23 +4,8 @@
 
 import { baselineMethods, type ChartLabels } from '~/model'
 import { isMobile } from '~/utils'
-
-const asmrTitles: Record<string, string> = {
-  who: 'WHO Standard Population',
-  esp: 'European Standard Population',
-  usa: 'U.S. Standard Population'
-}
-
-const getASMRTitle = (countries: string[], standardPopulation: string) => {
-  if (standardPopulation === 'country') {
-    return `${countries.join(',')} 2020 Standard Population`
-  }
-  const title = asmrTitles[standardPopulation]
-  if (!title) {
-    throw new Error('Uncrecognized standard population key.')
-  }
-  return title
-}
+import { getChartView, type ChartContext } from './chartViews'
+import type { ViewType } from '../state/viewTypes'
 
 const getMethodDescription = (baselineMethod: string) =>
   baselineMethods.filter(x => x.value === baselineMethod)[0]?.name ?? baselineMethod
@@ -33,54 +18,6 @@ export const blDescription = (
   baselineMethod === 'naive'
     ? `Baseline: ${getMethodDescription(baselineMethod)} ${baselineDateTo}`
     : `Baseline: ${getMethodDescription(baselineMethod)} ${baselineDateFrom}-${baselineDateTo}`
-
-/**
- * Label configuration for different metric types
- */
-interface LabelConfig {
-  getTitleParts: (ag: string, isExcess: boolean) => string[]
-  getYTitle: (isExcess: boolean, cumulative: boolean) => string
-  getSubtitle?: (asmrTitle: string, showBaseline: boolean) => string
-}
-
-const LABEL_CONFIGS: Record<string, LabelConfig> = {
-  population: {
-    getTitleParts: ag => [`Population${ag}`],
-    getYTitle: () => 'People'
-  },
-  deaths: {
-    getTitleParts: (ag, isExcess) =>
-      isExcess ? [`Excess Deaths${ag}`] : [`Deaths${ag}`],
-    getYTitle: (isExcess, cumulative) =>
-      isExcess
-        ? cumulative ? 'Cum. Excess Deaths' : 'Excess Deaths'
-        : 'Deaths'
-  },
-  cmr: {
-    getTitleParts: (ag, isExcess) =>
-      isExcess
-        ? ['Crude Excess', `Mortality${ag}`]
-        : ['Crude', `Mortality Rate${ag}`],
-    getYTitle: isExcess =>
-      isExcess ? 'Excess Deaths per 100k' : 'Deaths per 100k'
-  },
-  asmr: {
-    getTitleParts: (_, isExcess) =>
-      isExcess
-        ? ['Age-Standardized', 'Excess Mortality']
-        : ['Age-Standardized', 'Mortality Rate'],
-    getYTitle: isExcess =>
-      isExcess ? 'Excess Deaths per 100k' : 'Deaths per 100k',
-    getSubtitle: (asmrTitle, showBaseline) =>
-      showBaseline ? [asmrTitle].filter(x => x).join(' · ') : asmrTitle
-  },
-  le: {
-    getTitleParts: (_, isExcess) =>
-      isExcess ? ['Change in', 'Life Expectancy'] : ['Life Expectancy'],
-    getYTitle: () => 'Years',
-    getSubtitle: () => 'Based on WHO2015 Std. Pop.'
-  }
-}
 
 export const getChartLabels = (
   countries: string[],
@@ -98,57 +35,45 @@ export const getChartLabels = (
   chartType: string,
   view?: string
 ): ChartLabels => {
-  const title = []
-  let subtitle = ''
+  // Build chart context for view-based configuration
+  const ctx: ChartContext = {
+    countries,
+    type,
+    ageGroups,
+    standardPopulation,
+    cumulative,
+    showBaseline,
+    showPredictionInterval,
+    showTotal,
+    chartType,
+    baselineMethod,
+    baselineDateFrom,
+    baselineDateTo,
+    view: (view as ViewType) || 'mortality'
+  }
+
+  // Get chart view configuration
+  const chartView = getChartView(ctx.view)
+
+  // Generate title from view configuration
+  const title = chartView.getTitleParts(ctx)
+
+  // Generate subtitle from view configuration
+  let subtitle = chartView.getSubtitle?.(ctx) || ''
+
+  // Generate Y-axis label from view configuration
+  const ytitle = typeof chartView.yAxisLabel === 'function'
+    ? chartView.yAxisLabel(ctx)
+    : chartView.yAxisLabel
+
+  // Generate X-axis label (chart type specific)
   let xtitle = ''
-  let ytitle = 'Deaths per 100k'
-  const asmrTitle = getASMRTitle(countries, standardPopulation)
-
-  // Display age group in title, if single age group and multiple countries.
-  let ag = ''
-  if (ageGroups.length === 1 && ageGroups[0] !== 'all') {
-    ag = ` [${ageGroups[0]}]`
-  }
-
-  const pi = showPredictionInterval ? '95% Prediction Interval' : ''
-
-  if (cumulative) title.push('Cumulative')
-
-  // Z-score view overrides standard labels
-  if (view === 'zscore') {
-    title.push('Z-Score Analysis')
-    title.push(ag)
-    ytitle = 'Z-Score (Standard Deviations)'
-    subtitle = 'Statistical deviations from baseline mean · Values beyond ±2 are significant'
-  } else {
-    // Get label configuration for the metric type
-    const config = LABEL_CONFIGS[type]
-    if (config) {
-      title.push(...config.getTitleParts(ag, isExcess))
-      ytitle = config.getYTitle(isExcess, cumulative)
-      if (config.getSubtitle) {
-        subtitle = config.getSubtitle(asmrTitle, showBaseline)
-      }
-    }
-  }
-
-  subtitle = [
-    subtitle,
-    showBaseline
-      ? blDescription(baselineMethod, baselineDateFrom, baselineDateTo)
-      : ''
-  ]
-    .filter(x => x)
-    .join(' · ')
-
-  if (showBaseline && showPredictionInterval) {
-    subtitle = [subtitle, pi].filter(x => x).join(' · ')
-  }
 
   if (showTotal) {
     // Cumulative Total
     xtitle = ''
   } else {
+    // Chart type specific X-axis labels and subtitle additions
     switch (chartType) {
       case 'weekly_104w_sma':
         subtitle = ['104 week moving average (SMA)', subtitle]
@@ -197,6 +122,8 @@ export const getChartLabels = (
         break
     }
   }
+
+  // Format title based on device (mobile vs desktop)
   if (isMobile()) {
     return { title, subtitle, xtitle, ytitle }
   } else {
