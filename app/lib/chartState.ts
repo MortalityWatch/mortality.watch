@@ -11,6 +11,7 @@ export interface ChartState {
   countries: string[]
   type: string
   // NOTE: isExcess removed - now handled by view system (see viewDetector.ts)
+  // NOTE: showZScores removed - now handled by view system (see viewDetector.ts)
   // View is derived from URL params (e=1, zs=1, etc.) not stored in state
   chartType: string
   chartStyle: string
@@ -28,7 +29,7 @@ export interface ChartState {
   showPredictionInterval: boolean
   showLabels: boolean
   showPercentage?: boolean
-  isLogarithmic: boolean
+  showLogarithmic: boolean
   sliderStart?: string
   userColors?: string[]
   decimals?: string

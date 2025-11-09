@@ -96,7 +96,17 @@ export const getDatasets = (
     cumulative: config.display.cumulative,
     showTotal: config.display.showTotal,
     showCumPi: config.display.showCumPi,
-    isAsmrType: config.chart.isAsmrType
+    isAsmrType: config.chart.isAsmrType,
+    view: config.display.view ?? 'mortality'
+  }
+
+  if (config.display.view === 'zscore') {
+    const firstAg = ags[0]
+    console.log('[datasets] Z-Score view active, checking data structure:', {
+      transformConfig,
+      firstAg,
+      sampleCountryKeys: firstAg && data[firstAg] ? Object.keys(data[firstAg]).slice(0, 2) : []
+    })
   }
 
   for (const ag of ags) {
@@ -106,6 +116,19 @@ export const getDatasets = (
       const ds = agData[iso3c]
       if (!ds) continue
       const dsRecord: Record<string, unknown[]> = ds
+
+      if (config.display.view === 'zscore' && iso3c === Object.keys(agData)[0]) {
+        const allKeys = Object.keys(dsRecord)
+        const zscoreKeys = allKeys.filter(k => k.includes('zscore'))
+        console.log('[datasets] First country data keys:', {
+          total: allKeys.length,
+          allKeys,
+          zscoreKeys,
+          hasZscoreData: zscoreKeys.length > 0,
+          asmrWhoZscore: dsRecord.asmr_who_zscore,
+          asmrWho: dsRecord.asmr_who
+        })
+      }
       const keys = getKeyForType(
         config.chart.type,
         config.display.showBaseline,

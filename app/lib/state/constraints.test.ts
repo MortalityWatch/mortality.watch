@@ -23,7 +23,7 @@ describe('StateResolver Constraints', () => {
       expect(DEFAULT_VALUES).toHaveProperty('showPercentage')
       expect(DEFAULT_VALUES).toHaveProperty('showTotal')
       expect(DEFAULT_VALUES).toHaveProperty('maximize')
-      expect(DEFAULT_VALUES).toHaveProperty('isLogarithmic')
+      expect(DEFAULT_VALUES).toHaveProperty('showLogarithmic')
       expect(DEFAULT_VALUES).toHaveProperty('showLabels')
       // NOTE: isExcess removed - view is determined by URL params, not stored in defaults
       expect(DEFAULT_VALUES).toHaveProperty('baselineMethod')
@@ -42,7 +42,7 @@ describe('StateResolver Constraints', () => {
       expect(DEFAULT_VALUES.showPercentage).toBe(false)
       expect(DEFAULT_VALUES.showTotal).toBe(false)
       expect(DEFAULT_VALUES.maximize).toBe(false)
-      expect(DEFAULT_VALUES.isLogarithmic).toBe(false)
+      expect(DEFAULT_VALUES.showLogarithmic).toBe(false)
       expect(DEFAULT_VALUES.showLabels).toBe(true)
       // NOTE: isExcess removed - view defaults to 'mortality' when no URL params present
       expect(DEFAULT_VALUES.baselineMethod).toBe('mean')
@@ -176,11 +176,11 @@ describe('StateResolver Constraints', () => {
     it('should disable logarithmic for matrix style', () => {
       const state = { chartStyle: 'matrix' }
       const constraint = STATE_CONSTRAINTS.find(
-        c => c.when(state) && c.apply.isLogarithmic === false
+        c => c.when(state) && c.apply.showLogarithmic === false
       )
 
       expect(constraint).toBeDefined()
-      expect(constraint?.apply.isLogarithmic).toBe(false)
+      expect(constraint?.apply.showLogarithmic).toBe(false)
     })
   })
 

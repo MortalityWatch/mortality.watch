@@ -13,6 +13,7 @@ import type {
   DatasetRaw,
   AllChartData,
   Country,
+  CountryData,
   NumberEntryFields
 } from '@/model'
 import type { MortalityChartData } from '@/lib/chart/chartTypes'
@@ -96,7 +97,7 @@ export class DataService {
     if (shouldDownloadDataset || shouldUpdateDataset) {
       // Update all chart specific data
       const newData = await getAllChartData(
-        getKeyForType(props.type, props.showBaseline, props.standardPopulation)[0] ?? 'deaths',
+        (getKeyForType(props.type, props.showBaseline, props.standardPopulation)[0] ?? 'deaths') as keyof CountryData,
         props.chartType as ChartType,
         currentDataset,
         allChartLabels.value!,
@@ -176,9 +177,10 @@ export class DataService {
       props.maximize ?? false,
       props.showLabels ?? true,
       '', // URL generation placeholder
-      props.isLogarithmic,
+      props.showLogarithmic,
       helpers.isPopulationType(),
       helpers.isDeathsType(),
+      'mortality', // view - default to mortality in admin/import contexts
       allChartDataLabels,
       allChartDataData
     )

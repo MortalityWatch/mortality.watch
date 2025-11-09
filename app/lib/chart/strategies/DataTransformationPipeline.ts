@@ -7,6 +7,7 @@ import type { ChartErrorDataPoint } from '../chartTypes'
 import { PercentageTransformStrategy } from './PercentageTransformStrategy'
 import { CumulativeTransformStrategy } from './CumulativeTransformStrategy'
 import { TotalTransformStrategy } from './TotalTransformStrategy'
+import { ZScoreTransformStrategy } from './ZScoreTransformStrategy'
 
 interface TransformConfig {
   showPercentage: boolean
@@ -14,6 +15,7 @@ interface TransformConfig {
   showTotal: boolean
   showCumPi: boolean
   isAsmrType: boolean
+  view?: string
 }
 
 /**
@@ -53,6 +55,7 @@ export class DataTransformationPipeline {
   private percentageStrategy = new PercentageTransformStrategy()
   private cumulativeStrategy = new CumulativeTransformStrategy()
   private totalStrategy = new TotalTransformStrategy()
+  private zscoreStrategy = new ZScoreTransformStrategy()
 
   /**
    * Transform simple data (non-error-bar data)
@@ -63,6 +66,32 @@ export class DataTransformationPipeline {
     key: string
   ): number[] {
     const dataRow = data[key] ?? []
+
+    // Z-scores take priority over other transformations
+    // Z-scores are pre-calculated by the R stats API and stored as <metric>_zscore
+    // Only apply to main data, not baseline/PI keys
+    if (config.view === 'zscore' && !key.includes('baseline') && !key.includes('_lower') && !key.includes('_upper') && !key.includes('excess')) {
+      const zscoreKey = this.zscoreStrategy.getZScoreKey(config.isAsmrType, key)
+      const zscoreData = data[zscoreKey] ?? []
+      const availableKeys = Object.keys(data)
+      console.log('[pipeline] Z-Score Transform:', {
+        key,
+        zscoreKey,
+        hasData: zscoreData.length > 0,
+        dataLength: zscoreData.length,
+        sample: zscoreData.slice(0, 10),
+        fullData: zscoreData,
+        availableKeys,
+        isAsmr: config.isAsmrType,
+        allData: data
+      })
+      if (zscoreData.length > 0) {
+        console.log('[pipeline] ✅ RETURNING Z-SCORE DATA:', zscoreData)
+      } else {
+        console.log('[pipeline] ❌ NO Z-SCORE DATA FOUND for key:', zscoreKey)
+      }
+      return zscoreData
+    }
 
     if (config.showPercentage) {
       const blKey = this.percentageStrategy.getBaselineKey(config.isAsmrType, key)

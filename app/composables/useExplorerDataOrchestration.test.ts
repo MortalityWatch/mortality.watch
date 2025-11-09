@@ -159,11 +159,12 @@ describe('useExplorerDataOrchestration', () => {
       showPercentage: ref(false),
       maximize: ref(false),
       showLabels: ref(true),
-      isLogarithmic: ref(false),
+      showLogarithmic: ref(false),
       dateFrom: ref('2020'),
       dateTo: ref('2023'),
       sliderStart: ref('2010'),
       chartStyle: ref('line'),
+      view: ref('mortality'),
       isUserSet: vi.fn(() => false)
     } as any
 
@@ -216,7 +217,7 @@ describe('useExplorerDataOrchestration', () => {
       xtitle: '',
       ytitle: '',
       isMaximized: false,
-      isLogarithmic: false,
+      showLogarithmic: false,
       showLabels: true,
       url: '',
       showPercentage: false,
@@ -333,7 +334,7 @@ describe('useExplorerDataOrchestration', () => {
         mockDisplayColors
       )
 
-      mockState.isLogarithmic.value = true
+      mockState.showLogarithmic.value = true
 
       orchestration.configureOptions()
 
@@ -826,9 +827,10 @@ describe('useExplorerDataOrchestration', () => {
         mockState.maximize.value,
         mockState.showLabels.value,
         expect.any(String), // URL
-        mockState.isLogarithmic.value,
+        mockState.showLogarithmic.value,
         false, // isPopulationType
         true, // isDeathsType
+        'mortality', // view
         orchestration.allChartData.labels,
         orchestration.allChartData.data
       )

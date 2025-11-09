@@ -39,7 +39,7 @@ export const Defaults = {
   showPredictionInterval: true,
   showLabels: true,
   showPercentage: undefined as boolean | undefined,
-  isLogarithmic: false,
+  showLogarithmic: false,
   sliderStart: '2010' as string | undefined, // Slider shows from 2010 onwards
   userColors: undefined as string[] | undefined,
   showLogo: true,
@@ -72,7 +72,7 @@ export const stateFieldEncoders = {
   showPredictionInterval: { key: 'pi', encode: encodeBool, decode: decodeBool },
   showLabels: { key: 'sl', encode: encodeBool, decode: decodeBool },
   showPercentage: { key: 'p', encode: encodeBool, decode: decodeBool },
-  isLogarithmic: { key: 'lg', encode: encodeBool, decode: decodeBool },
+  showLogarithmic: { key: 'lg', encode: encodeBool, decode: decodeBool },
   userColors: { key: 'uc' },
   decimals: { key: 'dec' },
   showLogo: { key: 'l', encode: encodeBool, decode: decodeBool },

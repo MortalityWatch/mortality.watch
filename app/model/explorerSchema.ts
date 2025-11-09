@@ -114,7 +114,7 @@ const explorerStateBaseSchema = z.object({
   showPercentage: z.boolean().optional(),
   maximize: z.boolean(),
   showLabels: z.boolean(),
-  isLogarithmic: z.boolean(),
+  showLogarithmic: z.boolean(),
 
   // Chart appearance
   decimals: DecimalPrecisionEnum
@@ -246,6 +246,7 @@ export const explorerStateSchema = explorerStateBaseSchema.superRefine(
     // View System (views.ts):
     // - UI visibility and defaults per view
     // - Example: "excess view hides logarithmic option"
+    // - Example: "zscore view enables z-score visualization"
     //
     // This schema focuses ONLY on data-level validation to catch malformed URLs early.
   }

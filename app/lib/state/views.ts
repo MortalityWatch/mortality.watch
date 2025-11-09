@@ -53,7 +53,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
     defaults: {
       chartStyle: 'line',
       showBaseline: false,
-      isLogarithmic: false
+      showLogarithmic: false
     },
 
     constraints: [
@@ -104,7 +104,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       showPredictionInterval: false,
       showPercentage: true,
       cumulative: false,
-      isLogarithmic: false
+      showLogarithmic: false
     },
 
     constraints: [
@@ -119,7 +119,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       // Excess disables logarithmic (priority 2 - hard constraint)
       {
         when: () => true,
-        apply: { isLogarithmic: false },
+        apply: { showLogarithmic: false },
         reason: 'Logarithmic scale not available in excess mode',
         allowUserOverride: false,
         priority: 2
@@ -139,7 +139,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
 
   /**
    * Z-Score View
-   * Statistical z-score analysis with matrix visualization
+   * Statistical z-score analysis showing standard deviations from baseline
    */
   zscore: {
     id: 'zscore',
@@ -147,36 +147,57 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
     urlParam: 'zs', // URL: ?zs=1
 
     ui: {
-      baseline: hidden(), // doesn't make sense
-      predictionInterval: hidden(),
-      logarithmic: hidden(),
-      maximize: hidden(),
+      baseline: hidden(), // Z-scores replace baseline display
+      predictionInterval: toggleable(), // Can show PI with z-scores
+      logarithmic: hidden(), // Not compatible with z-scores
+      maximize: conditional({
+        field: 'chartStyle',
+        is: 'bar'
+      }),
       labels: toggleable(),
-      cumulative: hidden(),
+      cumulative: hidden(), // Not available in z-score view
       percentage: hidden(),
-      showTotal: hidden(),
-      zScoreThreshold: toggleable(),
-      significanceLevel: toggleable()
+      showTotal: hidden()
     },
 
     defaults: {
-      chartStyle: 'matrix', // force heatmap
-      zScoreThreshold: 2.0,
-      significanceLevel: 0.05
+      chartStyle: 'line', // Line chart is default for z-scores
+      showBaseline: true, // Required for z-score calculation (but hidden in UI)
+      showPredictionInterval: false,
+      showLogarithmic: false
     },
 
     constraints: [
-      // Force matrix chart style (priority 2 - hard constraint)
+      // Z-scores require baseline for calculation (priority 2 - hard constraint)
       {
         when: () => true,
-        apply: { chartStyle: 'matrix' },
-        reason: 'Z-score analysis uses matrix visualization',
+        apply: { showBaseline: true },
+        reason: 'Z-score calculation requires baseline data',
+        allowUserOverride: false,
+        priority: 2
+      },
+      // Z-scores disable logarithmic scale (priority 2 - hard constraint)
+      {
+        when: () => true,
+        apply: { showLogarithmic: false },
+        reason: 'Logarithmic scale not compatible with z-score analysis',
+        allowUserOverride: false,
+        priority: 2
+      },
+      // Z-scores disable cumulative and percentage (priority 2)
+      {
+        when: () => true,
+        apply: {
+          cumulative: false,
+          showPercentage: false
+        },
+        reason: 'Z-scores show deviations, not cumulative or percentage values',
         allowUserOverride: false,
         priority: 2
       }
     ],
 
-    compatibleMetrics: ['cmr'], // maybe only crude
-    compatibleChartStyles: ['matrix']
+    compatibleMetrics: ['cmr', 'asmr', 'deaths'], // All metrics that support baselines
+    compatibleChartStyles: ['line', 'bar'] // No matrix for z-scores
   }
 }

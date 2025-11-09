@@ -42,14 +42,14 @@ describe('chartState', () => {
       const query = {
         sb: '0', // showBaseline
         pi: '1', // showPredictionInterval
-        lg: '1' // isLogarithmic
+        lg: '1' // showLogarithmic
       }
 
       const state = decodeChartState(query)
 
       expect(state.showBaseline).toBe(false)
       expect(state.showPredictionInterval).toBe(true)
-      expect(state.isLogarithmic).toBe(true)
+      expect(state.showLogarithmic).toBe(true)
     })
 
     it('should decode array values', () => {
@@ -96,7 +96,7 @@ describe('chartState', () => {
     it('should encode boolean values correctly', () => {
       const state: Partial<ChartState> = {
         showBaseline: false, // not default
-        isLogarithmic: true // not default
+        showLogarithmic: true // not default
       }
 
       const query = encodeChartState(state)

@@ -75,7 +75,7 @@ StateResolver applies view constraints
 
 **Constraints:**
 - **Hard:** `showBaseline` must be `true` (priority 2)
-- **Hard:** `isLogarithmic` must be `false` (priority 2)
+- **Hard:** `showLogarithmic` must be `false` (priority 2)
 
 ### 3. Z-Score View
 

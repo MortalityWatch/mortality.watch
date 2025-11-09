@@ -30,7 +30,7 @@ vi.mock('@/composables/useExplorerState', () => ({
     showPercentage: { key: 'pct', decode: (v: any) => v === '1' || v === true },
     showTotal: { key: 'tot', decode: (v: any) => v === '1' || v === true },
     maximize: { key: 'max', decode: (v: any) => v === '1' || v === true },
-    isLogarithmic: { key: 'lg', decode: (v: any) => v === '1' || v === true },
+    showLogarithmic: { key: 'lg', decode: (v: any) => v === '1' || v === true },
     showLabels: { key: 'lbl', decode: (v: any) => v === '1' || v === true },
     baselineMethod: { key: 'bm' },
     baselineDateFrom: { key: 'bdf' },

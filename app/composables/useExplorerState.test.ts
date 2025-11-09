@@ -115,7 +115,7 @@ describe('useExplorerState', () => {
       expect(state.showPredictionInterval.value).toBe(true)
       expect(state.showLabels.value).toBe(true)
       expect(state.showPercentage.value).toBe(false)
-      expect(state.isLogarithmic.value).toBe(false)
+      expect(state.showLogarithmic.value).toBe(false)
     })
 
     it('should initialize chart appearance options', () => {

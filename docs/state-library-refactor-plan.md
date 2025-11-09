@@ -91,7 +91,7 @@ Aligning state fields with ViewConfig for consistency:
 |----------|----------|---------|-------|
 | `showBaseline` | `baseline` | `sb` | Keep URL key for backward compat |
 | `showPredictionInterval` | `predictionInterval` | `pi` | Keep URL key |
-| `isLogarithmic` | `logarithmic` | `lg` | Keep URL key |
+| `showLogarithmic` | `logarithmic` | `lg` | Keep URL key |
 | `showLabels` | `labels` | `sl` | Keep URL key |
 | `showPercentage` | `percentage` | `p` | Keep URL key |
 | `showTotal` | `total` | `st` | Keep URL key |
@@ -152,7 +152,7 @@ Aligning state fields with ViewConfig for consistency:
 find app -type f -name "*.ts" -o -name "*.vue" | xargs sed -i \
   -e 's/showBaseline/baseline/g' \
   -e 's/showPredictionInterval/predictionInterval/g' \
-  -e 's/isLogarithmic/logarithmic/g' \
+  -e 's/showLogarithmic/logarithmic/g' \
   -e 's/showLabels/labels/g' \
   -e 's/showPercentage/percentage/g' \
   -e 's/showTotal/total/g'

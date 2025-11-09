@@ -92,9 +92,10 @@ export const getFilteredChartData = async (
   maximize: boolean,
   showLabels: boolean,
   url: string,
-  isLogarithmic: boolean,
+  showLogarithmic: boolean,
   isPopulationType: boolean,
   isDeathsType: boolean,
+  view: string,
   allLabels: string[],
   allChartData: Dataset
 ): Promise<MortalityChartData> => {
@@ -111,7 +112,8 @@ export const getFilteredChartData = async (
     baselineDateFrom,
     baselineDateTo,
     showTotal,
-    chartType
+    chartType,
+    view
   )
 
   const filteredData = getFilteredLabelAndData(
@@ -135,7 +137,8 @@ export const getFilteredChartData = async (
       showTotal,
       showCumPi,
       showBaseline,
-      showPredictionInterval
+      showPredictionInterval,
+      view
     },
     chart: {
       type,
@@ -169,7 +172,7 @@ export const getFilteredChartData = async (
     showLabels: showLabels,
     url,
     showPercentage,
-    isLogarithmic,
+    showLogarithmic,
     showXOffset: isBarChartStyle || isPopulationType || isDeathsType,
     sources: ds.sources
   }

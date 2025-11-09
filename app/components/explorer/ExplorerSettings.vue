@@ -2,9 +2,6 @@
 import { computed } from 'vue'
 import MortalityChartControlsSecondary from '@/components/charts/MortalityChartControlsSecondary.vue'
 import type { useExplorerState } from '@/composables/useExplorerState'
-import { VIEWS } from '@/lib/state/views'
-import { isVisible } from '@/lib/state/viewHelpers'
-import type { ExplorerStateValues } from '@/lib/state/viewTypes'
 
 const props = defineProps<{
   state: ReturnType<typeof useExplorerState>
@@ -27,7 +24,7 @@ const emit = defineEmits<{
   showPredictionIntervalChanged: [value: boolean]
   showLabelsChanged: [value: boolean]
   maximizeChanged: [value: boolean]
-  isLogarithmicChanged: [value: boolean]
+  showLogarithmicChanged: [value: boolean]
   showPercentageChanged: [value: boolean]
   cumulativeChanged: [value: boolean]
   showTotalChanged: [value: boolean]
@@ -40,49 +37,18 @@ const emit = defineEmits<{
   decimalsChanged: [value: string]
 }>()
 
-// Get current view configuration
-const currentView = computed(() => VIEWS[props.state.view.value])
-
-// Build current state values for view helper functions
-const currentStateValues = computed<ExplorerStateValues>(() => ({
-  countries: props.state.countries.value,
-  type: props.state.type.value,
-  chartType: props.state.chartType.value,
-  chartStyle: props.state.chartStyle.value,
-  ageGroups: props.state.ageGroups.value,
-  standardPopulation: props.state.standardPopulation.value,
-  showPredictionInterval: props.state.showPredictionInterval.value,
-  showBaseline: props.state.showBaseline.value,
-  baselineMethod: props.state.baselineMethod.value,
-  baselineDateFrom: props.state.baselineDateFrom.value,
-  baselineDateTo: props.state.baselineDateTo.value,
-  cumulative: props.state.cumulative.value,
-  showPercentage: props.state.showPercentage.value,
-  showTotal: props.state.showTotal.value,
-  maximize: props.state.maximize.value,
-  isLogarithmic: props.state.isLogarithmic.value,
-  showLabels: props.state.showLabels.value,
-  showLogo: props.state.showLogo.value,
-  showQrCode: props.state.showQrCode.value,
-  showCaption: props.state.showCaption.value,
-  decimals: props.state.decimals.value,
-  dateFrom: props.state.dateFrom.value,
-  dateTo: props.state.dateTo.value,
-  sliderStart: props.state.sliderStart.value,
-  userColors: props.state.userColors.value,
-  chartPreset: props.state.chartPreset.value
-}))
-
-// UI visibility based on view configuration
-// NOTE: This is a partial implementation - only some UI elements are wired to view config.
-// Complete UI wiring (including disabled states, forced values, etc.) will be implemented
-// in the state library refactor. See docs/state-library-refactor-plan.md for details.
-const showLogarithmicOption = computed(() => isVisible(currentView.value.ui.logarithmic, currentStateValues.value))
-const showMaximizeOption = computed(() => isVisible(currentView.value.ui.maximize, currentStateValues.value))
-const showPercentageOption = computed(() => isVisible(currentView.value.ui.percentage, currentStateValues.value))
-const showCumulativeOption = computed(() => isVisible(currentView.value.ui.cumulative, currentStateValues.value))
-const showTotalOption = computed(() => isVisible(currentView.value.ui.showTotal, currentStateValues.value))
-const showPredictionIntervalOption = computed(() => isVisible(currentView.value.ui.predictionInterval, currentStateValues.value))
+// ✨ UI state is now computed centrally by StateResolver
+// Just reference props.state.ui.value.{field}.visible/disabled
+// No need for manual VIEWS imports or isVisible() calls
+//
+// Before: isVisible(currentView.value.ui.logarithmic, currentStateValues.value)
+// After: props.state.ui.value.logarithmic?.visible ?? false
+const showLogarithmicOption = computed(() => props.state.ui.value.logarithmic?.visible ?? false)
+const showMaximizeOption = computed(() => props.state.ui.value.maximize?.visible ?? false)
+const showPercentageOption = computed(() => props.state.ui.value.percentage?.visible ?? false)
+const showCumulativeOption = computed(() => props.state.ui.value.cumulative?.visible ?? false)
+const showTotalOption = computed(() => props.state.ui.value.showTotal?.visible ?? false)
+const showPredictionIntervalOption = computed(() => props.state.ui.value.predictionInterval?.visible ?? false)
 
 // Computed values derived from state
 const isPopulationType = computed(() => props.state.type.value === 'population')
@@ -138,14 +104,14 @@ const baselineSliderValue = computed(() => {
       :show-prediction-interval-disabled="props.showPredictionIntervalDisabled"
       :show-labels="props.state.showLabels.value"
       :maximize="props.state.maximize.value"
-      :is-logarithmic="props.state.isLogarithmic.value"
+      :show-logarithmic="props.state.showLogarithmic.value"
       :show-percentage="props.state.showPercentage.value || false"
       :cumulative="props.state.cumulative.value"
       :show-total="props.state.showTotal.value"
       :show-logarithmic-option="showLogarithmicOption"
       :show-maximize-option="showMaximizeOption"
       :show-maximize-option-disabled="
-        props.state.isLogarithmic.value || (props.state.isExcess.value && !showTotalOption)
+        props.state.showLogarithmic.value || (props.state.isExcess.value && !showTotalOption)
       "
       :show-percentage-option="showPercentageOption"
       :show-cumulative-option="showCumulativeOption"
@@ -171,7 +137,7 @@ const baselineSliderValue = computed(() => {
       @show-prediction-interval-changed="emit('showPredictionIntervalChanged', $event)"
       @show-labels-changed="emit('showLabelsChanged', $event)"
       @maximize-changed="emit('maximizeChanged', $event)"
-      @is-logarithmic-changed="emit('isLogarithmicChanged', $event)"
+      @is-logarithmic-changed="emit('showLogarithmicChanged', $event)"
       @show-percentage-changed="emit('showPercentageChanged', $event)"
       @cumulative-changed="emit('cumulativeChanged', $event)"
       @show-total-changed="emit('showTotalChanged', $event)"

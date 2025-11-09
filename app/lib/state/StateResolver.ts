@@ -16,6 +16,8 @@ import type { StateChange, ResolvedState, StateResolutionLog, StateFieldMetadata
 import { detectView } from './viewDetector'
 import { getViewConstraints } from './viewConstraints'
 import type { ViewType } from './viewTypes'
+import { VIEWS } from './views'
+import { computeUIState } from './uiStateComputer'
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class StateResolver {
@@ -91,11 +93,16 @@ export class StateResolver {
 
     log.after = { ...constrainedState }
 
-    // 5. Log resolution
+    // 5. Compute UI state from view configuration
+    const viewConfig = VIEWS[view as ViewType] || VIEWS.mortality
+    const ui = computeUIState(viewConfig, constrainedState)
+
+    // 6. Log resolution
     this.logResolution(log, 'INITIAL')
 
     return {
       state: constrainedState,
+      ui,
       metadata,
       changedFields: log.changes.map(c => c.field),
       userOverrides,
@@ -165,11 +172,113 @@ export class StateResolver {
 
     log.after = { ...constrainedState }
 
-    // 3. Log resolution
+    // 3. Compute UI state from view configuration
+    const view = (constrainedState.view as ViewType) || 'mortality'
+    const viewConfig = VIEWS[view] || VIEWS.mortality
+    const ui = computeUIState(viewConfig, constrainedState)
+
+    // 4. Log resolution
     this.logResolution(log, 'CHANGE')
 
     return {
       state: constrainedState,
+      ui,
+      metadata,
+      changedFields: log.changes.map(c => c.field),
+      userOverrides,
+      log
+    }
+  }
+
+  /**
+   * Resolve a view change from user action
+   *
+   * Called when user switches views (e.g., mortality ↔ excess ↔ zscore).
+   * Applies view defaults → constraints → computes UI state.
+   *
+   * @param newView - The view to switch to
+   * @param currentState - Current state values
+   * @param currentUserOverrides - Fields explicitly set by user (from URL)
+   * @returns Resolved state with view defaults and constraints applied
+   */
+  static resolveViewChange(
+    newView: ViewType,
+    currentState: Record<string, unknown>,
+    currentUserOverrides: Set<string>
+  ): ResolvedState {
+    const log: StateResolutionLog = {
+      timestamp: new Date().toISOString(),
+      trigger: { field: 'view', value: newView, source: 'user' },
+      before: { ...currentState },
+      after: {},
+      changes: [],
+      userOverridesFromUrl: Array.from(currentUserOverrides)
+    }
+
+    const state = { ...currentState }
+    const metadata: Record<string, StateFieldMetadata> = {}
+
+    // Clone user overrides to avoid mutation
+    const userOverrides = new Set(currentUserOverrides)
+
+    // 1. Update view
+    const oldView = state.view
+    state.view = newView
+    userOverrides.add('view')
+
+    const urlKey = 'view'
+    metadata.view = {
+      value: newView,
+      priority: 'user',
+      reason: 'User changed view',
+      changed: true,
+      urlKey
+    }
+
+    log.changes.push({
+      field: 'view',
+      urlKey,
+      oldValue: oldView,
+      newValue: newView,
+      priority: 'user',
+      reason: 'User changed view'
+    })
+
+    // 2. Apply view defaults (for fields not explicitly set by user)
+    const viewConfig = VIEWS[newView]
+    for (const [field, value] of Object.entries(viewConfig.defaults || {})) {
+      if (!userOverrides.has(field)) {
+        const oldValue = state[field]
+        if (oldValue !== value) {
+          state[field] = value
+          const fieldUrlKey = stateFieldEncoders[field as keyof typeof stateFieldEncoders]?.key || field
+
+          log.changes.push({
+            field,
+            urlKey: fieldUrlKey,
+            oldValue,
+            newValue: value,
+            priority: 'view-default',
+            reason: `${viewConfig.label} view default`
+          })
+        }
+      }
+    }
+
+    // 3. Apply constraints
+    const constrainedState = this.applyConstraints(state, userOverrides, log)
+
+    log.after = { ...constrainedState }
+
+    // 4. Compute UI state from view configuration
+    const ui = computeUIState(viewConfig, constrainedState)
+
+    // 5. Log resolution
+    this.logResolution(log, 'VIEW_CHANGE')
+
+    return {
+      state: constrainedState,
+      ui,
       metadata,
       changedFields: log.changes.map(c => c.field),
       userOverrides,
@@ -300,22 +409,24 @@ export class StateResolver {
    */
   private static logResolution(
     log: StateResolutionLog,
-    type: 'INITIAL' | 'CHANGE'
+    type: 'INITIAL' | 'CHANGE' | 'VIEW_CHANGE'
   ): void {
     // Skip logging in production
     if (typeof window !== 'undefined' && '__PROD__' in window && window.__PROD__) return
 
-    const emoji = type === 'INITIAL' ? '🚀' : '🔄'
+    const emoji = type === 'INITIAL' ? '🚀' : type === 'VIEW_CHANGE' ? '🔀' : '🔄'
     const trigger = log.trigger !== 'initial' ? log.trigger : null
     const title = type === 'INITIAL'
       ? 'Initial State Resolution'
-      : trigger
-        ? `State Resolution: ${trigger.field} = ${JSON.stringify(trigger.value)}`
-        : 'State Resolution'
+      : type === 'VIEW_CHANGE'
+        ? `View Change: ${JSON.stringify(trigger?.value)}`
+        : trigger
+          ? `State Resolution: ${trigger.field} = ${JSON.stringify(trigger.value)}`
+          : 'State Resolution'
 
     console.group(`${emoji} ${title}`)
 
-    if (type === 'CHANGE') {
+    if (type === 'CHANGE' || type === 'VIEW_CHANGE') {
       console.log('📋 BEFORE:', this.formatState(log.before))
     }
     console.log('📋 AFTER:', this.formatState(log.after))
@@ -384,7 +495,28 @@ export class StateResolver {
       }
     }
 
+    // Handle special view field (uses e=1, zs=1 instead of state encoder)
+    if (resolved.changedFields.includes('view')) {
+      const view = resolved.state.view as ViewType
+
+      // Remove all view parameters first
+      Reflect.deleteProperty(newQuery, 'e')
+      Reflect.deleteProperty(newQuery, 'zs')
+      Reflect.deleteProperty(newQuery, 'view')
+
+      // Add appropriate parameter for the new view
+      if (view === 'excess') {
+        newQuery.e = '1'
+      } else if (view === 'zscore') {
+        newQuery.zs = '1'
+      }
+      // mortality view has no special parameter (it's the default)
+    }
+
     for (const field of resolved.changedFields) {
+      // Skip 'view' field - handled above with special parameters
+      if (field === 'view') continue
+
       const encoder = stateFieldEncoders[field as keyof typeof stateFieldEncoders]
       if (!encoder) continue
 

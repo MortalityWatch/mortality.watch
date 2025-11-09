@@ -99,7 +99,7 @@ export interface ExplorerStateValues {
   showPercentage: boolean
   showTotal: boolean
   maximize: boolean
-  isLogarithmic: boolean
+  showLogarithmic: boolean
   showLabels: boolean
   showLogo: boolean
   showQrCode: boolean

@@ -28,7 +28,7 @@ describe('chartConfig', () => {
     xtitle: 'Date',
     ytitle: 'Deaths',
     isMaximized: false,
-    isLogarithmic: false,
+    showLogarithmic: false,
     showLabels: true,
     url: 'https://example.com',
     showPercentage: false,

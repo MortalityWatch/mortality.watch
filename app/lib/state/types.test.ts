@@ -156,6 +156,10 @@ describe('StateResolver Types', () => {
           isExcess: true,
           showBaseline: true
         },
+        ui: {
+          baseline: { visible: true, disabled: false },
+          predictionInterval: { visible: true, disabled: false }
+        },
         metadata: {
           isExcess: {
             value: true,
@@ -268,7 +272,7 @@ describe('StateResolver Types', () => {
         when: state => state.isExcess === true,
         apply: {
           showBaseline: true,
-          isLogarithmic: false
+          showLogarithmic: false
         },
         reason: 'Excess mode requires baseline and disables logarithmic scale',
         allowUserOverride: false,
