@@ -8,6 +8,8 @@ import {
   explorerStateSchema,
   type ExplorerState
 } from '@/model/explorerSchema'
+import { detectView } from '@/lib/state/viewDetector'
+import type { ViewType } from '@/lib/state/viewTypes'
 
 /**
  * Explorer State Management Composable
@@ -43,12 +45,6 @@ export function useExplorerState() {
   const standardPopulation = useUrlState(
     stateFieldEncoders.standardPopulation.key,
     Defaults.standardPopulation
-  )
-  const isExcess = useUrlState<boolean>(
-    stateFieldEncoders.isExcess.key,
-    false,
-    stateFieldEncoders.isExcess.encode,
-    stateFieldEncoders.isExcess.decode
   )
   const type = useUrlState(
     stateFieldEncoders.type.key,
@@ -172,6 +168,23 @@ export function useExplorerState() {
   const chartHeight = ref<number | undefined>(undefined)
 
   // ============================================================================
+  // VIEW - Derived from URL parameters
+  // ============================================================================
+
+  /**
+   * Current view type, derived from URL params (e, zs, etc.)
+   */
+  const view = computed<ViewType>(() => {
+    return detectView(route.query)
+  })
+
+  /**
+   * Backward compatibility: isExcess computed from view
+   * @deprecated Use view === 'excess' instead
+   */
+  const isExcess = computed(() => view.value === 'excess')
+
+  // ============================================================================
   // VALIDATION - Gather complete state and validate
   // ============================================================================
 
@@ -189,7 +202,6 @@ export function useExplorerState() {
     baselineMethod: baselineMethod.value,
     baselineDateFrom: baselineDateFrom.value,
     baselineDateTo: baselineDateTo.value,
-    isExcess: isExcess.value,
     cumulative: cumulative.value,
     showPredictionInterval: showPredictionInterval.value,
     showTotal: showTotal.value,
@@ -334,12 +346,15 @@ export function useExplorerState() {
   }
 
   return {
+    // View (derived from URL)
+    view,
+    isExcess, // Backward compat: computed from view === 'excess'
+
     // Core settings
     countries,
     chartType,
     ageGroups,
     standardPopulation,
-    isExcess,
     type,
     chartStyle,
 

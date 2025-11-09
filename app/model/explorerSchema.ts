@@ -108,7 +108,6 @@ const explorerStateBaseSchema = z.object({
   baselineDateTo: z.string().optional(),
 
   // Display options
-  isExcess: z.boolean(),
   cumulative: z.boolean(),
   showPredictionInterval: z.boolean(),
   showTotal: z.boolean(),
@@ -127,7 +126,7 @@ const explorerStateBaseSchema = z.object({
 
 export const explorerStateSchema = explorerStateBaseSchema.superRefine(
   (data, ctx) => {
-    // Rule 1: ASMR requires standardPopulation
+    // Rule 1: ASMR requires standardPopulation (data requirement)
     if (data.type === 'asmr' && !data.standardPopulation) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -136,18 +135,7 @@ export const explorerStateSchema = explorerStateBaseSchema.superRefine(
       })
     }
 
-    // Rule 2: Excess mode REQUIRES baseline to be ON
-    // NOTE: StateResolver enforces this as a hard constraint (priority 2)
-    // Bar chart style is a soft default (priority 0) - user can override
-    if (data.isExcess && !data.showBaseline) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Excess mode requires baseline to be enabled',
-        path: ['showBaseline']
-      })
-    }
-
-    // Rule 3: Date format must match chart type (only validate if dates are present)
+    // Rule 2: Date format must match chart type (data validation)
     const yearlyPattern = /^\d{4}$/
     const monthlyPattern = /^\d{4}-\d{2}$/
     const weeklyPattern = /^\d{4}-W\d{2}$/
@@ -242,38 +230,24 @@ export const explorerStateSchema = explorerStateBaseSchema.superRefine(
       })
     }
 
-    // Rule 5: Baseline dates should be within reasonable range
-    // Note: We don't strictly validate that baseline is "before" data period
-    // because baselines are often calculated from overlapping historical data
-    // The actual baseline calculation logic handles this appropriately
-
-    // Rule 6: Population type can't have baseline or excess
-    if (data.type === 'population' && data.showBaseline) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Population metric does not support baseline calculations',
-        path: ['showBaseline']
-      })
-    }
-
-    if (data.type === 'population' && data.isExcess) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Population metric does not support excess calculations',
-        path: ['isExcess']
-      })
-    }
-
-    // Rule 7: Prediction intervals require baseline OR excess mode
-    // In excess mode, baseline is always ON (enforced by StateResolver)
-    // In normal mode, baseline must be explicitly enabled
-    if (data.showPredictionInterval && !data.showBaseline && !data.isExcess) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Prediction intervals require baseline to be enabled',
-        path: ['showPredictionInterval']
-      })
-    }
+    // NOTE: Separation of concerns for validation:
+    //
+    // Zod Schema (this file):
+    // - Data-level validation (types, formats, required fields)
+    // - Prevents invalid data from entering the system
+    // - Runs once on initial load to catch malformed URLs
+    // - Example: "dateFrom must be YYYY format for yearly charts"
+    //
+    // State Constraints (constraints.ts):
+    // - Business rule enforcement (cross-field dependencies)
+    // - Runs on every state change to maintain consistency
+    // - Example: "if baseline is off, then prediction interval must be off"
+    //
+    // View System (views.ts):
+    // - UI visibility and defaults per view
+    // - Example: "excess view hides logarithmic option"
+    //
+    // This schema focuses ONLY on data-level validation to catch malformed URLs early.
   }
 )
 

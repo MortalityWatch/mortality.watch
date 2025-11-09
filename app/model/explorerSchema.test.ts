@@ -17,7 +17,6 @@ describe('explorerSchema', () => {
     baselineMethod: 'mean',
     baselineDateFrom: '2015',
     baselineDateTo: '2019',
-    isExcess: false,
     cumulative: false,
     showPredictionInterval: true,
     showTotal: false,
@@ -84,36 +83,9 @@ describe('explorerSchema', () => {
     })
   })
 
-  describe('Rule 2: Excess mode requires baseline', () => {
-    it('should accept excess WITH baseline', () => {
-      const state = createValidState()
-      state.isExcess = true
-      state.showBaseline = true
-      state.showPredictionInterval = false // PI can be OFF in excess mode
-      const result = explorerStateSchema.safeParse(state)
-      expect(result.success).toBe(true)
-    })
-
-    it('should accept baseline without excess', () => {
-      const state = createValidState()
-      state.isExcess = false
-      state.showBaseline = true
-      const result = explorerStateSchema.safeParse(state)
-      expect(result.success).toBe(true)
-    })
-
-    it('should reject excess WITHOUT baseline', () => {
-      const state = createValidState()
-      state.isExcess = true
-      state.showBaseline = false
-      state.showPredictionInterval = false
-      const result = explorerStateSchema.safeParse(state)
-      expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.error.issues[0]?.message).toContain('Excess mode requires baseline')
-      }
-    })
-  })
+  // NOTE: Rule 2 "Excess mode requires baseline" removed
+  // This is now handled by the view system (app/lib/state/views.ts)
+  // Excess is a view type, not a state field
 
   describe('Rule 3: Date format must match chart type', () => {
     describe('yearly charts', () => {
@@ -285,76 +257,15 @@ describe('explorerSchema', () => {
     })
   })
 
-  describe('Rule 6: Population type restrictions', () => {
-    it('should accept population without baseline', () => {
-      const state = createValidState()
-      state.type = 'population'
-      state.showBaseline = false
-      state.isExcess = false
-      state.showPredictionInterval = false // Prediction intervals require baseline
-      const result = explorerStateSchema.safeParse(state)
-      expect(result.success).toBe(true)
-    })
+  // NOTE: Rule 6 "Population type restrictions" tests removed
+  // Business rules like:
+  // - "population doesn't support baseline" -> handled by StateResolver constraints
+  // - "population doesn't support excess" -> handled by view.compatibleMetrics
+  // The Zod schema only validates data-level rules
 
-    it('should reject population with baseline', () => {
-      const state = createValidState()
-      state.type = 'population'
-      state.showBaseline = true
-      const result = explorerStateSchema.safeParse(state)
-      expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.error.issues.some(e =>
-          e.message.includes('Population metric does not support baseline')
-        )).toBe(true)
-      }
-    })
-
-    it('should reject population with excess', () => {
-      const state = createValidState()
-      state.type = 'population'
-      state.showBaseline = false
-      state.isExcess = true
-      const result = explorerStateSchema.safeParse(state)
-      expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.error.issues.some(e =>
-          e.message.includes('Population metric does not support excess')
-        )).toBe(true)
-      }
-    })
-  })
-
-  describe('Rule 7: Prediction intervals require baseline OR excess mode', () => {
-    it('should accept prediction intervals with baseline', () => {
-      const state = createValidState()
-      state.showPredictionInterval = true
-      state.showBaseline = true
-      state.isExcess = false
-      const result = explorerStateSchema.safeParse(state)
-      expect(result.success).toBe(true)
-    })
-
-    it('should accept prediction intervals in excess mode (baseline always ON)', () => {
-      const state = createValidState()
-      state.showPredictionInterval = true
-      state.showBaseline = true // Required by Rule 2
-      state.isExcess = true
-      const result = explorerStateSchema.safeParse(state)
-      expect(result.success).toBe(true)
-    })
-
-    it('should reject prediction intervals without baseline (normal mode)', () => {
-      const state = createValidState()
-      state.showPredictionInterval = true
-      state.showBaseline = false
-      state.isExcess = false
-      const result = explorerStateSchema.safeParse(state)
-      expect(result.success).toBe(false)
-      if (!result.success) {
-        expect(result.error.issues[0]?.message).toContain('require baseline')
-      }
-    })
-  })
+  // NOTE: Rule 7 "Prediction intervals require baseline" tests removed
+  // This is a business rule, not a data validation rule
+  // Now handled by StateResolver constraints (app/lib/state/constraints.ts)
 
   describe('enum validation', () => {
     it('should reject invalid chart type', () => {

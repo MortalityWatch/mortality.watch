@@ -8,6 +8,7 @@ import {
 } from '@/lib/data'
 import { getFilteredChartData } from '@/lib/chart'
 import { getKeyForType } from '@/model'
+import { inferIsExcessFromFlags } from '@/lib/state/viewHelpers'
 import type {
   DatasetRaw,
   AllChartData,
@@ -142,12 +143,18 @@ export class DataService {
       showCumPi: () => boolean
     }
   ): Promise<MortalityChartData> {
+    // NOTE: isExcess removed from ExplorerState - use helper to infer from flags
+    const isExcess = inferIsExcessFromFlags({
+      cumulative: props.cumulative,
+      showPercentage: props.showPercentage
+    })
+
     return await getFilteredChartData(
       props.countries,
       props.standardPopulation,
       props.ageGroups,
       props.showPredictionInterval,
-      props.isExcess,
+      isExcess,
       props.type,
       props.cumulative,
       props.showBaseline,

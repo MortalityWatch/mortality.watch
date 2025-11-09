@@ -13,8 +13,8 @@ describe('chartState', () => {
       const query = {
         c: ['USA', 'GBR'],
         t: 'deaths',
-        ct: 'weekly',
-        e: '1'
+        ct: 'weekly'
+        // NOTE: e param (excess view) is handled by view system, not ChartState
       }
 
       const state = decodeChartState(query)
@@ -22,7 +22,7 @@ describe('chartState', () => {
       expect(state.countries).toEqual(['USA', 'GBR'])
       expect(state.type).toBe('deaths')
       expect(state.chartType).toBe('weekly')
-      expect(state.isExcess).toBe(true)
+      // NOTE: isExcess removed - view is determined by viewDetector from URL params
     })
 
     it('should use defaults for missing values', () => {
@@ -35,7 +35,7 @@ describe('chartState', () => {
       expect(state.countries).toEqual(['USA'])
       expect(state.type).toBe('asmr') // default
       expect(state.chartType).toBe('fluseason') // default
-      expect(state.isExcess).toBe(false) // default
+      // NOTE: isExcess removed - now determined by view system from URL params
     })
 
     it('should decode boolean values correctly', () => {
@@ -68,8 +68,8 @@ describe('chartState', () => {
       const state: Partial<ChartState> = {
         countries: ['USA', 'GBR'],
         type: 'deaths',
-        chartType: 'weekly',
-        isExcess: true
+        chartType: 'weekly'
+        // NOTE: isExcess removed - view is determined from URL params (e=1)
       }
 
       const query = encodeChartState(state)
@@ -77,7 +77,7 @@ describe('chartState', () => {
       expect(query.c).toEqual(['USA', 'GBR'])
       expect(query.t).toBe('deaths')
       expect(query.ct).toBe('weekly')
-      expect(query.e).toBe('1')
+      // NOTE: e param (excess view) is not part of state, added by view system
     })
 
     it('should skip default values', () => {
@@ -134,14 +134,15 @@ describe('chartState', () => {
 
   describe('queryStringToChartState', () => {
     it('should parse URL query string to chart state', () => {
-      const queryString = 'c=USA&c=GBR&t=deaths&ct=weekly&e=1'
+      const queryString = 'c=USA&c=GBR&t=deaths&ct=weekly'
+      // NOTE: e=1 is handled by view system, not part of ChartState
 
       const state = queryStringToChartState(queryString)
 
       expect(state.countries).toEqual(['USA', 'GBR'])
       expect(state.type).toBe('deaths')
       expect(state.chartType).toBe('weekly')
-      expect(state.isExcess).toBe(true)
+      // NOTE: isExcess removed - view is determined by viewDetector from URL params
     })
 
     it('should handle single array values', () => {
@@ -167,7 +168,7 @@ describe('chartState', () => {
         countries: ['USA', 'GBR', 'DEU'],
         type: 'deaths',
         chartType: 'monthly',
-        isExcess: true,
+        // NOTE: isExcess removed - view is handled separately by view system
         ageGroups: ['65-74', '75-84'],
         showBaseline: false
       }
@@ -178,7 +179,7 @@ describe('chartState', () => {
       expect(decoded.countries).toEqual(original.countries)
       expect(decoded.type).toBe(original.type)
       expect(decoded.chartType).toBe(original.chartType)
-      expect(decoded.isExcess).toBe(original.isExcess)
+      // NOTE: isExcess comparison removed - not part of state anymore
       expect(decoded.ageGroups).toEqual(original.ageGroups)
       expect(decoded.showBaseline).toBe(original.showBaseline)
     })
