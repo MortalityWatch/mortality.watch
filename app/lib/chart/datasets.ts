@@ -97,7 +97,7 @@ export const getDatasets = (
     showTotal: config.display.showTotal,
     showCumPi: config.display.showCumPi,
     isAsmrType: config.chart.isAsmrType,
-    view: config.display.view
+    view: config.display.view ?? 'mortality'
   }
 
   if (config.display.view === 'zscore') {

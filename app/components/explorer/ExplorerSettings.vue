@@ -37,8 +37,12 @@ const emit = defineEmits<{
   decimalsChanged: [value: string]
 }>()
 
-// UI visibility/disabled state from state library (computed from view config)
-// No manual visibility computation needed - StateResolver handles this
+// ✨ UI state is now computed centrally by StateResolver
+// Just reference props.state.ui.value.{field}.visible/disabled
+// No need for manual VIEWS imports or isVisible() calls
+//
+// Before: isVisible(currentView.value.ui.logarithmic, currentStateValues.value)
+// After: props.state.ui.value.logarithmic?.visible ?? false
 const showLogarithmicOption = computed(() => props.state.ui.value.logarithmic?.visible ?? false)
 const showMaximizeOption = computed(() => props.state.ui.value.maximize?.visible ?? false)
 const showPercentageOption = computed(() => props.state.ui.value.percentage?.visible ?? false)
