@@ -95,6 +95,7 @@ export const getFilteredChartData = async (
   isLogarithmic: boolean,
   isPopulationType: boolean,
   isDeathsType: boolean,
+  view: string,
   allLabels: string[],
   allChartData: Dataset
 ): Promise<MortalityChartData> => {
@@ -111,7 +112,8 @@ export const getFilteredChartData = async (
     baselineDateFrom,
     baselineDateTo,
     showTotal,
-    chartType
+    chartType,
+    view
   )
 
   const filteredData = getFilteredLabelAndData(
@@ -135,7 +137,8 @@ export const getFilteredChartData = async (
       showTotal,
       showCumPi,
       showBaseline,
-      showPredictionInterval
+      showPredictionInterval,
+      view
     },
     chart: {
       type,

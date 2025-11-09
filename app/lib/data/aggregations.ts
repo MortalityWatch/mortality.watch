@@ -54,7 +54,7 @@ export const getAllChartData = async (
       if (!data[ag]) data[ag] = {}
       if (
         !cd
-        || (!baselineMethod && cd[dataKey].filter(x => x).length == 0)
+        || (!baselineMethod && cd[dataKey]?.filter(x => x).length == 0)
       ) {
         if (dataKey.startsWith('asmr')) {
           noAsmr.add(iso3c)
@@ -93,10 +93,13 @@ export const getAllChartData = async (
         }
 
         for (const key of numberKeys) {
-          data[ag][iso3c][key] = prefillUndefined(
-            data[ag][iso3c][key],
-            n
-          ) as NumberArray
+          const currentValue = data[ag][iso3c][key]
+          if (currentValue !== undefined) {
+            data[ag][iso3c][key] = prefillUndefined(
+              currentValue,
+              n
+            ) as NumberArray
+          }
         }
       }
     }

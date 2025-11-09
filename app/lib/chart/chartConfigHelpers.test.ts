@@ -488,7 +488,7 @@ describe('chartConfigHelpers', () => {
     })
 
     it('should use dark theme colors when isDark is true', () => {
-      const config = createPluginsConfig(mockData, false, false, false, true, 'auto', false, false, true, true)
+      const config = createPluginsConfig(mockData, false, false, false, true, 'auto', false, false, true, 'zscore', true)
 
       expect(config.title.color).toBeDefined()
       expect(config.subtitle.color).toBeDefined()

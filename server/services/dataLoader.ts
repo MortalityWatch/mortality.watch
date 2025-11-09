@@ -358,10 +358,13 @@ export class DataLoaderService {
           }
 
           for (const key of numberKeys) {
-            data[ag][iso3c][key] = prefillUndefined(
-              data[ag][iso3c][key],
-              n
-            ) as NumberArray
+            const currentValue = data[ag][iso3c][key]
+            if (currentValue !== undefined) {
+              data[ag][iso3c][key] = prefillUndefined(
+                currentValue,
+                n
+              ) as NumberArray
+            }
           }
         }
       }

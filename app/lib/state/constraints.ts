@@ -144,6 +144,7 @@ const cumulativeOffConstraints: StateConstraint = {
 export const STATE_CONSTRAINTS: StateConstraint[] = [
   // Priority 2: Hard constraints (cannot be overridden)
   // Note: Excess-related constraints moved to view-based system (views.ts)
+  // Note: Z-score constraints moved to view-based system (views.ts)
   populationTypeConstraints,
   asmrLeTypeConstraints,
   matrixStyleConstraints,

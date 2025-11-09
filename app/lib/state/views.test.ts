@@ -152,43 +152,62 @@ describe('View Configurations', () => {
 
     it('hides standard mortality options', () => {
       expect(config.ui.baseline.visibility.type).toBe('hidden')
-      expect(config.ui.predictionInterval.visibility.type).toBe('hidden')
       expect(config.ui.logarithmic.visibility.type).toBe('hidden')
-      expect(config.ui.maximize.visibility.type).toBe('hidden')
       expect(config.ui.cumulative.visibility.type).toBe('hidden')
       expect(config.ui.percentage.visibility.type).toBe('hidden')
       expect(config.ui.showTotal.visibility.type).toBe('hidden')
     })
 
-    it('shows z-score specific options', () => {
-      expect(config.ui.zScoreThreshold).toBeDefined()
-      expect(config.ui.zScoreThreshold?.visibility.type).toBe('visible')
+    it('shows prediction interval and labels options', () => {
+      expect(config.ui.predictionInterval.visibility.type).toBe('visible')
+      expect(config.ui.labels.visibility.type).toBe('visible')
+    })
 
-      expect(config.ui.significanceLevel).toBeDefined()
-      expect(config.ui.significanceLevel?.visibility.type).toBe('visible')
+    it('has maximize conditional on bar chart', () => {
+      expect(config.ui.maximize.visibility.type).toBe('conditional')
     })
 
     it('has correct defaults', () => {
-      expect(config.defaults.chartStyle).toBe('matrix')
-      expect(config.defaults.zScoreThreshold).toBe(2.0)
-      expect(config.defaults.significanceLevel).toBe(0.05)
+      expect(config.defaults.chartStyle).toBe('line')
+      expect(config.defaults.showBaseline).toBe(true)
+      expect(config.defaults.showPredictionInterval).toBe(false)
+      expect(config.defaults.isLogarithmic).toBe(false)
     })
 
     it('restricts to compatible metrics', () => {
-      expect(config.compatibleMetrics).toEqual(['cmr'])
+      expect(config.compatibleMetrics).toEqual(['cmr', 'asmr', 'deaths'])
     })
 
-    it('restricts to matrix chart style only', () => {
-      expect(config.compatibleChartStyles).toEqual(['matrix'])
+    it('supports line and bar chart styles', () => {
+      expect(config.compatibleChartStyles).toEqual(['line', 'bar'])
     })
 
-    it('has constraint to force matrix chart style', () => {
-      const matrixConstraint = config.constraints.find(
-        c => c.apply.chartStyle === 'matrix'
+    it('has constraint to force baseline enabled', () => {
+      const baselineConstraint = config.constraints.find(
+        c => c.apply.showBaseline === true
       )
-      expect(matrixConstraint).toBeDefined()
-      expect(matrixConstraint?.allowUserOverride).toBe(false)
-      expect(matrixConstraint?.priority).toBe(2)
+      expect(baselineConstraint).toBeDefined()
+      expect(baselineConstraint?.allowUserOverride).toBe(false)
+      expect(baselineConstraint?.priority).toBe(2)
+      expect(baselineConstraint?.reason).toContain('Z-score calculation requires baseline')
+    })
+
+    it('has constraint to disable logarithmic', () => {
+      const logConstraint = config.constraints.find(
+        c => c.apply.isLogarithmic === false
+      )
+      expect(logConstraint).toBeDefined()
+      expect(logConstraint?.allowUserOverride).toBe(false)
+      expect(logConstraint?.priority).toBe(2)
+    })
+
+    it('has constraint to disable cumulative and percentage', () => {
+      const cumulativeConstraint = config.constraints.find(
+        c => c.apply.cumulative === false && c.apply.showPercentage === false
+      )
+      expect(cumulativeConstraint).toBeDefined()
+      expect(cumulativeConstraint?.allowUserOverride).toBe(false)
+      expect(cumulativeConstraint?.priority).toBe(2)
     })
   })
 

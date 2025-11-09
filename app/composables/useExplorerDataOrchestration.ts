@@ -19,7 +19,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import type { Ref, ComputedRef } from 'vue'
 import type { useExplorerState } from '@/composables/useExplorerState'
 import type { useExplorerHelpers } from '@/composables/useExplorerHelpers'
-import type { AllChartData, DatasetRaw, Country } from '@/model'
+import type { AllChartData, DatasetRaw, Country, CountryData } from '@/model'
 import { getKeyForType } from '@/model'
 import { ChartPeriod, type ChartType } from '@/model/period'
 import {
@@ -300,6 +300,7 @@ export function useExplorerDataOrchestration(
       state.isLogarithmic.value,
       helpers.isPopulationType(),
       helpers.isDeathsType(),
+      state.view.value,
       allChartData.labels,
       allChartData.data
     )
@@ -330,7 +331,7 @@ export function useExplorerDataOrchestration(
         chartType: state.chartType.value as ChartType,
         countries: state.countries.value,
         ageGroups: ageGroupsForFetch.value, // Use memoized age groups
-        dataKey: key,
+        dataKey: key as keyof CountryData,
         baselineMethod: state.baselineMethod.value,
         baselineDateFrom: state.baselineDateFrom.value ?? baselineRange.value?.from,
         baselineDateTo: state.baselineDateTo.value ?? baselineRange.value?.to,
@@ -384,7 +385,7 @@ export function useExplorerDataOrchestration(
         chartType: state.chartType.value as ChartType,
         countries: state.countries.value,
         ageGroups: ageGroupsForFetch.value, // Use memoized age groups
-        dataKey: key,
+        dataKey: key as keyof CountryData,
         baselineMethod: state.baselineMethod.value,
         baselineDateFrom: state.baselineDateFrom.value ?? baselineRange.value?.from,
         baselineDateTo: state.baselineDateTo.value ?? baselineRange.value?.to,
