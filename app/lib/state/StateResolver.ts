@@ -191,6 +191,102 @@ export class StateResolver {
   }
 
   /**
+   * Resolve a view change from user action
+   *
+   * Called when user switches views (e.g., mortality ↔ excess ↔ zscore).
+   * Applies view defaults → constraints → computes UI state.
+   *
+   * @param newView - The view to switch to
+   * @param currentState - Current state values
+   * @param currentUserOverrides - Fields explicitly set by user (from URL)
+   * @returns Resolved state with view defaults and constraints applied
+   */
+  static resolveViewChange(
+    newView: ViewType,
+    currentState: Record<string, unknown>,
+    currentUserOverrides: Set<string>
+  ): ResolvedState {
+    const log: StateResolutionLog = {
+      timestamp: new Date().toISOString(),
+      trigger: { field: 'view', value: newView, source: 'user' },
+      before: { ...currentState },
+      after: {},
+      changes: [],
+      userOverridesFromUrl: Array.from(currentUserOverrides)
+    }
+
+    const state = { ...currentState }
+    const metadata: Record<string, StateFieldMetadata> = {}
+
+    // Clone user overrides to avoid mutation
+    const userOverrides = new Set(currentUserOverrides)
+
+    // 1. Update view
+    const oldView = state.view
+    state.view = newView
+    userOverrides.add('view')
+
+    const urlKey = 'view'
+    metadata.view = {
+      value: newView,
+      priority: 'user',
+      reason: 'User changed view',
+      changed: true,
+      urlKey
+    }
+
+    log.changes.push({
+      field: 'view',
+      urlKey,
+      oldValue: oldView,
+      newValue: newView,
+      priority: 'user',
+      reason: 'User changed view'
+    })
+
+    // 2. Apply view defaults (for fields not explicitly set by user)
+    const viewConfig = VIEWS[newView]
+    for (const [field, value] of Object.entries(viewConfig.defaults || {})) {
+      if (!userOverrides.has(field)) {
+        const oldValue = state[field]
+        if (oldValue !== value) {
+          state[field] = value
+          const fieldUrlKey = stateFieldEncoders[field as keyof typeof stateFieldEncoders]?.key || field
+
+          log.changes.push({
+            field,
+            urlKey: fieldUrlKey,
+            oldValue,
+            newValue: value,
+            priority: 'view-default',
+            reason: `${viewConfig.label} view default`
+          })
+        }
+      }
+    }
+
+    // 3. Apply constraints
+    const constrainedState = this.applyConstraints(state, userOverrides, log)
+
+    log.after = { ...constrainedState }
+
+    // 4. Compute UI state from view configuration
+    const ui = computeUIState(viewConfig, constrainedState)
+
+    // 5. Log resolution
+    this.logResolution(log, 'VIEW_CHANGE')
+
+    return {
+      state: constrainedState,
+      ui,
+      metadata,
+      changedFields: log.changes.map(c => c.field),
+      userOverrides,
+      log
+    }
+  }
+
+  /**
    * Apply all constraints to state in priority order
    *
    * Constraints are sorted by priority (high to low) and applied in order.
@@ -313,22 +409,24 @@ export class StateResolver {
    */
   private static logResolution(
     log: StateResolutionLog,
-    type: 'INITIAL' | 'CHANGE'
+    type: 'INITIAL' | 'CHANGE' | 'VIEW_CHANGE'
   ): void {
     // Skip logging in production
     if (typeof window !== 'undefined' && '__PROD__' in window && window.__PROD__) return
 
-    const emoji = type === 'INITIAL' ? '🚀' : '🔄'
+    const emoji = type === 'INITIAL' ? '🚀' : type === 'VIEW_CHANGE' ? '🔀' : '🔄'
     const trigger = log.trigger !== 'initial' ? log.trigger : null
     const title = type === 'INITIAL'
       ? 'Initial State Resolution'
-      : trigger
-        ? `State Resolution: ${trigger.field} = ${JSON.stringify(trigger.value)}`
-        : 'State Resolution'
+      : type === 'VIEW_CHANGE'
+        ? `View Change: ${JSON.stringify(trigger?.value)}`
+        : trigger
+          ? `State Resolution: ${trigger.field} = ${JSON.stringify(trigger.value)}`
+          : 'State Resolution'
 
     console.group(`${emoji} ${title}`)
 
-    if (type === 'CHANGE') {
+    if (type === 'CHANGE' || type === 'VIEW_CHANGE') {
       console.log('📋 BEFORE:', this.formatState(log.before))
     }
     console.log('📋 AFTER:', this.formatState(log.after))

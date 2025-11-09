@@ -21,7 +21,6 @@ import type { ChartType } from '@/model/period'
 import {
   loadCountryMetadata
 } from '@/lib/data'
-import { VIEWS } from '@/lib/state/views'
 import ExplorerDataSelection from '@/components/explorer/ExplorerDataSelection.vue'
 import ExplorerChartContainer from '@/components/explorer/ExplorerChartContainer.vue'
 import ExplorerSettings from '@/components/explorer/ExplorerSettings.vue'
@@ -302,44 +301,28 @@ const handleStateChange = async (field: string, value: unknown, refreshKey: stri
 
 // Specific handlers for different controls
 // Core chart configuration
-// TODO: This handler bypasses StateResolver and manually manipulates URL.
-// Should be refactored to use StateResolver.resolveViewChange() for proper
-// view transitions with constraint application. See docs/state-library-refactor-plan.md
-// Special handler for excess toggle - manipulates view URL parameter
+// Special handler for excess toggle - uses StateResolver for proper view transitions
 const handleExcessChanged = async (v: boolean) => {
   const router = useRouter()
   const route = useRoute()
-  const currentQuery = { ...route.query }
 
-  if (v) {
-    // Enable excess view: add e=1 to URL
-    currentQuery.e = '1'
+  // Determine new view
+  const newView = v ? 'excess' : 'mortality'
 
-    // Apply excess view defaults to URL
-    const excessDefaults = VIEWS.excess.defaults
-    if (excessDefaults.showPredictionInterval === false) {
-      currentQuery.pi = '0'
-    }
-    if (excessDefaults.showPercentage === true) {
-      currentQuery.p = '1'
-    }
-  } else {
-    // Disable excess view: remove e from URL
-    delete currentQuery.e
+  // Resolve view change through StateResolver
+  // This applies view defaults, constraints, and computes UI state
+  const { StateResolver } = await import('@/lib/state/StateResolver')
+  const resolved = StateResolver.resolveViewChange(
+    newView,
+    state.getCurrentStateValues(),
+    state.getUserOverrides()
+  )
 
-    // Reset to mortality view defaults
-    const mortalityDefaults = VIEWS.mortality.defaults
-    if (mortalityDefaults.showPercentage === false) {
-      delete currentQuery.p // Remove percentage parameter
-    }
-    // PI can stay (same default in both views)
-  }
-
-  // Navigate with updated query params
-  await router.push({ path: route.path, query: currentQuery })
+  // Apply resolved state to URL
+  await StateResolver.applyResolvedState(resolved, route, router)
 
   // Trigger chart refresh
-  await update('_isExcess')
+  await update('_view')
 }
 const handleBaselineChanged = (v: boolean) => handleStateChange('showBaseline', v, '_showBaseline')
 const handlePredictionIntervalChanged = (v: boolean) => handleStateChange('showPredictionInterval', v, '_showPredictionInterval')
