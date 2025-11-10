@@ -27,6 +27,8 @@ import {
 import type { ChartErrorDataPoint, MortalityChartData } from '../chartTypes'
 import { getLabelText } from './chartLabels'
 import { createTooltipCallbacks } from './chartTooltips'
+import { getChartView, type ReferenceLineConfig } from '../chartViews/index'
+import type { ViewType } from '../../state/viewTypes'
 
 /**
  * Create custom background color plugin
@@ -126,17 +128,31 @@ export function createDatalabelsConfig(
 }
 
 /**
- * Create Z-score reference lines annotation config
- * Shows reference lines at -2, 0, +2, +4 standard deviations (EuroMOMO style)
+ * Convert reference line configs from chart views to Chart.js annotations
+ * Handles reference lines for any view (excess baseline, z-score lines, etc.)
  */
-export function createZScoreAnnotations(isDark?: boolean) {
-  const lineColor = (sigma: number) => {
-    // Red for +4σ, Yellow for ±2σ, Gray for 0
-    if (sigma === 4) return isDark ? '#ef4444' : '#dc2626' // red
-    if (Math.abs(sigma) === 2) return isDark ? '#eab308' : '#ca8a04' // yellow
-    return isDark ? '#6b7280' : '#9ca3af' // gray
+export function createAnnotationsFromReferenceLines(
+  referenceLines: ReferenceLineConfig[]
+): Record<string, {
+  type: string
+  yMin: number
+  yMax: number
+  borderColor: string
+  borderWidth: number
+  borderDash: number[]
+  label: {
+    display: boolean
+    content: string
+    position: string
+    backgroundColor: string
+    color: string
+    font: {
+      size: number
+      weight: string
+    }
+    padding: number
   }
-
+}> {
   const annotations: Record<string, {
     type: string
     yMin: number
@@ -158,23 +174,21 @@ export function createZScoreAnnotations(isDark?: boolean) {
     }
   }> = {}
 
-  // Create annotations for -2, 0, +2, +4 (EuroMOMO style)
-  const sigmaValues = [-2, 0, 2, 4]
-  sigmaValues.forEach((sigma) => {
-    const key = `zscore_${sigma}`
+  referenceLines.forEach((line, index) => {
+    const key = `reference_line_${index}`
     annotations[key] = {
       type: 'line',
-      yMin: sigma,
-      yMax: sigma,
-      borderColor: lineColor(sigma),
-      borderWidth: sigma === 0 ? 1.5 : 1,
-      borderDash: sigma === 0 ? [] : [5, 5],
+      yMin: line.value,
+      yMax: line.value,
+      borderColor: line.color,
+      borderWidth: line.width || 1,
+      borderDash: line.style === 'dashed' ? [5, 5] : [],
       label: {
         display: true,
-        content: sigma === 0 ? '0σ' : `${sigma > 0 ? '+' : ''}${sigma}σ`,
+        content: line.label,
         position: 'end',
         backgroundColor: 'transparent',
-        color: lineColor(sigma),
+        color: line.color,
         font: {
           size: 10,
           weight: 'normal'
@@ -247,12 +261,35 @@ export function createPluginsConfig(
     isDarkMode: isDark
   }
 
-  // Add Z-score annotations if in zscore view
-  if (view === 'zscore') {
+  // Get reference lines from chart view configuration
+  const chartView = getChartView((view as ViewType) || 'mortality')
+
+  // For reference lines, we need a minimal context
+  // Most reference lines only need isDark, not the full context
+  const minimalContext = {
+    countries: [],
+    type: '',
+    ageGroups: [],
+    standardPopulation: '',
+    cumulative: false,
+    showBaseline: false,
+    showPredictionInterval: false,
+    showTotal: false,
+    chartType: '',
+    baselineMethod: '',
+    baselineDateFrom: '',
+    baselineDateTo: '',
+    view: (view as ViewType) || 'mortality'
+  }
+
+  const referenceLines = chartView.referenceLines?.(minimalContext, isDark ?? false) || []
+
+  // Add reference line annotations if any are defined
+  if (referenceLines.length > 0) {
     return {
       ...basePlugins,
       annotation: {
-        annotations: createZScoreAnnotations(isDark)
+        annotations: createAnnotationsFromReferenceLines(referenceLines)
       }
     }
   }
