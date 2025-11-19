@@ -41,9 +41,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .eslintcache
-          key: ${{ runner.os }}-eslint-${{ hashFiles('**/bun.lock') }}-${{ hashFiles('**/*.ts', '**/*.vue', '**/*.js', '.eslintrc.*') }}
+          key: ${{ runner.os }}-eslint-${{ hashFiles('**/bun.lock', 'eslint.config.*', '.eslintrc.*') }}
           restore-keys: |
-            ${{ runner.os }}-eslint-${{ hashFiles('**/bun.lock') }}-
             ${{ runner.os }}-eslint-
 
       - name: Run all checks (lint + typecheck + test)
