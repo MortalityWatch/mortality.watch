@@ -4,6 +4,7 @@ import { computed } from 'vue'
 const props = defineProps<{
   // Boolean switches
   isExcess: boolean
+  isZScore: boolean
   showBaseline: boolean
   showPredictionInterval: boolean
   maximize: boolean
@@ -31,6 +32,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:isExcess': [value: boolean]
+  'update:isZScore': [value: boolean]
   'update:showBaseline': [value: boolean]
   'update:showPredictionInterval': [value: boolean]
   'update:maximize': [value: boolean]
@@ -45,6 +47,11 @@ const emit = defineEmits<{
 const isExcessModel = computed({
   get: () => props.isExcess,
   set: v => emit('update:isExcess', v)
+})
+
+const isZScoreModel = computed({
+  get: () => props.isZScore,
+  set: v => emit('update:isZScore', v)
 })
 
 const showBaselineModel = computed({
@@ -104,6 +111,26 @@ const chartPresetModel = computed({
           test-id="excess-toggle"
           help-content="Compares observed mortality to expected baseline. Positive values indicate more deaths than expected, negative values indicate fewer deaths."
         />
+
+        <FeatureGate feature="Z_SCORES">
+          <UiControlRow>
+            <label class="text-sm font-medium whitespace-nowrap">
+              Z-Score
+              <FeatureBadge
+                feature="Z_SCORES"
+                class="ml-2"
+              />
+            </label>
+            <USwitch
+              v-model="isZScoreModel"
+              :disabled="props.isPopulationType"
+              data-testid="z-score-toggle"
+            />
+            <template #help>
+              Statistical measure of how many standard deviations the observed value is from the expected baseline. Values beyond ±2 indicate statistical significance.
+            </template>
+          </UiControlRow>
+        </FeatureGate>
 
         <UiSwitchRow
           v-model="showBaselineModel"
