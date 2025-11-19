@@ -127,15 +127,19 @@ jobs:
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
         run: bun install --frozen-lockfile
 
-      - name: Cache Nuxt Build (no .output for E2E)
+      - name: Cache Nuxt Build
         uses: actions/cache@v4
+        id: nuxt-build-cache
         with:
           path: |
             .nuxt
+            .output
             node_modules/.cache
           key: ${{ runner.os }}-nuxt-e2e-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
+            ${{ runner.os }}-nuxt-${{ hashFiles('**/bun.lock') }}
             ${{ runner.os }}-nuxt-e2e-
+            ${{ runner.os }}-nuxt-
 
       - name: Cache Playwright Browsers
         uses: actions/cache@v4
@@ -161,6 +165,7 @@ jobs:
           ls -lh .data/mortality.db
 
       - name: Build for E2E tests
+        if: steps.nuxt-build-cache.outputs.cache-hit != 'true'
         run: bun run build
         timeout-minutes: 5
 
