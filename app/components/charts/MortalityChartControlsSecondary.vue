@@ -24,6 +24,7 @@ const props = defineProps<{
   isUpdating: boolean
   isPopulationType: boolean
   isExcess: boolean
+  isZScore: boolean
   baselineMethod: string
   baselineSliderValue: string[]
   showBaseline: boolean
@@ -61,6 +62,7 @@ const emit = defineEmits<{
   chartStyleChanged: [value: string]
   standardPopulationChanged: [value: string]
   isExcessChanged: [value: boolean]
+  isZScoreChanged: [value: boolean]
   showBaselineChanged: [value: boolean]
   baselineMethodChanged: [value: string]
   baselineSliderValueChanged: [value: string[]]
@@ -145,6 +147,11 @@ const selectedBaselineMethod = computed({
 const isExcess = computed({
   get: () => props.isExcess,
   set: (v: boolean) => emit('isExcessChanged', v)
+})
+
+const isZScore = computed({
+  get: () => props.isZScore,
+  set: (v: boolean) => emit('isZScoreChanged', v)
 })
 
 const showBaseline = computed({
@@ -328,6 +335,7 @@ const activeTab = ref('data')
       <DisplayTab
         v-if="activeTab === 'display'"
         :is-excess="props.isExcess"
+        :is-z-score="props.isZScore"
         :show-baseline="props.showBaseline"
         :show-prediction-interval="props.showPredictionInterval"
         :maximize="props.maximize"
@@ -349,6 +357,7 @@ const activeTab = ref('data')
         :chart-preset="chartPreset"
         :chart-preset-options="chartPresetOptions"
         @update:is-excess="isExcess = $event"
+        @update:is-z-score="isZScore = $event"
         @update:show-baseline="showBaseline = $event"
         @update:show-prediction-interval="showPredictionInterval = $event"
         @update:maximize="maximize = $event"
