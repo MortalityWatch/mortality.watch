@@ -186,6 +186,11 @@ export function useExplorerState() {
    */
   const isExcess = computed(() => view.value === 'excess')
 
+  /**
+   * Check if current view is z-score
+   */
+  const isZScore = computed(() => view.value === 'zscore')
+
   // ============================================================================
   // VALIDATION - Gather complete state and validate
   // ============================================================================
@@ -324,6 +329,7 @@ export function useExplorerState() {
       ageGroups: ageGroups.value,
       standardPopulation: standardPopulation.value,
       isExcess: isExcess.value,
+      isZScore: isZScore.value,
       showBaseline: showBaseline.value,
       showPredictionInterval: showPredictionInterval.value,
       cumulative: cumulative.value,
@@ -358,6 +364,7 @@ export function useExplorerState() {
     // View (derived from URL)
     view,
     isExcess, // Backward compat: computed from view === 'excess'
+    isZScore, // Computed from view === 'zscore'
 
     // Core settings
     countries,
