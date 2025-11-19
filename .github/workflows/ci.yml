@@ -15,31 +15,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Install node
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: ${{ matrix.node }}
+          bun-version: latest
 
       - name: Cache node_modules
         id: cache-node-modules
         uses: actions/cache@v4
         with:
           path: node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-bun-node-modules-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-node-modules-
+            ${{ runner.os }}-bun-node-modules-
 
       - name: Install dependencies
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
-        run: npm ci --prefer-offline
+        run: bun install --frozen-lockfile
 
       - name: Cache ESLint
         uses: actions/cache@v4
         with:
           path: .eslintcache
-          key: ${{ runner.os }}-eslint-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.ts', '**/*.vue', '**/*.js', '.eslintrc.*') }}
+          key: ${{ runner.os }}-eslint-${{ hashFiles('**/bun.lock') }}-${{ hashFiles('**/*.ts', '**/*.vue', '**/*.js', '.eslintrc.*') }}
           restore-keys: |
-            ${{ runner.os }}-eslint-${{ hashFiles('**/package-lock.json') }}-
+            ${{ runner.os }}-eslint-${{ hashFiles('**/bun.lock') }}-
             ${{ runner.os }}-eslint-
 
       - name: Cache Nuxt Build
@@ -49,16 +49,16 @@ jobs:
             .nuxt
             .output
             node_modules/.cache
-          key: ${{ runner.os }}-nuxt-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-nuxt-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-nuxt-
 
       - name: Run all checks (lint + typecheck + test)
-        run: npm run check
+        run: bun run check
         timeout-minutes: 10
 
       - name: Build verification
-        run: npm run build
+        run: bun run build
         timeout-minutes: 5
 
   e2e:
@@ -74,23 +74,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Install node
-        uses: actions/setup-node@v4
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: ${{ matrix.node }}
+          bun-version: latest
 
       - name: Cache node_modules
         id: cache-node-modules
         uses: actions/cache@v4
         with:
           path: node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-bun-node-modules-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-node-modules-
+            ${{ runner.os }}-bun-node-modules-
 
       - name: Install dependencies
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
-        run: npm ci --prefer-offline
+        run: bun install --frozen-lockfile
 
       - name: Cache Nuxt Build (no .output for E2E)
         uses: actions/cache@v4
@@ -98,7 +98,7 @@ jobs:
           path: |
             .nuxt
             node_modules/.cache
-          key: ${{ runner.os }}-nuxt-e2e-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-nuxt-e2e-${{ hashFiles('**/bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-nuxt-e2e-
 
@@ -107,17 +107,17 @@ jobs:
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/bun.lock') }}
 
       - name: Install Playwright Browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium
+        run: bunx playwright install --with-deps chromium
 
       - name: Setup database for E2E tests
         run: |
           mkdir -p .data
-          npm run db:migrate
-          npx tsx scripts/seed-test-user.ts
+          bun run db:migrate
+          bunx tsx scripts/seed-test-user.ts
           echo "Database created, checking tables:"
           sqlite3 .data/mortality.db ".tables"
           echo "Checking test user exists:"
@@ -126,7 +126,7 @@ jobs:
           ls -lh .data/mortality.db
 
       - name: Build for E2E tests
-        run: npm run build
+        run: bun run build
         timeout-minutes: 5
 
       - name: Verify database after build
@@ -144,7 +144,7 @@ jobs:
       - name: Run E2E tests
         env:
           JWT_SECRET: test-secret-for-e2e-only-do-not-use-in-production
-        run: npx playwright test --project=chromium
+        run: bunx playwright test --project=chromium
         timeout-minutes: 15
 
       - name: Upload Playwright Report
