@@ -197,11 +197,11 @@ test.describe('Explorer Page', () => {
     await page.waitForTimeout(300) // Wait for tab content to render
 
     // Find and click the Z-Score toggle
-    const zscoreToggle = page.locator('[data-testid="z-score-toggle"]')
-
-    // Click the z-score toggle ONCE
-    // Use force:true to bypass FeatureGate overlay in unauthenticated tests
-    await zscoreToggle.click({ force: true })
+    // Use JavaScript to click directly, bypassing FeatureGate overlay
+    await page.evaluate(() => {
+      const toggle = document.querySelector('[data-testid="z-score-toggle"]') as HTMLElement
+      if (toggle) toggle.click()
+    })
 
     // Wait for URL to update (StateResolver should apply constraints)
     await page.waitForTimeout(500) // Give time for state resolution
@@ -244,9 +244,11 @@ test.describe('Explorer Page', () => {
     await page.waitForTimeout(300)
 
     // Click the Z-Score toggle
-    const zscoreToggle = page.locator('[data-testid="z-score-toggle"]')
-    // Use force:true to bypass FeatureGate overlay in unauthenticated tests
-    await zscoreToggle.click({ force: true })
+    // Use JavaScript to click directly, bypassing FeatureGate overlay
+    await page.evaluate(() => {
+      const toggle = document.querySelector('[data-testid="z-score-toggle"]') as HTMLElement
+      if (toggle) toggle.click()
+    })
     await page.waitForTimeout(500)
 
     // Z-score should be ON, excess should be OFF (mutually exclusive)
