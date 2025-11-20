@@ -29,6 +29,7 @@ import {
   BarWithErrorBarsController
 } from 'chartjs-chart-error-bars'
 import ChartDataLabels from 'chartjs-plugin-datalabels'
+import annotationPlugin from 'chartjs-plugin-annotation'
 import { MatrixController, MatrixElement } from 'chartjs-chart-matrix'
 import QRCode from 'qrcode'
 import { withTimeout, cleanupCanvas } from './memoryManager'
@@ -106,7 +107,8 @@ Chart.register(
   BarWithErrorBarsController,
   MatrixController,
   MatrixElement,
-  ChartDataLabels
+  ChartDataLabels,
+  annotationPlugin
 )
 
 // SVG logo (inline to work in both browser and node-canvas)
