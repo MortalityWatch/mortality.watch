@@ -173,4 +173,103 @@ test.describe('Explorer Page', () => {
       console.log('Validation error shown for invalid state')
     }
   })
+
+  test('should toggle z-score mode with single click', async ({ page }) => {
+    // Start with default state (no z-score)
+    await page.goto('/explorer')
+    await page.waitForLoadState('networkidle')
+    await page.waitForSelector('canvas#chart', { timeout: 10000 })
+
+    // Close welcome/tutorial modal if present
+    try {
+      const closeButton = page.getByRole('button', { name: '×' }).or(page.getByText('×'))
+      await closeButton.first().click({ timeout: 2000, force: true })
+      await page.waitForTimeout(500)
+    } catch {
+      // Tutorial not present, continue
+    }
+
+    // Verify initial state: no z-score in URL
+    expect(page.url()).not.toContain('zs=1')
+
+    // Click on the Display tab to reveal the z-score toggle
+    await page.getByRole('button', { name: 'Display' }).click()
+    await page.waitForTimeout(300) // Wait for tab content to render
+
+    // Find and click the Z-Score toggle
+    const zscoreToggle = page.locator('[data-testid="z-score-toggle"]')
+
+    // Click the z-score toggle ONCE
+    await zscoreToggle.click()
+
+    // Wait for URL to update (StateResolver should apply constraints)
+    await page.waitForTimeout(500) // Give time for state resolution
+
+    // SINGLE CLICK should work!
+    // Verify URL contains z-score parameter
+    expect(page.url()).toContain('zs=1')
+
+    // Verify baseline is enabled (z-score requires baseline for calculation)
+    expect(page.url()).not.toContain('sb=0')
+
+    // Verify logarithmic is disabled (not compatible with z-scores)
+    expect(page.url()).not.toContain('log=1')
+
+    // Verify chart still renders
+    await expect(page.locator('canvas#chart')).toBeVisible()
+  })
+
+  test('should make z-score and excess mutually exclusive', async ({ page }) => {
+    // Start with excess mode ON
+    await page.goto('/explorer?e=1')
+    await page.waitForLoadState('networkidle')
+    await page.waitForSelector('canvas#chart', { timeout: 10000 })
+
+    // Verify excess is ON
+    expect(page.url()).toContain('e=1')
+    expect(page.url()).not.toContain('zs=1')
+
+    // Close tutorial modal if present
+    try {
+      const closeButton = page.getByRole('button', { name: '×' }).or(page.getByText('×'))
+      await closeButton.first().click({ timeout: 2000, force: true })
+      await page.waitForTimeout(500)
+    } catch {
+      // Tutorial not present, continue
+    }
+
+    // Click on the Display tab
+    await page.getByRole('button', { name: 'Display' }).click()
+    await page.waitForTimeout(300)
+
+    // Click the Z-Score toggle
+    const zscoreToggle = page.locator('[data-testid="z-score-toggle"]')
+    await zscoreToggle.click()
+    await page.waitForTimeout(500)
+
+    // Z-score should be ON, excess should be OFF (mutually exclusive)
+    expect(page.url()).toContain('zs=1')
+    expect(page.url()).not.toContain('e=1')
+
+    // Chart should still render
+    await expect(page.locator('canvas#chart')).toBeVisible()
+  })
+
+  test('should show z-score reference lines (visual check)', async ({ page }) => {
+    // Load explorer with z-score view enabled
+    await page.goto('/explorer?zs=1')
+    await page.waitForLoadState('networkidle')
+    await page.waitForSelector('canvas#chart', { timeout: 10000 })
+
+    // Verify z-score mode is active
+    expect(page.url()).toContain('zs=1')
+
+    // Verify chart renders (reference lines are part of chart rendering)
+    const chart = page.locator('canvas#chart')
+    await expect(chart).toBeVisible()
+
+    // Note: We can't easily verify the visual appearance of reference lines
+    // in an E2E test, but we can verify the chart renders successfully
+    // Reference lines (0σ, ±2σ, +4σ) are rendered by chartPlugins.ts
+  })
 })
