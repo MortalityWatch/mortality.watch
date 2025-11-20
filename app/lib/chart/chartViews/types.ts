@@ -34,12 +34,18 @@ export interface ChartContext {
 
 /**
  * Annotation/Reference line configuration
+ * Supports both lines and box (shaded area) annotations
  */
 export interface ReferenceLineConfig {
-  value: number // Y-axis value
+  type?: 'line' | 'box' // Annotation type (default: 'line')
+  value?: number // Y-axis value (for lines)
+  yMin?: number // Min Y value (for boxes)
+  yMax?: number // Max Y value (for boxes)
   label: string // Display text (e.g., '0σ', '+2σ')
-  color: string // Line color
-  style: 'solid' | 'dashed' // Line style
+  color?: string // Line/border color
+  backgroundColor?: string // Fill color (for boxes)
+  borderWidth?: number // Border width (for boxes, 0 = no border)
+  style?: 'solid' | 'dashed' // Line style
   width?: number // Line width (default: 1)
   dark?: { // Optional dark mode overrides
     color?: string
