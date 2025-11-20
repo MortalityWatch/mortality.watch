@@ -200,7 +200,8 @@ test.describe('Explorer Page', () => {
     const zscoreToggle = page.locator('[data-testid="z-score-toggle"]')
 
     // Click the z-score toggle ONCE
-    await zscoreToggle.click()
+    // Use force:true to bypass FeatureGate overlay in unauthenticated tests
+    await zscoreToggle.click({ force: true })
 
     // Wait for URL to update (StateResolver should apply constraints)
     await page.waitForTimeout(500) // Give time for state resolution
@@ -244,7 +245,8 @@ test.describe('Explorer Page', () => {
 
     // Click the Z-Score toggle
     const zscoreToggle = page.locator('[data-testid="z-score-toggle"]')
-    await zscoreToggle.click()
+    // Use force:true to bypass FeatureGate overlay in unauthenticated tests
+    await zscoreToggle.click({ force: true })
     await page.waitForTimeout(500)
 
     // Z-score should be ON, excess should be OFF (mutually exclusive)
