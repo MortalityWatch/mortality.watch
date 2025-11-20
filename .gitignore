@@ -46,3 +46,4 @@ logs
 # Husky
 .husky/_/
 core
+package-lock.json
