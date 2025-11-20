@@ -129,9 +129,14 @@ export const getDatasets = (
           asmrWho: dsRecord.asmr_who
         })
       }
+      // Z-score view: baseline required for calculation but hidden from display
+      const shouldIncludeBaseline = config.display.view === 'zscore'
+        ? false
+        : config.display.showBaseline
+
       const keys = getKeyForType(
         config.chart.type,
-        config.display.showBaseline,
+        shouldIncludeBaseline,
         config.chart.standardPopulation,
         config.chart.isExcess,
         true
