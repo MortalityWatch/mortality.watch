@@ -119,7 +119,8 @@ const calculateBaseline = async (
   }
 
   try {
-    const baseUrl = 'https://stats.mortality.watch/'
+    // TODO: Change back to 'https://stats.mortality.watch/' for production
+    const baseUrl = 'http://localhost:5001/'
     // Always send full dataset for z-score calculation
     // Use 'b' parameter to indicate baseline period length
     const dataParam = (all_data as (string | number)[]).join(',')
