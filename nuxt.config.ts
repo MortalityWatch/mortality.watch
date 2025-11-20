@@ -89,8 +89,7 @@ export default defineNuxtConfig({
             'style-src \'self\' \'unsafe-inline\'',
             'img-src \'self\' data: https:',
             'font-src \'self\' data:',
-            // TODO: Remove localhost:5001 before production deployment
-            'connect-src \'self\' http://localhost:5001 https://s3.mortality.watch https://stats.mortality.watch https://api.stripe.com',
+            'connect-src \'self\' https://s3.mortality.watch https://stats.mortality.watch https://api.stripe.com',
             'frame-src https://js.stripe.com',
             'child-src https://js.stripe.com'
           ].join('; ')
