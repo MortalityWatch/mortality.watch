@@ -29,6 +29,7 @@ import {
   BarWithErrorBarsController
 } from 'chartjs-chart-error-bars'
 import ChartDataLabels from 'chartjs-plugin-datalabels'
+import annotationPlugin from 'chartjs-plugin-annotation'
 import { MatrixController, MatrixElement } from 'chartjs-chart-matrix'
 import QRCode from 'qrcode'
 import { withTimeout, cleanupCanvas } from './memoryManager'
@@ -106,7 +107,8 @@ Chart.register(
   BarWithErrorBarsController,
   MatrixController,
   MatrixElement,
-  ChartDataLabels
+  ChartDataLabels,
+  annotationPlugin
 )
 
 // SVG logo (inline to work in both browser and node-canvas)
@@ -153,7 +155,8 @@ const createLogoPlugin = (logoImage: CanvasImage, qrImage: CanvasImage | null, d
       ctx.save()
       ctx.globalCompositeOperation = 'destination-over'
       // Use dark background in dark mode, white in light mode
-      ctx.fillStyle = darkMode ? '#1f2937' : '#ffffff'
+      // Matches backgroundColor from chartColors.ts (#111827 for dark, #ffffff for light)
+      ctx.fillStyle = darkMode ? '#111827' : '#ffffff'
       ctx.fillRect(0, 0, chart.width, chart.height)
       ctx.restore()
     },
@@ -169,7 +172,7 @@ const createLogoPlugin = (logoImage: CanvasImage, qrImage: CanvasImage | null, d
 
           ctx.save()
           // Background behind logo matches chart background
-          ctx.fillStyle = darkMode ? '#1f2937' : '#ffffff'
+          ctx.fillStyle = darkMode ? '#111827' : '#ffffff'
           ctx.fillRect(10, 10, w, h)
           ctx.restore()
           // node-canvas Image is compatible with Canvas API but TypeScript doesn't recognize it

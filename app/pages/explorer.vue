@@ -324,6 +324,31 @@ const handleExcessChanged = async (v: boolean) => {
   // Trigger chart refresh
   await update('_view')
 }
+
+// Special handler for z-score toggle - uses StateResolver for proper view transitions
+const handleZScoreChanged = async (v: boolean) => {
+  const router = useRouter()
+  const route = useRoute()
+
+  // Determine new view (z-score and excess are mutually exclusive)
+  const newView = v ? 'zscore' : 'mortality'
+
+  // Resolve view change through StateResolver
+  // This applies view defaults, constraints, and computes UI state
+  const { StateResolver } = await import('@/lib/state/StateResolver')
+  const resolved = StateResolver.resolveViewChange(
+    newView,
+    state.getCurrentStateValues(),
+    state.getUserOverrides()
+  )
+
+  // Apply resolved state to URL
+  await StateResolver.applyResolvedState(resolved, route, router)
+
+  // Trigger chart refresh
+  await update('_view')
+}
+
 const handleBaselineChanged = (v: boolean) => handleStateChange('showBaseline', v, '_showBaseline')
 const handlePredictionIntervalChanged = (v: boolean) => handleStateChange('showPredictionInterval', v, '_showPredictionInterval')
 const handleTypeChanged = (v: string) => handleStateChange('type', v, '_type')
@@ -644,6 +669,7 @@ watch(
             @chart-style-changed="handleChartStyleChanged"
             @standard-population-changed="handleStandardPopulationChanged"
             @is-excess-changed="handleExcessChanged"
+            @is-z-score-changed="handleZScoreChanged"
             @show-baseline-changed="handleBaselineChanged"
             @baseline-method-changed="handleBaselineMethodChanged"
             @baseline-slider-value-changed="baselineSliderChanged"

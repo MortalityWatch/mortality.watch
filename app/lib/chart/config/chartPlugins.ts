@@ -128,72 +128,83 @@ export function createDatalabelsConfig(
 }
 
 /**
- * Convert reference line configs from chart views to Chart.js annotations
- * Handles reference lines for any view (excess baseline, z-score lines, etc.)
+ * Annotation configuration types for Chart.js annotation plugin
  */
-export function createAnnotationsFromReferenceLines(
-  referenceLines: ReferenceLineConfig[]
-): Record<string, {
-  type: string
-  yMin: number
-  yMax: number
-  borderColor: string
-  borderWidth: number
-  borderDash: number[]
-  label: {
+interface BoxAnnotation {
+  type: 'box'
+  yMin?: number
+  yMax?: number
+  backgroundColor?: string
+  borderWidth?: number
+  borderColor?: string
+}
+
+interface LineAnnotation {
+  type: 'line'
+  yMin?: number
+  yMax?: number
+  borderColor?: string
+  borderWidth?: number
+  borderDash?: number[]
+  label?: {
     display: boolean
     content: string
     position: string
     backgroundColor: string
-    color: string
+    color?: string
     font: {
       size: number
       weight: string
     }
     padding: number
   }
-}> {
-  const annotations: Record<string, {
-    type: string
-    yMin: number
-    yMax: number
-    borderColor: string
-    borderWidth: number
-    borderDash: number[]
-    label: {
-      display: boolean
-      content: string
-      position: string
-      backgroundColor: string
-      color: string
-      font: {
-        size: number
-        weight: string
-      }
-      padding: number
-    }
-  }> = {}
+}
+
+type ChartAnnotation = BoxAnnotation | LineAnnotation
+
+/**
+ * Convert reference line configs from chart views to Chart.js annotations
+ * Handles both lines and box (shaded area) annotations
+ */
+export function createAnnotationsFromReferenceLines(
+  referenceLines: ReferenceLineConfig[]
+): Record<string, ChartAnnotation> {
+  const annotations: Record<string, ChartAnnotation> = {}
 
   referenceLines.forEach((line, index) => {
-    const key = `reference_line_${index}`
-    annotations[key] = {
-      type: 'line',
-      yMin: line.value,
-      yMax: line.value,
-      borderColor: line.color,
-      borderWidth: line.width || 1,
-      borderDash: line.style === 'dashed' ? [5, 5] : [],
-      label: {
-        display: true,
-        content: line.label,
-        position: 'end',
-        backgroundColor: 'transparent',
-        color: line.color,
-        font: {
-          size: 10,
-          weight: 'normal'
-        },
-        padding: 2
+    const key = `reference_${line.type || 'line'}_${index}`
+
+    if (line.type === 'box') {
+      // Box annotation (shaded area)
+      annotations[key] = {
+        type: 'box',
+        yMin: line.yMin,
+        yMax: line.yMax,
+        backgroundColor: line.backgroundColor,
+        borderWidth: line.borderWidth ?? 0,
+        borderColor: line.color || 'transparent'
+      }
+    } else {
+      // Line annotation (default)
+      annotations[key] = {
+        type: 'line',
+        yMin: line.value,
+        yMax: line.value,
+        borderColor: line.color,
+        borderWidth: line.width || 1,
+        borderDash: line.style === 'dashed' ? [5, 5] : [],
+        label: {
+          display: !!line.label,
+          content: line.label,
+          position: 'end',
+          backgroundColor: 'transparent',
+          color: line.color,
+          font: {
+            size: 10,
+            weight: 'normal'
+          },
+          padding: 2
+        }
       }
     }
   })

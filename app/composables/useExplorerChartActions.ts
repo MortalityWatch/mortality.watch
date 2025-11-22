@@ -44,7 +44,27 @@ export function useExplorerChartActions(
       return
     }
     try {
-      const dataURL = canvas.toDataURL('image/png')
+      // Create a temporary canvas to add white/black background
+      const tempCanvas = document.createElement('canvas')
+      tempCanvas.width = canvas.width
+      tempCanvas.height = canvas.height
+      const ctx = tempCanvas.getContext('2d')
+
+      if (!ctx) {
+        showToast('Failed to create canvas context', 'error')
+        return
+      }
+
+      // Detect dark mode and set appropriate background color
+      const isDark = document.documentElement.classList.contains('dark')
+      ctx.fillStyle = isDark ? '#111827' : '#ffffff'
+      ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height)
+
+      // Draw the chart on top of the background
+      ctx.drawImage(canvas, 0, 0)
+
+      // Export the composite image
+      const dataURL = tempCanvas.toDataURL('image/png')
       const link = document.createElement('a')
       link.download = 'mortality-chart.png'
       link.href = dataURL

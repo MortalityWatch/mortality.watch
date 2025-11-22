@@ -22,6 +22,7 @@ import {
   BarWithErrorBarsController
 } from 'chartjs-chart-error-bars'
 import ChartDataLabels from 'chartjs-plugin-datalabels'
+import annotationPlugin from 'chartjs-plugin-annotation'
 import type {
   MatrixDataPoint } from 'chartjs-chart-matrix'
 import {
@@ -73,6 +74,7 @@ Chart.register(
   Filler,
   BarWithErrorBar,
   ChartDataLabels,
+  annotationPlugin,
   MatrixController,
   MatrixElement,
   getLogoPlugin(),
