@@ -24,6 +24,9 @@ export default defineConfig({
     ['list']
   ],
 
+  /* Global setup - run once before all tests */
+  globalSetup: './tests/e2e/global-setup.ts',
+
   /* Shared settings for all the projects below */
   use: {
     /* Base URL to use in actions like `await page.goto('/')` */
@@ -77,6 +80,9 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 30 * 1000, // 30 seconds for preview server startup
     stdout: 'pipe', // Show server output in test logs
-    stderr: 'pipe' // Show server errors in test logs
+    stderr: 'pipe', // Show server errors in test logs
+    env: {
+      JWT_SECRET: 'test-secret-for-e2e-only-do-not-use-in-production'
+    }
   }
 })
