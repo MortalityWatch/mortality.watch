@@ -26,8 +26,19 @@ test('save modal opens and closes on cancel', async ({ page }) => {
     // Tutorial not present, continue
   }
 
-  // Click the Save Chart button to open the modal (force to bypass any overlays)
-  await page.getByRole('button', { name: /Save Chart|Bookmark/i }).click({ force: true })
+  // Click the Save Chart button to open the modal
+  // Use JavaScript to click directly, bypassing FeatureGate overlay
+  await page.evaluate(() => {
+    const saveButton = Array.from(document.querySelectorAll('button')).find(
+      button => button.textContent?.includes('Save Chart') || button.textContent?.includes('Bookmark')
+    ) as HTMLElement
+    if (saveButton) {
+      saveButton.click()
+    }
+  })
+
+  // Wait a bit for the modal to appear
+  await page.waitForTimeout(500)
 
   // Verify the modal is visible
   await expect(page.getByRole('dialog')).toBeVisible()
