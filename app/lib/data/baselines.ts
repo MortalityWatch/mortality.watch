@@ -120,12 +120,14 @@ const calculateBaseline = async (
 
   try {
     const baseUrl = 'https://stats.mortality.watch/'
-    const dataParam
-      = cumulative && s === 1 ? (all_data as (string | number)[]).join(',') : (bl_data as (string | number)[]).join(',')
+    // Always send full dataset for z-score calculation
+    // Use 'b' parameter to indicate baseline period length
+    const dataParam = (all_data as (string | number)[]).join(',')
+    const baselineLength = bl_data.length
     const url
       = cumulative && s === 1
-        ? `${baseUrl}cum?y=${dataParam}&h=${h}&t=${trend ? 1 : 0}`
-        : `${baseUrl}?y=${dataParam}&h=${h}&s=${s}&t=${trend ? 1 : 0}&m=${method}`
+        ? `${baseUrl}cum?y=${dataParam}&h=${h}&t=${trend ? 1 : 0}&b=${baselineLength}`
+        : `${baseUrl}?y=${dataParam}&h=${h}&s=${s}&t=${trend ? 1 : 0}&m=${method}&b=${baselineLength}`
 
     const text = await dataLoader.fetchBaseline(url)
     const json = JSON.parse(text)

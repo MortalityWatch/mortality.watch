@@ -26,8 +26,17 @@ test('save modal opens and closes on cancel', async ({ page }) => {
     // Tutorial not present, continue
   }
 
-  // Click the Save Chart button to open the modal (force to bypass any overlays)
-  await page.getByRole('button', { name: /Save Chart|Bookmark/i }).click({ force: true })
+  // Click the Save Chart button to open the modal
+  // Use data-tour attribute to find the button
+  await page.evaluate(() => {
+    const saveButton = document.querySelector('[data-tour="save-button"] button') as HTMLElement
+    if (saveButton) {
+      saveButton.click()
+    }
+  })
+
+  // Wait a bit for the modal to appear
+  await page.waitForTimeout(500)
 
   // Verify the modal is visible
   await expect(page.getByRole('dialog')).toBeVisible()

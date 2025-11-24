@@ -18,6 +18,7 @@ const emit = defineEmits<{
   chartStyleChanged: [value: string]
   standardPopulationChanged: [value: string]
   isExcessChanged: [value: boolean]
+  isZScoreChanged: [value: boolean]
   showBaselineChanged: [value: boolean]
   baselineMethodChanged: [value: string]
   baselineSliderValueChanged: [value: string[]]
@@ -96,6 +97,7 @@ const baselineSliderValue = computed(() => {
       :is-updating="false"
       :is-population-type="isPopulationType"
       :is-excess="props.state.isExcess.value"
+      :is-z-score="props.state.isZScore.value"
       :baseline-method="props.state.baselineMethod.value"
       :baseline-slider-value="baselineSliderValue"
       :show-baseline="props.state.showBaseline.value"
@@ -131,6 +133,7 @@ const baselineSliderValue = computed(() => {
       @chart-style-changed="emit('chartStyleChanged', $event)"
       @standard-population-changed="emit('standardPopulationChanged', $event)"
       @is-excess-changed="emit('isExcessChanged', $event)"
+      @is-z-score-changed="emit('isZScoreChanged', $event)"
       @show-baseline-changed="emit('showBaselineChanged', $event)"
       @baseline-method-changed="emit('baselineMethodChanged', $event)"
       @baseline-slider-value-changed="emit('baselineSliderValueChanged', $event)"
