@@ -27,11 +27,9 @@ test('save modal opens and closes on cancel', async ({ page }) => {
   }
 
   // Click the Save Chart button to open the modal
-  // Use JavaScript to click directly, bypassing FeatureGate overlay
+  // Use data-tour attribute to find the button
   await page.evaluate(() => {
-    const saveButton = Array.from(document.querySelectorAll('button')).find(
-      button => button.textContent?.includes('Save Chart') || button.textContent?.includes('Bookmark')
-    ) as HTMLElement
+    const saveButton = document.querySelector('[data-tour="save-button"] button') as HTMLElement
     if (saveButton) {
       saveButton.click()
     }
