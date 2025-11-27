@@ -76,6 +76,50 @@ const getSource = (ds: Record<string, unknown[]>, key: string) => {
 }
 
 /**
+ * Calculate fill target for prediction interval datasets
+ *
+ * For baseline PI: _baseline_lower and _baseline_upper should fill toward _baseline
+ * For excess PI: _excess_lower and _excess_upper should fill toward _excess (main data)
+ *
+ * Uses relative string format (e.g., '-1', '-2') for Chart.js fill
+ *
+ * @param key - Current dataset key (e.g., 'deaths_baseline_lower')
+ * @param keys - All keys for current country (e.g., ['deaths', 'deaths_baseline', ...])
+ * @param keyIndex - Index of current key in keys array
+ * @returns Fill target string (e.g., '-1') or undefined if not a PI key
+ */
+const getFillTarget = (
+  key: string,
+  keys: string[],
+  keyIndex: number
+): string | undefined => {
+  if (!isPredictionIntervalKey(key)) return undefined
+
+  // For baseline PI (_baseline_lower, _baseline_upper), fill toward _baseline
+  if (key.includes('_baseline_lower') || key.includes('_baseline_upper')) {
+    // Find the index of the corresponding _baseline key
+    const baselineKey = key.replace('_lower', '').replace('_upper', '')
+    const baselineIndex = keys.indexOf(baselineKey)
+    if (baselineIndex >= 0) {
+      // Return relative offset (negative = previous dataset)
+      return String(baselineIndex - keyIndex)
+    }
+  }
+
+  // For excess PI (_excess_lower, _excess_upper), fill toward _excess (main data)
+  if (key.includes('_excess_lower') || key.includes('_excess_upper')) {
+    // Find the index of the corresponding _excess key
+    const excessKey = key.replace('_lower', '').replace('_upper', '')
+    const excessIndex = keys.indexOf(excessKey)
+    if (excessIndex >= 0) {
+      return String(excessIndex - keyIndex)
+    }
+  }
+
+  return undefined
+}
+
+/**
  * Generate chart datasets with transformed data
  * @param config - Configuration object containing display, chart, visual, and context settings
  * @param data - The dataset to process
@@ -143,14 +187,13 @@ export const getDatasets = (
       )
       const country = config.context.allCountries[iso3c]
       if (!country) throw new Error(`No country found for iso3c ${iso3c}`)
-      keys.forEach((key) => {
+      keys.forEach((key, keyIndex) => {
         if (
           config.chart.isErrorBarType
           && (key.endsWith('_lower') || key.endsWith('_upper'))
         )
           return
-        const offset
-          = keys.length * countryIndex + 1 + (key.includes('_prediction') ? 1 : 0)
+        const fillTarget = getFillTarget(key, keys, keyIndex)
         const color: string = config.visual.colors[countryIndex] ?? '#000000'
         const ag_str = ags.length === 1 ? '' : ` [${getCamelCase(ag)}]`
         const label = getLabel(
@@ -185,7 +228,7 @@ export const getDatasets = (
                 ),
           borderColor: config.visual.colors[countryIndex],
           backgroundColor: getBackgroundColor(key, color),
-          fill: isPredictionIntervalKey(key) ? offset : undefined,
+          fill: fillTarget,
           borderWidth: getBorderWidth(key, config.chart.isBarChartStyle),
           borderDash: getBorderDash(key),
           pointRadius:

@@ -179,7 +179,8 @@ describe('useExplorerDataOrchestration', () => {
       isDeathsType: vi.fn(() => true),
       hasBaseline: vi.fn(() => true),
       showCumPi: vi.fn(() => false),
-      getBaseKeysForType: vi.fn(() => [])
+      getBaseKeysForType: vi.fn(() => []),
+      getBaseKeysForFetch: vi.fn(() => ['cmr', 'cmr_baseline', 'cmr_baseline_lower', 'cmr_baseline_upper'])
     } as any
 
     // Create mock countries

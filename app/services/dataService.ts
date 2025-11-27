@@ -55,6 +55,7 @@ export class DataService {
       isAsmrType: () => boolean
       showCumPi: () => boolean
       getBaseKeysForType: () => (keyof NumberEntryFields)[]
+      getBaseKeysForFetch: () => (keyof NumberEntryFields)[]
     }
   ): Promise<DatasetRaw> {
     let currentDataset = dataset
@@ -108,7 +109,7 @@ export class DataService {
         props.baselineMethod,
         props.baselineDateFrom ?? '',
         props.baselineDateTo ?? '',
-        helpers.getBaseKeysForType()
+        helpers.getBaseKeysForFetch()
       )
 
       // Update allChartData in place
