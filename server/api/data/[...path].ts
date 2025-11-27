@@ -1,19 +1,63 @@
 import { readFileSync, existsSync } from 'fs'
-import { join } from 'path'
+import { join, resolve, normalize } from 'path'
 import { filesystemCache } from '../../utils/cache'
 
 const S3_BASE = 'https://s3.mortality.watch/data/mortality'
 const CACHE_DIR = '.data/cache/mortality'
 
-export default defineEventHandler(async (event) => {
-  const path = getRouterParam(event, 'path')
+// Allowed patterns for data paths:
+// - world_meta.csv (metadata file)
+// - {country}/{chartType}.csv (e.g., USA/weekly.csv)
+// - {country}/{chartType}_{ageGroup}.csv (e.g., USA/weekly_0-14.csv)
+const VALID_PATH_PATTERN = /^(?:world_meta\.csv|[A-Z]{2,3}\/[a-z]+(?:_[\w-]+)?\.csv)$/
 
-  if (!path) {
+/**
+ * Validates and sanitizes the path parameter to prevent path traversal attacks.
+ * Returns the sanitized path or throws an error if invalid.
+ */
+function validatePath(path: string): string {
+  // Normalize the path to resolve any . or .. segments
+  const normalized = normalize(path)
+
+  // Reject paths with directory traversal attempts
+  if (normalized.includes('..') || normalized.startsWith('/') || normalized.startsWith('\\')) {
+    throw createError({
+      statusCode: 400,
+      message: 'Invalid path: directory traversal not allowed'
+    })
+  }
+
+  // Reject paths with null bytes (common attack vector)
+  if (path.includes('\0')) {
+    throw createError({
+      statusCode: 400,
+      message: 'Invalid path: null bytes not allowed'
+    })
+  }
+
+  // Validate against allowed pattern
+  if (!VALID_PATH_PATTERN.test(normalized)) {
+    throw createError({
+      statusCode: 400,
+      message: 'Invalid path format'
+    })
+  }
+
+  return normalized
+}
+
+export default defineEventHandler(async (event) => {
+  const rawPath = getRouterParam(event, 'path')
+
+  if (!rawPath) {
     throw createError({
       statusCode: 400,
       message: 'Path parameter is required'
     })
   }
+
+  // Validate and sanitize the path
+  const path = validatePath(rawPath)
 
   const config = useRuntimeConfig()
   const isDev = process.env.NODE_ENV === 'development'
@@ -22,6 +66,17 @@ export default defineEventHandler(async (event) => {
   // Dev: Check local dev cache first (for downloaded data)
   if (isDev || useLocalCacheOnly) {
     const localPath = join(CACHE_DIR, path)
+
+    // Additional safety check: ensure resolved path is within cache directory
+    const resolvedPath = resolve(localPath)
+    const resolvedCacheDir = resolve(CACHE_DIR)
+    if (!resolvedPath.startsWith(resolvedCacheDir + '/')) {
+      throw createError({
+        statusCode: 400,
+        message: 'Invalid path: access denied'
+      })
+    }
+
     if (existsSync(localPath)) {
       try {
         const data = readFileSync(localPath, 'utf-8')
