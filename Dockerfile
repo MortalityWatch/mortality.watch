@@ -1,18 +1,20 @@
 # Dockerfile for Nuxt 4 + Canvas (Server-Side Chart Rendering)
 # Multi-stage build for smaller final image and better caching
+# Using Debian-based images for glibc compatibility with native modules
 
 # Build stage
-FROM oven/bun:1-alpine AS builder
+FROM oven/bun:1-debian AS builder
 
 # Install canvas native dependencies (needed for build)
-RUN apk add --no-cache \
-  build-base \
-  cairo-dev \
-  pango-dev \
-  jpeg-dev \
-  giflib-dev \
-  librsvg-dev \
-  pixman-dev
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  build-essential \
+  libcairo2-dev \
+  libpango1.0-dev \
+  libjpeg-dev \
+  libgif-dev \
+  librsvg2-dev \
+  libpixman-1-dev \
+  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -29,24 +31,19 @@ ENV NODE_ENV=production
 RUN CI=true bun run build
 
 # Production stage - use Node.js for runtime (better compatibility)
-FROM node:22-alpine
+FROM node:22-slim
 
 # Install build tools + runtime dependencies for native modules
-RUN apk add --no-cache \
-  build-base \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  build-essential \
   python3 \
-  cairo \
-  cairo-dev \
-  pango \
-  pango-dev \
-  jpeg \
-  jpeg-dev \
-  giflib \
-  giflib-dev \
-  librsvg \
-  librsvg-dev \
-  pixman \
-  pixman-dev
+  libcairo2-dev \
+  libpango1.0-dev \
+  libjpeg-dev \
+  libgif-dev \
+  librsvg2-dev \
+  libpixman-1-dev \
+  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
