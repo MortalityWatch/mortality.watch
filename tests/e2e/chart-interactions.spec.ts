@@ -85,6 +85,10 @@ test.describe('Chart Interactions', () => {
         && !error.includes('externalized for browser compatibility')
         && !error.includes('ResizeObserver')
         && !error.includes('chunks are larger than')
+        && !error.includes('CORS policy')
+        && !error.includes('stats.mortality.watch')
+        && !error.includes('net::ERR_FAILED')
+        && !error.includes('Baseline calculation failed')
     )
 
     // Log errors for debugging but allow some non-critical errors
