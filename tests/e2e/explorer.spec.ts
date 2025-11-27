@@ -200,15 +200,34 @@ test.describe('Explorer Page', () => {
 
     // Find and click the Z-Score radio button
     // Use JavaScript to click directly, bypassing FeatureGate/disabled state
-    await page.evaluate(() => {
-      // Find the radio input with value 'zscore'
-      const radioInput = document.querySelector('[data-testid="view-selector"] input[value="zscore"]') as HTMLInputElement
+    const clicked = await page.evaluate(() => {
+      const selector = '[data-testid="view-selector"]'
+      const viewSelector = document.querySelector(selector)
+      if (!viewSelector) return { success: false, error: 'view-selector not found' }
+
+      // Try to find the radio label containing "Z-Score" text and click it
+      const labels = viewSelector.querySelectorAll('label')
+      for (const label of labels) {
+        if (label.textContent?.includes('Z-Score')) {
+          label.click()
+          return { success: true, method: 'label-click' }
+        }
+      }
+
+      // Fallback: try direct input
+      const radioInput = viewSelector.querySelector('input[value="zscore"]') as HTMLInputElement
       if (radioInput) {
         radioInput.click()
-        // Also trigger change event to ensure Vue reactivity
         radioInput.dispatchEvent(new Event('change', { bubbles: true }))
+        return { success: true, method: 'input-click' }
       }
+
+      return { success: false, error: 'No radio found', labelsFound: labels.length }
     })
+
+    if (!clicked.success) {
+      console.log('Failed to click z-score:', clicked)
+    }
 
     // Wait for URL to update (StateResolver should apply constraints)
     await page.waitForTimeout(500) // Give time for state resolution
@@ -253,11 +272,23 @@ test.describe('Explorer Page', () => {
     // Click the Z-Score radio button
     // Use JavaScript to click directly, bypassing FeatureGate/disabled state
     await page.evaluate(() => {
-      // Find the radio input with value 'zscore'
-      const radioInput = document.querySelector('[data-testid="view-selector"] input[value="zscore"]') as HTMLInputElement
+      const selector = '[data-testid="view-selector"]'
+      const viewSelector = document.querySelector(selector)
+      if (!viewSelector) return
+
+      // Try to find the radio label containing "Z-Score" text and click it
+      const labels = viewSelector.querySelectorAll('label')
+      for (const label of labels) {
+        if (label.textContent?.includes('Z-Score')) {
+          label.click()
+          return
+        }
+      }
+
+      // Fallback: try direct input
+      const radioInput = viewSelector.querySelector('input[value="zscore"]') as HTMLInputElement
       if (radioInput) {
         radioInput.click()
-        // Also trigger change event to ensure Vue reactivity
         radioInput.dispatchEvent(new Event('change', { bubbles: true }))
       }
     })
