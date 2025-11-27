@@ -7,6 +7,7 @@ import {
   setAuthToken
 } from '../../utils/auth'
 import { AuthSuccessResponseSchema } from '../../schemas'
+import { RequestThrottle } from '../../utils/requestQueue'
 
 const signinSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -14,7 +15,26 @@ const signinSchema = z.object({
   remember: z.boolean().optional()
 })
 
+// Rate limiting: 5 attempts per 15 minutes per IP
+const signinRateLimit = new RequestThrottle(
+  15 * 60 * 1000, // 15 minutes
+  5 // 5 attempts
+)
+
 export default defineEventHandler(async (event) => {
+  // Rate limit by IP address
+  const clientIp = getRequestIP(event, { xForwardedFor: true }) ?? 'unknown'
+
+  if (!signinRateLimit.check(clientIp)) {
+    const retryAfter = signinRateLimit.getSecondsUntilReset(clientIp)
+    setResponseHeader(event, 'Retry-After', retryAfter)
+    logger.warn(`Rate limit exceeded for signin from IP: ${clientIp}`)
+    throw createError({
+      statusCode: 429,
+      message: 'Too many sign-in attempts. Please try again later.'
+    })
+  }
+
   // Parse and validate request body
   const body = await readBody(event)
   const result = signinSchema.safeParse(body)
