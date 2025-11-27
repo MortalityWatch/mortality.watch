@@ -50,6 +50,13 @@ const { tier } = useAuth()
         </ULink>
         <span class="mx-1 hidden lg:inline">·</span>
         <ULink
+          to="/contact"
+          class="text-muted hover:text-default hidden lg:inline"
+        >
+          Contact
+        </ULink>
+        <span class="mx-1 hidden lg:inline">·</span>
+        <ULink
           to="/legal/terms"
           class="text-muted hover:text-default hidden lg:inline"
         >
