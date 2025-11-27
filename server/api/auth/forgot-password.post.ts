@@ -28,12 +28,16 @@ export default defineEventHandler(async (event) => {
   }
 
   const { email } = result.data
+  const normalizedEmail = email.toLowerCase()
 
   // Rate limit by email address to prevent spam
-  if (!forgotPasswordRateLimit.check(email.toLowerCase())) {
+  if (!forgotPasswordRateLimit.check(normalizedEmail)) {
+    const retryAfter = forgotPasswordRateLimit.getSecondsUntilReset(normalizedEmail)
+    setResponseHeader(event, 'Retry-After', retryAfter)
+    logger.warn(`Rate limit exceeded for forgot-password: ${normalizedEmail.substring(0, 3)}***`)
     throw createError({
       statusCode: 429,
-      message: 'Too many password reset requests. Please try again in an hour.'
+      message: 'Too many password reset requests. Please try again later.'
     })
   }
 
@@ -41,7 +45,7 @@ export default defineEventHandler(async (event) => {
   const user = await db
     .select()
     .from(users)
-    .where(eq(users.email, email.toLowerCase()))
+    .where(eq(users.email, normalizedEmail))
     .get()
 
   // Always return success to avoid email enumeration

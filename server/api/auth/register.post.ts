@@ -38,9 +38,12 @@ export default defineEventHandler(async (event) => {
   const clientIp = getRequestIP(event, { xForwardedFor: true }) ?? 'unknown'
 
   if (!registerRateLimit.check(clientIp)) {
+    const retryAfter = registerRateLimit.getSecondsUntilReset(clientIp)
+    setResponseHeader(event, 'Retry-After', retryAfter)
+    logger.warn(`Rate limit exceeded for register from IP: ${clientIp}`)
     throw createError({
       statusCode: 429,
-      message: 'Too many registration attempts. Please try again in an hour.'
+      message: 'Too many registration attempts. Please try again later.'
     })
   }
 

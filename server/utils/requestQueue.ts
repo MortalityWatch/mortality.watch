@@ -196,6 +196,18 @@ export class RequestThrottle {
   }
 
   /**
+   * Get seconds until rate limit resets for an identifier
+   * Returns 0 if not rate limited or entry doesn't exist
+   */
+  getSecondsUntilReset(identifier: string): number {
+    const entry = this.requests.get(identifier)
+    if (!entry || Date.now() > entry.resetTime) {
+      return 0
+    }
+    return Math.ceil((entry.resetTime - Date.now()) / 1000)
+  }
+
+  /**
    * Clean up expired entries
    */
   private cleanup() {

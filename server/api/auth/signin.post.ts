@@ -26,9 +26,12 @@ export default defineEventHandler(async (event) => {
   const clientIp = getRequestIP(event, { xForwardedFor: true }) ?? 'unknown'
 
   if (!signinRateLimit.check(clientIp)) {
+    const retryAfter = signinRateLimit.getSecondsUntilReset(clientIp)
+    setResponseHeader(event, 'Retry-After', retryAfter)
+    logger.warn(`Rate limit exceeded for signin from IP: ${clientIp}`)
     throw createError({
       statusCode: 429,
-      message: 'Too many sign-in attempts. Please try again in 15 minutes.'
+      message: 'Too many sign-in attempts. Please try again later.'
     })
   }
 
