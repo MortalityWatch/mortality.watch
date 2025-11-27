@@ -8,6 +8,7 @@ import { CHART_PRESETS } from '@/lib/constants'
 import { types, chartTypes, chartStyles, standardPopulations, baselineMethods, decimalPrecisions } from '@/model'
 import { useChartUIState } from '@/composables/useChartUIState'
 import type { ChartStyle } from '@/lib/chart/chartTypes'
+import type { ViewType } from '@/lib/state/viewTypes'
 
 // Feature access for tier-based features
 const { can } = useFeatureAccess()
@@ -23,8 +24,7 @@ const props = defineProps<{
   standardPopulation: string
   isUpdating: boolean
   isPopulationType: boolean
-  isExcess: boolean
-  isZScore: boolean
+  view: ViewType
   baselineMethod: string
   baselineSliderValue: string[]
   showBaseline: boolean
@@ -61,8 +61,7 @@ const emit = defineEmits<{
   chartTypeChanged: [value: string]
   chartStyleChanged: [value: string]
   standardPopulationChanged: [value: string]
-  isExcessChanged: [value: boolean]
-  isZScoreChanged: [value: boolean]
+  viewChanged: [value: ViewType]
   showBaselineChanged: [value: boolean]
   baselineMethodChanged: [value: string]
   baselineSliderValueChanged: [value: string[]]
@@ -82,12 +81,15 @@ const emit = defineEmits<{
   decimalsChanged: [value: string]
 }>()
 
+// Backward compat: compute isExcess from view for chartUIState
+const isExcess = computed(() => props.view === 'excess')
+
 // Initialize chart UI state configuration
 const chartUIState = useChartUIState(
   toRef(props, 'type'),
   toRef(props, 'chartType'),
   computed(() => props.chartStyle as ChartStyle),
-  toRef(props, 'isExcess'),
+  isExcess,
   toRef(props, 'standardPopulation'),
   computed(() => props.countries.length),
   toRef(props, 'showBaseline'),
@@ -144,14 +146,9 @@ const selectedBaselineMethod = computed({
   set: (v: BaselineMethodItem) => emit('baselineMethodChanged', v.value)
 })
 
-const isExcess = computed({
-  get: () => props.isExcess,
-  set: (v: boolean) => emit('isExcessChanged', v)
-})
-
-const isZScore = computed({
-  get: () => props.isZScore,
-  set: (v: boolean) => emit('isZScoreChanged', v)
+const view = computed({
+  get: () => props.view,
+  set: (v: ViewType) => emit('viewChanged', v)
 })
 
 const showBaseline = computed({
@@ -278,7 +275,7 @@ const activeTab = ref('data')
         ]"
         @click="activeTab = 'data'"
       >
-        Data
+        Data & Analysis
       </button>
       <button
         :class="[
@@ -324,18 +321,19 @@ const activeTab = ref('data')
         :selected-type="selectedType as { name: string, value: string, label: string }"
         :selected-chart-type="selectedChartType as { name: string, value: string, label: string }"
         :selected-standard-population="selectedStandardPopulation as { name: string, value: string, label: string }"
+        :view="props.view"
         :is-updating="props.isUpdating"
+        :is-population-type="props.isPopulationType"
         :show-standard-population="chartUIState.showStandardPopulation.value"
         @update:selected-type="selectedType = $event"
         @update:selected-chart-type="selectedChartType = $event"
         @update:selected-standard-population="selectedStandardPopulation = $event"
+        @update:view="view = $event"
       />
 
       <!-- Display Tab -->
       <DisplayTab
         v-if="activeTab === 'display'"
-        :is-excess="props.isExcess"
-        :is-z-score="props.isZScore"
         :show-baseline="props.showBaseline"
         :show-prediction-interval="props.showPredictionInterval"
         :maximize="props.maximize"
@@ -356,8 +354,6 @@ const activeTab = ref('data')
         :show-total-option="props.showTotalOption"
         :chart-preset="chartPreset"
         :chart-preset-options="chartPresetOptions"
-        @update:is-excess="isExcess = $event"
-        @update:is-z-score="isZScore = $event"
         @update:show-baseline="showBaseline = $event"
         @update:show-prediction-interval="showPredictionInterval = $event"
         @update:maximize="maximize = $event"

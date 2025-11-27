@@ -344,7 +344,7 @@ describe('chartTitles', () => {
         dateFrom: '2020/01',
         dateTo: '2023/12'
       })
-      expect(result).toBe('Age Std. Mortality Rate - USA - 2020-2023')
+      expect(result).toBe('Age-Standardized Mortality Rate - USA - 2020-2023')
     })
 
     it('should handle life expectancy metric', () => {
@@ -563,7 +563,7 @@ describe('chartTitles', () => {
         dateFrom: '2019/01',
         dateTo: '2023/12'
       })
-      expect(result).toBe('Excess Age Std. Mortality Rate - USA vs GBR - 0-14 & 15-64 - 2019-2023')
+      expect(result).toBe('Excess Age-Standardized Mortality Rate - USA vs GBR - 0-14 & 15-64 - 2019-2023')
     })
   })
 })

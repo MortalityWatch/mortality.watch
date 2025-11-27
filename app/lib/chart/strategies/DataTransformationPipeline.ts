@@ -73,23 +73,6 @@ export class DataTransformationPipeline {
     if (config.view === 'zscore' && !key.includes('baseline') && !key.includes('_lower') && !key.includes('_upper') && !key.includes('excess')) {
       const zscoreKey = this.zscoreStrategy.getZScoreKey(config.isAsmrType, key)
       const zscoreData = data[zscoreKey] ?? []
-      const availableKeys = Object.keys(data)
-      console.log('[pipeline] Z-Score Transform:', {
-        key,
-        zscoreKey,
-        hasData: zscoreData.length > 0,
-        dataLength: zscoreData.length,
-        sample: zscoreData.slice(0, 10),
-        fullData: zscoreData,
-        availableKeys,
-        isAsmr: config.isAsmrType,
-        allData: data
-      })
-      if (zscoreData.length > 0) {
-        console.log('[pipeline] ✅ RETURNING Z-SCORE DATA:', zscoreData)
-      } else {
-        console.log('[pipeline] ❌ NO Z-SCORE DATA FOUND for key:', zscoreKey)
-      }
       return zscoreData
     }
 
