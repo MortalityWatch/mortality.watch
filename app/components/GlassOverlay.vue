@@ -3,7 +3,7 @@
     class="absolute inset-0 bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm flex justify-center items-center z-10 rounded-lg"
   >
     <div class="bg-white/90 dark:bg-gray-800/90 backdrop-blur rounded-lg px-8 py-6 shadow-xl">
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-4 m-4">
         <UIcon
           name="i-lucide-loader-2"
           class="w-8 h-8 animate-spin text-primary shrink-0"
