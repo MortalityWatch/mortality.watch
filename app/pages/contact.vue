@@ -2,14 +2,14 @@
   <div class="container mx-auto px-4 py-8">
     <div class="max-w-2xl mx-auto">
       <!-- Header -->
-      <div class="text-center mb-8">
-        <h1 class="text-4xl font-bold mb-4">
-          Contact Us
-        </h1>
+      <PageHeader
+        title="Contact Us"
+        max-width="none"
+      >
         <p class="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
           Have a question, suggestion, or found a bug? We'd love to hear from you.
         </p>
-      </div>
+      </PageHeader>
 
       <!-- Success Message -->
       <UCard
@@ -144,14 +144,30 @@
       </UCard>
 
       <!-- Additional Information -->
-      <div class="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
-        <p>
-          We typically respond within 24-48 hours.
-        </p>
-        <p class="mt-2">
-          For urgent issues, please include "URGENT" in your subject line.
-        </p>
-      </div>
+      <UCard
+        v-if="!showSuccess"
+        class="mt-6"
+      >
+        <div class="text-center text-sm text-gray-600 dark:text-gray-400 space-y-2">
+          <p>
+            We typically respond within 24-48 hours.
+          </p>
+          <p>
+            For urgent issues, please include "URGENT" in your subject line.
+          </p>
+          <p>
+            For real-time support and community discussions, join our
+            <ULink
+              to="https://discord.gg/nkSUpBV3Zr"
+              target="_blank"
+              active-class="text-primary"
+              inactive-class="text-primary hover:text-primary-600 dark:hover:text-primary-400"
+            >
+              Discord server
+            </ULink>.
+          </p>
+        </div>
+      </UCard>
     </div>
   </div>
 </template>

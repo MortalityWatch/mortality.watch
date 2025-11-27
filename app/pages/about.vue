@@ -208,15 +208,15 @@
         </template>
 
         <p class="text-gray-700 dark:text-gray-300">
-          Feedback or questions? Reach us via
+          Feedback or questions? Use our
           <ULink
-            to="mailto:mortalitywatch@proton.me"
+            to="/contact"
             active-class="text-primary"
             inactive-class="text-primary hover:text-primary-600 dark:hover:text-primary-400"
           >
-            E-Mail
+            contact form
           </ULink>
-          or on
+          or reach out on
           <ULink
             to="https://twitter.com/mortalitywatch"
             target="_blank"
