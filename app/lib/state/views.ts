@@ -102,7 +102,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       chartStyle: 'bar',
       showBaseline: true, // forced
       showPredictionInterval: false,
-      showPercentage: false, // Show absolute excess by default
+      showPercentage: true,
       cumulative: false,
       showLogarithmic: false
     },

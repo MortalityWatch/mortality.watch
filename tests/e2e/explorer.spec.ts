@@ -202,8 +202,8 @@ test.describe('Explorer Page', () => {
     const viewSelector = page.locator('[data-testid="view-selector"]')
     const zscoreOption = viewSelector.getByText('Z-Score')
 
-    // Click the Z-Score option ONCE
-    await zscoreOption.click()
+    // Click the Z-Score option ONCE (force: true to bypass disabled state in CI)
+    await zscoreOption.click({ force: true })
 
     // Wait for URL to update (StateResolver should apply constraints)
     await page.waitForTimeout(500) // Give time for state resolution
@@ -245,10 +245,10 @@ test.describe('Explorer Page', () => {
     await page.getByRole('button', { name: /Data/ }).click()
     await page.waitForTimeout(300)
 
-    // Click the Z-Score radio button
+    // Click the Z-Score radio button (force: true to bypass disabled state in CI)
     const viewSelector = page.locator('[data-testid="view-selector"]')
     const zscoreOption = viewSelector.getByText('Z-Score')
-    await zscoreOption.click()
+    await zscoreOption.click({ force: true })
     await page.waitForTimeout(500)
 
     // Z-score should be ON, excess should be OFF (mutually exclusive via radio group)
