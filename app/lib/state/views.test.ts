@@ -109,7 +109,7 @@ describe('View Configurations', () => {
       expect(config.defaults.chartStyle).toBe('bar')
       expect(config.defaults.showBaseline).toBe(true)
       expect(config.defaults.showPredictionInterval).toBe(false)
-      expect(config.defaults.showPercentage).toBe(true)
+      expect(config.defaults.showPercentage).toBe(false) // Absolute excess by default
       expect(config.defaults.cumulative).toBe(false)
       expect(config.defaults.showLogarithmic).toBe(false)
     })

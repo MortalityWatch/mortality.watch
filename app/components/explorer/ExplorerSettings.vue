@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import MortalityChartControlsSecondary from '@/components/charts/MortalityChartControlsSecondary.vue'
 import type { useExplorerState } from '@/composables/useExplorerState'
+import type { ViewType } from '@/lib/state/viewTypes'
 
 const props = defineProps<{
   state: ReturnType<typeof useExplorerState>
@@ -17,8 +18,7 @@ const emit = defineEmits<{
   chartTypeChanged: [value: string]
   chartStyleChanged: [value: string]
   standardPopulationChanged: [value: string]
-  isExcessChanged: [value: boolean]
-  isZScoreChanged: [value: boolean]
+  viewChanged: [value: ViewType]
   showBaselineChanged: [value: boolean]
   baselineMethodChanged: [value: string]
   baselineSliderValueChanged: [value: string[]]
@@ -96,8 +96,7 @@ const baselineSliderValue = computed(() => {
       :standard-population="props.state.standardPopulation.value"
       :is-updating="false"
       :is-population-type="isPopulationType"
-      :is-excess="props.state.isExcess.value"
-      :is-z-score="props.state.isZScore.value"
+      :view="props.state.view.value"
       :baseline-method="props.state.baselineMethod.value"
       :baseline-slider-value="baselineSliderValue"
       :show-baseline="props.state.showBaseline.value"
@@ -132,8 +131,7 @@ const baselineSliderValue = computed(() => {
       @chart-type-changed="emit('chartTypeChanged', $event)"
       @chart-style-changed="emit('chartStyleChanged', $event)"
       @standard-population-changed="emit('standardPopulationChanged', $event)"
-      @is-excess-changed="emit('isExcessChanged', $event)"
-      @is-z-score-changed="emit('isZScoreChanged', $event)"
+      @view-changed="emit('viewChanged', $event)"
       @show-baseline-changed="emit('showBaselineChanged', $event)"
       @baseline-method-changed="emit('baselineMethodChanged', $event)"
       @baseline-slider-value-changed="emit('baselineSliderValueChanged', $event)"

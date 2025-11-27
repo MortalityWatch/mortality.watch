@@ -18,6 +18,7 @@ import type {
   Country
 } from '@/model'
 import type { ChartType } from '@/model/period'
+import type { ViewType } from '@/lib/state/viewTypes'
 import {
   loadCountryMetadata
 } from '@/lib/data'
@@ -223,6 +224,7 @@ const handleUpdate = async (key: string) => {
       'dateRange', // Date range is just a filter, not a data download
       '_chartStyle',
       '_isExcess',
+      '_view', // View changes affect chart rendering (e.g., z-score transform)
       '_showBaseline',
       '_cumulative',
       '_showPredictionInterval',
@@ -301,13 +303,10 @@ const handleStateChange = async (field: string, value: unknown, refreshKey: stri
 
 // Specific handlers for different controls
 // Core chart configuration
-// Special handler for excess toggle - uses StateResolver for proper view transitions
-const handleExcessChanged = async (v: boolean) => {
+// Special handler for view changes - uses StateResolver for proper view transitions
+const handleViewChanged = async (newView: ViewType) => {
   const router = useRouter()
   const route = useRoute()
-
-  // Determine new view
-  const newView = v ? 'excess' : 'mortality'
 
   // Resolve view change through StateResolver
   // This applies view defaults, constraints, and computes UI state
@@ -321,29 +320,8 @@ const handleExcessChanged = async (v: boolean) => {
   // Apply resolved state to URL
   await StateResolver.applyResolvedState(resolved, route, router)
 
-  // Trigger chart refresh
-  await update('_view')
-}
-
-// Special handler for z-score toggle - uses StateResolver for proper view transitions
-const handleZScoreChanged = async (v: boolean) => {
-  const router = useRouter()
-  const route = useRoute()
-
-  // Determine new view (z-score and excess are mutually exclusive)
-  const newView = v ? 'zscore' : 'mortality'
-
-  // Resolve view change through StateResolver
-  // This applies view defaults, constraints, and computes UI state
-  const { StateResolver } = await import('@/lib/state/StateResolver')
-  const resolved = StateResolver.resolveViewChange(
-    newView,
-    state.getCurrentStateValues(),
-    state.getUserOverrides()
-  )
-
-  // Apply resolved state to URL
-  await StateResolver.applyResolvedState(resolved, route, router)
+  // Wait for Vue reactivity to propagate
+  await nextTick()
 
   // Trigger chart refresh
   await update('_view')
@@ -668,8 +646,7 @@ watch(
             @chart-type-changed="handleChartTypeChanged"
             @chart-style-changed="handleChartStyleChanged"
             @standard-population-changed="handleStandardPopulationChanged"
-            @is-excess-changed="handleExcessChanged"
-            @is-z-score-changed="handleZScoreChanged"
+            @view-changed="handleViewChanged"
             @show-baseline-changed="handleBaselineChanged"
             @baseline-method-changed="handleBaselineMethodChanged"
             @baseline-slider-value-changed="baselineSliderChanged"

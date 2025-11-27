@@ -3,8 +3,6 @@ import { computed } from 'vue'
 
 const props = defineProps<{
   // Boolean switches
-  isExcess: boolean
-  isZScore: boolean
   showBaseline: boolean
   showPredictionInterval: boolean
   maximize: boolean
@@ -31,8 +29,6 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  'update:isExcess': [value: boolean]
-  'update:isZScore': [value: boolean]
   'update:showBaseline': [value: boolean]
   'update:showPredictionInterval': [value: boolean]
   'update:maximize': [value: boolean]
@@ -44,15 +40,6 @@ const emit = defineEmits<{
 }>()
 
 // Computed v-models
-const isExcessModel = computed({
-  get: () => props.isExcess,
-  set: v => emit('update:isExcess', v)
-})
-
-const isZScoreModel = computed({
-  get: () => props.isZScore,
-  set: v => emit('update:isZScore', v)
-})
 
 const showBaselineModel = computed({
   get: () => props.showBaseline,
@@ -97,41 +84,13 @@ const chartPresetModel = computed({
 
 <template>
   <div class="space-y-6">
-    <!-- Data Analysis Section -->
+    <!-- Display Options Section -->
     <div class="pb-6 border-b border-gray-200 dark:border-gray-700">
       <h3 class="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4 flex items-center gap-2">
         <span class="w-1 h-4 bg-primary-500 rounded-full" />
-        Data Analysis
+        Display Options
       </h3>
       <div class="flex flex-wrap gap-4">
-        <UiSwitchRow
-          v-model="isExcessModel"
-          label="Excess"
-          :disabled="props.isPopulationType"
-          test-id="excess-toggle"
-          help-content="Compares observed mortality to expected baseline. Positive values indicate more deaths than expected, negative values indicate fewer deaths."
-        />
-
-        <FeatureGate feature="Z_SCORES">
-          <UiControlRow>
-            <label class="text-sm font-medium whitespace-nowrap">
-              Z-Score
-              <FeatureBadge
-                feature="Z_SCORES"
-                class="ml-2"
-              />
-            </label>
-            <USwitch
-              v-model="isZScoreModel"
-              :disabled="props.isPopulationType"
-              data-testid="z-score-toggle"
-            />
-            <template #help>
-              Statistical measure of how many standard deviations the observed value is from the expected baseline. Values beyond ±2 indicate statistical significance.
-            </template>
-          </UiControlRow>
-        </FeatureGate>
-
         <UiSwitchRow
           v-model="showBaselineModel"
           label="Baseline"
@@ -146,16 +105,7 @@ const chartPresetModel = computed({
           :disabled="props.showPredictionIntervalOptionDisabled"
           help-content="95% Prediction Interval shows the range of uncertainty around expected values. Values outside this range are statistically significant."
         />
-      </div>
-    </div>
 
-    <!-- Data Transformation Section -->
-    <div class="pb-6 border-b border-gray-200 dark:border-gray-700">
-      <h3 class="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-4 flex items-center gap-2">
-        <span class="w-1 h-4 bg-primary-500 rounded-full" />
-        Data Transformation
-      </h3>
-      <div class="flex flex-wrap gap-4">
         <UiSwitchRow
           v-if="props.showPercentageOption"
           v-model="showPercentageModel"

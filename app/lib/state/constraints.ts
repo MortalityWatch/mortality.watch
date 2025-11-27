@@ -16,6 +16,11 @@ import type { StateConstraint } from './types'
  * Default values when nothing is set in URL
  */
 export const DEFAULT_VALUES: Record<string, unknown> = {
+  // View (default to mortality)
+  view: 'mortality',
+  isExcess: false,
+  isZScore: false,
+
   // Core settings
   countries: ['USA'],
   type: 'cmr',
@@ -133,6 +138,43 @@ const cumulativeOffConstraints: StateConstraint = {
   priority: 1
 }
 
+/**
+ * View synchronization constraints
+ * Synchronize isExcess and isZScore flags with the view field
+ */
+const viewSyncExcessConstraint: StateConstraint = {
+  when: state => state.view === 'excess',
+  apply: {
+    isExcess: true,
+    isZScore: false
+  },
+  reason: 'Excess view sets isExcess=true',
+  allowUserOverride: false,
+  priority: 2
+}
+
+const viewSyncZScoreConstraint: StateConstraint = {
+  when: state => state.view === 'zscore',
+  apply: {
+    isExcess: false,
+    isZScore: true
+  },
+  reason: 'Z-Score view sets isZScore=true',
+  allowUserOverride: false,
+  priority: 2
+}
+
+const viewSyncMortalityConstraint: StateConstraint = {
+  when: state => state.view === 'mortality',
+  apply: {
+    isExcess: false,
+    isZScore: false
+  },
+  reason: 'Mortality view clears view flags',
+  allowUserOverride: false,
+  priority: 2
+}
+
 // ============================================================================
 // CONSTRAINT REGISTRY
 // ============================================================================
@@ -148,6 +190,11 @@ export const STATE_CONSTRAINTS: StateConstraint[] = [
   populationTypeConstraints,
   asmrLeTypeConstraints,
   matrixStyleConstraints,
+
+  // View synchronization (keep isExcess/isZScore in sync with view field)
+  viewSyncExcessConstraint,
+  viewSyncZScoreConstraint,
+  viewSyncMortalityConstraint,
 
   // Priority 1: Normal business rules
   baselineOffConstraints,

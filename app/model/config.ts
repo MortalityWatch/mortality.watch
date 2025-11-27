@@ -6,7 +6,7 @@ export type ListType = { name: string, value: string }
 
 export const types: ListType[] = [
   { name: 'Life Expectancy (LE)', value: 'le' },
-  { name: 'Age Std. Mortality Rate (ASMR)', value: 'asmr' },
+  { name: 'Age-Standardized Mortality Rate (ASMR)', value: 'asmr' },
   { name: 'Crude Mortality Rate (CMR)', value: 'cmr' },
   { name: 'Deaths', value: 'deaths' },
   { name: 'Population', value: 'population' }
