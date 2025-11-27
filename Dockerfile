@@ -1,20 +1,23 @@
 # Dockerfile for Nuxt 4 + Canvas (Server-Side Chart Rendering)
-# Multi-stage build for smaller final image and better caching
-# Using Debian-based images for glibc compatibility with native modules
+# Single-stage build using Node.js LTS for consistency
 
-# Build stage
-FROM oven/bun:1-debian AS builder
+FROM node:24-slim
 
-# Install canvas native dependencies (needed for build)
+# Install build tools + runtime dependencies for native modules
 RUN apt-get update && apt-get install -y --no-install-recommends \
   build-essential \
+  python3 \
   libcairo2-dev \
   libpango1.0-dev \
   libjpeg-dev \
   libgif-dev \
   librsvg2-dev \
   libpixman-1-dev \
+  git \
   && rm -rf /var/lib/apt/lists/*
+
+# Install Bun for faster dependency installation
+RUN npm install -g bun
 
 WORKDIR /app
 
@@ -29,32 +32,6 @@ COPY . .
 # Set CI=true to skip prerendering during build (pages will be SSR'd at runtime)
 ENV NODE_ENV=production
 RUN CI=true bun run build
-
-# Production stage - use Node.js for runtime (better compatibility)
-FROM node:22-slim
-
-# Install build tools + runtime dependencies for native modules
-RUN apt-get update && apt-get install -y --no-install-recommends \
-  build-essential \
-  python3 \
-  libcairo2-dev \
-  libpango1.0-dev \
-  libjpeg-dev \
-  libgif-dev \
-  librsvg2-dev \
-  libpixman-1-dev \
-  && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /app
-
-# Copy built application from builder
-COPY --from=builder /app/.output /app/.output
-COPY --from=builder /app/package*.json ./
-
-# Reinstall native modules from source for Node.js (Bun-compiled binaries don't work with Node)
-RUN cd /app/.output/server && \
-    rm -rf node_modules/better-sqlite3 node_modules/canvas && \
-    npm install better-sqlite3 canvas --build-from-source
 
 # Set environment to production
 ENV NODE_ENV=production
