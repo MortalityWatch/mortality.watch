@@ -9,18 +9,6 @@
         <p class="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
           Have a question, suggestion, or found a bug? We'd love to hear from you.
         </p>
-        <p class="text-gray-600 dark:text-gray-400 mt-2">
-          You can also join our
-          <ULink
-            to="https://discord.gg/nkSUpBV3Zr"
-            target="_blank"
-            active-class="text-primary"
-            inactive-class="text-primary hover:text-primary-600 dark:hover:text-primary-400"
-          >
-            Discord community
-          </ULink>
-          for faster responses and discussions.
-        </p>
       </PageHeader>
 
       <!-- Success Message -->
