@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { types, standardPopulations } from '@/model'
 import PeriodOfTimePicker from '@/components/shared/PeriodOfTimePicker.vue'
 import type { RadioGroupItem } from '@nuxt/ui'
 import type { ViewType } from '@/lib/state/viewTypes'
+
+// Feature access for Z-Score
+const { can } = useFeatureAccess()
 
 const props = defineProps<{
   selectedType: { name: string, value: string, label: string }
@@ -26,24 +29,28 @@ const emit = defineEmits<{
 const typesWithLabels = types.map(t => ({ ...t, label: t.name }))
 const standardPopulationsWithLabels = standardPopulations.map(t => ({ ...t, label: t.name }))
 
-// View options for radio group
-const viewOptions = ref<RadioGroupItem[]>([
-  {
-    label: 'Raw Values',
-    value: 'mortality',
-    description: 'Observed values without adjustments or transformations'
-  },
-  {
-    label: 'Excess',
-    value: 'excess',
-    description: 'Difference from expected baseline (observed - expected)'
-  },
-  {
-    label: 'Z-Score',
-    value: 'zscore',
-    description: 'How many standard deviations from baseline (±2 = significant)'
-  }
-])
+// View options for radio group - gate Z-Score for Pro users
+const viewOptions = computed<RadioGroupItem[]>(() => {
+  const hasZScoreAccess = can('Z_SCORES')
+  return [
+    {
+      label: 'Raw Values',
+      value: 'mortality',
+      description: 'Observed values without adjustments or transformations'
+    },
+    {
+      label: 'Excess',
+      value: 'excess',
+      description: 'Difference from expected baseline (observed - expected)'
+    },
+    {
+      label: 'Z-Score',
+      value: 'zscore',
+      description: 'How many standard deviations from baseline (±2 = significant)',
+      disabled: !hasZScoreAccess
+    }
+  ]
+})
 
 const selectedTypeModel = computed({
   get: () => props.selectedType,
