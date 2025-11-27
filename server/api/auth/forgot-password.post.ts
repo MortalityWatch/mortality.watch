@@ -3,10 +3,17 @@ import { db, users } from '#db'
 import { eq } from 'drizzle-orm'
 import { generateRandomToken } from '../../utils/auth'
 import { sendPasswordResetEmail } from '../../utils/email'
+import { RequestThrottle } from '../../utils/requestQueue'
 
 const forgotPasswordSchema = z.object({
   email: z.string().email('Invalid email address')
 })
+
+// Rate limiting: 3 attempts per hour per email
+const forgotPasswordRateLimit = new RequestThrottle(
+  60 * 60 * 1000, // 1 hour
+  3 // 3 attempts
+)
 
 export default defineEventHandler(async (event) => {
   // Parse and validate request body
@@ -21,6 +28,14 @@ export default defineEventHandler(async (event) => {
   }
 
   const { email } = result.data
+
+  // Rate limit by email address to prevent spam
+  if (!forgotPasswordRateLimit.check(email.toLowerCase())) {
+    throw createError({
+      statusCode: 429,
+      message: 'Too many password reset requests. Please try again in an hour.'
+    })
+  }
 
   // Find user by email
   const user = await db

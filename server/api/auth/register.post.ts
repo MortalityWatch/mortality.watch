@@ -11,6 +11,7 @@ import {
   validateAndConsumeInviteCode,
   createTrialSubscription
 } from '../../utils/inviteCode'
+import { RequestThrottle } from '../../utils/requestQueue'
 
 const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -26,7 +27,23 @@ const registerSchema = z.object({
   inviteCode: z.string().optional() // Optional invite code from URL param
 })
 
+// Rate limiting: 5 attempts per hour per IP
+const registerRateLimit = new RequestThrottle(
+  60 * 60 * 1000, // 1 hour
+  5 // 5 attempts
+)
+
 export default defineEventHandler(async (event) => {
+  // Rate limit by IP address
+  const clientIp = getRequestIP(event, { xForwardedFor: true }) ?? 'unknown'
+
+  if (!registerRateLimit.check(clientIp)) {
+    throw createError({
+      statusCode: 429,
+      message: 'Too many registration attempts. Please try again in an hour.'
+    })
+  }
+
   // Parse and validate request body
   const body = await readBody(event)
   const result = registerSchema.safeParse(body)
