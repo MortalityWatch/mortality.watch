@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { db, users } from '#db'
 import { eq } from 'drizzle-orm'
-import { generateRandomToken } from '../../utils/auth'
+import { generateRandomToken, hashToken } from '../../utils/auth'
 import { sendPasswordResetEmail } from '../../utils/email'
 
 const forgotPasswordSchema = z.object({
@@ -40,18 +40,19 @@ export default defineEventHandler(async (event) => {
 
   // Generate password reset token
   const resetToken = generateRandomToken()
+  const hashedResetToken = hashToken(resetToken)
   const resetTokenExpires = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
 
-  // Update user with reset token
+  // Update user with hashed reset token (security: store hash, not plain token)
   await db
     .update(users)
     .set({
-      passwordResetToken: resetToken,
+      passwordResetToken: hashedResetToken,
       passwordResetTokenExpires: resetTokenExpires
     })
     .where(eq(users.id, user.id))
 
-  // Send password reset email (don't await - send in background)
+  // Send password reset email with unhashed token (don't await - send in background)
   sendPasswordResetEmail(user.email, resetToken).catch((error) => {
     logger.error('Failed to send password reset email:', error instanceof Error ? error : new Error(String(error)))
     // Don't throw error - we don't want to reveal if user exists

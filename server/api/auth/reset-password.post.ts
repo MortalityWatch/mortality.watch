@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { db, users } from '#db'
 import { eq } from 'drizzle-orm'
-import { hashPassword, generateToken, setAuthToken } from '../../utils/auth'
+import { hashPassword, hashToken, generateToken, setAuthToken } from '../../utils/auth'
 
 const resetPasswordSchema = z.object({
   token: z.string().min(1, 'Reset token is required'),
@@ -25,11 +25,14 @@ export default defineEventHandler(async (event) => {
 
   const { token, password } = result.data
 
-  // Find user by reset token
+  // Hash the incoming token to compare with stored hash (security: tokens are stored hashed)
+  const hashedToken = hashToken(token)
+
+  // Find user by hashed reset token
   const user = await db
     .select()
     .from(users)
-    .where(eq(users.passwordResetToken, token))
+    .where(eq(users.passwordResetToken, hashedToken))
     .get()
 
   if (!user) {

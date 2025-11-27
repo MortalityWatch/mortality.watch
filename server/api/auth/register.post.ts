@@ -3,7 +3,8 @@ import { db, users } from '#db'
 import { eq } from 'drizzle-orm'
 import {
   hashPassword,
-  generateRandomToken
+  generateRandomToken,
+  hashToken
 } from '../../utils/auth'
 import { sendVerificationEmail } from '../../utils/email'
 import { RegisterResponseSchema } from '../../schemas'
@@ -90,8 +91,9 @@ export default defineEventHandler(async (event) => {
   // Hash password
   const passwordHash = await hashPassword(password)
 
-  // Generate verification token (optional - can be used later)
+  // Generate verification token
   const verificationToken = generateRandomToken()
+  const hashedVerificationToken = hashToken(verificationToken)
   const verificationTokenExpires = new Date(
     Date.now() + 24 * 60 * 60 * 1000
   ) // 24 hours
@@ -112,7 +114,7 @@ export default defineEventHandler(async (event) => {
       tier: userTier, // Set tier based on invite code or default to 1
       invitedByCodeId: inviteCodeId, // Track which code was used
       emailVerified: false,
-      verificationToken,
+      verificationToken: hashedVerificationToken, // Security: store hashed token
       verificationTokenExpires,
       tosAcceptedAt: new Date() // Store TOS acceptance timestamp for legal compliance
     })
@@ -124,7 +126,7 @@ export default defineEventHandler(async (event) => {
     await createTrialSubscription(newUser.id, proExpiryDate)
   }
 
-  // Send verification email - await to ensure it succeeds
+  // Send verification email with unhashed token - await to ensure it succeeds
   // Note: Auth token is not generated until email is verified
   try {
     await sendVerificationEmail(newUser.email, verificationToken)

@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import { randomBytes } from 'node:crypto'
+import { randomBytes, createHash } from 'node:crypto'
 import type { H3Event } from 'h3'
 import { db, users } from '#db'
 import { eq } from 'drizzle-orm'
@@ -537,6 +537,20 @@ export async function requireTier(event: H3Event, requiredTier: 0 | 1 | 2) {
  */
 export function generateRandomToken(): string {
   return randomBytes(32).toString('hex')
+}
+
+/**
+ * Hash a token using SHA-256 for secure database storage.
+ * Used for password reset and email verification tokens.
+ *
+ * SHA-256 is appropriate here (vs bcrypt) because tokens are already
+ * cryptographically random - we just need to prevent DB compromise exposure.
+ *
+ * @param token - Plain token to hash (typically from generateRandomToken)
+ * @returns SHA-256 hash as 64-character hex string
+ */
+export function hashToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex')
 }
 
 /**

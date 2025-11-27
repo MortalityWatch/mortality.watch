@@ -1,3 +1,36 @@
+CREATE TABLE `data_quality_overrides` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`iso3c` text NOT NULL,
+	`source` text NOT NULL,
+	`status` text DEFAULT 'monitor' NOT NULL,
+	`notes` text,
+	`updated_by` integer,
+	`created_at` integer DEFAULT (unixepoch()) NOT NULL,
+	`updated_at` integer DEFAULT (unixepoch()) NOT NULL,
+	FOREIGN KEY (`updated_by`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE INDEX `idx_data_quality_unique` ON `data_quality_overrides` (`iso3c`,`source`);--> statement-breakpoint
+CREATE INDEX `idx_data_quality_status` ON `data_quality_overrides` (`status`);--> statement-breakpoint
+CREATE TABLE `invite_codes` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`code` text NOT NULL,
+	`created_by` integer,
+	`max_uses` integer DEFAULT 1 NOT NULL,
+	`current_uses` integer DEFAULT 0 NOT NULL,
+	`expires_at` integer,
+	`grants_pro_until` integer,
+	`notes` text,
+	`is_active` integer DEFAULT true NOT NULL,
+	`created_at` integer DEFAULT (unixepoch()) NOT NULL,
+	`updated_at` integer DEFAULT (unixepoch()) NOT NULL,
+	FOREIGN KEY (`created_by`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `invite_codes_code_unique` ON `invite_codes` (`code`);--> statement-breakpoint
+CREATE INDEX `idx_invite_codes_code` ON `invite_codes` (`code`);--> statement-breakpoint
+CREATE INDEX `idx_invite_codes_active` ON `invite_codes` (`is_active`);--> statement-breakpoint
+CREATE INDEX `idx_invite_codes_expires` ON `invite_codes` (`expires_at`);--> statement-breakpoint
 CREATE TABLE `saved_charts` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`user_id` integer NOT NULL,
@@ -72,9 +105,12 @@ CREATE TABLE `users` (
 	`verification_token_expires` integer,
 	`password_reset_token` text,
 	`password_reset_token_expires` integer,
+	`tos_accepted_at` integer,
 	`last_login` integer,
+	`invited_by_code_id` integer,
 	`created_at` integer DEFAULT (unixepoch()) NOT NULL,
-	`updated_at` integer DEFAULT (unixepoch()) NOT NULL
+	`updated_at` integer DEFAULT (unixepoch()) NOT NULL,
+	FOREIGN KEY (`invited_by_code_id`) REFERENCES `invite_codes`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `users_email_unique` ON `users` (`email`);--> statement-breakpoint

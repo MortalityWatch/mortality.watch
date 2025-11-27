@@ -1,6 +1,6 @@
 import { db, users } from '#db'
 import { eq, and, gt } from 'drizzle-orm'
-import { generateToken, setAuthToken } from '../../../utils/auth'
+import { generateToken, setAuthToken, hashToken } from '../../../utils/auth'
 
 export default defineEventHandler(async (event) => {
   const token = getRouterParam(event, 'token')
@@ -12,13 +12,16 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Find user with this verification token
+  // Hash the incoming token to compare with stored hash (security: tokens are stored hashed)
+  const hashedToken = hashToken(token)
+
+  // Find user with this hashed verification token
   const user = await db
     .select()
     .from(users)
     .where(
       and(
-        eq(users.verificationToken, token),
+        eq(users.verificationToken, hashedToken),
         gt(users.verificationTokenExpires, new Date())
       )
     )
