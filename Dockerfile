@@ -2,7 +2,7 @@
 # Multi-stage build for smaller final image and better caching
 
 # Build stage
-FROM node:22-alpine AS builder
+FROM oven/bun:1-alpine AS builder
 
 # Install canvas native dependencies (needed for build)
 RUN apk add --no-cache \
@@ -17,8 +17,8 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 # Copy package files and install dependencies
-COPY package*.json ./
-RUN npm ci
+COPY package.json bun.lockb ./
+RUN bun install --frozen-lockfile
 
 # Copy application code
 COPY . .
@@ -26,7 +26,7 @@ COPY . .
 # Build Nuxt application
 # Set CI=true to skip prerendering during build (pages will be SSR'd at runtime)
 ENV NODE_ENV=production
-RUN CI=true npm run build
+RUN CI=true bun run build
 
 # Production stage
 FROM node:22-alpine
