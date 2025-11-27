@@ -1,8 +1,16 @@
 /**
  * Z-Score View Configuration
  *
- * Statistical analysis showing standard deviations from baseline
- * Completely overrides base behavior for specialized statistical visualization
+ * Statistical analysis showing standard deviations from baseline.
+ * Completely overrides base behavior for specialized statistical visualization.
+ *
+ * ## Rendering Approach
+ *
+ * Uses chartjs-plugin-annotation for reference lines (0σ, ±2σ, +4σ) because
+ * these are fixed horizontal values that don't change with x-axis position.
+ *
+ * This differs from baseline PI rendering (see app/lib/chart/datasets.ts)
+ * which uses Chart.js dataset fill because baseline bounds vary per data point.
  */
 
 import type { ChartViewConfig, ChartContext } from './types'

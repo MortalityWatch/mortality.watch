@@ -1,5 +1,29 @@
 /**
  * Chart dataset builders
+ *
+ * This module generates Chart.js datasets for mortality visualizations.
+ *
+ * ## Rendering Architecture
+ *
+ * The app uses two different approaches for rendering reference data:
+ *
+ * ### 1. Dataset Fill (baseline/prediction intervals)
+ * Used for: Baseline curves and their prediction interval bands
+ * Why: Baseline values vary per data point (it's a curve, not a flat line).
+ * Chart.js `fill` property with relative offset (e.g., '-1') fills between
+ * the PI bound dataset and the baseline dataset.
+ *
+ * Example keys: deaths_baseline, deaths_baseline_lower, deaths_baseline_upper
+ *
+ * ### 2. Annotation Plugin (z-score reference lines)
+ * Used for: Fixed horizontal reference lines (0σ, ±2σ, +4σ)
+ * Why: Z-score thresholds are fixed values that don't change with x-axis position.
+ * The chartjs-plugin-annotation creates horizontal line/box annotations.
+ *
+ * See: app/lib/chart/chartViews/zscore.ts for reference line configuration
+ *
+ * This architectural difference is intentional - each approach is optimized
+ * for its specific use case.
  */
 
 import type { ChartDataset, ChartType, DefaultDataPoint } from 'chart.js'
