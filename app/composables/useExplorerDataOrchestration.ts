@@ -337,7 +337,7 @@ export function useExplorerDataOrchestration(
         baselineDateTo: state.baselineDateTo.value ?? baselineRange.value?.to,
         baselineStartIdx: undefined, // Will be calculated from labels
         cumulative: helpers.showCumPi(),
-        baseKeys: helpers.getBaseKeysForType(),
+        baseKeys: helpers.getBaseKeysForFetch(),
         isAsmr: helpers.isAsmrType()
       })
 
@@ -391,7 +391,7 @@ export function useExplorerDataOrchestration(
         baselineDateTo: state.baselineDateTo.value ?? baselineRange.value?.to,
         baselineStartIdx: getStartIndex(allYearlyChartLabels.value || [], state.sliderStart.value),
         cumulative: helpers.showCumPi(),
-        baseKeys: helpers.getBaseKeysForType(),
+        baseKeys: helpers.getBaseKeysForFetch(),
         isAsmr: helpers.isAsmrType()
       })
 
