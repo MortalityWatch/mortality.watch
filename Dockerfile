@@ -1,24 +1,29 @@
 # Dockerfile for Nuxt 4 + Canvas (Server-Side Chart Rendering)
-# Multi-stage build for smaller final image and better caching
+# Single-stage build using Node.js LTS for consistency
 
-# Build stage
-FROM node:22-alpine AS builder
+FROM node:24-slim
 
-# Install canvas native dependencies (needed for build)
-RUN apk add --no-cache \
-  build-base \
-  cairo-dev \
-  pango-dev \
-  jpeg-dev \
-  giflib-dev \
-  librsvg-dev \
-  pixman-dev
+# Install build tools + runtime dependencies for native modules
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  build-essential \
+  python3 \
+  libcairo2-dev \
+  libpango1.0-dev \
+  libjpeg-dev \
+  libgif-dev \
+  librsvg2-dev \
+  libpixman-1-dev \
+  git \
+  && rm -rf /var/lib/apt/lists/*
+
+# Install Bun for faster dependency installation
+RUN npm install -g bun
 
 WORKDIR /app
 
 # Copy package files and install dependencies
-COPY package*.json ./
-RUN npm ci
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
 # Copy application code
 COPY . .
@@ -26,26 +31,7 @@ COPY . .
 # Build Nuxt application
 # Set CI=true to skip prerendering during build (pages will be SSR'd at runtime)
 ENV NODE_ENV=production
-RUN CI=true npm run build
-
-# Production stage
-FROM node:22-alpine
-
-# Install only runtime dependencies for canvas
-RUN apk add --no-cache \
-  cairo \
-  pango \
-  jpeg \
-  giflib \
-  librsvg \
-  pixman
-
-WORKDIR /app
-
-# Copy built application and node_modules from builder
-COPY --from=builder /app/.output /app/.output
-COPY --from=builder /app/node_modules /app/node_modules
-COPY --from=builder /app/package*.json ./
+RUN CI=true bun run build
 
 # Set environment to production
 ENV NODE_ENV=production

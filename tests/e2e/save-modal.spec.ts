@@ -45,8 +45,8 @@ test('save modal opens and closes on cancel', async ({ page }) => {
   // Click Cancel button
   await page.getByRole('button', { name: 'Cancel' }).click()
 
-  // Verify the modal is dismissed
-  await expect(page.getByRole('dialog')).not.toBeVisible()
+  // Verify the modal is dismissed (use specific locator to avoid matching driver-popover tutorial)
+  await expect(page.locator('[data-slot="content"][role="dialog"]')).not.toBeVisible()
 })
 
 test.skip('save modal opens and closes on save', async ({ page }) => {
