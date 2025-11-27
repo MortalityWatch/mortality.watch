@@ -31,14 +31,22 @@ RUN CI=true bun run build
 # Production stage
 FROM node:22-alpine
 
-# Install only runtime dependencies for canvas
+# Install build tools + runtime dependencies for native modules (better-sqlite3, canvas)
 RUN apk add --no-cache \
+  build-base \
+  python3 \
   cairo \
+  cairo-dev \
   pango \
+  pango-dev \
   jpeg \
+  jpeg-dev \
   giflib \
+  giflib-dev \
   librsvg \
-  pixman
+  librsvg-dev \
+  pixman \
+  pixman-dev
 
 WORKDIR /app
 
@@ -46,6 +54,9 @@ WORKDIR /app
 COPY --from=builder /app/.output /app/.output
 COPY --from=builder /app/node_modules /app/node_modules
 COPY --from=builder /app/package*.json ./
+
+# Rebuild native modules for Node.js (they were compiled for Bun in builder stage)
+RUN npm rebuild better-sqlite3 canvas
 
 # Set environment to production
 ENV NODE_ENV=production
