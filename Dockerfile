@@ -54,8 +54,10 @@ WORKDIR /app
 COPY --from=builder /app/.output /app/.output
 COPY --from=builder /app/package*.json ./
 
-# Rebuild native modules in .output/server/node_modules for Node.js
-RUN cd /app/.output/server && npm rebuild better-sqlite3 canvas 2>/dev/null || true
+# Reinstall native modules from source for Node.js (Bun-compiled binaries don't work with Node)
+RUN cd /app/.output/server && \
+    rm -rf node_modules/better-sqlite3 node_modules/canvas && \
+    npm install better-sqlite3 canvas --build-from-source
 
 # Set environment to production
 ENV NODE_ENV=production
