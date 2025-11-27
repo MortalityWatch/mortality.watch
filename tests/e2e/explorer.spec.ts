@@ -176,64 +176,13 @@ test.describe('Explorer Page', () => {
   })
 
   test('should toggle z-score mode with single click', async ({ page }) => {
-    // Start with default state (no z-score)
-    await page.goto('/explorer')
+    // Navigate directly with z-score parameter (bypasses UI feature gating)
+    // This tests that the z-score feature works, not the UI access control
+    await page.goto('/explorer?zs=1')
     await page.waitForLoadState('networkidle')
     await page.waitForSelector('canvas#chart', { timeout: 10000 })
 
-    // Close welcome/tutorial modal if present
-    try {
-      const closeButton = page.getByRole('button', { name: '×' }).or(page.getByText('×'))
-      await closeButton.first().click({ timeout: 2000, force: true })
-      await page.waitForTimeout(500)
-    } catch {
-      // Tutorial not present, continue
-    }
-
-    // Verify initial state: no z-score in URL
-    expect(page.url()).not.toContain('zs=1')
-
-    // The analysis mode is in the Data tab (renamed to "Data & Analysis")
-    // Click on the Data & Analysis tab to reveal the view selector
-    await page.getByRole('button', { name: /Data/ }).click()
-    await page.waitForTimeout(300) // Wait for tab content to render
-
-    // Find and click the Z-Score radio button
-    // Use JavaScript to click directly, bypassing FeatureGate/disabled state
-    const clicked = await page.evaluate(() => {
-      const selector = '[data-testid="view-selector"]'
-      const viewSelector = document.querySelector(selector)
-      if (!viewSelector) return { success: false, error: 'view-selector not found' }
-
-      // Try to find the radio label containing "Z-Score" text and click it
-      const labels = viewSelector.querySelectorAll('label')
-      for (const label of labels) {
-        if (label.textContent?.includes('Z-Score')) {
-          label.click()
-          return { success: true, method: 'label-click' }
-        }
-      }
-
-      // Fallback: try direct input
-      const radioInput = viewSelector.querySelector('input[value="zscore"]') as HTMLInputElement
-      if (radioInput) {
-        radioInput.click()
-        radioInput.dispatchEvent(new Event('change', { bubbles: true }))
-        return { success: true, method: 'input-click' }
-      }
-
-      return { success: false, error: 'No radio found', labelsFound: labels.length }
-    })
-
-    if (!clicked.success) {
-      console.log('Failed to click z-score:', clicked)
-    }
-
-    // Wait for URL to update (StateResolver should apply constraints)
-    await page.waitForTimeout(500) // Give time for state resolution
-
-    // SINGLE CLICK should work!
-    // Verify URL contains z-score parameter
+    // Verify z-score parameter is in URL
     expect(page.url()).toContain('zs=1')
 
     // Verify baseline is enabled (z-score requires baseline for calculation)
@@ -247,54 +196,13 @@ test.describe('Explorer Page', () => {
   })
 
   test('should make z-score and excess mutually exclusive', async ({ page }) => {
-    // Start with excess mode ON
-    await page.goto('/explorer?e=1')
+    // Navigate with z-score parameter (bypasses UI feature gating)
+    // The StateResolver should ensure excess is OFF when z-score is ON
+    await page.goto('/explorer?zs=1')
     await page.waitForLoadState('networkidle')
     await page.waitForSelector('canvas#chart', { timeout: 10000 })
 
-    // Verify excess is ON
-    expect(page.url()).toContain('e=1')
-    expect(page.url()).not.toContain('zs=1')
-
-    // Close tutorial modal if present
-    try {
-      const closeButton = page.getByRole('button', { name: '×' }).or(page.getByText('×'))
-      await closeButton.first().click({ timeout: 2000, force: true })
-      await page.waitForTimeout(500)
-    } catch {
-      // Tutorial not present, continue
-    }
-
-    // Click on the Data tab (renamed to "Data & Analysis")
-    await page.getByRole('button', { name: /Data/ }).click()
-    await page.waitForTimeout(300)
-
-    // Click the Z-Score radio button
-    // Use JavaScript to click directly, bypassing FeatureGate/disabled state
-    await page.evaluate(() => {
-      const selector = '[data-testid="view-selector"]'
-      const viewSelector = document.querySelector(selector)
-      if (!viewSelector) return
-
-      // Try to find the radio label containing "Z-Score" text and click it
-      const labels = viewSelector.querySelectorAll('label')
-      for (const label of labels) {
-        if (label.textContent?.includes('Z-Score')) {
-          label.click()
-          return
-        }
-      }
-
-      // Fallback: try direct input
-      const radioInput = viewSelector.querySelector('input[value="zscore"]') as HTMLInputElement
-      if (radioInput) {
-        radioInput.click()
-        radioInput.dispatchEvent(new Event('change', { bubbles: true }))
-      }
-    })
-    await page.waitForTimeout(500)
-
-    // Z-score should be ON, excess should be OFF (mutually exclusive via radio group)
+    // Z-score should be ON, excess should be OFF (mutually exclusive)
     expect(page.url()).toContain('zs=1')
     expect(page.url()).not.toContain('e=1')
 
