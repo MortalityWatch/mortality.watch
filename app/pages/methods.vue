@@ -68,15 +68,15 @@ useSeoMeta({
 
         <p class="text-gray-700 dark:text-gray-300">
           If you have questions about our methodology or need clarification on
-          any calculations, please contact us via
+          any calculations, please use our
           <ULink
-            to="mailto:mortalitywatch@proton.me"
+            to="/contact"
             active-class="text-primary"
             inactive-class="text-primary hover:text-primary-600 dark:hover:text-primary-400"
           >
-            email
+            contact form
           </ULink>
-          or on
+          or reach out on
           <ULink
             to="https://twitter.com/mortalitywatch"
             target="_blank"
