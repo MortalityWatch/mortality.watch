@@ -70,7 +70,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Validate and consume invite code if provided
-  let userTier = 1 // Default tier
+  let userTier: 0 | 1 | 2 = 1 // Default tier
   let inviteCodeId: number | null = null
   let proExpiryDate: Date | null = null
 
