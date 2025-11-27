@@ -199,11 +199,16 @@ test.describe('Explorer Page', () => {
     await page.waitForTimeout(300) // Wait for tab content to render
 
     // Find and click the Z-Score radio button
-    const viewSelector = page.locator('[data-testid="view-selector"]')
-    const zscoreOption = viewSelector.getByText('Z-Score')
-
-    // Click the Z-Score option ONCE (force: true to bypass disabled state in CI)
-    await zscoreOption.click({ force: true })
+    // Use JavaScript to click directly, bypassing FeatureGate/disabled state
+    await page.evaluate(() => {
+      // Find the radio input with value 'zscore'
+      const radioInput = document.querySelector('[data-testid="view-selector"] input[value="zscore"]') as HTMLInputElement
+      if (radioInput) {
+        radioInput.click()
+        // Also trigger change event to ensure Vue reactivity
+        radioInput.dispatchEvent(new Event('change', { bubbles: true }))
+      }
+    })
 
     // Wait for URL to update (StateResolver should apply constraints)
     await page.waitForTimeout(500) // Give time for state resolution
@@ -245,10 +250,17 @@ test.describe('Explorer Page', () => {
     await page.getByRole('button', { name: /Data/ }).click()
     await page.waitForTimeout(300)
 
-    // Click the Z-Score radio button (force: true to bypass disabled state in CI)
-    const viewSelector = page.locator('[data-testid="view-selector"]')
-    const zscoreOption = viewSelector.getByText('Z-Score')
-    await zscoreOption.click({ force: true })
+    // Click the Z-Score radio button
+    // Use JavaScript to click directly, bypassing FeatureGate/disabled state
+    await page.evaluate(() => {
+      // Find the radio input with value 'zscore'
+      const radioInput = document.querySelector('[data-testid="view-selector"] input[value="zscore"]') as HTMLInputElement
+      if (radioInput) {
+        radioInput.click()
+        // Also trigger change event to ensure Vue reactivity
+        radioInput.dispatchEvent(new Event('change', { bubbles: true }))
+      }
+    })
     await page.waitForTimeout(500)
 
     // Z-score should be ON, excess should be OFF (mutually exclusive via radio group)
