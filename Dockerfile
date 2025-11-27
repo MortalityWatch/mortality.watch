@@ -28,24 +28,34 @@ COPY . .
 ENV NODE_ENV=production
 RUN CI=true bun run build
 
-# Production stage
-FROM oven/bun:1-alpine
+# Production stage - use Node.js for runtime (better compatibility)
+FROM node:22-alpine
 
-# Install only runtime dependencies for canvas
+# Install build tools + runtime dependencies for native modules
 RUN apk add --no-cache \
+  build-base \
+  python3 \
   cairo \
+  cairo-dev \
   pango \
+  pango-dev \
   jpeg \
+  jpeg-dev \
   giflib \
+  giflib-dev \
   librsvg \
-  pixman
+  librsvg-dev \
+  pixman \
+  pixman-dev
 
 WORKDIR /app
 
-# Copy built application and node_modules from builder
+# Copy built application from builder
 COPY --from=builder /app/.output /app/.output
-COPY --from=builder /app/node_modules /app/node_modules
 COPY --from=builder /app/package*.json ./
+
+# Rebuild native modules in .output/server/node_modules for Node.js
+RUN cd /app/.output/server && npm rebuild better-sqlite3 canvas 2>/dev/null || true
 
 # Set environment to production
 ENV NODE_ENV=production
@@ -55,7 +65,7 @@ ENV PORT=5000
 
 # Health check (uses PORT env var)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s \
-  CMD bun -e "fetch('http://localhost:' + (process.env.PORT || 5000) + '/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+  CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 5000) + '/api/health', (r) => r.statusCode === 200 ? process.exit(0) : process.exit(1))"
 
 # Start Nuxt server
-CMD ["bun", "run", ".output/server/index.mjs"]
+CMD ["node", ".output/server/index.mjs"]
