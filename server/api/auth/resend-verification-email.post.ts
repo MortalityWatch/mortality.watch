@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { db, users } from '#db'
 import { eq } from 'drizzle-orm'
-import { generateRandomToken } from '../../utils/auth'
+import { generateRandomToken, hashToken } from '../../utils/auth'
 import { sendVerificationEmail } from '../../utils/email'
 
 const resendSchema = z.object({
@@ -79,22 +79,23 @@ export default defineEventHandler(async (event) => {
 
   // Generate new verification token
   const verificationToken = generateRandomToken()
+  const hashedVerificationToken = hashToken(verificationToken)
   const verificationTokenExpires = new Date(
     Date.now() + 24 * 60 * 60 * 1000
   ) // 24 hours
 
-  // Update user with new token
+  // Update user with new hashed token (security: store hash, not plain token)
   await db
     .update(users)
     .set({
-      verificationToken,
+      verificationToken: hashedVerificationToken,
       verificationTokenExpires,
       updatedAt: new Date()
     })
     .where(eq(users.id, user.id))
     .run()
 
-  // Send verification email
+  // Send verification email with unhashed token
   await sendVerificationEmail(user.email, verificationToken)
 
   return {

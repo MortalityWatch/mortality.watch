@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import { randomBytes } from 'node:crypto'
+import { randomBytes, createHash } from 'node:crypto'
 import type { H3Event } from 'h3'
 import { db, users } from '#db'
 import { eq } from 'drizzle-orm'
@@ -537,6 +537,62 @@ export async function requireTier(event: H3Event, requiredTier: 0 | 1 | 2) {
  */
 export function generateRandomToken(): string {
   return randomBytes(32).toString('hex')
+}
+
+/**
+ * Hash a token for secure storage
+ *
+ * Creates a SHA-256 hash of a token for secure database storage.
+ * This is used for password reset tokens and email verification tokens.
+ * Unlike passwords, these tokens are already cryptographically random,
+ * so SHA-256 is appropriate (faster than bcrypt, still secure).
+ *
+ * **Security Rationale:**
+ * - Tokens are generated with crypto.randomBytes (32 bytes = 256 bits)
+ * - SHA-256 is sufficient for hashing already-random data
+ * - bcrypt is overkill for random tokens (designed for passwords)
+ * - If database is compromised, attackers cannot use hashed tokens
+ *
+ * **Use Cases:**
+ * - Password reset tokens (before storing in database)
+ * - Email verification tokens (before storing in database)
+ * - Any security-sensitive token that needs to be verified later
+ *
+ * **Implementation Notes:**
+ * - Uses SHA-256 (not bcrypt) for performance
+ * - Returns deterministic hash (same input = same output)
+ * - Hash is 64 characters (hex encoding of 256 bits)
+ *
+ * **Security Considerations:**
+ * - Store hashed version in database, never plain token
+ * - Send unhashed token to user (via email, one time only)
+ * - When verifying, hash incoming token and compare to stored hash
+ * - Tokens should still have expiration times
+ * - Tokens should be single-use only
+ *
+ * @param {string} token - Plain token to hash (typically 64-char hex string)
+ * @returns {string} SHA-256 hash as 64-character hex string
+ *
+ * @example
+ * ```typescript
+ * // When storing token
+ * const token = generateRandomToken()
+ * const hashedToken = hashToken(token)
+ * await db.update(users).set({ resetToken: hashedToken })
+ * await sendPasswordResetEmail(email, token) // Send unhashed
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // When verifying token
+ * const hashedIncoming = hashToken(incomingToken)
+ * const user = await db.select()
+ *   .from(users)
+ *   .where(eq(users.resetToken, hashedIncoming))
+ * ```
+ */
+export function hashToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex')
 }
 
 /**
