@@ -962,6 +962,55 @@ describe('Auth Utilities', () => {
     })
   })
 
+  describe('hashToken', () => {
+    it('should return consistent hash for same input', async () => {
+      const { hashToken } = await import('./auth')
+
+      const token = 'test-token-12345'
+      const hash1 = hashToken(token)
+      const hash2 = hashToken(token)
+
+      expect(hash1).toBe(hash2)
+    })
+
+    it('should return 64-character hex string (SHA-256)', async () => {
+      const { hashToken } = await import('./auth')
+
+      const hash = hashToken('any-token')
+
+      expect(hash).toMatch(/^[a-f0-9]{64}$/)
+      expect(hash.length).toBe(64)
+    })
+
+    it('should return different hashes for different inputs', async () => {
+      const { hashToken } = await import('./auth')
+
+      const hash1 = hashToken('token-a')
+      const hash2 = hashToken('token-b')
+
+      expect(hash1).not.toBe(hash2)
+    })
+
+    it('should handle empty string', async () => {
+      const { hashToken } = await import('./auth')
+
+      const hash = hashToken('')
+
+      // SHA-256 of empty string is a known value
+      expect(hash).toMatch(/^[a-f0-9]{64}$/)
+    })
+
+    it('should work with generated random tokens', async () => {
+      const { hashToken, generateRandomToken } = await import('./auth')
+
+      const token = generateRandomToken()
+      const hash = hashToken(token)
+
+      expect(hash).toMatch(/^[a-f0-9]{64}$/)
+      expect(hash).toBe(hashToken(token)) // Consistent
+    })
+  })
+
   describe('setAuthToken', () => {
     it('should set auth cookie with correct defaults', async () => {
       const { setAuthToken } = await import('./auth')
