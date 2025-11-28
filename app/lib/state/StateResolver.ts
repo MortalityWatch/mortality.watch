@@ -17,7 +17,7 @@ import { detectView } from './viewDetector'
 import { getViewConstraints } from './viewConstraints'
 import type { ViewType } from './viewTypes'
 import { VIEWS } from './views'
-import { computeUIState } from './uiStateComputer'
+import { computeUIState, type UIFieldState } from './uiStateComputer'
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class StateResolver {
@@ -121,10 +121,7 @@ export class StateResolver {
     // 6. Compute UI state from view configuration (reuse viewConfig from step 4)
     const ui = computeUIState(viewConfig, constrainedState)
 
-    // 7. Log resolution
-    this.logResolution(log, 'INITIAL')
-
-    return {
+    const result = {
       state: constrainedState,
       ui,
       metadata,
@@ -132,6 +129,11 @@ export class StateResolver {
       userOverrides,
       log
     }
+
+    // 7. Log resolution with full context
+    this.logResolution(log, 'INITIAL', result)
+
+    return result
   }
 
   /**
@@ -201,10 +203,7 @@ export class StateResolver {
     const viewConfig = VIEWS[view] || VIEWS.mortality
     const ui = computeUIState(viewConfig, constrainedState)
 
-    // 4. Log resolution
-    this.logResolution(log, 'CHANGE')
-
-    return {
+    const result = {
       state: constrainedState,
       ui,
       metadata,
@@ -212,6 +211,11 @@ export class StateResolver {
       userOverrides,
       log
     }
+
+    // 4. Log resolution with full context
+    this.logResolution(log, 'CHANGE', result)
+
+    return result
   }
 
   /**
@@ -307,10 +311,7 @@ export class StateResolver {
     // 4. Compute UI state from view configuration
     const ui = computeUIState(viewConfig, constrainedState)
 
-    // 5. Log resolution
-    this.logResolution(log, 'VIEW_CHANGE')
-
-    return {
+    const result = {
       state: constrainedState,
       ui,
       metadata,
@@ -318,6 +319,11 @@ export class StateResolver {
       userOverrides,
       log
     }
+
+    // 5. Log resolution with full context
+    this.logResolution(log, 'VIEW_CHANGE', result)
+
+    return result
   }
 
   /**
@@ -443,7 +449,8 @@ export class StateResolver {
    */
   private static logResolution(
     log: StateResolutionLog,
-    type: 'INITIAL' | 'CHANGE' | 'VIEW_CHANGE'
+    type: 'INITIAL' | 'CHANGE' | 'VIEW_CHANGE',
+    resolved?: ResolvedState
   ): void {
     // Skip logging in production
     if (typeof window !== 'undefined' && '__PROD__' in window && window.__PROD__) return
@@ -480,7 +487,75 @@ export class StateResolver {
     }
 
     console.log('👤 User Overrides:', log.userOverridesFromUrl)
+
+    // Enhanced logging: URL query preview
+    if (resolved) {
+      console.log('🔗 URL Query:', this.buildQueryPreview(resolved.state))
+      console.log('👁️ UI State:', this.formatUIState(resolved.ui))
+    }
+
     console.groupEnd()
+  }
+
+  /**
+   * Build a preview of what URL query will look like
+   *
+   * @private
+   */
+  private static buildQueryPreview(state: Record<string, unknown>): Record<string, string> {
+    const query: Record<string, string> = {}
+
+    // Handle view
+    if (state.view === 'excess') {
+      query.e = '1'
+    } else if (state.view === 'zscore') {
+      query.zs = '1'
+    }
+
+    // Only show non-default values
+    for (const [field, encoder] of Object.entries(stateFieldEncoders)) {
+      const value = state[field]
+      const defaultValue = DEFAULT_VALUES[field]
+
+      if (this.valuesEqual(value, defaultValue)) continue
+      if (value === undefined) continue
+
+      const urlKey = encoder.key
+      const encodedValue = 'encode' in encoder && encoder.encode
+        ? encoder.encode(value as boolean | undefined)
+        : value
+
+      if (encodedValue !== undefined) {
+        query[urlKey] = Array.isArray(encodedValue)
+          ? encodedValue.join(',')
+          : String(encodedValue)
+      }
+    }
+
+    return query
+  }
+
+  /**
+   * Format UI state for logging
+   *
+   * @private
+   */
+  private static formatUIState(ui: Record<string, UIFieldState>): string[] {
+    const visible: string[] = []
+    const hidden: string[] = []
+
+    for (const [field, state] of Object.entries(ui)) {
+      if (state.visible) {
+        const suffix = state.disabled ? ' (disabled)' : ''
+        visible.push(field + suffix)
+      } else {
+        hidden.push(field)
+      }
+    }
+
+    return visible.length > 0
+      ? visible
+      : ['(no UI controls visible)']
   }
 
   /**
