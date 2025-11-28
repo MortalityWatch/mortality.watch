@@ -3,7 +3,7 @@
 
 FROM node:24-slim
 
-# Install build tools + runtime dependencies for native modules
+# Install build tools + runtime dependencies for native modules + Playwright dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
   build-essential \
   python3 \
@@ -14,6 +14,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   librsvg2-dev \
   libpixman-1-dev \
   git \
+  libnss3 \
+  libnspr4 \
+  libatk1.0-0 \
+  libatk-bridge2.0-0 \
+  libcups2 \
+  libdrm2 \
+  libxkbcommon0 \
+  libxcomposite1 \
+  libxdamage1 \
+  libxfixes3 \
+  libxrandr2 \
+  libgbm1 \
+  libasound2 \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Bun for faster dependency installation
@@ -22,6 +35,7 @@ RUN npm install -g bun
 WORKDIR /app
 
 # Copy package files and install dependencies
+# Note: Playwright chromium is installed via postinstall script
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 

@@ -30,8 +30,8 @@ export const DEFAULT_VALUES: Record<string, unknown> = {
   standardPopulation: 'who',
 
   // Display options
-  showPredictionInterval: true, // Default ON normally
-  showBaseline: true, // Default ON
+  showPredictionInterval: false, // Default OFF (matches mortality view)
+  showBaseline: false, // Default OFF (matches mortality view)
   cumulative: false,
   showPercentage: false,
   showTotal: false,

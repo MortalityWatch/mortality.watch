@@ -112,7 +112,7 @@ describe('useExplorerState', () => {
       expect(state.cumulative.value).toBe(false)
       expect(state.showTotal.value).toBe(false)
       expect(state.maximize.value).toBe(false)
-      expect(state.showPredictionInterval.value).toBe(true)
+      expect(state.showPredictionInterval.value).toBe(false)
       expect(state.showLabels.value).toBe(true)
       expect(state.showPercentage.value).toBe(false)
       expect(state.showLogarithmic.value).toBe(false)

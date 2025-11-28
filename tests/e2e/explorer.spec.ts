@@ -127,8 +127,8 @@ test.describe('Explorer Page', () => {
     // Verify baseline is still enabled (excess requires baseline)
     expect(page.url()).not.toContain('sb=0')
 
-    // Verify PI defaults to OFF (soft constraint)
-    expect(page.url()).toContain('pi=0')
+    // Verify PI defaults to OFF (soft constraint) - since pi=0 is now the default, it won't appear in URL
+    expect(page.url()).not.toContain('pi=1')
 
     // Note: percentage defaults to OFF (p=0) but may not be in URL if it's the default value
 
