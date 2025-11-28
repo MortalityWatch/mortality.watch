@@ -9,6 +9,7 @@ import {
   PointElement,
   CategoryScale,
   LinearScale,
+  LogarithmicScale,
   TimeScale,
   Tooltip,
   Legend,
@@ -50,6 +51,7 @@ const props = defineProps<{
   showPredictionInterval: boolean
   showPercentage: boolean
   showLabels: boolean
+  showLogarithmic: boolean
   isDeathsType: boolean
   isPopulationType: boolean
   showLogo: boolean
@@ -66,6 +68,7 @@ Chart.register(
   PointElement,
   CategoryScale,
   LinearScale,
+  LogarithmicScale,
   TimeScale,
   Tooltip,
   Legend,
@@ -108,7 +111,7 @@ const lineConfig = computed(() => {
   const isDark = colorMode.value === 'dark'
   if (props.chartStyle !== 'line') return undefined
   return makeBarLineChartConfig(
-    { ...props.data, showLabels: effectiveShowLabels.value },
+    { ...props.data, showLabels: effectiveShowLabels.value, showLogarithmic: props.showLogarithmic },
     props.isExcess,
     props.showPredictionInterval,
     props.showPercentage,
@@ -128,7 +131,7 @@ const barConfig = computed(() => {
   const isDark = colorMode.value === 'dark'
   if (props.chartStyle !== 'bar') return undefined
   return makeBarLineChartConfig(
-    { ...props.data, showLabels: effectiveShowLabels.value },
+    { ...props.data, showLabels: effectiveShowLabels.value, showLogarithmic: props.showLogarithmic },
     props.isExcess,
     props.showPredictionInterval,
     props.showPercentage,

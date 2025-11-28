@@ -13,6 +13,7 @@ const props = defineProps<{
   showPredictionInterval: boolean
   showPercentage: boolean
   showLabels: boolean
+  showLogarithmic: boolean
   isDeathsType: boolean
   isPopulationType: boolean
   showLogo: boolean
@@ -73,6 +74,7 @@ defineExpose({
         :show-prediction-interval="props.showPredictionInterval"
         :show-percentage="props.showPercentage"
         :show-labels="props.showLabels"
+        :show-logarithmic="props.showLogarithmic"
         :is-deaths-type="props.isDeathsType"
         :is-population-type="props.isPopulationType"
         :show-logo="props.showLogo"

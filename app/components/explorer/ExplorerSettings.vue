@@ -138,7 +138,7 @@ const baselineSliderValue = computed(() => {
       @show-prediction-interval-changed="emit('showPredictionIntervalChanged', $event)"
       @show-labels-changed="emit('showLabelsChanged', $event)"
       @maximize-changed="emit('maximizeChanged', $event)"
-      @is-logarithmic-changed="emit('showLogarithmicChanged', $event)"
+      @show-logarithmic-changed="emit('showLogarithmicChanged', $event)"
       @show-percentage-changed="emit('showPercentageChanged', $event)"
       @cumulative-changed="emit('cumulativeChanged', $event)"
       @show-total-changed="emit('showTotalChanged', $event)"
