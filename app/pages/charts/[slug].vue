@@ -69,36 +69,36 @@
       </div>
 
       <!-- Chart Visualization -->
-      <UCard class="mb-8">
-        <div class="rounded-lg overflow-hidden">
-          <!-- Chart rendered with state -->
-          <img
-            v-if="chartImageUrl"
-            :src="chartImageUrl"
-            :alt="chart.name"
-            class="w-full h-auto"
+      <UCard
+        class="mb-8"
+        :ui="{ body: 'p-0' }"
+      >
+        <img
+          v-if="chartImageUrl"
+          :src="chartImageUrl"
+          :alt="chart.name"
+          class="w-full h-auto block"
+        >
+        <div
+          v-else
+          class="aspect-video flex flex-col items-center justify-center text-gray-400 gap-4"
+        >
+          <Icon
+            name="i-lucide-bar-chart-2"
+            class="w-16 h-16"
+          />
+          <p
+            v-if="chart.chartType === 'ranking'"
+            class="text-sm"
           >
-          <div
+            Preview not available for ranking charts yet
+          </p>
+          <p
             v-else
-            class="aspect-video flex flex-col items-center justify-center text-gray-400 gap-4"
+            class="text-sm"
           >
-            <Icon
-              name="i-lucide-bar-chart-2"
-              class="w-16 h-16"
-            />
-            <p
-              v-if="chart.chartType === 'ranking'"
-              class="text-sm"
-            >
-              Preview not available for ranking charts yet
-            </p>
-            <p
-              v-else
-              class="text-sm"
-            >
-              Chart preview unavailable
-            </p>
-          </div>
+            Chart preview unavailable
+          </p>
         </div>
       </UCard>
 
