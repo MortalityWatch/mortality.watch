@@ -28,16 +28,14 @@ describe('viewConstraints', () => {
       expect(baselineConstraint?.reason.toLowerCase()).toContain('baseline')
     })
 
-    it('generates hard constraint for disabled logarithmic in excess', () => {
+    it('does not generate constraint for logarithmic in excess', () => {
       const constraints = getViewConstraints('excess')
 
       const logarithmicConstraint = constraints.find(c =>
         c.apply.showLogarithmic === false
       )
 
-      expect(logarithmicConstraint).toBeDefined()
-      expect(logarithmicConstraint?.priority).toBe(2)
-      expect(logarithmicConstraint?.allowUserOverride).toBe(false)
+      expect(logarithmicConstraint).toBeUndefined()
     })
 
     it('includes view-specific constraints from config', () => {
@@ -72,7 +70,7 @@ describe('viewConstraints', () => {
       // Find hard constraints (priority 2)
       const hardConstraints = constraints.filter(c => c.priority === 2)
 
-      // Excess should have hard constraints (baseline, logarithmic)
+      // Excess should have hard constraints (baseline only, logarithmic is now toggleable)
       expect(hardConstraints.length).toBeGreaterThan(0)
 
       hardConstraints.forEach((constraint) => {
@@ -104,12 +102,12 @@ describe('viewConstraints', () => {
       // Excess view should have constraints defined in views.ts
       expect(constraints.length).toBeGreaterThan(0)
 
-      // Should include baseline and logarithmic constraints
+      // Should include baseline constraint, but NOT logarithmic (now toggleable)
       const baselineConstraint = constraints.find(c => c.apply.showBaseline === true)
       const logarithmicConstraint = constraints.find(c => c.apply.showLogarithmic === false)
 
       expect(baselineConstraint).toBeDefined()
-      expect(logarithmicConstraint).toBeDefined()
+      expect(logarithmicConstraint).toBeUndefined()
     })
 
     it('mortality view has minimal constraints', () => {
@@ -123,7 +121,7 @@ describe('viewConstraints', () => {
       expect(piConstraint).toBeDefined()
     })
 
-    it('zscore view has baseline and logarithmic constraints', () => {
+    it('zscore view has baseline constraint but not logarithmic', () => {
       const constraints = getViewConstraints('zscore')
 
       // Z-score should require baseline
@@ -132,11 +130,11 @@ describe('viewConstraints', () => {
       )
       expect(baselineConstraint).toBeDefined()
 
-      // Z-score should disable logarithmic
+      // Z-score should NOT disable logarithmic (now toggleable)
       const logConstraint = constraints.find(c =>
         c.apply.showLogarithmic === false
       )
-      expect(logConstraint).toBeDefined()
+      expect(logConstraint).toBeUndefined()
     })
   })
 })

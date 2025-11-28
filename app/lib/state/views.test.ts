@@ -89,8 +89,11 @@ describe('View Configurations', () => {
       }
     })
 
-    it('hides logarithmic option', () => {
-      expect(config.ui.logarithmic.visibility.type).toBe('hidden')
+    it('shows logarithmic option as toggleable', () => {
+      expect(config.ui.logarithmic.visibility.type).toBe('visible')
+      if (config.ui.logarithmic.visibility.type === 'visible') {
+        expect(config.ui.logarithmic.visibility.toggleable).toBe(true)
+      }
     })
 
     it('shows excess-specific options', () => {
@@ -131,13 +134,11 @@ describe('View Configurations', () => {
       expect(baselineConstraint?.allowUserOverride).toBe(false)
       expect(baselineConstraint?.priority).toBe(2)
 
-      // Should have constraint for logarithmic = false
+      // Should NOT have constraint for logarithmic = false (now toggleable)
       const logarithmicConstraint = config.constraints.find(
         c => c.apply.showLogarithmic === false
       )
-      expect(logarithmicConstraint).toBeDefined()
-      expect(logarithmicConstraint?.allowUserOverride).toBe(false)
-      expect(logarithmicConstraint?.priority).toBe(2)
+      expect(logarithmicConstraint).toBeUndefined()
     })
   })
 
@@ -152,10 +153,16 @@ describe('View Configurations', () => {
 
     it('hides standard mortality options', () => {
       expect(config.ui.baseline.visibility.type).toBe('hidden')
-      expect(config.ui.logarithmic.visibility.type).toBe('hidden')
       expect(config.ui.cumulative.visibility.type).toBe('hidden')
       expect(config.ui.percentage.visibility.type).toBe('hidden')
       expect(config.ui.showTotal.visibility.type).toBe('hidden')
+    })
+
+    it('shows logarithmic option as toggleable', () => {
+      expect(config.ui.logarithmic.visibility.type).toBe('visible')
+      if (config.ui.logarithmic.visibility.type === 'visible') {
+        expect(config.ui.logarithmic.visibility.toggleable).toBe(true)
+      }
     })
 
     it('shows prediction interval and labels options', () => {
@@ -192,13 +199,11 @@ describe('View Configurations', () => {
       expect(baselineConstraint?.reason).toContain('Z-score calculation requires baseline')
     })
 
-    it('has constraint to disable logarithmic', () => {
+    it('does not have constraint to disable logarithmic', () => {
       const logConstraint = config.constraints.find(
         c => c.apply.showLogarithmic === false
       )
-      expect(logConstraint).toBeDefined()
-      expect(logConstraint?.allowUserOverride).toBe(false)
-      expect(logConstraint?.priority).toBe(2)
+      expect(logConstraint).toBeUndefined()
     })
 
     it('has constraint to disable cumulative and percentage', () => {

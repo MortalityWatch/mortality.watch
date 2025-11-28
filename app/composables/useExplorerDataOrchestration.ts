@@ -181,7 +181,7 @@ export function useExplorerDataOrchestration(
       = (!state.isExcess.value && !state.showBaseline.value) || (state.cumulative.value && !helpers.showCumPi())
     chartOptions.showCumulativeOption = state.isExcess.value
     chartOptions.showPercentageOption = state.isExcess.value
-    chartOptions.showLogarithmicOption = !helpers.isMatrixChartStyle() && !state.isExcess.value
+    chartOptions.showLogarithmicOption = !helpers.isMatrixChartStyle()
   }
 
   /**

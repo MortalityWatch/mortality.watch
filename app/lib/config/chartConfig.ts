@@ -323,7 +323,6 @@ export function computeChartUIState(
     showLogarithmicOption:
       metricConfig.supportsLogarithmic
       && !styleConfig.disablesLogarithmic
-      && !isExcess
       && !isMatrixStyle,
 
     showCumulativeOption: isExcess && metricConfig.supportsExcess,

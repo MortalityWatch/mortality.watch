@@ -82,7 +82,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
     ui: {
       baseline: required(true), // forced ON
       predictionInterval: toggleable(),
-      logarithmic: hidden(), // not available in excess
+      logarithmic: toggleable(), // user can enable/disable as needed
       maximize: conditional({
         field: 'chartStyle',
         is: 'bar'
@@ -116,14 +116,6 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
         allowUserOverride: false,
         priority: 2
       },
-      // Excess disables logarithmic (priority 2 - hard constraint)
-      {
-        when: () => true,
-        apply: { showLogarithmic: false },
-        reason: 'Logarithmic scale not available in excess mode',
-        allowUserOverride: false,
-        priority: 2
-      },
       // Cumulative OFF disables showTotal
       {
         when: s => s.cumulative === false,
@@ -149,7 +141,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
     ui: {
       baseline: hidden(), // Z-scores replace baseline display
       predictionInterval: toggleable(), // Can show PI with z-scores
-      logarithmic: hidden(), // Not compatible with z-scores
+      logarithmic: toggleable(), // user can enable/disable as needed
       maximize: conditional({
         field: 'chartStyle',
         is: 'bar'
@@ -173,14 +165,6 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
         when: () => true,
         apply: { showBaseline: true },
         reason: 'Z-score calculation requires baseline data',
-        allowUserOverride: false,
-        priority: 2
-      },
-      // Z-scores disable logarithmic scale (priority 2 - hard constraint)
-      {
-        when: () => true,
-        apply: { showLogarithmic: false },
-        reason: 'Logarithmic scale not compatible with z-score analysis',
         allowUserOverride: false,
         priority: 2
       },
