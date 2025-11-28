@@ -1,17 +1,12 @@
+import { chromium } from 'playwright'
 import { chartRenderQueue, chartRenderThrottle } from '../utils/requestQueue'
 import { generateCacheKey, getCachedChart, saveCachedChart } from '../utils/chartCache'
 import {
   getClientIp,
   parseQueryParams,
   getDimensions,
-  getChartResponseHeaders,
-  fetchChartData,
-  transformChartData,
-  generateChartConfig,
-  generateChartUrl
+  getChartResponseHeaders
 } from '../utils/chartPngHelpers'
-import { decodeChartState } from '../../app/lib/chartState'
-import { renderChart } from '../utils/chartRenderer'
 
 export default defineEventHandler(async (event) => {
   try {
@@ -32,14 +27,11 @@ export default defineEventHandler(async (event) => {
     const query = getQuery(event)
     const queryParams = parseQueryParams(query as Record<string, unknown>)
 
-    // Check for dark mode parameter
-    const darkMode = queryParams.dm === '1' || queryParams.dm === 'true'
-
     // Get dimensions from query or use defaults (OG image size)
     const { width, height } = getDimensions(query as Record<string, unknown>)
 
-    // Generate cache key from query parameters (including width/height and dark mode)
-    const cacheKey = generateCacheKey({ ...queryParams, width, height, dm: darkMode ? '1' : '0' })
+    // Generate cache key from query parameters (including width/height)
+    const cacheKey = generateCacheKey({ ...queryParams, width, height })
 
     // Check filesystem cache first (7-day TTL)
     const cachedBuffer = await getCachedChart(cacheKey)
@@ -49,51 +41,87 @@ export default defineEventHandler(async (event) => {
       return cachedBuffer
     }
 
-    // Queue the chart rendering to limit concurrency
+    // Queue the screenshot rendering to limit concurrency
     const buffer = await chartRenderQueue.enqueue(async () => {
+      let browser
       try {
-        // Decode chart state from query parameters
-        const state = decodeChartState(queryParams)
+        // Build the URL for the explorer page with all query params
+        // Always use localhost for screenshots (can't screenshot external URL from server)
+        const baseUrl = 'http://localhost:3000'
 
-        // Generate chart URL for QR code
-        const chartUrl = generateChartUrl(queryParams)
+        // Remove width/height from query params (not part of chart state)
+        const { width: _w, height: _h, ...chartParams } = queryParams
+        const params = new URLSearchParams()
+        Object.entries(chartParams).forEach(([key, value]) => {
+          if (Array.isArray(value)) {
+            value.forEach(v => params.append(key, v))
+          } else {
+            params.set(key, String(value))
+          }
+        })
 
-        // Fetch all required chart data
-        const { allCountries, allLabels, allChartData, isAsmrType } = await fetchChartData(state)
+        const explorerUrl = `${baseUrl}/explorer?${params.toString()}`
 
-        // Transform data into chart-ready format
-        const { chartData, isDeathsType, isLE, isPopulationType } = await transformChartData(
-          state,
-          allCountries,
-          allLabels,
-          allChartData,
-          chartUrl,
-          isAsmrType,
-          queryParams
-        )
+        logger.info('Screenshotting explorer page:', { url: explorerUrl })
 
-        // Generate chart configuration
-        const chartConfig = generateChartConfig(
-          state,
-          chartData,
-          isDeathsType,
-          isLE,
-          isPopulationType,
-          chartUrl
-        )
+        // Launch headless browser
+        browser = await chromium.launch({
+          headless: true,
+          args: ['--no-sandbox', '--disable-setuid-sandbox']
+        })
 
-        // Determine chart type for renderer
-        const chartType = state.chartStyle === 'bar'
-          ? 'bar'
-          : state.chartStyle === 'matrix'
-            ? 'matrix'
-            : 'line'
+        // Use a large viewport to render the chart at full size
+        // The chart will render properly at this size, then we screenshot the canvas
+        const context = await browser.newContext({
+          viewport: { width: 1600, height: 900 },
+          deviceScaleFactor: 2, // 2x for high-DPI/retina displays
+          // Set color scheme based on dm parameter
+          colorScheme: queryParams.dm === '1' ? 'dark' : 'light'
+        })
 
-        // Render chart using server-side Canvas renderer
-        return await renderChart(width, height, chartConfig, chartType, darkMode)
-      } catch (renderError) {
-        logger.error('Error rendering chart:', renderError instanceof Error ? renderError : new Error(String(renderError)))
-        throw renderError
+        const page = await context.newPage()
+
+        // Navigate to explorer page with tutorial disabled
+        await page.goto(`${explorerUrl}&skipTutorial=1`, {
+          waitUntil: 'networkidle',
+          timeout: 30000
+        })
+
+        // Wait for the chart canvas to load
+        await page.waitForSelector('canvas', { timeout: 10000 })
+
+        // Hide everything except the chart container
+        await page.addStyleTag({
+          content: `
+            header { display: none !important; }
+            footer { display: none !important; }
+            #nuxt-devtools-container { display: none !important; }
+            #nuxt-devtools { display: none !important; }
+            [data-nuxt-devtools] { display: none !important; }
+            .nuxt-devtools-overlay { display: none !important; }
+            .nuxt-loading-indicator { display: none !important; }
+            /* Hide everything except the chart */
+            body > div:first-child > div:first-child > div:not(:has(canvas)) { display: none !important; }
+          `
+        })
+
+        // Find the chart container element and take a screenshot
+        const chartContainer = await page.locator('canvas').first()
+
+        // Take screenshot of just the chart canvas
+        const screenshot = await chartContainer.screenshot({
+          type: 'png'
+        })
+
+        await browser.close()
+
+        return Buffer.from(screenshot)
+      } catch (screenshotError) {
+        if (browser) {
+          await browser.close().catch(() => {})
+        }
+        logger.error('Error taking explorer screenshot:', screenshotError instanceof Error ? screenshotError : new Error(String(screenshotError)))
+        throw screenshotError
       }
     })
 

@@ -21,26 +21,7 @@ const CHART_TYPES = [
 const AGE_GROUPS = ['all', '0-14', '15-64', '65-74', '75-84', '85+']
 
 // Default countries for development (subset)
-const DEFAULT_COUNTRIES = [
-  'USA',
-  'GBR',
-  'DEU',
-  'FRA',
-  'ITA',
-  'ESP',
-  'NLD',
-  'BEL',
-  'SWE',
-  'NOR',
-  'DNK',
-  'FIN',
-  'AUT',
-  'CHE',
-  'CAN',
-  'AUS',
-  'NZL',
-  'JPN'
-]
+const DEFAULT_COUNTRIES = ['USA', 'DEU', 'SWE']
 
 interface DownloadStats {
   total: number
