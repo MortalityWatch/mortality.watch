@@ -232,9 +232,6 @@ const handleUpdate = async (key: string) => {
       '_showPredictionInterval',
       '_showPercentage',
       '_showTotal',
-      '_showLogarithmic',
-      '_maximize',
-      '_showLabels',
       '_userColors'
     ].includes(key)
 
@@ -242,11 +239,6 @@ const handleUpdate = async (key: string) => {
     if (shouldDownloadDataset || shouldUpdateDataset || needsFilterUpdate) {
       await updateData(shouldDownloadDataset, shouldUpdateDataset)
     }
-  }
-
-  if (dataOrchestration.chartData.value) {
-    if (key === '_maximize') dataOrchestration.chartData.value.isMaximized = state.maximize.value
-    if (key === '_showLabels') dataOrchestration.chartData.value.showLabels = state.showLabels.value
   }
 }
 
@@ -343,10 +335,61 @@ const handleStandardPopulationChanged = (v: string) => handleStateChange('standa
 // Baseline configuration
 const handleBaselineMethodChanged = (v: string) => handleStateChange('baselineMethod', v, '_baselineMethod')
 
-// Display options
-const handleShowLabelsChanged = (v: boolean) => handleStateChange('showLabels', v, '_showLabels')
-const handleMaximizeChanged = (v: boolean) => handleStateChange('maximize', v, '_maximize')
-const handleShowLogarithmicChanged = (v: boolean) => handleStateChange('showLogarithmic', v, '_showLogarithmic')
+// Display options - these update UI only, no data reload needed
+const handleShowLabelsChanged = async (v: boolean) => {
+  const { StateResolver } = await import('@/lib/state/StateResolver')
+  const router = useRouter()
+  const route = useRoute()
+
+  // Update URL state
+  const resolved = StateResolver.resolveChange(
+    { field: 'showLabels', value: v, source: 'user' },
+    state.getCurrentStateValues(),
+    state.getUserOverrides()
+  )
+  await StateResolver.applyResolvedState(resolved, route, router)
+
+  // Update chart display directly (no data reload)
+  if (dataOrchestration.chartData.value) {
+    dataOrchestration.chartData.value.showLabels = v
+  }
+}
+
+const handleMaximizeChanged = async (v: boolean) => {
+  const { StateResolver } = await import('@/lib/state/StateResolver')
+  const router = useRouter()
+  const route = useRoute()
+
+  // Update URL state
+  const resolved = StateResolver.resolveChange(
+    { field: 'maximize', value: v, source: 'user' },
+    state.getCurrentStateValues(),
+    state.getUserOverrides()
+  )
+  await StateResolver.applyResolvedState(resolved, route, router)
+
+  // Update chart display directly (no data reload)
+  if (dataOrchestration.chartData.value) {
+    dataOrchestration.chartData.value.isMaximized = v
+  }
+}
+
+const handleShowLogarithmicChanged = async (v: boolean) => {
+  const { StateResolver } = await import('@/lib/state/StateResolver')
+  const router = useRouter()
+  const route = useRoute()
+
+  // Update URL state
+  const resolved = StateResolver.resolveChange(
+    { field: 'showLogarithmic', value: v, source: 'user' },
+    state.getCurrentStateValues(),
+    state.getUserOverrides()
+  )
+  await StateResolver.applyResolvedState(resolved, route, router)
+
+  // Logarithmic scale is handled automatically by chartData reactivity
+  // No manual update needed - the chartOptions will react to state.showLogarithmic.value
+}
 
 // Excess mode options
 const handleShowPercentageChanged = (v: boolean) => handleStateChange('showPercentage', v, '_showPercentage')
