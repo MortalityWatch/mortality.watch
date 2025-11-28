@@ -35,11 +35,9 @@ RUN npm install -g bun
 WORKDIR /app
 
 # Copy package files and install dependencies
+# Note: Playwright chromium is installed via postinstall script
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
-
-# Install Playwright browsers
-RUN npx playwright install chromium
 
 # Copy application code
 COPY . .
