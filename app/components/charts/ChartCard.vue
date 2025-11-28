@@ -262,6 +262,7 @@ function getThumbnailUrl() {
 
   // Generate thumbnail from chart state
   try {
+    const colorMode = useColorMode()
     const state = JSON.parse(props.chart.chartState)
     const params = new URLSearchParams()
 
@@ -270,6 +271,15 @@ function getThumbnailUrl() {
         params.set(key, String(value))
       }
     })
+
+    // Add dark mode parameter if in dark mode
+    if (colorMode.value === 'dark') {
+      params.set('dm', '1')
+    }
+
+    // Hide QR code and logo for thumbnails
+    params.set('hideQr', '1')
+    params.set('hideLogo', '1')
 
     // Use appropriate endpoint based on chart type
     const endpoint = props.chart.chartType === 'ranking' ? '/ranking.png' : '/chart.png'

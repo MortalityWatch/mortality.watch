@@ -70,8 +70,10 @@ export default defineEventHandler(async (event) => {
           args: ['--no-sandbox', '--disable-setuid-sandbox']
         })
 
+        // Use a large viewport to render the chart at full size
+        // The chart will render properly at this size, then we screenshot the canvas
         const context = await browser.newContext({
-          viewport: { width, height },
+          viewport: { width: 1600, height: 900 },
           deviceScaleFactor: 2, // 2x for high-DPI/retina displays
           // Set color scheme based on dm parameter
           colorScheme: queryParams.dm === '1' ? 'dark' : 'light'

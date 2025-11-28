@@ -77,7 +77,9 @@ export default defineEventHandler(async (event) => {
     return {
       ...chart,
       authorName: chart.author?.displayName || chart.author?.firstName || 'Anonymous',
-      author: undefined // Remove nested author object
+      author: undefined, // Remove nested author object
+      // Return incremented view count for public charts (since we're about to increment it)
+      viewCount: chart.isPublic ? chart.viewCount + 1 : chart.viewCount
       // userId is included for ownership checking
     }
   } catch (err) {
