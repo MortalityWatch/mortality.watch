@@ -478,71 +478,77 @@ export class StateResolver {
   }
 
   /**
+   * Check if two values are equal (with deep comparison for arrays)
+   *
+   * @private
+   */
+  private static valuesEqual(a: unknown, b: unknown): boolean {
+    // Handle arrays
+    if (Array.isArray(a) && Array.isArray(b)) {
+      if (a.length !== b.length) return false
+      return a.every((val, idx) => val === b[idx])
+    }
+    // Handle primitives
+    return a === b
+  }
+
+  /**
    * Apply resolved state changes to URL
    *
-   * Builds a complete query object with all changes and pushes to router.
-   * This ensures atomic URL updates without race conditions.
+   * Builds a minimal query object containing only non-default values.
+   * This ensures clean URLs without redundant parameters.
    *
    * @param resolved - Resolved state from resolveChange()
-   * @param route - Current route
+   * @param route - Current route (unused, kept for API compatibility)
    * @param router - Vue router instance
    */
   static async applyResolvedState(
     resolved: ResolvedState,
-    route: RouteLocationNormalizedLoaded,
+    _route: RouteLocationNormalizedLoaded,
     router: Router,
     options: { replaceHistory?: boolean } = {}
   ): Promise<void> {
-    // Build complete query object with ALL changes at once
+    // Build query from scratch - only include non-default values
     const newQuery: Record<string, string | string[]> = {}
 
-    // Copy existing query with proper types
-    for (const [key, value] of Object.entries(route.query)) {
-      if (Array.isArray(value)) {
-        newQuery[key] = value.filter((v): v is string => v !== null)
-      } else if (value !== null && value !== undefined) {
-        newQuery[key] = value
-      }
+    // Handle view first (uses e=1, zs=1 instead of state encoder)
+    const view = resolved.state.view as ViewType
+    if (view === 'excess') {
+      newQuery.e = '1'
+    } else if (view === 'zscore') {
+      newQuery.zs = '1'
     }
+    // mortality view has no special parameter (it's the default)
 
-    // Handle special view field (uses e=1, zs=1 instead of state encoder)
-    if (resolved.changedFields.includes('view')) {
-      const view = resolved.state.view as ViewType
-
-      // Remove all view parameters first
-      Reflect.deleteProperty(newQuery, 'e')
-      Reflect.deleteProperty(newQuery, 'zs')
-      Reflect.deleteProperty(newQuery, 'view')
-
-      // Add appropriate parameter for the new view
-      if (view === 'excess') {
-        newQuery.e = '1'
-      } else if (view === 'zscore') {
-        newQuery.zs = '1'
-      }
-      // mortality view has no special parameter (it's the default)
-    }
-
-    for (const field of resolved.changedFields) {
-      // Skip 'view' field - handled above with special parameters
-      if (field === 'view') continue
-
-      const encoder = stateFieldEncoders[field as keyof typeof stateFieldEncoders]
-      if (!encoder) continue
-
+    // For each state field, only add to URL if different from base default
+    // Note: We use DEFAULT_VALUES (landing page defaults), not view-specific defaults
+    // This ensures the URL contains all values needed to reconstruct the state
+    for (const [field, encoder] of Object.entries(stateFieldEncoders)) {
       const urlKey = encoder.key
       const newValue = resolved.state[field]
+      const defaultValue = DEFAULT_VALUES[field]
+
+      // Skip if value matches base default
+      if (this.valuesEqual(newValue, defaultValue)) {
+        continue
+      }
+
+      // Skip undefined values
+      if (newValue === undefined) {
+        continue
+      }
 
       // Encode the value
-      const encodedValue = 'encode' in encoder && encoder.encode ? encoder.encode(newValue as boolean | undefined) : newValue
+      const encodedValue = 'encode' in encoder && encoder.encode
+        ? encoder.encode(newValue as boolean | undefined)
+        : newValue
 
-      if (encodedValue === undefined) {
-        // Remove from URL if undefined
-        Reflect.deleteProperty(newQuery, urlKey)
-      } else if (Array.isArray(encodedValue)) {
-        newQuery[urlKey] = encodedValue.map(String)
-      } else {
-        newQuery[urlKey] = String(encodedValue)
+      if (encodedValue !== undefined) {
+        if (Array.isArray(encodedValue)) {
+          newQuery[urlKey] = encodedValue.map(String)
+        } else {
+          newQuery[urlKey] = String(encodedValue)
+        }
       }
     }
 

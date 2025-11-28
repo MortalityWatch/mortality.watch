@@ -7,6 +7,7 @@
  */
 
 import type { StateConstraint } from './types'
+import { Defaults } from './stateSerializer'
 
 // ============================================================================
 // DEFAULT VALUES
@@ -14,48 +15,16 @@ import type { StateConstraint } from './types'
 
 /**
  * Default values when nothing is set in URL
+ * Re-exports Defaults from stateSerializer with view-specific additions
  */
 export const DEFAULT_VALUES: Record<string, unknown> = {
-  // View (default to mortality)
+  // View defaults (not in stateSerializer)
   view: 'mortality',
   isExcess: false,
   isZScore: false,
 
-  // Core settings
-  countries: ['USA'],
-  type: 'cmr',
-  chartType: 'yearly',
-  chartStyle: 'line',
-  ageGroups: ['all'],
-  standardPopulation: 'who',
-
-  // Display options
-  showPredictionInterval: false, // Default OFF (matches mortality view)
-  showBaseline: false, // Default OFF (matches mortality view)
-  cumulative: false,
-  showPercentage: false,
-  showTotal: false,
-  maximize: false,
-  showLogarithmic: false,
-  showLabels: true,
-
-  // Baseline
-  baselineMethod: 'mean',
-
-  // Dates (undefined = use defaults from data availability)
-  dateFrom: undefined,
-  dateTo: undefined,
-  sliderStart: undefined,
-  baselineDateFrom: undefined,
-  baselineDateTo: undefined,
-
-  // Chart appearance
-  decimals: 'auto',
-  showLogo: true,
-  showQrCode: true,
-  showCaption: true,
-  chartPreset: undefined,
-  userColors: undefined
+  // All other defaults from stateSerializer (the single source of truth)
+  ...Defaults
 }
 
 // ============================================================================

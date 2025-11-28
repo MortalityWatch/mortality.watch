@@ -68,10 +68,11 @@ describe('StateResolver', () => {
       const route = createMockRoute({})
       const resolved = StateResolver.resolveInitial(route)
 
-      expect(resolved.state.countries).toEqual(['USA'])
-      expect(resolved.state.type).toBe('cmr')
-      expect(resolved.state.showBaseline).toBe(false)
-      expect(resolved.state.showPredictionInterval).toBe(false)
+      // These should match Defaults in stateSerializer.ts (the single source of truth)
+      expect(resolved.state.countries).toEqual(['USA', 'SWE'])
+      expect(resolved.state.type).toBe('asmr')
+      expect(resolved.state.showBaseline).toBe(true)
+      expect(resolved.state.showPredictionInterval).toBe(true)
       expect(resolved.userOverrides.size).toBe(0)
     })
 

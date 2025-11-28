@@ -312,6 +312,7 @@ const handleViewChanged = async (newView: ViewType) => {
   )
 
   // Apply resolved state to URL
+  // This writes all values that differ from landing page defaults
   await StateResolver.applyResolvedState(resolved, route, router)
 
   // Wait for Vue reactivity to propagate

@@ -38,7 +38,7 @@ export const Defaults = {
   maximize: false,
   showPredictionInterval: true,
   showLabels: true,
-  showPercentage: undefined as boolean | undefined,
+  showPercentage: false,
   showLogarithmic: false,
   sliderStart: '2010' as string | undefined, // Slider shows from 2010 onwards
   userColors: undefined as string[] | undefined,

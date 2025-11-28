@@ -51,9 +51,9 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
     },
 
     defaults: {
-      chartStyle: 'line',
-      showBaseline: false,
-      showLogarithmic: false
+      chartStyle: 'line'
+      // Note: showBaseline is NOT set here - it's toggleable in mortality view
+      // and the landing page default (from stateSerializer.Defaults) is true
     },
 
     constraints: [

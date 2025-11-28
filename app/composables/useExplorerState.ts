@@ -83,7 +83,7 @@ export function useExplorerState() {
   )
   const showBaseline = useUrlState<boolean>(
     stateFieldEncoders.showBaseline.key,
-    false,
+    Defaults.showBaseline,
     stateFieldEncoders.showBaseline.encode,
     stateFieldEncoders.showBaseline.decode
   )
@@ -93,45 +93,46 @@ export function useExplorerState() {
   )
 
   // URL State - Display Options
+  // All defaults should come from Defaults (single source of truth)
   const cumulative = useUrlState<boolean>(
     stateFieldEncoders.cumulative.key,
-    false,
+    Defaults.cumulative,
     stateFieldEncoders.cumulative.encode,
     stateFieldEncoders.cumulative.decode
   )
   const showTotal = useUrlState<boolean>(
     stateFieldEncoders.showTotal.key,
-    false,
+    Defaults.showTotal,
     stateFieldEncoders.showTotal.encode,
     stateFieldEncoders.showTotal.decode
   )
   const maximize = useUrlState<boolean>(
     stateFieldEncoders.maximize.key,
-    false,
+    Defaults.maximize,
     stateFieldEncoders.maximize.encode,
     stateFieldEncoders.maximize.decode
   )
   const showPredictionInterval = useUrlState<boolean>(
     stateFieldEncoders.showPredictionInterval.key,
-    false,
+    Defaults.showPredictionInterval,
     stateFieldEncoders.showPredictionInterval.encode,
     stateFieldEncoders.showPredictionInterval.decode
   )
   const showLabels = useUrlState<boolean>(
     stateFieldEncoders.showLabels.key,
-    true,
+    Defaults.showLabels,
     stateFieldEncoders.showLabels.encode,
     stateFieldEncoders.showLabels.decode
   )
   const showPercentage = useUrlState<boolean>(
     stateFieldEncoders.showPercentage.key,
-    false,
+    Defaults.showPercentage,
     stateFieldEncoders.showPercentage.encode,
     stateFieldEncoders.showPercentage.decode
   )
   const showLogarithmic = useUrlState<boolean>(
     stateFieldEncoders.showLogarithmic.key,
-    false,
+    Defaults.showLogarithmic,
     stateFieldEncoders.showLogarithmic.encode,
     stateFieldEncoders.showLogarithmic.decode
   )
@@ -316,27 +317,51 @@ export function useExplorerState() {
 
   /**
    * Get current state as plain object for StateResolver
-   * Extracts all ref values into a plain object
+   * Extracts all ref values into a plain object, applying view defaults
+   * for fields that aren't explicitly set in the URL.
    *
    * @returns Plain object with all current state values
    */
   const getCurrentStateValues = (): Record<string, unknown> => {
+    // Get current view's defaults
+    const currentView = view.value
+    const viewConfig = VIEWS[currentView] || VIEWS.mortality
+    const viewDefaults = viewConfig.defaults || {}
+
+    // Helper to get value with view default fallback
+    // If the field isn't in URL but has a view default, use the view default
+    const getValueWithViewDefault = <T>(
+      field: keyof typeof stateFieldEncoders,
+      refValue: T
+    ): T => {
+      // If the field is explicitly set in URL, use the ref value
+      if (isUserSet(field)) {
+        return refValue
+      }
+      // If the view has a default for this field, use it
+      if (field in viewDefaults) {
+        return viewDefaults[field as keyof typeof viewDefaults] as T
+      }
+      // Otherwise use the ref value (which has the landing page default)
+      return refValue
+    }
+
     return {
       countries: countries.value,
       type: type.value,
       chartType: chartType.value,
-      chartStyle: chartStyle.value,
+      chartStyle: getValueWithViewDefault('chartStyle', chartStyle.value),
       ageGroups: ageGroups.value,
       standardPopulation: standardPopulation.value,
       isExcess: isExcess.value,
       isZScore: isZScore.value,
-      showBaseline: showBaseline.value,
-      showPredictionInterval: showPredictionInterval.value,
-      cumulative: cumulative.value,
-      showPercentage: showPercentage.value,
+      showBaseline: getValueWithViewDefault('showBaseline', showBaseline.value),
+      showPredictionInterval: getValueWithViewDefault('showPredictionInterval', showPredictionInterval.value),
+      cumulative: getValueWithViewDefault('cumulative', cumulative.value),
+      showPercentage: getValueWithViewDefault('showPercentage', showPercentage.value),
       showTotal: showTotal.value,
       maximize: maximize.value,
-      showLogarithmic: showLogarithmic.value,
+      showLogarithmic: getValueWithViewDefault('showLogarithmic', showLogarithmic.value),
       showLabels: showLabels.value,
       baselineMethod: baselineMethod.value,
       baselineDateFrom: baselineDateFrom.value,
