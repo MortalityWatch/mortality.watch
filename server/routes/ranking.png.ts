@@ -74,7 +74,9 @@ export default defineEventHandler(async (event) => {
         // Height doesn't matter since we're screenshotting just the table element
         const context = await browser.newContext({
           viewport: { width: 2400, height: 1600 },
-          deviceScaleFactor: 2 // 2x for high-DPI/retina displays
+          deviceScaleFactor: 2, // 2x for high-DPI/retina displays
+          // Set color scheme based on dm parameter
+          colorScheme: queryParams.dm === '1' ? 'dark' : 'light'
         })
 
         const page = await context.newPage()
