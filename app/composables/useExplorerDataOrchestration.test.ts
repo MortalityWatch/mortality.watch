@@ -147,7 +147,7 @@ describe('useExplorerDataOrchestration', () => {
       chartType: ref('yearly'),
       ageGroups: ref(['all']),
       type: ref('cmr'),
-      standardPopulation: ref('who2015'),
+      standardPopulation: ref('who'),
       showBaseline: ref(true),
       baselineMethod: ref('mean'),
       baselineDateFrom: ref('2017'),

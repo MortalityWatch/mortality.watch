@@ -50,7 +50,7 @@ describe('useChartDataFetcher', () => {
   const mockDataset: DatasetRaw = {
     USA: {
       all: [
-        { cmr: 100, asmr_who2015: 50 } as any
+        { cmr: 100, asmr_who: 50 } as any
       ]
     }
   }
@@ -568,7 +568,7 @@ describe('useChartDataFetcher', () => {
         chartType: 'yearly' as ChartType,
         countries: ['USA'],
         ageGroups: ['all'],
-        dataKey: 'asmr_who2015' as keyof CountryData,
+        dataKey: 'asmr_who' as keyof CountryData,
         baselineMethod: 'mean',
         isAsmr: true
       })

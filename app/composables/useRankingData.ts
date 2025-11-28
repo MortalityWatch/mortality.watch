@@ -250,7 +250,7 @@ export function useRankingData(
       sliderStart: sliderStart.value, // Layer 2 offset
       cumulative: state.cumulative.value,
       isAsmr: type === 'asmr',
-      baseKeys: getKeyForType(type, true, state.standardPopulation.value || 'who2015')
+      baseKeys: getKeyForType(type, true, state.standardPopulation.value || 'who')
     })
 
     if (!result) {
