@@ -147,8 +147,6 @@ export class DataTransformationPipeline {
   ): ChartErrorDataPoint[] {
     const blKey = this.percentageStrategy.getBaselineKey(config.isAsmrType, key)
     const blDataRow = dataRaw[blKey] ?? []
-    const blDataLRow = dataRaw[this.percentageStrategy.getBaselineKey(config.isAsmrType, `${key}_lower`)] ?? []
-    const blDataURow = dataRaw[this.percentageStrategy.getBaselineKey(config.isAsmrType, `${key}_upper`)] ?? []
 
     if (!config.cumulative) {
       // Absolute percentage
@@ -166,9 +164,7 @@ export class DataTransformationPipeline {
         data,
         dataL,
         dataU,
-        blDataRow,
-        blDataLRow,
-        blDataURow
+        blDataRow
       )
     }
 
@@ -178,23 +174,25 @@ export class DataTransformationPipeline {
       data,
       dataL,
       dataU,
-      blDataRow,
-      blDataLRow,
-      blDataURow
+      blDataRow
     )
   }
 
   /**
    * Transform cumulative percentage error bar data
+   *
+   * Note: Error bar bounds (dataL/dataU) are divided by the baseline center (blDataRow),
+   * not the baseline bounds. This is correct because:
+   * - dataL/dataU represent the prediction interval around the excess value
+   * - The percentage should show "excess as % of baseline" for both center and bounds
+   * - Using baseline bounds would incorrectly mix two different uncertainty measures
    */
   private transformCumulativePercentageErrorBar(
     config: TransformConfig,
     data: number[],
     dataL: number[],
     dataU: number[],
-    blDataRow: number[],
-    _blDataLRow: number[],
-    _blDataURow: number[]
+    blDataRow: number[]
   ): ChartErrorDataPoint[] {
     const cumData = this.cumulativeStrategy.transform(data)
     const cumBl = this.cumulativeStrategy.transform(blDataRow)
@@ -223,15 +221,15 @@ export class DataTransformationPipeline {
 
   /**
    * Transform total percentage error bar data
+   *
+   * Note: Error bar bounds use baseline center (see transformCumulativePercentageErrorBar)
    */
   private transformTotalPercentageErrorBar(
     config: TransformConfig,
     data: number[],
     dataL: number[],
     dataU: number[],
-    blDataRow: number[],
-    _blDataLRow: number[],
-    _blDataURow: number[]
+    blDataRow: number[]
   ): ChartErrorDataPoint[] {
     const totalData = this.totalStrategy.transform(data)
     const totalBl = this.totalStrategy.transform(blDataRow)
