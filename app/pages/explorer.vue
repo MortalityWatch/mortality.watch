@@ -319,11 +319,7 @@ const handleViewChanged = async (newView: ViewType) => {
   // 3. Sync URL for persistence/sharing
   await StateResolver.applyResolvedState(resolved, route, router)
 
-  // 4. Wait for Vue to propagate route changes to computed properties
-  // (isExcess, isZScore are computed from route.query via detectView)
-  await nextTick()
-
-  // 5. Trigger chart refresh
+  // 4. Trigger chart refresh (view ref already updated in step 2)
   await update('_view')
 }
 

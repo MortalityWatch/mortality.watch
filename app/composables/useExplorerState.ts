@@ -181,15 +181,15 @@ export function useExplorerState() {
   const chartHeight = ref<number | undefined>(undefined)
 
   // ============================================================================
-  // VIEW - Derived from URL parameters
+  // VIEW - Ref that can be set directly for single-tick updates
   // ============================================================================
 
   /**
-   * Current view type, derived from URL params (e, zs, etc.)
+   * Current view type as a ref (not computed from route)
+   * This allows direct updates without waiting for route reactivity
+   * Initialized from URL and kept in sync via applyResolvedState
    */
-  const view = computed<ViewType>(() => {
-    return detectView(route.query)
-  })
+  const view = ref<ViewType>(detectView(route.query))
 
   /**
    * Backward compatibility: isExcess computed from view
@@ -411,6 +411,11 @@ export function useExplorerState() {
    */
   const applyResolvedState = (resolved: { state: Record<string, unknown> }) => {
     const state = resolved.state
+
+    // Apply view first (isExcess/isZScore depend on it)
+    if (state.view !== undefined && state.view !== view.value) {
+      view.value = state.view as ViewType
+    }
 
     // Apply each field if value differs (avoids unnecessary reactivity)
     if (state.countries !== undefined && !arraysEqual(state.countries as string[], countries.value)) {
