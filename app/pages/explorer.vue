@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import {
   computed,
-  nextTick,
   onMounted,
   ref,
   watch
@@ -275,7 +274,7 @@ const handleChartPresetChanged = (v: string) => {
 }
 
 // Generic StateResolver handler for any state change
-// Handles cascading constraints and atomic URL updates
+// Handles cascading constraints and single-tick state application
 const handleStateChange = async (field: string, value: unknown, refreshKey: string) => {
   const { StateResolver } = await import('@/lib/state/StateResolver')
   const router = useRouter()
@@ -288,10 +287,13 @@ const handleStateChange = async (field: string, value: unknown, refreshKey: stri
     state.getUserOverrides()
   )
 
-  // 2. Apply all changes to URL atomically
+  // 2. Apply directly to refs (single tick, no reactive cascade)
+  state.applyResolvedState(resolved)
+
+  // 3. Sync URL for persistence/sharing
   await StateResolver.applyResolvedState(resolved, route, router)
 
-  // 3. Trigger chart refresh
+  // 4. Trigger chart refresh
   await update(refreshKey)
 }
 
@@ -302,7 +304,7 @@ const handleViewChanged = async (newView: ViewType) => {
   const router = useRouter()
   const route = useRoute()
 
-  // Resolve view change through StateResolver
+  // 1. Resolve view change through StateResolver
   // This applies view defaults, constraints, and computes UI state
   const { StateResolver } = await import('@/lib/state/StateResolver')
   const resolved = StateResolver.resolveViewChange(
@@ -311,14 +313,13 @@ const handleViewChanged = async (newView: ViewType) => {
     state.getUserOverrides()
   )
 
-  // Apply resolved state to URL
-  // This writes all values that differ from landing page defaults
+  // 2. Apply directly to refs (single tick, no reactive cascade)
+  state.applyResolvedState(resolved)
+
+  // 3. Sync URL for persistence/sharing
   await StateResolver.applyResolvedState(resolved, route, router)
 
-  // Wait for Vue reactivity to propagate
-  await nextTick()
-
-  // Trigger chart refresh
+  // 4. Trigger chart refresh (no nextTick needed - refs already updated)
   await update('_view')
 }
 
@@ -481,20 +482,23 @@ useBrowserNavigation({
 
 onMounted(async () => {
   // 1. FIRST: Resolve initial state from URL + apply constraints
-  // Use router.replace() to preserve browser history (no new history entry)
   const { StateResolver } = await import('@/lib/state/StateResolver')
   const route = useRoute()
   const router = useRouter()
 
   const resolved = StateResolver.resolveInitial(route)
 
-  // Apply resolved state to URL if constraints changed anything
+  // 2. Apply resolved state directly to refs (single tick, no reactive cascade)
+  // This is the key change - refs get values BEFORE any URL update
+  state.applyResolvedState(resolved)
+
+  // 3. Sync URL if constraints changed anything (for persistence/sharing only)
   // Use replaceHistory to avoid creating new history entry (preserves back/forward)
   if (resolved.changedFields.length > 0) {
     await StateResolver.applyResolvedState(resolved, route, router, { replaceHistory: true })
   }
 
-  // 2. THEN: Load country metadata - load all, client-side filtering happens via useCountryFilter
+  // 4. Load country metadata - load all, client-side filtering happens via useCountryFilter
   const allMetadata = await loadCountryMetadata()
 
   // Apply client-side filtering

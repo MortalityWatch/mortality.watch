@@ -14,6 +14,16 @@ import { VIEWS } from '@/lib/state/views'
 import { computeUIState } from '@/lib/state/uiStateComputer'
 
 /**
+ * Compare two arrays for equality (shallow)
+ */
+function arraysEqual(a: unknown[] | undefined, b: unknown[] | undefined): boolean {
+  if (a === b) return true
+  if (a === undefined || b === undefined) return false
+  if (a.length !== b.length) return false
+  return a.every((val, idx) => val === b[idx])
+}
+
+/**
  * Explorer State Management Composable
  *
  * State management with validation for the explorer page
@@ -385,6 +395,102 @@ export function useExplorerState() {
     return computeUIState(currentView, stateValues)
   })
 
+  // ============================================================================
+  // DIRECT STATE APPLICATION - Apply resolved state to refs in single tick
+  // ============================================================================
+
+  /**
+   * Apply resolved state directly to refs (single tick, no URL reactivity)
+   *
+   * This is the key to eliminating multi-tick updates. Instead of:
+   *   StateResolver → URL → refs react → watchers fire
+   * We do:
+   *   StateResolver → refs directly → URL sync (for persistence only)
+   *
+   * @param resolved - ResolvedState from StateResolver
+   */
+  const applyResolvedState = (resolved: { state: Record<string, unknown> }) => {
+    const state = resolved.state
+
+    // Apply each field if value differs (avoids unnecessary reactivity)
+    if (state.countries !== undefined && !arraysEqual(state.countries as string[], countries.value)) {
+      countries.value = state.countries as string[]
+    }
+    if (state.type !== undefined && state.type !== type.value) {
+      type.value = state.type as string
+    }
+    if (state.chartType !== undefined && state.chartType !== chartType.value) {
+      chartType.value = state.chartType as string
+    }
+    if (state.chartStyle !== undefined && state.chartStyle !== chartStyle.value) {
+      chartStyle.value = state.chartStyle as string
+    }
+    if (state.ageGroups !== undefined && !arraysEqual(state.ageGroups as string[], ageGroups.value)) {
+      ageGroups.value = state.ageGroups as string[]
+    }
+    if (state.standardPopulation !== undefined && state.standardPopulation !== standardPopulation.value) {
+      standardPopulation.value = state.standardPopulation as string
+    }
+    if (state.showBaseline !== undefined && state.showBaseline !== showBaseline.value) {
+      showBaseline.value = state.showBaseline as boolean
+    }
+    if (state.showPredictionInterval !== undefined && state.showPredictionInterval !== showPredictionInterval.value) {
+      showPredictionInterval.value = state.showPredictionInterval as boolean
+    }
+    if (state.cumulative !== undefined && state.cumulative !== cumulative.value) {
+      cumulative.value = state.cumulative as boolean
+    }
+    if (state.showPercentage !== undefined && state.showPercentage !== showPercentage.value) {
+      showPercentage.value = state.showPercentage as boolean
+    }
+    if (state.showTotal !== undefined && state.showTotal !== showTotal.value) {
+      showTotal.value = state.showTotal as boolean
+    }
+    if (state.maximize !== undefined && state.maximize !== maximize.value) {
+      maximize.value = state.maximize as boolean
+    }
+    if (state.showLogarithmic !== undefined && state.showLogarithmic !== showLogarithmic.value) {
+      showLogarithmic.value = state.showLogarithmic as boolean
+    }
+    if (state.showLabels !== undefined && state.showLabels !== showLabels.value) {
+      showLabels.value = state.showLabels as boolean
+    }
+    if (state.baselineMethod !== undefined && state.baselineMethod !== baselineMethod.value) {
+      baselineMethod.value = state.baselineMethod as string
+    }
+    // For optional fields (can be undefined), check if key exists in state object
+    if ('dateFrom' in state && state.dateFrom !== dateFrom.value) {
+      dateFrom.value = state.dateFrom as string | undefined
+    }
+    if ('dateTo' in state && state.dateTo !== dateTo.value) {
+      dateTo.value = state.dateTo as string | undefined
+    }
+    if (state.sliderStart !== undefined && state.sliderStart !== sliderStart.value) {
+      sliderStart.value = state.sliderStart as string
+    }
+    if ('baselineDateFrom' in state && state.baselineDateFrom !== baselineDateFrom.value) {
+      baselineDateFrom.value = state.baselineDateFrom as string | undefined
+    }
+    if ('baselineDateTo' in state && state.baselineDateTo !== baselineDateTo.value) {
+      baselineDateTo.value = state.baselineDateTo as string | undefined
+    }
+    if (state.decimals !== undefined && state.decimals !== decimals.value) {
+      decimals.value = state.decimals as string
+    }
+    if (state.showLogo !== undefined && state.showLogo !== showLogo.value) {
+      showLogo.value = state.showLogo as boolean
+    }
+    if (state.showQrCode !== undefined && state.showQrCode !== showQrCode.value) {
+      showQrCode.value = state.showQrCode as boolean
+    }
+    if (state.showCaption !== undefined && state.showCaption !== showCaption.value) {
+      showCaption.value = state.showCaption as boolean
+    }
+    if ('userColors' in state && !arraysEqual(state.userColors as string[] | undefined, userColors.value)) {
+      userColors.value = state.userColors as string[] | undefined
+    }
+  }
+
   return {
     // View (derived from URL)
     view,
@@ -443,7 +549,10 @@ export function useExplorerState() {
     // Helper functions
     isUserSet,
     getUserOverrides,
-    getCurrentStateValues
+    getCurrentStateValues,
+
+    // Direct state application (single-tick updates)
+    applyResolvedState
   }
 }
 
