@@ -5,7 +5,7 @@ import DisplayTab from './controls/DisplayTab.vue'
 import BaselineTab from './controls/BaselineTab.vue'
 import StyleTab from './controls/StyleTab.vue'
 import { CHART_PRESETS } from '@/lib/constants'
-import { types, chartTypes, chartStyles, standardPopulations, baselineMethods, decimalPrecisions } from '@/model'
+import { chartStyles, baselineMethods, decimalPrecisions } from '@/model'
 import { useChartUIState } from '@/composables/useChartUIState'
 import type { ChartStyle } from '@/lib/chart/chartTypes'
 import type { ViewType } from '@/lib/state/viewTypes'
@@ -99,10 +99,7 @@ const chartUIState = useChartUIState(
 
 // Options imported from @/model
 // Add 'label' property for USelect compatibility
-const typesWithLabels = types.map(t => ({ ...t, label: t.name }))
-const chartTypesWithLabels = chartTypes.map(t => ({ ...t, label: t.name }))
 const chartStylesWithLabels = chartStyles.map(t => ({ ...t, label: t.name }))
-const standardPopulationsWithLabels = standardPopulations.map(t => ({ ...t, label: t.name }))
 
 // Feature gate: Show all baseline methods but disable advanced ones for non-registered users
 const baselineMethodsWithLabels = computed(() => {

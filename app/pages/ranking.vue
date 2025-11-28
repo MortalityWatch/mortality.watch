@@ -21,9 +21,6 @@ import { useBrowserNavigation } from '@/composables/useBrowserNavigation'
 import type { Country } from '@/model'
 import type { ChartType } from '@/model/period'
 import {
-  standardPopulationItems,
-  baselineMethodItems,
-  decimalPrecisionItems,
   chartTypes,
   jurisdictionTypes
 } from '@/model'
