@@ -39,7 +39,8 @@ export default defineNuxtConfig({
       devCountries: process.env.NUXT_PUBLIC_DEV_COUNTRIES || '',
       dataCachePath: '.data/cache/mortality',
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://www.mortality.watch',
-      stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY || ''
+      stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY || '',
+      statsUrl: process.env.NUXT_PUBLIC_STATS_URL || 'https://stats.mortality.watch/'
     }
   },
 
@@ -89,7 +90,8 @@ export default defineNuxtConfig({
             'style-src \'self\' \'unsafe-inline\'',
             'img-src \'self\' data: https:',
             'font-src \'self\' data:',
-            'connect-src \'self\' https://s3.mortality.watch https://stats.mortality.watch https://api.stripe.com',
+            // Allow localhost for local stats API development
+            'connect-src \'self\' https://s3.mortality.watch https://stats.mortality.watch https://api.stripe.com http://localhost:*',
             'frame-src https://js.stripe.com',
             'child-src https://js.stripe.com'
           ].join('; ')

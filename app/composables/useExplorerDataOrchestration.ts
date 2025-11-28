@@ -336,6 +336,7 @@ export function useExplorerDataOrchestration(
         baselineDateFrom: state.baselineDateFrom.value ?? baselineRange.value?.from,
         baselineDateTo: state.baselineDateTo.value ?? baselineRange.value?.to,
         baselineStartIdx: undefined, // Will be calculated from labels
+        sliderStart: state.sliderStart.value, // Layer 2 offset
         cumulative: helpers.showCumPi(),
         baseKeys: helpers.getBaseKeysForFetch(),
         isAsmr: helpers.isAsmrType()
@@ -390,6 +391,7 @@ export function useExplorerDataOrchestration(
         baselineDateFrom: state.baselineDateFrom.value ?? baselineRange.value?.from,
         baselineDateTo: state.baselineDateTo.value ?? baselineRange.value?.to,
         baselineStartIdx: getStartIndex(allYearlyChartLabels.value || [], state.sliderStart.value),
+        sliderStart: state.sliderStart.value, // Layer 2 offset
         cumulative: helpers.showCumPi(),
         baseKeys: helpers.getBaseKeysForFetch(),
         isAsmr: helpers.isAsmrType()

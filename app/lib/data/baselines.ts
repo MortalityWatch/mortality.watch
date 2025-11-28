@@ -4,7 +4,6 @@ import type {
   NumberArray,
   DataVector
 } from '~/model'
-import { prefillUndefined } from '~/utils'
 import { dataLoader } from '../dataLoader'
 
 /**
@@ -66,36 +65,49 @@ const getSeasonType = (chartType: string) => {
   }
 }
 
+// Default stats API URL - can be overridden via NUXT_PUBLIC_STATS_URL
+const DEFAULT_STATS_URL = 'https://stats.mortality.watch/'
+
 /**
  * Calculate baseline for a single dataset entry
+ *
+ * Sends full data to stats API with bs/be parameters to specify baseline range.
+ * This allows z-scores to be calculated for all periods (pre-baseline, baseline, post-baseline).
+ *
+ * @param baselineStartIdx - 0-indexed start of baseline period within labels
+ * @param baselineEndIdx - 0-indexed end of baseline period within labels (inclusive)
+ * @param statsUrl - Optional stats API URL (defaults to https://stats.mortality.watch/)
  */
 const calculateBaseline = async (
   data: DatasetEntry,
   labels: string[],
-  startIdx: number,
-  endIdx: number,
+  baselineStartIdx: number,
+  baselineEndIdx: number,
   keys: (keyof DatasetEntry)[],
   method: string,
   chartType: string,
-  cumulative: boolean
+  cumulative: boolean,
+  statsUrl?: string
 ) => {
   if (method === 'auto') return
 
   const n = labels.length
   const firstKey = keys[0]
-  const all_data = firstKey ? (data[firstKey]?.slice(startIdx, n) || []) : []
-  const bl_data = firstKey ? (data[firstKey]?.slice(startIdx, endIdx + 1) || []) : []
-  const h = all_data.length - bl_data.length
+
+  // Use full data array - labels and data should be aligned
+  // Baseline is calculated on full dataset; slider filtering happens at display time
+  const all_data = firstKey ? (data[firstKey]?.slice(0, n) || []) : []
+  const bl_data = all_data.slice(baselineStartIdx, baselineEndIdx + 1)
   const trend = method === 'lin_reg' // Only linear regression uses trend mode (t=1)
   const s = getSeasonType(chartType)
 
   if (bl_data.every(x => x == null || isNaN(x as number))) return
 
   // Validate indices before making API call
-  if (startIdx < 0 || endIdx < 0) {
+  if (baselineStartIdx < 0 || baselineEndIdx < 0) {
     console.warn('Invalid baseline indices:', {
-      startIdx,
-      endIdx,
+      baselineStartIdx,
+      baselineEndIdx,
       chartType,
       labelsLength: labels.length,
       firstLabel: labels[0],
@@ -111,46 +123,52 @@ const calculateBaseline = async (
       iso3c: data.iso3c?.[0],
       validDataPoints,
       blDataLength: bl_data.length,
-      startIdx,
-      endIdx,
+      baselineStartIdx,
+      baselineEndIdx,
       chartType
     })
     return
   }
 
   try {
-    const baseUrl = 'https://stats.mortality.watch/'
-    // Always send full dataset for z-score calculation
-    // Use 'b' parameter to indicate baseline period length
+    const baseUrl = statsUrl || DEFAULT_STATS_URL
+    // Send full dataset with bs/be params to specify baseline range
+    // API uses 1-indexed values, so add 1 to our 0-indexed values
     const dataParam = (all_data as (string | number)[]).join(',')
-    const baselineLength = bl_data.length
+    const bs = baselineStartIdx + 1 // Convert to 1-indexed
+    const be = baselineEndIdx + 1 // Convert to 1-indexed
+    // With bs/be, PI is calculated for all post-be periods - no h needed
     const url
       = cumulative && s === 1
-        ? `${baseUrl}cum?y=${dataParam}&h=${h}&t=${trend ? 1 : 0}&b=${baselineLength}`
-        : `${baseUrl}?y=${dataParam}&h=${h}&s=${s}&t=${trend ? 1 : 0}&m=${method}&b=${baselineLength}`
+        ? `${baseUrl}cum?y=${dataParam}&bs=${bs}&be=${be}&t=${trend ? 1 : 0}`
+        : `${baseUrl}?y=${dataParam}&bs=${bs}&be=${be}&s=${s}&t=${trend ? 1 : 0}&m=${method}`
 
     const text = await dataLoader.fetchBaseline(url)
     const json = JSON.parse(text)
 
-    // Update NA to undefined
-    json.lower = (json.lower as string[]).map(x =>
+    // Update NA to undefined and trim forecast values (API returns input length + h)
+    // We only want the first n values (matching our input data length)
+    const inputLength = all_data.length
+    json.y = (json.y as (string | number)[]).slice(0, inputLength)
+    json.lower = (json.lower as (string | number)[]).slice(0, inputLength).map((x: string | number) =>
       x === 'NA' ? undefined : x
     )
-    json.upper = (json.upper as string[]).map(x =>
+    json.upper = (json.upper as (string | number)[]).slice(0, inputLength).map((x: string | number) =>
       x === 'NA' ? undefined : x
     )
+    if (json.zscore) {
+      json.zscore = (json.zscore as (string | number)[]).slice(0, inputLength)
+    }
 
-    if (keys[1]) data[keys[1]] = prefillUndefined(
-      json.y as NumberArray,
-      startIdx
-    ) as DataVector
-    if (keys[2]) data[keys[2]] = prefillUndefined(json.lower, startIdx) as DataVector
-    if (keys[3]) data[keys[3]] = prefillUndefined(json.upper, startIdx) as DataVector
+    // Response is aligned with input - no prefill needed since we send from index 0
+    if (keys[1]) data[keys[1]] = json.y as DataVector
+    if (keys[2]) data[keys[2]] = json.lower as DataVector
+    if (keys[3]) data[keys[3]] = json.upper as DataVector
 
     // Extract z-scores if available
     if (json.zscore && keys[0]) {
       const zscoreKey = `${String(keys[0])}_zscore` as keyof DatasetEntry
-      data[zscoreKey] = prefillUndefined(json.zscore as NumberArray, startIdx) as DataVector
+      data[zscoreKey] = json.zscore as DataVector
       console.log('[baselines] Extracted z-scores:', {
         key: keys[0],
         zscoreKey,
@@ -167,8 +185,8 @@ const calculateBaseline = async (
       iso3c: data.iso3c?.[0],
       chartType,
       method,
-      startIdx,
-      endIdx,
+      baselineStartIdx,
+      baselineEndIdx,
       blDataLength: bl_data.length,
       validDataPoints,
       error
@@ -182,14 +200,14 @@ const calculateBaseline = async (
         validData.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / validData.length
       )
 
-      // Create baseline array filled with mean value
+      // Create baseline array for full data length
       const baselineArray = new Array(all_data.length).fill(mean)
       const lowerArray = new Array(all_data.length).fill(mean - 2 * stdDev)
       const upperArray = new Array(all_data.length).fill(mean + 2 * stdDev)
 
-      if (keys[1]) data[keys[1]] = prefillUndefined(baselineArray as NumberArray, startIdx) as DataVector
-      if (keys[2]) data[keys[2]] = prefillUndefined(lowerArray as NumberArray, startIdx) as DataVector
-      if (keys[3]) data[keys[3]] = prefillUndefined(upperArray as NumberArray, startIdx) as DataVector
+      if (keys[1]) data[keys[1]] = baselineArray as DataVector
+      if (keys[2]) data[keys[2]] = lowerArray as DataVector
+      if (keys[3]) data[keys[3]] = upperArray as DataVector
     }
   }
 
@@ -198,6 +216,8 @@ const calculateBaseline = async (
 
 /**
  * Calculate baselines for all entries in dataset
+ *
+ * @param statsUrl - Optional stats API URL (defaults to https://stats.mortality.watch/)
  */
 export const calculateBaselines = async (
   data: Dataset,
@@ -208,7 +228,8 @@ export const calculateBaselines = async (
   method: string,
   chartType: string,
   cumulative: boolean,
-  progressCb?: (progress: number, total: number) => void
+  progressCb?: (progress: number, total: number) => void,
+  statsUrl?: string
 ) => {
   let count = 0
   const total = Object.keys(data || {}).reduce(
@@ -228,7 +249,8 @@ export const calculateBaselines = async (
           keys,
           method,
           chartType,
-          cumulative
+          cumulative,
+          statsUrl
         ).then((result) => {
           if (!progressCb) return
           count++

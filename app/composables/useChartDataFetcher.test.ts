@@ -39,6 +39,13 @@ vi.mock('@/model/baseline', () => ({
   defaultBaselineToDate: vi.fn()
 }))
 
+// Mock useRuntimeConfig
+vi.stubGlobal('useRuntimeConfig', () => ({
+  public: {
+    statsUrl: 'https://stats.mortality.watch/'
+  }
+}))
+
 describe('useChartDataFetcher', () => {
   const mockDataset: DatasetRaw = {
     USA: {
@@ -217,7 +224,8 @@ describe('useChartDataFetcher', () => {
       let progressCallback: ((progress: number, total: number) => void) | undefined
 
       vi.mocked(fetchAllChartData).mockImplementation(async (...args: any[]) => {
-        progressCallback = args[args.length - 1] as (progress: number, total: number) => void
+        // Progress callback is second to last arg (last is statsUrl)
+        progressCallback = args[args.length - 2] as (progress: number, total: number) => void
         if (progressCallback) {
           progressCallback(50, 100)
         }
@@ -241,7 +249,8 @@ describe('useChartDataFetcher', () => {
       let progressCallback: ((progress: number, total: number) => void) | undefined
 
       vi.mocked(fetchAllChartData).mockImplementation(async (...args: any[]) => {
-        progressCallback = args[args.length - 1] as (progress: number, total: number) => void
+        // Progress callback is second to last arg (last is statsUrl)
+        progressCallback = args[args.length - 2] as (progress: number, total: number) => void
         if (progressCallback) {
           progressCallback(75, 100)
         }
@@ -592,7 +601,8 @@ describe('useChartDataFetcher', () => {
         '2017',
         '2019',
         [],
-        expect.any(Function)
+        expect.any(Function),
+        'https://stats.mortality.watch/'
       )
     })
 
@@ -623,7 +633,8 @@ describe('useChartDataFetcher', () => {
         '2017',
         '2019',
         [],
-        expect.any(Function)
+        expect.any(Function),
+        'https://stats.mortality.watch/'
       )
     })
 

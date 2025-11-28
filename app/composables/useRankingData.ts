@@ -247,6 +247,7 @@ export function useRankingData(
       baselineMethod: state.baselineMethod.value || 'mean',
       baselineDateFrom: state.baselineDateFrom.value,
       baselineDateTo: state.baselineDateTo.value,
+      sliderStart: sliderStart.value, // Layer 2 offset
       cumulative: state.cumulative.value,
       isAsmr: type === 'asmr',
       baseKeys: getKeyForType(type, true, state.standardPopulation.value || 'who2015')

@@ -16,6 +16,8 @@ import { calculateBaselines } from './baselines'
 
 /**
  * Get all chart data with optional baseline calculations
+ *
+ * @param statsUrl - Optional stats API URL for baseline calculations
  */
 export const getAllChartData = async (
   dataKey: keyof CountryData,
@@ -30,7 +32,8 @@ export const getAllChartData = async (
   baselineDateFrom?: string,
   baselineDateTo?: string,
   keys?: (keyof NumberEntryFields)[],
-  progressCb?: (progress: number, total: number) => void
+  progressCb?: (progress: number, total: number) => void,
+  statsUrl?: string
 ): Promise<AllChartData> => {
   const data: Dataset = {}
   const ageGroups = ageGroupFilter ?? Object.keys(rawData || {})
@@ -123,7 +126,8 @@ export const getAllChartData = async (
       baselineMethod,
       chartType,
       cumulative,
-      progressCb
+      progressCb,
+      statsUrl
     )
   }
 
