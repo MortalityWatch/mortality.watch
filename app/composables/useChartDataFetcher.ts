@@ -42,6 +42,9 @@ export interface ChartDataFetchConfig {
   baselineDateTo?: string
   baselineStartIdx?: number
 
+  // Date range - sliderStart defines the "from" offset for allChartData (layer 2)
+  sliderStart?: string
+
   // Options
   cumulative?: boolean
   baseKeys?: (keyof NumberEntryFields)[]
@@ -65,6 +68,10 @@ export interface ChartDataFetchResult {
  * Centralizes common data fetching logic used by both explorer and ranking pages.
  */
 export function useChartDataFetcher() {
+  // Get stats URL from runtime config
+  const config = useRuntimeConfig()
+  const statsUrl = config.public.statsUrl as string | undefined
+
   // Loading state
   const isUpdating = ref(false)
   const updateProgress = ref(0)
@@ -120,7 +127,7 @@ export function useChartDataFetcher() {
    * 4. Processes data with baseline calculations
    */
   async function fetchChartData(
-    config: ChartDataFetchConfig
+    fetchConfig: ChartDataFetchConfig
   ): Promise<ChartDataFetchResult | null> {
     isUpdating.value = true
     updateProgress.value = 0
@@ -128,16 +135,16 @@ export function useChartDataFetcher() {
     try {
       // Step 1: Fetch raw dataset
       const dataset = await fetchDataset(
-        config.chartType,
-        config.countries,
-        config.ageGroups
+        fetchConfig.chartType,
+        fetchConfig.countries,
+        fetchConfig.ageGroups
       )
 
       // Step 2: Get all chart labels
       // Dataset is already filtered, so only pass dataset and isAsmr flag
       const allLabels = fetchAllChartLabels(
         dataset,
-        config.isAsmr ?? false
+        fetchConfig.isAsmr ?? false
       )
 
       if (!allLabels.length) {
@@ -148,38 +155,36 @@ export function useChartDataFetcher() {
       // Step 3: Validate baseline dates
       const { from: baselineFrom, to: baselineTo } = validateBaselineDates(
         allLabels,
-        config.chartType,
-        config.baselineMethod,
-        config.baselineDateFrom,
-        config.baselineDateTo
+        fetchConfig.chartType,
+        fetchConfig.baselineMethod,
+        fetchConfig.baselineDateFrom,
+        fetchConfig.baselineDateTo
       )
 
-      // Step 4: Get baseline start index (no longer used for data fetching)
-      // We now load all data and filter at display time
-      // const baselineStartIdx = config.baselineStartIdx ?? getBaselineStartIndex(allLabels, config.chartType, baselineFrom)
-
-      // Step 5: Fetch processed chart data
-      // IMPORTANT: Pass 0 as startDateIndex to load ALL available data
-      // Filtering for display range happens later in updateFilteredData
-      // This ensures allChartData contains the full dataset for slider interaction
-      const dataStartIndex = 0
+      // Step 4: Calculate data start index from sliderStart (layer 2 offset)
+      // This slices data from sliderStart year, not from the beginning
+      // Slider filtering (layer 3) happens at display time
+      const dataStartIndex = fetchConfig.sliderStart
+        ? getBaselineStartIndex(allLabels, fetchConfig.chartType, fetchConfig.sliderStart)
+        : 0
 
       const chartData = await fetchAllChartData(
-        config.dataKey,
-        config.chartType,
+        fetchConfig.dataKey,
+        fetchConfig.chartType,
         dataset,
         allLabels,
         dataStartIndex, // Load all data, filter at display time
-        config.cumulative ?? false,
-        config.ageGroups,
-        config.countries,
-        config.baselineMethod,
+        fetchConfig.cumulative ?? false,
+        fetchConfig.ageGroups,
+        fetchConfig.countries,
+        fetchConfig.baselineMethod,
         baselineFrom,
         baselineTo,
-        config.baseKeys ?? [],
-        config.onProgress ?? ((progress, total) => {
+        fetchConfig.baseKeys ?? [],
+        fetchConfig.onProgress ?? ((progress, total) => {
           updateProgress.value = Math.round((progress / total) * 100)
-        })
+        }),
+        statsUrl
       )
 
       isUpdating.value = false
