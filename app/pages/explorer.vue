@@ -180,6 +180,7 @@ const dateSliderChanged = async (val: string[]) => {
 
 const baselineSliderChanged = async (val: string[]) => {
   // IMPORTANT: Batch both updates into a single router.push to avoid race condition
+  // The browser navigation watcher will handle the data update when the URL changes
   const route = useRoute()
   const router = useRouter()
   const newQuery = { ...route.query }
@@ -187,8 +188,6 @@ const baselineSliderChanged = async (val: string[]) => {
   newQuery.bt = val[1]!
 
   await router.push({ query: newQuery })
-
-  update('_baselineDateFrom')
 }
 
 // Labels for the date range slider - full range from sliderStart to end
