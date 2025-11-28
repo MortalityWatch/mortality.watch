@@ -244,10 +244,15 @@ export class StateResolver {
       reason: 'User changed view'
     })
 
-    // 2. Apply view defaults (for fields not explicitly set by user)
+    // 2. Apply view defaults
+    // When switching views, chartStyle should always use the new view's default
+    // because chartStyle is set BY the view, not by explicit user action
     const viewConfig = VIEWS[newView]
     for (const [field, value] of Object.entries(viewConfig.defaults || {})) {
-      if (!userOverrides.has(field)) {
+      // Special case: chartStyle is always set by view defaults, not user override
+      const shouldApply = field === 'chartStyle' || !userOverrides.has(field)
+
+      if (shouldApply) {
         const oldValue = state[field]
         if (oldValue !== value) {
           state[field] = value
@@ -261,6 +266,11 @@ export class StateResolver {
             priority: 'view-default',
             reason: `${viewConfig.label} view default`
           })
+        }
+
+        // Remove chartStyle from userOverrides since it's controlled by view
+        if (field === 'chartStyle') {
+          userOverrides.delete('chartStyle')
         }
       }
     }
