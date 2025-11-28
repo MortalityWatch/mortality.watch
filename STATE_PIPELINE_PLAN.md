@@ -169,16 +169,19 @@ private static formatUIState(ui: Record<string, UIFieldState>): string[] {
 }
 ```
 
-### Phase 5: Remove Redundant Watchers
+### Phase 5: Remove Redundant Watchers ✅ (Already Clean)
 
-**Files**: `useExplorerState.ts`, `useExplorerDataOrchestration.ts`
+**Files**: `useExplorerState.ts`, `useExplorerDataOrchestration.ts`, `explorer.vue`
 
-After Phase 3, these watchers become unnecessary:
+**Review complete** - all existing watchers serve distinct purposes:
 
-- Validation error watcher in `useExplorerState` (StateResolver handles this)
-- Date validation in orchestration can be simplified
+1. **`watch(errors)` in useExplorerState.ts** - Debugging only (logs validation errors). Keep.
+2. **`watch([visibleLabels, chartType])` in orchestration** - Runtime date validation when data availability changes. Keep (not constraint-related).
+3. **`watch([dateFrom, dateTo])` in explorer.vue** - Chart refresh trigger. Keep.
+4. **`useBrowserNavigation`** - Back/forward navigation. Keep.
+5. **`watch([...state fields])`** - Save state tracking (markAsModified). Keep.
 
-Review and remove any watcher that exists only to "fix" state that StateResolver already handles.
+**Conclusion**: Previous refactoring already removed auto-fix logic from watchers. No watchers need removal - they're all doing distinct jobs from StateResolver.
 
 ## Testing Strategy
 
