@@ -76,6 +76,7 @@ const {
   isYearlyChartType: _isYearlyChartType,
   showCumPi,
   getBaseKeysForType,
+  getBaseKeysForFetch,
   showPredictionIntervalDisabled
 } = useExplorerHelpers(
   state.type,
@@ -143,6 +144,7 @@ const dataOrchestration = useExplorerDataOrchestration(
     isYearlyChartType: _isYearlyChartType,
     showCumPi,
     getBaseKeysForType,
+    getBaseKeysForFetch,
     showPredictionIntervalDisabled
   },
   allCountries,

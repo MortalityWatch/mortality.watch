@@ -175,6 +175,19 @@ export function useExplorerHelpers(
     getKeyForType(type.value, showBaseline.value, standardPopulation.value, false)
 
   /**
+   * Gets the database field keys for data fetching, always including baseline keys.
+   *
+   * Unlike getBaseKeysForType which respects showBaseline state, this function
+   * always returns baseline keys when the type supports baselines. This ensures
+   * baseline data is always calculated and stored, making baseline toggle a
+   * pure display operation without requiring data re-fetch.
+   *
+   * @returns Array of field keys including baseline fields for data fetching
+   */
+  const getBaseKeysForFetch = (): (keyof NumberEntryFields)[] =>
+    getKeyForType(type.value, hasBaseline(), standardPopulation.value, false)
+
+  /**
    * Computed property indicating if the prediction interval toggle should be disabled.
    *
    * Prediction intervals are disabled when:
@@ -201,6 +214,7 @@ export function useExplorerHelpers(
     isYearlyChartType,
     showCumPi,
     getBaseKeysForType,
+    getBaseKeysForFetch,
     showPredictionIntervalDisabled
   }
 }
