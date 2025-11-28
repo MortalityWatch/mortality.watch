@@ -21,14 +21,21 @@ import { computeUIState, type UIFieldState } from './uiStateComputer'
 
 /**
  * Get defaults for a view, with view-specific fields added
+ *
+ * For non-mortality views, we merge mortality defaults with view-specific overrides.
+ * This ensures fields like countries, type, chartType have defaults even for excess/zscore views.
  */
 function getViewDefaults(view: ViewType): Record<string, unknown> {
+  const baseDefaults = VIEWS.mortality.defaults
   const viewConfig = VIEWS[view] || VIEWS.mortality
+
+  // Merge: mortality defaults → view-specific defaults → view flags
   return {
+    ...baseDefaults,
+    ...viewConfig.defaults,
     view,
     isExcess: view === 'excess',
-    isZScore: view === 'zscore',
-    ...viewConfig.defaults
+    isZScore: view === 'zscore'
   }
 }
 
