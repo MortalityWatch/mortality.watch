@@ -24,7 +24,7 @@ const props = defineProps<{
   showCumulativeOption: boolean
   showTotalOption: boolean
   // Chart preset
-  chartPreset?: { name: string, value: string, label: string, category: string }
+  chartPreset?: string
   chartPresetOptions: { name: string, value: string, label: string, category: string }[]
 }>()
 
@@ -36,7 +36,7 @@ const emit = defineEmits<{
   'update:showPercentage': [value: boolean]
   'update:cumulative': [value: boolean]
   'update:showTotal': [value: boolean]
-  'update:chartPreset': [value: { name: string, value: string, label: string, category: string } | undefined]
+  'update:chartPreset': [value: string | undefined]
 }>()
 
 // Computed v-models
@@ -161,9 +161,10 @@ const chartPresetModel = computed({
                   class="ml-2"
                 />
               </label>
-              <UInputMenu
+              <USelect
                 v-model="chartPresetModel"
                 :items="props.chartPresetOptions"
+                value-key="value"
                 placeholder="Select a size"
                 size="sm"
                 class="flex-1"

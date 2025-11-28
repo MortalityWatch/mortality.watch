@@ -4,9 +4,9 @@ import PeriodOfTimePicker from '@/components/shared/PeriodOfTimePicker.vue'
 import DateRangePicker from '@/components/shared/DateRangePicker.vue'
 
 const props = defineProps<{
-  selectedPeriodOfTime: { label: string, name: string, value: string }
+  selectedPeriodOfTime: string
   periodOfTimeItems: Array<{ label: string, name: string, value: string }>
-  selectedJurisdictionType: { label: string, name: string, value: string }
+  selectedJurisdictionType: string
   jurisdictionTypeItems: Array<{ label: string, name: string, value: string }>
   sliderStart: string
   allYearlyChartLabelsUnique: string[]
@@ -14,13 +14,13 @@ const props = defineProps<{
   sliderValue: string[]
   labels: string[] // Renamed from sliderValues for consistency with Explorer
   isUpdating: boolean
-  selectedBaselineMethod?: { label: string, name: string, value: string }
+  selectedBaselineMethod?: string
   dataTour?: string
 }>()
 
 const emit = defineEmits<{
-  'periodOfTimeChanged': [value: { label: string, name: string, value: string }]
-  'update:selectedJurisdictionType': [value: { label: string, name: string, value: string }]
+  'periodOfTimeChanged': [value: string]
+  'update:selectedJurisdictionType': [value: string]
   'update:sliderStart': [value: string]
   'sliderChanged': [value: string[]]
 }>()
@@ -47,10 +47,11 @@ const emit = defineEmits<{
           class="text-sm font-medium whitespace-nowrap"
           for="jurisdictionType"
         >Jurisdictions</label>
-        <USelectMenu
+        <USelect
           id="jurisdictionType"
           :model-value="props.selectedJurisdictionType"
           :items="props.jurisdictionTypeItems"
+          value-key="value"
           placeholder="Select the jurisdictions to include"
           size="sm"
           class="w-48"
@@ -60,7 +61,7 @@ const emit = defineEmits<{
     </div>
 
     <div
-      v-if="props.allLabels.length && props.selectedBaselineMethod?.value !== 'auto'"
+      v-if="props.allLabels.length && props.selectedBaselineMethod !== 'auto'"
       class="mt-6"
     >
       <DateRangePicker
@@ -68,7 +69,7 @@ const emit = defineEmits<{
         :all-yearly-chart-labels-unique="props.allYearlyChartLabelsUnique"
         :slider-value="props.sliderValue"
         :labels="props.labels"
-        :chart-type="(props.selectedPeriodOfTime?.value || 'yearly') as ChartType"
+        :chart-type="(props.selectedPeriodOfTime || 'yearly') as ChartType"
         :disabled="props.isUpdating"
         data-tour="ranking-date-range"
         @update:slider-start="emit('update:sliderStart', $event)"

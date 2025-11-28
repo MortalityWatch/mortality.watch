@@ -3,21 +3,14 @@ import { computed } from 'vue'
 import { baselineMethods } from '@/model'
 import FeatureBadge from '@/components/FeatureBadge.vue'
 
-interface BaselineMethodItem {
-  name: string
-  value: string
-  label: string
-  disabled?: boolean
-}
-
 const props = defineProps<{
-  modelValue: BaselineMethodItem
+  modelValue: string
   isUpdating?: boolean
   items?: Array<{ name: string, value: string, label?: string, disabled?: boolean }>
 }>()
 
 const emit = defineEmits<{
-  'update:modelValue': [value: BaselineMethodItem]
+  'update:modelValue': [value: string]
 }>()
 
 // Feature access for tier-based features
@@ -42,27 +35,18 @@ const baselineMethodsWithLabels = computed((): Array<{ name: string, value: stri
 })
 
 const selectedValue = computed({
-  get: () => ({
-    ...props.modelValue,
-    disabled: Boolean(props.modelValue.disabled)
-  }),
-  set: (v: { name: string, value: string, label: string, disabled: boolean }) => {
-    emit('update:modelValue', {
-      name: v.name,
-      value: v.value,
-      label: v.label,
-      disabled: v.disabled
-    })
-  }
+  get: () => props.modelValue,
+  set: v => emit('update:modelValue', v)
 })
 </script>
 
 <template>
   <div class="flex flex-col gap-4">
     <UiControlRow label="Method">
-      <UInputMenu
+      <USelect
         v-model="selectedValue"
         :items="baselineMethodsWithLabels"
+        value-key="value"
         placeholder="Select Baseline Method"
         :disabled="props.isUpdating"
         size="sm"

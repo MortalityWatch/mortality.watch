@@ -98,7 +98,7 @@ const chartUIState = useChartUIState(
 )
 
 // Options imported from @/model
-// Add 'label' property for USelectMenu compatibility
+// Add 'label' property for USelect compatibility
 const typesWithLabels = types.map(t => ({ ...t, label: t.name }))
 const chartTypesWithLabels = chartTypes.map(t => ({ ...t, label: t.name }))
 const chartStylesWithLabels = chartStyles.map(t => ({ ...t, label: t.name }))
@@ -119,31 +119,30 @@ const baselineMethodsWithLabels = computed(() => {
 
 const decimalPrecisionsWithLabels = decimalPrecisions.map(t => ({ ...t, label: t.name }))
 
-// Computed v-models
+// Computed v-models - now using primitive values directly
 const selectedType = computed({
-  get: () => typesWithLabels.find(t => t.value === props.type) || typesWithLabels[0],
-  set: (v: { name: string, value: string, label: string }) => emit('typeChanged', v.value)
+  get: () => props.type,
+  set: (v: string) => emit('typeChanged', v)
 })
 
 const selectedChartType = computed({
-  get: () => chartTypesWithLabels.find(t => t.value === props.chartType) || chartTypesWithLabels[0],
-  set: (v: { name: string, value: string, label: string }) => emit('chartTypeChanged', v.value)
+  get: () => props.chartType,
+  set: (v: string) => emit('chartTypeChanged', v)
 })
 
 const selectedChartStyle = computed({
-  get: () => chartStylesWithLabels.find(t => t.value === props.chartStyle) || chartStylesWithLabels[0],
-  set: (v: { name: string, value: string, label: string }) => emit('chartStyleChanged', v.value)
+  get: () => props.chartStyle,
+  set: (v: string) => emit('chartStyleChanged', v)
 })
 
 const selectedStandardPopulation = computed({
-  get: () => standardPopulationsWithLabels.find(t => t.value === props.standardPopulation) || standardPopulationsWithLabels[0],
-  set: (v: { name: string, value: string, label: string }) => emit('standardPopulationChanged', v.value)
+  get: () => props.standardPopulation,
+  set: (v: string) => emit('standardPopulationChanged', v)
 })
 
-type BaselineMethodItem = { name: string, value: string, label: string, disabled?: boolean }
 const selectedBaselineMethod = computed({
-  get: (): BaselineMethodItem => (baselineMethodsWithLabels.value.find(t => t.value === props.baselineMethod) || baselineMethodsWithLabels.value[0]) as BaselineMethodItem,
-  set: (v: BaselineMethodItem) => emit('baselineMethodChanged', v.value)
+  get: () => props.baselineMethod,
+  set: (v: string) => emit('baselineMethodChanged', v)
 })
 
 const view = computed({
@@ -197,30 +196,9 @@ const _sliderStart = computed({
 })
 
 const chartPreset = computed({
-  get: () => {
-    if (!props.chartPreset) return undefined
-
-    // First try exact match
-    let preset = chartPresetOptions.find(p => p.value === props.chartPreset)
-
-    // If no match, check if it's in dimensional format (e.g., "1000x625")
-    if (!preset) {
-      const match = props.chartPreset.match(/^(\d+)x(\d+)$/)
-      if (match && match[1] && match[2]) {
-        const width = parseInt(match[1])
-        const height = parseInt(match[2])
-        // Find preset by dimensions from CHART_PRESETS
-        const dimensionPreset = CHART_PRESETS.find(p => p.width === width && p.height === height)
-        if (dimensionPreset) {
-          preset = chartPresetOptions.find(p => p.value === dimensionPreset.name)
-        }
-      }
-    }
-
-    return preset
-  },
-  set: (v: { name: string, value: string, label: string, category: string } | undefined) => {
-    if (v) emit('chartPresetChanged', v.value)
+  get: () => props.chartPreset,
+  set: (v: string | undefined) => {
+    if (v) emit('chartPresetChanged', v)
   }
 })
 
@@ -240,8 +218,8 @@ const showCaption = computed({
 })
 
 const selectedDecimals = computed({
-  get: () => decimalPrecisionsWithLabels.find(t => t.value === props.decimals) || decimalPrecisionsWithLabels[0],
-  set: (v: { name: string, value: string, label: string }) => emit('decimalsChanged', v.value)
+  get: () => props.decimals,
+  set: (v: string) => emit('decimalsChanged', v)
 })
 
 const baselineSliderChanged = (values: string[]) => {
@@ -318,9 +296,9 @@ const activeTab = ref('data')
       <!-- Data Tab -->
       <DataTab
         v-if="activeTab === 'data'"
-        :selected-type="selectedType as { name: string, value: string, label: string }"
-        :selected-chart-type="selectedChartType as { name: string, value: string, label: string }"
-        :selected-standard-population="selectedStandardPopulation as { name: string, value: string, label: string }"
+        :selected-type="selectedType"
+        :selected-chart-type="selectedChartType"
+        :selected-standard-population="selectedStandardPopulation"
         :view="props.view"
         :is-updating="props.isUpdating"
         :is-population-type="props.isPopulationType"
@@ -367,7 +345,7 @@ const activeTab = ref('data')
       <!-- Baseline Tab -->
       <BaselineTab
         v-if="activeTab === 'baseline'"
-        :selected-baseline-method="selectedBaselineMethod as { name: string, value: string, label: string }"
+        :selected-baseline-method="selectedBaselineMethod"
         :baseline-methods-with-labels="baselineMethodsWithLabels"
         :baseline-method="props.baselineMethod"
         :baseline-slider-value="props.baselineSliderValue"
@@ -381,9 +359,9 @@ const activeTab = ref('data')
       <!-- Style Tab -->
       <StyleTab
         v-if="activeTab === 'style'"
-        :selected-chart-style="selectedChartStyle as { name: string, value: string, label: string }"
+        :selected-chart-style="selectedChartStyle"
         :chart-styles-with-labels="chartStylesWithLabels"
-        :selected-decimals="selectedDecimals as { name: string, value: string, label: string }"
+        :selected-decimals="selectedDecimals"
         :decimal-precisions-with-labels="decimalPrecisionsWithLabels"
         :colors="props.colors"
         :is-matrix-chart-style="props.isMatrixChartStyle"

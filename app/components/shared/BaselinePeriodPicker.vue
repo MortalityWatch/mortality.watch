@@ -31,26 +31,24 @@ const getDefaultPeriodLength = (method: string): number => {
   return 3 // Default for other methods
 }
 
-const selectedPeriodLength = ref(
-  periodLengthOptions.find(o => o.value === getDefaultPeriodLength(props.baselineMethod)) || periodLengthOptions[0]
-)
+const selectedPeriodLength = ref(getDefaultPeriodLength(props.baselineMethod))
 
 // Watch for baseline method changes to update default period length
 // Always preserve user's Custom selection (value === 0)
 watch(() => props.baselineMethod, (newMethod) => {
   // Don't change if user has selected Custom
-  if (!selectedPeriodLength.value || selectedPeriodLength.value.value === 0) return
+  if (selectedPeriodLength.value === 0) return
 
   const defaultLength = getDefaultPeriodLength(newMethod)
-  if (selectedPeriodLength.value.value !== defaultLength) {
-    selectedPeriodLength.value = periodLengthOptions.find(o => o.value === defaultLength) || periodLengthOptions[0]!
+  if (selectedPeriodLength.value !== defaultLength) {
+    selectedPeriodLength.value = defaultLength
   }
 })
 
 // Watch for period length changes to recalculate baseline dates
 // When user changes period length or when method changes (triggering period length change),
 // we need to adjust the baseline slider to match the new period length
-watch(() => selectedPeriodLength.value?.value, (newLength, oldLength) => {
+watch(() => selectedPeriodLength.value, (newLength, oldLength) => {
   // Skip if Custom (0) or if this is the initial value
   if (!newLength || newLength === 0 || oldLength === undefined) return
 
@@ -99,9 +97,10 @@ const baselineSliderChanged = (values: string[]) => {
         class="flex items-center gap-2"
       >
         <label class="text-xs text-gray-600 dark:text-gray-400">Length:</label>
-        <UInputMenu
+        <USelect
           v-model="selectedPeriodLength"
           :items="periodLengthOptions"
+          value-key="value"
           placeholder="Select period length"
           size="xs"
           class="w-28"
@@ -110,14 +109,14 @@ const baselineSliderChanged = (values: string[]) => {
     </div>
     <div>
       <DateSlider
-        :key="`${props.baselineMethod}-${selectedPeriodLength?.value ?? 3}`"
+        :key="`${props.baselineMethod}-${selectedPeriodLength ?? 3}`"
         :slider-value="props.sliderValue"
         :labels="props.labels"
         :chart-type="props.chartType"
         :color="specialColor()"
         :min-range="baselineMinRange(props.baselineMethod)"
         :single-value="props.baselineMethod === 'naive'"
-        :period-length="selectedPeriodLength?.value ?? 3"
+        :period-length="selectedPeriodLength ?? 3"
         :delay-emit="true"
         @slider-changed="baselineSliderChanged"
       />

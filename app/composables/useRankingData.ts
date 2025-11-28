@@ -375,19 +375,19 @@ export function useRankingData(
    * Resets dates to defaults for the new period type.
    * Reactive watcher ensures validation happens automatically.
    */
-  const periodOfTimeChanged = (val: { label: string, name: string, value: string }) => {
-    state.periodOfTime.value = val.value
+  const periodOfTimeChanged = (val: string) => {
+    state.periodOfTime.value = val
 
     // Reset dates to defaults for new period type
-    const defaultFrom = getPeriodStart(RANKING_START_YEAR, val.value)
-    const defaultTo = getPeriodEnd(RANKING_END_YEAR, val.value)
+    const defaultFrom = getPeriodStart(RANKING_START_YEAR, val)
+    const defaultTo = getPeriodEnd(RANKING_END_YEAR, val)
 
     // Reset baseline dates
     const baselineMethod = state.baselineMethod.value || 'mean'
     const baselineStartYear
       = baselineMethod === 'lin_reg' ? 2010 : baselineMethod === 'mean' ? 2017 : 2015
-    const defaultBaselineFrom = getSeasonString(val.value, baselineStartYear)
-    const defaultBaselineTo = defaultBaselineToDate(val.value) || ''
+    const defaultBaselineFrom = getSeasonString(val, baselineStartYear)
+    const defaultBaselineTo = defaultBaselineToDate(val) || ''
 
     state.dateFrom.value = defaultFrom
     state.dateTo.value = defaultTo
