@@ -452,8 +452,8 @@ export class StateResolver {
     type: 'INITIAL' | 'CHANGE' | 'VIEW_CHANGE',
     resolved?: ResolvedState
   ): void {
-    // Skip logging in production
-    if (typeof window !== 'undefined' && '__PROD__' in window && window.__PROD__) return
+    // Only log in development mode
+    if (!import.meta.dev) return
 
     const emoji = type === 'INITIAL' ? '🚀' : type === 'VIEW_CHANGE' ? '🔀' : '🔄'
     const trigger = log.trigger !== 'initial' ? log.trigger : null

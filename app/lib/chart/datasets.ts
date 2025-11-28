@@ -145,15 +145,6 @@ export const getDatasets = (
     view: config.display.view ?? 'mortality'
   }
 
-  if (config.display.view === 'zscore') {
-    const firstAg = ags[0]
-    console.log('[datasets] Z-Score view active, checking data structure:', {
-      transformConfig,
-      firstAg,
-      sampleCountryKeys: firstAg && data[firstAg] ? Object.keys(data[firstAg]).slice(0, 2) : []
-    })
-  }
-
   for (const ag of ags) {
     const agData = data[ag]
     if (!agData) continue
@@ -162,18 +153,6 @@ export const getDatasets = (
       if (!ds) continue
       const dsRecord: Record<string, unknown[]> = ds
 
-      if (config.display.view === 'zscore' && iso3c === Object.keys(agData)[0]) {
-        const allKeys = Object.keys(dsRecord)
-        const zscoreKeys = allKeys.filter(k => k.includes('zscore'))
-        console.log('[datasets] First country data keys:', {
-          total: allKeys.length,
-          allKeys,
-          zscoreKeys,
-          hasZscoreData: zscoreKeys.length > 0,
-          asmrWhoZscore: dsRecord.asmr_who_zscore,
-          asmrWho: dsRecord.asmr_who
-        })
-      }
       // Z-score view: baseline required for calculation but hidden from display
       const shouldIncludeBaseline = config.display.view === 'zscore'
         ? false
