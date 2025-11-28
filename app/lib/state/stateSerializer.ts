@@ -1,3 +1,5 @@
+import { VIEWS } from './views'
+
 export const encodeBool = (bool: boolean | undefined): number | undefined => {
   if (bool === undefined) return undefined
   return bool ? 1 : 0
@@ -20,34 +22,11 @@ export const decodeString = (str: string | undefined): string | undefined => {
   return decodeURIComponent(str)
 }
 
-export const Defaults = {
-  countries: ['USA', 'SWE'],
-  type: 'asmr',
-  chartType: 'fluseason',
-  chartStyle: 'line',
-  dateFrom: undefined as string | undefined, // undefined = use default range
-  dateTo: undefined as string | undefined, // undefined = use latest available
-  baselineDateFrom: undefined as string | undefined,
-  baselineDateTo: undefined as string | undefined,
-  standardPopulation: 'who',
-  ageGroups: ['all'],
-  showBaseline: true,
-  baselineMethod: 'mean',
-  cumulative: false,
-  showTotal: false,
-  maximize: false,
-  showPredictionInterval: true,
-  showLabels: true,
-  showPercentage: false,
-  showLogarithmic: false,
-  sliderStart: '2010' as string | undefined, // Slider shows from 2010 onwards
-  userColors: undefined as string[] | undefined,
-  showLogo: true,
-  showQrCode: true,
-  showCaption: true,
-  decimals: 'auto',
-  darkMode: false
-}
+/**
+ * Landing page defaults - alias for VIEWS.mortality.defaults
+ * Single source of truth is in views.ts
+ */
+export const Defaults = VIEWS.mortality.defaults
 
 export type ChartStateInput = typeof Defaults
 

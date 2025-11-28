@@ -6,10 +6,14 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { DEFAULT_VALUES, STATE_CONSTRAINTS } from './constraints'
+import { STATE_CONSTRAINTS } from './constraints'
+import { VIEWS } from './views'
+
+// Single source of truth for defaults is VIEWS.mortality.defaults
+const DEFAULT_VALUES = VIEWS.mortality.defaults
 
 describe('StateResolver Constraints', () => {
-  describe('DEFAULT_VALUES', () => {
+  describe('DEFAULT_VALUES (via VIEWS.mortality.defaults)', () => {
     it('should have all required default values', () => {
       expect(DEFAULT_VALUES).toHaveProperty('countries')
       expect(DEFAULT_VALUES).toHaveProperty('type')
@@ -29,8 +33,7 @@ describe('StateResolver Constraints', () => {
       expect(DEFAULT_VALUES).toHaveProperty('baselineMethod')
     })
 
-    it('should have sensible defaults matching stateSerializer.Defaults', () => {
-      // These should match Defaults in stateSerializer.ts (the single source of truth)
+    it('should have sensible defaults (single source of truth in views.ts)', () => {
       expect(DEFAULT_VALUES.countries).toEqual(['USA', 'SWE'])
       expect(DEFAULT_VALUES.type).toBe('asmr')
       expect(DEFAULT_VALUES.chartType).toBe('fluseason')

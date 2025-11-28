@@ -11,13 +11,26 @@
 
 import type { RouteLocationNormalizedLoaded, Router } from 'vue-router'
 import { stateFieldEncoders } from '@/lib/state/stateSerializer'
-import { STATE_CONSTRAINTS, DEFAULT_VALUES } from './constraints'
+import { STATE_CONSTRAINTS } from './constraints'
 import type { StateChange, ResolvedState, StateResolutionLog, StateFieldMetadata } from './types'
 import { detectView } from './viewDetector'
 import { getViewConstraints } from './viewConstraints'
 import type { ViewType } from './viewTypes'
 import { VIEWS } from './views'
 import { computeUIState, type UIFieldState } from './uiStateComputer'
+
+/**
+ * Get defaults for a view, with view-specific fields added
+ */
+function getViewDefaults(view: ViewType): Record<string, unknown> {
+  const viewConfig = VIEWS[view] || VIEWS.mortality
+  return {
+    view,
+    isExcess: view === 'excess',
+    isZScore: view === 'zscore',
+    ...viewConfig.defaults
+  }
+}
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class StateResolver {
@@ -40,29 +53,35 @@ export class StateResolver {
       userOverridesFromUrl: []
     }
 
-    // 1. Start with defaults
-    const state = { ...DEFAULT_VALUES }
+    // 1. Detect view from URL params FIRST (e=1 → excess, zs=1 → zscore)
+    const view = detectView(route.query)
+    const viewConfig = VIEWS[view as ViewType] || VIEWS.mortality
+
+    // 2. Start with view-specific defaults (includes all fields)
+    const viewDefaults = getViewDefaults(view as ViewType)
+    const state = { ...viewDefaults }
     const metadata: Record<string, StateFieldMetadata> = {}
     const userOverrides = new Set<string>()
 
-    // Initialize metadata with defaults
-    for (const [field, value] of Object.entries(DEFAULT_VALUES)) {
+    // Initialize metadata with view defaults
+    for (const [field, value] of Object.entries(viewDefaults)) {
       metadata[field] = {
         value,
         priority: 'default',
-        reason: 'System default',
+        reason: `${viewConfig.label} default`,
         changed: false,
         urlKey: stateFieldEncoders[field as keyof typeof stateFieldEncoders]?.key
       }
     }
 
-    // 2. Validate and apply URL parameters (user overrides)
+    // 3. Validate and apply URL parameters (user overrides)
     const validatedUrlParams = this.validateUrlParams(route)
 
     for (const [field, value] of Object.entries(validatedUrlParams)) {
       userOverrides.add(field)
       log.userOverridesFromUrl.push(field)
 
+      const oldValue = state[field]
       state[field] = value
 
       const urlKey = stateFieldEncoders[field as keyof typeof stateFieldEncoders]?.key || field
@@ -74,42 +93,15 @@ export class StateResolver {
         urlKey
       }
 
-      log.changes.push({
-        field,
-        urlKey,
-        oldValue: DEFAULT_VALUES[field],
-        newValue: value,
-        priority: 'user',
-        reason: 'Set in URL'
-      })
-    }
-
-    // 3. Detect view from URL params (e=1 → excess, zs=1 → zscore)
-    const view = detectView(route.query)
-    state.view = view
-
-    // 4. Apply view defaults for fields not set by user
-    // This ensures ?e=1 gets chartStyle='bar' without user explicitly setting it
-    const viewConfig = VIEWS[view as ViewType] || VIEWS.mortality
-    for (const [field, value] of Object.entries(viewConfig.defaults || {})) {
-      // Skip undefined values - they mean "use landing page default"
-      if (value === undefined) continue
-
-      if (!userOverrides.has(field)) {
-        const oldValue = state[field]
-        if (oldValue !== value) {
-          state[field] = value
-          const urlKey = stateFieldEncoders[field as keyof typeof stateFieldEncoders]?.key || field
-
-          log.changes.push({
-            field,
-            urlKey,
-            oldValue,
-            newValue: value,
-            priority: 'view-default',
-            reason: `${viewConfig.label} view default`
-          })
-        }
+      if (oldValue !== value) {
+        log.changes.push({
+          field,
+          urlKey,
+          oldValue,
+          newValue: value,
+          priority: 'user',
+          reason: 'Set in URL'
+        })
       }
     }
 
@@ -505,17 +497,22 @@ export class StateResolver {
   private static buildQueryPreview(state: Record<string, unknown>): Record<string, string> {
     const query: Record<string, string> = {}
 
+    const view = (state.view as ViewType) || 'mortality'
+
     // Handle view
-    if (state.view === 'excess') {
+    if (view === 'excess') {
       query.e = '1'
-    } else if (state.view === 'zscore') {
+    } else if (view === 'zscore') {
       query.zs = '1'
     }
 
-    // Only show non-default values
+    // Get view defaults
+    const viewDefaults = getViewDefaults(view)
+
+    // Only show non-default values for this view
     for (const [field, encoder] of Object.entries(stateFieldEncoders)) {
       const value = state[field]
-      const defaultValue = DEFAULT_VALUES[field]
+      const defaultValue = viewDefaults[field]
 
       if (this.valuesEqual(value, defaultValue)) continue
       if (value === undefined) continue
@@ -619,15 +616,18 @@ export class StateResolver {
     }
     // mortality view has no special parameter (it's the default)
 
-    // For each state field, only add to URL if different from base default
-    // Note: We use DEFAULT_VALUES (landing page defaults), not view-specific defaults
-    // This ensures the URL contains all values needed to reconstruct the state
+    // Get view-specific defaults to compare against
+    // When view=excess and chartStyle=bar, we don't need chartStyle in URL
+    // because resolveInitial will apply view defaults when loading ?e=1
+    const viewDefaults = getViewDefaults(view)
+
+    // For each state field, only add to URL if different from view default
     for (const [field, encoder] of Object.entries(stateFieldEncoders)) {
       const urlKey = encoder.key
       const newValue = resolved.state[field]
-      const defaultValue = DEFAULT_VALUES[field]
+      const defaultValue = viewDefaults[field]
 
-      // Skip if value matches base default
+      // Skip if value matches view default
       if (this.valuesEqual(newValue, defaultValue)) {
         continue
       }

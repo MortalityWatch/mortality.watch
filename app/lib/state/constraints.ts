@@ -1,31 +1,15 @@
 /**
- * State Constraints and Defaults
+ * State Constraints
  *
- * Defines all business rules and default values for state resolution.
+ * Defines business rule constraints for state resolution.
  * Constraints are applied in priority order (high to low) when their
  * condition is met.
+ *
+ * NOTE: Defaults are now in VIEWS (views.ts). Each view has its own defaults.
+ * Use VIEWS[viewType].defaults to get defaults for a specific view.
  */
 
 import type { StateConstraint } from './types'
-import { Defaults } from './stateSerializer'
-
-// ============================================================================
-// DEFAULT VALUES
-// ============================================================================
-
-/**
- * Default values when nothing is set in URL
- * Re-exports Defaults from stateSerializer with view-specific additions
- */
-export const DEFAULT_VALUES: Record<string, unknown> = {
-  // View defaults (not in stateSerializer)
-  view: 'mortality',
-  isExcess: false,
-  isZScore: false,
-
-  // All other defaults from stateSerializer (the single source of truth)
-  ...Defaults
-}
 
 // ============================================================================
 // CONSTRAINT DEFINITIONS

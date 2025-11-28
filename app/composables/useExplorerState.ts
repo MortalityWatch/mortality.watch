@@ -9,7 +9,7 @@ import {
   type ExplorerState
 } from '@/model/explorerSchema'
 import { detectView } from '@/lib/state/viewDetector'
-import type { ViewType } from '@/lib/state/viewTypes'
+import type { ViewType, MetricType, ChartStyle } from '@/lib/state/viewTypes'
 import { VIEWS } from '@/lib/state/views'
 import { computeUIState } from '@/lib/state/uiStateComputer'
 
@@ -93,7 +93,7 @@ export function useExplorerState() {
   )
   const showBaseline = useUrlState<boolean>(
     stateFieldEncoders.showBaseline.key,
-    Defaults.showBaseline,
+    Defaults.showBaseline ?? true,
     stateFieldEncoders.showBaseline.encode,
     stateFieldEncoders.showBaseline.decode
   )
@@ -106,43 +106,43 @@ export function useExplorerState() {
   // All defaults should come from Defaults (single source of truth)
   const cumulative = useUrlState<boolean>(
     stateFieldEncoders.cumulative.key,
-    Defaults.cumulative,
+    Defaults.cumulative ?? false,
     stateFieldEncoders.cumulative.encode,
     stateFieldEncoders.cumulative.decode
   )
   const showTotal = useUrlState<boolean>(
     stateFieldEncoders.showTotal.key,
-    Defaults.showTotal,
+    Defaults.showTotal ?? false,
     stateFieldEncoders.showTotal.encode,
     stateFieldEncoders.showTotal.decode
   )
   const maximize = useUrlState<boolean>(
     stateFieldEncoders.maximize.key,
-    Defaults.maximize,
+    Defaults.maximize ?? false,
     stateFieldEncoders.maximize.encode,
     stateFieldEncoders.maximize.decode
   )
   const showPredictionInterval = useUrlState<boolean>(
     stateFieldEncoders.showPredictionInterval.key,
-    Defaults.showPredictionInterval,
+    Defaults.showPredictionInterval ?? true,
     stateFieldEncoders.showPredictionInterval.encode,
     stateFieldEncoders.showPredictionInterval.decode
   )
   const showLabels = useUrlState<boolean>(
     stateFieldEncoders.showLabels.key,
-    Defaults.showLabels,
+    Defaults.showLabels ?? true,
     stateFieldEncoders.showLabels.encode,
     stateFieldEncoders.showLabels.decode
   )
   const showPercentage = useUrlState<boolean>(
     stateFieldEncoders.showPercentage.key,
-    Defaults.showPercentage,
+    Defaults.showPercentage ?? false,
     stateFieldEncoders.showPercentage.encode,
     stateFieldEncoders.showPercentage.decode
   )
   const showLogarithmic = useUrlState<boolean>(
     stateFieldEncoders.showLogarithmic.key,
-    Defaults.showLogarithmic,
+    Defaults.showLogarithmic ?? false,
     stateFieldEncoders.showLogarithmic.encode,
     stateFieldEncoders.showLogarithmic.decode
   )
@@ -172,7 +172,7 @@ export function useExplorerState() {
   )
   const decimals = useUrlState<string>(
     stateFieldEncoders.decimals.key,
-    Defaults.decimals
+    Defaults.decimals ?? 'auto'
   )
 
   // Local State - Chart Size (not synced to URL)
@@ -417,13 +417,13 @@ export function useExplorerState() {
       countries.value = state.countries as string[]
     }
     if (state.type !== undefined && state.type !== type.value) {
-      type.value = state.type as string
+      type.value = state.type as MetricType
     }
     if (state.chartType !== undefined && state.chartType !== chartType.value) {
       chartType.value = state.chartType as string
     }
     if (state.chartStyle !== undefined && state.chartStyle !== chartStyle.value) {
-      chartStyle.value = state.chartStyle as string
+      chartStyle.value = state.chartStyle as ChartStyle
     }
     if (state.ageGroups !== undefined && !arraysEqual(state.ageGroups as string[], ageGroups.value)) {
       ageGroups.value = state.ageGroups as string[]

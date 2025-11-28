@@ -61,9 +61,11 @@ describe('View Configurations', () => {
 
     it('has correct defaults', () => {
       expect(config.defaults.chartStyle).toBe('line')
-      // showBaseline is NOT a view default for mortality - it's toggleable
-      // and the landing page default (from stateSerializer.Defaults) is true
-      expect(config.defaults.showBaseline).toBeUndefined()
+      // VIEWS.mortality.defaults is now the single source of truth for all landing page defaults
+      expect(config.defaults.showBaseline).toBe(true)
+      expect(config.defaults.showPredictionInterval).toBe(true)
+      expect(config.defaults.type).toBe('asmr')
+      expect(config.defaults.countries).toEqual(['USA', 'SWE'])
     })
 
     it('supports all metrics', () => {

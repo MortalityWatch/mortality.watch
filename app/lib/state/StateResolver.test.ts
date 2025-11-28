@@ -143,17 +143,18 @@ describe('StateResolver', () => {
       expect(resolved.userOverrides.has('chartStyle')).toBe(true)
     })
 
-    it('should log view defaults in changes', () => {
+    it('should use view defaults without logging changes', () => {
       const route = createMockRoute({
         e: '1' // excess view
       })
       const resolved = StateResolver.resolveInitial(route)
 
-      // Check that view defaults are logged
+      // View defaults are now the starting state - no "change" to log
+      // chartStyle is 'bar' from the start for excess view
+      expect(resolved.state.chartStyle).toBe('bar')
+      // No chartStyle change is logged since it starts with the view default
       const chartStyleChange = resolved.log.changes.find(c => c.field === 'chartStyle')
-      expect(chartStyleChange).toBeDefined()
-      expect(chartStyleChange?.priority).toBe('view-default')
-      expect(chartStyleChange?.reason).toContain('Excess')
+      expect(chartStyleChange).toBeUndefined()
     })
   })
 })
