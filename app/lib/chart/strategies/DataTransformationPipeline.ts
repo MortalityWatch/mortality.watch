@@ -79,24 +79,28 @@ export class DataTransformationPipeline {
     if (config.showPercentage) {
       const blKey = this.percentageStrategy.getBaselineKey(config.isAsmrType, key)
       const blDataRow = data[blKey] ?? []
+      // Check if data is already excess (key contains _excess)
+      const isExcessData = key.includes('_excess')
 
       if (!config.cumulative) {
         // Absolute percentage
-        return this.percentageStrategy.transform(dataRow, blDataRow)
+        return this.percentageStrategy.transform(dataRow, blDataRow, isExcessData)
       }
 
       if (!config.showTotal) {
         // Cumulative percentage
         return this.percentageStrategy.transform(
           this.cumulativeStrategy.transform(dataRow),
-          this.cumulativeStrategy.transform(blDataRow)
+          this.cumulativeStrategy.transform(blDataRow),
+          isExcessData
         )
       }
 
       // Cumulative total percentage
       return this.percentageStrategy.transform(
         this.totalStrategy.transform(dataRow),
-        this.totalStrategy.transform(blDataRow)
+        this.totalStrategy.transform(blDataRow),
+        isExcessData
       )
     } else {
       if (!config.cumulative) {
@@ -149,13 +153,15 @@ export class DataTransformationPipeline {
     const blDataRow = dataRaw[blKey] ?? []
     const blDataLRow = dataRaw[this.percentageStrategy.getBaselineKey(config.isAsmrType, `${key}_lower`)] ?? []
     const blDataURow = dataRaw[this.percentageStrategy.getBaselineKey(config.isAsmrType, `${key}_upper`)] ?? []
+    // Check if data is already excess (key contains _excess)
+    const isExcessData = key.includes('_excess')
 
     if (!config.cumulative) {
       // Absolute percentage
       return makeErrorBarData(
-        this.percentageStrategy.transform(data, blDataRow),
-        this.percentageStrategy.transform(dataL, blDataLRow),
-        this.percentageStrategy.transform(dataU, blDataURow)
+        this.percentageStrategy.transform(data, blDataRow, isExcessData),
+        this.percentageStrategy.transform(dataL, blDataLRow, isExcessData),
+        this.percentageStrategy.transform(dataU, blDataURow, isExcessData)
       )
     }
 
@@ -167,7 +173,8 @@ export class DataTransformationPipeline {
         dataU,
         blDataRow,
         blDataLRow,
-        blDataURow
+        blDataURow,
+        isExcessData
       )
     }
 
@@ -179,7 +186,8 @@ export class DataTransformationPipeline {
       dataU,
       blDataRow,
       blDataLRow,
-      blDataURow
+      blDataURow,
+      isExcessData
     )
   }
 
@@ -193,27 +201,30 @@ export class DataTransformationPipeline {
     dataU: number[],
     blDataRow: number[],
     blDataLRow: number[],
-    blDataURow: number[]
+    blDataURow: number[],
+    isExcessData: boolean
   ): ChartErrorDataPoint[] {
     const cumData = this.cumulativeStrategy.transform(data)
     const cumBl = this.cumulativeStrategy.transform(blDataRow)
 
     if (config.showCumPi) {
       return makeErrorBarData(
-        this.percentageStrategy.transform(cumData, cumBl),
+        this.percentageStrategy.transform(cumData, cumBl, isExcessData),
         this.percentageStrategy.transform(
           this.cumulativeStrategy.transform(dataL),
-          this.cumulativeStrategy.transform(blDataLRow)
+          this.cumulativeStrategy.transform(blDataLRow),
+          isExcessData
         ),
         this.percentageStrategy.transform(
           this.cumulativeStrategy.transform(dataU),
-          this.cumulativeStrategy.transform(blDataURow)
+          this.cumulativeStrategy.transform(blDataURow),
+          isExcessData
         )
       )
     }
 
     return makeErrorBarData(
-      this.percentageStrategy.transform(cumData, cumBl),
+      this.percentageStrategy.transform(cumData, cumBl, isExcessData),
       repeat(undefined, data.length),
       repeat(undefined, data.length)
     )
@@ -229,27 +240,30 @@ export class DataTransformationPipeline {
     dataU: number[],
     blDataRow: number[],
     blDataLRow: number[],
-    blDataURow: number[]
+    blDataURow: number[],
+    isExcessData: boolean
   ): ChartErrorDataPoint[] {
     const totalData = this.totalStrategy.transform(data)
     const totalBl = this.totalStrategy.transform(blDataRow)
 
     if (config.showCumPi) {
       return makeErrorBarData(
-        this.percentageStrategy.transform(totalData, totalBl),
+        this.percentageStrategy.transform(totalData, totalBl, isExcessData),
         this.percentageStrategy.transform(
           this.totalStrategy.transform(dataL),
-          this.totalStrategy.transform(blDataLRow)
+          this.totalStrategy.transform(blDataLRow),
+          isExcessData
         ),
         this.percentageStrategy.transform(
           this.totalStrategy.transform(dataU),
-          this.totalStrategy.transform(blDataURow)
+          this.totalStrategy.transform(blDataURow),
+          isExcessData
         )
       )
     }
 
     return makeErrorBarData(
-      this.percentageStrategy.transform(totalData, totalBl),
+      this.percentageStrategy.transform(totalData, totalBl, isExcessData),
       [undefined],
       [undefined]
     )

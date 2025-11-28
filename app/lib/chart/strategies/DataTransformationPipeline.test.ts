@@ -69,7 +69,8 @@ describe('DataTransformationPipeline', () => {
 
       const result = pipeline.transformData(config, data, 'key1')
 
-      expect(result).toEqual([2, 2, 2])
+      // 10/5 - 1 = 1, 20/10 - 1 = 1, 30/15 - 1 = 1 (100% excess)
+      expect(result).toEqual([1, 1, 1])
     })
 
     it('should calculate cumulative percentage', () => {
@@ -87,8 +88,8 @@ describe('DataTransformationPipeline', () => {
 
       const result = pipeline.transformData(config, data, 'key1')
 
-      // cumulative: [10, 30, 60] / [5, 15, 30] = [2, 2, 2]
-      expect(result).toEqual([2, 2, 2])
+      // cumulative: [10, 30, 60] / [5, 15, 30] - 1 = [1, 1, 1] (100% excess)
+      expect(result).toEqual([1, 1, 1])
     })
 
     it('should calculate total percentage', () => {
@@ -106,8 +107,8 @@ describe('DataTransformationPipeline', () => {
 
       const result = pipeline.transformData(config, data, 'key1')
 
-      // total: 60 / 30 = 2
-      expect(result).toEqual([2])
+      // total: 60 / 30 - 1 = 1 (100% excess)
+      expect(result).toEqual([1])
     })
 
     it('should handle ASMR baseline keys correctly', () => {
@@ -125,7 +126,97 @@ describe('DataTransformationPipeline', () => {
 
       const result = pipeline.transformData(config, data, 'asmr_who_key1')
 
-      expect(result).toEqual([2, 2, 2])
+      // 10/5 - 1 = 1, 20/10 - 1 = 1, 30/15 - 1 = 1 (100% excess)
+      expect(result).toEqual([1, 1, 1])
+    })
+
+    it('should not subtract 1 when key contains _excess (data is already excess)', () => {
+      // When data is excess (deaths_excess), it's already (deaths - baseline)
+      // So we just divide by baseline: excess/baseline (no -1)
+      const data = {
+        deaths_excess: [100, 200, 300], // Already: deaths - baseline
+        deaths_baseline: [900, 800, 700]
+      }
+      const config = {
+        showPercentage: true,
+        cumulative: false,
+        showTotal: false,
+        showCumPi: false,
+        isAsmrType: false
+      }
+
+      const result = pipeline.transformData(config, data, 'deaths_excess')
+
+      // excess/baseline (no -1)
+      expect(result[0]).toBeCloseTo(100 / 900, 5) // ~0.111 (11.1%)
+      expect(result[1]).toBeCloseTo(200 / 800, 5) // 0.25 (25%)
+      expect(result[2]).toBeCloseTo(300 / 700, 5) // ~0.429 (42.9%)
+    })
+
+    it('should handle cumulative excess percentage correctly', () => {
+      const data = {
+        deaths_excess: [100, 200, 300],
+        deaths_baseline: [900, 800, 700]
+      }
+      const config = {
+        showPercentage: true,
+        cumulative: true,
+        showTotal: false,
+        showCumPi: false,
+        isAsmrType: false
+      }
+
+      const result = pipeline.transformData(config, data, 'deaths_excess')
+
+      // cumulative excess: [100, 300, 600]
+      // cumulative baseline: [900, 1700, 2400]
+      // ratios: 100/900, 300/1700, 600/2400 (no -1 because it's excess data)
+      expect(result[0]).toBeCloseTo(100 / 900, 5)
+      expect(result[1]).toBeCloseTo(300 / 1700, 5)
+      expect(result[2]).toBeCloseTo(600 / 2400, 5)
+    })
+
+    it('should handle total excess percentage correctly', () => {
+      const data = {
+        deaths_excess: [100, 200, 300],
+        deaths_baseline: [900, 800, 700]
+      }
+      const config = {
+        showPercentage: true,
+        cumulative: true,
+        showTotal: true,
+        showCumPi: false,
+        isAsmrType: false
+      }
+
+      const result = pipeline.transformData(config, data, 'deaths_excess')
+
+      // total excess: 600
+      // total baseline: 2400
+      // ratio: 600/2400 = 0.25 (no -1 because it's excess data)
+      expect(result).toHaveLength(1)
+      expect(result[0]).toBeCloseTo(600 / 2400, 5)
+    })
+
+    it('should handle ASMR excess keys correctly', () => {
+      const data = {
+        asmr_who_excess: [10, 20, 30],
+        asmr_who_baseline: [100, 100, 100]
+      }
+      const config = {
+        showPercentage: true,
+        cumulative: false,
+        showTotal: false,
+        showCumPi: false,
+        isAsmrType: true
+      }
+
+      const result = pipeline.transformData(config, data, 'asmr_who_excess')
+
+      // excess/baseline (no -1)
+      expect(result[0]).toBeCloseTo(10 / 100, 5) // 0.1 (10%)
+      expect(result[1]).toBeCloseTo(20 / 100, 5) // 0.2 (20%)
+      expect(result[2]).toBeCloseTo(30 / 100, 5) // 0.3 (30%)
     })
   })
 
@@ -238,15 +329,21 @@ describe('DataTransformationPipeline', () => {
       const result = pipeline.transformErrorBarData(config, data, 'key1')
 
       expect(result).toHaveLength(3)
-      // [10, 20, 30] / [5, 10, 15] = [2, 2, 2]
-      // [8, 18, 28] / [5, 10, 15] = [1.6, 1.8, 1.867]
-      // [12, 22, 32] / [5, 10, 15] = [2.4, 2.2, 2.133]
-      expect(result[0]).toMatchObject({ x: 0, y: 2, yMin: 1.6, yMax: 2.4 })
-      expect(result[1]).toMatchObject({ x: 1, y: 2, yMin: 1.8, yMax: 2.2 })
+      // [10, 20, 30] / [5, 10, 15] - 1 = [1, 1, 1]
+      // [8, 18, 28] / [5, 10, 15] - 1 = [0.6, 0.8, 0.867]
+      // [12, 22, 32] / [5, 10, 15] - 1 = [1.4, 1.2, 1.133]
+      expect(result[0]?.x).toBe(0)
+      expect(result[0]?.y).toBe(1)
+      expect(result[0]?.yMin).toBeCloseTo(0.6, 2)
+      expect(result[0]?.yMax).toBeCloseTo(1.4, 2)
+      expect(result[1]?.x).toBe(1)
+      expect(result[1]?.y).toBe(1)
+      expect(result[1]?.yMin).toBeCloseTo(0.8, 2)
+      expect(result[1]?.yMax).toBeCloseTo(1.2, 2)
       expect(result[2]?.x).toBe(2)
-      expect(result[2]?.y).toBe(2)
-      expect(result[2]?.yMin).toBeCloseTo(1.867, 2)
-      expect(result[2]?.yMax).toBeCloseTo(2.133, 2)
+      expect(result[2]?.y).toBe(1)
+      expect(result[2]?.yMin).toBeCloseTo(0.867, 2)
+      expect(result[2]?.yMax).toBeCloseTo(1.133, 2)
     })
   })
 })

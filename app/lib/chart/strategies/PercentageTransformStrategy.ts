@@ -10,12 +10,19 @@ export class PercentageTransformStrategy {
    * Transform data row to percentage values relative to baseline
    * @param dataRow - The data values to transform
    * @param blRow - The baseline values to use as denominator
-   * @returns Percentage values (data/baseline)
+   * @param isExcessData - If true, data is already excess (data - baseline), so just divide by baseline
+   * @returns Percentage values as decimal
+   *   - For regular data: (data/baseline - 1) gives excess ratio
+   *   - For excess data: (excess/baseline) gives excess ratio (already subtracted)
    */
-  transform(dataRow: number[], blRow: number[]): number[] {
+  transform(dataRow: number[], blRow: number[], isExcessData = false): number[] {
     const result = []
     for (let i = 0; i < dataRow.length; i++) {
-      result.push((dataRow[i] ?? 0) / (blRow[i] ?? 1))
+      const ratio = (dataRow[i] ?? 0) / (blRow[i] ?? 1)
+      // For excess data, the subtraction is already done (excess = data - baseline)
+      // So excess/baseline gives the correct percentage
+      // For regular data, we need data/baseline - 1 to get excess percentage
+      result.push(isExcessData ? ratio : ratio - 1)
     }
     return result
   }
