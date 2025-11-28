@@ -332,7 +332,7 @@ const activeTab = ref('data')
         @update:show-baseline="showBaseline = $event"
         @update:show-prediction-interval="showPredictionInterval = $event"
         @update:maximize="maximize = $event"
-        @update:is-logarithmic="showLogarithmic = $event"
+        @update:show-logarithmic="showLogarithmic = $event"
         @update:show-percentage="showPercentage = $event"
         @update:cumulative="cumulative = $event"
         @update:show-total="showTotal = $event"

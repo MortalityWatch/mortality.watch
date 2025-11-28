@@ -664,6 +664,7 @@ watch(
             :show-prediction-interval="state.showPredictionInterval.value"
             :show-percentage="state.showPercentage.value"
             :show-labels="state.showLabels.value"
+            :show-logarithmic="state.showLogarithmic.value"
             :is-deaths-type="isDeathsType()"
             :is-population-type="isPopulationType()"
             :show-logo="state.showLogo.value"
