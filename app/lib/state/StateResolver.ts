@@ -84,20 +84,44 @@ export class StateResolver {
       })
     }
 
-    // 3. Detect and add view to state (derived from URL params)
+    // 3. Detect view from URL params (e=1 → excess, zs=1 → zscore)
     const view = detectView(route.query)
     state.view = view
 
-    // 4. Apply constraints (including view-specific constraints)
+    // 4. Apply view defaults for fields not set by user
+    // This ensures ?e=1 gets chartStyle='bar' without user explicitly setting it
+    const viewConfig = VIEWS[view as ViewType] || VIEWS.mortality
+    for (const [field, value] of Object.entries(viewConfig.defaults || {})) {
+      // Skip undefined values - they mean "use landing page default"
+      if (value === undefined) continue
+
+      if (!userOverrides.has(field)) {
+        const oldValue = state[field]
+        if (oldValue !== value) {
+          state[field] = value
+          const urlKey = stateFieldEncoders[field as keyof typeof stateFieldEncoders]?.key || field
+
+          log.changes.push({
+            field,
+            urlKey,
+            oldValue,
+            newValue: value,
+            priority: 'view-default',
+            reason: `${viewConfig.label} view default`
+          })
+        }
+      }
+    }
+
+    // 5. Apply constraints (including view-specific constraints)
     const constrainedState = this.applyConstraints(state, userOverrides, log)
 
     log.after = { ...constrainedState }
 
-    // 5. Compute UI state from view configuration
-    const viewConfig = VIEWS[view as ViewType] || VIEWS.mortality
+    // 6. Compute UI state from view configuration (reuse viewConfig from step 4)
     const ui = computeUIState(viewConfig, constrainedState)
 
-    // 6. Log resolution
+    // 7. Log resolution
     this.logResolution(log, 'INITIAL')
 
     return {

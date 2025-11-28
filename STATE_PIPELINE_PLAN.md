@@ -231,3 +231,39 @@ Each phase can be a separate PR if needed.
 - [ ] Logging shows complete state picture
 - [ ] All existing tests pass
 - [ ] E2E tests pass
+
+## Concerns & Mitigations
+
+### Phase 2: View Defaults
+
+**Concern**: View defaults may contain `undefined` values.
+**Mitigation**: Skip `undefined` values in the loop - they mean "use landing page default".
+
+### Phase 3: Race Conditions & Maintenance
+
+**Concern**: `refMap` creates maintenance burden (two places to update).
+**Mitigation**: Generate map from `stateFieldEncoders` keys, or use consistent naming.
+
+**Concern**: Watchers may fire between `applyResolvedState()` and URL sync.
+**Mitigation**: The refs will already have correct values, so watcher logic should be idempotent. If needed, add `isApplyingState` flag to skip watcher during apply.
+
+### Phase 5: Watcher Removal Risk
+
+**Concern**: Removing watchers may break edge cases.
+**Mitigation**:
+
+1. Document each watcher's purpose before removal
+2. Run E2E tests after each individual removal
+3. Keep date validation for runtime data availability changes (not constraint-related)
+
+### SSR Considerations
+
+**Concern**: `resolveInitial` in `onMounted` is client-only.
+**Current behavior**: SSR renders with defaults, client hydrates with URL state.
+**Mitigation**: This is acceptable - explorer is excluded from prerender anyway (`nuxt.config.ts`). The resolver only runs client-side.
+
+### Deep Link Handling
+
+**Concern**: Invalid URL combinations like `?e=1&sb=0` (excess with baseline off).
+**Behavior**: Resolver fixes to `?e=1` (baseline forced on, removed from URL as it matches view default).
+**Mitigation**: Use `replaceHistory: true` on initial load so user doesn't see a redirect flash. The corrected URL is the canonical one.
