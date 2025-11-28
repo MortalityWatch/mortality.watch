@@ -1,13 +1,17 @@
-import { UI_CONFIG } from '@/lib/config/constants'
+import { UI_CONFIG, type CHART_FILTERS } from '@/lib/config/constants'
+
+type SortByValue = typeof CHART_FILTERS.SORT_OPTIONS[number]['value']
+type FilterTypeValue = typeof CHART_FILTERS.TYPE_OPTIONS[number]['value']
+type FilterFeaturedValue = typeof CHART_FILTERS.FEATURED_OPTIONS[number]['value']
 
 /**
  * Composable for managing chart gallery/list filters
  * Provides reactive filter state and computed query parameters
  */
 export function useChartFilters() {
-  const sortBy = ref('featured')
-  const filterType = ref<string | null>(null)
-  const filterFeatured = ref<string | null>(null)
+  const sortBy = ref<SortByValue>('featured')
+  const filterType = ref<FilterTypeValue>(null)
+  const filterFeatured = ref<FilterFeaturedValue>(null)
   const currentPage = ref(1)
 
   /**
