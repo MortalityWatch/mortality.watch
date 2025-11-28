@@ -511,11 +511,7 @@ describe('useRankingData', () => {
 
       await ranking.loadData()
 
-      ranking.periodOfTimeChanged({
-        label: 'Monthly',
-        name: 'monthly',
-        value: 'monthly'
-      })
+      ranking.periodOfTimeChanged('monthly')
 
       expect(mockState.periodOfTime.value).toBe('monthly')
     })
@@ -527,11 +523,7 @@ describe('useRankingData', () => {
 
       const oldBaselineFrom = mockState.baselineDateFrom.value
 
-      ranking.periodOfTimeChanged({
-        label: 'Monthly',
-        name: 'monthly',
-        value: 'monthly'
-      })
+      ranking.periodOfTimeChanged('monthly')
 
       // Baseline dates should be recalculated
       expect(mockState.baselineDateFrom.value).toBeDefined()

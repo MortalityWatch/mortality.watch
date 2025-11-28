@@ -3,9 +3,9 @@ import { computed } from 'vue'
 import MultiColorPicker from '../MultiColorPicker.vue'
 
 const props = defineProps<{
-  selectedChartStyle: { name: string, value: string, label: string }
+  selectedChartStyle: string
   chartStylesWithLabels: { name: string, value: string, label: string }[]
-  selectedDecimals: { name: string, value: string, label: string }
+  selectedDecimals: string
   decimalPrecisionsWithLabels: { name: string, value: string, label: string }[]
   colors: string[]
   isMatrixChartStyle: boolean
@@ -17,8 +17,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  'update:selectedChartStyle': [value: { name: string, value: string, label: string }]
-  'update:selectedDecimals': [value: { name: string, value: string, label: string }]
+  'update:selectedChartStyle': [value: string]
+  'update:selectedDecimals': [value: string]
   'colors-changed': [value: string[]]
   'update:showLabels': [value: boolean]
   'update:showCaption': [value: boolean]
@@ -46,6 +46,16 @@ const showQrCodeModel = computed({
   get: () => props.showQrCode,
   set: v => emit('update:showQrCode', v)
 })
+
+const selectedChartStyleModel = computed({
+  get: () => props.selectedChartStyle,
+  set: v => emit('update:selectedChartStyle', v)
+})
+
+const selectedDecimalsModel = computed({
+  get: () => props.selectedDecimals,
+  set: v => emit('update:selectedDecimals', v)
+})
 </script>
 
 <template>
@@ -58,14 +68,14 @@ const showQrCodeModel = computed({
       </h3>
       <div class="flex flex-col gap-4">
         <UiControlRow label="Chart Type">
-          <UInputMenu
-            :model-value="props.selectedChartStyle"
+          <USelect
+            v-model="selectedChartStyleModel"
             :items="props.chartStylesWithLabels"
+            value-key="value"
             placeholder="Select the chart type"
             :disabled="props.isUpdating"
             size="sm"
             class="flex-1"
-            @update:model-value="emit('update:selectedChartStyle', $event)"
           />
         </UiControlRow>
 
@@ -117,14 +127,14 @@ const showQrCodeModel = computed({
                   class="ml-2"
                 />
               </label>
-              <UInputMenu
-                :model-value="props.selectedDecimals"
+              <USelect
+                v-model="selectedDecimalsModel"
                 :items="props.decimalPrecisionsWithLabels"
+                value-key="value"
                 placeholder="Select decimal precision"
                 :disabled="props.isUpdating"
                 size="sm"
                 class="flex-1"
-                @update:model-value="emit('update:selectedDecimals', $event)"
               />
             </template>
           </UiControlRow>

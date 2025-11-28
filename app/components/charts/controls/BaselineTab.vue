@@ -4,7 +4,7 @@ import BaselineMethodPicker from '@/components/shared/BaselineMethodPicker.vue'
 import BaselinePeriodPicker from '@/components/shared/BaselinePeriodPicker.vue'
 
 const props = defineProps<{
-  selectedBaselineMethod: { name: string, value: string, label: string, disabled?: boolean }
+  selectedBaselineMethod: string
   baselineMethodsWithLabels: { name: string, value: string, label: string, disabled?: boolean }[]
   baselineMethod: string
   baselineSliderValue: string[]
@@ -14,7 +14,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  'update:selectedBaselineMethod': [value: { name: string, value: string, label: string, disabled?: boolean }]
+  'update:selectedBaselineMethod': [value: string]
   'baseline-slider-changed': [value: string[]]
 }>()
 </script>

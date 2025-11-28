@@ -9,9 +9,9 @@ import type { ViewType } from '@/lib/state/viewTypes'
 const { can } = useFeatureAccess()
 
 const props = defineProps<{
-  selectedType: { name: string, value: string, label: string }
-  selectedChartType: { name: string, value: string, label: string }
-  selectedStandardPopulation: { name: string, value: string, label: string }
+  selectedType: string
+  selectedChartType: string
+  selectedStandardPopulation: string
   view: ViewType
   isUpdating: boolean
   isPopulationType: boolean
@@ -19,13 +19,13 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  'update:selectedType': [value: { name: string, value: string, label: string }]
-  'update:selectedChartType': [value: { name: string, value: string, label: string }]
-  'update:selectedStandardPopulation': [value: { name: string, value: string, label: string }]
+  'update:selectedType': [value: string]
+  'update:selectedChartType': [value: string]
+  'update:selectedStandardPopulation': [value: string]
   'update:view': [value: ViewType]
 }>()
 
-// Add 'label' property for USelectMenu compatibility
+// Add 'label' property for USelect compatibility
 const typesWithLabels = types.map(t => ({ ...t, label: t.name }))
 const standardPopulationsWithLabels = standardPopulations.map(t => ({ ...t, label: t.name }))
 
@@ -76,9 +76,10 @@ const viewModel = computed({
 <template>
   <div class="flex flex-col gap-4">
     <UiControlRow label="Metric">
-      <UInputMenu
+      <USelect
         v-model="selectedTypeModel"
         :items="typesWithLabels"
+        value-key="value"
         placeholder="Select the metric"
         :disabled="props.isUpdating"
         size="sm"
@@ -130,9 +131,10 @@ const viewModel = computed({
       label="Standard Population"
       help-content="Reference population used to standardize mortality rates by age structure. Enables fair comparisons across countries and time periods."
     >
-      <UInputMenu
+      <USelect
         v-model="selectedStandardPopulationModel"
         :items="standardPopulationsWithLabels"
+        value-key="value"
         placeholder="Select the standard population"
         :disabled="props.isUpdating"
         size="sm"

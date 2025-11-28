@@ -21,9 +21,6 @@ import { useBrowserNavigation } from '@/composables/useBrowserNavigation'
 import type { Country } from '@/model'
 import type { ChartType } from '@/model/period'
 import {
-  standardPopulationItems,
-  baselineMethodItems,
-  decimalPrecisionItems,
   chartTypes,
   jurisdictionTypes
 } from '@/model'
@@ -80,53 +77,12 @@ const {
   decimalPrecision
 } = state
 
-// Create computed wrappers for template compatibility
-const selectedPeriodOfTime = computed({
-  get: () => {
-    const items = periodOfTimeItems
-    return items.find(x => x.value === periodOfTime.value) || items[0]!
-  },
-  set: (val: { label: string, name: string, value: string }) => {
-    periodOfTime.value = val.value
-  }
-})
-
-const selectedJurisdictionType = computed({
-  get: () => {
-    const items = jurisdictionTypeItems
-    return items.find(x => x.value === jurisdictionType.value) || items[0]!
-  },
-  set: (val: { label: string, name: string, value: string }) => {
-    jurisdictionType.value = val.value
-  }
-})
-
-const selectedStandardPopulation = computed({
-  get: () => {
-    return standardPopulationItems.find(x => x.value === standardPopulation.value) || standardPopulationItems[0]!
-  },
-  set: (val) => {
-    standardPopulation.value = val.value
-  }
-})
-
-const selectedBaselineMethod = computed({
-  get: () => {
-    return baselineMethodItems.find(x => x.value === baselineMethod.value) || baselineMethodItems[2]!
-  },
-  set: (val) => {
-    baselineMethod.value = val.value
-  }
-})
-
-const selectedDecimalPrecision = computed({
-  get: () => {
-    return decimalPrecisionItems.find(x => x.value === decimalPrecision.value) || decimalPrecisionItems[1]!
-  },
-  set: (val) => {
-    decimalPrecision.value = val.value
-  }
-})
+// Alias state values directly for template - child components now use primitive v-model
+const selectedPeriodOfTime = periodOfTime
+const selectedJurisdictionType = jurisdictionType
+const selectedStandardPopulation = standardPopulation
+const selectedBaselineMethod = baselineMethod
+const selectedDecimalPrecision = decimalPrecision
 
 // Items for select menus
 const periodOfTimeItems = chartTypes
@@ -308,8 +264,10 @@ const title = computed(() => {
       : `${titleResult}Age-Standardized Mortality Rate`
   else titleResult = isMobile() ? `${titleResult}CMR` : `${titleResult}Crude Mortality Rate`
 
-  if (selectedJurisdictionType.value.value !== 'countries') {
-    titleResult = `${titleResult} [${selectedJurisdictionType.value.name}]`
+  if (selectedJurisdictionType.value !== 'countries') {
+    // Look up the display name from the items array
+    const jurisdictionItem = jurisdictionTypeItems.find(x => x.value === selectedJurisdictionType.value)
+    titleResult = `${titleResult} [${jurisdictionItem?.name || selectedJurisdictionType.value}]`
   }
 
   return cumulative.value ? `Cumulative ${titleResult}` : titleResult
@@ -317,7 +275,7 @@ const title = computed(() => {
 
 const subtitle = computed(() => {
   return blDescription(
-    selectedBaselineMethod.value?.value || 'mean',
+    selectedBaselineMethod.value || 'mean',
     baselineSliderValue.value[0] || '',
     baselineSliderValue.value[1] || ''
   )
@@ -328,8 +286,8 @@ const displaySettings = computed(() => ({
   showPercentage: showPercentage.value,
   showPI: showPI.value,
   totalRowKey: 'TOTAL',
-  selectedBaselineMethod: selectedBaselineMethod.value?.value || 'mean',
-  decimalPrecision: selectedDecimalPrecision.value?.value || '1',
+  selectedBaselineMethod: selectedBaselineMethod.value || 'mean',
+  decimalPrecision: selectedDecimalPrecision.value || '1',
   subtitle: subtitle.value
 }))
 
@@ -379,7 +337,7 @@ const {
 } = useSaveChart({
   chartType: 'ranking',
   generateDefaultTitle: () => generateRankingTitle({
-    jurisdictionType: selectedJurisdictionType.value.value,
+    jurisdictionType: selectedJurisdictionType.value,
     dateFrom: sliderValue.value[0],
     dateTo: sliderValue.value[1],
     showASMR: showASMR.value,
@@ -391,21 +349,21 @@ const {
 const rankingStateData = computed(() => ({
   // Main type selection
   a: showASMR.value,
-  p: selectedPeriodOfTime.value.value,
-  j: selectedJurisdictionType.value.value,
+  p: selectedPeriodOfTime.value,
+  j: selectedJurisdictionType.value,
 
   // Date range
   df: sliderValue.value[0],
   dt: sliderValue.value[1],
 
   // Baseline settings
-  bm: selectedBaselineMethod.value.value,
+  bm: selectedBaselineMethod.value,
   bf: baselineSliderValue.value[0],
   bt: baselineSliderValue.value[1],
 
   // Display options
-  sp: selectedStandardPopulation.value.value,
-  dp: selectedDecimalPrecision.value.value,
+  sp: selectedStandardPopulation.value,
+  dp: selectedDecimalPrecision.value,
   t: showTotals.value,
   to: showTotalsOnly.value,
   r: showPercentage.value,
@@ -428,7 +386,7 @@ const saveToDB = async () => {
 // Generate default title for ranking charts
 const getDefaultRankingTitle = () => {
   return generateRankingTitle({
-    jurisdictionType: selectedJurisdictionType.value.value,
+    jurisdictionType: selectedJurisdictionType.value,
     dateFrom: sliderValue.value[0],
     dateTo: sliderValue.value[1],
     showASMR: showASMR.value,
@@ -689,7 +647,7 @@ watch(
             :baseline-slider-value="baselineSliderValue"
             :baseline-slider-values="baselineSliderValues"
             :green-color="greenColor"
-            :chart-type="(selectedPeriodOfTime?.value || 'yearly') as ChartType"
+            :chart-type="(selectedPeriodOfTime || 'yearly') as ChartType"
             @baseline-slider-changed="baselineSliderChangedWrapper"
           />
 
@@ -755,7 +713,7 @@ watch(
             :baseline-slider-value="baselineSliderValue"
             :baseline-slider-values="baselineSliderValues"
             :green-color="greenColor"
-            :chart-type="(selectedPeriodOfTime?.value || 'yearly') as ChartType"
+            :chart-type="(selectedPeriodOfTime || 'yearly') as ChartType"
             @baseline-slider-changed="baselineSliderChangedWrapper"
           />
 

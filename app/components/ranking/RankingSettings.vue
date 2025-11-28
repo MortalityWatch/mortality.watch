@@ -9,15 +9,15 @@ import { useRankingUIState } from '@/composables/useRankingUIState'
 // Props
 interface Props {
   showASMR: boolean
-  selectedStandardPopulation: { label: string, name: string, value: string }
+  selectedStandardPopulation: string
   showTotals: boolean
   showTotalsOnly: boolean
   hideIncomplete: boolean
   showPercentage: boolean
   cumulative: boolean
   showPI: boolean
-  selectedBaselineMethod: { label: string, name: string, value: string }
-  selectedDecimalPrecision: { label: string, name: string, value: string }
+  selectedBaselineMethod: string
+  selectedDecimalPrecision: string
   isUpdating: boolean
   allLabels: string[]
   baselineSliderValue: string[]
@@ -31,15 +31,15 @@ const props = defineProps<Props>()
 // Emits
 const emit = defineEmits<{
   'update:showASMR': [value: boolean]
-  'update:selectedStandardPopulation': [value: { label: string, name: string, value: string }]
+  'update:selectedStandardPopulation': [value: string]
   'update:showTotals': [value: boolean]
   'update:showTotalsOnly': [value: boolean]
   'update:hideIncomplete': [value: boolean]
   'update:showPercentage': [value: boolean]
   'update:cumulative': [value: boolean]
   'update:showPI': [value: boolean]
-  'update:selectedBaselineMethod': [value: { label: string, name: string, value: string }]
-  'update:selectedDecimalPrecision': [value: { label: string, name: string, value: string }]
+  'update:selectedBaselineMethod': [value: string]
+  'update:selectedDecimalPrecision': [value: string]
   'baselineSliderChanged': [value: string[]]
 }>()
 
@@ -171,10 +171,11 @@ const activeTab = ref('metric')
           >
             Standard Population
           </label>
-          <USelectMenu
+          <USelect
             id="standardPopulation"
             v-model="selectedStandardPopulationLocal"
             :items="standardPopulationItems"
+            value-key="value"
             placeholder="Select the standard population"
             size="sm"
             class="w-40"
@@ -229,10 +230,11 @@ const activeTab = ref('metric')
           >
             Decimal Places
           </label>
-          <USelectMenu
+          <USelect
             id="decimalPrecision"
             v-model="selectedDecimalPrecisionLocal"
             :items="decimalPrecisionItems"
+            value-key="value"
             placeholder="Select Decimal Precision"
             size="sm"
             class="w-20"
@@ -252,7 +254,7 @@ const activeTab = ref('metric')
 
         <BaselinePeriodPicker
           v-if="allLabels.length && selectedBaselineMethod"
-          :baseline-method="selectedBaselineMethod.value || 'mean'"
+          :baseline-method="selectedBaselineMethod || 'mean'"
           :slider-value="baselineSliderValue"
           :labels="baselineSliderValues()"
           :chart-type="chartType"

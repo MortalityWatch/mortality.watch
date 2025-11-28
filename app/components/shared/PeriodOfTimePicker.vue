@@ -3,13 +3,13 @@ import { computed } from 'vue'
 import { chartTypes } from '@/model'
 
 const props = defineProps<{
-  modelValue: { label: string, name: string, value: string }
+  modelValue: string
   isUpdating?: boolean
   items?: Array<{ label: string, name: string, value: string }>
 }>()
 
 const emit = defineEmits<{
-  'update:modelValue': [value: { label: string, name: string, value: string }]
+  'update:modelValue': [value: string]
 }>()
 
 // Use provided items or default to all chart types
@@ -37,10 +37,11 @@ const selectedValue = computed({
     label="Period of Time"
     data-tour="period-of-time"
   >
-    <UInputMenu
+    <USelect
       id="periodOfTime"
       v-model="selectedValue"
       :items="chartTypesWithLabels"
+      value-key="value"
       placeholder="Select the period of time"
       :disabled="props.isUpdating"
       size="sm"
