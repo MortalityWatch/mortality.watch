@@ -27,6 +27,10 @@ export default defineEventHandler(async (event) => {
     const query = getQuery(event)
     const queryParams = parseQueryParams(query as Record<string, unknown>)
 
+    // Check for hideQr and hideLogo parameters (for thumbnails)
+    const hideQr = query.hideQr === '1' || query.hideQr === 'true'
+    const hideLogo = query.hideLogo === '1' || query.hideLogo === 'true'
+
     // Get dimensions from query or use defaults (OG image size)
     const { width, height } = getDimensions(query as Record<string, unknown>)
 
@@ -72,7 +76,7 @@ export default defineEventHandler(async (event) => {
 
         const context = await browser.newContext({
           viewport: { width, height },
-          deviceScaleFactor: 2, // 2x for high-DPI/retina displays
+          deviceScaleFactor: 1, // Changed from 2 to fix preview size
           // Set color scheme based on dm parameter
           colorScheme: queryParams.dm === '1' ? 'dark' : 'light'
         })
@@ -89,19 +93,31 @@ export default defineEventHandler(async (event) => {
         await page.waitForSelector('canvas', { timeout: 10000 })
 
         // Hide everything except the chart container
-        await page.addStyleTag({
-          content: `
-            header { display: none !important; }
-            footer { display: none !important; }
-            #nuxt-devtools-container { display: none !important; }
-            #nuxt-devtools { display: none !important; }
-            [data-nuxt-devtools] { display: none !important; }
-            .nuxt-devtools-overlay { display: none !important; }
-            .nuxt-loading-indicator { display: none !important; }
-            /* Hide everything except the chart */
-            body > div:first-child > div:first-child > div:not(:has(canvas)) { display: none !important; }
+        let styleContent = `
+          header { display: none !important; }
+          footer { display: none !important; }
+          #nuxt-devtools-container { display: none !important; }
+          #nuxt-devtools { display: none !important; }
+          [data-nuxt-devtools] { display: none !important; }
+          .nuxt-devtools-overlay { display: none !important; }
+          .nuxt-loading-indicator { display: none !important; }
+          /* Hide everything except the chart */
+          body > div:first-child > div:first-child > div:not(:has(canvas)) { display: none !important; }
+        `
+
+        // Hide QR code and logo if requested (for thumbnails)
+        if (hideQr) {
+          styleContent += `
+            .chart-qr-code { display: none !important; }
           `
-        })
+        }
+        if (hideLogo) {
+          styleContent += `
+            .chart-logo { display: none !important; }
+          `
+        }
+
+        await page.addStyleTag({ content: styleContent })
 
         // Find the chart container element and take a screenshot
         const chartContainer = await page.locator('canvas').first()

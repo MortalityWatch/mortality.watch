@@ -70,13 +70,13 @@
 
       <!-- Chart Visualization -->
       <UCard class="mb-8">
-        <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+        <div class="rounded-lg overflow-hidden">
           <!-- Chart rendered with state -->
           <img
             v-if="chartImageUrl"
             :src="chartImageUrl"
             :alt="chart.name"
-            class="w-full h-auto rounded"
+            class="w-full h-auto"
           >
           <div
             v-else
