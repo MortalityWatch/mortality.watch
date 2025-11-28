@@ -152,10 +152,11 @@ export class DataTransformationPipeline {
 
     if (!config.cumulative) {
       // Absolute percentage
+      // Use transformPreservingUndefined for error bars to hide PI in baseline period
       return makeErrorBarData(
         this.percentageStrategy.transform(data, blDataRow),
-        this.percentageStrategy.transform(dataL, blDataLRow),
-        this.percentageStrategy.transform(dataU, blDataURow)
+        this.percentageStrategy.transformPreservingUndefined(dataL, blDataRow),
+        this.percentageStrategy.transformPreservingUndefined(dataU, blDataRow)
       )
     }
 
@@ -192,22 +193,23 @@ export class DataTransformationPipeline {
     dataL: number[],
     dataU: number[],
     blDataRow: number[],
-    blDataLRow: number[],
-    blDataURow: number[]
+    _blDataLRow: number[],
+    _blDataURow: number[]
   ): ChartErrorDataPoint[] {
     const cumData = this.cumulativeStrategy.transform(data)
     const cumBl = this.cumulativeStrategy.transform(blDataRow)
 
     if (config.showCumPi) {
+      // Use transformPreservingUndefined to hide PI in baseline period
       return makeErrorBarData(
         this.percentageStrategy.transform(cumData, cumBl),
-        this.percentageStrategy.transform(
+        this.percentageStrategy.transformPreservingUndefined(
           this.cumulativeStrategy.transform(dataL),
-          this.cumulativeStrategy.transform(blDataLRow)
+          cumBl
         ),
-        this.percentageStrategy.transform(
+        this.percentageStrategy.transformPreservingUndefined(
           this.cumulativeStrategy.transform(dataU),
-          this.cumulativeStrategy.transform(blDataURow)
+          cumBl
         )
       )
     }
@@ -228,22 +230,23 @@ export class DataTransformationPipeline {
     dataL: number[],
     dataU: number[],
     blDataRow: number[],
-    blDataLRow: number[],
-    blDataURow: number[]
+    _blDataLRow: number[],
+    _blDataURow: number[]
   ): ChartErrorDataPoint[] {
     const totalData = this.totalStrategy.transform(data)
     const totalBl = this.totalStrategy.transform(blDataRow)
 
     if (config.showCumPi) {
+      // Use transformPreservingUndefined to hide PI if any data is undefined
       return makeErrorBarData(
         this.percentageStrategy.transform(totalData, totalBl),
-        this.percentageStrategy.transform(
+        this.percentageStrategy.transformPreservingUndefined(
           this.totalStrategy.transform(dataL),
-          this.totalStrategy.transform(blDataLRow)
+          totalBl
         ),
-        this.percentageStrategy.transform(
+        this.percentageStrategy.transformPreservingUndefined(
           this.totalStrategy.transform(dataU),
-          this.totalStrategy.transform(blDataURow)
+          totalBl
         )
       )
     }

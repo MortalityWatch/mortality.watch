@@ -182,10 +182,14 @@ export function useExplorerHelpers(
    * baseline data is always calculated and stored, making baseline toggle a
    * pure display operation without requiring data re-fetch.
    *
+   * Important: In excess mode, we still need baseline keys for the baseline
+   * calculation, even though the baseline line itself isn't displayed. The
+   * baseline is used to calculate excess values and percentage transformations.
+   *
    * @returns Array of field keys including baseline fields for data fetching
    */
   const getBaseKeysForFetch = (): (keyof NumberEntryFields)[] =>
-    getKeyForType(type.value, hasBaseline(), standardPopulation.value, false)
+    getKeyForType(type.value, !isPopulationType(), standardPopulation.value, false)
 
   /**
    * Computed property indicating if the prediction interval toggle should be disabled.

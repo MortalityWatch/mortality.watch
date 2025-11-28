@@ -30,14 +30,14 @@ describe('PercentageTransformStrategy', () => {
       expect(result[2]).toBe(2)
     })
 
-    it('should handle undefined values in data', () => {
-      const data = [10, undefined as unknown as number, 30]
+    it('should convert undefined values in data to 0', () => {
+      const data: (number | undefined)[] = [10, undefined, 30]
       const baseline = [5, 10, 15]
 
       const result = strategy.transform(data, baseline)
 
       expect(result[0]).toBe(2)
-      expect(result[1]).toBe(0) // undefined treated as 0
+      expect(result[1]).toBe(0) // undefined converted to 0 for main data
       expect(result[2]).toBe(2)
     })
 
@@ -63,6 +63,28 @@ describe('PercentageTransformStrategy', () => {
       expect(result[1]).toBe(2)
       expect(result[2]).toBe(30) // undefined baseline
       expect(result[3]).toBe(40) // undefined baseline
+    })
+  })
+
+  describe('transformPreservingUndefined', () => {
+    it('should preserve undefined values in data for error bar bounds', () => {
+      const data: (number | undefined)[] = [10, undefined, 30]
+      const baseline = [5, 10, 15]
+
+      const result = strategy.transformPreservingUndefined(data, baseline)
+
+      expect(result[0]).toBe(2)
+      expect(result[1]).toBe(undefined) // undefined preserved for PI hiding
+      expect(result[2]).toBe(2)
+    })
+
+    it('should calculate percentages normally for defined values', () => {
+      const data = [100, 200, 300]
+      const baseline = [50, 100, 150]
+
+      const result = strategy.transformPreservingUndefined(data, baseline)
+
+      expect(result).toEqual([2, 2, 2])
     })
   })
 

@@ -36,12 +36,13 @@ const calculateExcess = (data: DatasetEntry, key: keyof DatasetEntry): void => {
   for (let i = 0; i < currentValues.length; i++) {
     const currentValue = currentValues[i] ?? 0
     const base = baseline[i] ?? 0
-    const baseLower = baselineLower[i] ?? 0
-    const baseUpper = baselineUpper[i] ?? 0
+    const baseLower = baselineLower[i]
+    const baseUpper = baselineUpper[i]
 
     excess[i] = currentValue - base
-    excessLower[i] = currentValue - baseLower
-    excessUpper[i] = currentValue - baseUpper
+    // Propagate undefined for periods where PI is not calculated (baseline period)
+    excessLower[i] = baseLower !== undefined ? currentValue - baseLower : undefined
+    excessUpper[i] = baseUpper !== undefined ? currentValue - baseUpper : undefined
   }
 }
 
@@ -146,15 +147,16 @@ const calculateBaseline = async (
     const text = await dataLoader.fetchBaseline(url)
     const json = JSON.parse(text)
 
-    // Update NA to undefined and trim forecast values (API returns input length + h)
+    // Update NA/null to undefined and trim forecast values (API returns input length + h)
     // We only want the first n values (matching our input data length)
+    // Note: Stats API returns null for baseline period where PI is not calculated
     const inputLength = all_data.length
     json.y = (json.y as (string | number)[]).slice(0, inputLength)
-    json.lower = (json.lower as (string | number)[]).slice(0, inputLength).map((x: string | number) =>
-      x === 'NA' ? undefined : x
+    json.lower = (json.lower as (string | number | null)[]).slice(0, inputLength).map((x: string | number | null) =>
+      x === 'NA' || x === null ? undefined : x
     )
-    json.upper = (json.upper as (string | number)[]).slice(0, inputLength).map((x: string | number) =>
-      x === 'NA' ? undefined : x
+    json.upper = (json.upper as (string | number | null)[]).slice(0, inputLength).map((x: string | number | null) =>
+      x === 'NA' || x === null ? undefined : x
     )
     if (json.zscore) {
       json.zscore = (json.zscore as (string | number)[]).slice(0, inputLength)
