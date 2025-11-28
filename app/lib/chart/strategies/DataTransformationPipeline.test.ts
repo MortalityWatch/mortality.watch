@@ -127,6 +127,51 @@ describe('DataTransformationPipeline', () => {
 
       expect(result).toEqual([2, 2, 2])
     })
+
+    it('should calculate excess percentage relative to baseline', () => {
+      // Simulates excess view: key is deaths_excess, baseline is deaths_baseline
+      const data = {
+        deaths_excess: [50, 100, 150], // excess deaths = actual - baseline
+        deaths_baseline: [1000, 1000, 1000] // baseline
+      }
+      const config = {
+        showPercentage: true,
+        cumulative: false,
+        showTotal: false,
+        showCumPi: false,
+        isAsmrType: false
+      }
+
+      const result = pipeline.transformData(config, data, 'deaths_excess')
+
+      // excess / baseline: [50/1000, 100/1000, 150/1000] = [0.05, 0.1, 0.15]
+      expect(result).toEqual([0.05, 0.1, 0.15])
+    })
+
+    it('should handle missing baseline by dividing by 1', () => {
+      // Documents the current behavior when baseline data is missing.
+      // In normal operation, useExplorerHelpers.getBaseKeysForFetch() ensures
+      // baseline is always fetched, so this edge case shouldn't occur in practice.
+      // If it does occur (e.g., due to a data loading race condition), the
+      // fallback to dividing by 1 produces visually incorrect percentages.
+      const data = {
+        deaths_excess: [500, 1000, 1500] // excess deaths
+        // deaths_baseline missing!
+      }
+      const config = {
+        showPercentage: true,
+        cumulative: false,
+        showTotal: false,
+        showCumPi: false,
+        isAsmrType: false
+      }
+
+      const result = pipeline.transformData(config, data, 'deaths_excess')
+
+      // When baseline is empty, divides by 1 (fallback), returning raw excess values
+      // In the UI, these would display as 50000%, 100000%, 150000%
+      expect(result).toEqual([500, 1000, 1500])
+    })
   })
 
   describe('transformErrorBarData', () => {

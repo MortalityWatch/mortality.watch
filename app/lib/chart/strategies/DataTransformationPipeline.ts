@@ -147,15 +147,14 @@ export class DataTransformationPipeline {
   ): ChartErrorDataPoint[] {
     const blKey = this.percentageStrategy.getBaselineKey(config.isAsmrType, key)
     const blDataRow = dataRaw[blKey] ?? []
-    const blDataLRow = dataRaw[this.percentageStrategy.getBaselineKey(config.isAsmrType, `${key}_lower`)] ?? []
-    const blDataURow = dataRaw[this.percentageStrategy.getBaselineKey(config.isAsmrType, `${key}_upper`)] ?? []
 
     if (!config.cumulative) {
       // Absolute percentage
+      // Use transformPreservingUndefined for error bars to hide PI in baseline period
       return makeErrorBarData(
         this.percentageStrategy.transform(data, blDataRow),
-        this.percentageStrategy.transform(dataL, blDataLRow),
-        this.percentageStrategy.transform(dataU, blDataURow)
+        this.percentageStrategy.transformPreservingUndefined(dataL, blDataRow),
+        this.percentageStrategy.transformPreservingUndefined(dataU, blDataRow)
       )
     }
 
@@ -165,9 +164,7 @@ export class DataTransformationPipeline {
         data,
         dataL,
         dataU,
-        blDataRow,
-        blDataLRow,
-        blDataURow
+        blDataRow
       )
     }
 
@@ -177,37 +174,40 @@ export class DataTransformationPipeline {
       data,
       dataL,
       dataU,
-      blDataRow,
-      blDataLRow,
-      blDataURow
+      blDataRow
     )
   }
 
   /**
    * Transform cumulative percentage error bar data
+   *
+   * Note: Error bar bounds (dataL/dataU) are divided by the baseline center (blDataRow),
+   * not the baseline bounds. This is correct because:
+   * - dataL/dataU represent the prediction interval around the excess value
+   * - The percentage should show "excess as % of baseline" for both center and bounds
+   * - Using baseline bounds would incorrectly mix two different uncertainty measures
    */
   private transformCumulativePercentageErrorBar(
     config: TransformConfig,
     data: number[],
     dataL: number[],
     dataU: number[],
-    blDataRow: number[],
-    blDataLRow: number[],
-    blDataURow: number[]
+    blDataRow: number[]
   ): ChartErrorDataPoint[] {
     const cumData = this.cumulativeStrategy.transform(data)
     const cumBl = this.cumulativeStrategy.transform(blDataRow)
 
     if (config.showCumPi) {
+      // Use transformPreservingUndefined to hide PI in baseline period
       return makeErrorBarData(
         this.percentageStrategy.transform(cumData, cumBl),
-        this.percentageStrategy.transform(
+        this.percentageStrategy.transformPreservingUndefined(
           this.cumulativeStrategy.transform(dataL),
-          this.cumulativeStrategy.transform(blDataLRow)
+          cumBl
         ),
-        this.percentageStrategy.transform(
+        this.percentageStrategy.transformPreservingUndefined(
           this.cumulativeStrategy.transform(dataU),
-          this.cumulativeStrategy.transform(blDataURow)
+          cumBl
         )
       )
     }
@@ -221,29 +221,30 @@ export class DataTransformationPipeline {
 
   /**
    * Transform total percentage error bar data
+   *
+   * Note: Error bar bounds use baseline center (see transformCumulativePercentageErrorBar)
    */
   private transformTotalPercentageErrorBar(
     config: TransformConfig,
     data: number[],
     dataL: number[],
     dataU: number[],
-    blDataRow: number[],
-    blDataLRow: number[],
-    blDataURow: number[]
+    blDataRow: number[]
   ): ChartErrorDataPoint[] {
     const totalData = this.totalStrategy.transform(data)
     const totalBl = this.totalStrategy.transform(blDataRow)
 
     if (config.showCumPi) {
+      // Use transformPreservingUndefined to hide PI if any data is undefined
       return makeErrorBarData(
         this.percentageStrategy.transform(totalData, totalBl),
-        this.percentageStrategy.transform(
+        this.percentageStrategy.transformPreservingUndefined(
           this.totalStrategy.transform(dataL),
-          this.totalStrategy.transform(blDataLRow)
+          totalBl
         ),
-        this.percentageStrategy.transform(
+        this.percentageStrategy.transformPreservingUndefined(
           this.totalStrategy.transform(dataU),
-          this.totalStrategy.transform(blDataURow)
+          totalBl
         )
       )
     }
