@@ -83,7 +83,7 @@ export function useExplorerState() {
   )
   const showBaseline = useUrlState<boolean>(
     stateFieldEncoders.showBaseline.key,
-    true,
+    false,
     stateFieldEncoders.showBaseline.encode,
     stateFieldEncoders.showBaseline.decode
   )
@@ -113,7 +113,7 @@ export function useExplorerState() {
   )
   const showPredictionInterval = useUrlState<boolean>(
     stateFieldEncoders.showPredictionInterval.key,
-    true,
+    false,
     stateFieldEncoders.showPredictionInterval.encode,
     stateFieldEncoders.showPredictionInterval.decode
   )
