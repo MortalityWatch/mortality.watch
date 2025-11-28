@@ -73,7 +73,15 @@ export class MetadataService {
     // Find entries for each country
     const typesByCountry = countries.map((country) => {
       const entries = this.metadata!.filter(e => e.iso3c === country)
-      return new Set(entries.map(e => e.type))
+      const types = new Set(entries.map(e => e.type))
+
+      // Data derivation: Weekly data (type '3') can be aggregated to yearly (type '1') and monthly (type '2')
+      if (types.has('3')) {
+        types.add('1') // Weekly can be aggregated to yearly
+        types.add('2') // Weekly can be aggregated to monthly
+      }
+
+      return types
     })
 
     if (typesByCountry.length === 0) return []
@@ -105,9 +113,19 @@ export class MetadataService {
 
     // Find entries for each country with matching type
     const ageGroupsByCountry = countries.map((country) => {
-      const entries = this.metadata!.filter(
+      let entries = this.metadata!.filter(
         e => e.iso3c === country && e.type === dataType
       )
+
+      // Data derivation: For yearly/monthly types, also check weekly data (type 3)
+      // since we can aggregate weekly data to yearly or monthly
+      if (dataType === '1' || dataType === '2') {
+        const weeklyEntries = this.metadata!.filter(
+          e => e.iso3c === country && e.type === '3'
+        )
+        entries = [...entries, ...weeklyEntries]
+      }
+
       const allGroups = entries.flatMap(e => e.ageGroups)
       return new Set(allGroups)
     })
@@ -143,9 +161,9 @@ export class MetadataService {
       && ageGroups.some(ag => e.ageGroups.includes(ag))
     )
 
-    // Fallback: For yearly/fluseason/midyear (type 1), also check weekly data (type 3)
-    // since we can calculate yearly aggregates from weekly data
-    if (dataType === '1') {
+    // Data derivation: For yearly/monthly types, also check weekly data (type 3)
+    // since we can aggregate weekly data to yearly or monthly
+    if (dataType === '1' || dataType === '2') {
       const weeklyEntries = this.metadata.filter(e =>
         countries.includes(e.iso3c)
         && e.type === '3'
