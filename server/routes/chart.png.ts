@@ -72,7 +72,9 @@ export default defineEventHandler(async (event) => {
 
         const context = await browser.newContext({
           viewport: { width, height },
-          deviceScaleFactor: 2 // 2x for high-DPI/retina displays
+          deviceScaleFactor: 2, // 2x for high-DPI/retina displays
+          // Set color scheme based on dm parameter
+          colorScheme: queryParams.dm === '1' ? 'dark' : 'light'
         })
 
         const page = await context.newPage()
