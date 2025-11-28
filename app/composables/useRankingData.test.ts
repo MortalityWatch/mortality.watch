@@ -130,7 +130,7 @@ describe('useRankingData', () => {
       periodOfTime: ref('yearly'),
       jurisdictionType: ref('all'),
       showASMR: ref(false),
-      standardPopulation: ref('who2015'),
+      standardPopulation: ref('who'),
       baselineMethod: ref('mean'),
       baselineDateFrom: ref('2017'),
       baselineDateTo: ref('2019'),
@@ -240,7 +240,7 @@ describe('useRankingData', () => {
 
       expect(mockDataFetcher.fetchChartData).toHaveBeenCalledWith(
         expect.objectContaining({
-          dataKey: 'asmr_who2015',
+          dataKey: 'asmr_who',
           isAsmr: true
         })
       )
