@@ -45,128 +45,93 @@
         <UForm
           :schema="contactSchema"
           :state="formState"
+          class="space-y-4"
           @submit="onSubmit"
         >
-          <div class="space-y-4">
-            <!-- Name Field -->
-            <UFormGroup
-              label="Name"
-              name="name"
-              required
-            >
-              <UInput
-                v-model="formState.name"
-                placeholder="Your name"
-                :disabled="isSubmitting"
-              />
-            </UFormGroup>
-
-            <!-- Email Field -->
-            <UFormGroup
-              label="Email"
-              name="email"
-              required
-            >
-              <UInput
-                v-model="formState.email"
-                type="email"
-                placeholder="your.email@example.com"
-                :disabled="isSubmitting"
-              />
-            </UFormGroup>
-
-            <!-- Subject Field -->
-            <UFormGroup
-              label="Subject"
-              name="subject"
-              required
-            >
-              <UInput
-                v-model="formState.subject"
-                placeholder="What is this about?"
-                :disabled="isSubmitting"
-              />
-            </UFormGroup>
-
-            <!-- Message Field -->
-            <UFormGroup
-              label="Message"
-              name="message"
-              required
-            >
-              <UTextarea
-                v-model="formState.message"
-                placeholder="Tell us more..."
-                :rows="6"
-                :disabled="isSubmitting"
-              />
-            </UFormGroup>
-
-            <!-- Include Chart URL Checkbox -->
-            <UFormGroup
-              v-if="currentChartUrl"
-              name="includeChartUrl"
-            >
-              <UCheckbox
-                v-model="formState.includeChartUrl"
-                :label="`Include current chart URL (${currentPageName})`"
-                :disabled="isSubmitting"
-              />
-            </UFormGroup>
-
-            <!-- Error Message -->
-            <UAlert
-              v-if="errorMessage"
-              color="error"
-              variant="soft"
-              :title="errorMessage"
-              :close-button="{ icon: 'i-lucide-x', color: 'gray', variant: 'link' }"
-              @close="errorMessage = ''"
+          <UFormField
+            label="Name"
+            name="name"
+            required
+            class="w-full"
+          >
+            <UInput
+              v-model="formState.name"
+              class="w-full"
+              :disabled="isSubmitting"
             />
+          </UFormField>
 
-            <!-- Submit Button -->
-            <div class="flex justify-end gap-3 pt-2">
-              <UButton
-                type="submit"
-                size="lg"
-                :loading="isSubmitting"
-                :disabled="isSubmitting"
-              >
-                <Icon
-                  name="i-lucide-send"
-                  class="w-5 h-5"
-                />
-                Send Message
-              </UButton>
-            </div>
-          </div>
+          <UFormField
+            label="Email"
+            name="email"
+            required
+            class="w-full"
+          >
+            <UInput
+              v-model="formState.email"
+              type="email"
+              class="w-full"
+              :disabled="isSubmitting"
+            />
+          </UFormField>
+
+          <UFormField
+            label="Subject"
+            name="subject"
+            required
+            class="w-full"
+          >
+            <UInput
+              v-model="formState.subject"
+              class="w-full"
+              :disabled="isSubmitting"
+            />
+          </UFormField>
+
+          <UFormField
+            label="Message"
+            name="message"
+            required
+            class="w-full"
+          >
+            <UTextarea
+              v-model="formState.message"
+              class="w-full"
+              :rows="6"
+              :disabled="isSubmitting"
+            />
+          </UFormField>
+
+          <UFormField
+            v-if="currentChartUrl"
+            name="includeChartUrl"
+          >
+            <UCheckbox
+              v-model="formState.includeChartUrl"
+              :label="`Include current chart URL (${currentPageName})`"
+              :disabled="isSubmitting"
+            />
+          </UFormField>
+
+          <UAlert
+            v-if="errorMessage"
+            color="error"
+            variant="soft"
+            :title="errorMessage"
+            icon="i-lucide-alert-circle"
+            :close-button="{ icon: 'i-lucide-x', color: 'gray', variant: 'link' }"
+            @close="errorMessage = ''"
+          />
+
+          <UButton
+            type="submit"
+            block
+            :loading="isSubmitting"
+            :disabled="isSubmitting"
+          >
+            Send Message
+          </UButton>
         </UForm>
-      </UCard>
-
-      <!-- Additional Information -->
-      <UCard
-        v-if="!showSuccess"
-        class="mt-6"
-      >
-        <div class="text-center text-sm text-gray-600 dark:text-gray-400 space-y-2">
-          <p>
-            We typically respond within 24-48 hours.
-          </p>
-          <p>
-            For urgent issues, please include "URGENT" in your subject line.
-          </p>
-          <p>
-            For real-time support and community discussions, join our
-            <ULink
-              to="https://discord.gg/nkSUpBV3Zr"
-              target="_blank"
-              active-class="text-primary"
-              inactive-class="text-primary hover:text-primary-600 dark:hover:text-primary-400"
-            >
-              Discord server
-            </ULink>.
-          </p>
-        </div>
       </UCard>
     </div>
   </div>
