@@ -128,7 +128,8 @@ export function useExplorerChartActions(
         isExcess: state.isExcess.value,
         ageGroups: state.ageGroups.value,
         dateFrom: state.dateFrom.value,
-        dateTo: state.dateTo.value
+        dateTo: state.dateTo.value,
+        view: state.view?.value
       })
     }
   })

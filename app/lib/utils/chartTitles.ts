@@ -70,18 +70,25 @@ function formatDateRange(dateFrom: string | undefined, dateTo: string | undefine
 }
 
 /**
- * Get readable metric name from type value
+ * Get readable metric name from type value with view mode
  */
-function getMetricName(type: string, isExcess: boolean = false): string {
+function getMetricName(type: string, view?: 'mortality' | 'excess' | 'zscore'): string {
   const typeConfig = types.find(t => t.value === type)
   if (!typeConfig) return type
 
   const baseName = typeConfig.name.replace(/\s*\([^)]*\)/g, '') // Remove abbreviations in parentheses
 
-  if (isExcess && type !== 'le' && type !== 'population') {
+  // Z-Score view: prefix with "Z-Score "
+  if (view === 'zscore') {
+    return `Z-Score ${baseName}`
+  }
+
+  // Excess view: prefix with "Excess " (except for LE and population)
+  if (view === 'excess' && type !== 'le' && type !== 'population') {
     return `Excess ${baseName}`
   }
 
+  // Mortality view or undefined: no prefix
   return baseName
 }
 
@@ -154,6 +161,7 @@ export function generateExplorerTitle(params: {
   ageGroups?: string[]
   dateFrom?: string
   dateTo?: string
+  view?: 'mortality' | 'excess' | 'zscore'
 }): string {
   const {
     countries,
@@ -162,13 +170,17 @@ export function generateExplorerTitle(params: {
     isExcess,
     ageGroups = [],
     dateFrom,
-    dateTo
+    dateTo,
+    view
   } = params
 
   const parts: string[] = []
 
+  // Determine view mode if not explicitly provided
+  const effectiveView = view || (isExcess ? 'excess' : 'mortality')
+
   // Metric name
-  parts.push(getMetricName(type, isExcess))
+  parts.push(getMetricName(type, effectiveView))
 
   // Countries
   const countriesStr = formatCountries(countries, allCountries, 3)

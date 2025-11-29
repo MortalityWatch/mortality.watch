@@ -565,5 +565,101 @@ describe('chartTitles', () => {
       })
       expect(result).toBe('Excess Age-Standardized Mortality Rate - USA vs GBR - 0-14 & 15-64 - 2019-2023')
     })
+
+    it('should handle z-score view with explicit view parameter', () => {
+      const result = generateExplorerTitle({
+        countries: ['USA'],
+        allCountries: mockCountries,
+        type: 'cmr',
+        isExcess: false,
+        ageGroups: ['TOTAL'],
+        dateFrom: '2020/01',
+        dateTo: '2024/12',
+        view: 'zscore'
+      })
+      expect(result).toBe('Z-Score Crude Mortality Rate - USA - 2020-2024')
+    })
+
+    it('should handle z-score view for deaths metric', () => {
+      const result = generateExplorerTitle({
+        countries: ['DEU'],
+        allCountries: mockCountries,
+        type: 'deaths',
+        isExcess: false,
+        ageGroups: ['TOTAL'],
+        dateFrom: '2019/01',
+        dateTo: '2023/12',
+        view: 'zscore'
+      })
+      expect(result).toBe('Z-Score Deaths - Germany - 2019-2023')
+    })
+
+    it('should handle z-score view with multiple countries', () => {
+      const result = generateExplorerTitle({
+        countries: ['USA', 'GBR', 'DEU'],
+        allCountries: mockCountries,
+        type: 'asmr',
+        isExcess: false,
+        ageGroups: ['TOTAL'],
+        dateFrom: '2020/01',
+        dateTo: '2023/12',
+        view: 'zscore'
+      })
+      expect(result).toBe('Z-Score Age-Standardized Mortality Rate - USA, GBR & Germany - 2020-2023')
+    })
+
+    it('should fall back to excess view when isExcess is true and view is not provided', () => {
+      const result = generateExplorerTitle({
+        countries: ['USA'],
+        allCountries: mockCountries,
+        type: 'deaths',
+        isExcess: true,
+        ageGroups: ['TOTAL'],
+        dateFrom: '2020/01',
+        dateTo: '2023/12'
+      })
+      expect(result).toBe('Excess Deaths - USA - 2020-2023')
+    })
+
+    it('should fall back to mortality view when isExcess is false and view is not provided', () => {
+      const result = generateExplorerTitle({
+        countries: ['USA'],
+        allCountries: mockCountries,
+        type: 'deaths',
+        isExcess: false,
+        ageGroups: ['TOTAL'],
+        dateFrom: '2020/01',
+        dateTo: '2023/12'
+      })
+      expect(result).toBe('Deaths - USA - 2020-2023')
+    })
+
+    it('should explicitly use mortality view when provided', () => {
+      const result = generateExplorerTitle({
+        countries: ['USA'],
+        allCountries: mockCountries,
+        type: 'cmr',
+        isExcess: false,
+        ageGroups: ['TOTAL'],
+        dateFrom: '2020/01',
+        dateTo: '2023/12',
+        view: 'mortality'
+      })
+      expect(result).toBe('Crude Mortality Rate - USA - 2020-2023')
+    })
+
+    it('should explicitly use excess view when provided', () => {
+      const result = generateExplorerTitle({
+        countries: ['USA'],
+        allCountries: mockCountries,
+        type: 'cmr',
+        isExcess: false,
+        ageGroups: ['TOTAL'],
+        dateFrom: '2020/01',
+        dateTo: '2023/12',
+        view: 'excess'
+      })
+      expect(result).toBe('Excess Crude Mortality Rate - USA - 2020-2023')
+    })
   })
 })
