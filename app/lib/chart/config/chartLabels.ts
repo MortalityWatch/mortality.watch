@@ -4,7 +4,7 @@
  * Functions for formatting chart labels, tooltips, and axis ticks
  */
 
-import { asPercentage, numberWithCommas, round } from '../chartUtils'
+import { asPercentage, numberWithCommas } from '../chartUtils'
 
 /**
  * Format confidence interval text
@@ -22,6 +22,12 @@ function formatCI(
 
 /**
  * Get maximum decimal places for display
+ *
+ * Uses magnitude-aware precision for 'auto' mode:
+ * - 100+: no decimals (e.g., 100)
+ * - 10-100: 1 decimal (e.g., 90.1)
+ * - 1-10: 1 decimal (e.g., 9.1)
+ * - <1: 2 decimals (e.g., 0.91)
  */
 function getMaxDecimals(
   y: number,
@@ -32,11 +38,17 @@ function getMaxDecimals(
   if (decimals !== 'auto') {
     return parseInt(decimals)
   }
-  return short
-    ? Math.max(0, 3 - Math.min(3, round(y).toString().length))
-    : showDecimals
-      ? 1
-      : 0
+
+  // For non-short mode, use existing behavior
+  if (!short) {
+    return showDecimals ? 1 : 0
+  }
+
+  // For short mode (tooltips, etc.), use magnitude-aware precision
+  const absY = Math.abs(y)
+  if (absY >= 100) return 0
+  if (absY >= 1) return 1
+  return 2
 }
 
 /**
