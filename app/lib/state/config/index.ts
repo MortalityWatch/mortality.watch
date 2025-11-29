@@ -10,8 +10,16 @@
 // View configurations
 export { VIEWS } from './views'
 
-// Global constraints
-export { STATE_CONSTRAINTS } from './constraints'
+// Global constraints and field update strategy
+export {
+  STATE_CONSTRAINTS,
+  FIELD_UPDATE_STRATEGY,
+  type FieldUpdateType,
+  getFieldUpdateType,
+  requiresDataDownload,
+  requiresDatasetUpdate,
+  requiresFilterUpdate
+} from './constraints'
 
 // Field encoders and defaults
 export {

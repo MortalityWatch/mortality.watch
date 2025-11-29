@@ -18,6 +18,8 @@ import { getViewConstraints } from './viewConstraints'
 import type { ViewType } from './viewTypes'
 import { VIEWS } from '../config/views'
 import { computeUIState, type UIFieldState } from './uiStateComputer'
+import type { ChartStateSnapshot } from '@/lib/chart/types'
+import type { ChartType } from '@/model/period'
 
 /**
  * Get defaults for a view, with view-specific fields added
@@ -663,6 +665,55 @@ export class StateResolver {
       await router.replace({ query: newQuery })
     } else {
       await router.push({ query: newQuery })
+    }
+  }
+
+  /**
+   * Create a ChartStateSnapshot from a resolved state object.
+   *
+   * Used to generate chart data before applying resolved state to refs,
+   * ensuring consistent state during view transitions.
+   *
+   * This centralizes the snapshot creation logic that was previously
+   * duplicated in explorer.vue's createSnapshotFromResolved function.
+   *
+   * @param resolvedState - The resolved state object from StateResolver
+   * @param currentState - Optional current state to fill in missing fields
+   * @returns A complete ChartStateSnapshot ready for chart data generation
+   */
+  static createSnapshot(
+    resolvedState: Record<string, unknown>,
+    currentState?: Record<string, unknown>
+  ): ChartStateSnapshot {
+    // Use provided current state or empty object for fallbacks
+    const current = currentState ?? {}
+
+    return {
+      countries: (resolvedState.countries ?? current.countries ?? []) as string[],
+      type: (resolvedState.type ?? current.type ?? 'asmr') as string,
+      chartType: (resolvedState.chartType ?? current.chartType ?? 'fluseason') as ChartType,
+      chartStyle: (resolvedState.chartStyle ?? current.chartStyle ?? 'line') as string,
+      ageGroups: (resolvedState.ageGroups ?? current.ageGroups ?? ['all']) as string[],
+      standardPopulation: (resolvedState.standardPopulation ?? current.standardPopulation ?? 'who') as string,
+      view: (resolvedState.view ?? current.view ?? 'mortality') as string,
+      isExcess: (resolvedState.isExcess ?? current.isExcess ?? false) as boolean,
+      isZScore: (resolvedState.isZScore ?? current.isZScore ?? false) as boolean,
+      dateFrom: (resolvedState.dateFrom ?? current.dateFrom) as string | undefined,
+      dateTo: (resolvedState.dateTo ?? current.dateTo) as string | undefined,
+      sliderStart: (resolvedState.sliderStart ?? current.sliderStart ?? '2010') as string,
+      baselineDateFrom: (resolvedState.baselineDateFrom ?? current.baselineDateFrom) as string | undefined,
+      baselineDateTo: (resolvedState.baselineDateTo ?? current.baselineDateTo) as string | undefined,
+      showBaseline: (resolvedState.showBaseline ?? current.showBaseline ?? true) as boolean,
+      baselineMethod: (resolvedState.baselineMethod ?? current.baselineMethod ?? 'mean') as string,
+      cumulative: (resolvedState.cumulative ?? current.cumulative ?? false) as boolean,
+      showTotal: (resolvedState.showTotal ?? current.showTotal ?? false) as boolean,
+      maximize: (resolvedState.maximize ?? current.maximize ?? false) as boolean,
+      showPredictionInterval: (resolvedState.showPredictionInterval ?? current.showPredictionInterval ?? true) as boolean,
+      showLabels: (resolvedState.showLabels ?? current.showLabels ?? true) as boolean,
+      showPercentage: (resolvedState.showPercentage ?? current.showPercentage ?? false) as boolean,
+      showLogarithmic: (resolvedState.showLogarithmic ?? current.showLogarithmic ?? false) as boolean,
+      userColors: (resolvedState.userColors ?? current.userColors) as string[] | undefined,
+      decimals: (resolvedState.decimals ?? current.decimals ?? 'auto') as string
     }
   }
 }

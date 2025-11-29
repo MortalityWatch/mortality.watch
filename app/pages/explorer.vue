@@ -14,6 +14,7 @@ import { useExplorerColors } from '@/composables/useExplorerColors'
 import { useExplorerChartActions } from '@/composables/useExplorerChartActions'
 import { useTutorial } from '@/composables/useTutorial'
 import { useBrowserNavigation } from '@/composables/useBrowserNavigation'
+import { useUpdateQueue } from '@/composables/useUpdateQueue'
 import type {
   Country
 } from '@/model'
@@ -209,68 +210,21 @@ const {
   setupResizeObserver
 } = useChartResize()
 
-const handleUpdate = async (key: string) => {
-  if (state.countries.value.length) {
-    const shouldDownloadDataset = ['_countries', '_type', '_chartType', '_ageGroups'].includes(key)
-    const shouldUpdateDataset = [
-      '_baselineMethod',
-      '_standardPopulation',
-      '_baselineDateFrom',
-      '_baselineDateTo',
-      '_sliderStart'
-    ].includes(key)
-    || (state.baselineMethod.value !== 'auto' && key === '_cumulative')
-
-    // Options that affect chart rendering but don't need data redownload
-    const needsFilterUpdate = [
-      'dateRange', // Date range is just a filter, not a data download
-      '_chartStyle',
-      '_isExcess',
-      '_view', // View changes affect chart rendering (e.g., z-score transform)
-      '_showBaseline',
-      '_cumulative',
-      '_showPredictionInterval',
-      '_showPercentage',
-      '_showTotal',
-      '_userColors'
-    ].includes(key)
-
-    // Always call updateData if any trigger is true OR if it's a filter update
-    if (shouldDownloadDataset || shouldUpdateDataset || needsFilterUpdate) {
-      await updateData(shouldDownloadDataset, shouldUpdateDataset)
+// Update queue - prevents concurrent updates and handles field-based update strategy
+const {
+  queueUpdate: update,
+  isUpdating: isCurrentlyUpdating,
+  startInternalUrlUpdate,
+  endInternalUrlUpdate,
+  shouldSkipUpdate: isInternalUrlUpdate
+} = useUpdateQueue({
+  onUpdate: async (shouldDownload, shouldUpdate) => {
+    if (state.countries.value.length) {
+      await updateData(shouldDownload, shouldUpdate)
     }
-  }
-}
-
-// Prevent concurrent updates using queue pattern
-let isCurrentlyUpdating = false
-let pendingUpdateKey: string | null = null
-
-// Flag to skip browser navigation handler when WE update the URL
-// (vs when user clicks back/forward)
-let isInternalUrlUpdate = false
-
-const update = async (key: string) => {
-  // If already updating, queue this update
-  if (isCurrentlyUpdating) {
-    pendingUpdateKey = key
-    return
-  }
-
-  isCurrentlyUpdating = true
-  try {
-    await handleUpdate(key)
-
-    // Process any pending update
-    if (pendingUpdateKey) {
-      const nextKey = pendingUpdateKey
-      pendingUpdateKey = null
-      await handleUpdate(nextKey)
-    }
-  } finally {
-    isCurrentlyUpdating = false
-  }
-}
+  },
+  getCurrentState: () => state.getCurrentStateValues()
+})
 
 // Special handler for chart preset (local state, not URL)
 const handleChartPresetChanged = (v: string) => {
@@ -300,10 +254,10 @@ const handleStateChange = async (field: string, value: unknown, refreshKey: stri
 
   // 4. Sync URL for persistence/sharing
   // Set flag to prevent useBrowserNavigation from triggering duplicate update
-  isInternalUrlUpdate = true
+  startInternalUrlUpdate()
   await StateResolver.applyResolvedState(resolved, route, router)
   await nextTick()
-  isInternalUrlUpdate = false
+  endInternalUrlUpdate()
 
   // 5. Trigger chart refresh
   await update(refreshKey)
@@ -330,7 +284,7 @@ const handleViewChanged = async (newView: ViewType) => {
 
   // 3. Create a state snapshot from the resolved state BEFORE applying to refs
   // This ensures chart data is generated with consistent state values
-  const snapshot = createSnapshotFromResolved(resolved.state)
+  const snapshot = await createSnapshotFromResolved(resolved.state)
 
   // 4. Generate new chart data using the snapshot (before refs update)
   // This is the key fix: chart data is computed with the new state values
@@ -342,45 +296,18 @@ const handleViewChanged = async (newView: ViewType) => {
 
   // 6. Sync URL for persistence/sharing
   // Set flag to prevent useBrowserNavigation from triggering duplicate update
-  isInternalUrlUpdate = true
+  startInternalUrlUpdate()
   await StateResolver.applyResolvedState(resolved, route, router)
-  isInternalUrlUpdate = false
+  endInternalUrlUpdate()
 }
 
 /**
  * Create a ChartStateSnapshot from a resolved state object.
- * Used to generate chart data before applying resolved state to refs.
+ * Delegates to StateResolver.createSnapshot for centralized logic.
  */
-const createSnapshotFromResolved = (resolvedState: Record<string, unknown>): import('@/lib/chart/types').ChartStateSnapshot => {
-  // Merge resolved state with current state values for fields not in resolved
-  const current = state.getCurrentStateValues()
-  return {
-    countries: (resolvedState.countries ?? current.countries) as string[],
-    type: (resolvedState.type ?? current.type) as string,
-    chartType: (resolvedState.chartType ?? current.chartType) as import('@/model/period').ChartType,
-    chartStyle: (resolvedState.chartStyle ?? current.chartStyle) as string,
-    ageGroups: (resolvedState.ageGroups ?? current.ageGroups) as string[],
-    standardPopulation: (resolvedState.standardPopulation ?? current.standardPopulation) as string,
-    view: (resolvedState.view ?? current.view) as string,
-    isExcess: (resolvedState.isExcess ?? current.isExcess) as boolean,
-    isZScore: (resolvedState.isZScore ?? current.isZScore) as boolean,
-    dateFrom: (resolvedState.dateFrom ?? current.dateFrom) as string | undefined,
-    dateTo: (resolvedState.dateTo ?? current.dateTo) as string | undefined,
-    sliderStart: (resolvedState.sliderStart ?? current.sliderStart) as string,
-    baselineDateFrom: (resolvedState.baselineDateFrom ?? current.baselineDateFrom) as string | undefined,
-    baselineDateTo: (resolvedState.baselineDateTo ?? current.baselineDateTo) as string | undefined,
-    showBaseline: (resolvedState.showBaseline ?? current.showBaseline) as boolean,
-    baselineMethod: (resolvedState.baselineMethod ?? current.baselineMethod) as string,
-    cumulative: (resolvedState.cumulative ?? current.cumulative) as boolean,
-    showTotal: (resolvedState.showTotal ?? current.showTotal) as boolean,
-    maximize: (resolvedState.maximize ?? current.maximize) as boolean,
-    showPredictionInterval: (resolvedState.showPredictionInterval ?? current.showPredictionInterval) as boolean,
-    showLabels: (resolvedState.showLabels ?? current.showLabels) as boolean,
-    showPercentage: (resolvedState.showPercentage ?? current.showPercentage) as boolean,
-    showLogarithmic: (resolvedState.showLogarithmic ?? current.showLogarithmic) as boolean,
-    userColors: (resolvedState.userColors ?? current.userColors) as string[] | undefined,
-    decimals: (resolvedState.decimals ?? current.decimals) as string
-  }
+const createSnapshotFromResolved = async (resolvedState: Record<string, unknown>) => {
+  const { StateResolver } = await import('@/lib/state/resolver/StateResolver')
+  return StateResolver.createSnapshot(resolvedState, state.getCurrentStateValues())
 }
 
 const handleBaselineChanged = (v: boolean) => handleStateChange('showBaseline', v, '_showBaseline')
@@ -537,13 +464,13 @@ useBrowserNavigation({
     'sp', 'ag', 'sb', 'bm', 'ce', 'st', 'pi', 'p', 'lg'
   ],
   onNavigate: () => {
-    if (isInternalUrlUpdate) {
+    if (isInternalUrlUpdate.value) {
       return
     }
     update('_countries')
   },
   isReady: isDataLoaded,
-  isUpdating: computed(() => isCurrentlyUpdating)
+  isUpdating: isCurrentlyUpdating
 })
 
 onMounted(async () => {
@@ -678,29 +605,9 @@ const getDefaultExplorerDescription = () => {
 }
 
 // Watch for state changes to mark chart as modified
+// Uses getCurrentStateValues() for simpler maintenance - no need to update list when adding fields
 watch(
-  [
-    () => state.countries.value,
-    () => state.type.value,
-    () => state.chartType.value,
-    () => state.ageGroups.value,
-    () => state.chartStyle.value,
-    () => state.isExcess.value,
-    () => state.showBaseline.value,
-    () => state.baselineMethod.value,
-    () => state.baselineDateFrom.value,
-    () => state.baselineDateTo.value,
-    () => state.cumulative.value,
-    () => state.showPercentage.value,
-    () => state.showPredictionInterval.value,
-    () => state.showTotal.value,
-    () => state.dateFrom.value,
-    () => state.dateTo.value,
-    () => state.standardPopulation.value,
-    () => state.showLogarithmic.value,
-    () => state.maximize.value,
-    () => state.showLabels.value
-  ],
+  () => state.getCurrentStateValues(),
   () => {
     markAsModified()
   },

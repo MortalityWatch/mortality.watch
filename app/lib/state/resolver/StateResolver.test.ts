@@ -157,4 +157,122 @@ describe('StateResolver', () => {
       expect(chartStyleChange).toBeUndefined()
     })
   })
+
+  describe('createSnapshot', () => {
+    it('should create a complete snapshot from resolved state', () => {
+      const resolvedState = {
+        countries: ['USA', 'GBR'],
+        type: 'deaths',
+        chartType: 'fluseason',
+        chartStyle: 'bar',
+        view: 'excess',
+        isExcess: true
+      }
+
+      const snapshot = StateResolver.createSnapshot(resolvedState)
+
+      expect(snapshot.countries).toEqual(['USA', 'GBR'])
+      expect(snapshot.type).toBe('deaths')
+      expect(snapshot.chartType).toBe('fluseason')
+      expect(snapshot.chartStyle).toBe('bar')
+      expect(snapshot.view).toBe('excess')
+      expect(snapshot.isExcess).toBe(true)
+    })
+
+    it('should use defaults for missing fields', () => {
+      const resolvedState = {
+        countries: ['USA']
+      }
+
+      const snapshot = StateResolver.createSnapshot(resolvedState)
+
+      expect(snapshot.countries).toEqual(['USA'])
+      // Default values should be used for missing fields
+      expect(snapshot.type).toBe('asmr')
+      expect(snapshot.chartStyle).toBe('line')
+      expect(snapshot.view).toBe('mortality')
+      expect(snapshot.isExcess).toBe(false)
+      expect(snapshot.isZScore).toBe(false)
+      expect(snapshot.showBaseline).toBe(true)
+      expect(snapshot.showPredictionInterval).toBe(true)
+    })
+
+    it('should merge resolved state with current state', () => {
+      const resolvedState = {
+        countries: ['FRA'],
+        type: 'deaths'
+      }
+      const currentState = {
+        countries: ['USA'],
+        type: 'asmr',
+        chartType: 'year',
+        chartStyle: 'matrix',
+        showBaseline: false
+      }
+
+      const snapshot = StateResolver.createSnapshot(resolvedState, currentState)
+
+      // Resolved state takes precedence
+      expect(snapshot.countries).toEqual(['FRA'])
+      expect(snapshot.type).toBe('deaths')
+      // Current state used for missing resolved fields
+      expect(snapshot.chartType).toBe('year')
+      expect(snapshot.chartStyle).toBe('matrix')
+      expect(snapshot.showBaseline).toBe(false)
+    })
+
+    it('should handle all ChartStateSnapshot fields', () => {
+      const resolvedState = {
+        countries: ['USA'],
+        type: 'asmr',
+        chartType: 'fluseason',
+        chartStyle: 'line',
+        ageGroups: ['all'],
+        standardPopulation: 'who',
+        view: 'mortality',
+        isExcess: false,
+        isZScore: false,
+        dateFrom: '2020-01',
+        dateTo: '2023-12',
+        sliderStart: '2010',
+        baselineDateFrom: '2015-01',
+        baselineDateTo: '2019-12',
+        showBaseline: true,
+        baselineMethod: 'mean',
+        cumulative: false,
+        showTotal: false,
+        maximize: false,
+        showPredictionInterval: true,
+        showLabels: true,
+        showPercentage: false,
+        showLogarithmic: false,
+        userColors: ['#ff0000', '#00ff00'],
+        decimals: 'auto'
+      }
+
+      const snapshot = StateResolver.createSnapshot(resolvedState)
+
+      // All fields should be present
+      expect(snapshot).toEqual(resolvedState)
+    })
+
+    it('should handle undefined date fields', () => {
+      const resolvedState = {
+        countries: ['USA'],
+        dateFrom: undefined,
+        dateTo: undefined,
+        baselineDateFrom: undefined,
+        baselineDateTo: undefined,
+        userColors: undefined
+      }
+
+      const snapshot = StateResolver.createSnapshot(resolvedState)
+
+      expect(snapshot.dateFrom).toBeUndefined()
+      expect(snapshot.dateTo).toBeUndefined()
+      expect(snapshot.baselineDateFrom).toBeUndefined()
+      expect(snapshot.baselineDateTo).toBeUndefined()
+      expect(snapshot.userColors).toBeUndefined()
+    })
+  })
 })

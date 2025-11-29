@@ -12,6 +12,123 @@
 import type { StateConstraint } from '../resolver/types'
 
 // ============================================================================
+// FIELD UPDATE STRATEGY
+// ============================================================================
+
+/**
+ * Update type for field changes - determines what kind of data refresh is needed
+ */
+export type FieldUpdateType = 'download' | 'update' | 'filter' | 'none'
+
+/**
+ * Field Update Strategy
+ *
+ * Centralized mapping of state field changes to required data operations.
+ * This extracts the logic from explorer.vue into a single source of truth.
+ *
+ * - download: Requires fresh data fetch from server (e.g., country/type change)
+ * - update: Requires dataset recalculation (e.g., baseline method change)
+ * - filter: Only needs chart re-rendering (e.g., date range, style change)
+ * - none: No data operation needed (e.g., display-only options like showLabels)
+ *
+ * Note: Some fields have conditional behavior based on current state,
+ * which is handled by getFieldUpdateType()
+ */
+export const FIELD_UPDATE_STRATEGY: Record<string, FieldUpdateType> = {
+  // Download: Requires fetching new data from server
+  countries: 'download',
+  type: 'download',
+  chartType: 'download',
+  ageGroups: 'download',
+
+  // Update: Requires recalculating baseline/dataset
+  baselineMethod: 'update',
+  standardPopulation: 'update',
+  baselineDateFrom: 'update',
+  baselineDateTo: 'update',
+  sliderStart: 'update',
+  // Note: cumulative is conditional - see getFieldUpdateType()
+
+  // Filter: Only needs chart re-rendering with existing data
+  dateFrom: 'filter',
+  dateTo: 'filter',
+  chartStyle: 'filter',
+  view: 'filter',
+  isExcess: 'filter',
+  showBaseline: 'filter',
+  cumulative: 'filter', // Default to filter, but may be 'update' if baselineMethod !== 'auto'
+  showPredictionInterval: 'filter',
+  showPercentage: 'filter',
+  showTotal: 'filter',
+  userColors: 'filter',
+
+  // None: Display-only, no data refresh needed
+  showLabels: 'none',
+  maximize: 'none',
+  showLogarithmic: 'none',
+  showLogo: 'none',
+  showQrCode: 'none',
+  showCaption: 'none',
+  decimals: 'none',
+  chartPreset: 'none'
+}
+
+/**
+ * Get the update type for a field change, considering current state.
+ *
+ * Some fields have conditional behavior:
+ * - cumulative: needs 'update' if baselineMethod !== 'auto' (affects baseline calculation)
+ *
+ * @param field - The field that changed (without underscore prefix)
+ * @param currentState - Current state values for conditional checks
+ * @returns The type of update needed
+ */
+export function getFieldUpdateType(
+  field: string,
+  currentState?: Record<string, unknown>
+): FieldUpdateType {
+  // Handle underscore-prefixed keys (legacy format from explorer.vue)
+  const normalizedField = field.startsWith('_') ? field.slice(1) : field
+
+  // Special case: dateRange is a virtual field for combined dateFrom/dateTo changes
+  if (normalizedField === 'dateRange') {
+    return 'filter'
+  }
+
+  // Conditional: cumulative needs 'update' if baseline is not auto
+  if (normalizedField === 'cumulative' && currentState) {
+    if (currentState.baselineMethod !== 'auto') {
+      return 'update'
+    }
+  }
+
+  return FIELD_UPDATE_STRATEGY[normalizedField] ?? 'none'
+}
+
+/**
+ * Determine if a field change requires downloading new data from server
+ */
+export function requiresDataDownload(field: string, currentState?: Record<string, unknown>): boolean {
+  return getFieldUpdateType(field, currentState) === 'download'
+}
+
+/**
+ * Determine if a field change requires updating the dataset (baseline recalculation)
+ */
+export function requiresDatasetUpdate(field: string, currentState?: Record<string, unknown>): boolean {
+  return getFieldUpdateType(field, currentState) === 'update'
+}
+
+/**
+ * Determine if a field change requires re-filtering/re-rendering chart data
+ */
+export function requiresFilterUpdate(field: string, currentState?: Record<string, unknown>): boolean {
+  const updateType = getFieldUpdateType(field, currentState)
+  // Download and update also require filter update
+  return updateType === 'download' || updateType === 'update' || updateType === 'filter'
+}
+
+// ============================================================================
 // CONSTRAINT DEFINITIONS
 // ============================================================================
 
