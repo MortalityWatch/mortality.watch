@@ -4,7 +4,7 @@
  * Re-exports all chart configuration functions for easy importing
  */
 
-export { getLabelText } from './chartLabels'
+export { getLabelText, computeChartPrecision, extractYValues, resolveDecimals } from './chartLabels'
 export { createTooltipCallbacks } from './chartTooltips'
 export {
   createBackgroundPlugin,
