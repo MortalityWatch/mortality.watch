@@ -61,6 +61,50 @@ describe('chartState', () => {
 
       expect(state.ageGroups).toEqual(['0-14', '15-64', '65-74'])
     })
+
+    it('should use excess view defaults when e=1 is present', () => {
+      const query = {
+        c: 'USA',
+        e: '1' // excess view
+      }
+
+      const state = decodeChartState(query)
+
+      // Excess view defaults should be applied
+      expect(state.chartStyle).toBe('bar') // excess default (vs 'line' for mortality)
+      expect(state.showPercentage).toBe(true) // excess default
+      expect(state.showBaseline).toBe(true) // excess default (forced)
+      expect(state.showPredictionInterval).toBe(false) // excess default
+    })
+
+    it('should use zscore view defaults when zs=1 is present', () => {
+      const query = {
+        c: 'USA',
+        zs: '1' // zscore view
+      }
+
+      const state = decodeChartState(query)
+
+      // Z-score view defaults should be applied
+      expect(state.chartStyle).toBe('line') // zscore default
+      expect(state.showBaseline).toBe(true) // zscore default (required for calculation)
+      expect(state.showLogarithmic).toBe(false) // zscore default (not compatible)
+    })
+
+    it('should allow URL params to override view defaults', () => {
+      const query = {
+        c: 'USA',
+        e: '1', // excess view
+        cs: 'line' // override chartStyle from bar to line
+      }
+
+      const state = decodeChartState(query)
+
+      // URL param should override view default
+      expect(state.chartStyle).toBe('line')
+      // Other excess defaults should still apply
+      expect(state.showPercentage).toBe(true)
+    })
   })
 
   describe('encodeChartState', () => {

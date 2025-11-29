@@ -5,7 +5,7 @@
  * Used for server-side chart rendering and OG image generation.
  */
 
-import { Defaults, stateFieldEncoders } from './state'
+import { Defaults, stateFieldEncoders, detectView, getViewDefaults } from './state'
 
 export interface ChartState {
   countries: string[]
@@ -38,6 +38,10 @@ export interface ChartState {
 
 /**
  * Decode query parameters to chart state
+ *
+ * This function is view-aware: it detects the view from query params
+ * (e=1 for excess, zs=1 for zscore) and applies view-specific defaults.
+ * This ensures SSR chart rendering matches the explorer UI.
  */
 export function decodeChartState(query: Record<string, string | string[]>): ChartState {
   const state: Record<string, unknown> = {}
@@ -62,9 +66,14 @@ export function decodeChartState(query: Record<string, string | string[]>): Char
     }
   }
 
-  // Fill in defaults for missing values
+  // Detect view from query params and get view-specific defaults
+  // This ensures SSR uses the same defaults as the explorer UI
+  const view = detectView(query as Record<string, unknown>)
+  const viewDefaults = getViewDefaults(view)
+
+  // Fill in defaults for missing values (view-specific defaults take precedence)
   return {
-    ...Defaults,
+    ...viewDefaults,
     ...state
   } as ChartState
 }
