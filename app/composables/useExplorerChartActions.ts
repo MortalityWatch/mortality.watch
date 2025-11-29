@@ -2,7 +2,7 @@ import { showToast } from '@/toast'
 import { handleError } from '@/lib/errors/errorHandler'
 import { useSaveChart } from '@/composables/useSaveChart'
 import { generateChartFilename } from '@/lib/utils/strings'
-import { generateExplorerTitle } from '@/lib/utils/chartTitles'
+import { generateExplorerTitle, generateExplorerDescription } from '@/lib/utils/chartTitles'
 import Papa from 'papaparse'
 import type { Ref } from 'vue'
 import type { MortalityChartData } from '@/lib/chart/chartTypes'
@@ -130,6 +130,27 @@ export function useExplorerChartActions(
         dateFrom: state.dateFrom.value,
         dateTo: state.dateTo.value,
         view: state.view?.value
+      })
+    },
+    generateDefaultDescription: () => {
+      const countries = allCountries?.value || {}
+      return generateExplorerDescription({
+        countries: state.countries.value,
+        allCountries: countries,
+        type: state.type.value,
+        isExcess: state.isExcess.value,
+        ageGroups: state.ageGroups.value,
+        dateFrom: state.dateFrom.value,
+        dateTo: state.dateTo.value,
+        view: state.view?.value,
+        chartType: state.chartType?.value,
+        showBaseline: state.showBaseline?.value,
+        baselineMethod: state.baselineMethod?.value,
+        baselineDateFrom: state.baselineDateFrom?.value,
+        baselineDateTo: state.baselineDateTo?.value,
+        cumulative: state.cumulative?.value,
+        showPercentage: state.showPercentage?.value,
+        standardPopulation: state.standardPopulation?.value
       })
     }
   })
