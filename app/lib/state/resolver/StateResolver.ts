@@ -10,13 +10,13 @@
  */
 
 import type { RouteLocationNormalizedLoaded, Router } from 'vue-router'
-import { stateFieldEncoders } from '@/lib/state/stateSerializer'
-import { STATE_CONSTRAINTS } from './constraints'
+import { stateFieldEncoders } from '../config/fieldEncoders'
+import { STATE_CONSTRAINTS } from '../config/constraints'
 import type { StateChange, ResolvedState, StateResolutionLog, StateFieldMetadata } from './types'
 import { detectView } from './viewDetector'
 import { getViewConstraints } from './viewConstraints'
 import type { ViewType } from './viewTypes'
-import { VIEWS } from './views'
+import { VIEWS } from '../config/views'
 import { computeUIState, type UIFieldState } from './uiStateComputer'
 
 /**

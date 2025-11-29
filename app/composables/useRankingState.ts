@@ -15,7 +15,7 @@ import { computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { rankingStateSchema, type RankingState } from '@/model/rankingSchema'
 import { showToast } from '@/toast'
-import { encodeBool, decodeBool } from '@/lib/state/stateSerializer'
+import { encodeBool, decodeBool } from '@/lib/state'
 
 export function useRankingState() {
   const route = useRoute()

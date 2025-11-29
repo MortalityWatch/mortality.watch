@@ -8,7 +8,7 @@ import { CHART_PRESETS } from '@/lib/constants'
 import { chartStyles, baselineMethods, decimalPrecisions } from '@/model'
 import { useChartUIState } from '@/composables/useChartUIState'
 import type { ChartStyle } from '@/lib/chart/chartTypes'
-import type { ViewType } from '@/lib/state/viewTypes'
+import type { ViewType } from '@/lib/state'
 
 // Feature access for tier-based features
 const { can } = useFeatureAccess()

@@ -12,10 +12,14 @@ import {
   type BaselineMethod as BaselineMethodSchema,
   type DecimalPrecision as DecimalPrecisionSchema
 } from '@/model/explorerSchema'
-import { detectView } from '@/lib/state/viewDetector'
-import type { ViewType, MetricType, ChartStyle } from '@/lib/state/viewTypes'
-import { VIEWS } from '@/lib/state/views'
-import { computeUIState } from '@/lib/state/uiStateComputer'
+import {
+  detectView,
+  computeUIState,
+  VIEWS,
+  type ViewType,
+  type MetricType,
+  type ChartStyle
+} from '@/lib/state'
 
 /**
  * Compare two arrays for equality (shallow)

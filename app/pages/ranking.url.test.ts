@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { encodeBool, decodeBool } from '@/lib/state/stateSerializer'
+import { encodeBool, decodeBool } from '@/lib/state'
 
 /**
  * Tests for ranking page URL state management

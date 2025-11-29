@@ -1,26 +1,15 @@
+/**
+ * Field Encoders Configuration
+ *
+ * App-specific field definitions for URL state serialization.
+ * Maps field names to URL keys and optional encode/decode functions.
+ */
+
+import { encodeBool, decodeBool } from '../resolver/encoders'
 import { VIEWS } from './views'
 
-export const encodeBool = (bool: boolean | undefined): number | undefined => {
-  if (bool === undefined) return undefined
-  return bool ? 1 : 0
-}
-
-export const decodeBool = (
-  num: string | number | undefined
-): boolean | undefined => {
-  if (num === undefined) return undefined
-  return num == 1 ? true : false
-}
-
-export const encodeString = (str: string | undefined): string | undefined => {
-  if (str === undefined) return undefined
-  return encodeURIComponent(str)
-}
-
-export const decodeString = (str: string | undefined): string | undefined => {
-  if (str === undefined) return undefined
-  return decodeURIComponent(str)
-}
+// Re-export encoders for backward compatibility
+export { encodeBool, decodeBool, encodeString, decodeString } from '../resolver/encoders'
 
 /**
  * Landing page defaults - alias for VIEWS.mortality.defaults
@@ -30,6 +19,14 @@ export const Defaults = VIEWS.mortality.defaults
 
 export type ChartStateInput = typeof Defaults
 
+/**
+ * Field encoder definitions
+ *
+ * Maps state field names to:
+ * - key: Short URL parameter name
+ * - encode: Optional function to encode value for URL
+ * - decode: Optional function to decode value from URL
+ */
 export const stateFieldEncoders = {
   countries: { key: 'c' },
   type: { key: 't' },

@@ -6,8 +6,7 @@ import { getFilteredChartData } from '../../app/lib/chart/filtering'
 import { getChartColors } from '../../app/colors'
 import { decompress, base64ToArrayBuffer } from '../../app/lib/compression/compress.node'
 import { makeChartConfig } from '../../app/lib/chart/chartConfig'
-import { inferIsExcessFromFlags } from '../../app/lib/state/viewHelpers'
-import { detectView } from '../../app/lib/state/viewDetector'
+import { inferIsExcessFromFlags, detectView } from '../../app/lib/state'
 import type { ChartStyle } from '../../app/lib/chart/chartTypes'
 
 /**

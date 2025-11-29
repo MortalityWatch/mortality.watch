@@ -4,7 +4,7 @@ import {
   decodeBool,
   encodeString,
   decodeString
-} from './stateSerializer'
+} from './fieldEncoders'
 
 describe('stateSerializer', () => {
   describe('encodeBool', () => {

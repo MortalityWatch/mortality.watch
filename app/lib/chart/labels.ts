@@ -5,7 +5,7 @@
 import { baselineMethods, type ChartLabels } from '~/model'
 import { isMobile } from '~/utils'
 import { getChartView, type ChartContext } from './chartViews/index'
-import type { ViewType } from '../state/viewTypes'
+import type { ViewType } from '../state'
 
 const getMethodDescription = (baselineMethod: string) =>
   baselineMethods.filter(x => x.value === baselineMethod)[0]?.name ?? baselineMethod

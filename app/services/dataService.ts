@@ -8,7 +8,7 @@ import {
 } from '@/lib/data'
 import { getFilteredChartData } from '@/lib/chart'
 import { getKeyForType } from '@/model'
-import { inferIsExcessFromFlags } from '@/lib/state/viewHelpers'
+import { inferIsExcessFromFlags } from '@/lib/state'
 import type {
   DatasetRaw,
   AllChartData,

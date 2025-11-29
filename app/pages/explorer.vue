@@ -18,7 +18,7 @@ import type {
   Country
 } from '@/model'
 import type { ChartType } from '@/model/period'
-import type { ViewType } from '@/lib/state/viewTypes'
+import type { ViewType } from '@/lib/state'
 import {
   loadCountryMetadata
 } from '@/lib/data'
@@ -280,7 +280,7 @@ const handleChartPresetChanged = (v: string) => {
 // Generic StateResolver handler for any state change
 // Handles cascading constraints and single-tick state application
 const handleStateChange = async (field: string, value: unknown, refreshKey: string) => {
-  const { StateResolver } = await import('@/lib/state/StateResolver')
+  const { StateResolver } = await import('@/lib/state/resolver/StateResolver')
   const router = useRouter()
   const route = useRoute()
 
@@ -320,7 +320,7 @@ const handleViewChanged = async (newView: ViewType) => {
 
   // 2. Resolve view change through StateResolver
   // This applies view defaults, constraints, and computes UI state
-  const { StateResolver } = await import('@/lib/state/StateResolver')
+  const { StateResolver } = await import('@/lib/state/resolver/StateResolver')
   const resolved = StateResolver.resolveViewChange(
     newView,
     state.getCurrentStateValues(),
@@ -398,7 +398,7 @@ const handleBaselineMethodChanged = (v: string) => handleStateChange('baselineMe
 
 // Display options - these update UI only, no data reload needed
 const handleShowLabelsChanged = async (v: boolean) => {
-  const { StateResolver } = await import('@/lib/state/StateResolver')
+  const { StateResolver } = await import('@/lib/state/resolver/StateResolver')
   const router = useRouter()
   const route = useRoute()
 
@@ -417,7 +417,7 @@ const handleShowLabelsChanged = async (v: boolean) => {
 }
 
 const handleMaximizeChanged = async (v: boolean) => {
-  const { StateResolver } = await import('@/lib/state/StateResolver')
+  const { StateResolver } = await import('@/lib/state/resolver/StateResolver')
   const router = useRouter()
   const route = useRoute()
 
@@ -436,7 +436,7 @@ const handleMaximizeChanged = async (v: boolean) => {
 }
 
 const handleShowLogarithmicChanged = async (v: boolean) => {
-  const { StateResolver } = await import('@/lib/state/StateResolver')
+  const { StateResolver } = await import('@/lib/state/resolver/StateResolver')
   const router = useRouter()
   const route = useRoute()
 
@@ -465,7 +465,7 @@ const handleSliderStartChanged = (v: string | undefined) => handleStateChange('s
 
 // Chart appearance (no data refresh needed, just URL sync)
 const handleShowLogoChanged = async (v: boolean) => {
-  const { StateResolver } = await import('@/lib/state/StateResolver')
+  const { StateResolver } = await import('@/lib/state/resolver/StateResolver')
   const router = useRouter()
   const route = useRoute()
 
@@ -479,7 +479,7 @@ const handleShowLogoChanged = async (v: boolean) => {
 }
 
 const handleShowQrCodeChanged = async (v: boolean) => {
-  const { StateResolver } = await import('@/lib/state/StateResolver')
+  const { StateResolver } = await import('@/lib/state/resolver/StateResolver')
   const router = useRouter()
   const route = useRoute()
 
@@ -493,7 +493,7 @@ const handleShowQrCodeChanged = async (v: boolean) => {
 }
 
 const handleShowCaptionChanged = async (v: boolean) => {
-  const { StateResolver } = await import('@/lib/state/StateResolver')
+  const { StateResolver } = await import('@/lib/state/resolver/StateResolver')
   const router = useRouter()
   const route = useRoute()
 
@@ -507,7 +507,7 @@ const handleShowCaptionChanged = async (v: boolean) => {
 }
 
 const handleDecimalsChanged = async (v: string) => {
-  const { StateResolver } = await import('@/lib/state/StateResolver')
+  const { StateResolver } = await import('@/lib/state/resolver/StateResolver')
   const router = useRouter()
   const route = useRoute()
 
@@ -547,7 +547,7 @@ useBrowserNavigation({
 
 onMounted(async () => {
   // 1. FIRST: Resolve initial state from URL + apply constraints
-  const { StateResolver } = await import('@/lib/state/StateResolver')
+  const { StateResolver } = await import('@/lib/state/resolver/StateResolver')
   const route = useRoute()
   const router = useRouter()
 

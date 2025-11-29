@@ -12,7 +12,7 @@ import type {
   MetricType,
   ChartStyle
 } from './viewTypes'
-import { VIEWS } from './views'
+import { VIEWS } from '../config/views'
 
 /**
  * Check if a UI element is visible given current state

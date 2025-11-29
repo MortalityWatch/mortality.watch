@@ -4,7 +4,7 @@
  * Type definitions for chart view configuration system
  */
 
-import type { ViewType } from '../../state/viewTypes'
+import type { ViewType } from '../../state'
 
 /**
  * Chart state passed to title/subtitle generators

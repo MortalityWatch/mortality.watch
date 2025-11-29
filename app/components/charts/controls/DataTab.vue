@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { types, standardPopulations } from '@/model'
 import PeriodOfTimePicker from '@/components/shared/PeriodOfTimePicker.vue'
 import type { RadioGroupItem } from '@nuxt/ui'
-import type { ViewType } from '@/lib/state/viewTypes'
+import type { ViewType } from '@/lib/state'
 
 // Feature access for Z-Score
 const { can } = useFeatureAccess()

@@ -6,7 +6,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { VIEWS } from './views'
-import type { ViewType } from './viewTypes'
+import type { ViewType } from '../resolver/viewTypes'
 
 describe('View Configurations', () => {
   describe('VIEWS constant', () => {
