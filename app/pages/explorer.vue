@@ -232,19 +232,24 @@ const handleStateChange = async (
   // Normalize to array
   const changeList = Array.isArray(changes) ? changes : [changes]
 
+  // Guard: nothing to do if empty
+  if (changeList.length === 0) return
+
   // 1. Track all as user overrides
   changeList.forEach(c => state.addUserOverride(c.field))
 
   // 2. Chain resolve through all changes
+  const firstChange = changeList[0]!
   let resolved = StateResolver.resolveChange(
-    { field: changeList[0].field, value: changeList[0].value, source: 'user' },
+    { field: firstChange.field, value: firstChange.value, source: 'user' },
     state.getCurrentStateValues(),
     state.getUserOverrides()
   )
 
   for (let i = 1; i < changeList.length; i++) {
+    const change = changeList[i]!
     resolved = StateResolver.resolveChange(
-      { field: changeList[i].field, value: changeList[i].value, source: 'user' },
+      { field: change.field, value: change.value, source: 'user' },
       resolved.state,
       state.getUserOverrides()
     )
@@ -276,19 +281,24 @@ const handleUIStateChange = async (
   // Normalize to array
   const changeList = Array.isArray(changes) ? changes : [changes]
 
+  // Guard: nothing to do if empty
+  if (changeList.length === 0) return
+
   // 1. Track all as user overrides
   changeList.forEach(c => state.addUserOverride(c.field))
 
   // 2. Chain resolve through all changes
+  const firstChange = changeList[0]!
   let resolved = StateResolver.resolveChange(
-    { field: changeList[0].field, value: changeList[0].value, source: 'user' },
+    { field: firstChange.field, value: firstChange.value, source: 'user' },
     state.getCurrentStateValues(),
     state.getUserOverrides()
   )
 
   for (let i = 1; i < changeList.length; i++) {
+    const change = changeList[i]!
     resolved = StateResolver.resolveChange(
-      { field: changeList[i].field, value: changeList[i].value, source: 'user' },
+      { field: change.field, value: change.value, source: 'user' },
       resolved.state,
       state.getUserOverrides()
     )
