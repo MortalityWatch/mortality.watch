@@ -25,7 +25,7 @@ import {
   textSoftColor
 } from '../chartColors'
 import type { ChartErrorDataPoint, MortalityChartData } from '../chartTypes'
-import { getLabelText } from './chartLabels'
+import { getLabelText, resolveDecimals } from './chartLabels'
 import { createTooltipCallbacks } from './chartTooltips'
 import { getChartView, type ReferenceLineConfig } from '../chartViews/index'
 import type { ViewType } from '../../state/viewTypes'
@@ -78,6 +78,9 @@ export function createDatalabelsConfig(
   decimals: string,
   isDark?: boolean
 ) {
+  // Compute chart-wide precision for consistent label display
+  const resolvedDecimals = resolveDecimals(data, decimals, showPercentage)
+
   return {
     anchor: 'end' as const,
     align: 'end' as const,
@@ -116,7 +119,7 @@ export function createDatalabelsConfig(
         isExcess,
         showPercentage,
         showDecimals,
-        decimals
+        resolvedDecimals
       )
       return label
     },

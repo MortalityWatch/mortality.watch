@@ -15,7 +15,26 @@ import {
   textStrongColor
 } from '../chartColors'
 import type { MortalityChartData } from '../chartTypes'
-import { getLabelText } from './chartLabels'
+import { extractYValues, getLabelText } from './chartLabels'
+
+/**
+ * Compute axis tick precision based on data range.
+ * Uses 0 decimals for large values, more for small ranges.
+ */
+function computeAxisPrecision(data: MortalityChartData, isPercentage: boolean): number {
+  const values = extractYValues(data)
+  if (values.length === 0) return 0
+
+  // For percentages, multiply by 100 to get display values
+  const displayValues = isPercentage ? values.map(v => v * 100) : values
+  const maxAbs = Math.max(...displayValues.map(v => Math.abs(v)))
+
+  // Axis ticks need less precision than data labels
+  // Only show decimals if the max value is small
+  if (maxAbs >= 10) return 0 // 10+ -> no decimals (10%, 20%, 100, 200)
+  if (maxAbs >= 1) return 1 // 1-10 -> 1 decimal (1.5%, 5.0%)
+  return 2 // <1 -> 2 decimals (0.50%)
+}
 
 /**
  * Create scales configuration
@@ -28,6 +47,11 @@ export function createScalesConfig(
   decimals: string,
   isDark?: boolean
 ) {
+  // Compute axis-specific precision (less than data labels)
+  const axisPrecision = decimals === 'auto'
+    ? computeAxisPrecision(data, showPercentage)
+    : parseInt(decimals)
+
   return {
     x: {
       offset: data.showXOffset,
@@ -67,15 +91,16 @@ export function createScalesConfig(
           this: Scale,
           tickValue: number | string
         ): string {
+          const value = typeof tickValue === 'string' ? parseFloat(tickValue) : tickValue
           return getLabelText(
             '',
-            typeof tickValue === 'string' ? parseInt(tickValue) : tickValue,
+            value,
             undefined,
             true,
             isExcess,
             showPercentage,
             showDecimals,
-            decimals
+            axisPrecision
           )
         }
       }
