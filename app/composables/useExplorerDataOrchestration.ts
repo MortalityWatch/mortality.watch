@@ -201,11 +201,6 @@ export function useExplorerDataOrchestration(
    * 3. Try to preserve year when chart type changes (e.g., yearly → fluseason)
    */
   watch([dateRangeCalc.visibleLabels, state.chartType], () => {
-    console.log(`🗓️ [useExplorerDataOrchestration] date range watcher fired`, {
-      chartType: state.chartType.value,
-      labelsLength: dateRangeCalc.visibleLabels.value.length
-    })
-
     const labels = dateRangeCalc.visibleLabels.value
     if (labels.length === 0) return
 
@@ -224,7 +219,6 @@ export function useExplorerDataOrchestration(
 
     // If current range is valid, preserve it
     if (hasValidRange) {
-      console.log(`🗓️ [useExplorerDataOrchestration] valid range, keeping`)
       return
     }
 
@@ -232,7 +226,6 @@ export function useExplorerDataOrchestration(
     // The chart will use visibleLabels range when dates are undefined
     const userNeverSetDates = !state.isUserSet('dateFrom') && !state.isUserSet('dateTo')
     if (userNeverSetDates) {
-      console.log(`🗓️ [useExplorerDataOrchestration] user never set dates, skipping`)
       return
     }
 
@@ -251,11 +244,9 @@ export function useExplorerDataOrchestration(
 
     // Update state only if values changed
     if (validatedRange.from !== currentFrom) {
-      console.log(`🗓️ [useExplorerDataOrchestration] updating dateFrom: ${currentFrom} → ${validatedRange.from}`)
       state.dateFrom.value = validatedRange.from
     }
     if (validatedRange.to !== currentTo) {
-      console.log(`🗓️ [useExplorerDataOrchestration] updating dateTo: ${currentTo} → ${validatedRange.to}`)
       state.dateTo.value = validatedRange.to
     }
   })
