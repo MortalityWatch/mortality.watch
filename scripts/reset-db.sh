@@ -23,13 +23,15 @@ case "$REPLY" in
     ;;
 esac
 
-# Remove the database file if it exists
+# Remove the database file and SQLite WAL files if they exist
 DB_PATH="./.data/mortality.db"
 if [ -f "$DB_PATH" ]; then
   echo "🗑️  Removing existing database: $DB_PATH"
-  rm "$DB_PATH"
+  rm -f "$DB_PATH" "$DB_PATH-shm" "$DB_PATH-wal"
   echo "✅ Database removed"
 else
+  # Still remove WAL files in case they're orphaned
+  rm -f "$DB_PATH-shm" "$DB_PATH-wal"
   echo "ℹ️  No existing database found at $DB_PATH"
 fi
 
