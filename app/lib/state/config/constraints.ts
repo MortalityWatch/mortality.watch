@@ -9,7 +9,7 @@
  * Use VIEWS[viewType].defaults to get defaults for a specific view.
  */
 
-import type { StateConstraint } from './types'
+import type { StateConstraint } from '../resolver/types'
 
 // ============================================================================
 // CONSTRAINT DEFINITIONS

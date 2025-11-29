@@ -5,7 +5,7 @@
  * Used for server-side chart rendering and OG image generation.
  */
 
-import { Defaults, stateFieldEncoders } from './state/stateSerializer'
+import { Defaults, stateFieldEncoders } from './state'
 
 export interface ChartState {
   countries: string[]

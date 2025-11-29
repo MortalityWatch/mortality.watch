@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import MortalityChartControlsSecondary from '@/components/charts/MortalityChartControlsSecondary.vue'
 import type { useExplorerState } from '@/composables/useExplorerState'
-import type { ViewType } from '@/lib/state/viewTypes'
+import type { ViewType } from '@/lib/state'
 
 const props = defineProps<{
   state: ReturnType<typeof useExplorerState>

@@ -4,7 +4,7 @@
  * Defines all available view types and their UI/constraint configurations
  */
 
-import type { ViewConfig, ViewType, UIElement, UICondition } from './viewTypes'
+import type { ViewConfig, ViewType, UIElement, UICondition } from '../resolver/viewTypes'
 
 /** Helper functions for common UI element patterns */
 const hidden = (): UIElement => ({

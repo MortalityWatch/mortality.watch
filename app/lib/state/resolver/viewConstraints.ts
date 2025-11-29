@@ -7,7 +7,7 @@
 
 import type { StateConstraint } from './types'
 import type { ViewType } from './viewTypes'
-import { VIEWS } from './views'
+import { VIEWS } from '../config/views'
 
 /**
  * Get constraints for a specific view

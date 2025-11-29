@@ -14,7 +14,7 @@
  * - Easy to extend: New views just specify overrides
  */
 
-import type { ViewType } from '../../state/viewTypes'
+import type { ViewType } from '../../state'
 import type { ChartViewConfig, CompleteChartViewConfig } from './types'
 import { BASE_VIEW } from './base'
 import { MORTALITY_VIEW } from './mortality'

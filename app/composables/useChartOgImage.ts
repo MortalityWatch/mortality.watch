@@ -5,7 +5,7 @@
 import { computed, unref, type MaybeRef } from 'vue'
 import { chartStateToQueryString, type ChartState } from '@/lib/chartState'
 import { types, chartTypes } from '@/model'
-import { inferIsExcessFromFlags } from '@/lib/state/viewHelpers'
+import { inferIsExcessFromFlags } from '@/lib/state'
 import countries from 'i18n-iso-countries'
 import en from 'i18n-iso-countries/langs/en.json'
 
