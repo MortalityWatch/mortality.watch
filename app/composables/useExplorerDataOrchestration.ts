@@ -175,11 +175,15 @@ export function useExplorerDataOrchestration(
       = !(state.isExcess.value && helpers.isLineChartStyle()) && !helpers.isMatrixChartStyle()
     chartOptions.showMaximizeOptionDisabled
       = state.showLogarithmic.value || (state.isExcess.value && !chartOptions.showTotalOption)
-    chartOptions.showBaselineOption = helpers.hasBaseline() && !helpers.isMatrixChartStyle()
+    // Baseline option: disabled in zscore view (baseline is implicit in z-score calculation)
+    chartOptions.showBaselineOption = helpers.hasBaseline() && !helpers.isMatrixChartStyle() && !state.isZScore.value
     chartOptions.showPredictionIntervalOption
       = chartOptions.showBaselineOption || (state.isExcess.value && !helpers.isMatrixChartStyle())
+    // PI disabled: when no baseline shown (unless excess), cumulative without PI support, or in zscore view
     chartOptions.showPredictionIntervalOptionDisabled
-      = (!state.isExcess.value && !state.showBaseline.value) || (state.cumulative.value && !helpers.showCumPi())
+      = (!state.isExcess.value && !state.showBaseline.value)
+        || (state.cumulative.value && !helpers.showCumPi())
+        || state.isZScore.value
     chartOptions.showCumulativeOption = state.isExcess.value
     chartOptions.showPercentageOption = state.isExcess.value
     chartOptions.showLogarithmicOption = !helpers.isMatrixChartStyle() && !state.isExcess.value

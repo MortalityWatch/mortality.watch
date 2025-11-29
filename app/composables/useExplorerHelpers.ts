@@ -51,7 +51,8 @@ export function useExplorerHelpers(
   cumulative: Ref<boolean>,
   baselineMethod: Ref<string>,
   showBaseline: Ref<boolean>,
-  chartType: Ref<string>
+  chartType: Ref<string>,
+  isZScore: Ref<boolean> = ref(false)
 ) {
   /**
    * Checks if the current data type is age-standardized mortality rate (ASMR).
@@ -197,11 +198,12 @@ export function useExplorerHelpers(
    * Prediction intervals are disabled when:
    * - Not in excess mode AND baseline is not shown (no baseline = no PI)
    * - In cumulative mode but cumulative PIs are not supported for current config
+   * - In z-score view (baseline is implicit in z-score calculation)
    *
    * @returns Computed boolean indicating if PI toggle should be disabled
    */
   const showPredictionIntervalDisabled = computed(() =>
-    (!isExcess.value && !showBaseline.value) || (cumulative.value && !showCumPi())
+    (!isExcess.value && !showBaseline.value) || (cumulative.value && !showCumPi()) || isZScore.value
   )
 
   return {

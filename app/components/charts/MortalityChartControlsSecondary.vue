@@ -81,8 +81,9 @@ const emit = defineEmits<{
   decimalsChanged: [value: string]
 }>()
 
-// Backward compat: compute isExcess from view for chartUIState
+// Compute view flags for chartUIState and UI logic
 const isExcess = computed(() => props.view === 'excess')
+const isZScore = computed(() => props.view === 'zscore')
 
 // Initialize chart UI state configuration
 const chartUIState = useChartUIState(
@@ -222,18 +223,10 @@ const selectedDecimals = computed({
 const baselineSliderChanged = (values: string[]) => {
   emit('baselineSliderValueChanged', values)
 }
-// Use configuration-based baseline option visibility (kept for backward compatibility)
-// Disable baseline option when view is zscore (baseline is implicit in z-score calculation)
-const showBaselineOption = computed(() => {
-  if (props.view === 'zscore') return false
-  return chartUIState.showBaselineOption.value
-})
-
-// Disable PI option when view is zscore (baseline is implicit in z-score calculation)
-const showPredictionIntervalOptionDisabledComputed = computed(() => {
-  if (props.view === 'zscore') return true
-  return props.showPredictionIntervalOptionDisabled
-})
+// Baseline option: disabled in zscore view (baseline is implicit in z-score calculation)
+const showBaselineOption = computed(() =>
+  chartUIState.showBaselineOption.value && !isZScore.value
+)
 
 // Chart presets for dropdown
 const chartPresetOptions = CHART_PRESETS.map(preset => ({
@@ -328,7 +321,7 @@ const activeTab = ref('data')
         :show-total="props.showTotal"
         :is-population-type="props.isPopulationType"
         :show-baseline-option="showBaselineOption"
-        :show-prediction-interval-option-disabled="showPredictionIntervalOptionDisabledComputed"
+        :show-prediction-interval-option-disabled="props.showPredictionIntervalOptionDisabled"
         :show-maximize-option-disabled="props.showMaximizeOptionDisabled"
         :show-total-option-disabled="props.showTotalOptionDisabled"
         :show-prediction-interval-option="props.showPredictionIntervalOption"

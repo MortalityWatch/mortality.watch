@@ -86,7 +86,8 @@ const {
   state.cumulative,
   state.baselineMethod,
   state.showBaseline,
-  state.chartType
+  state.chartType,
+  state.isZScore
 )
 
 // Adapter: Convert separate date refs to array format for DateSlider component
@@ -783,6 +784,8 @@ watch(
             :all-yearly-chart-labels-unique="dataOrchestration.allYearlyChartLabelsUnique.value || []"
             :colors="displayColors"
             :show-prediction-interval-disabled="showPredictionIntervalDisabled"
+            :show-maximize-option-disabled="dataOrchestration.chartOptions.showMaximizeOptionDisabled"
+            :show-total-option-disabled="dataOrchestration.chartOptions.showTotalOptionDisabled"
             :baseline-range="dataOrchestration.baselineRange.value"
             @type-changed="handleTypeChanged"
             @chart-type-changed="handleChartTypeChanged"
