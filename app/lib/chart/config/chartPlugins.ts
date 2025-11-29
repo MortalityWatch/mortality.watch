@@ -135,20 +135,24 @@ export function createDatalabelsConfig(
  */
 interface BoxAnnotation {
   type: 'box'
+  drawTime?: 'beforeDraw' | 'beforeDatasetsDraw' | 'afterDatasetsDraw' | 'afterDraw'
   yMin?: number
   yMax?: number
   backgroundColor?: string
   borderWidth?: number
   borderColor?: string
+  z?: number
 }
 
 interface LineAnnotation {
   type: 'line'
+  drawTime?: 'beforeDraw' | 'beforeDatasetsDraw' | 'afterDatasetsDraw' | 'afterDraw'
   yMin?: number
   yMax?: number
   borderColor?: string
   borderWidth?: number
   borderDash?: number[]
+  z?: number
   label?: {
     display: boolean
     content: string
@@ -160,6 +164,7 @@ interface LineAnnotation {
       weight: string
     }
     padding: number
+    yAdjust?: number
   }
 }
 
@@ -181,25 +186,30 @@ export function createAnnotationsFromReferenceLines(
       // Box annotation (shaded area)
       annotations[key] = {
         type: 'box',
+        drawTime: line.drawTime || 'beforeDatasetsDraw',
         yMin: line.yMin,
         yMax: line.yMax,
         backgroundColor: line.backgroundColor,
         borderWidth: line.borderWidth ?? 0,
-        borderColor: line.color || 'transparent'
+        borderColor: line.color || 'transparent',
+        z: line.z ?? -1
       }
     } else {
       // Line annotation (default)
       annotations[key] = {
         type: 'line',
+        drawTime: line.drawTime,
         yMin: line.value,
         yMax: line.value,
         borderColor: line.color,
         borderWidth: line.width || 1,
         borderDash: line.style === 'dashed' ? [5, 5] : [],
+        z: line.z,
         label: {
           display: !!line.label,
           content: line.label,
           position: 'end',
+          yAdjust: -4,
           backgroundColor: 'transparent',
           color: line.color,
           font: {
