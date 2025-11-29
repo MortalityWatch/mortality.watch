@@ -72,10 +72,12 @@ export function decodeChartState(query: Record<string, string | string[]>): Char
   const viewDefaults = getViewDefaults(view)
 
   // Fill in defaults for missing values (view-specific defaults take precedence)
+  // Cast through unknown since viewDefaults is Record<string, unknown> but we know
+  // it contains all the fields defined in VIEWS.mortality.defaults
   return {
     ...viewDefaults,
     ...state
-  } as ChartState
+  } as unknown as ChartState
 }
 
 /**
