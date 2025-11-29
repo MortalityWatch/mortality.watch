@@ -227,4 +227,52 @@ test.describe('Explorer Page', () => {
     // in an E2E test, but we can verify the chart renders successfully
     // Reference lines (0σ, ±2σ, +4σ) are rendered by chartPlugins.ts
   })
+
+  test('should disable baseline toggle in z-score view', async ({ page }) => {
+    // Load explorer with z-score view enabled
+    await page.goto('/explorer?zs=1')
+    await page.waitForLoadState('networkidle')
+    await page.waitForSelector('canvas#chart', { timeout: 10000 })
+
+    // Navigate to Display tab where toggles are
+    await page.getByRole('button', { name: /Display/ }).click()
+    await page.waitForTimeout(300)
+
+    // Find the Baseline toggle's USwitch
+    // It should be disabled when z-score view is active
+    const baselineSwitch = page.locator('text=Baseline').locator('..').locator('button[role="switch"]')
+    await expect(baselineSwitch).toBeDisabled()
+  })
+
+  test('should disable PI toggle in z-score view', async ({ page }) => {
+    // Load explorer with z-score view enabled and baseline on (so PI toggle is visible)
+    await page.goto('/explorer?zs=1&sb=1')
+    await page.waitForLoadState('networkidle')
+    await page.waitForSelector('canvas#chart', { timeout: 10000 })
+
+    // Navigate to Display tab where toggles are
+    await page.getByRole('button', { name: /Display/ }).click()
+    await page.waitForTimeout(300)
+
+    // Find the 95% PI toggle's USwitch
+    // It should be disabled when z-score view is active
+    const piSwitch = page.locator('text=95% PI').locator('..').locator('button[role="switch"]')
+    await expect(piSwitch).toBeDisabled()
+  })
+
+  test('should enable baseline toggle when NOT in z-score view', async ({ page }) => {
+    // Load explorer without z-score view
+    await page.goto('/explorer')
+    await page.waitForLoadState('networkidle')
+    await page.waitForSelector('canvas#chart', { timeout: 10000 })
+
+    // Navigate to Display tab where toggles are
+    await page.getByRole('button', { name: /Display/ }).click()
+    await page.waitForTimeout(300)
+
+    // Find the Baseline toggle's USwitch
+    // It should be enabled when NOT in z-score view
+    const baselineSwitch = page.locator('text=Baseline').locator('..').locator('button[role="switch"]')
+    await expect(baselineSwitch).toBeEnabled()
+  })
 })

@@ -81,8 +81,9 @@ const emit = defineEmits<{
   decimalsChanged: [value: string]
 }>()
 
-// Backward compat: compute isExcess from view for chartUIState
+// Compute view flags for chartUIState and UI logic
 const isExcess = computed(() => props.view === 'excess')
+const isZScore = computed(() => props.view === 'zscore')
 
 // Initialize chart UI state configuration
 const chartUIState = useChartUIState(
@@ -222,8 +223,10 @@ const selectedDecimals = computed({
 const baselineSliderChanged = (values: string[]) => {
   emit('baselineSliderValueChanged', values)
 }
-// Use configuration-based baseline option visibility (kept for backward compatibility)
-const showBaselineOption = chartUIState.showBaselineOption
+// Baseline option: disabled in zscore view (baseline is implicit in z-score calculation)
+const showBaselineOption = computed(() =>
+  chartUIState.showBaselineOption.value && !isZScore.value
+)
 
 // Chart presets for dropdown
 const chartPresetOptions = CHART_PRESETS.map(preset => ({

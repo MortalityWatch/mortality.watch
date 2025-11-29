@@ -10,6 +10,8 @@ const props = defineProps<{
   allYearlyChartLabelsUnique: string[]
   colors: string[]
   showPredictionIntervalDisabled: boolean
+  showMaximizeOptionDisabled: boolean
+  showTotalOptionDisabled: boolean
   baselineRange: { from: string, to: string } | null
 }>()
 
@@ -111,13 +113,11 @@ const baselineSliderValue = computed(() => {
       :show-total="props.state.showTotal.value"
       :show-logarithmic-option="showLogarithmicOption"
       :show-maximize-option="showMaximizeOption"
-      :show-maximize-option-disabled="
-        props.state.showLogarithmic.value || (props.state.isExcess.value && !showTotalOption)
-      "
+      :show-maximize-option-disabled="props.showMaximizeOptionDisabled"
       :show-percentage-option="showPercentageOption"
       :show-cumulative-option="showCumulativeOption"
       :show-total-option="showTotalOption"
-      :show-total-option-disabled="!props.state.cumulative.value"
+      :show-total-option-disabled="props.showTotalOptionDisabled"
       :show-prediction-interval-option="showPredictionIntervalOption"
       :show-prediction-interval-option-disabled="props.showPredictionIntervalDisabled"
       :is-matrix-chart-style="isMatrixChartStyle"
