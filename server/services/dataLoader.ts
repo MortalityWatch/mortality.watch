@@ -28,10 +28,10 @@ import { Country, CountryData, stringKeys, numberKeys } from '../../app/model'
 import { getObjectOfArrays, prefillUndefined, fromYearMonthString, left, right } from '../../app/utils'
 import { filesystemCache } from '../utils/cache'
 
-// Configuration constants - can be overridden via environment variables
-const S3_BASE = process.env.MORTALITY_DATA_S3_BASE || 'https://s3.mortality.watch/data/mortality'
-const CACHE_DIR = process.env.MORTALITY_DATA_CACHE_DIR || '.data/cache/mortality'
-const FETCH_TIMEOUT_MS = parseInt(process.env.MORTALITY_DATA_FETCH_TIMEOUT || '30000', 10)
+// Default configuration constants
+const DEFAULT_S3_BASE = 'https://s3.mortality.watch/data/mortality'
+const DEFAULT_CACHE_DIR = '.data/cache/mortality'
+const DEFAULT_FETCH_TIMEOUT_MS = 30000
 
 /**
  * Parameters for loading mortality data
@@ -88,12 +88,68 @@ function createConcurrencyLimiter(concurrency: number) {
  * Unified Data Loader Service for server-side operations
  */
 export class DataLoaderService {
-  private readonly isDev: boolean
-  private readonly useLocalCacheOnly: boolean
+  /**
+   * Check if running in development mode
+   * Uses getter to ensure config is read at runtime, not module load time
+   */
+  private get isDev(): boolean {
+    return process.env.NODE_ENV === 'development'
+  }
 
-  constructor() {
-    this.isDev = process.env.NODE_ENV === 'development'
-    this.useLocalCacheOnly = process.env.NUXT_PUBLIC_USE_LOCAL_CACHE === 'true'
+  /**
+   * Check if local-only cache mode is enabled
+   * Uses getter with useRuntimeConfig() to ensure .env is loaded
+   * Note: Nuxt may convert env vars to booleans, so we check both types
+   */
+  private get useLocalCacheOnly(): boolean {
+    try {
+      const config = useRuntimeConfig()
+      const value = config.public.useLocalCache as unknown
+      return value === true || value === 'true'
+    } catch {
+      // Fallback to env var if useRuntimeConfig not available (e.g., during build)
+      return process.env.NUXT_PUBLIC_USE_LOCAL_CACHE === 'true'
+    }
+  }
+
+  /**
+   * Get S3 base URL from runtime config
+   * Uses getter to ensure config is read at runtime, not module load time
+   */
+  private get s3Base(): string {
+    try {
+      const config = useRuntimeConfig()
+      return (config.mortalityDataS3Base as string) || DEFAULT_S3_BASE
+    } catch {
+      return process.env.MORTALITY_DATA_S3_BASE || DEFAULT_S3_BASE
+    }
+  }
+
+  /**
+   * Get cache directory from runtime config
+   * Uses getter to ensure config is read at runtime, not module load time
+   */
+  private get cacheDir(): string {
+    try {
+      const config = useRuntimeConfig()
+      return (config.mortalityDataCacheDir as string) || DEFAULT_CACHE_DIR
+    } catch {
+      return process.env.MORTALITY_DATA_CACHE_DIR || DEFAULT_CACHE_DIR
+    }
+  }
+
+  /**
+   * Get fetch timeout from runtime config
+   * Uses getter to ensure config is read at runtime, not module load time
+   */
+  private get fetchTimeoutMs(): number {
+    try {
+      const config = useRuntimeConfig()
+      const value = config.mortalityDataFetchTimeout
+      return typeof value === 'number' ? value : DEFAULT_FETCH_TIMEOUT_MS
+    } catch {
+      return parseInt(process.env.MORTALITY_DATA_FETCH_TIMEOUT || String(DEFAULT_FETCH_TIMEOUT_MS), 10)
+    }
   }
 
   /**
@@ -196,7 +252,8 @@ export class DataLoaderService {
       return data
     } catch (error) {
       console.error('Error loading mortality data:', error)
-      return {}
+      // Rethrow to surface errors instead of silently returning empty
+      throw error
     }
   }
 
@@ -388,7 +445,7 @@ export class DataLoaderService {
   private async fetchMetadataCsv(): Promise<string> {
     // Dev: Check local cache first
     if (this.isDev || this.useLocalCacheOnly) {
-      const localPath = join(CACHE_DIR, 'world_meta.csv')
+      const localPath = join(this.cacheDir, 'world_meta.csv')
       if (existsSync(localPath)) {
         try {
           return readFileSync(localPath, 'utf-8')
@@ -417,9 +474,9 @@ export class DataLoaderService {
     }
 
     // Fetch from S3
-    const url = `${S3_BASE}/world_meta.csv`
+    const url = `${this.s3Base}/world_meta.csv`
     const response = await fetch(url, {
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)
+      signal: AbortSignal.timeout(this.fetchTimeoutMs)
     })
 
     if (!response.ok) {
@@ -454,7 +511,7 @@ export class DataLoaderService {
 
       // Dev: Check local cache first
       if (this.isDev || this.useLocalCacheOnly) {
-        const localPath = join(CACHE_DIR, path)
+        const localPath = join(this.cacheDir, path)
         if (existsSync(localPath)) {
           try {
             const csvText = readFileSync(localPath, 'utf-8')
@@ -485,9 +542,9 @@ export class DataLoaderService {
       }
 
       // Fetch from S3
-      const url = `${S3_BASE}/${path}`
+      const url = `${this.s3Base}/${path}`
       const response = await fetch(url, {
-        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS)
+        signal: AbortSignal.timeout(this.fetchTimeoutMs)
       })
 
       if (!response.ok) {
@@ -509,7 +566,8 @@ export class DataLoaderService {
       return this.parseCountryData(csvText, ageGroup, chartType)
     } catch (error) {
       console.error(`Error fetching ${country}/${chartType}/${ageGroup}:`, error)
-      return []
+      // Rethrow instead of returning empty
+      throw error
     }
   }
 
@@ -520,7 +578,8 @@ export class DataLoaderService {
     const lines = csvText.trim().split('\n')
     if (lines.length === 0) return []
 
-    const headers = lines[0]!.split(',').map(h => h.trim())
+    // Strip quotes from headers
+    const headers = lines[0]!.split(',').map(h => h.trim().replace(/^"|"$/g, ''))
     const results: Record<string, unknown>[] = []
 
     for (let i = 1; i < lines.length; i++) {
@@ -528,9 +587,21 @@ export class DataLoaderService {
       const obj: Record<string, unknown> = {}
 
       headers.forEach((header, index) => {
-        const value = values[index]?.trim()
-        // Try to parse as number, otherwise keep as string
-        obj[header] = isNaN(Number(value)) ? value : Number(value)
+        let value = values[index]?.trim()
+        // Strip quotes from string values
+        if (value?.startsWith('"') && value?.endsWith('"')) {
+          value = value.slice(1, -1)
+        }
+        // Fields that should remain as strings even if they look numeric
+        // 'type' contains comma-separated resolution codes like "1, 2, 3"
+        // 'source' and 'source_asmr' are source names
+        const stringFields = ['type', 'source', 'source_asmr', 'iso3c', 'date']
+        if (stringFields.includes(header)) {
+          obj[header] = value
+        } else {
+          // Try to parse as number, otherwise keep as string
+          obj[header] = value && !isNaN(Number(value)) ? Number(value) : value
+        }
       })
 
       results.push(obj)
@@ -557,9 +628,13 @@ export class DataLoaderService {
     ) => CountryData
 
     for (const rawObj of rawObjects) {
-      const parsedObj = new CountryDataConstructor(rawObj as unknown as CountryDataRaw, ageGroup, chartType)
-      if (!parsedObj.iso3c) continue
-      data.push(parsedObj)
+      try {
+        const parsedObj = new CountryDataConstructor(rawObj as unknown as CountryDataRaw, ageGroup, chartType)
+        if (!parsedObj.iso3c) continue
+        data.push(parsedObj)
+      } catch (e) {
+        console.error(`[parseCountryData] Error creating CountryData:`, e, rawObj)
+      }
     }
 
     return data
