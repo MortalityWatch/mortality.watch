@@ -379,8 +379,21 @@ const handleStandardPopulationChanged = (v: string) => handleStateChange({ field
 const handleBaselineMethodChanged = (v: string) => handleStateChange({ field: 'baselineMethod', value: v }, '_baselineMethod')
 
 // Display options - these update UI only, no data reload needed
-const handleShowLabelsChanged = (v: boolean) => handleUIStateChange({ field: 'showLabels', value: v })
-const handleMaximizeChanged = (v: boolean) => handleUIStateChange({ field: 'maximize', value: v })
+// Some require direct chartData update since they affect rendering without data reload
+const handleShowLabelsChanged = async (v: boolean) => {
+  await handleUIStateChange({ field: 'showLabels', value: v })
+  // Update chart display directly (no data reload)
+  if (dataOrchestration.chartData.value) {
+    dataOrchestration.chartData.value.showLabels = v
+  }
+}
+const handleMaximizeChanged = async (v: boolean) => {
+  await handleUIStateChange({ field: 'maximize', value: v })
+  // Update chart display directly (no data reload)
+  if (dataOrchestration.chartData.value) {
+    dataOrchestration.chartData.value.isMaximized = v
+  }
+}
 const handleShowLogarithmicChanged = (v: boolean) => handleUIStateChange({ field: 'showLogarithmic', value: v })
 
 // Excess mode options
