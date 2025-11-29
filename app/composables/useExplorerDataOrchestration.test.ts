@@ -21,7 +21,7 @@ import type { useExplorerHelpers } from './useExplorerHelpers'
 import type { Country } from '@/model'
 
 import { useChartDataFetcher } from './useChartDataFetcher'
-import { getFilteredChartData } from '@/lib/chart'
+import { getFilteredChartDataFromConfig } from '@/lib/chart'
 import { getKeyForType } from '@/model'
 
 // Mock dependencies
@@ -90,7 +90,8 @@ vi.mock('./useDateRangeCalculations', () => ({
 }))
 
 vi.mock('@/lib/chart', () => ({
-  getFilteredChartData: vi.fn()
+  getFilteredChartData: vi.fn(),
+  getFilteredChartDataFromConfig: vi.fn()
 }))
 
 vi.mock('@/lib/compression/compress.browser', () => ({
@@ -153,6 +154,7 @@ describe('useExplorerDataOrchestration', () => {
       baselineDateFrom: ref('2017'),
       baselineDateTo: ref('2019'),
       isExcess: ref(false),
+      isZScore: ref(false),
       cumulative: ref(false),
       showTotal: ref(false),
       showPredictionInterval: ref(true),
@@ -165,6 +167,8 @@ describe('useExplorerDataOrchestration', () => {
       sliderStart: ref('2010'),
       chartStyle: ref('line'),
       view: ref('mortality'),
+      userColors: ref(undefined),
+      decimals: ref('auto'),
       isUserSet: vi.fn(() => false)
     } as any
 
@@ -210,7 +214,7 @@ describe('useExplorerDataOrchestration', () => {
 
     vi.mocked(useChartDataFetcher).mockReturnValue(mockDataFetcher)
 
-    vi.mocked(getFilteredChartData).mockResolvedValue({
+    vi.mocked(getFilteredChartDataFromConfig).mockReturnValue({
       datasets: [],
       labels: ['2020', '2021', '2022', '2023'],
       title: 'Test Chart',
@@ -627,7 +631,7 @@ describe('useExplorerDataOrchestration', () => {
 
       await orchestration.updateData(true, false)
 
-      expect(getFilteredChartData).toHaveBeenCalled()
+      expect(getFilteredChartDataFromConfig).toHaveBeenCalled()
       expect(orchestration.chartData.value).toBeDefined()
     })
 
@@ -675,7 +679,7 @@ describe('useExplorerDataOrchestration', () => {
       await orchestration.updateData(true, false)
 
       expect(orchestration.isUpdating.value).toBe(false)
-      expect(getFilteredChartData).not.toHaveBeenCalled()
+      expect(getFilteredChartDataFromConfig).not.toHaveBeenCalled()
     })
   })
 
@@ -748,7 +752,7 @@ describe('useExplorerDataOrchestration', () => {
       await orchestration.updateData(false, false)
 
       expect(mockDataFetcher.fetchChartData).not.toHaveBeenCalled()
-      expect(getFilteredChartData).toHaveBeenCalled()
+      expect(getFilteredChartDataFromConfig).toHaveBeenCalled()
     })
 
     it('should still configure options', async () => {
@@ -788,7 +792,7 @@ describe('useExplorerDataOrchestration', () => {
       expect(result).toEqual({ datasets: [], labels: [] })
     })
 
-    it('should call getFilteredChartData with correct parameters', async () => {
+    it('should call getFilteredChartDataFromConfig with correct config', async () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
@@ -801,37 +805,15 @@ describe('useExplorerDataOrchestration', () => {
 
       await orchestration.updateFilteredData()
 
-      expect(getFilteredChartData).toHaveBeenCalledWith(
-        mockState.countries.value,
-        mockState.standardPopulation.value,
-        mockState.ageGroups.value,
-        mockState.showPredictionInterval.value,
-        mockState.isExcess.value,
-        mockState.type.value,
-        mockState.cumulative.value,
-        mockState.showBaseline.value,
-        mockState.baselineMethod.value,
-        mockState.baselineDateFrom.value,
-        mockState.baselineDateTo.value,
-        mockState.showTotal.value,
-        mockState.chartType.value,
-        mockState.dateFrom.value,
-        mockState.dateTo.value,
-        false, // isBarChartStyle
-        mockAllCountries.value,
-        false, // isErrorBarType
-        mockDisplayColors.value,
-        false, // isMatrixChartStyle
-        mockState.showPercentage.value,
-        false, // showCumPi
-        false, // isAsmrType
-        mockState.maximize.value,
-        mockState.showLabels.value,
-        expect.any(String), // URL
-        mockState.showLogarithmic.value,
-        false, // isPopulationType
-        true, // isDeathsType
-        'mortality', // view
+      // getFilteredChartDataFromConfig is called with (config, labels, data)
+      expect(getFilteredChartDataFromConfig).toHaveBeenCalledWith(
+        expect.objectContaining({
+          countries: mockState.countries.value,
+          standardPopulation: mockState.standardPopulation.value,
+          view: 'mortality',
+          isBarChartStyle: false,
+          isMatrixChartStyle: false
+        }),
         orchestration.allChartData.labels,
         orchestration.allChartData.data
       )
@@ -929,7 +911,7 @@ describe('useExplorerDataOrchestration', () => {
       await expect(orchestration.updateFilteredData()).resolves.not.toThrow()
 
       // getFilteredChartData should have been called
-      expect(getFilteredChartData).toHaveBeenCalled()
+      expect(getFilteredChartDataFromConfig).toHaveBeenCalled()
     })
 
     it('should handle matrix chart style', async () => {

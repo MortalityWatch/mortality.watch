@@ -1,12 +1,16 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { useUrlState } from '@/composables/useUrlState'
-import { Defaults, stateFieldEncoders } from '@/lib/state/stateSerializer'
 import type { AllChartData, DatasetRaw } from '@/model'
 import type { MortalityChartData } from '@/lib/chart/chartTypes'
 import {
   explorerStateSchema,
-  type ExplorerState
+  type ExplorerState,
+  type ChartType as ChartTypeSchema,
+  type MetricType as MetricTypeSchema,
+  type ChartStyle as ChartStyleSchema,
+  type StandardPopulation as StandardPopulationSchema,
+  type BaselineMethod as BaselineMethodSchema,
+  type DecimalPrecision as DecimalPrecisionSchema
 } from '@/model/explorerSchema'
 import { detectView } from '@/lib/state/viewDetector'
 import type { ViewType, MetricType, ChartStyle } from '@/lib/state/viewTypes'
@@ -26,154 +30,92 @@ function arraysEqual(a: unknown[] | undefined, b: unknown[] | undefined): boolea
 /**
  * Explorer State Management Composable
  *
- * State management with validation for the explorer page
+ * Refs-first state management for the explorer page.
+ *
+ * Architecture:
+ * - Plain refs are the source of truth for state
+ * - StateResolver initializes refs on page load (with view-specific defaults)
+ * - StateResolver syncs to URL for persistence/sharing
+ * - No useUrlState - eliminates conflict between URL defaults and view defaults
  *
  * Provides:
- * - All URL state refs (maintaining URL-first architecture)
+ * - All state refs (initialized by StateResolver.resolveInitial)
  * - Real-time validation using Zod schema
- * - Auto-fix for incompatible state combinations
- * - User notifications for invalid states
- *
- * This consolidates state management and eliminates the need for
- * scattered business logic across the codebase.
+ * - Direct state application for single-tick updates
  */
 export function useExplorerState() {
-  // Get route once at setup time (cannot be called inside functions/watchers)
+  // Get route once at setup time (for reading URL params at init)
   const route = useRoute()
 
-  // URL State - Core Settings
-  const countries = useUrlState(
-    stateFieldEncoders.countries.key,
-    Defaults.countries
-  )
-  const chartType = useUrlState(
-    stateFieldEncoders.chartType.key,
-    Defaults.chartType
-  )
-  const ageGroups = useUrlState<string[]>(
-    stateFieldEncoders.ageGroups.key,
-    ['all']
-  )
-  const standardPopulation = useUrlState(
-    stateFieldEncoders.standardPopulation.key,
-    Defaults.standardPopulation
-  )
-  const type = useUrlState(
-    stateFieldEncoders.type.key,
-    Defaults.type
-  )
-  const chartStyle = useUrlState(
-    stateFieldEncoders.chartStyle.key,
-    Defaults.chartStyle
-  )
+  // ============================================================================
+  // VIEW - Detect from URL immediately (before StateResolver runs)
+  // ============================================================================
 
-  // URL State - Date Range
-  const dateFrom = useUrlState<string | undefined>(
-    stateFieldEncoders.dateFrom.key,
-    Defaults.dateFrom
-  )
-  const dateTo = useUrlState<string | undefined>(
-    stateFieldEncoders.dateTo.key,
-    Defaults.dateTo
-  )
-  const sliderStart = useUrlState(
-    stateFieldEncoders.sliderStart.key,
-    Defaults.sliderStart ?? '2010'
-  )
+  /**
+   * Current view type as a ref
+   * Initialized from URL, updated by applyResolvedState
+   */
+  const view = ref<ViewType>(detectView(route.query))
 
-  // URL State - Baseline
-  // Note: Defaults are undefined to let StateComputed calculate proper format based on chart type
-  const baselineDateFrom = useUrlState<string | undefined>(
-    stateFieldEncoders.baselineDateFrom.key,
-    undefined
-  )
-  const baselineDateTo = useUrlState<string | undefined>(
-    stateFieldEncoders.baselineDateTo.key,
-    undefined
-  )
-  const showBaseline = useUrlState<boolean>(
-    stateFieldEncoders.showBaseline.key,
-    Defaults.showBaseline ?? true,
-    stateFieldEncoders.showBaseline.encode,
-    stateFieldEncoders.showBaseline.decode
-  )
-  const baselineMethod = useUrlState(
-    stateFieldEncoders.baselineMethod.key,
-    Defaults.baselineMethod
-  )
+  // Get initial defaults based on detected view
+  // Mortality defaults are the base, view-specific defaults override
+  const initialView = detectView(route.query)
+  const viewConfig = VIEWS[initialView] || VIEWS.mortality
+  const mortalityDefaults = VIEWS.mortality.defaults
 
-  // URL State - Display Options
-  // All defaults should come from Defaults (single source of truth)
-  const cumulative = useUrlState<boolean>(
-    stateFieldEncoders.cumulative.key,
-    Defaults.cumulative ?? false,
-    stateFieldEncoders.cumulative.encode,
-    stateFieldEncoders.cumulative.decode
-  )
-  const showTotal = useUrlState<boolean>(
-    stateFieldEncoders.showTotal.key,
-    Defaults.showTotal ?? false,
-    stateFieldEncoders.showTotal.encode,
-    stateFieldEncoders.showTotal.decode
-  )
-  const maximize = useUrlState<boolean>(
-    stateFieldEncoders.maximize.key,
-    Defaults.maximize ?? false,
-    stateFieldEncoders.maximize.encode,
-    stateFieldEncoders.maximize.decode
-  )
-  const showPredictionInterval = useUrlState<boolean>(
-    stateFieldEncoders.showPredictionInterval.key,
-    Defaults.showPredictionInterval ?? true,
-    stateFieldEncoders.showPredictionInterval.encode,
-    stateFieldEncoders.showPredictionInterval.decode
-  )
-  const showLabels = useUrlState<boolean>(
-    stateFieldEncoders.showLabels.key,
-    Defaults.showLabels ?? true,
-    stateFieldEncoders.showLabels.encode,
-    stateFieldEncoders.showLabels.decode
-  )
-  const showPercentage = useUrlState<boolean>(
-    stateFieldEncoders.showPercentage.key,
-    Defaults.showPercentage ?? false,
-    stateFieldEncoders.showPercentage.encode,
-    stateFieldEncoders.showPercentage.decode
-  )
-  const showLogarithmic = useUrlState<boolean>(
-    stateFieldEncoders.showLogarithmic.key,
-    Defaults.showLogarithmic ?? false,
-    stateFieldEncoders.showLogarithmic.encode,
-    stateFieldEncoders.showLogarithmic.decode
-  )
+  // Helper to get merged default with proper fallback
+  const getDefault = <T>(field: keyof typeof mortalityDefaults, fallback: T): T => {
+    // First check view-specific default
+    if (viewConfig.defaults && field in viewConfig.defaults) {
+      const viewValue = viewConfig.defaults[field as keyof typeof viewConfig.defaults]
+      if (viewValue !== undefined) return viewValue as T
+    }
+    // Then mortality default
+    const baseValue = mortalityDefaults[field]
+    if (baseValue !== undefined) return baseValue as T
+    // Finally use fallback
+    return fallback
+  }
 
-  // URL State - Chart Appearance
-  const userColors = useUrlState<string[] | undefined>(
-    stateFieldEncoders.userColors.key,
-    undefined
-  )
-  const showLogo = useUrlState<boolean>(
-    stateFieldEncoders.showLogo.key,
-    true,
-    stateFieldEncoders.showLogo.encode,
-    stateFieldEncoders.showLogo.decode
-  )
-  const showQrCode = useUrlState<boolean>(
-    stateFieldEncoders.showQrCode.key,
-    true,
-    stateFieldEncoders.showQrCode.encode,
-    stateFieldEncoders.showQrCode.decode
-  )
-  const showCaption = useUrlState<boolean>(
-    stateFieldEncoders.showCaption.key,
-    true,
-    stateFieldEncoders.showCaption.encode,
-    stateFieldEncoders.showCaption.decode
-  )
-  const decimals = useUrlState<string>(
-    stateFieldEncoders.decimals.key,
-    Defaults.decimals ?? 'auto'
-  )
+  // ============================================================================
+  // STATE REFS - Plain refs initialized with view-aware defaults
+  // StateResolver.resolveInitial() will update these on mount
+  // ============================================================================
+
+  // Core Settings
+  const countries = ref<string[]>(getDefault('countries', ['USA', 'SWE']))
+  const chartType = ref<ChartTypeSchema>(getDefault('chartType', 'fluseason') as ChartTypeSchema)
+  const ageGroups = ref<string[]>(getDefault('ageGroups', ['all']))
+  const standardPopulation = ref<string>(getDefault('standardPopulation', 'who'))
+  const type = ref<MetricType>(getDefault('type', 'asmr') as MetricType)
+  const chartStyle = ref<ChartStyle>(getDefault('chartStyle', 'line') as ChartStyle)
+
+  // Date Range
+  const dateFrom = ref<string | undefined>(mortalityDefaults.dateFrom)
+  const dateTo = ref<string | undefined>(mortalityDefaults.dateTo)
+  const sliderStart = ref<string>(getDefault('sliderStart', '2010'))
+
+  // Baseline
+  const baselineDateFrom = ref<string | undefined>(mortalityDefaults.baselineDateFrom)
+  const baselineDateTo = ref<string | undefined>(mortalityDefaults.baselineDateTo)
+  const showBaseline = ref<boolean>(getDefault('showBaseline', true))
+  const baselineMethod = ref<string>(getDefault('baselineMethod', 'mean'))
+
+  // Display Options
+  const cumulative = ref<boolean>(getDefault('cumulative', false))
+  const showTotal = ref<boolean>(getDefault('showTotal', false))
+  const maximize = ref<boolean>(getDefault('maximize', false))
+  const showPredictionInterval = ref<boolean>(getDefault('showPredictionInterval', true))
+  const showLabels = ref<boolean>(getDefault('showLabels', true))
+  const showPercentage = ref<boolean>(getDefault('showPercentage', false))
+  const showLogarithmic = ref<boolean>(getDefault('showLogarithmic', false))
+
+  // Chart Appearance
+  const userColors = ref<string[] | undefined>(mortalityDefaults.userColors)
+  const showLogo = ref<boolean>(getDefault('showLogo', true))
+  const showQrCode = ref<boolean>(getDefault('showQrCode', true))
+  const showCaption = ref<boolean>(getDefault('showCaption', true))
+  const decimals = ref<string>(getDefault('decimals', 'auto'))
 
   // Local State - Chart Size (not synced to URL)
   const chartPreset = ref<string>('Auto')
@@ -181,15 +123,11 @@ export function useExplorerState() {
   const chartHeight = ref<number | undefined>(undefined)
 
   // ============================================================================
-  // VIEW - Ref that can be set directly for single-tick updates
+  // USER OVERRIDES - Track which fields have been explicitly set by user
+  // Populated by StateResolver.resolveInitial() from URL params
+  // Updated when user makes changes (via handleStateChange)
   // ============================================================================
-
-  /**
-   * Current view type as a ref (not computed from route)
-   * This allows direct updates without waiting for route reactivity
-   * Initialized from URL and kept in sync via applyResolvedState
-   */
-  const view = ref<ViewType>(detectView(route.query))
+  const userOverrides = ref<Set<string>>(new Set())
 
   /**
    * Backward compatibility: isExcess computed from view
@@ -210,14 +148,14 @@ export function useExplorerState() {
     countries: countries.value,
     chartType: chartType.value,
     ageGroups: ageGroups.value,
-    type: type.value,
-    standardPopulation: standardPopulation.value,
-    chartStyle: chartStyle.value,
+    type: type.value as MetricTypeSchema,
+    standardPopulation: standardPopulation.value as StandardPopulationSchema,
+    chartStyle: chartStyle.value as ChartStyleSchema,
     dateFrom: dateFrom.value,
     dateTo: dateTo.value,
     sliderStart: sliderStart.value,
     showBaseline: showBaseline.value,
-    baselineMethod: baselineMethod.value,
+    baselineMethod: baselineMethod.value as BaselineMethodSchema,
     baselineDateFrom: baselineDateFrom.value,
     baselineDateTo: baselineDateTo.value,
     cumulative: cumulative.value,
@@ -227,7 +165,7 @@ export function useExplorerState() {
     maximize: maximize.value,
     showLabels: showLabels.value,
     showLogarithmic: showLogarithmic.value,
-    decimals: decimals.value
+    decimals: decimals.value as DecimalPrecisionSchema
   }))
 
   const validationResult = computed(() =>
@@ -291,87 +229,82 @@ export function useExplorerState() {
   }
 
   // ============================================================================
-  // HELPER - Check if field is set by user (exists in URL)
+  // HELPER - Check if field is set by user
   // ============================================================================
 
   /**
    * Check if a state field has been explicitly set by the user.
-   * Uses URL presence to determine if user touched the field.
+   * Uses tracked userOverrides ref (populated from URL on init, updated on user actions)
    *
    * @param field - The state field name (e.g., 'dateFrom', 'baselineDateFrom')
-   * @returns true if the field exists in the URL (user has set it)
+   * @returns true if the field has been explicitly set by user
    */
-  const isUserSet = (field: keyof typeof stateFieldEncoders): boolean => {
-    const urlKey = stateFieldEncoders[field]?.key
-    if (!urlKey) return false
-    return urlKey in route.query
+  const isUserSet = (field: string): boolean => {
+    return userOverrides.value.has(field)
   }
 
   /**
-   * Get set of fields explicitly set by user in URL
+   * Get set of fields explicitly set by user
    * Used by StateResolver to determine which fields can be overridden by constraints
    *
-   * @returns Set of field names that are present in URL
+   * @returns Set of field names that user has explicitly set
    */
   const getUserOverrides = (): Set<string> => {
-    const overrides = new Set<string>()
+    return new Set(userOverrides.value)
+  }
 
-    for (const [field, encoder] of Object.entries(stateFieldEncoders)) {
-      if (encoder?.key && encoder.key in route.query) {
-        overrides.add(field)
-      }
-    }
+  /**
+   * Set user overrides (called after StateResolver.resolveInitial)
+   * @param overrides - Set of field names from URL params
+   */
+  const setUserOverrides = (overrides: Set<string>) => {
+    userOverrides.value = new Set(overrides)
+  }
 
-    return overrides
+  /**
+   * Add a field to user overrides (called when user makes a change)
+   * @param field - Field name to add
+   */
+  const addUserOverride = (field: string) => {
+    userOverrides.value = new Set([...userOverrides.value, field])
+  }
+
+  /**
+   * Clear user overrides (called when switching views)
+   * When user switches views, they want the new view's defaults,
+   * so we clear all previous overrides.
+   */
+  const clearUserOverrides = () => {
+    userOverrides.value = new Set()
   }
 
   /**
    * Get current state as plain object for StateResolver
-   * Extracts all ref values into a plain object, applying view defaults
-   * for fields that aren't explicitly set in the URL.
+   * Extracts all ref values into a plain object.
+   *
+   * Since refs are now the source of truth (initialized by StateResolver),
+   * we simply return the current ref values without needing view-default fallbacks.
    *
    * @returns Plain object with all current state values
    */
   const getCurrentStateValues = (): Record<string, unknown> => {
-    // Get current view's defaults
-    const currentView = view.value
-    const viewConfig = VIEWS[currentView] || VIEWS.mortality
-    const viewDefaults = viewConfig.defaults || {}
-
-    // Helper to get value with view default fallback
-    // If the field isn't in URL but has a view default, use the view default
-    const getValueWithViewDefault = <T>(
-      field: keyof typeof stateFieldEncoders,
-      refValue: T
-    ): T => {
-      // If the field is explicitly set in URL, use the ref value
-      if (isUserSet(field)) {
-        return refValue
-      }
-      // If the view has a default for this field, use it
-      if (field in viewDefaults) {
-        return viewDefaults[field as keyof typeof viewDefaults] as T
-      }
-      // Otherwise use the ref value (which has the landing page default)
-      return refValue
-    }
-
     return {
+      view: view.value,
       countries: countries.value,
       type: type.value,
       chartType: chartType.value,
-      chartStyle: getValueWithViewDefault('chartStyle', chartStyle.value),
+      chartStyle: chartStyle.value,
       ageGroups: ageGroups.value,
       standardPopulation: standardPopulation.value,
       isExcess: isExcess.value,
       isZScore: isZScore.value,
-      showBaseline: getValueWithViewDefault('showBaseline', showBaseline.value),
-      showPredictionInterval: getValueWithViewDefault('showPredictionInterval', showPredictionInterval.value),
-      cumulative: getValueWithViewDefault('cumulative', cumulative.value),
-      showPercentage: getValueWithViewDefault('showPercentage', showPercentage.value),
+      showBaseline: showBaseline.value,
+      showPredictionInterval: showPredictionInterval.value,
+      cumulative: cumulative.value,
+      showPercentage: showPercentage.value,
       showTotal: showTotal.value,
       maximize: maximize.value,
-      showLogarithmic: getValueWithViewDefault('showLogarithmic', showLogarithmic.value),
+      showLogarithmic: showLogarithmic.value,
       showLabels: showLabels.value,
       baselineMethod: baselineMethod.value,
       baselineDateFrom: baselineDateFrom.value,
@@ -425,7 +358,7 @@ export function useExplorerState() {
       type.value = state.type as MetricType
     }
     if (state.chartType !== undefined && state.chartType !== chartType.value) {
-      chartType.value = state.chartType as string
+      chartType.value = state.chartType as ChartTypeSchema
     }
     if (state.chartStyle !== undefined && state.chartStyle !== chartStyle.value) {
       chartStyle.value = state.chartStyle as ChartStyle
@@ -554,6 +487,9 @@ export function useExplorerState() {
     // Helper functions
     isUserSet,
     getUserOverrides,
+    setUserOverrides,
+    addUserOverride,
+    clearUserOverrides,
     getCurrentStateValues,
 
     // Direct state application (single-tick updates)

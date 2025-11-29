@@ -78,10 +78,16 @@ export function useDataAvailability(
 
   // Auto-correct: Chart type not available
   watch([availableChartTypes, () => state.chartType.value], ([available, current]) => {
+    console.log(`🔧 [useDataAvailability] chartType watcher fired`, {
+      isLoading: isLoading.value,
+      available,
+      current
+    })
     if (isLoading.value) return
     if (available.length > 0 && !available.includes(current)) {
-      const newType = available[0]
+      const newType = available[0] as ChartType | undefined
       if (newType) {
+        console.log(`🔧 [useDataAvailability] auto-correcting chartType: ${current} → ${newType}`)
         state.chartType.value = newType
         showToast(
           `Chart type changed to ${newType} (only type available for selected countries)`,
@@ -93,6 +99,11 @@ export function useDataAvailability(
 
   // Auto-correct: Age groups not available
   watch([availableAgeGroups, () => state.ageGroups.value], ([available, current]) => {
+    console.log(`🔧 [useDataAvailability] ageGroups watcher fired`, {
+      isLoading: isLoading.value,
+      availableCount: available.length,
+      current
+    })
     if (isLoading.value) return
     if (available.length === 0) return
 
@@ -100,6 +111,7 @@ export function useDataAvailability(
     if (invalidGroups.length > 0) {
       const validGroups = current.filter((g: string) => available.includes(g))
       const fallback = available[0]
+      console.log(`🔧 [useDataAvailability] auto-correcting ageGroups: invalid=${invalidGroups}`)
       state.ageGroups.value = validGroups.length > 0 ? validGroups : (fallback ? [fallback] : ['all'])
 
       showToast('Some age groups not available for selected countries', 'warning')
@@ -172,7 +184,7 @@ export function useDataAvailability(
     }
 
     // For non-premium users, restrict to 2000 or later
-    const year2000Start = getYear2000Start(state.chartType.value)
+    const year2000Start = getYear2000Start(state.chartType.value as ChartType)
 
     // Return whichever is later: year 2000 or actual data start
     return dataMinDate > year2000Start ? dataMinDate : year2000Start

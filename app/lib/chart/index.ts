@@ -16,8 +16,12 @@ export { getChartLabels, blDescription } from './labels'
 export {
   getFilteredLabelAndData,
   getFilteredChartData,
+  getFilteredChartDataFromConfig,
   baselineMinRange
 } from './filtering'
+
+// Types
+export type { ChartFilterConfig, ChartStateSnapshot } from './types'
 
 // Chart configuration and utilities
 export * from './chartConfig'

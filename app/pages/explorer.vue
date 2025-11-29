@@ -91,13 +91,13 @@ const {
 
 // Adapter: Convert separate date refs to array format for DateSlider component
 // Uses default range (~10 years of recent data) when dates are undefined
-const sliderValue = computed(() => {
+const sliderValue = computed((): string[] => {
   const defaultRange = dataOrchestration.defaultRange.value
 
   // If user has set dates, use them; otherwise use defaults (if available)
-  // Convert empty strings to undefined so DateSlider handles initial state correctly
-  const from = state.dateFrom.value ?? (defaultRange.from || undefined)
-  const to = state.dateTo.value ?? (defaultRange.to || undefined)
+  // Fallback to empty strings if no dates available yet
+  const from = state.dateFrom.value ?? defaultRange.from ?? ''
+  const to = state.dateTo.value ?? defaultRange.to ?? ''
 
   return [from, to]
 })
@@ -245,6 +245,10 @@ const handleUpdate = async (key: string) => {
 let isCurrentlyUpdating = false
 let pendingUpdateKey: string | null = null
 
+// Flag to skip browser navigation handler when WE update the URL
+// (vs when user clicks back/forward)
+let isInternalUrlUpdate = false
+
 const update = async (key: string) => {
   // If already updating, queue this update
   if (isCurrentlyUpdating) {
@@ -280,20 +284,27 @@ const handleStateChange = async (field: string, value: unknown, refreshKey: stri
   const router = useRouter()
   const route = useRoute()
 
-  // 1. Resolve state with constraints
+  // 1. Track this as a user override
+  state.addUserOverride(field)
+
+  // 2. Resolve state with constraints
   const resolved = StateResolver.resolveChange(
     { field, value, source: 'user' },
     state.getCurrentStateValues(),
     state.getUserOverrides()
   )
 
-  // 2. Apply directly to refs (single tick, no reactive cascade)
+  // 3. Apply directly to refs (single tick, no reactive cascade)
   state.applyResolvedState(resolved)
 
-  // 3. Sync URL for persistence/sharing
+  // 4. Sync URL for persistence/sharing
+  // Set flag to prevent useBrowserNavigation from triggering duplicate update
+  isInternalUrlUpdate = true
   await StateResolver.applyResolvedState(resolved, route, router)
+  await nextTick()
+  isInternalUrlUpdate = false
 
-  // 4. Trigger chart refresh
+  // 5. Trigger chart refresh
   await update(refreshKey)
 }
 
@@ -304,23 +315,71 @@ const handleViewChanged = async (newView: ViewType) => {
   const router = useRouter()
   const route = useRoute()
 
-  // 1. Resolve view change through StateResolver
+  // 1. Clear user overrides - when switching views, user wants the new view's defaults
+  state.clearUserOverrides()
+
+  // 2. Resolve view change through StateResolver
   // This applies view defaults, constraints, and computes UI state
   const { StateResolver } = await import('@/lib/state/StateResolver')
   const resolved = StateResolver.resolveViewChange(
     newView,
     state.getCurrentStateValues(),
-    state.getUserOverrides()
+    new Set() // Pass empty set since we cleared overrides
   )
 
-  // 2. Apply directly to refs (single tick, no reactive cascade)
+  // 3. Create a state snapshot from the resolved state BEFORE applying to refs
+  // This ensures chart data is generated with consistent state values
+  const snapshot = createSnapshotFromResolved(resolved.state)
+
+  // 4. Generate new chart data using the snapshot (before refs update)
+  // This is the key fix: chart data is computed with the new state values
+  // before Vue's reactivity system can cause intermediate renders
+  await updateData(false, false, snapshot)
+
+  // 5. NOW apply to refs (chart already has correct data, so no flash)
   state.applyResolvedState(resolved)
 
-  // 3. Sync URL for persistence/sharing
+  // 6. Sync URL for persistence/sharing
+  // Set flag to prevent useBrowserNavigation from triggering duplicate update
+  isInternalUrlUpdate = true
   await StateResolver.applyResolvedState(resolved, route, router)
+  isInternalUrlUpdate = false
+}
 
-  // 4. Trigger chart refresh (view ref already updated in step 2)
-  await update('_view')
+/**
+ * Create a ChartStateSnapshot from a resolved state object.
+ * Used to generate chart data before applying resolved state to refs.
+ */
+const createSnapshotFromResolved = (resolvedState: Record<string, unknown>): import('@/lib/chart/types').ChartStateSnapshot => {
+  // Merge resolved state with current state values for fields not in resolved
+  const current = state.getCurrentStateValues()
+  return {
+    countries: (resolvedState.countries ?? current.countries) as string[],
+    type: (resolvedState.type ?? current.type) as string,
+    chartType: (resolvedState.chartType ?? current.chartType) as import('@/model/period').ChartType,
+    chartStyle: (resolvedState.chartStyle ?? current.chartStyle) as string,
+    ageGroups: (resolvedState.ageGroups ?? current.ageGroups) as string[],
+    standardPopulation: (resolvedState.standardPopulation ?? current.standardPopulation) as string,
+    view: (resolvedState.view ?? current.view) as string,
+    isExcess: (resolvedState.isExcess ?? current.isExcess) as boolean,
+    isZScore: (resolvedState.isZScore ?? current.isZScore) as boolean,
+    dateFrom: (resolvedState.dateFrom ?? current.dateFrom) as string | undefined,
+    dateTo: (resolvedState.dateTo ?? current.dateTo) as string | undefined,
+    sliderStart: (resolvedState.sliderStart ?? current.sliderStart) as string,
+    baselineDateFrom: (resolvedState.baselineDateFrom ?? current.baselineDateFrom) as string | undefined,
+    baselineDateTo: (resolvedState.baselineDateTo ?? current.baselineDateTo) as string | undefined,
+    showBaseline: (resolvedState.showBaseline ?? current.showBaseline) as boolean,
+    baselineMethod: (resolvedState.baselineMethod ?? current.baselineMethod) as string,
+    cumulative: (resolvedState.cumulative ?? current.cumulative) as boolean,
+    showTotal: (resolvedState.showTotal ?? current.showTotal) as boolean,
+    maximize: (resolvedState.maximize ?? current.maximize) as boolean,
+    showPredictionInterval: (resolvedState.showPredictionInterval ?? current.showPredictionInterval) as boolean,
+    showLabels: (resolvedState.showLabels ?? current.showLabels) as boolean,
+    showPercentage: (resolvedState.showPercentage ?? current.showPercentage) as boolean,
+    showLogarithmic: (resolvedState.showLogarithmic ?? current.showLogarithmic) as boolean,
+    userColors: (resolvedState.userColors ?? current.userColors) as string[] | undefined,
+    decimals: (resolvedState.decimals ?? current.decimals) as string
+  }
 }
 
 const handleBaselineChanged = (v: boolean) => handleStateChange('showBaseline', v, '_showBaseline')
@@ -470,12 +529,18 @@ watch([() => state.dateFrom.value, () => state.dateTo.value], () => {
 
 // Handle browser back/forward navigation
 // Watches all chart-affecting query params and triggers update when they change
+// Skip if we initiated the URL change ourselves (isInternalUrlUpdate flag)
 useBrowserNavigation({
   queryParams: [
     'c', 't', 'ct', 'e', 'cs', 'df', 'dt', 'ss', 'bf', 'bt',
     'sp', 'ag', 'sb', 'bm', 'ce', 'st', 'pi', 'p', 'lg'
   ],
-  onNavigate: () => update('_countries'),
+  onNavigate: () => {
+    if (isInternalUrlUpdate) {
+      return
+    }
+    update('_countries')
+  },
   isReady: isDataLoaded,
   isUpdating: computed(() => isCurrentlyUpdating)
 })
@@ -492,7 +557,10 @@ onMounted(async () => {
   // This is the key change - refs get values BEFORE any URL update
   state.applyResolvedState(resolved)
 
-  // 3. Sync URL if constraints changed anything (for persistence/sharing only)
+  // 3. Set user overrides from URL params (so we know which fields user explicitly set)
+  state.setUserOverrides(resolved.userOverrides)
+
+  // 4. Sync URL if constraints changed anything (for persistence/sharing only)
   // Use replaceHistory to avoid creating new history entry (preserves back/forward)
   if (resolved.changedFields.length > 0) {
     await StateResolver.applyResolvedState(resolved, route, router, { replaceHistory: true })

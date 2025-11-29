@@ -26,8 +26,9 @@ import {
   getStartIndex
 } from '@/lib/data'
 import { useChartDataFetcher } from '@/composables/useChartDataFetcher'
-import { getFilteredChartData } from '@/lib/chart'
+import { getFilteredChartDataFromConfig } from '@/lib/chart'
 import type { MortalityChartData } from '@/lib/chart/chartTypes'
+import type { ChartFilterConfig, ChartStateSnapshot } from '@/lib/chart/types'
 import { useDateRangeValidation } from '@/composables/useDateRangeValidation'
 import { useDateRangeCalculations } from '@/composables/useDateRangeCalculations'
 import { UI_CONFIG } from '@/lib/config/constants'
@@ -200,6 +201,11 @@ export function useExplorerDataOrchestration(
    * 3. Try to preserve year when chart type changes (e.g., yearly → fluseason)
    */
   watch([dateRangeCalc.visibleLabels, state.chartType], () => {
+    console.log(`🗓️ [useExplorerDataOrchestration] date range watcher fired`, {
+      chartType: state.chartType.value,
+      labelsLength: dateRangeCalc.visibleLabels.value.length
+    })
+
     const labels = dateRangeCalc.visibleLabels.value
     if (labels.length === 0) return
 
@@ -218,6 +224,7 @@ export function useExplorerDataOrchestration(
 
     // If current range is valid, preserve it
     if (hasValidRange) {
+      console.log(`🗓️ [useExplorerDataOrchestration] valid range, keeping`)
       return
     }
 
@@ -225,6 +232,7 @@ export function useExplorerDataOrchestration(
     // The chart will use visibleLabels range when dates are undefined
     const userNeverSetDates = !state.isUserSet('dateFrom') && !state.isUserSet('dateTo')
     if (userNeverSetDates) {
+      console.log(`🗓️ [useExplorerDataOrchestration] user never set dates, skipping`)
       return
     }
 
@@ -243,73 +251,145 @@ export function useExplorerDataOrchestration(
 
     // Update state only if values changed
     if (validatedRange.from !== currentFrom) {
+      console.log(`🗓️ [useExplorerDataOrchestration] updating dateFrom: ${currentFrom} → ${validatedRange.from}`)
       state.dateFrom.value = validatedRange.from
     }
     if (validatedRange.to !== currentTo) {
+      console.log(`🗓️ [useExplorerDataOrchestration] updating dateTo: ${currentTo} → ${validatedRange.to}`)
       state.dateTo.value = validatedRange.to
     }
   })
 
-  // Update filtered chart data
-  const updateFilteredData = async () => {
-    if (!allChartData || !allChartData.labels || !allChartData.data) {
-      return { datasets: [], labels: [] }
-    }
+  /**
+   * Create a state snapshot from current refs.
+   * Used when no explicit snapshot is provided to updateFilteredData.
+   */
+  const createStateSnapshot = (): ChartStateSnapshot => ({
+    countries: state.countries.value,
+    type: state.type.value,
+    chartType: state.chartType.value as ChartType,
+    chartStyle: state.chartStyle.value,
+    ageGroups: state.ageGroups.value,
+    standardPopulation: state.standardPopulation.value,
+    view: state.view.value,
+    isExcess: state.isExcess.value,
+    isZScore: state.isZScore.value,
+    dateFrom: state.dateFrom.value,
+    dateTo: state.dateTo.value,
+    sliderStart: state.sliderStart.value,
+    baselineDateFrom: state.baselineDateFrom.value,
+    baselineDateTo: state.baselineDateTo.value,
+    showBaseline: state.showBaseline.value,
+    baselineMethod: state.baselineMethod.value,
+    cumulative: state.cumulative.value,
+    showTotal: state.showTotal.value,
+    maximize: state.maximize.value,
+    showPredictionInterval: state.showPredictionInterval.value,
+    showLabels: state.showLabels.value,
+    showPercentage: state.showPercentage.value,
+    showLogarithmic: state.showLogarithmic.value,
+    userColors: state.userColors.value,
+    decimals: state.decimals.value
+  })
 
+  /**
+   * Build ChartFilterConfig from a state snapshot.
+   * Applies effective defaults for dates and computes derived flags.
+   */
+  const buildFilterConfig = async (snapshot: ChartStateSnapshot): Promise<ChartFilterConfig> => {
     // Use default range (last ~10 years) when dates are undefined
-    // This ensures chart shows a reasonable recent window without polluting URL
     const defaultRange = dateRangeCalc.defaultRange.value
     const visibleRange = dateRangeCalc.visibleRange.value
 
     // Fall back to visible range if default range is empty (data not loaded yet)
-    const effectiveDateFrom = state.dateFrom.value ?? (defaultRange.from || visibleRange?.min)
-    const effectiveDateTo = state.dateTo.value ?? (defaultRange.to || visibleRange?.max)
+    const effectiveDateFrom = snapshot.dateFrom ?? defaultRange.from ?? visibleRange?.min ?? ''
+    const effectiveDateTo = snapshot.dateTo ?? defaultRange.to ?? visibleRange?.max ?? ''
 
     // Use baselineRange when baseline dates are undefined
-    // This prevents baseline dates from polluting URL on initial load
-    const effectiveBaselineFrom = state.baselineDateFrom.value ?? baselineRange.value?.from
-    const effectiveBaselineTo = state.baselineDateTo.value ?? baselineRange.value?.to
+    const effectiveBaselineFrom = snapshot.baselineDateFrom ?? baselineRange.value?.from ?? ''
+    const effectiveBaselineTo = snapshot.baselineDateTo ?? baselineRange.value?.to ?? ''
 
-    return await getFilteredChartData(
-      state.countries.value,
-      state.standardPopulation.value,
-      state.ageGroups.value,
-      state.showPredictionInterval.value,
-      state.isExcess.value,
-      state.type.value,
-      state.cumulative.value,
-      state.showBaseline.value,
-      state.baselineMethod.value,
-      effectiveBaselineFrom,
-      effectiveBaselineTo,
-      state.showTotal.value,
-      state.chartType.value,
-      effectiveDateFrom,
-      effectiveDateTo,
-      helpers.isBarChartStyle(),
-      allCountries.value, // This is the country metadata, not the selected countries
-      helpers.isErrorBarType(),
-      displayColors.value, // Use displayColors which handles 8+ countries
-      helpers.isMatrixChartStyle(),
-      state.showPercentage.value,
-      helpers.showCumPi(),
-      helpers.isAsmrType(),
-      state.maximize.value,
-      state.showLabels.value,
-      await makeUrl(),
-      state.showLogarithmic.value,
-      helpers.isPopulationType(),
-      helpers.isDeathsType(),
-      state.view.value,
-      allChartData.labels,
-      allChartData.data
-    )
+    // Compute derived flags from snapshot (not from helpers that read refs)
+    const isBarChartStyle = snapshot.chartStyle === 'bar'
+    const isMatrixChartStyle = snapshot.chartStyle === 'matrix'
+    const isAsmrType = snapshot.type === 'asmr' || snapshot.type === 'le'
+    const isPopulationType = snapshot.type === 'population'
+    const isDeathsType = snapshot.type === 'deaths'
+    const isErrorBarType = isBarChartStyle && snapshot.isExcess
+
+    // Compute showCumPi from snapshot
+    const showCumPi = snapshot.cumulative
+      && snapshot.showPredictionInterval
+      && snapshot.baselineMethod !== 'mean'
+
+    return {
+      countries: snapshot.countries,
+      ageGroups: isAsmrType ? ['all'] : snapshot.ageGroups,
+      type: snapshot.type,
+      chartType: snapshot.chartType,
+      standardPopulation: snapshot.standardPopulation,
+      view: snapshot.view,
+      isExcess: snapshot.isExcess,
+      chartStyle: snapshot.chartStyle,
+      isBarChartStyle,
+      isMatrixChartStyle,
+      isErrorBarType,
+      isAsmrType,
+      isPopulationType,
+      isDeathsType,
+      dateFrom: effectiveDateFrom,
+      dateTo: effectiveDateTo,
+      baselineMethod: snapshot.baselineMethod,
+      baselineDateFrom: effectiveBaselineFrom,
+      baselineDateTo: effectiveBaselineTo,
+      showBaseline: snapshot.showBaseline,
+      cumulative: snapshot.cumulative,
+      showTotal: snapshot.showTotal,
+      showPredictionInterval: snapshot.showPredictionInterval,
+      showPercentage: snapshot.showPercentage,
+      showCumPi,
+      maximize: snapshot.maximize,
+      showLabels: snapshot.showLabels,
+      showLogarithmic: snapshot.showLogarithmic,
+      colors: displayColors.value,
+      allCountries: allCountries.value,
+      url: await makeUrl()
+    }
   }
 
-  // Main data update function
+  /**
+   * Update filtered chart data.
+   *
+   * @param snapshot - Optional state snapshot. If not provided, reads from current refs.
+   *                   Providing a snapshot ensures consistent state during view transitions.
+   */
+  const updateFilteredData = async (snapshot?: ChartStateSnapshot): Promise<MortalityChartData> => {
+    if (!allChartData || !allChartData.labels || !allChartData.data) {
+      return { datasets: [], labels: [] } as unknown as MortalityChartData
+    }
+
+    // Use provided snapshot or create one from current refs
+    const stateSnapshot = snapshot ?? createStateSnapshot()
+
+    // Build filter config from snapshot
+    const config = await buildFilterConfig(stateSnapshot)
+
+    // Use the new config-based function
+    return getFilteredChartDataFromConfig(config, allChartData.labels, allChartData.data)
+  }
+
+  /**
+   * Main data update function.
+   *
+   * @param shouldDownloadDataset - Whether to fetch fresh data from server
+   * @param shouldUpdateDataset - Whether to update the dataset (recalculate baseline, etc)
+   * @param snapshot - Optional state snapshot for consistent rendering during view transitions.
+   *                   If provided, chart data is generated from this snapshot instead of current refs.
+   */
   const updateData = async (
     shouldDownloadDataset: boolean,
-    shouldUpdateDataset: boolean
+    shouldUpdateDataset: boolean,
+    snapshot?: ChartStateSnapshot
   ) => {
     isUpdating.value = true
 
@@ -416,7 +496,8 @@ export function useExplorerDataOrchestration(
     }
 
     // Update filtered chart datasets
-    const filteredData = await updateFilteredData()
+    // Pass snapshot if provided for consistent rendering during view transitions
+    const filteredData = await updateFilteredData(snapshot)
     chartData.value = filteredData as MortalityChartData
 
     configureOptions()
@@ -478,6 +559,7 @@ export function useExplorerDataOrchestration(
     updateData,
     updateFilteredData,
     configureOptions,
+    createStateSnapshot,
 
     // Date range helpers
     defaultRange: dateRangeCalc.defaultRange,

@@ -89,10 +89,11 @@ describe('useExplorerState', () => {
     it('should initialize with default URL state values', () => {
       const state = useExplorerState()
 
-      expect(state.countries.value).toEqual(['USA'])
-      expect(state.chartType.value).toBe('yearly')
+      // Default values come from VIEWS.mortality.defaults
+      expect(state.countries.value).toEqual(['USA', 'SWE'])
+      expect(state.chartType.value).toBe('fluseason')
       expect(state.ageGroups.value).toEqual(['all'])
-      expect(state.type.value).toBe('cmr')
+      expect(state.type.value).toBe('asmr')
       expect(state.chartStyle.value).toBe('line')
     })
 
@@ -153,9 +154,10 @@ describe('useExplorerState', () => {
 
       const current = state.currentState.value
 
-      expect(current.countries).toEqual(['USA'])
-      expect(current.chartType).toBe('yearly')
-      expect(current.type).toBe('cmr')
+      // Default values come from VIEWS.mortality.defaults
+      expect(current.countries).toEqual(['USA', 'SWE'])
+      expect(current.chartType).toBe('fluseason')
+      expect(current.type).toBe('asmr')
       expect(current.showBaseline).toBe(true)
     })
 
@@ -221,8 +223,9 @@ describe('useExplorerState', () => {
 
       const validated = state.getValidatedState()
 
-      expect(validated.countries).toEqual(['USA'])
-      expect(validated.chartType).toBe('yearly')
+      // Default values come from VIEWS.mortality.defaults
+      expect(validated.countries).toEqual(['USA', 'SWE'])
+      expect(validated.chartType).toBe('fluseason')
     })
 
     it('should throw error when state is invalid', async () => {

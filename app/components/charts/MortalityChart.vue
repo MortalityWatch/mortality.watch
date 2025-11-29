@@ -236,6 +236,7 @@ onMounted(() => {
   <Line
     v-if="lineConfig?.data"
     id="chart"
+    :key="`line-${props.chartStyle}`"
     ref="lineChart"
     :data="lineConfig.data"
     :options="lineConfig.options"
@@ -243,6 +244,7 @@ onMounted(() => {
   <Bar
     v-if="barConfig?.data"
     id="chart"
+    :key="`bar-${props.chartStyle}`"
     ref="barChart"
     :data="barConfig.data"
     :options="barConfig.options"
@@ -250,6 +252,7 @@ onMounted(() => {
   <Matrix
     v-if="matrixConfig?.data"
     id="chart"
+    :key="`matrix-${props.chartStyle}`"
     ref="matrixChart"
     :data="matrixConfig.data"
     :options="matrixConfig.options"
