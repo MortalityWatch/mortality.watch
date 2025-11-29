@@ -14,7 +14,9 @@ const CHART_TYPES = [
   'weekly_13w_sma',
   'monthly',
   'quarterly',
-  'yearly'
+  'yearly',
+  'fluseason',
+  'midyear'
 ]
 
 // Age groups to download

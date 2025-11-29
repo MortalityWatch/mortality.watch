@@ -33,6 +33,10 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
+    // Server-side only config (not exposed to client)
+    mortalityDataS3Base: process.env.MORTALITY_DATA_S3_BASE || 'https://s3.mortality.watch/data/mortality',
+    mortalityDataCacheDir: process.env.MORTALITY_DATA_CACHE_DIR || '.data/cache/mortality',
+    mortalityDataFetchTimeout: parseInt(process.env.MORTALITY_DATA_FETCH_TIMEOUT || '30000', 10),
     public: {
       incognitoMode: process.env.NUXT_PUBLIC_INCOGNITO_MODE || '0',
       useLocalCache: process.env.NUXT_PUBLIC_USE_LOCAL_CACHE || 'false',

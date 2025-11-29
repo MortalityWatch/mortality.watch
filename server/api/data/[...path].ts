@@ -61,7 +61,9 @@ export default defineEventHandler(async (event) => {
 
   const config = useRuntimeConfig()
   const isDev = process.env.NODE_ENV === 'development'
-  const useLocalCacheOnly = config.public.useLocalCache === 'true'
+  // Nuxt may convert 'true' string to boolean true at runtime, so check both types
+  const configValue = config.public.useLocalCache as unknown
+  const useLocalCacheOnly = configValue === true || configValue === 'true'
 
   // Dev: Check local dev cache first (for downloaded data)
   if (isDev || useLocalCacheOnly) {

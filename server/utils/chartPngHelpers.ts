@@ -131,6 +131,15 @@ export async function fetchChartData(state: ReturnType<typeof decodeChartState>)
     state.chartType
   )
 
+  // Validate that we have data to render
+  if (allLabels.length === 0) {
+    const countriesStr = state.countries.join(', ')
+    throw new Error(
+      `No data available for ${countriesStr} (${state.chartType}). `
+      + 'The requested data may not exist or failed to load.'
+    )
+  }
+
   // 4. Fetch raw chart data using DataLoaderService
   const dataKey = getDataKey(state.type)
 
