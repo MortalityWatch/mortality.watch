@@ -165,31 +165,17 @@ const {
   updateData
 } = dataOrchestration
 
-const dateSliderChanged = async (val: string[]) => {
-  // IMPORTANT: Batch both updates into a single router.push to avoid race condition
-  // where the second update overwrites the first with stale route data
-  const route = useRoute()
-  const router = useRouter()
-  const newQuery = { ...route.query }
-  newQuery.df = val[0]!
-  newQuery.dt = val[1]!
+// Date range slider - batch update both dateFrom and dateTo
+const dateSliderChanged = (val: string[]) => handleStateChange([
+  { field: 'dateFrom', value: val[0] },
+  { field: 'dateTo', value: val[1] }
+], 'dateRange')
 
-  await router.push({ query: newQuery })
-
-  update('dateRange')
-}
-
-const baselineSliderChanged = async (val: string[]) => {
-  // IMPORTANT: Batch both updates into a single router.push to avoid race condition
-  // The browser navigation watcher will handle the data update when the URL changes
-  const route = useRoute()
-  const router = useRouter()
-  const newQuery = { ...route.query }
-  newQuery.bf = val[0]!
-  newQuery.bt = val[1]!
-
-  await router.push({ query: newQuery })
-}
+// Baseline period slider - batch update both baselineDateFrom and baselineDateTo
+const baselineSliderChanged = (val: string[]) => handleStateChange([
+  { field: 'baselineDateFrom', value: val[0] },
+  { field: 'baselineDateTo', value: val[1] }
+], '_baselineMethod')
 
 // Labels for the date range slider - full range from sliderStart to end
 // The sliderValue (dateFrom/dateTo) determines which portion is selected
@@ -234,20 +220,40 @@ const handleChartPresetChanged = (v: string) => {
 
 // Generic StateResolver handler for any state change
 // Handles cascading constraints and single-tick state application
-const handleStateChange = async (field: string, value: unknown, refreshKey: string) => {
+// Supports both single field and batch changes (for sliders with from/to)
+const handleStateChange = async (
+  changes: { field: string, value: unknown } | { field: string, value: unknown }[],
+  refreshKey: string
+) => {
   const { StateResolver } = await import('@/lib/state/resolver/StateResolver')
   const router = useRouter()
   const route = useRoute()
 
-  // 1. Track this as a user override
-  state.addUserOverride(field)
+  // Normalize to array
+  const changeList = Array.isArray(changes) ? changes : [changes]
 
-  // 2. Resolve state with constraints
-  const resolved = StateResolver.resolveChange(
-    { field, value, source: 'user' },
+  // Guard: nothing to do if empty
+  if (changeList.length === 0) return
+
+  // 1. Track all as user overrides
+  changeList.forEach(c => state.addUserOverride(c.field))
+
+  // 2. Chain resolve through all changes
+  const firstChange = changeList[0]!
+  let resolved = StateResolver.resolveChange(
+    { field: firstChange.field, value: firstChange.value, source: 'user' },
     state.getCurrentStateValues(),
     state.getUserOverrides()
   )
+
+  for (let i = 1; i < changeList.length; i++) {
+    const change = changeList[i]!
+    resolved = StateResolver.resolveChange(
+      { field: change.field, value: change.value, source: 'user' },
+      resolved.state,
+      state.getUserOverrides()
+    )
+  }
 
   // 3. Apply directly to refs (single tick, no reactive cascade)
   state.applyResolvedState(resolved)
@@ -261,6 +267,54 @@ const handleStateChange = async (field: string, value: unknown, refreshKey: stri
 
   // 5. Trigger chart refresh
   await update(refreshKey)
+}
+
+// Handler for UI-only state changes (no data refresh needed)
+// Used for display options that only affect chart rendering, not data
+const handleUIStateChange = async (
+  changes: { field: string, value: unknown } | { field: string, value: unknown }[]
+) => {
+  const { StateResolver } = await import('@/lib/state/resolver/StateResolver')
+  const router = useRouter()
+  const route = useRoute()
+
+  // Normalize to array
+  const changeList = Array.isArray(changes) ? changes : [changes]
+
+  // Guard: nothing to do if empty
+  if (changeList.length === 0) return
+
+  // 1. Track all as user overrides
+  changeList.forEach(c => state.addUserOverride(c.field))
+
+  // 2. Chain resolve through all changes
+  const firstChange = changeList[0]!
+  let resolved = StateResolver.resolveChange(
+    { field: firstChange.field, value: firstChange.value, source: 'user' },
+    state.getCurrentStateValues(),
+    state.getUserOverrides()
+  )
+
+  for (let i = 1; i < changeList.length; i++) {
+    const change = changeList[i]!
+    resolved = StateResolver.resolveChange(
+      { field: change.field, value: change.value, source: 'user' },
+      resolved.state,
+      state.getUserOverrides()
+    )
+  }
+
+  // 3. Apply directly to refs (single tick, no reactive cascade)
+  state.applyResolvedState(resolved)
+
+  // 4. Sync URL for persistence/sharing
+  // Set flag to prevent useBrowserNavigation from triggering duplicate update
+  startInternalUrlUpdate()
+  await StateResolver.applyResolvedState(resolved, route, router)
+  await nextTick()
+  endInternalUrlUpdate()
+
+  // No update() call - UI-only change
 }
 
 // Specific handlers for different controls
@@ -310,150 +364,54 @@ const createSnapshotFromResolved = async (resolvedState: Record<string, unknown>
   return StateResolver.createSnapshot(resolvedState, state.getCurrentStateValues())
 }
 
-const handleBaselineChanged = (v: boolean) => handleStateChange('showBaseline', v, '_showBaseline')
-const handlePredictionIntervalChanged = (v: boolean) => handleStateChange('showPredictionInterval', v, '_showPredictionInterval')
-const handleTypeChanged = (v: string) => handleStateChange('type', v, '_type')
-const handleChartTypeChanged = (v: string) => handleStateChange('chartType', v, '_chartType')
-const handleChartStyleChanged = (v: string) => handleStateChange('chartStyle', v, '_chartStyle')
+const handleBaselineChanged = (v: boolean) => handleStateChange({ field: 'showBaseline', value: v }, '_showBaseline')
+const handlePredictionIntervalChanged = (v: boolean) => handleStateChange({ field: 'showPredictionInterval', value: v }, '_showPredictionInterval')
+const handleTypeChanged = (v: string) => handleStateChange({ field: 'type', value: v }, '_type')
+const handleChartTypeChanged = (v: string) => handleStateChange({ field: 'chartType', value: v }, '_chartType')
+const handleChartStyleChanged = (v: string) => handleStateChange({ field: 'chartStyle', value: v }, '_chartStyle')
 
 // Data selection
-const handleCountriesChanged = (v: string[]) => handleStateChange('countries', v, '_countries')
-const handleAgeGroupsChanged = (v: string[]) => handleStateChange('ageGroups', v, '_ageGroups')
-const handleStandardPopulationChanged = (v: string) => handleStateChange('standardPopulation', v, '_standardPopulation')
+const handleCountriesChanged = (v: string[]) => handleStateChange({ field: 'countries', value: v }, '_countries')
+const handleAgeGroupsChanged = (v: string[]) => handleStateChange({ field: 'ageGroups', value: v }, '_ageGroups')
+const handleStandardPopulationChanged = (v: string) => handleStateChange({ field: 'standardPopulation', value: v }, '_standardPopulation')
 
 // Baseline configuration
-const handleBaselineMethodChanged = (v: string) => handleStateChange('baselineMethod', v, '_baselineMethod')
+const handleBaselineMethodChanged = (v: string) => handleStateChange({ field: 'baselineMethod', value: v }, '_baselineMethod')
 
 // Display options - these update UI only, no data reload needed
+// Some require direct chartData update since they affect rendering without data reload
 const handleShowLabelsChanged = async (v: boolean) => {
-  const { StateResolver } = await import('@/lib/state/resolver/StateResolver')
-  const router = useRouter()
-  const route = useRoute()
-
-  // Update URL state
-  const resolved = StateResolver.resolveChange(
-    { field: 'showLabels', value: v, source: 'user' },
-    state.getCurrentStateValues(),
-    state.getUserOverrides()
-  )
-  await StateResolver.applyResolvedState(resolved, route, router)
-
+  await handleUIStateChange({ field: 'showLabels', value: v })
   // Update chart display directly (no data reload)
   if (dataOrchestration.chartData.value) {
     dataOrchestration.chartData.value.showLabels = v
   }
 }
-
 const handleMaximizeChanged = async (v: boolean) => {
-  const { StateResolver } = await import('@/lib/state/resolver/StateResolver')
-  const router = useRouter()
-  const route = useRoute()
-
-  // Update URL state
-  const resolved = StateResolver.resolveChange(
-    { field: 'maximize', value: v, source: 'user' },
-    state.getCurrentStateValues(),
-    state.getUserOverrides()
-  )
-  await StateResolver.applyResolvedState(resolved, route, router)
-
+  await handleUIStateChange({ field: 'maximize', value: v })
   // Update chart display directly (no data reload)
   if (dataOrchestration.chartData.value) {
     dataOrchestration.chartData.value.isMaximized = v
   }
 }
-
-const handleShowLogarithmicChanged = async (v: boolean) => {
-  const { StateResolver } = await import('@/lib/state/resolver/StateResolver')
-  const router = useRouter()
-  const route = useRoute()
-
-  // Update URL state
-  const resolved = StateResolver.resolveChange(
-    { field: 'showLogarithmic', value: v, source: 'user' },
-    state.getCurrentStateValues(),
-    state.getUserOverrides()
-  )
-  await StateResolver.applyResolvedState(resolved, route, router)
-
-  // Logarithmic scale is handled automatically by chartData reactivity
-  // No manual update needed - the chartOptions will react to state.showLogarithmic.value
-}
+const handleShowLogarithmicChanged = (v: boolean) => handleUIStateChange({ field: 'showLogarithmic', value: v })
 
 // Excess mode options
-const handleShowPercentageChanged = (v: boolean) => handleStateChange('showPercentage', v, '_showPercentage')
-const handleCumulativeChanged = (v: boolean) => handleStateChange('cumulative', v, '_cumulative')
-const handleShowTotalChanged = (v: boolean) => handleStateChange('showTotal', v, '_showTotal')
+const handleShowPercentageChanged = (v: boolean) => handleStateChange({ field: 'showPercentage', value: v }, '_showPercentage')
+const handleCumulativeChanged = (v: boolean) => handleStateChange({ field: 'cumulative', value: v }, '_cumulative')
+const handleShowTotalChanged = (v: boolean) => handleStateChange({ field: 'showTotal', value: v }, '_showTotal')
 
 // Colors
-const handleUserColorsChanged = (v: string[] | undefined) => handleStateChange('userColors', v, '_userColors')
+const handleUserColorsChanged = (v: string[] | undefined) => handleStateChange({ field: 'userColors', value: v }, '_userColors')
 
 // Slider start
-const handleSliderStartChanged = (v: string | undefined) => handleStateChange('sliderStart', v, '_sliderStart')
+const handleSliderStartChanged = (v: string | undefined) => handleStateChange({ field: 'sliderStart', value: v }, '_sliderStart')
 
 // Chart appearance (no data refresh needed, just URL sync)
-const handleShowLogoChanged = async (v: boolean) => {
-  const { StateResolver } = await import('@/lib/state/resolver/StateResolver')
-  const router = useRouter()
-  const route = useRoute()
-
-  const resolved = StateResolver.resolveChange(
-    { field: 'showLogo', value: v, source: 'user' },
-    state.getCurrentStateValues(),
-    state.getUserOverrides()
-  )
-
-  await StateResolver.applyResolvedState(resolved, route, router)
-}
-
-const handleShowQrCodeChanged = async (v: boolean) => {
-  const { StateResolver } = await import('@/lib/state/resolver/StateResolver')
-  const router = useRouter()
-  const route = useRoute()
-
-  const resolved = StateResolver.resolveChange(
-    { field: 'showQrCode', value: v, source: 'user' },
-    state.getCurrentStateValues(),
-    state.getUserOverrides()
-  )
-
-  await StateResolver.applyResolvedState(resolved, route, router)
-}
-
-const handleShowCaptionChanged = async (v: boolean) => {
-  const { StateResolver } = await import('@/lib/state/resolver/StateResolver')
-  const router = useRouter()
-  const route = useRoute()
-
-  const resolved = StateResolver.resolveChange(
-    { field: 'showCaption', value: v, source: 'user' },
-    state.getCurrentStateValues(),
-    state.getUserOverrides()
-  )
-
-  await StateResolver.applyResolvedState(resolved, route, router)
-}
-
-const handleDecimalsChanged = async (v: string) => {
-  const { StateResolver } = await import('@/lib/state/resolver/StateResolver')
-  const router = useRouter()
-  const route = useRoute()
-
-  const resolved = StateResolver.resolveChange(
-    { field: 'decimals', value: v, source: 'user' },
-    state.getCurrentStateValues(),
-    state.getUserOverrides()
-  )
-
-  await StateResolver.applyResolvedState(resolved, route, router)
-}
-
-// Watch for date range changes from URL/slider and trigger chart update
-watch([() => state.dateFrom.value, () => state.dateTo.value], () => {
-  if (isDataLoaded.value) {
-    update('dateRange')
-  }
-})
+const handleShowLogoChanged = (v: boolean) => handleUIStateChange({ field: 'showLogo', value: v })
+const handleShowQrCodeChanged = (v: boolean) => handleUIStateChange({ field: 'showQrCode', value: v })
+const handleShowCaptionChanged = (v: boolean) => handleUIStateChange({ field: 'showCaption', value: v })
+const handleDecimalsChanged = (v: string) => handleUIStateChange({ field: 'decimals', value: v })
 
 // Handle browser back/forward navigation
 // Watches all chart-affecting query params and triggers update when they change
@@ -463,10 +421,19 @@ useBrowserNavigation({
     'c', 't', 'ct', 'e', 'cs', 'df', 'dt', 'ss', 'bf', 'bt',
     'sp', 'ag', 'sb', 'bm', 'ce', 'st', 'pi', 'p', 'lg'
   ],
-  onNavigate: () => {
+  onNavigate: async () => {
     if (isInternalUrlUpdate.value) {
       return
     }
+    // Re-read state from URL and apply to refs before updating data
+    const { StateResolver } = await import('@/lib/state/resolver/StateResolver')
+    const route = useRoute()
+    const resolved = StateResolver.resolveInitial(route)
+    state.applyResolvedState(resolved)
+    state.setUserOverrides(resolved.userOverrides)
+    // Wait for Vue reactivity to propagate before updating chart
+    await nextTick()
+    // Now update data with correct state
     update('_countries')
   },
   isReady: isDataLoaded,
