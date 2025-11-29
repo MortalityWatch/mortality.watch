@@ -38,6 +38,7 @@ export interface ChartContext {
  */
 export interface ReferenceLineConfig {
   type?: 'line' | 'box' // Annotation type (default: 'line')
+  drawTime?: 'beforeDraw' | 'beforeDatasetsDraw' | 'afterDatasetsDraw' | 'afterDraw' // When to draw
   value?: number // Y-axis value (for lines)
   yMin?: number // Min Y value (for boxes)
   yMax?: number // Max Y value (for boxes)
@@ -47,6 +48,7 @@ export interface ReferenceLineConfig {
   borderWidth?: number // Border width (for boxes, 0 = no border)
   style?: 'solid' | 'dashed' // Line style
   width?: number // Line width (default: 1)
+  z?: number // Z-index for layering (-1 = behind data)
   dark?: { // Optional dark mode overrides
     color?: string
   }

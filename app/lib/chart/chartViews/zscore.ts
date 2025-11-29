@@ -47,23 +47,27 @@ export const ZSCORE_VIEW: ChartViewConfig = {
   referenceLines: (_, isDark) => [
     // Shaded area for ±2σ confidence band (95%)
     {
+      drawTime: 'beforeDatasetsDraw',
       type: 'box',
       yMin: -2,
       yMax: 2,
       backgroundColor: isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(96, 165, 250, 0.15)', // blue-500 with transparency
       borderWidth: 0,
-      label: ''
+      label: '',
+      z: -1000
     },
     // 0σ line (baseline mean)
     {
+      drawTime: 'beforeDatasetsDraw',
       value: 0,
-      label: '0σ',
-      color: isDark ? '#60a5fa' : '#3b82f6', // blue-400 / blue-500
+      label: '',
+      color: isDark ? '#525252' : '#a1a1a1', // neutral-600 / neutral-400
       style: 'solid',
       width: 1.5
     },
     // +2σ line (upper confidence bound)
     {
+      drawTime: 'beforeDatasetsDraw',
       value: 2,
       label: '+2σ',
       color: isDark ? '#60a5fa' : '#3b82f6', // blue-400 / blue-500
@@ -72,6 +76,7 @@ export const ZSCORE_VIEW: ChartViewConfig = {
     },
     // -2σ line (lower confidence bound)
     {
+      drawTime: 'beforeDatasetsDraw',
       value: -2,
       label: '-2σ',
       color: isDark ? '#60a5fa' : '#3b82f6', // blue-400 / blue-500
@@ -80,6 +85,7 @@ export const ZSCORE_VIEW: ChartViewConfig = {
     },
     // +4σ line (extreme deviation threshold)
     {
+      drawTime: 'beforeDatasetsDraw',
       value: 4,
       label: '+4σ',
       color: isDark ? '#f87171' : '#ef4444', // red-400 / red-500
