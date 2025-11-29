@@ -157,6 +157,7 @@ interface LineAnnotation {
       weight: string
     }
     padding: number
+    yAdjust?: number
   }
 }
 
@@ -196,14 +197,15 @@ export function createAnnotationsFromReferenceLines(
         label: {
           display: !!line.label,
           content: line.label,
-          position: 'end',
+          position: 'start',
           backgroundColor: 'transparent',
           color: line.color,
           font: {
-            size: 10,
-            weight: 'normal'
+            size: 11,
+            weight: 'bold'
           },
-          padding: 2
+          padding: 4,
+          yAdjust: -12
         }
       }
     }
