@@ -6,7 +6,14 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { STATE_CONSTRAINTS } from './constraints'
+import {
+  STATE_CONSTRAINTS,
+  FIELD_UPDATE_STRATEGY,
+  getFieldUpdateType,
+  requiresDataDownload,
+  requiresDatasetUpdate,
+  requiresFilterUpdate
+} from './constraints'
 import { VIEWS } from './views'
 
 // Single source of truth for defaults is VIEWS.mortality.defaults
@@ -243,4 +250,127 @@ describe('StateResolver Constraints', () => {
   // NOTE: Complex Scenarios tests for excess constraints removed
   // These were testing how excess constraints interact with other constraints
   // Excess is now a view type with view-specific constraints tested in viewConstraints.test.ts
+})
+
+describe('Field Update Strategy', () => {
+  describe('FIELD_UPDATE_STRATEGY', () => {
+    it('should classify download fields correctly', () => {
+      expect(FIELD_UPDATE_STRATEGY.countries).toBe('download')
+      expect(FIELD_UPDATE_STRATEGY.type).toBe('download')
+      expect(FIELD_UPDATE_STRATEGY.chartType).toBe('download')
+      expect(FIELD_UPDATE_STRATEGY.ageGroups).toBe('download')
+    })
+
+    it('should classify update fields correctly', () => {
+      expect(FIELD_UPDATE_STRATEGY.baselineMethod).toBe('update')
+      expect(FIELD_UPDATE_STRATEGY.standardPopulation).toBe('update')
+      expect(FIELD_UPDATE_STRATEGY.baselineDateFrom).toBe('update')
+      expect(FIELD_UPDATE_STRATEGY.baselineDateTo).toBe('update')
+      expect(FIELD_UPDATE_STRATEGY.sliderStart).toBe('update')
+    })
+
+    it('should classify filter fields correctly', () => {
+      expect(FIELD_UPDATE_STRATEGY.dateFrom).toBe('filter')
+      expect(FIELD_UPDATE_STRATEGY.dateTo).toBe('filter')
+      expect(FIELD_UPDATE_STRATEGY.chartStyle).toBe('filter')
+      expect(FIELD_UPDATE_STRATEGY.view).toBe('filter')
+      expect(FIELD_UPDATE_STRATEGY.isExcess).toBe('filter')
+      expect(FIELD_UPDATE_STRATEGY.showBaseline).toBe('filter')
+      expect(FIELD_UPDATE_STRATEGY.cumulative).toBe('filter')
+    })
+
+    it('should classify none fields correctly', () => {
+      expect(FIELD_UPDATE_STRATEGY.showLabels).toBe('none')
+      expect(FIELD_UPDATE_STRATEGY.maximize).toBe('none')
+      expect(FIELD_UPDATE_STRATEGY.showLogarithmic).toBe('none')
+      expect(FIELD_UPDATE_STRATEGY.showLogo).toBe('none')
+    })
+  })
+
+  describe('getFieldUpdateType', () => {
+    it('should handle underscore-prefixed keys', () => {
+      expect(getFieldUpdateType('_countries')).toBe('download')
+      expect(getFieldUpdateType('_type')).toBe('download')
+      expect(getFieldUpdateType('_chartStyle')).toBe('filter')
+      expect(getFieldUpdateType('_showLabels')).toBe('none')
+    })
+
+    it('should handle dateRange special case', () => {
+      expect(getFieldUpdateType('dateRange')).toBe('filter')
+    })
+
+    it('should return none for unknown fields', () => {
+      expect(getFieldUpdateType('unknownField')).toBe('none')
+    })
+
+    describe('cumulative conditional logic', () => {
+      it('should return filter when baselineMethod is auto', () => {
+        const state = { baselineMethod: 'auto' }
+        expect(getFieldUpdateType('cumulative', state)).toBe('filter')
+      })
+
+      it('should return update when baselineMethod is not auto', () => {
+        const state = { baselineMethod: 'mean' }
+        expect(getFieldUpdateType('cumulative', state)).toBe('update')
+      })
+
+      it('should return filter when no state is provided', () => {
+        expect(getFieldUpdateType('cumulative')).toBe('filter')
+      })
+
+      it('should handle underscore prefix for cumulative', () => {
+        const state = { baselineMethod: 'mean' }
+        expect(getFieldUpdateType('_cumulative', state)).toBe('update')
+      })
+    })
+  })
+
+  describe('requiresDataDownload', () => {
+    it('should return true for download fields', () => {
+      expect(requiresDataDownload('countries')).toBe(true)
+      expect(requiresDataDownload('_type')).toBe(true)
+    })
+
+    it('should return false for non-download fields', () => {
+      expect(requiresDataDownload('dateFrom')).toBe(false)
+      expect(requiresDataDownload('showLabels')).toBe(false)
+    })
+  })
+
+  describe('requiresDatasetUpdate', () => {
+    it('should return true for update fields', () => {
+      expect(requiresDatasetUpdate('baselineMethod')).toBe(true)
+      expect(requiresDatasetUpdate('_standardPopulation')).toBe(true)
+    })
+
+    it('should return false for non-update fields', () => {
+      expect(requiresDatasetUpdate('countries')).toBe(false)
+      expect(requiresDatasetUpdate('dateFrom')).toBe(false)
+    })
+
+    it('should handle cumulative conditional', () => {
+      expect(requiresDatasetUpdate('cumulative', { baselineMethod: 'auto' })).toBe(false)
+      expect(requiresDatasetUpdate('cumulative', { baselineMethod: 'mean' })).toBe(true)
+    })
+  })
+
+  describe('requiresFilterUpdate', () => {
+    it('should return true for download fields', () => {
+      expect(requiresFilterUpdate('countries')).toBe(true)
+    })
+
+    it('should return true for update fields', () => {
+      expect(requiresFilterUpdate('baselineMethod')).toBe(true)
+    })
+
+    it('should return true for filter fields', () => {
+      expect(requiresFilterUpdate('dateFrom')).toBe(true)
+      expect(requiresFilterUpdate('chartStyle')).toBe(true)
+    })
+
+    it('should return false for none fields', () => {
+      expect(requiresFilterUpdate('showLabels')).toBe(false)
+      expect(requiresFilterUpdate('maximize')).toBe(false)
+    })
+  })
 })
