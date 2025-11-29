@@ -421,10 +421,19 @@ useBrowserNavigation({
     'c', 't', 'ct', 'e', 'cs', 'df', 'dt', 'ss', 'bf', 'bt',
     'sp', 'ag', 'sb', 'bm', 'ce', 'st', 'pi', 'p', 'lg'
   ],
-  onNavigate: () => {
+  onNavigate: async () => {
     if (isInternalUrlUpdate.value) {
       return
     }
+    // Re-read state from URL and apply to refs before updating data
+    const { StateResolver } = await import('@/lib/state/resolver/StateResolver')
+    const route = useRoute()
+    const resolved = StateResolver.resolveInitial(route)
+    state.applyResolvedState(resolved)
+    state.setUserOverrides(resolved.userOverrides)
+    // Wait for Vue reactivity to propagate before updating chart
+    await nextTick()
+    // Now update data with correct state
     update('_countries')
   },
   isReady: isDataLoaded,
