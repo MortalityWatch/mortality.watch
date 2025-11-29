@@ -13,7 +13,7 @@ import {
 } from '~/model'
 import { ChartPeriod, type ChartType } from '~/model/period'
 import type { MortalityChartData } from './chartTypes'
-import type { DataTransformationConfig } from './types'
+import type { DataTransformationConfig, ChartFilterConfig } from './types'
 import { getDatasets } from './datasets'
 import { getChartLabels } from './labels'
 
@@ -65,6 +65,103 @@ const getLabels = (dateFrom: string, dateTo: string): string[] => [
   (dateFrom ?? 'n/a') + ' - ' + (dateTo ?? 'n/a')
 ]
 
+/**
+ * Generate filtered chart data from a config object.
+ * This is the primary API - uses a single config object instead of 30+ parameters.
+ *
+ * @param config - Complete chart filter configuration
+ * @param allLabels - All available date labels
+ * @param allChartData - Raw dataset
+ * @returns Filtered and transformed chart data ready for rendering
+ */
+export const getFilteredChartDataFromConfig = (
+  config: ChartFilterConfig,
+  allLabels: string[],
+  allChartData: Dataset
+): MortalityChartData => {
+  const chartLabels = getChartLabels(
+    config.countries,
+    config.standardPopulation,
+    config.ageGroups,
+    config.showPredictionInterval,
+    config.isExcess,
+    config.type,
+    config.cumulative,
+    config.showBaseline,
+    config.baselineMethod,
+    config.baselineDateFrom,
+    config.baselineDateTo,
+    config.showTotal,
+    config.chartType,
+    config.view
+  )
+
+  const filteredData = getFilteredLabelAndData(
+    allLabels,
+    config.dateFrom,
+    config.dateTo,
+    getChartTypeOrdinal(config.chartType),
+    config.chartType as ChartType,
+    allChartData
+  )
+
+  const labels
+    = config.cumulative && config.showTotal && config.isBarChartStyle
+      ? getLabels(config.dateFrom, config.dateTo)
+      : filteredData.labels
+
+  const transformConfig: DataTransformationConfig = {
+    display: {
+      showPercentage: config.showPercentage,
+      cumulative: config.cumulative,
+      showTotal: config.showTotal,
+      showCumPi: config.showCumPi,
+      showBaseline: config.showBaseline,
+      showPredictionInterval: config.showPredictionInterval,
+      view: config.view
+    },
+    chart: {
+      type: config.type,
+      chartType: config.chartType,
+      isExcess: config.isExcess,
+      isAsmrType: config.isAsmrType,
+      isBarChartStyle: config.isBarChartStyle,
+      isMatrixChartStyle: config.isMatrixChartStyle,
+      isErrorBarType: config.isErrorBarType,
+      standardPopulation: config.standardPopulation
+    },
+    visual: {
+      colors: config.colors
+    },
+    context: {
+      countries: config.countries,
+      allCountries: config.allCountries
+    }
+  }
+
+  const ds = getDatasets(transformConfig, filteredData.data)
+
+  return {
+    labels,
+    datasets: ds.datasets,
+    title: chartLabels.title,
+    subtitle: chartLabels.subtitle,
+    xtitle: chartLabels.xtitle,
+    ytitle: chartLabels.ytitle,
+    isMaximized: config.maximize,
+    showLabels: config.showLabels,
+    url: config.url,
+    showPercentage: config.showPercentage,
+    showLogarithmic: config.showLogarithmic,
+    showXOffset: config.isBarChartStyle || config.isPopulationType || config.isDeathsType,
+    sources: ds.sources
+  }
+}
+
+/**
+ * Generate filtered chart data (legacy API with individual parameters).
+ * @deprecated Use getFilteredChartDataFromConfig instead
+ */
 export const getFilteredChartData = async (
   countries: string[],
   standardPopulation: string,
@@ -99,83 +196,42 @@ export const getFilteredChartData = async (
   allLabels: string[],
   allChartData: Dataset
 ): Promise<MortalityChartData> => {
-  const chartLabels = getChartLabels(
+  // Convert to config object and delegate to new implementation
+  const config: ChartFilterConfig = {
     countries,
-    standardPopulation,
     ageGroups,
-    showPredictionInterval,
-    isExcess,
     type,
-    cumulative,
-    showBaseline,
+    chartType,
+    standardPopulation,
+    view,
+    isExcess,
+    chartStyle: isBarChartStyle ? 'bar' : (isMatrixChartStyle ? 'matrix' : 'line'),
+    isBarChartStyle,
+    isMatrixChartStyle,
+    isErrorBarType,
+    isAsmrType,
+    isPopulationType,
+    isDeathsType,
+    dateFrom,
+    dateTo,
     baselineMethod,
     baselineDateFrom,
     baselineDateTo,
+    showBaseline,
+    cumulative,
     showTotal,
-    chartType,
-    view
-  )
-
-  const filteredData = getFilteredLabelAndData(
-    allLabels,
-    dateFrom,
-    dateTo,
-    getChartTypeOrdinal(chartType),
-    chartType as ChartType,
-    allChartData
-  )
-
-  const labels
-    = cumulative && showTotal && isBarChartStyle
-      ? getLabels(dateFrom, dateTo)
-      : filteredData.labels
-
-  const config: DataTransformationConfig = {
-    display: {
-      showPercentage,
-      cumulative,
-      showTotal,
-      showCumPi,
-      showBaseline,
-      showPredictionInterval,
-      view
-    },
-    chart: {
-      type,
-      chartType,
-      isExcess,
-      isAsmrType,
-      isBarChartStyle,
-      isMatrixChartStyle,
-      isErrorBarType,
-      standardPopulation
-    },
-    visual: {
-      colors
-    },
-    context: {
-      countries,
-      allCountries
-    }
-  }
-
-  const ds = getDatasets(config, filteredData.data)
-
-  return {
-    labels,
-    datasets: ds.datasets,
-    title: chartLabels.title,
-    subtitle: chartLabels.subtitle,
-    xtitle: chartLabels.xtitle,
-    ytitle: chartLabels.ytitle,
-    isMaximized: maximize,
-    showLabels: showLabels,
-    url,
+    showPredictionInterval,
     showPercentage,
+    showCumPi,
+    maximize,
+    showLabels,
     showLogarithmic,
-    showXOffset: isBarChartStyle || isPopulationType || isDeathsType,
-    sources: ds.sources
+    colors,
+    allCountries,
+    url
   }
+
+  return getFilteredChartDataFromConfig(config, allLabels, allChartData)
 }
 
 const baselineMinRanges: Record<string, number> = {

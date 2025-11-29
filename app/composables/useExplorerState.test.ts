@@ -89,10 +89,11 @@ describe('useExplorerState', () => {
     it('should initialize with default URL state values', () => {
       const state = useExplorerState()
 
-      expect(state.countries.value).toEqual(['USA'])
-      expect(state.chartType.value).toBe('yearly')
+      // Default values come from VIEWS.mortality.defaults
+      expect(state.countries.value).toEqual(['USA', 'SWE'])
+      expect(state.chartType.value).toBe('fluseason')
       expect(state.ageGroups.value).toEqual(['all'])
-      expect(state.type.value).toBe('cmr')
+      expect(state.type.value).toBe('asmr')
       expect(state.chartStyle.value).toBe('line')
     })
 
@@ -112,7 +113,7 @@ describe('useExplorerState', () => {
       expect(state.cumulative.value).toBe(false)
       expect(state.showTotal.value).toBe(false)
       expect(state.maximize.value).toBe(false)
-      expect(state.showPredictionInterval.value).toBe(false)
+      expect(state.showPredictionInterval.value).toBe(true) // Matches Defaults.showPredictionInterval
       expect(state.showLabels.value).toBe(true)
       expect(state.showPercentage.value).toBe(false)
       expect(state.showLogarithmic.value).toBe(false)
@@ -153,9 +154,10 @@ describe('useExplorerState', () => {
 
       const current = state.currentState.value
 
-      expect(current.countries).toEqual(['USA'])
-      expect(current.chartType).toBe('yearly')
-      expect(current.type).toBe('cmr')
+      // Default values come from VIEWS.mortality.defaults
+      expect(current.countries).toEqual(['USA', 'SWE'])
+      expect(current.chartType).toBe('fluseason')
+      expect(current.type).toBe('asmr')
       expect(current.showBaseline).toBe(true)
     })
 
@@ -221,8 +223,9 @@ describe('useExplorerState', () => {
 
       const validated = state.getValidatedState()
 
-      expect(validated.countries).toEqual(['USA'])
-      expect(validated.chartType).toBe('yearly')
+      // Default values come from VIEWS.mortality.defaults
+      expect(validated.countries).toEqual(['USA', 'SWE'])
+      expect(validated.chartType).toBe('fluseason')
     })
 
     it('should throw error when state is invalid', async () => {
@@ -583,6 +586,111 @@ describe('useExplorerState', () => {
       await nextTick()
 
       expect(state.errors.value).toHaveLength(0)
+    })
+  })
+
+  // ============================================================================
+  // APPLY RESOLVED STATE
+  // ============================================================================
+
+  describe('applyResolvedState', () => {
+    it('should apply state values directly to refs', () => {
+      const state = useExplorerState()
+
+      // Initial state
+      expect(state.chartStyle.value).toBe('line')
+      expect(state.showBaseline.value).toBe(true)
+
+      // Apply resolved state (simulating StateResolver output)
+      state.applyResolvedState({
+        state: {
+          chartStyle: 'bar',
+          showBaseline: false,
+          showPercentage: true
+        }
+      })
+
+      // Values should be updated immediately (same tick)
+      expect(state.chartStyle.value).toBe('bar')
+      expect(state.showBaseline.value).toBe(false)
+      expect(state.showPercentage.value).toBe(true)
+    })
+
+    it('should not update refs when values are the same', () => {
+      const state = useExplorerState()
+
+      // Set initial values
+      state.chartStyle.value = 'bar'
+      state.countries.value = ['USA', 'GBR']
+
+      // Apply same values - should not trigger reactivity
+      state.applyResolvedState({
+        state: {
+          chartStyle: 'bar',
+          countries: ['USA', 'GBR']
+        }
+      })
+
+      // Values should remain the same
+      expect(state.chartStyle.value).toBe('bar')
+      expect(state.countries.value).toEqual(['USA', 'GBR'])
+    })
+
+    it('should handle array values correctly', () => {
+      const state = useExplorerState()
+
+      state.applyResolvedState({
+        state: {
+          countries: ['DEU', 'FRA', 'ITA'],
+          ageGroups: ['0-14', '15-64']
+        }
+      })
+
+      expect(state.countries.value).toEqual(['DEU', 'FRA', 'ITA'])
+      expect(state.ageGroups.value).toEqual(['0-14', '15-64'])
+    })
+
+    it('should handle undefined values', () => {
+      const state = useExplorerState()
+
+      state.dateFrom.value = '2020'
+      state.dateTo.value = '2023'
+
+      state.applyResolvedState({
+        state: {
+          dateFrom: undefined,
+          dateTo: undefined
+        }
+      })
+
+      expect(state.dateFrom.value).toBeUndefined()
+      expect(state.dateTo.value).toBeUndefined()
+    })
+
+    it('should apply all boolean flags correctly', () => {
+      const state = useExplorerState()
+
+      state.applyResolvedState({
+        state: {
+          showBaseline: true,
+          showPredictionInterval: false,
+          cumulative: true,
+          showPercentage: true,
+          showTotal: true,
+          maximize: true,
+          showLogarithmic: true,
+          showLabels: false
+        }
+      })
+
+      expect(state.showBaseline.value).toBe(true)
+      expect(state.showPredictionInterval.value).toBe(false)
+      expect(state.cumulative.value).toBe(true)
+      expect(state.showPercentage.value).toBe(true)
+      expect(state.showTotal.value).toBe(true)
+      expect(state.maximize.value).toBe(true)
+      expect(state.showLogarithmic.value).toBe(true)
+      expect(state.showLabels.value).toBe(false)
     })
   })
 })

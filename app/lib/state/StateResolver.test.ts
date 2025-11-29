@@ -68,10 +68,11 @@ describe('StateResolver', () => {
       const route = createMockRoute({})
       const resolved = StateResolver.resolveInitial(route)
 
-      expect(resolved.state.countries).toEqual(['USA'])
-      expect(resolved.state.type).toBe('cmr')
-      expect(resolved.state.showBaseline).toBe(false)
-      expect(resolved.state.showPredictionInterval).toBe(false)
+      // These should match Defaults in stateSerializer.ts (the single source of truth)
+      expect(resolved.state.countries).toEqual(['USA', 'SWE'])
+      expect(resolved.state.type).toBe('asmr')
+      expect(resolved.state.showBaseline).toBe(true)
+      expect(resolved.state.showPredictionInterval).toBe(true)
       expect(resolved.userOverrides.size).toBe(0)
     })
 
@@ -101,6 +102,59 @@ describe('StateResolver', () => {
       expect(resolved.state.showPredictionInterval).toBe(false)
     })
 
-    // NOTE: Several tests commented out - test excess functionality now in view system
+    it('should apply view defaults for excess view', () => {
+      const route = createMockRoute({
+        e: '1' // excess view
+      })
+      const resolved = StateResolver.resolveInitial(route)
+
+      // View defaults from VIEWS.excess.defaults
+      expect(resolved.state.view).toBe('excess')
+      expect(resolved.state.chartStyle).toBe('bar') // excess default
+      expect(resolved.state.showBaseline).toBe(true) // forced by constraint
+      expect(resolved.state.showPercentage).toBe(true) // excess default
+      expect(resolved.state.cumulative).toBe(false) // excess default
+      expect(resolved.state.showLogarithmic).toBe(false) // excess default (forced)
+    })
+
+    it('should apply view defaults for zscore view', () => {
+      const route = createMockRoute({
+        zs: '1' // zscore view
+      })
+      const resolved = StateResolver.resolveInitial(route)
+
+      // View defaults from VIEWS.zscore.defaults
+      expect(resolved.state.view).toBe('zscore')
+      expect(resolved.state.chartStyle).toBe('line') // zscore default
+      expect(resolved.state.showBaseline).toBe(true) // forced by constraint
+      expect(resolved.state.showPredictionInterval).toBe(false) // zscore default
+      expect(resolved.state.showLogarithmic).toBe(false) // zscore default (forced)
+    })
+
+    it('should respect user overrides over view defaults', () => {
+      const route = createMockRoute({
+        e: '1', // excess view
+        cs: 'line' // user explicitly sets line chart
+      })
+      const resolved = StateResolver.resolveInitial(route)
+
+      // User override wins over view default
+      expect(resolved.state.chartStyle).toBe('line') // user set, not 'bar'
+      expect(resolved.userOverrides.has('chartStyle')).toBe(true)
+    })
+
+    it('should use view defaults without logging changes', () => {
+      const route = createMockRoute({
+        e: '1' // excess view
+      })
+      const resolved = StateResolver.resolveInitial(route)
+
+      // View defaults are now the starting state - no "change" to log
+      // chartStyle is 'bar' from the start for excess view
+      expect(resolved.state.chartStyle).toBe('bar')
+      // No chartStyle change is logged since it starts with the view default
+      const chartStyleChange = resolved.log.changes.find(c => c.field === 'chartStyle')
+      expect(chartStyleChange).toBeUndefined()
+    })
   })
 })

@@ -61,8 +61,11 @@ describe('View Configurations', () => {
 
     it('has correct defaults', () => {
       expect(config.defaults.chartStyle).toBe('line')
-      expect(config.defaults.showBaseline).toBe(false)
-      expect(config.defaults.showLogarithmic).toBe(false)
+      // VIEWS.mortality.defaults is now the single source of truth for all landing page defaults
+      expect(config.defaults.showBaseline).toBe(true)
+      expect(config.defaults.showPredictionInterval).toBe(true)
+      expect(config.defaults.type).toBe('asmr')
+      expect(config.defaults.countries).toEqual(['USA', 'SWE'])
     })
 
     it('supports all metrics', () => {

@@ -110,6 +110,7 @@ export interface ExplorerStateValues {
   sliderStart: string
   userColors: string[]
   chartPreset: string
+  darkMode: boolean
   zScoreThreshold?: number
   significanceLevel?: number
 }

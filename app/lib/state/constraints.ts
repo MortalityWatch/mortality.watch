@@ -1,62 +1,15 @@
 /**
- * State Constraints and Defaults
+ * State Constraints
  *
- * Defines all business rules and default values for state resolution.
+ * Defines business rule constraints for state resolution.
  * Constraints are applied in priority order (high to low) when their
  * condition is met.
+ *
+ * NOTE: Defaults are now in VIEWS (views.ts). Each view has its own defaults.
+ * Use VIEWS[viewType].defaults to get defaults for a specific view.
  */
 
 import type { StateConstraint } from './types'
-
-// ============================================================================
-// DEFAULT VALUES
-// ============================================================================
-
-/**
- * Default values when nothing is set in URL
- */
-export const DEFAULT_VALUES: Record<string, unknown> = {
-  // View (default to mortality)
-  view: 'mortality',
-  isExcess: false,
-  isZScore: false,
-
-  // Core settings
-  countries: ['USA'],
-  type: 'cmr',
-  chartType: 'yearly',
-  chartStyle: 'line',
-  ageGroups: ['all'],
-  standardPopulation: 'who',
-
-  // Display options
-  showPredictionInterval: false, // Default OFF (matches mortality view)
-  showBaseline: false, // Default OFF (matches mortality view)
-  cumulative: false,
-  showPercentage: false,
-  showTotal: false,
-  maximize: false,
-  showLogarithmic: false,
-  showLabels: true,
-
-  // Baseline
-  baselineMethod: 'mean',
-
-  // Dates (undefined = use defaults from data availability)
-  dateFrom: undefined,
-  dateTo: undefined,
-  sliderStart: undefined,
-  baselineDateFrom: undefined,
-  baselineDateTo: undefined,
-
-  // Chart appearance
-  decimals: 'auto',
-  showLogo: true,
-  showQrCode: true,
-  showCaption: true,
-  chartPreset: undefined,
-  userColors: undefined
-}
 
 // ============================================================================
 // CONSTRAINT DEFINITIONS

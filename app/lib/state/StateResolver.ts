@@ -11,13 +11,33 @@
 
 import type { RouteLocationNormalizedLoaded, Router } from 'vue-router'
 import { stateFieldEncoders } from '@/lib/state/stateSerializer'
-import { STATE_CONSTRAINTS, DEFAULT_VALUES } from './constraints'
+import { STATE_CONSTRAINTS } from './constraints'
 import type { StateChange, ResolvedState, StateResolutionLog, StateFieldMetadata } from './types'
 import { detectView } from './viewDetector'
 import { getViewConstraints } from './viewConstraints'
 import type { ViewType } from './viewTypes'
 import { VIEWS } from './views'
-import { computeUIState } from './uiStateComputer'
+import { computeUIState, type UIFieldState } from './uiStateComputer'
+
+/**
+ * Get defaults for a view, with view-specific fields added
+ *
+ * For non-mortality views, we merge mortality defaults with view-specific overrides.
+ * This ensures fields like countries, type, chartType have defaults even for excess/zscore views.
+ */
+function getViewDefaults(view: ViewType): Record<string, unknown> {
+  const baseDefaults = VIEWS.mortality.defaults
+  const viewConfig = VIEWS[view] || VIEWS.mortality
+
+  // Merge: mortality defaults → view-specific defaults → view flags
+  return {
+    ...baseDefaults,
+    ...viewConfig.defaults,
+    view,
+    isExcess: view === 'excess',
+    isZScore: view === 'zscore'
+  }
+}
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class StateResolver {
@@ -40,29 +60,35 @@ export class StateResolver {
       userOverridesFromUrl: []
     }
 
-    // 1. Start with defaults
-    const state = { ...DEFAULT_VALUES }
+    // 1. Detect view from URL params FIRST (e=1 → excess, zs=1 → zscore)
+    const view = detectView(route.query)
+    const viewConfig = VIEWS[view as ViewType] || VIEWS.mortality
+
+    // 2. Start with view-specific defaults (includes all fields)
+    const viewDefaults = getViewDefaults(view as ViewType)
+    const state = { ...viewDefaults }
     const metadata: Record<string, StateFieldMetadata> = {}
     const userOverrides = new Set<string>()
 
-    // Initialize metadata with defaults
-    for (const [field, value] of Object.entries(DEFAULT_VALUES)) {
+    // Initialize metadata with view defaults
+    for (const [field, value] of Object.entries(viewDefaults)) {
       metadata[field] = {
         value,
         priority: 'default',
-        reason: 'System default',
+        reason: `${viewConfig.label} default`,
         changed: false,
         urlKey: stateFieldEncoders[field as keyof typeof stateFieldEncoders]?.key
       }
     }
 
-    // 2. Validate and apply URL parameters (user overrides)
+    // 3. Validate and apply URL parameters (user overrides)
     const validatedUrlParams = this.validateUrlParams(route)
 
     for (const [field, value] of Object.entries(validatedUrlParams)) {
       userOverrides.add(field)
       log.userOverridesFromUrl.push(field)
 
+      const oldValue = state[field]
       state[field] = value
 
       const urlKey = stateFieldEncoders[field as keyof typeof stateFieldEncoders]?.key || field
@@ -74,33 +100,27 @@ export class StateResolver {
         urlKey
       }
 
-      log.changes.push({
-        field,
-        urlKey,
-        oldValue: DEFAULT_VALUES[field],
-        newValue: value,
-        priority: 'user',
-        reason: 'Set in URL'
-      })
+      if (oldValue !== value) {
+        log.changes.push({
+          field,
+          urlKey,
+          oldValue,
+          newValue: value,
+          priority: 'user',
+          reason: 'Set in URL'
+        })
+      }
     }
 
-    // 3. Detect and add view to state (derived from URL params)
-    const view = detectView(route.query)
-    state.view = view
-
-    // 4. Apply constraints (including view-specific constraints)
+    // 5. Apply constraints (including view-specific constraints)
     const constrainedState = this.applyConstraints(state, userOverrides, log)
 
     log.after = { ...constrainedState }
 
-    // 5. Compute UI state from view configuration
-    const viewConfig = VIEWS[view as ViewType] || VIEWS.mortality
+    // 6. Compute UI state from view configuration (reuse viewConfig from step 4)
     const ui = computeUIState(viewConfig, constrainedState)
 
-    // 6. Log resolution
-    this.logResolution(log, 'INITIAL')
-
-    return {
+    const result = {
       state: constrainedState,
       ui,
       metadata,
@@ -108,6 +128,11 @@ export class StateResolver {
       userOverrides,
       log
     }
+
+    // 7. Log resolution with full context
+    this.logResolution(log, 'INITIAL', result)
+
+    return result
   }
 
   /**
@@ -177,10 +202,7 @@ export class StateResolver {
     const viewConfig = VIEWS[view] || VIEWS.mortality
     const ui = computeUIState(viewConfig, constrainedState)
 
-    // 4. Log resolution
-    this.logResolution(log, 'CHANGE')
-
-    return {
+    const result = {
       state: constrainedState,
       ui,
       metadata,
@@ -188,6 +210,11 @@ export class StateResolver {
       userOverrides,
       log
     }
+
+    // 4. Log resolution with full context
+    this.logResolution(log, 'CHANGE', result)
+
+    return result
   }
 
   /**
@@ -283,10 +310,7 @@ export class StateResolver {
     // 4. Compute UI state from view configuration
     const ui = computeUIState(viewConfig, constrainedState)
 
-    // 5. Log resolution
-    this.logResolution(log, 'VIEW_CHANGE')
-
-    return {
+    const result = {
       state: constrainedState,
       ui,
       metadata,
@@ -294,6 +318,11 @@ export class StateResolver {
       userOverrides,
       log
     }
+
+    // 5. Log resolution with full context
+    this.logResolution(log, 'VIEW_CHANGE', result)
+
+    return result
   }
 
   /**
@@ -419,10 +448,11 @@ export class StateResolver {
    */
   private static logResolution(
     log: StateResolutionLog,
-    type: 'INITIAL' | 'CHANGE' | 'VIEW_CHANGE'
+    type: 'INITIAL' | 'CHANGE' | 'VIEW_CHANGE',
+    resolved?: ResolvedState
   ): void {
-    // Skip logging in production
-    if (typeof window !== 'undefined' && '__PROD__' in window && window.__PROD__) return
+    // Only log in development mode
+    if (!import.meta.dev) return
 
     const emoji = type === 'INITIAL' ? '🚀' : type === 'VIEW_CHANGE' ? '🔀' : '🔄'
     const trigger = log.trigger !== 'initial' ? log.trigger : null
@@ -456,7 +486,80 @@ export class StateResolver {
     }
 
     console.log('👤 User Overrides:', log.userOverridesFromUrl)
+
+    // Enhanced logging: URL query preview
+    if (resolved) {
+      console.log('🔗 URL Query:', this.buildQueryPreview(resolved.state))
+      console.log('👁️ UI State:', this.formatUIState(resolved.ui))
+    }
+
     console.groupEnd()
+  }
+
+  /**
+   * Build a preview of what URL query will look like
+   *
+   * @private
+   */
+  private static buildQueryPreview(state: Record<string, unknown>): Record<string, string> {
+    const query: Record<string, string> = {}
+
+    const view = (state.view as ViewType) || 'mortality'
+
+    // Handle view
+    if (view === 'excess') {
+      query.e = '1'
+    } else if (view === 'zscore') {
+      query.zs = '1'
+    }
+
+    // Get view defaults
+    const viewDefaults = getViewDefaults(view)
+
+    // Only show non-default values for this view
+    for (const [field, encoder] of Object.entries(stateFieldEncoders)) {
+      const value = state[field]
+      const defaultValue = viewDefaults[field]
+
+      if (this.valuesEqual(value, defaultValue)) continue
+      if (value === undefined) continue
+
+      const urlKey = encoder.key
+      const encodedValue = 'encode' in encoder && encoder.encode
+        ? encoder.encode(value as boolean | undefined)
+        : value
+
+      if (encodedValue !== undefined) {
+        query[urlKey] = Array.isArray(encodedValue)
+          ? encodedValue.join(',')
+          : String(encodedValue)
+      }
+    }
+
+    return query
+  }
+
+  /**
+   * Format UI state for logging
+   *
+   * @private
+   */
+  private static formatUIState(ui: Record<string, UIFieldState>): string[] {
+    const visible: string[] = []
+    const hidden: string[] = []
+
+    for (const [field, state] of Object.entries(ui)) {
+      if (state.visible) {
+        const suffix = state.disabled ? ' (disabled)' : ''
+        visible.push(field + suffix)
+      } else {
+        hidden.push(field)
+      }
+    }
+
+    return visible.length > 0
+      ? visible
+      : ['(no UI controls visible)']
   }
 
   /**
@@ -478,71 +581,80 @@ export class StateResolver {
   }
 
   /**
+   * Check if two values are equal (with deep comparison for arrays)
+   *
+   * @private
+   */
+  private static valuesEqual(a: unknown, b: unknown): boolean {
+    // Handle arrays
+    if (Array.isArray(a) && Array.isArray(b)) {
+      if (a.length !== b.length) return false
+      return a.every((val, idx) => val === b[idx])
+    }
+    // Handle primitives
+    return a === b
+  }
+
+  /**
    * Apply resolved state changes to URL
    *
-   * Builds a complete query object with all changes and pushes to router.
-   * This ensures atomic URL updates without race conditions.
+   * Builds a minimal query object containing only non-default values.
+   * This ensures clean URLs without redundant parameters.
    *
    * @param resolved - Resolved state from resolveChange()
-   * @param route - Current route
+   * @param route - Current route (unused, kept for API compatibility)
    * @param router - Vue router instance
    */
   static async applyResolvedState(
     resolved: ResolvedState,
-    route: RouteLocationNormalizedLoaded,
+    _route: RouteLocationNormalizedLoaded,
     router: Router,
     options: { replaceHistory?: boolean } = {}
   ): Promise<void> {
-    // Build complete query object with ALL changes at once
+    // Build query from scratch - only include non-default values
     const newQuery: Record<string, string | string[]> = {}
 
-    // Copy existing query with proper types
-    for (const [key, value] of Object.entries(route.query)) {
-      if (Array.isArray(value)) {
-        newQuery[key] = value.filter((v): v is string => v !== null)
-      } else if (value !== null && value !== undefined) {
-        newQuery[key] = value
-      }
+    // Handle view first (uses e=1, zs=1 instead of state encoder)
+    const view = resolved.state.view as ViewType
+    if (view === 'excess') {
+      newQuery.e = '1'
+    } else if (view === 'zscore') {
+      newQuery.zs = '1'
     }
+    // mortality view has no special parameter (it's the default)
 
-    // Handle special view field (uses e=1, zs=1 instead of state encoder)
-    if (resolved.changedFields.includes('view')) {
-      const view = resolved.state.view as ViewType
+    // Get view-specific defaults to compare against
+    // When view=excess and chartStyle=bar, we don't need chartStyle in URL
+    // because resolveInitial will apply view defaults when loading ?e=1
+    const viewDefaults = getViewDefaults(view)
 
-      // Remove all view parameters first
-      Reflect.deleteProperty(newQuery, 'e')
-      Reflect.deleteProperty(newQuery, 'zs')
-      Reflect.deleteProperty(newQuery, 'view')
-
-      // Add appropriate parameter for the new view
-      if (view === 'excess') {
-        newQuery.e = '1'
-      } else if (view === 'zscore') {
-        newQuery.zs = '1'
-      }
-      // mortality view has no special parameter (it's the default)
-    }
-
-    for (const field of resolved.changedFields) {
-      // Skip 'view' field - handled above with special parameters
-      if (field === 'view') continue
-
-      const encoder = stateFieldEncoders[field as keyof typeof stateFieldEncoders]
-      if (!encoder) continue
-
+    // For each state field, only add to URL if different from view default
+    for (const [field, encoder] of Object.entries(stateFieldEncoders)) {
       const urlKey = encoder.key
       const newValue = resolved.state[field]
+      const defaultValue = viewDefaults[field]
+
+      // Skip if value matches view default
+      if (this.valuesEqual(newValue, defaultValue)) {
+        continue
+      }
+
+      // Skip undefined values
+      if (newValue === undefined) {
+        continue
+      }
 
       // Encode the value
-      const encodedValue = 'encode' in encoder && encoder.encode ? encoder.encode(newValue as boolean | undefined) : newValue
+      const encodedValue = 'encode' in encoder && encoder.encode
+        ? encoder.encode(newValue as boolean | undefined)
+        : newValue
 
-      if (encodedValue === undefined) {
-        // Remove from URL if undefined
-        Reflect.deleteProperty(newQuery, urlKey)
-      } else if (Array.isArray(encodedValue)) {
-        newQuery[urlKey] = encodedValue.map(String)
-      } else {
-        newQuery[urlKey] = String(encodedValue)
+      if (encodedValue !== undefined) {
+        if (Array.isArray(encodedValue)) {
+          newQuery[urlKey] = encodedValue.map(String)
+        } else {
+          newQuery[urlKey] = String(encodedValue)
+        }
       }
     }
 

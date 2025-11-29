@@ -6,10 +6,14 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { DEFAULT_VALUES, STATE_CONSTRAINTS } from './constraints'
+import { STATE_CONSTRAINTS } from './constraints'
+import { VIEWS } from './views'
+
+// Single source of truth for defaults is VIEWS.mortality.defaults
+const DEFAULT_VALUES = VIEWS.mortality.defaults
 
 describe('StateResolver Constraints', () => {
-  describe('DEFAULT_VALUES', () => {
+  describe('DEFAULT_VALUES (via VIEWS.mortality.defaults)', () => {
     it('should have all required default values', () => {
       expect(DEFAULT_VALUES).toHaveProperty('countries')
       expect(DEFAULT_VALUES).toHaveProperty('type')
@@ -29,22 +33,22 @@ describe('StateResolver Constraints', () => {
       expect(DEFAULT_VALUES).toHaveProperty('baselineMethod')
     })
 
-    it('should have sensible defaults', () => {
-      expect(DEFAULT_VALUES.countries).toEqual(['USA'])
-      expect(DEFAULT_VALUES.type).toBe('cmr')
-      expect(DEFAULT_VALUES.chartType).toBe('yearly')
+    it('should have sensible defaults (single source of truth in views.ts)', () => {
+      expect(DEFAULT_VALUES.countries).toEqual(['USA', 'SWE'])
+      expect(DEFAULT_VALUES.type).toBe('asmr')
+      expect(DEFAULT_VALUES.chartType).toBe('fluseason')
       expect(DEFAULT_VALUES.chartStyle).toBe('line')
       expect(DEFAULT_VALUES.ageGroups).toEqual(['all'])
       expect(DEFAULT_VALUES.standardPopulation).toBe('who')
-      expect(DEFAULT_VALUES.showPredictionInterval).toBe(false)
-      expect(DEFAULT_VALUES.showBaseline).toBe(false)
+      expect(DEFAULT_VALUES.showPredictionInterval).toBe(true)
+      expect(DEFAULT_VALUES.showBaseline).toBe(true)
       expect(DEFAULT_VALUES.cumulative).toBe(false)
       expect(DEFAULT_VALUES.showPercentage).toBe(false)
       expect(DEFAULT_VALUES.showTotal).toBe(false)
       expect(DEFAULT_VALUES.maximize).toBe(false)
       expect(DEFAULT_VALUES.showLogarithmic).toBe(false)
       expect(DEFAULT_VALUES.showLabels).toBe(true)
-      // NOTE: isExcess removed - view defaults to 'mortality' when no URL params present
+      expect(DEFAULT_VALUES.sliderStart).toBe('2010')
       expect(DEFAULT_VALUES.baselineMethod).toBe('mean')
     })
   })

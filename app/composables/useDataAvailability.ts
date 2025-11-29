@@ -80,7 +80,7 @@ export function useDataAvailability(
   watch([availableChartTypes, () => state.chartType.value], ([available, current]) => {
     if (isLoading.value) return
     if (available.length > 0 && !available.includes(current)) {
-      const newType = available[0]
+      const newType = available[0] as ChartType | undefined
       if (newType) {
         state.chartType.value = newType
         showToast(
@@ -172,7 +172,7 @@ export function useDataAvailability(
     }
 
     // For non-premium users, restrict to 2000 or later
-    const year2000Start = getYear2000Start(state.chartType.value)
+    const year2000Start = getYear2000Start(state.chartType.value as ChartType)
 
     // Return whichever is later: year 2000 or actual data start
     return dataMinDate > year2000Start ? dataMinDate : year2000Start

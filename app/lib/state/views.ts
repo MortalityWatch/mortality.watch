@@ -30,6 +30,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
   /**
    * Mortality View (Default)
    * Standard mortality analysis with optional baseline
+   * Contains ALL landing page defaults - this is the single source of truth
    */
   mortality: {
     id: 'mortality',
@@ -51,9 +52,39 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
     },
 
     defaults: {
+      // Core settings
+      countries: ['USA', 'SWE'],
+      type: 'asmr',
+      chartType: 'fluseason',
       chartStyle: 'line',
-      showBaseline: false,
-      showLogarithmic: false
+      ageGroups: ['all'],
+      standardPopulation: 'who',
+
+      // Date range (undefined = use data availability defaults)
+      dateFrom: undefined as string | undefined,
+      dateTo: undefined as string | undefined,
+      sliderStart: '2010',
+      baselineDateFrom: undefined as string | undefined,
+      baselineDateTo: undefined as string | undefined,
+
+      // Display options
+      showBaseline: true,
+      baselineMethod: 'mean',
+      showPredictionInterval: true,
+      cumulative: false,
+      showTotal: false,
+      showPercentage: false,
+      showLogarithmic: false,
+      maximize: false,
+      showLabels: true,
+
+      // Chart appearance
+      decimals: 'auto',
+      showLogo: true,
+      showQrCode: true,
+      showCaption: true,
+      userColors: undefined as string[] | undefined,
+      darkMode: false
     },
 
     constraints: [
