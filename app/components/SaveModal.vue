@@ -23,6 +23,7 @@ const props = withDefaults(defineProps<{
   success: boolean
   type?: 'chart' | 'ranking'
   generateDefaultTitle?: () => string
+  generateDefaultDescription?: () => string
   isSaved?: boolean
   isModified?: boolean
   savedChartSlug?: string | null
@@ -33,6 +34,7 @@ const props = withDefaults(defineProps<{
 }>(), {
   type: 'chart',
   generateDefaultTitle: undefined,
+  generateDefaultDescription: undefined,
   isSaved: false,
   isModified: false,
   savedChartSlug: null,
@@ -73,10 +75,11 @@ const typeLabel = computed(() => props.type === 'ranking' ? 'Ranking' : 'Chart')
 const typeLabelLower = computed(() => typeLabel.value.toLowerCase())
 
 const handleOpenModal = (): void => {
-  // Generate default title if function provided, otherwise reset to empty
+  // Generate default title and description if functions provided, otherwise reset to empty
   const defaultTitle = props.generateDefaultTitle ? props.generateDefaultTitle() : ''
+  const defaultDescription = props.generateDefaultDescription ? props.generateDefaultDescription() : ''
   emit('update:name', defaultTitle)
-  emit('update:description', '')
+  emit('update:description', defaultDescription)
   emit('update:isPublic', false)
   localShow.value = true
 }

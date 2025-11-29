@@ -27,7 +27,7 @@ import ExplorerChartContainer from '@/components/explorer/ExplorerChartContainer
 import ExplorerSettings from '@/components/explorer/ExplorerSettings.vue'
 import ChartActions from '@/components/charts/ChartActions.vue'
 import SaveModal from '@/components/SaveModal.vue'
-import { generateExplorerTitle } from '@/lib/utils/chartTitles'
+import { generateExplorerTitle, generateExplorerDescription } from '@/lib/utils/chartTitles'
 
 // Auth state for conditional features
 const { isAuthenticated } = useAuth()
@@ -649,7 +649,30 @@ const getDefaultExplorerTitle = () => {
     isExcess: state.isExcess.value,
     ageGroups: state.ageGroups.value,
     dateFrom: state.dateFrom.value,
-    dateTo: state.dateTo.value
+    dateTo: state.dateTo.value,
+    view: state.view.value
+  })
+}
+
+// Generate default description for explorer charts
+const getDefaultExplorerDescription = () => {
+  return generateExplorerDescription({
+    countries: state.countries.value,
+    allCountries: allCountries.value,
+    type: state.type.value,
+    isExcess: state.isExcess.value,
+    ageGroups: state.ageGroups.value,
+    dateFrom: state.dateFrom.value,
+    dateTo: state.dateTo.value,
+    view: state.view.value,
+    chartType: state.chartType.value,
+    showBaseline: state.showBaseline.value,
+    baselineMethod: state.baselineMethod.value,
+    baselineDateFrom: state.baselineDateFrom.value,
+    baselineDateTo: state.baselineDateTo.value,
+    cumulative: state.cumulative.value,
+    showPercentage: state.showPercentage.value,
+    standardPopulation: state.standardPopulation.value
   })
 }
 
@@ -816,6 +839,7 @@ watch(
                 :existing-chart="existingChart"
                 type="chart"
                 :generate-default-title="getDefaultExplorerTitle"
+                :generate-default-description="getDefaultExplorerDescription"
                 data-tour="save-button"
                 @save="saveToDB"
               />

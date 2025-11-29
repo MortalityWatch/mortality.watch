@@ -13,6 +13,7 @@ interface SaveChartOptions {
   chartType: 'explorer' | 'ranking'
   entityName?: string // 'chart' or 'ranking' (defaults based on chartType)
   generateDefaultTitle?: () => string // Optional function to generate default title
+  generateDefaultDescription?: () => string // Optional function to generate default description
 }
 
 interface SaveResponse {
@@ -35,7 +36,7 @@ interface ExistingChart {
  * @returns Modal state, save functions, and handlers
  */
 export function useSaveChart(options: SaveChartOptions) {
-  const { chartType, entityName = chartType === 'explorer' ? 'chart' : 'ranking', generateDefaultTitle } = options
+  const { chartType, entityName = chartType === 'explorer' ? 'chart' : 'ranking', generateDefaultTitle, generateDefaultDescription } = options
 
   // Modal state management
   const showSaveModal = ref(false)
@@ -77,9 +78,9 @@ export function useSaveChart(options: SaveChartOptions) {
    */
   const openSaveModal = () => {
     showSaveModal.value = true
-    // Generate default title if function provided
+    // Generate default title and description if functions provided
     saveChartName.value = generateDefaultTitle ? generateDefaultTitle() : ''
-    saveChartDescription.value = ''
+    saveChartDescription.value = generateDefaultDescription ? generateDefaultDescription() : ''
     saveChartPublic.value = false
     saveError.value = ''
     saveSuccess.value = false
