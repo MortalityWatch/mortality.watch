@@ -8,11 +8,24 @@ import {
   fetchChartData,
   transformChartData,
   generateChartConfig,
-  generateChartUrl
+  generateChartUrl,
+  resolveChartStateForRendering
 } from '../utils/chartPngHelpers'
-import { decodeChartState } from '../../app/lib/chartState'
+import { dataLoader } from '../services/dataLoader'
 import { renderChart } from '../utils/chartRenderer'
 
+/**
+ * Server-side chart PNG rendering endpoint
+ *
+ * Uses the unified state resolution pipeline (resolveChartStateForRendering)
+ * to ensure SSR renders identically to the explorer UI.
+ *
+ * Resolution flow:
+ * 1. Parse query params → preliminary state (for data loading)
+ * 2. Load data to get allLabels
+ * 3. Resolve full state with allLabels (applies constraints + effective defaults)
+ * 4. Transform and render chart
+ */
 export default defineEventHandler(async (event) => {
   try {
     // Get client IP for throttling
@@ -52,36 +65,64 @@ export default defineEventHandler(async (event) => {
     // Queue the chart rendering to limit concurrency
     const buffer = await chartRenderQueue.enqueue(async () => {
       try {
-        // Decode chart state from query parameters
-        const state = decodeChartState(queryParams)
-
         // Generate chart URL for QR code
         const chartUrl = generateChartUrl(queryParams)
 
-        // Fetch all required chart data
-        const { allCountries, allLabels, allChartData, isAsmrType } = await fetchChartData(state)
+        // Step 1: Do preliminary state resolution to get data loading params
+        // We need allLabels to compute effective date range, but we need
+        // countries/chartType/ageGroups to load data first
+        const preliminaryState = resolveChartStateForRendering(queryParams, [])
 
-        // Transform data into chart-ready format
-        // This is where the view parameter (detected from zs=1, e=1, etc.) flows through
-        const { chartData, isDeathsType, isLE, isPopulationType, isExcess } = await transformChartData(
+        // Step 2: Load data to get allLabels
+        const rawData = await dataLoader.loadMortalityData({
+          chartType: preliminaryState.chartType,
+          countries: preliminaryState.countries,
+          ageGroups: preliminaryState.ageGroups
+        })
+
+        const isAsmrType = preliminaryState.type.startsWith('asmr')
+        const allLabels = dataLoader.getAllChartLabels(
+          rawData,
+          isAsmrType,
+          preliminaryState.ageGroups,
+          preliminaryState.countries,
+          preliminaryState.chartType
+        )
+
+        // Validate that we have data to render
+        if (allLabels.length === 0) {
+          const countriesStr = preliminaryState.countries.join(', ')
+          throw new Error(
+            `No data available for ${countriesStr} (${preliminaryState.chartType}). `
+            + 'The requested data may not exist or failed to load.'
+          )
+        }
+
+        // Step 3: Now resolve full state with allLabels
+        // This applies constraints AND computes effective date ranges
+        const state = resolveChartStateForRendering(queryParams, allLabels)
+
+        // Step 4: Fetch all required chart data with resolved state
+        const { allCountries, allChartData } = await fetchChartData(state)
+
+        // Step 5: Transform data into chart-ready format
+        const { chartData, isDeathsType, isLE, isPopulationType } = await transformChartData(
           state,
           allCountries,
           allLabels,
           allChartData,
           chartUrl,
-          isAsmrType,
-          queryParams
+          isAsmrType
         )
 
-        // Generate chart configuration
+        // Step 6: Generate chart configuration
         const chartConfig = generateChartConfig(
           state,
           chartData,
           isDeathsType,
           isLE,
           isPopulationType,
-          chartUrl,
-          isExcess
+          chartUrl
         )
 
         // Determine chart type for renderer
@@ -91,7 +132,7 @@ export default defineEventHandler(async (event) => {
             ? 'matrix'
             : 'line'
 
-        // Render chart using server-side Canvas renderer
+        // Step 7: Render chart using server-side Canvas renderer
         return await renderChart(width, height, chartConfig, chartType, darkMode)
       } catch (renderError) {
         logger.error('Error rendering chart:', renderError instanceof Error ? renderError : new Error(String(renderError)))

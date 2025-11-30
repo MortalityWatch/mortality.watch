@@ -1,17 +1,20 @@
 import type { H3Event } from 'h3'
-import type { decodeChartState } from '../../app/lib/chartState'
 import { dataLoader } from '../services/dataLoader'
 import type { AllChartData, CountryData } from '../../app/model'
+import { getKeyForType } from '../../app/model/utils'
 import { getFilteredChartData } from '../../app/lib/chart/filtering'
 import { getChartColors } from '../../app/colors'
 import { decompress, base64ToArrayBuffer } from '../../app/lib/compression/compress.node'
 import { makeChartConfig } from '../../app/lib/chart/chartConfig'
-import { detectView } from '../../app/lib/state'
+import { resolveChartStateForRendering, type ChartRenderState } from '../../app/lib/state/resolution'
 import type { ChartStyle } from '../../app/lib/chart/chartTypes'
 
 /**
  * Chart PNG generation helper functions
  * Extracted from chart.png.ts route to improve maintainability and testability
+ *
+ * Uses the unified state resolution pipeline from app/lib/state/core
+ * to ensure SSR renders identically to the explorer UI.
  */
 
 /**
@@ -66,10 +69,10 @@ export function getDimensions(query: Record<string, unknown>): { width: number, 
 
 /**
  * Generate chart title from state
- * @param state - Decoded chart state
+ * @param state - Resolved chart state
  * @returns Chart title string
  */
-export function generateChartTitle(state: ReturnType<typeof decodeChartState>): string {
+export function generateChartTitle(state: ChartRenderState): string {
   const countries = state.countries.join(', ')
   return `${state.type} - ${countries} (${state.chartType})`
 }
@@ -105,11 +108,31 @@ export function getChartResponseHeaders(
 }
 
 /**
+ * Determine the data key based on chart type
+ * @param type - Chart type (cmr, asmr, le, deaths, population)
+ * @returns Data key for chart data fetching
+ */
+export function getDataKey(type: string): string {
+  if (type.startsWith('asmr')) {
+    const standardPopulation = type.split('_')[1] || 'esp2013'
+    return `asmr_${standardPopulation}`
+  }
+
+  const typeMap: Record<string, string> = {
+    cmr: 'cmr',
+    le: 'le',
+    deaths: 'deaths'
+  }
+
+  return typeMap[type] || 'population'
+}
+
+/**
  * Fetch and process all chart data required for rendering using DataLoaderService
- * @param state - Decoded chart state
+ * @param state - Resolved chart state
  * @returns Processed chart data ready for rendering
  */
-export async function fetchChartData(state: ReturnType<typeof decodeChartState>) {
+export async function fetchChartData(state: ChartRenderState) {
   // 1. Load country metadata using DataLoaderService
   const allCountries = await dataLoader.loadCountryMetadata({ filterCountries: state.countries })
 
@@ -142,6 +165,15 @@ export async function fetchChartData(state: ReturnType<typeof decodeChartState>)
   // 4. Fetch raw chart data using DataLoaderService
   const dataKey = getDataKey(state.type)
 
+  // Get baseline keys for fetching (similar to useExplorerHelpers.getBaseKeysForFetch)
+  // Population type doesn't need baseline
+  // IMPORTANT: Pass isExcess=false to get baseline keys needed for calculation
+  // The excess values are calculated from baseline, so we need the baseline keys
+  const isPopulationType = state.type === 'population'
+  const baseKeys = !isPopulationType
+    ? getKeyForType(state.type, state.showBaseline, state.standardPopulation, false, false)
+    : undefined
+
   const allChartData: AllChartData = await dataLoader.getAllChartData({
     dataKey: dataKey as keyof CountryData,
     chartType: state.chartType,
@@ -153,54 +185,38 @@ export async function fetchChartData(state: ReturnType<typeof decodeChartState>)
     countryCodeFilter: state.countries,
     baselineMethod: state.showBaseline ? state.baselineMethod : undefined,
     baselineDateFrom: state.baselineDateFrom,
-    baselineDateTo: state.baselineDateTo
+    baselineDateTo: state.baselineDateTo,
+    keys: baseKeys
   })
 
   return { allCountries, allLabels, allChartData, isAsmrType }
 }
 
 /**
- * Determine the data key based on chart type
- * @param type - Chart type (cmr, asmr, le, deaths, population)
- * @returns Data key for chart data fetching
- */
-export function getDataKey(type: string): string {
-  if (type.startsWith('asmr')) {
-    const standardPopulation = type.split('_')[1] || 'esp2013'
-    return `asmr_${standardPopulation}`
-  }
-
-  const typeMap: Record<string, string> = {
-    cmr: 'cmr',
-    le: 'le',
-    deaths: 'deaths'
-  }
-
-  return typeMap[type] || 'population'
-}
-
-/**
  * Transform raw chart data into chart-ready format
- * @param state - Decoded chart state
+ *
+ * Uses the unified state resolution from app/lib/state/core to ensure
+ * SSR renders identically to the explorer UI.
+ *
+ * @param state - Resolved chart state (from resolveChartStateForRendering)
  * @param allCountries - Country metadata
  * @param allLabels - Chart labels
  * @param allChartData - Raw chart data
  * @param chartUrl - Chart URL for QR code
  * @param isAsmrType - Whether chart is ASMR type
- * @param queryParams - Original query parameters for view detection
  * @returns Filtered and formatted chart data
  */
 export async function transformChartData(
-  state: ReturnType<typeof decodeChartState>,
+  state: ChartRenderState,
   allCountries: Awaited<ReturnType<typeof dataLoader.loadCountryMetadata>>,
   allLabels: string[],
   allChartData: AllChartData,
   chartUrl: string,
-  isAsmrType: boolean,
-  queryParams: Record<string, unknown>
+  isAsmrType: boolean
 ) {
   const colors = getChartColors()
 
+  // Derive flags from resolved state
   const isBarChartStyle = state.chartStyle === 'bar'
   const isErrorBarType = state.chartType === 'yearly' && state.showPredictionInterval
   const isMatrixChartStyle = state.chartStyle === 'matrix'
@@ -209,35 +225,28 @@ export async function transformChartData(
   const isPopulationType = state.type === 'population'
   const isLE = state.type === 'le'
 
-  // Detect view from query parameters FIRST (e=1 for excess, zs=1 for zscore)
-  const view = detectView(queryParams)
-
-  // Derive isExcess from view - this is the source of truth
-  // The view is set by URL params (e=1), not inferred from flags
-  const isExcess = view === 'excess'
-
   const chartData = await getFilteredChartData(
     state.countries,
     state.standardPopulation,
     state.ageGroups,
     state.showPredictionInterval,
-    isExcess,
+    state.isExcess,
     state.type,
     state.cumulative,
     state.showBaseline,
     state.baselineMethod,
-    state.baselineDateFrom || '',
-    state.baselineDateTo || '',
+    state.baselineDateFrom,
+    state.baselineDateTo,
     state.showTotal,
     state.chartType,
-    allLabels[0] || '', // dateFrom - full range
-    allLabels[allLabels.length - 1] || '', // dateTo - full range
+    state.dateFrom, // Already resolved to effective value
+    state.dateTo, // Already resolved to effective value
     isBarChartStyle,
     allCountries,
     isErrorBarType,
     colors,
     isMatrixChartStyle,
-    state.showPercentage ?? false,
+    state.showPercentage,
     showCumPi,
     isAsmrType,
     state.maximize,
@@ -246,43 +255,41 @@ export async function transformChartData(
     state.showLogarithmic,
     isPopulationType,
     isDeathsType,
-    view,
+    state.view,
     allLabels,
     allChartData.data
   )
 
-  return { chartData, isDeathsType, isLE, isPopulationType, isExcess }
+  return { chartData, isDeathsType, isLE, isPopulationType, isExcess: state.isExcess }
 }
 
 /**
  * Generate chart configuration object
- * @param state - Decoded chart state
+ * @param state - Resolved chart state
  * @param chartData - Transformed chart data
  * @param isDeathsType - Whether chart is deaths type
  * @param isLE - Whether chart is life expectancy type
  * @param isPopulationType - Whether chart is population type
  * @param chartUrl - Chart URL for QR code
- * @param isExcess - Whether chart is in excess view mode
  * @returns Chart configuration object
  */
 export function generateChartConfig(
-  state: ReturnType<typeof decodeChartState>,
+  state: ChartRenderState,
   chartData: unknown,
   isDeathsType: boolean,
   isLE: boolean,
   isPopulationType: boolean,
-  chartUrl: string,
-  isExcess: boolean
+  chartUrl: string
 ) {
   const config = makeChartConfig(
     state.chartStyle as ChartStyle,
     chartData as unknown as Array<Record<string, unknown>>,
     isDeathsType,
-    isExcess,
+    state.isExcess,
     isLE,
     isPopulationType,
     state.showLabels,
-    state.showPercentage ?? false,
+    state.showPercentage,
     state.showPredictionInterval
   )
 
@@ -303,3 +310,6 @@ export function generateChartUrl(query: Record<string, unknown>): string {
   const siteUrl = process.env.NUXT_PUBLIC_SITE_URL || 'https://www.mortality.watch'
   return `${siteUrl}/explorer?${new URLSearchParams(query as Record<string, string>).toString()}`
 }
+
+// Re-export the unified state resolution function for use in chart.png route
+export { resolveChartStateForRendering, type ChartRenderState }

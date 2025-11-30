@@ -5,7 +5,8 @@
  * Used for server-side chart rendering and OG image generation.
  */
 
-import { Defaults, stateFieldEncoders, detectView, getViewDefaults } from './state'
+import { Defaults, stateFieldEncoders, detectView, getViewDefaults, applyConstraints } from './state'
+import type { ViewType } from './state'
 
 export interface ChartState {
   countries: string[]
@@ -40,8 +41,14 @@ export interface ChartState {
  * Decode query parameters to chart state
  *
  * This function is view-aware: it detects the view from query params
- * (e=1 for excess, zs=1 for zscore) and applies view-specific defaults.
- * This ensures SSR chart rendering matches the explorer UI.
+ * (e=1 for excess, zs=1 for zscore) and applies view-specific defaults
+ * AND constraints. This ensures SSR chart rendering matches the explorer UI.
+ *
+ * The resolution flow mirrors StateResolver.resolveInitial():
+ * 1. Detect view from URL params (e=1, zs=1)
+ * 2. Get view-specific defaults
+ * 3. Merge with URL-provided values
+ * 4. Apply constraints (enforces view requirements like excess needing baseline)
  */
 export function decodeChartState(query: Record<string, string | string[]>): ChartState {
   const state: Record<string, unknown> = {}
@@ -66,18 +73,26 @@ export function decodeChartState(query: Record<string, string | string[]>): Char
     }
   }
 
-  // Detect view from query params and get view-specific defaults
-  // This ensures SSR uses the same defaults as the explorer UI
-  const view = detectView(query as Record<string, unknown>)
+  // 1. Detect view from query params (e=1 for excess, zs=1 for zscore)
+  const view = detectView(query as Record<string, unknown>) as ViewType
+
+  // 2. Get view-specific defaults
   const viewDefaults = getViewDefaults(view)
 
-  // Fill in defaults for missing values (view-specific defaults take precedence)
-  // Cast through unknown since viewDefaults is Record<string, unknown> but we know
-  // it contains all the fields defined in VIEWS.mortality.defaults
-  return {
+  // 3. Merge defaults with URL-provided values
+  const mergedState = {
     ...viewDefaults,
-    ...state
-  } as unknown as ChartState
+    ...state,
+    view // Ensure view is set for constraint evaluation
+  }
+
+  // 4. Apply constraints to enforce view requirements
+  // This ensures excess view always has showBaseline=true, etc.
+  // Without this, URL params like ?e=1&bl=0 would render differently
+  // in SSR vs explorer (where StateResolver enforces constraints)
+  const constrainedState = applyConstraints(mergedState, view)
+
+  return constrainedState as unknown as ChartState
 }
 
 /**

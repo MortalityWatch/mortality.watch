@@ -38,6 +38,7 @@ export { computeUIState, type UIFieldState } from './uiStateComputer'
 // View utilities
 export { detectView } from './viewDetector'
 export { getViewConstraints } from './viewConstraints'
+export { applyConstraints } from './applyConstraints'
 export {
   isVisible,
   isRequired,
