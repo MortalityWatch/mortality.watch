@@ -115,6 +115,7 @@
   background-color: rgb(38 38 38);
   color: rgb(245 245 245);
   border: 1px solid rgb(64 64 64);
+  text-shadow: none;
 }
 
 .driver-popover-custom .driver-popover-footer button:hover,
