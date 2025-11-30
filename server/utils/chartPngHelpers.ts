@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { dataLoader } from '../services/dataLoader'
-import type { AllChartData, CountryData } from '../../app/model'
+import type { AllChartData, CountryData, NumberEntryFields } from '../../app/model'
 import { getKeyForType } from '../../app/model/utils'
 import { getFilteredChartData } from '../../app/lib/chart/filtering'
 import { getChartColors } from '../../app/colors'
@@ -174,6 +174,17 @@ export async function fetchChartData(state: ChartRenderState) {
     ? getKeyForType(state.type, state.showBaseline, state.standardPopulation, false, false)
     : undefined
 
+  // For z-score view, we need to include the z-score keys
+  // Z-scores are calculated by the stats API alongside baseline data
+  // and stored as <metric>_zscore fields (e.g., deaths_zscore, asmr_who_zscore)
+  let keysWithZScore = baseKeys
+  if (state.isZScore && baseKeys && baseKeys.length > 0) {
+    // Add z-score key for the base metric
+    const baseMetricKey = baseKeys[0] // e.g., 'deaths', 'asmr_who'
+    const zscoreKey = `${String(baseMetricKey)}_zscore` as keyof NumberEntryFields
+    keysWithZScore = [...baseKeys, zscoreKey]
+  }
+
   const allChartData: AllChartData = await dataLoader.getAllChartData({
     dataKey: dataKey as keyof CountryData,
     chartType: state.chartType,
@@ -186,7 +197,7 @@ export async function fetchChartData(state: ChartRenderState) {
     baselineMethod: state.showBaseline ? state.baselineMethod : undefined,
     baselineDateFrom: state.baselineDateFrom,
     baselineDateTo: state.baselineDateTo,
-    keys: baseKeys
+    keys: keysWithZScore
   })
 
   return { allCountries, allLabels, allChartData, isAsmrType }
