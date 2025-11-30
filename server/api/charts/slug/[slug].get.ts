@@ -66,20 +66,31 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // Increment view count only for public charts (async, non-blocking)
+    // Increment view count only for public charts (non-blocking - errors logged but don't fail request)
+    let viewCountIncremented = false
     if (chart.isPublic) {
-      db.update(savedCharts)
-        .set({ viewCount: sql`${savedCharts.viewCount} + 1` })
-        .where(eq(savedCharts.id, chart.id))
-        .run()
+      try {
+        db.update(savedCharts)
+          .set({ viewCount: sql`${savedCharts.viewCount} + 1` })
+          .where(eq(savedCharts.id, chart.id))
+          .run()
+        viewCountIncremented = true
+      } catch (err) {
+        // Log error but don't fail the request - view count increment is non-critical
+        logger.error(
+          'Failed to increment view count',
+          err instanceof Error ? err : new Error(String(err)),
+          { chartId: chart.id, slug: chart.slug }
+        )
+      }
     }
 
     return {
       ...chart,
       authorName: chart.author?.displayName || chart.author?.firstName || 'Anonymous',
       author: undefined, // Remove nested author object
-      // Return incremented view count for public charts (since we're about to increment it)
-      viewCount: chart.isPublic ? chart.viewCount + 1 : chart.viewCount
+      // Only return incremented count if update succeeded
+      viewCount: viewCountIncremented ? chart.viewCount + 1 : chart.viewCount
       // userId is included for ownership checking
     }
   } catch (err) {
