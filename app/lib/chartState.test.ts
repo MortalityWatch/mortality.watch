@@ -39,21 +39,24 @@ describe('chartState', () => {
     })
 
     it('should decode boolean values correctly', () => {
+      // In mortality view (default), showBaseline can be false
       const query = {
         sb: '0', // showBaseline
-        pi: '1', // showPredictionInterval
         lg: '1' // showLogarithmic
       }
 
       const state = decodeChartState(query)
 
       expect(state.showBaseline).toBe(false)
-      expect(state.showPredictionInterval).toBe(true)
+      // Note: showPredictionInterval is constrained to false when showBaseline=false
+      expect(state.showPredictionInterval).toBe(false)
       expect(state.showLogarithmic).toBe(true)
     })
 
     it('should decode array values', () => {
+      // Use CMR type because ASMR/LE constraints force ageGroups to ['all']
       const query = {
+        t: 'cmr', // CMR allows custom age groups
         ag: ['0-14', '15-64', '65-74']
       }
 
@@ -91,7 +94,7 @@ describe('chartState', () => {
       expect(state.showLogarithmic).toBe(false) // zscore default (not compatible)
     })
 
-    it('should allow URL params to override view defaults', () => {
+    it('should allow URL params to override view defaults for non-constrained fields', () => {
       const query = {
         c: 'USA',
         e: '1', // excess view
@@ -100,10 +103,90 @@ describe('chartState', () => {
 
       const state = decodeChartState(query)
 
-      // URL param should override view default
+      // URL param should override view default for non-constrained fields
       expect(state.chartStyle).toBe('line')
       // Other excess defaults should still apply
       expect(state.showPercentage).toBe(true)
+    })
+
+    it('should enforce constraints even when URL params conflict (excess view)', () => {
+      // This is the key bug fix: SSR must enforce constraints like explorer does
+      const query = {
+        c: 'USA',
+        e: '1', // excess view
+        sb: '0' // try to disable baseline (NOT allowed in excess view)
+      }
+
+      const state = decodeChartState(query)
+
+      // Constraint should enforce showBaseline=true in excess view
+      // regardless of URL param sb=0
+      expect(state.showBaseline).toBe(true)
+      // showLogarithmic is also forced off in excess view
+      expect(state.showLogarithmic).toBe(false)
+    })
+
+    it('should enforce constraints even when URL params conflict (zscore view)', () => {
+      const query = {
+        c: 'USA',
+        zs: '1', // zscore view
+        sb: '0', // try to disable baseline (NOT allowed in zscore view)
+        lg: '1', // try to enable logarithmic (NOT allowed in zscore view)
+        cum: '1' // try to enable cumulative (NOT allowed in zscore view)
+      }
+
+      const state = decodeChartState(query)
+
+      // Z-score constraints should be enforced
+      expect(state.showBaseline).toBe(true) // required for z-score calculation
+      expect(state.showLogarithmic).toBe(false) // not compatible with z-scores
+      expect(state.cumulative).toBe(false) // not available in z-score view
+    })
+
+    it('should enforce population type constraints', () => {
+      const query = {
+        c: 'USA',
+        t: 'population', // population type
+        sb: '1', // try to enable baseline (NOT supported for population)
+        pi: '1' // try to enable prediction interval (NOT supported for population)
+      }
+
+      const state = decodeChartState(query)
+
+      // Population type constraints should be enforced
+      expect(state.showBaseline).toBe(false)
+      expect(state.showPredictionInterval).toBe(false)
+    })
+
+    it('should enforce matrix style constraints', () => {
+      const query = {
+        c: 'USA',
+        cs: 'matrix', // matrix chart style
+        sb: '1', // try to enable baseline (NOT supported for matrix)
+        lg: '1' // try to enable logarithmic (NOT supported for matrix)
+      }
+
+      const state = decodeChartState(query)
+
+      // Matrix style constraints should be enforced
+      expect(state.showBaseline).toBe(false)
+      expect(state.showLogarithmic).toBe(false)
+      expect(state.maximize).toBe(false)
+    })
+
+    it('should enforce showTotal requires cumulative constraint', () => {
+      const query = {
+        c: 'USA',
+        e: '1', // excess view (where showTotal is available)
+        cum: '0', // cumulative off
+        st: '1' // try to enable showTotal (requires cumulative)
+      }
+
+      const state = decodeChartState(query)
+
+      // showTotal should be forced off when cumulative is off
+      expect(state.cumulative).toBe(false)
+      expect(state.showTotal).toBe(false)
     })
   })
 
@@ -198,7 +281,8 @@ describe('chartState', () => {
     })
 
     it('should handle multiple array values', () => {
-      const queryString = 'ag=0-14&ag=15-64&ag=65-74'
+      // Use CMR type because ASMR/LE constraints force ageGroups to ['all']
+      const queryString = 't=cmr&ag=0-14&ag=15-64&ag=65-74'
 
       const state = queryStringToChartState(queryString)
 
