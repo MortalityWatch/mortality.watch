@@ -31,7 +31,60 @@ const getDefaultPeriodLength = (method: string): number => {
   return 3 // Default for other methods
 }
 
-const selectedPeriodLength = ref(getDefaultPeriodLength(props.baselineMethod))
+/**
+ * Calculate period length from baseline dates
+ * Returns 3, 5, 10 if the year range matches those presets, otherwise 0 (Custom)
+ * Falls back to method-based default if sliderValue is not available
+ */
+const calculatePeriodLength = (sliderValue: string[], fallbackMethod?: string): number => {
+  // Validate input - need both dates and labels
+  if (!sliderValue || sliderValue.length !== 2 || !props.labels.length) {
+    return fallbackMethod ? getDefaultPeriodLength(fallbackMethod) : 3
+  }
+
+  const startDate = sliderValue[0]
+  const endDate = sliderValue[1]
+
+  // Validate date strings exist and have minimum length for year extraction
+  if (!startDate || !endDate || startDate.length < 4 || endDate.length < 4) {
+    return fallbackMethod ? getDefaultPeriodLength(fallbackMethod) : 3
+  }
+
+  // Extract years and validate they're valid numbers
+  const startYear = parseInt(startDate.substring(0, 4))
+  const endYear = parseInt(endDate.substring(0, 4))
+
+  if (isNaN(startYear) || isNaN(endYear)) {
+    return fallbackMethod ? getDefaultPeriodLength(fallbackMethod) : 3
+  }
+
+  // Calculate approximate years (add 1 because range is inclusive)
+  const years = endYear - startYear + 1
+
+  // Match to preset options
+  if (years === 3) return 3
+  if (years === 5) return 5
+  if (years === 10) return 10
+
+  // Otherwise it's custom
+  return 0
+}
+
+// Initialize with calculated value, falling back to method-based default
+const selectedPeriodLength = ref(
+  calculatePeriodLength(props.sliderValue, props.baselineMethod)
+)
+
+// Update period length when slider value changes externally (e.g., URL navigation)
+watch(() => props.sliderValue, (newValue) => {
+  const calculated = calculatePeriodLength(newValue)
+  // Update if:
+  // 1. The calculated value is a preset (3, 5, 10) AND current is also a preset
+  // 2. OR the calculated value is Custom (0) - always reflect custom ranges
+  if (calculated === 0 || selectedPeriodLength.value !== 0) {
+    selectedPeriodLength.value = calculated
+  }
+}, { deep: true })
 
 // Watch for baseline method changes to update default period length
 // Always preserve user's Custom selection (value === 0)
