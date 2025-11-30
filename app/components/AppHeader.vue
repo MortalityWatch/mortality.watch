@@ -72,10 +72,6 @@ const items = computed(() => {
     label: 'Ranking',
     icon: 'i-lucide-chart-bar-decreasing',
     to: '/ranking'
-  }, {
-    label: 'Chart Gallery',
-    icon: 'i-lucide-gallery-horizontal-end',
-    to: '/charts'
   }]
 
   // Add "My Charts" if user is authenticated
@@ -86,6 +82,13 @@ const items = computed(() => {
       to: '/my-charts'
     })
   }
+
+  // Add Chart Gallery
+  navItems.push({
+    label: 'Chart Gallery',
+    icon: 'i-lucide-gallery-horizontal-end',
+    to: '/charts'
+  })
 
   // Add "Features" for non-pro users (PUBLIC and REGISTERED, tier < 2)
   if (tier.value < 2) {

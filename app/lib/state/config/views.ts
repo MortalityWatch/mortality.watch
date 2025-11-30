@@ -63,7 +63,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       // Date range (undefined = use data availability defaults)
       dateFrom: undefined as string | undefined,
       dateTo: undefined as string | undefined,
-      sliderStart: '2010',
+      sliderStart: '2009',
       baselineDateFrom: undefined as string | undefined,
       baselineDateTo: undefined as string | undefined,
 

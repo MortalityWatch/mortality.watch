@@ -60,7 +60,7 @@
           <img
             :src="getThumbnailUrl()"
             :alt="chart.name"
-            class="w-full h-full object-cover hover:scale-105 transition-transform"
+            class="w-full h-full object-cover object-top hover:scale-105 transition-transform"
             loading="lazy"
           >
         </NuxtLink>

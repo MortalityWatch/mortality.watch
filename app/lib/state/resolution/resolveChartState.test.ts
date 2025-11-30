@@ -166,9 +166,9 @@ describe('resolveChartStateForRendering', () => {
       expect(state.dateTo).toBe('2024')
     })
 
-    it('should use default sliderStart of 2010', () => {
+    it('should use default sliderStart of 2009', () => {
       const state = resolveChartStateForRendering({ c: 'USA', ct: 'yearly' }, yearlyLabels)
-      expect(state.sliderStart).toBe('2010')
+      expect(state.sliderStart).toBe('2009')
     })
   })
 
