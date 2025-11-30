@@ -389,10 +389,10 @@ describe('useExplorerState', () => {
   // ============================================================================
 
   describe('slider start', () => {
-    it('should default slider start to 2010', () => {
+    it('should default slider start to 2009', () => {
       const state = useExplorerState()
 
-      expect(state.sliderStart.value).toBe('2010')
+      expect(state.sliderStart.value).toBe('2009')
     })
 
     it('should update slider start', () => {

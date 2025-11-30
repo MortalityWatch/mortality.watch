@@ -55,7 +55,7 @@ describe('StateResolver Constraints', () => {
       expect(DEFAULT_VALUES.maximize).toBe(false)
       expect(DEFAULT_VALUES.showLogarithmic).toBe(false)
       expect(DEFAULT_VALUES.showLabels).toBe(true)
-      expect(DEFAULT_VALUES.sliderStart).toBe('2010')
+      expect(DEFAULT_VALUES.sliderStart).toBe('2009')
       expect(DEFAULT_VALUES.baselineMethod).toBe('mean')
     })
   })

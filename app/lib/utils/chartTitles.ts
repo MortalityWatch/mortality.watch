@@ -253,6 +253,7 @@ function getBaselineMethodDescription(method: string): string {
     case 'median':
       return 'median'
     case 'lm':
+    case 'lin_reg':
       return 'linear regression'
     default:
       return method
