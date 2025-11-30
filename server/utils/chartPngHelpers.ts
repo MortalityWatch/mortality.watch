@@ -2,6 +2,7 @@ import type { H3Event } from 'h3'
 import type { decodeChartState } from '../../app/lib/chartState'
 import { dataLoader } from '../services/dataLoader'
 import type { AllChartData, CountryData } from '../../app/model'
+import { ChartPeriod, type ChartType } from '../../app/model/period'
 import { getFilteredChartData } from '../../app/lib/chart/filtering'
 import { getChartColors } from '../../app/colors'
 import { decompress, base64ToArrayBuffer } from '../../app/lib/compression/compress.node'
@@ -180,6 +181,82 @@ export function getDataKey(type: string): string {
 }
 
 /**
+ * Calculate default periods count based on chart type
+ * This mirrors the logic in useDateRangeCalculations.ts
+ *
+ * Target: approximately 10 years of recent data
+ */
+function getDefaultPeriods(chartType: string): number {
+  if (chartType === 'weekly' || chartType.startsWith('weekly_')) {
+    return 520 // 10 years of weeks
+  } else if (chartType === 'monthly') {
+    return 120 // 10 years of months
+  } else if (chartType === 'quarterly') {
+    return 40 // 10 years of quarters
+  }
+  // yearly, midyear, fluseason
+  return 10 // 10 years
+}
+
+/**
+ * Compute the effective date range for chart rendering
+ *
+ * This mirrors the logic in useDateRangeCalculations.ts:
+ * 1. Apply sliderStart filter to get visible labels
+ * 2. If dateFrom/dateTo undefined, use default range (last ~10 years)
+ * 3. Otherwise use the provided dates
+ *
+ * @param allLabels - All available date labels
+ * @param chartType - Chart type for period calculation
+ * @param sliderStart - Start date for slider (filters available labels)
+ * @param dateFrom - User-selected start date (undefined = use default)
+ * @param dateTo - User-selected end date (undefined = use default)
+ * @returns { effectiveDateFrom, effectiveDateTo } - Resolved date range
+ */
+function computeEffectiveDateRange(
+  allLabels: string[],
+  chartType: string,
+  sliderStart: string | undefined,
+  dateFrom: string | undefined,
+  dateTo: string | undefined
+): { effectiveDateFrom: string, effectiveDateTo: string } {
+  if (allLabels.length === 0) {
+    return { effectiveDateFrom: '', effectiveDateTo: '' }
+  }
+
+  // 1. Apply sliderStart filter to get visible labels
+  let visibleLabels = allLabels
+  if (sliderStart) {
+    const period = new ChartPeriod(allLabels, chartType as ChartType)
+    const startIndex = period.indexOf(sliderStart)
+    visibleLabels = allLabels.slice(startIndex)
+  }
+
+  if (visibleLabels.length === 0) {
+    visibleLabels = allLabels // Fallback to all labels
+  }
+
+  // 2. Compute effective date range
+  let effectiveDateFrom: string
+  let effectiveDateTo: string
+
+  if (dateFrom && dateTo) {
+    // User provided both dates - use them
+    effectiveDateFrom = dateFrom
+    effectiveDateTo = dateTo
+  } else {
+    // Use default range: last ~10 years of visible labels
+    const defaultPeriods = getDefaultPeriods(chartType)
+    const startIndex = Math.max(0, visibleLabels.length - defaultPeriods)
+
+    effectiveDateFrom = dateFrom || visibleLabels[startIndex] || ''
+    effectiveDateTo = dateTo || visibleLabels[visibleLabels.length - 1] || ''
+  }
+
+  return { effectiveDateFrom, effectiveDateTo }
+}
+
+/**
  * Transform raw chart data into chart-ready format
  * @param state - Decoded chart state
  * @param allCountries - Country metadata
@@ -216,6 +293,16 @@ export async function transformChartData(
   // The view is set by URL params (e=1), not inferred from flags
   const isExcess = view === 'excess'
 
+  // Compute effective date range (mirrors useDateRangeCalculations logic)
+  // When dateFrom/dateTo are undefined, use default range (last ~10 years)
+  const { effectiveDateFrom, effectiveDateTo } = computeEffectiveDateRange(
+    allLabels,
+    state.chartType,
+    state.sliderStart,
+    state.dateFrom,
+    state.dateTo
+  )
+
   const chartData = await getFilteredChartData(
     state.countries,
     state.standardPopulation,
@@ -230,8 +317,8 @@ export async function transformChartData(
     state.baselineDateTo || '',
     state.showTotal,
     state.chartType,
-    allLabels[0] || '', // dateFrom - full range
-    allLabels[allLabels.length - 1] || '', // dateTo - full range
+    effectiveDateFrom,
+    effectiveDateTo,
     isBarChartStyle,
     allCountries,
     isErrorBarType,
