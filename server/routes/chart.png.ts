@@ -63,7 +63,7 @@ export default defineEventHandler(async (event) => {
 
         // Transform data into chart-ready format
         // This is where the view parameter (detected from zs=1, e=1, etc.) flows through
-        const { chartData, isDeathsType, isLE, isPopulationType } = await transformChartData(
+        const { chartData, isDeathsType, isLE, isPopulationType, isExcess } = await transformChartData(
           state,
           allCountries,
           allLabels,
@@ -80,7 +80,8 @@ export default defineEventHandler(async (event) => {
           isDeathsType,
           isLE,
           isPopulationType,
-          chartUrl
+          chartUrl,
+          isExcess
         )
 
         // Determine chart type for renderer

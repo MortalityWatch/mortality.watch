@@ -6,7 +6,7 @@ import { getFilteredChartData } from '../../app/lib/chart/filtering'
 import { getChartColors } from '../../app/colors'
 import { decompress, base64ToArrayBuffer } from '../../app/lib/compression/compress.node'
 import { makeChartConfig } from '../../app/lib/chart/chartConfig'
-import { inferIsExcessFromFlags, detectView } from '../../app/lib/state'
+import { detectView } from '../../app/lib/state'
 import type { ChartStyle } from '../../app/lib/chart/chartTypes'
 
 /**
@@ -209,14 +209,12 @@ export async function transformChartData(
   const isPopulationType = state.type === 'population'
   const isLE = state.type === 'le'
 
-  // NOTE: isExcess removed from ChartState - use helper to infer from flags
-  const isExcess = inferIsExcessFromFlags({
-    cumulative: state.cumulative,
-    showPercentage: state.showPercentage
-  })
-
-  // Detect view from query parameters
+  // Detect view from query parameters FIRST (e=1 for excess, zs=1 for zscore)
   const view = detectView(queryParams)
+
+  // Derive isExcess from view - this is the source of truth
+  // The view is set by URL params (e=1), not inferred from flags
+  const isExcess = view === 'excess'
 
   const chartData = await getFilteredChartData(
     state.countries,
@@ -253,7 +251,7 @@ export async function transformChartData(
     allChartData.data
   )
 
-  return { chartData, isDeathsType, isLE, isPopulationType }
+  return { chartData, isDeathsType, isLE, isPopulationType, isExcess }
 }
 
 /**
@@ -264,6 +262,7 @@ export async function transformChartData(
  * @param isLE - Whether chart is life expectancy type
  * @param isPopulationType - Whether chart is population type
  * @param chartUrl - Chart URL for QR code
+ * @param isExcess - Whether chart is in excess view mode
  * @returns Chart configuration object
  */
 export function generateChartConfig(
@@ -272,14 +271,9 @@ export function generateChartConfig(
   isDeathsType: boolean,
   isLE: boolean,
   isPopulationType: boolean,
-  chartUrl: string
+  chartUrl: string,
+  isExcess: boolean
 ) {
-  // NOTE: isExcess removed from ChartState - use helper to infer from flags
-  const isExcess = inferIsExcessFromFlags({
-    cumulative: state.cumulative,
-    showPercentage: state.showPercentage
-  })
-
   const config = makeChartConfig(
     state.chartStyle as ChartStyle,
     chartData as unknown as Array<Record<string, unknown>>,

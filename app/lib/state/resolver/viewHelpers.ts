@@ -112,6 +112,33 @@ export function getCurrentViewConfig(view: ViewType) {
 }
 
 /**
+ * Get merged defaults for a view
+ *
+ * Returns mortality defaults merged with view-specific defaults.
+ * This is the same logic used by StateResolver for initial state resolution.
+ *
+ * @param view - The view type to get defaults for
+ * @returns Complete defaults object with view-specific overrides applied
+ *
+ * @example
+ * ```typescript
+ * // Get defaults for excess view
+ * const defaults = getViewDefaults('excess')
+ * // Returns: { ...mortalityDefaults, chartStyle: 'bar', showPercentage: true, ... }
+ * ```
+ */
+export function getViewDefaults(view: ViewType): Record<string, unknown> {
+  const mortalityDefaults = VIEWS.mortality.defaults
+  const viewConfig = VIEWS[view]
+
+  // Merge: mortality defaults + view-specific defaults
+  return {
+    ...mortalityDefaults,
+    ...(viewConfig.defaults || {})
+  }
+}
+
+/**
  * Check if a metric is compatible with a view
  */
 export function isMetricCompatible(
