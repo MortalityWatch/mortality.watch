@@ -136,16 +136,9 @@ export function useSaveChart(options: SaveChartOptions) {
 
       // Show success toast
       showToast(
-        saveChartPublic.value
-          ? `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} saved and published!`
-          : `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} saved!`,
+        `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} saved!`,
         'success'
       )
-
-      // Navigate to saved chart if public
-      if (saveChartPublic.value && response.chart?.slug) {
-        navigateTo(`/charts/${response.chart.slug}`)
-      }
     } catch (err: unknown) {
       console.error(`Failed to save ${entityName}:`, err)
 
@@ -162,9 +155,15 @@ export function useSaveChart(options: SaveChartOptions) {
       const hasDuplicateFlag = errorData?.duplicate === true
 
       if (is409 && hasDuplicateFlag) {
+        // Chart already exists - show duplicate warning in modal
         isDuplicate.value = true
         existingChart.value = errorData.existingChart || null
-        saveError.value = error.data?.message || error.message || 'You have already saved an identical chart'
+        // Update saved state so button shows "Saved!" with view link when modal is dismissed
+        isSaved.value = true
+        isModified.value = false
+        savedChartSlug.value = errorData.existingChart?.slug || null
+        savedChartId.value = errorData.existingChart?.id?.toString() || null
+        // Keep modal open so user can see the warning and use the links
       } else {
         saveError.value = err instanceof Error ? err.message : `Failed to save ${entityName}`
       }
