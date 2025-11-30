@@ -363,11 +363,8 @@ describe('useSaveChart', () => {
 
       await saveChart.saveToDB({ test: 'data' })
 
-      expect(showToast).toHaveBeenCalledWith(
-        'Chart saved and published!',
-        'success',
-        [{ label: 'View', to: '/charts/test-chart-slug' }]
-      )
+      // Same toast for public and private charts
+      expect(showToast).toHaveBeenCalledWith('Chart saved!', 'success')
     })
 
     it('should show toast without action for private chart', async () => {

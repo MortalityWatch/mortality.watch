@@ -528,9 +528,16 @@ const {
 } = chartActions
 
 // Wrap showSaveModal in computed for proper v-model binding
+// Reset duplicate state when modal opens
 const showSaveModal = computed({
   get: () => _showSaveModal.value,
   set: (val) => {
+    if (val) {
+      // Reset duplicate state when opening modal
+      isDuplicate.value = false
+      existingChart.value = null
+      saveError.value = ''
+    }
     _showSaveModal.value = val
   }
 })
