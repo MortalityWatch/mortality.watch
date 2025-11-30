@@ -7,7 +7,6 @@
 
 import { describe, it, expect } from 'vitest'
 import { resolveChartStateForRendering } from './resolveChartState'
-import { StateResolver } from '../resolver/StateResolver'
 import { computeEffectiveDateRange, getDefaultPeriods, getVisibleLabels } from './effectiveDefaults'
 
 // Generate test labels for different chart types
@@ -130,7 +129,7 @@ describe('resolveChartStateForRendering', () => {
   describe('date range computation', () => {
     const yearlyLabels = generateLabels('yearly', 2000, 2024) // 25 years
     const monthlyLabels = generateLabels('monthly', 2015, 2024) // 10 years * 12 = 120 months
-    const weeklyLabels = generateLabels('weekly', 2015, 2024) // 10 years * 52 = 520 weeks
+    const _weeklyLabels = generateLabels('weekly', 2015, 2024) // 10 years * 52 = 520 weeks (reserved for future tests)
 
     it('should use last 10 years for yearly chart by default', () => {
       const state = resolveChartStateForRendering({ c: 'USA', ct: 'yearly' }, yearlyLabels)
