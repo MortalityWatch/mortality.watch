@@ -21,11 +21,18 @@ const signinRateLimit = new RequestThrottle(
   5 // 5 attempts
 )
 
+// Helper to check if running in E2E test mode
+// Uses runtime check since env vars may not be available at module load time
+function isE2ETestMode(): boolean {
+  return process.env.JWT_SECRET === 'test-secret-for-e2e-only-do-not-use-in-production'
+}
+
 export default defineEventHandler(async (event) => {
   // Rate limit by IP address
+  // Skip rate limiting in E2E test mode to allow many login attempts
   const clientIp = getRequestIP(event, { xForwardedFor: true }) ?? 'unknown'
 
-  if (!signinRateLimit.check(clientIp)) {
+  if (!isE2ETestMode() && !signinRateLimit.check(clientIp)) {
     const retryAfter = signinRateLimit.getSecondsUntilReset(clientIp)
     setResponseHeader(event, 'Retry-After', retryAfter)
     logger.warn(`Rate limit exceeded for signin from IP: ${clientIp}`)
