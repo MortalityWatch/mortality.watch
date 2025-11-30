@@ -1,6 +1,7 @@
 import type { H3Event } from 'h3'
 import { dataLoader } from '../services/dataLoader'
 import type { AllChartData, CountryData } from '../../app/model'
+import { getKeyForType } from '../../app/model/utils'
 import { getFilteredChartData } from '../../app/lib/chart/filtering'
 import { getChartColors } from '../../app/colors'
 import { decompress, base64ToArrayBuffer } from '../../app/lib/compression/compress.node'
@@ -164,6 +165,15 @@ export async function fetchChartData(state: ChartRenderState) {
   // 4. Fetch raw chart data using DataLoaderService
   const dataKey = getDataKey(state.type)
 
+  // Get baseline keys for fetching (similar to useExplorerHelpers.getBaseKeysForFetch)
+  // Population type doesn't need baseline
+  // IMPORTANT: Pass isExcess=false to get baseline keys needed for calculation
+  // The excess values are calculated from baseline, so we need the baseline keys
+  const isPopulationType = state.type === 'population'
+  const baseKeys = !isPopulationType
+    ? getKeyForType(state.type, state.showBaseline, state.standardPopulation, false, false)
+    : undefined
+
   const allChartData: AllChartData = await dataLoader.getAllChartData({
     dataKey: dataKey as keyof CountryData,
     chartType: state.chartType,
@@ -175,7 +185,8 @@ export async function fetchChartData(state: ChartRenderState) {
     countryCodeFilter: state.countries,
     baselineMethod: state.showBaseline ? state.baselineMethod : undefined,
     baselineDateFrom: state.baselineDateFrom,
-    baselineDateTo: state.baselineDateTo
+    baselineDateTo: state.baselineDateTo,
+    keys: baseKeys
   })
 
   return { allCountries, allLabels, allChartData, isAsmrType }

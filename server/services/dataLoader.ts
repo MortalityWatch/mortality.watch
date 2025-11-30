@@ -22,11 +22,14 @@ import type {
   Dataset,
   NumberEntryFields,
   NumberArray,
-  StringArray
+  StringArray,
+  DatasetEntry
 } from '../../app/model'
 import { Country, CountryData, stringKeys, numberKeys } from '../../app/model'
+import { ChartPeriod, type ChartType } from '../../app/model/period'
 import { getObjectOfArrays, prefillUndefined, fromYearMonthString, left, right } from '../../app/utils'
 import { filesystemCache } from '../utils/cache'
+import { calculateBaselines } from '../utils/baselines'
 
 // Default configuration constants
 const DEFAULT_S3_BASE = 'https://s3.mortality.watch/data/mortality'
@@ -317,10 +320,9 @@ export class DataLoaderService {
   /**
    * Get all chart data with optional baseline calculations
    *
-   * NOTE: Baseline calculation parameters (baselineMethod, baselineDateFrom, baselineDateTo)
-   * are accepted but not currently implemented. Baseline calculations require external API calls
-   * and will be added in a future update. For now, baseline-related parameters are preserved
-   * for API compatibility but have no effect on the returned data.
+   * Supports baseline calculations via external stats API. When baselineMethod,
+   * baselineDateFrom, and baselineDateTo are provided, this method will call
+   * the stats API to calculate baseline values, excess mortality, and z-scores.
    *
    * @param params - Chart data parameters
    * @returns All chart data with labels and metadata
@@ -332,9 +334,13 @@ export class DataLoaderService {
       rawData,
       allLabels,
       startDateIndex,
+      cumulative,
       ageGroupFilter,
       countryCodeFilter,
-      baselineMethod
+      baselineMethod,
+      baselineDateFrom,
+      baselineDateTo,
+      keys
     } = params
 
     const data: Dataset = {}
@@ -427,12 +433,27 @@ export class DataLoaderService {
       }
     }
 
-    // TODO: Baseline calculations not yet implemented
-    // When implemented, this section will:
-    // 1. Calculate baseline values based on baselineMethod (e.g., 'average', 'median')
-    // 2. Apply date range filters (baselineDateFrom, baselineDateTo)
-    // 3. Add baseline data to the Dataset for comparison
-    // This requires external API calls or additional data processing logic
+    // Calculate baselines if requested
+    if (
+      baselineDateFrom
+      && baselineDateTo
+      && keys
+      && baselineMethod
+      && dataKey !== 'population'
+    ) {
+      // Use ChartPeriod for smart date index lookup
+      const period = new ChartPeriod(labels, chartType as ChartType)
+      await calculateBaselines(
+        data,
+        labels,
+        period.indexOf(baselineDateFrom),
+        period.indexOf(baselineDateTo),
+        keys as (keyof DatasetEntry)[],
+        baselineMethod,
+        chartType,
+        cumulative
+      )
+    }
 
     return { data, labels, notes: { noData, noAsmr } }
   }
