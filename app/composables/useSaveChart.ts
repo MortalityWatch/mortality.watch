@@ -134,17 +134,19 @@ export function useSaveChart(options: SaveChartOptions) {
       // Close modal immediately
       showSaveModal.value = false
 
-      // Show success toast
-      showToast(
-        saveChartPublic.value
-          ? `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} saved and published!`
-          : `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} saved!`,
-        'success'
-      )
-
-      // Navigate to saved chart if public
+      // Show success toast with view link for public charts
+      // Note: We don't auto-navigate since users might want to continue editing
       if (saveChartPublic.value && response.chart?.slug) {
-        navigateTo(`/charts/${response.chart.slug}`)
+        showToast(
+          `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} saved and published!`,
+          'success',
+          [{ label: 'View', to: `/charts/${response.chart.slug}` }]
+        )
+      } else {
+        showToast(
+          `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} saved!`,
+          'success'
+        )
       }
     } catch (err: unknown) {
       console.error(`Failed to save ${entityName}:`, err)

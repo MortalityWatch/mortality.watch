@@ -363,21 +363,14 @@ describe('useSaveChart', () => {
 
       await saveChart.saveToDB({ test: 'data' })
 
-      expect(showToast).toHaveBeenCalledWith('Chart saved and published!', 'success')
+      expect(showToast).toHaveBeenCalledWith(
+        'Chart saved and published!',
+        'success',
+        [{ label: 'View', to: '/charts/test-chart-slug' }]
+      )
     })
 
-    it('should navigate to public chart after save', async () => {
-      const saveChart = useSaveChart({ chartType: 'explorer' })
-
-      saveChart.saveChartName.value = 'Test Chart'
-      saveChart.saveChartPublic.value = true
-
-      await saveChart.saveToDB({ test: 'data' })
-
-      expect(navigateTo).toHaveBeenCalledWith('/charts/test-chart-slug')
-    })
-
-    it('should not navigate for private chart', async () => {
+    it('should show toast without action for private chart', async () => {
       const saveChart = useSaveChart({ chartType: 'explorer' })
 
       saveChart.saveChartName.value = 'Test Chart'
@@ -385,7 +378,7 @@ describe('useSaveChart', () => {
 
       await saveChart.saveToDB({ test: 'data' })
 
-      expect(navigateTo).not.toHaveBeenCalled()
+      expect(showToast).toHaveBeenCalledWith('Chart saved!', 'success')
     })
 
     it('should handle missing slug in response', async () => {
