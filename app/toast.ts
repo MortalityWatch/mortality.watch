@@ -10,7 +10,13 @@ export interface ToastAction {
   /** Navigation target (route path) - use for link actions */
   to?: string
   /** Click handler function - use for custom actions */
-  onClick?: () => void
+  onClick?: (e?: MouseEvent) => void
+  /** Optional icon */
+  icon?: string
+  /** Button color */
+  color?: 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral'
+  /** Button variant */
+  variant?: 'solid' | 'outline' | 'soft' | 'subtle' | 'ghost' | 'link'
 }
 
 export const showToast = (
@@ -43,9 +49,16 @@ export const showToast = (
     info: 'info'
   }
 
+  // Format actions with default button styling
+  const formattedActions = actions?.map(action => ({
+    ...action,
+    color: action.color || 'neutral',
+    variant: action.variant || 'outline'
+  }))
+
   toast.add({
     title: message,
     color: colorMap[type] as 'success' | 'error' | 'warning' | 'info',
-    actions
+    actions: formattedActions
   })
 }
