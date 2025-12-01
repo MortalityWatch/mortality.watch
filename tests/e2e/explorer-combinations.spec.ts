@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 
 /**
  * E2E tests for all 14 valid explorer UI combinations
@@ -254,7 +254,7 @@ const COMBINATIONS: CombinationTest[] = [
 /**
  * Helper function to wait for chart to be ready
  */
-async function waitForChart(page: ReturnType<typeof test['info']>['page']) {
+async function waitForChart(page: Page): Promise<void> {
   await page.waitForLoadState('networkidle')
   await page.waitForSelector('canvas#chart', { timeout: 15000 })
 }
@@ -262,7 +262,7 @@ async function waitForChart(page: ReturnType<typeof test['info']>['page']) {
 /**
  * Helper function to check for critical console errors
  */
-async function setupConsoleErrorTracking(page: ReturnType<typeof test['info']>['page']): Promise<string[]> {
+async function setupConsoleErrorTracking(page: Page): Promise<string[]> {
   const consoleErrors: string[] = []
 
   page.on('console', (msg) => {
@@ -275,7 +275,14 @@ async function setupConsoleErrorTracking(page: ReturnType<typeof test['info']>['
 }
 
 /**
- * Helper function to filter out known non-critical errors
+ * Helper function to filter out known non-critical errors.
+ *
+ * Filtered errors include:
+ * - Build/bundler warnings (sharp, Sourcemap, externalized, chunks)
+ * - Browser quirks (ResizeObserver)
+ * - Network issues in CI (CORS, stats.mortality.watch, net::ERR_FAILED)
+ * - Expected baseline errors when testing invalid combinations or
+ *   combinations where baseline data is unavailable for certain countries
  */
 function filterCriticalErrors(errors: string[]): string[] {
   return errors.filter(
@@ -400,7 +407,7 @@ test.describe('Explorer UI Combinations - All 14 Valid Combinations', () => {
 
       await page.goto('/explorer?cs=matrix')
       await waitForChart(page)
-      const _url4 = page.url()
+      // url4 captured but not used - we only need it in history stack
 
       // Go back through history
       await page.goBack()
@@ -480,28 +487,23 @@ test.describe('Explorer UI Combinations - All 14 Valid Combinations', () => {
       await expect(page.locator('canvas#chart')).toBeVisible()
     })
 
-    test('M-X-std: Matrix + Z-score should render chart (graceful handling)', async ({ page }) => {
-      // This combination is technically invalid per the test plan
-      // But the app should handle it gracefully - either by:
-      // 1. Correcting the URL (removing one param)
-      // 2. Rendering the chart anyway with one mode taking precedence
+    test('Matrix + Z-score should correct to valid state (zscore wins, matrix removed)', async ({ page }) => {
+      // Matrix + Z-score is invalid because z-score doesn't support matrix view.
+      // The StateResolver should correct this by keeping zscore and removing matrix.
       await page.goto('/explorer?cs=matrix&zs=1')
       await page.waitForLoadState('networkidle')
 
-      // Wait for potential correction
+      // Wait for state resolution
       await page.waitForTimeout(1000)
 
-      // The key test is that the chart still renders without crashing
+      // Chart should render without crashing
       const chart = page.locator('canvas#chart')
       await expect(chart).toBeVisible({ timeout: 10000 })
 
-      // Verify URL has at least one of the params (app decides which wins)
+      // Z-score should win (it was explicitly requested), matrix should be removed
       const url = page.url()
-      const hasMatrix = url.includes('cs=matrix')
-      const hasZscore = url.includes('zs=1')
-
-      // At least one should be present (app doesn't strip both)
-      expect(hasMatrix || hasZscore).toBe(true)
+      expect(url).toContain('zs=1')
+      expect(url).not.toContain('cs=matrix')
     })
 
     test('M-L-le: Life expectancy should force age group to [all]', async ({ page }) => {
