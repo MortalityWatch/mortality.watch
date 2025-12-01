@@ -225,6 +225,14 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
         reason: 'Z-scores show deviations, not cumulative or percentage values',
         allowUserOverride: false,
         priority: 2
+      },
+      // Z-scores don't support matrix chart style - force to line (priority 2)
+      {
+        when: s => s.chartStyle === 'matrix',
+        apply: { chartStyle: 'line' },
+        reason: 'Matrix chart style not supported in z-score view',
+        allowUserOverride: false,
+        priority: 2
       }
     ],
 
