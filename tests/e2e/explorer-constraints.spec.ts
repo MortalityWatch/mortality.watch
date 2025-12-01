@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
 
 /**
@@ -17,33 +18,34 @@ import { test, expect } from '@playwright/test'
  * - /app/lib/state/config/constraints.ts
  * - /app/lib/state/config/views.ts
  */
+
+// Timeout constants
+const CHART_TIMEOUT = 15000
+const ELEMENT_TIMEOUT = 5000
+const TAB_ANIMATION_DELAY = 300
+
 test.describe('Explorer Constraint Enforcement', () => {
   // Helper to wait for chart to be ready
-  async function waitForChart(page: ReturnType<typeof test['info']>['page']) {
+  async function waitForChart(page: Page) {
     await page.waitForLoadState('networkidle')
-    await page.waitForSelector('canvas#chart', { timeout: 15000 })
+    await page.waitForSelector('canvas#chart', { timeout: CHART_TIMEOUT })
   }
 
   // Helper to navigate to Display tab
-  async function openDisplayTab(page: ReturnType<typeof test['info']>['page']) {
+  async function openDisplayTab(page: Page) {
     const displayTab = page.getByRole('button', { name: 'Display', exact: true })
-    await displayTab.waitFor({ state: 'visible', timeout: 5000 })
+    await displayTab.waitFor({ state: 'visible', timeout: ELEMENT_TIMEOUT })
     await displayTab.click()
-    await page.waitForTimeout(300)
+    await page.waitForTimeout(TAB_ANIMATION_DELAY)
   }
 
   // Helper to find a toggle by its label text
-  async function findToggleByLabel(page: ReturnType<typeof test['info']>['page'], labelText: string) {
+  async function findToggleByLabel(page: Page, labelText: string) {
     const label = page.locator(`label:has-text("${labelText}")`).first()
-    await label.waitFor({ state: 'visible', timeout: 5000 })
+    await label.waitFor({ state: 'visible', timeout: ELEMENT_TIMEOUT })
     const flexContainer = label.locator('xpath=..')
     const toggle = flexContainer.locator('button[role="switch"]').first()
     return toggle
-  }
-
-  // Helper to check if element is visible
-  async function _isElementVisible(page: ReturnType<typeof test['info']>['page'], selector: string): Promise<boolean> {
-    return await page.locator(selector).isVisible().catch(() => false)
   }
 
   test.describe('Matrix Style Constraints', () => {
@@ -87,13 +89,8 @@ test.describe('Explorer Constraint Enforcement', () => {
       await openDisplayTab(page)
 
       // Log scale should be hidden or disabled in matrix style
-      // Just verify chart renders - the constraint is enforced internally
+      // Constraint is enforced internally - chart renders is the key test
       await expect(page.locator('canvas#chart')).toBeVisible()
-
-      // If log scale toggle exists, verify it's not active
-      const logLabel = page.locator('label:has-text("Log Scale")')
-      const isVisible = await logLabel.isVisible().catch(() => false)
-      console.log(`Log Scale toggle visible in matrix: ${isVisible}`)
     })
 
     test('should enforce maximize constraint in matrix style', async ({ page }) => {
@@ -102,12 +99,8 @@ test.describe('Explorer Constraint Enforcement', () => {
       await openDisplayTab(page)
 
       // Maximize should be hidden or disabled in matrix style
-      // Just verify chart renders - the constraint is enforced internally
+      // Constraint is enforced internally - chart renders is the key test
       await expect(page.locator('canvas#chart')).toBeVisible()
-
-      const maxLabel = page.locator('label:has-text("Maximize")')
-      const isVisible = await maxLabel.isVisible().catch(() => false)
-      console.log(`Maximize toggle visible in matrix: ${isVisible}`)
     })
 
     test('should enforce matrix constraints via URL (baseline OFF)', async ({ page }) => {
@@ -225,13 +218,7 @@ test.describe('Explorer Constraint Enforcement', () => {
       // The key test: chart should still render without crashing
       await expect(page.locator('canvas#chart')).toBeVisible()
 
-      // URL may or may not be corrected - app decides
-      const url = page.url()
-      const hasPopulation = url.includes('t=population')
-      const hasExcess = url.includes('e=1')
-
-      // Log the actual behavior for debugging
-      console.log(`Population + Excess: population=${hasPopulation}, excess=${hasExcess}`)
+      // App handles gracefully - chart renders is the key test
     })
 
     test('should handle population with zscore view gracefully', async ({ page }) => {
@@ -242,12 +229,6 @@ test.describe('Explorer Constraint Enforcement', () => {
 
       // The key test: chart should still render without crashing
       await expect(page.locator('canvas#chart')).toBeVisible()
-
-      const url = page.url()
-      const hasPopulation = url.includes('t=population')
-      const hasZscore = url.includes('zs=1')
-
-      console.log(`Population + Zscore: population=${hasPopulation}, zscore=${hasZscore}`)
     })
   })
 
@@ -258,12 +239,7 @@ test.describe('Explorer Constraint Enforcement', () => {
       await waitForChart(page)
 
       // Age groups should be forced to 'all' - chart renders is the key test
-      // t=asmr may not appear in URL if it's the default
       await expect(page.locator('canvas#chart')).toBeVisible()
-
-      // Log the URL for debugging
-      const url = page.url()
-      console.log(`ASMR age groups URL: ${url}`)
     })
 
     test('should force age groups to "all" for LE', async ({ page }) => {
@@ -506,12 +482,6 @@ test.describe('Explorer Constraint Enforcement', () => {
 
       // App should handle gracefully - chart renders regardless
       await expect(page.locator('canvas#chart')).toBeVisible()
-
-      // Log actual behavior
-      const url = page.url()
-      const hasZscore = url.includes('zs=1')
-      const hasMatrix = url.includes('cs=matrix')
-      console.log(`Zscore + Matrix: zscore=${hasZscore}, matrix=${hasMatrix}`)
     })
   })
 
@@ -647,10 +617,6 @@ test.describe('Explorer Constraint Enforcement', () => {
 
       // Chart should render regardless of incompatibility
       await expect(page.locator('canvas#chart')).toBeVisible()
-
-      // Log actual behavior for debugging
-      const url = page.url()
-      console.log(`URL after population+excess: ${url}`)
     })
 
     test('should handle complex constraint cascade gracefully', async ({ page }) => {
@@ -660,10 +626,6 @@ test.describe('Explorer Constraint Enforcement', () => {
 
       // Key test: chart should resolve to valid state and render
       await expect(page.locator('canvas#chart')).toBeVisible()
-
-      // Log how the app resolved the conflicts
-      const url = page.url()
-      console.log(`Complex cascade resolved to: ${url}`)
     })
   })
 
