@@ -49,57 +49,72 @@ export async function compareCharts(
   const ssr = PNG.sync.read(ssrBuffer)
   const client = PNG.sync.read(clientBuffer)
 
-  // Ensure dimensions match
-  if (ssr.width !== client.width || ssr.height !== client.height) {
+  // Allow small dimension differences (up to 2 pixels) due to rounding
+  // in devicePixelRatio calculations. Compare the overlapping region.
+  const widthDiff = Math.abs(ssr.width - client.width)
+  const heightDiff = Math.abs(ssr.height - client.height)
+  const MAX_DIMENSION_TOLERANCE = 2
+
+  if (widthDiff > MAX_DIMENSION_TOLERANCE || heightDiff > MAX_DIMENSION_TOLERANCE) {
     throw new Error(
       `Dimension mismatch: SSR ${ssr.width}x${ssr.height} vs Client ${client.width}x${client.height}`
     )
   }
 
-  // Create diff image
-  const diff = new PNG({ width: ssr.width, height: ssr.height })
+  // Use the smaller dimensions for comparison (overlap region)
+  const compareWidth = Math.min(ssr.width, client.width)
+  const compareHeight = Math.min(ssr.height, client.height)
+
+  // Create diff image at the comparison dimensions
+  const diff = new PNG({ width: compareWidth, height: compareHeight })
 
   // Use pixelmatch to compare images
   // Note: We use a custom implementation instead of the pixelmatch package
   // to avoid adding another dependency, since the algorithm is straightforward
-  const mismatchPixels = comparePixels(
+  const mismatchPixels = comparePixelsWithStride(
     ssr.data,
     client.data,
     diff.data,
-    ssr.width,
-    ssr.height,
+    compareWidth,
+    compareHeight,
+    ssr.width, // SSR stride (original width for row offset calculation)
+    client.width, // Client stride
     threshold
   )
 
-  const totalPixels = ssr.width * ssr.height
+  const totalPixels = compareWidth * compareHeight
   const mismatchPercent = (mismatchPixels / totalPixels) * 100
 
   return {
     mismatchPixels,
     mismatchPercent,
     diffImage: PNG.sync.write(diff),
-    dimensions: { width: ssr.width, height: ssr.height }
+    dimensions: { width: compareWidth, height: compareHeight }
   }
 }
 
 /**
- * Simple pixel comparison algorithm inspired by pixelmatch
+ * Pixel comparison algorithm with support for different source strides
  * Compares two RGBA images and highlights differences in the diff image
  *
  * @param img1 - First image data (RGBA)
  * @param img2 - Second image data (RGBA)
  * @param output - Output diff image data (RGBA)
- * @param width - Image width in pixels
- * @param height - Image height in pixels
+ * @param width - Comparison region width in pixels
+ * @param height - Comparison region height in pixels
+ * @param stride1 - Row stride (width) of img1
+ * @param stride2 - Row stride (width) of img2
  * @param threshold - Color difference threshold (0-1)
  * @returns Number of mismatched pixels
  */
-function comparePixels(
+function comparePixelsWithStride(
   img1: Buffer,
   img2: Buffer,
   output: Buffer,
   width: number,
   height: number,
+  stride1: number,
+  stride2: number,
   threshold: number
 ): number {
   let mismatchCount = 0
@@ -107,18 +122,22 @@ function comparePixels(
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
-      const pos = (y * width + x) * 4
+      // Calculate positions in source images using their respective strides
+      const pos1 = (y * stride1 + x) * 4
+      const pos2 = (y * stride2 + x) * 4
+      // Output uses the comparison width as stride
+      const posOut = (y * width + x) * 4
 
       // Get RGBA values for both images
-      const r1 = img1[pos]
-      const g1 = img1[pos + 1]
-      const b1 = img1[pos + 2]
-      const a1 = img1[pos + 3]
+      const r1 = img1[pos1]
+      const g1 = img1[pos1 + 1]
+      const b1 = img1[pos1 + 2]
+      const a1 = img1[pos1 + 3]
 
-      const r2 = img2[pos]
-      const g2 = img2[pos + 1]
-      const b2 = img2[pos + 2]
-      const a2 = img2[pos + 3]
+      const r2 = img2[pos2]
+      const g2 = img2[pos2 + 1]
+      const b2 = img2[pos2 + 2]
+      const a2 = img2[pos2 + 3]
 
       // Calculate color difference using simple Euclidean distance
       const delta = colorDelta(r1, g1, b1, a1, r2, g2, b2, a2)
@@ -127,17 +146,17 @@ function comparePixels(
       if (delta / maxDelta > threshold) {
         // Pixel differs - mark as red in diff image
         mismatchCount++
-        output[pos] = 255 // R
-        output[pos + 1] = 0 // G
-        output[pos + 2] = 0 // B
-        output[pos + 3] = 255 // A
+        output[posOut] = 255 // R
+        output[posOut + 1] = 0 // G
+        output[posOut + 2] = 0 // B
+        output[posOut + 3] = 255 // A
       } else {
         // Pixel matches - copy original grayscale
         const gray = blend(r1, a1)
-        output[pos] = gray
-        output[pos + 1] = gray
-        output[pos + 2] = gray
-        output[pos + 3] = 255
+        output[posOut] = gray
+        output[posOut + 1] = gray
+        output[posOut + 2] = gray
+        output[posOut + 3] = 255
       }
     }
   }
