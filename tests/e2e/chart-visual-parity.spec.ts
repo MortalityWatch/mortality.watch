@@ -30,30 +30,23 @@ const TEST_COMBINATIONS = [
 const THEMES = ['light', 'dark'] as const
 
 /**
- * Maximum allowed pixel difference
+ * Maximum allowed pixel difference (50%)
  *
- * NOTE: Currently set to 100% (comparison runs but doesn't fail on difference)
- * because SSR and client have fundamental visual differences:
+ * Higher threshold needed due to inherent differences:
+ * 1. Font rendering: Cairo (SSR) vs browser canvas
+ * 2. Anti-aliasing algorithms differ between renderers
+ * 3. Sub-pixel positioning varies slightly
+ * 4. Matrix charts have more complex rendering paths
  *
- * 1. Different color palettes:
- *    - SSR dark mode: #111827 background
- *    - Client dark mode: #202020 background
+ * Current typical differences after color alignment:
+ * - Line charts: ~20%
+ * - Bar charts: ~25%
+ * - Matrix charts: ~48%
  *
- * 2. Different font rendering (Cairo vs browser)
- *
- * 3. Different Chart.js plugin configurations
- *
- * This test currently validates:
- * - Both SSR and client render successfully
- * - Both produce valid PNG images
- * - Dimensions can be matched (within tolerance)
- * - Pixel comparison infrastructure works correctly
- *
- * TODO: To achieve true visual parity:
- * - Align color palettes between SSR and client
- * - Then reduce this threshold to ~5%
+ * The 50% threshold catches major regressions while tolerating
+ * expected rendering engine differences.
  */
-const MAX_DIFF_PERCENT = 100
+const MAX_DIFF_PERCENT = 50
 
 /** Fixed dimensions for comparison - SSR will render at this size */
 const CHART_WIDTH = 800
@@ -183,16 +176,14 @@ test.describe('Chart Visual Parity: SSR vs Client', () => {
         // Set viewport size so client chart renders at predictable size
         await page.setViewportSize({ width: CHART_WIDTH + 400, height: CHART_HEIGHT + 200 })
 
-        // Use dark mode for both SSR and client for consistency
-        // (system preferences on test machine default to dark)
+        // Force dark mode via system preference emulation BEFORE first navigation
+        // This ensures the chart renders with dark colors from the start
         await page.emulateMedia({ colorScheme: 'dark' })
 
-        // Set dark mode in localStorage and navigate with dm=1 for SSR parity
-        await page.goto('/explorer')
-        await page.evaluate(() => {
+        // Add dark mode cookie/localStorage before navigation
+        // This must happen before the page loads for Nuxt color mode to pick it up
+        await page.addInitScript(() => {
           localStorage.setItem('nuxt-color-mode', 'dark')
-          document.documentElement.classList.add('dark')
-          document.documentElement.classList.remove('light')
         })
 
         // Navigate with dark mode URL param (dm=1) to match SSR request
@@ -230,6 +221,17 @@ test.describe('Chart Visual Parity: SSR vs Client', () => {
           const result = await compareCharts(ssrBuffer, clientBuffer)
 
           console.log(`${combo.id}: ${result.mismatchPercent.toFixed(2)}% pixel difference (${clientWidth}x${clientHeight})`)
+
+          // Save debug images when running locally
+          if (process.env.SAVE_DEBUG_IMAGES === '1') {
+            const fs = await import('fs')
+            const path = await import('path')
+            const debugDir = path.join(process.cwd(), 'test-results', 'debug')
+            await fs.promises.mkdir(debugDir, { recursive: true })
+            await fs.promises.writeFile(path.join(debugDir, `${combo.id}-ssr.png`), ssrBuffer)
+            await fs.promises.writeFile(path.join(debugDir, `${combo.id}-client.png`), clientBuffer)
+            await fs.promises.writeFile(path.join(debugDir, `${combo.id}-diff.png`), result.diffImage)
+          }
 
           // Allow up to MAX_DIFF_PERCENT difference
           expect(result.mismatchPercent).toBeLessThan(MAX_DIFF_PERCENT)

@@ -60,7 +60,27 @@ interface GlobalWithNuxt {
   useColorMode?: () => { value: string }
 }
 
+/**
+ * Server-side dark mode override
+ * Used by SSR chart rendering to force dark mode during config generation
+ */
+let serverDarkModeOverride: boolean | null = null
+
+/**
+ * Set dark mode override for server-side rendering
+ * Call this before generating chart configs in SSR context
+ * @param isDark - Whether to force dark mode (null to clear override)
+ */
+export const setServerDarkMode = (isDark: boolean | null): void => {
+  serverDarkModeOverride = isDark
+}
+
 export const getIsDark = (): boolean => {
+  // Check server-side override first (for SSR chart rendering)
+  if (serverDarkModeOverride !== null) {
+    return serverDarkModeOverride
+  }
+
   if (import.meta.server) return false
   try {
     // useColorMode is a Nuxt auto-import, only available on client

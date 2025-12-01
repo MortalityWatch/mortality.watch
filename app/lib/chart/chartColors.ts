@@ -36,7 +36,8 @@ export const borderColor = (isDark?: boolean) => {
 
 export const backgroundColor = (isDark?: boolean) => {
   const dark = isDark !== undefined ? isDark : getIsDarkTheme()
-  return dark ? '#111827' : '#ffffff'
+  // Dark mode: #202020 (must match app/colors.ts for visual parity)
+  return dark ? '#202020' : '#ffffff'
 }
 
 export const getColorPalette = (
