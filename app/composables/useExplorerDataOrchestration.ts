@@ -32,10 +32,6 @@ import type { ChartFilterConfig, ChartStateSnapshot } from '@/lib/chart/types'
 import { useDateRangeValidation } from '@/composables/useDateRangeValidation'
 import { useDateRangeCalculations } from '@/composables/useDateRangeCalculations'
 import { UI_CONFIG } from '@/lib/config/constants'
-import {
-  arrayBufferToBase64,
-  compress
-} from '@/lib/compression/compress.browser'
 import { calculateBaselineRange } from '@/lib/baseline/calculateBaselineRange'
 
 export function useExplorerDataOrchestration(
@@ -146,12 +142,58 @@ export function useExplorerDataOrchestration(
     showLogarithmicOption: true
   })
 
-  // Helper to generate short URL
-  const makeUrl = async () => {
-    const base = 'https://mortality.watch/?qr='
-    const query = JSON.stringify(window.location)
-    const encodedQuery = arrayBufferToBase64(await compress(query))
-    return base + encodeURIComponent(encodedQuery)
+  /**
+   * Generate URL for QR code from resolved state.
+   * Matches SSR's generateChartUrlFromState() approach to ensure identical QR codes.
+   * Uses effective (resolved) values for dates and baselines, not raw snapshot values.
+   */
+  const makeUrlFromState = (
+    snapshot: ChartStateSnapshot,
+    effectiveDateFrom: string,
+    effectiveDateTo: string,
+    effectiveBaselineFrom: string,
+    effectiveBaselineTo: string
+  ) => {
+    const siteUrl = 'https://www.mortality.watch'
+    const params = new URLSearchParams()
+
+    // Core fields
+    if (snapshot.countries.length) params.set('c', snapshot.countries.join(','))
+    params.set('t', snapshot.type)
+    params.set('ct', snapshot.chartType)
+    params.set('cs', snapshot.chartStyle)
+
+    // Date range - use effective values
+    if (effectiveDateFrom) params.set('df', effectiveDateFrom)
+    if (effectiveDateTo) params.set('dt', effectiveDateTo)
+    if (snapshot.sliderStart) params.set('ss', snapshot.sliderStart)
+
+    // Baseline - use effective values
+    if (snapshot.showBaseline) params.set('sb', '1')
+    params.set('bm', snapshot.baselineMethod)
+    if (effectiveBaselineFrom) params.set('bf', effectiveBaselineFrom)
+    if (effectiveBaselineTo) params.set('bt', effectiveBaselineTo)
+
+    // Display options
+    if (snapshot.ageGroups.length && snapshot.ageGroups[0] !== 'all') params.set('ag', snapshot.ageGroups.join(','))
+    if (snapshot.standardPopulation && snapshot.standardPopulation !== 'esp') params.set('sp', snapshot.standardPopulation)
+    if (snapshot.cumulative) params.set('ce', '1')
+    if (snapshot.showTotal) params.set('st', '1')
+    if (snapshot.maximize) params.set('m', '1')
+    if (snapshot.showPredictionInterval) params.set('pi', '1')
+    if (snapshot.showLabels) params.set('sl', '1')
+    if (snapshot.showPercentage) params.set('p', '1')
+    if (snapshot.showLogarithmic) params.set('lg', '1')
+
+    // View indicators
+    if (snapshot.isExcess) params.set('e', '1')
+    if (snapshot.isZScore) params.set('zs', '1')
+
+    // Optional
+    if (snapshot.userColors?.length) params.set('uc', snapshot.userColors.join(','))
+    if (snapshot.decimals && snapshot.decimals !== 'auto') params.set('dec', snapshot.decimals)
+
+    return `${siteUrl}/explorer?${params.toString()}`
   }
 
   // Memoized computations
@@ -291,7 +333,7 @@ export function useExplorerDataOrchestration(
    * Build ChartFilterConfig from a state snapshot.
    * Applies effective defaults for dates and computes derived flags.
    */
-  const buildFilterConfig = async (snapshot: ChartStateSnapshot): Promise<ChartFilterConfig> => {
+  const buildFilterConfig = (snapshot: ChartStateSnapshot): ChartFilterConfig => {
     // Use default range (last ~10 years) when dates are undefined
     const defaultRange = dateRangeCalc.defaultRange.value
     const visibleRange = dateRangeCalc.visibleRange.value
@@ -316,6 +358,9 @@ export function useExplorerDataOrchestration(
     const showCumPi = snapshot.cumulative
       && snapshot.showPredictionInterval
       && snapshot.baselineMethod !== 'mean'
+
+    // Build URL from resolved state to match SSR's generateChartUrlFromState()
+    const url = makeUrlFromState(snapshot, effectiveDateFrom, effectiveDateTo, effectiveBaselineFrom, effectiveBaselineTo)
 
     return {
       countries: snapshot.countries,
@@ -348,7 +393,7 @@ export function useExplorerDataOrchestration(
       showLogarithmic: snapshot.showLogarithmic,
       colors: displayColors.value,
       allCountries: allCountries.value,
-      url: await makeUrl()
+      url
     }
   }
 
@@ -367,7 +412,7 @@ export function useExplorerDataOrchestration(
     const stateSnapshot = snapshot ?? createStateSnapshot()
 
     // Build filter config from snapshot
-    const config = await buildFilterConfig(stateSnapshot)
+    const config = buildFilterConfig(stateSnapshot)
 
     // Use the new config-based function
     return getFilteredChartDataFromConfig(config, allChartData.labels, allChartData.data)
