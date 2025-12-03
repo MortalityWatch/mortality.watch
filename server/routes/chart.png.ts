@@ -8,7 +8,7 @@ import {
   fetchChartData,
   transformChartData,
   generateChartConfig,
-  generateChartUrl,
+  generateChartUrlFromState,
   resolveChartStateForRendering
 } from '../utils/chartPngHelpers'
 import { dataLoader } from '../services/dataLoader'
@@ -66,9 +66,6 @@ export default defineEventHandler(async (event) => {
     // Queue the chart rendering to limit concurrency
     const buffer = await chartRenderQueue.enqueue(async () => {
       try {
-        // Generate chart URL for QR code
-        const chartUrl = generateChartUrl(queryParams)
-
         // Step 1: Do preliminary state resolution to get data loading params
         // We need allLabels to compute effective date range, but we need
         // countries/chartType/ageGroups to load data first
@@ -103,6 +100,17 @@ export default defineEventHandler(async (event) => {
         // This applies constraints AND computes effective date ranges
         const state = resolveChartStateForRendering(queryParams, allLabels)
 
+        // Generate chart URL for QR code from resolved state (not raw query params)
+        // This ensures the QR code matches what the client would generate
+        const chartUrl = generateChartUrlFromState(state)
+
+        // Debug: Log resolved state
+        logger.info('SSR Chart State:', {
+          queryParams,
+          resolvedState: state,
+          chartUrl
+        })
+
         // Step 4: Fetch all required chart data with resolved state
         const { allCountries, allChartData } = await fetchChartData(state)
 
@@ -116,6 +124,13 @@ export default defineEventHandler(async (event) => {
           isAsmrType
         )
 
+        // Debug: Log chart data
+        logger.info('SSR Chart Data:', {
+          title: (chartData as { title?: string }).title,
+          subtitle: (chartData as { subtitle?: string }).subtitle,
+          url: (chartData as { url?: string }).url
+        })
+
         // Step 6: Generate chart configuration
         // Set dark mode override so color functions use correct theme
         setServerDarkMode(darkMode)
@@ -128,6 +143,13 @@ export default defineEventHandler(async (event) => {
             isPopulationType,
             chartUrl
           )
+
+          // Debug: Log chart config subtitle settings
+          const configOptions = chartConfig.options as Record<string, unknown>
+          const plugins = configOptions?.plugins as Record<string, unknown>
+          logger.info('SSR Chart Config Subtitle:', {
+            subtitle: plugins?.subtitle
+          })
 
           // Determine chart type for renderer
           const chartType = state.chartStyle === 'bar'

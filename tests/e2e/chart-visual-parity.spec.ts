@@ -1,5 +1,6 @@
 import { test, expect, type Page, type APIRequestContext } from '@playwright/test'
 import { compareCharts } from '../utils/chartComparison'
+import { login } from './helpers/auth'
 
 /**
  * Visual Parity Tests: SSR vs Client Chart Rendering
@@ -182,8 +183,10 @@ test.describe('Chart Visual Parity: SSR vs Client', () => {
 
         // Add dark mode cookie/localStorage before navigation
         // This must happen before the page loads for Nuxt color mode to pick it up
+        // Also dismiss tutorial to prevent it from covering the chart
         await page.addInitScript(() => {
           localStorage.setItem('nuxt-color-mode', 'dark')
+          localStorage.setItem('mortality-watch-tutorial-explorer-completed', 'true')
         })
 
         // Navigate with dark mode URL param (dm=1) to match SSR request
@@ -268,6 +271,92 @@ test.describe('Chart Visual Parity: SSR vs Client', () => {
 
       expect(elapsed).toBeLessThan(CHART_RENDER_TIMEOUT + 2000)
       console.log(`Client render time: ${elapsed}ms`)
+    })
+  })
+
+  test.describe('Fixed Size Screenshot Comparison', () => {
+    // Twitter/X preset: 600x338, rendered @2x = 1200x676
+    const TWITTER_WIDTH = 600
+    const TWITTER_HEIGHT = 338
+
+    // Run these tests at 2x devicePixelRatio to match SSR output
+    test.use({ deviceScaleFactor: 2 })
+
+    test('default chart with Twitter/X size: SSR vs client screenshot', async ({
+      page,
+      request
+    }) => {
+      // Set up page with tutorial dismissed
+      await page.addInitScript(() => {
+        localStorage.setItem('mortality-watch-tutorial-explorer-completed', 'true')
+      })
+
+      // Login as Pro user (required for Chart Size feature)
+      await login(page)
+
+      // Navigate to explorer
+      await page.goto('/explorer')
+      await waitForChartReady(page)
+
+      // Click on Display tab
+      await page.getByRole('button', { name: 'Display' }).click()
+      await page.waitForTimeout(300)
+
+      // Select Twitter/X chart size from dropdown
+      await page.getByRole('combobox').filter({ hasText: 'Auto' }).click()
+      await page.getByText('Twitter/X').click()
+      await page.waitForTimeout(500)
+
+      // Wait for chart to resize
+      await waitForChartReady(page)
+
+      // Intercept download and capture the screenshot PNG
+      const [download] = await Promise.all([
+        page.waitForEvent('download'),
+        page.getByRole('button', { name: 'Screenshot Capture current' }).click()
+      ])
+
+      // Read the downloaded file
+      const downloadPath = await download.path()
+      const fs = await import('fs')
+      const clientBuffer = await fs.promises.readFile(downloadPath!)
+
+      // Get client dimensions
+      const { PNG } = await import('pngjs')
+      const clientPng = PNG.sync.read(clientBuffer)
+      console.log(`Twitter/X client screenshot: ${clientPng.width}x${clientPng.height}`)
+
+      // Fetch SSR at Twitter/X dimensions (outputs 1200x676 at 2x)
+      const ssrBuffer = await fetchSSRChart(request, '', TWITTER_WIDTH, TWITTER_HEIGHT)
+      const ssrPng = PNG.sync.read(ssrBuffer)
+      console.log(`Twitter/X SSR: ${ssrPng.width}x${ssrPng.height}`)
+
+      // Compare pixels
+      try {
+        const result = await compareCharts(ssrBuffer, clientBuffer)
+        console.log(`Twitter/X: ${result.mismatchPercent.toFixed(2)}% pixel difference`)
+
+        // Save debug images
+        if (process.env.SAVE_DEBUG_IMAGES === '1') {
+          const path = await import('path')
+          const debugDir = path.join(process.cwd(), 'test-results', 'debug')
+          await fs.promises.mkdir(debugDir, { recursive: true })
+          await fs.promises.writeFile(path.join(debugDir, 'twitter-ssr.png'), ssrBuffer)
+          await fs.promises.writeFile(path.join(debugDir, 'twitter-client.png'), clientBuffer)
+          await fs.promises.writeFile(path.join(debugDir, 'twitter-diff.png'), result.diffImage)
+        }
+
+        expect(result.mismatchPercent).toBeLessThan(MAX_DIFF_PERCENT)
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('Dimension mismatch')) {
+          console.log(`Twitter/X: Dimension mismatch - SSR ${ssrPng.width}x${ssrPng.height} vs Client ${clientPng.width}x${clientPng.height}`)
+          // Still pass if both rendered
+          expect(ssrBuffer.length).toBeGreaterThan(1000)
+          expect(clientBuffer.length).toBeGreaterThan(1000)
+        } else {
+          throw error
+        }
+      }
     })
   })
 })

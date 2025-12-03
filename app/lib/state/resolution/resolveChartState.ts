@@ -14,7 +14,8 @@
 import { detectView, getViewDefaults, applyConstraints } from '../resolver'
 import type { ViewType } from '../resolver/viewTypes'
 import { stateFieldEncoders, Defaults } from '../config'
-import { computeEffectiveDateRange, computeEffectiveBaselineRange } from './effectiveDefaults'
+import { computeEffectiveDateRange } from './effectiveDefaults'
+import { calculateBaselineRange } from '@/lib/baseline/calculateBaselineRange'
 
 /**
  * Complete resolved state ready for chart rendering
@@ -146,14 +147,30 @@ export function resolveChartStateForRendering(
     constrainedState.dateTo as string | undefined
   )
 
-  // 7. Compute effective baseline range
-  const { effectiveBaselineFrom, effectiveBaselineTo } = computeEffectiveBaselineRange(
-    effectiveDateFrom,
-    effectiveDateTo,
-    constrainedState.baselineDateFrom as string | undefined,
-    constrainedState.baselineDateTo as string | undefined,
-    allLabels
-  )
+  // 7. Compute effective baseline range using the same logic as frontend
+  // If baseline dates are explicitly set in URL, use them
+  // Otherwise, use calculateBaselineRange (same as useExplorerDataOrchestration)
+  let effectiveBaselineFrom = constrainedState.baselineDateFrom as string | undefined
+  let effectiveBaselineTo = constrainedState.baselineDateTo as string | undefined
+
+  if (!effectiveBaselineFrom || !effectiveBaselineTo) {
+    // Calculate default baseline range (same as frontend's baselineRange computed)
+    // Need yearly labels for calculateBaselineRange
+    const yearlyLabels = allLabels.map(label => label.substring(0, 4))
+    const baselineRange = calculateBaselineRange(
+      constrainedState.chartType as string,
+      allLabels,
+      yearlyLabels
+    )
+    if (baselineRange) {
+      effectiveBaselineFrom = effectiveBaselineFrom || baselineRange.from
+      effectiveBaselineTo = effectiveBaselineTo || baselineRange.to
+    }
+  }
+
+  // Fallback to empty strings if still undefined
+  effectiveBaselineFrom = effectiveBaselineFrom || ''
+  effectiveBaselineTo = effectiveBaselineTo || ''
 
   // 8. Build complete render state with no undefined required fields
   return {
