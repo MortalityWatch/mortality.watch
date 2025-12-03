@@ -13,6 +13,7 @@ import {
 } from '../utils/chartPngHelpers'
 import { dataLoader } from '../services/dataLoader'
 import { renderChart } from '../utils/chartRenderer'
+import { setServerDarkMode } from '../../app/composables/useTheme'
 
 /**
  * Server-side chart PNG rendering endpoint
@@ -116,24 +117,31 @@ export default defineEventHandler(async (event) => {
         )
 
         // Step 6: Generate chart configuration
-        const chartConfig = generateChartConfig(
-          state,
-          chartData,
-          isDeathsType,
-          isLE,
-          isPopulationType,
-          chartUrl
-        )
+        // Set dark mode override so color functions use correct theme
+        setServerDarkMode(darkMode)
+        try {
+          const chartConfig = generateChartConfig(
+            state,
+            chartData,
+            isDeathsType,
+            isLE,
+            isPopulationType,
+            chartUrl
+          )
 
-        // Determine chart type for renderer
-        const chartType = state.chartStyle === 'bar'
-          ? 'bar'
-          : state.chartStyle === 'matrix'
-            ? 'matrix'
-            : 'line'
+          // Determine chart type for renderer
+          const chartType = state.chartStyle === 'bar'
+            ? 'bar'
+            : state.chartStyle === 'matrix'
+              ? 'matrix'
+              : 'line'
 
-        // Step 7: Render chart using server-side Canvas renderer
-        return await renderChart(width, height, chartConfig, chartType, darkMode)
+          // Step 7: Render chart using server-side Canvas renderer
+          return await renderChart(width, height, chartConfig, chartType, darkMode)
+        } finally {
+          // Clear dark mode override
+          setServerDarkMode(null)
+        }
       } catch (renderError) {
         logger.error('Error rendering chart:', renderError instanceof Error ? renderError : new Error(String(renderError)))
         throw renderError
