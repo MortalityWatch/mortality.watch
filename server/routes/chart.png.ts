@@ -114,13 +114,13 @@ export default defineEventHandler(async (event) => {
         const state = resolveChartStateForRendering(queryParams, allLabels)
 
         // Build explorer URL from request query params (same params, just /explorer instead of /chart.png)
-        // This ensures the hash matches what the client would generate
-        const siteUrl = process.env.NUXT_PUBLIC_SITE_URL || 'https://www.mortality.watch'
+        // Use request origin so short URL matches client (important for visual parity tests)
         const requestUrl = getRequestURL(event)
+        const siteUrl = requestUrl.origin
         const fullChartUrl = `${siteUrl}/explorer${requestUrl.search}`
 
         // Get short URL for QR code (smaller QR code = easier to scan)
-        const chartUrl = await getOrCreateShortUrl(fullChartUrl)
+        const chartUrl = await getOrCreateShortUrl(fullChartUrl, siteUrl)
 
         // Debug: Log resolved state
         logger.info('SSR Chart State:', {

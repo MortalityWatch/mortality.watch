@@ -76,10 +76,11 @@ function extractParamsFromUrl(urlString: string): Record<string, string> {
  * Stores only path (no domain) so URLs work across environments
  *
  * @param fullUrl - The full URL to shorten
+ * @param baseUrl - Optional base URL for the short URL (defaults to NUXT_PUBLIC_SITE_URL)
  * @returns The short URL (e.g., https://www.mortality.watch/s/a1b2c3d4e5f6)
  */
-export async function getOrCreateShortUrl(fullUrl: string): Promise<string> {
-  const siteUrl = process.env.NUXT_PUBLIC_SITE_URL || 'https://www.mortality.watch'
+export async function getOrCreateShortUrl(fullUrl: string, baseUrl?: string): Promise<string> {
+  const siteUrl = baseUrl || process.env.NUXT_PUBLIC_SITE_URL || 'https://www.mortality.watch'
 
   // Extract params and compute hash (hash is config-only, no path)
   const parsedUrl = new URL(fullUrl)
