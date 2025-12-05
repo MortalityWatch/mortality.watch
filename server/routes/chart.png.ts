@@ -8,7 +8,6 @@ import {
   fetchChartData,
   transformChartData,
   generateChartConfig,
-  generateChartUrlFromState,
   resolveChartStateForRendering
 } from '../utils/chartPngHelpers'
 import { dataLoader } from '../services/dataLoader'
@@ -106,8 +105,11 @@ export default defineEventHandler(async (event) => {
         // This applies constraints AND computes effective date ranges
         const state = resolveChartStateForRendering(queryParams, allLabels)
 
-        // Generate full chart URL from resolved state
-        const fullChartUrl = generateChartUrlFromState(state)
+        // Build explorer URL from request query params (same params, just /explorer instead of /chart.png)
+        // This ensures the hash matches what the client would generate
+        const siteUrl = process.env.NUXT_PUBLIC_SITE_URL || 'https://www.mortality.watch'
+        const requestUrl = getRequestURL(event)
+        const fullChartUrl = `${siteUrl}/explorer${requestUrl.search}`
 
         // Get short URL for QR code (smaller QR code = easier to scan)
         const chartUrl = await getOrCreateShortUrl(fullChartUrl)
