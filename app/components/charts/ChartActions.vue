@@ -17,7 +17,6 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{
   copyLink: []
-  copyShortLink: []
   downloadChart: []
   screenshot: []
   saveChart: []
@@ -86,31 +85,7 @@ const emit = defineEmits<{
               Copy Link
             </div>
             <div class="text-xs text-gray-500 dark:text-gray-400">
-              Share this chart via URL
-            </div>
-          </div>
-          <UIcon
-            name="i-lucide-chevron-right"
-            class="w-3 h-3 text-gray-400"
-          />
-        </button>
-
-        <div class="border-t border-gray-200 dark:border-gray-700" />
-
-        <button
-          class="chart-option-button"
-          @click="emit('copyShortLink')"
-        >
-          <UIcon
-            name="i-lucide-qr-code"
-            class="w-4 h-4 shrink-0"
-          />
-          <div class="flex-1 text-left">
-            <div class="text-sm font-medium">
-              Copy Short Link
-            </div>
-            <div class="text-xs text-gray-500 dark:text-gray-400">
-              Compact URL for QR codes
+              Share this chart via short URL
             </div>
           </div>
           <UIcon

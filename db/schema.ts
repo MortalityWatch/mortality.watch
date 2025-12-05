@@ -273,7 +273,8 @@ export const shortUrls = sqliteTable(
     urlHash: text('url_hash').notNull().unique(), // SHA-256 hash of normalized config
     fullUrl: text('full_url').notNull(), // Query string only (e.g., c=SWE&c=DEU)
     page: text('page', { enum: ['explorer', 'ranking'] }).notNull().default('explorer'),
-    accessCount: integer('access_count').notNull().default(0),
+    createCount: integer('create_count').notNull().default(1), // How many times this config was generated/shared
+    accessCount: integer('access_count').notNull().default(0), // How many times the short URL was visited
     createdAt: integer('created_at', { mode: 'timestamp' })
       .notNull()
       .default(sql`(unixepoch())`),

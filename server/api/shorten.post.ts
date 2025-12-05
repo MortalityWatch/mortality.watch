@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { eq } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { db } from '../utils/db'
 import { shortUrls } from '../../db/schema'
 
@@ -41,7 +41,11 @@ export default defineEventHandler(async (event) => {
     .limit(1)
 
   if (existing.length > 0) {
-    // Already exists, nothing to do
+    // Already exists - increment createCount to track generation frequency
+    await db
+      .update(shortUrls)
+      .set({ createCount: sql`${shortUrls.createCount} + 1` })
+      .where(eq(shortUrls.id, hash))
     return { success: true }
   }
 

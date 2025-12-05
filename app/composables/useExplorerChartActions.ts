@@ -27,25 +27,15 @@ export function useExplorerChartActions(
   chartData?: Ref<MortalityChartData | undefined> | { value: MortalityChartData | undefined },
   allCountries?: Ref<Record<string, Country>> | { value: Record<string, Country> }
 ) {
-  // Copy chart link to clipboard
-  const copyChartLink = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href)
-      showToast('Link copied to clipboard!', 'success')
-    } catch (error) {
-      handleError(error, 'Failed to copy link', 'copyChartLink')
-    }
-  }
-
-  // Copy short link to clipboard (uses local hash computation)
+  // Copy short URL to clipboard (uses local hash computation + fire-and-forget DB store)
   const { getShortUrl } = useShortUrl()
-  const copyShortLink = async () => {
+  const copyChartLink = async () => {
     try {
       const shortUrl = await getShortUrl()
       await navigator.clipboard.writeText(shortUrl)
-      showToast('Short link copied to clipboard!', 'success')
+      showToast('Link copied to clipboard!', 'success')
     } catch (error) {
-      handleError(error, 'Failed to copy short link', 'copyShortLink')
+      handleError(error, 'Failed to copy link', 'copyChartLink')
     }
   }
 
@@ -382,7 +372,6 @@ export function useExplorerChartActions(
   return {
     // Actions
     copyChartLink,
-    copyShortLink,
     screenshotChart,
     downloadChart,
     saveChart,
