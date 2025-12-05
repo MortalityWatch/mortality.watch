@@ -46,6 +46,14 @@ export default defineEventHandler(async (event) => {
     const query = getQuery(event)
     const queryParams = parseQueryParams(query as Record<string, unknown>)
 
+    // Extract countries from query params for filename
+    const countriesParam = queryParams.c
+    const countries = Array.isArray(countriesParam)
+      ? countriesParam
+      : typeof countriesParam === 'string'
+        ? countriesParam.split(',')
+        : [] // Empty = no suffix in filename
+
     // Check for dark mode parameter
     const darkMode = queryParams.dm === '1' || queryParams.dm === 'true'
 
@@ -63,7 +71,7 @@ export default defineEventHandler(async (event) => {
       const cachedBuffer = await getCachedChart(cacheKey)
       if (cachedBuffer) {
         // Return cached version with 7-day Cache-Control
-        setResponseHeaders(event, getChartResponseHeaders(cachedBuffer, [], true))
+        setResponseHeaders(event, getChartResponseHeaders(cachedBuffer, countries, true))
         return cachedBuffer
       }
     }
@@ -189,7 +197,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Set response headers with 7-day cache
-    setResponseHeaders(event, getChartResponseHeaders(buffer, [], false))
+    setResponseHeaders(event, getChartResponseHeaders(buffer, countries, false))
 
     return buffer
   } catch (error) {

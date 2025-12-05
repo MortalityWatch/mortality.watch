@@ -65,7 +65,8 @@ export function generateChartTitle(state: ChartRenderState): string {
  * @returns Sanitized country string
  */
 export function generateCountriesFilename(countries: string[]): string {
-  return countries.join(', ').replace(/,/g, '_')
+  if (!countries.length) return ''
+  return countries.join('-')
 }
 
 /**
@@ -85,7 +86,7 @@ export function getChartResponseHeaders(
     'Content-Length': buffer.length.toString(),
     'Cache-Control': 'public, max-age=604800, immutable', // 7 days
     'X-Cache': cacheHit ? 'HIT' : 'MISS',
-    'Content-Disposition': `inline; filename="mortality-chart-${generateCountriesFilename(countries)}.png"`
+    'Content-Disposition': `inline; filename="mortality-chart${countries.length ? '-' + generateCountriesFilename(countries) : ''}.png"`
   }
 }
 
