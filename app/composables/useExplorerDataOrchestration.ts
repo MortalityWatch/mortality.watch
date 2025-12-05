@@ -33,6 +33,7 @@ import { useDateRangeValidation } from '@/composables/useDateRangeValidation'
 import { useDateRangeCalculations } from '@/composables/useDateRangeCalculations'
 import { UI_CONFIG } from '@/lib/config/constants'
 import { calculateBaselineRange } from '@/lib/baseline/calculateBaselineRange'
+import { useShortUrl } from '@/composables/useShortUrl'
 
 export function useExplorerDataOrchestration(
   state: ReturnType<typeof useExplorerState>,
@@ -42,6 +43,10 @@ export function useExplorerDataOrchestration(
 ) {
   // Shared data fetching logic
   const dataFetcher = useChartDataFetcher()
+
+  // Short URL handling for QR codes
+  const { getShortUrl } = useShortUrl()
+  const currentShortUrl = ref<string | null>(null)
 
   // Validation
   const { getValidatedRange } = useDateRangeValidation()
@@ -360,7 +365,10 @@ export function useExplorerDataOrchestration(
       && snapshot.baselineMethod !== 'mean'
 
     // Build URL from resolved state to match SSR's generateChartUrlFromState()
-    const url = makeUrlFromState(snapshot, effectiveDateFrom, effectiveDateTo, effectiveBaselineFrom, effectiveBaselineTo)
+    const fullUrl = makeUrlFromState(snapshot, effectiveDateFrom, effectiveDateTo, effectiveBaselineFrom, effectiveBaselineTo)
+
+    // Use short URL if available, otherwise fall back to full URL
+    const url = currentShortUrl.value || fullUrl
 
     return {
       countries: snapshot.countries,
@@ -408,10 +416,19 @@ export function useExplorerDataOrchestration(
       return { datasets: [], labels: [] } as unknown as MortalityChartData
     }
 
+    // Compute short URL first (instant with local hash computation)
+    // This also fires a non-blocking POST to store the mapping in DB
+    try {
+      const shortUrl = await getShortUrl()
+      currentShortUrl.value = shortUrl
+    } catch {
+      // Silently fail - full URL will be used
+    }
+
     // Use provided snapshot or create one from current refs
     const stateSnapshot = snapshot ?? createStateSnapshot()
 
-    // Build filter config from snapshot
+    // Build filter config from snapshot (uses currentShortUrl)
     const config = buildFilterConfig(stateSnapshot)
 
     // Use the new config-based function
@@ -604,6 +621,9 @@ export function useExplorerDataOrchestration(
     // Date range helpers
     defaultRange: dateRangeCalc.defaultRange,
     getDefaultRange: dateRangeCalc.getDefaultRange, // Kept for backward compatibility
-    baselineRange
+    baselineRange,
+
+    // Short URL for QR codes and sharing
+    currentShortUrl
   }
 }

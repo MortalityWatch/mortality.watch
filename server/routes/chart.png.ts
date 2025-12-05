@@ -14,6 +14,7 @@ import {
 import { dataLoader } from '../services/dataLoader'
 import { renderChart } from '../utils/chartRenderer'
 import { setServerDarkMode } from '../../app/composables/useTheme'
+import { getOrCreateShortUrl } from '../utils/urlShortener'
 
 /**
  * Server-side chart PNG rendering endpoint
@@ -105,15 +106,18 @@ export default defineEventHandler(async (event) => {
         // This applies constraints AND computes effective date ranges
         const state = resolveChartStateForRendering(queryParams, allLabels)
 
-        // Generate chart URL for QR code from resolved state (not raw query params)
-        // This ensures the QR code matches what the client would generate
-        const chartUrl = generateChartUrlFromState(state)
+        // Generate full chart URL from resolved state
+        const fullChartUrl = generateChartUrlFromState(state)
+
+        // Get short URL for QR code (smaller QR code = easier to scan)
+        const chartUrl = await getOrCreateShortUrl(fullChartUrl)
 
         // Debug: Log resolved state
         logger.info('SSR Chart State:', {
           queryParams,
           resolvedState: state,
-          chartUrl
+          fullChartUrl,
+          shortUrl: chartUrl
         })
 
         // Step 4: Fetch all required chart data with resolved state

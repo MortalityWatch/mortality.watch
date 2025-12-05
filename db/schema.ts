@@ -261,6 +261,31 @@ export const dataQualityOverrides = sqliteTable(
   })
 )
 
+/**
+ * Short URLs table - stores shortened URLs for QR codes
+ * Hash is computed from normalized config only (not path), so same config = same hash
+ * Page type stored separately for SSR rendering
+ */
+export const shortUrls = sqliteTable(
+  'short_urls',
+  {
+    id: text('id').primaryKey(), // 12-char hash
+    urlHash: text('url_hash').notNull().unique(), // SHA-256 hash of normalized config
+    fullUrl: text('full_url').notNull(), // Query string only (e.g., c=SWE&c=DEU)
+    page: text('page', { enum: ['explorer', 'ranking'] }).notNull().default('explorer'),
+    accessCount: integer('access_count').notNull().default(0),
+    createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+    lastAccessedAt: integer('last_accessed_at', { mode: 'timestamp' })
+  },
+  table => ({
+    urlHashIdx: index('idx_short_urls_hash').on(table.urlHash),
+    pageIdx: index('idx_short_urls_page').on(table.page),
+    createdIdx: index('idx_short_urls_created').on(table.createdAt)
+  })
+)
+
 // Type exports for use in application code
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
@@ -282,3 +307,6 @@ export type NewDataQualityOverride = typeof dataQualityOverrides.$inferInsert
 
 export type InviteCode = typeof inviteCodes.$inferSelect
 export type NewInviteCode = typeof inviteCodes.$inferInsert
+
+export type ShortUrl = typeof shortUrls.$inferSelect
+export type NewShortUrl = typeof shortUrls.$inferInsert

@@ -503,6 +503,7 @@ onMounted(async () => {
 const chartActions: any = useExplorerChartActions(state as any, dataOrchestration.chartData as any, allCountries)
 const {
   copyChartLink,
+  copyShortLink,
   screenshotChart,
   downloadChart,
   saveToDB,
@@ -696,6 +697,7 @@ watch(
             class="mt-3"
             :show-save-button="!isAuthenticated"
             @copy-link="copyChartLink"
+            @copy-short-link="copyShortLink"
             @download-chart="downloadChart"
             @screenshot="screenshotChart"
             @save-chart="navigateTo('/signup')"

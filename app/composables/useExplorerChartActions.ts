@@ -1,6 +1,7 @@
 import { showToast } from '@/toast'
 import { handleError } from '@/lib/errors/errorHandler'
 import { useSaveChart } from '@/composables/useSaveChart'
+import { useShortUrl } from '@/composables/useShortUrl'
 import { generateChartFilename } from '@/lib/utils/strings'
 import { generateExplorerTitle, generateExplorerDescription } from '@/lib/utils/chartTitles'
 import Papa from 'papaparse'
@@ -33,6 +34,18 @@ export function useExplorerChartActions(
       showToast('Link copied to clipboard!', 'success')
     } catch (error) {
       handleError(error, 'Failed to copy link', 'copyChartLink')
+    }
+  }
+
+  // Copy short link to clipboard (uses local hash computation)
+  const { getShortUrl } = useShortUrl()
+  const copyShortLink = async () => {
+    try {
+      const shortUrl = await getShortUrl()
+      await navigator.clipboard.writeText(shortUrl)
+      showToast('Short link copied to clipboard!', 'success')
+    } catch (error) {
+      handleError(error, 'Failed to copy short link', 'copyShortLink')
     }
   }
 
@@ -369,6 +382,7 @@ export function useExplorerChartActions(
   return {
     // Actions
     copyChartLink,
+    copyShortLink,
     screenshotChart,
     downloadChart,
     saveChart,

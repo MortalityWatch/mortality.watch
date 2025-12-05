@@ -4,7 +4,6 @@ import type { AllChartData, CountryData } from '../../app/model'
 import { getKeyForType } from '../../app/model/utils'
 import { getFilteredChartData } from '../../app/lib/chart/filtering'
 import { getChartColors } from '../../app/colors'
-import { decompress, base64ToArrayBuffer } from '../../app/lib/compression/compress.node'
 import { makeChartConfig } from '../../app/lib/chart/chartConfig'
 import { resolveChartStateForRendering, type ChartRenderState } from '../../app/lib/state/resolution'
 import type { ChartStyle } from '../../app/lib/chart/chartTypes'
@@ -30,30 +29,12 @@ export function getClientIp(event: H3Event): string {
 }
 
 /**
- * Parse and decompress query parameters from request
- * Supports both compressed (qr) and expanded query params
+ * Parse query parameters from request
  * @param query - Raw query parameters
  * @returns Parsed query parameters
  */
 export function parseQueryParams(query: Record<string, unknown>): Record<string, string | string[]> {
-  let queryParams = query as Record<string, string | string[]>
-
-  // If compressed state is provided via 'qr' param, decompress it
-  if (query.qr && typeof query.qr === 'string') {
-    try {
-      const decodedQr = decodeURIComponent(query.qr)
-      const arrayBuffer = base64ToArrayBuffer(decodedQr)
-      const decompressedJson = decompress(arrayBuffer)
-      const compressedState = JSON.parse(decompressedJson)
-      // Merge compressed state into query params (compressed takes precedence)
-      queryParams = { ...query, ...compressedState }
-    } catch (err) {
-      logger.error('Failed to decompress qr parameter:', err instanceof Error ? err : new Error(String(err)))
-      // Fall back to using query params as-is
-    }
-  }
-
-  return queryParams
+  return query as Record<string, string | string[]>
 }
 
 /**
