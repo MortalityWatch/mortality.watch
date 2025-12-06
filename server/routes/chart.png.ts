@@ -115,9 +115,14 @@ export default defineEventHandler(async (event) => {
 
         // Build explorer URL from request query params (same params, just /explorer instead of /chart.png)
         // Use request origin so short URL matches client (important for visual parity tests)
+        // Filter out PNG-specific params (width, height) that don't apply to explorer
         const requestUrl = getRequestURL(event)
         const siteUrl = requestUrl.origin
-        const fullChartUrl = `${siteUrl}/explorer${requestUrl.search}`
+        const explorerParams = new URLSearchParams(requestUrl.search)
+        explorerParams.delete('width')
+        explorerParams.delete('height')
+        const explorerSearch = explorerParams.toString()
+        const fullChartUrl = `${siteUrl}/explorer${explorerSearch ? `?${explorerSearch}` : ''}`
 
         // Get short URL for QR code (smaller QR code = easier to scan)
         const chartUrl = await getOrCreateShortUrl(fullChartUrl, siteUrl)
