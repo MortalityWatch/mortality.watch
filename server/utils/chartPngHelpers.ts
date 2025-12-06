@@ -1,6 +1,7 @@
 import type { H3Event } from 'h3'
 import { dataLoader } from '../services/dataLoader'
 import type { AllChartData, CountryData } from '../../app/model'
+import { ChartPeriod, type ChartType } from '../../app/model/period'
 import { getKeyForType } from '../../app/model/utils'
 import { getFilteredChartData } from '../../app/lib/chart/filtering'
 import { getChartColors } from '../../app/colors'
@@ -158,12 +159,17 @@ export async function fetchChartData(state: ChartRenderState) {
     ? getKeyForType(state.type, state.showBaseline, state.standardPopulation, false, state.showPredictionInterval)
     : undefined
 
+  // Calculate startDateIndex from sliderStart to match client behavior
+  // This ensures baseline indices are calculated on the same label array as the client
+  const period = new ChartPeriod(allLabels, state.chartType as ChartType)
+  const startDateIndex = state.sliderStart ? period.indexOf(state.sliderStart) : 0
+
   const allChartData: AllChartData = await dataLoader.getAllChartData({
     dataKey: dataKey as keyof CountryData,
     chartType: state.chartType,
     rawData,
     allLabels,
-    startDateIndex: 0, // full range for OG images
+    startDateIndex,
     cumulative: state.cumulative,
     ageGroupFilter: state.ageGroups,
     countryCodeFilter: state.countries,

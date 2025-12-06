@@ -58,17 +58,24 @@ export function decodeChartState(query: Record<string, string | string[]>): Char
     const value = query[key]
 
     if (value !== undefined) {
-      const stringValue = Array.isArray(value) ? value[0] : value
-
       if ('decode' in config && config.decode) {
-        // Use custom decoder (e.g., for booleans)
-        state[field] = config.decode(stringValue)
-      } else if (Array.isArray(Defaults[field as keyof typeof Defaults])) {
-        // Array field
-        state[field] = Array.isArray(value) ? value : [stringValue]
+        // For fields with decode function (countries, ageGroups, userColors):
+        // - If value is already an array, return it as-is
+        // - If value is a string, decode splits it by comma
+        if (Array.isArray(value)) {
+          state[field] = value
+        } else {
+          state[field] = config.decode(value)
+        }
       } else {
-        // String field
-        state[field] = stringValue
+        const stringValue = Array.isArray(value) ? value[0] : value
+        if (Array.isArray(Defaults[field as keyof typeof Defaults])) {
+          // Array field
+          state[field] = Array.isArray(value) ? value : [stringValue]
+        } else {
+          // String field
+          state[field] = stringValue
+        }
       }
     }
   }

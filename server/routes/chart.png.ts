@@ -134,10 +134,11 @@ export default defineEventHandler(async (event) => {
         const { allCountries, allChartData } = await fetchChartData(state)
 
         // Step 5: Transform data into chart-ready format
+        // Use allChartData.labels (sliced from sliderStart) to match baseline data alignment
         const { chartData, isDeathsType, isLE, isPopulationType } = await transformChartData(
           state,
           allCountries,
-          allLabels,
+          allChartData.labels,
           allChartData,
           chartUrl,
           isAsmrType

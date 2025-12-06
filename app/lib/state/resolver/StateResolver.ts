@@ -419,9 +419,22 @@ export class StateResolver {
         try {
           // Attempt to decode
           const decodeFn = 'decode' in encoder ? encoder.decode : null
-          // Handle array of values by taking first element
-          const valueToProcess = Array.isArray(urlValue) ? urlValue[0] : urlValue
-          const decoded = decodeFn ? decodeFn(valueToProcess as string | number | undefined) : urlValue
+
+          let decoded: unknown
+          if (decodeFn) {
+            // For fields with decode function (countries, ageGroups, userColors):
+            // - If value is already an array, return it as-is
+            // - If value is a string, decode splits it by comma
+            if (Array.isArray(urlValue)) {
+              decoded = urlValue
+            } else {
+              decoded = decodeFn(urlValue as string | number | undefined)
+            }
+          } else {
+            // Handle array of values by taking first element
+            const valueToProcess = Array.isArray(urlValue) ? urlValue[0] : urlValue
+            decoded = valueToProcess
+          }
 
           // Validate result is not null/undefined
           if (decoded !== null && decoded !== undefined) {

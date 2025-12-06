@@ -69,11 +69,19 @@ function decodeUrlParam(
 ): unknown {
   if (value === undefined) return undefined
 
-  const stringValue = Array.isArray(value) ? value[0] : value
-
+  // For array fields with decode function (countries, ageGroups, userColors):
+  // - If value is already an array, return it as-is
+  // - If value is a comma-separated string, decode splits it
   if ('decode' in config && config.decode) {
-    return config.decode(stringValue)
-  } else if (Array.isArray(Defaults[field as keyof typeof Defaults])) {
+    if (Array.isArray(value)) {
+      // Value is already an array (e.g., from Vue Router), return as-is
+      return value
+    }
+    return config.decode(value)
+  }
+
+  const stringValue = Array.isArray(value) ? value[0] : value
+  if (Array.isArray(Defaults[field as keyof typeof Defaults])) {
     return Array.isArray(value) ? value : [stringValue]
   }
   return stringValue

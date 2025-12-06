@@ -81,17 +81,16 @@ export function useExplorerChartActions(
   // Download chart as PNG via server-side rendering (for social media/OG images)
   const downloadChart = () => {
     try {
-      let url = window.location.href
-        .replaceAll('/?', '/chart.png?')
-        .replaceAll('/explorer?', '/chart.png?')
+      const params = new URLSearchParams(window.location.search)
 
       // Add dark mode parameter if currently in dark mode
       const isDarkMode = document.documentElement.classList.contains('dark')
       if (isDarkMode) {
-        const separator = url.includes('?') ? '&' : '?'
-        url += `${separator}dm=1`
+        params.set('dm', '1')
       }
 
+      const query = params.toString()
+      const url = `${window.location.origin}/chart.png${query ? `?${query}` : ''}`
       window.open(url, '_blank')
     } catch (error) {
       handleError(error, 'Failed to download chart', 'downloadChart')
