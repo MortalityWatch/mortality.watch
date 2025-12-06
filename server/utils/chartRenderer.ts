@@ -204,6 +204,9 @@ const createLogoPlugin = (logoImage: CanvasImage, qrImage: CanvasImage | null, d
 
 /**
  * Create a Chart.js instance with canvas
+ *
+ * Chart.js handles 2x scaling via devicePixelRatio option.
+ * Output will be 2x the requested dimensions.
  */
 export function createChartCanvas(width: number, height: number) {
   const canvas = createCanvas(width, height)
