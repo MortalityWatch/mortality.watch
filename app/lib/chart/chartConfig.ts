@@ -74,7 +74,8 @@ export const makeChartConfig = (
   isPopulationType: boolean,
   showLabels: boolean,
   showPercentage: boolean,
-  showPi: boolean
+  showPi: boolean,
+  isSSR: boolean = false
 ): Record<string, unknown> => {
   // Cast from generic data structure to MortalityChartData
   // The caller is responsible for providing properly structured data
@@ -88,7 +89,14 @@ export const makeChartConfig = (
       showPercentage,
       showLabels,
       isDeathsType,
-      isPopulationType
+      isPopulationType,
+      true, // showQrCode
+      true, // showLogo
+      undefined, // isDark
+      'auto', // decimals
+      undefined, // userTier
+      true, // showCaption
+      isSSR
     ) as unknown as Record<string, unknown>
   }
   return makeBarLineChartConfig(
@@ -97,7 +105,14 @@ export const makeChartConfig = (
     showPi,
     showPercentage,
     isDeathsType,
-    isPopulationType
+    isPopulationType,
+    true, // showQrCode
+    true, // showLogo
+    'auto', // decimals
+    undefined, // isDark
+    undefined, // userTier
+    true, // showCaption
+    isSSR
   ) as unknown as Record<string, unknown>
 }
 
@@ -153,7 +168,8 @@ export const makeBarLineChartConfig = (
   decimals: string = 'auto',
   isDark?: boolean,
   userTier?: number,
-  showCaption: boolean = true
+  showCaption: boolean = true,
+  isSSR: boolean = false
 ) => {
   // Feature gating: Only Pro users (tier 2) can hide the watermark/QR code
   if (userTier !== undefined && userTier < 2) {
@@ -192,7 +208,8 @@ export const makeBarLineChartConfig = (
         showLogo,
         showCaption,
         data.ytitle.includes('Z-Score') ? 'zscore' : 'mortality', // Detect view from ytitle
-        isDark
+        isDark,
+        isSSR
       ),
       scales: createScalesConfig(
         data,
@@ -200,7 +217,8 @@ export const makeBarLineChartConfig = (
         showPercentage,
         showDecimals,
         decimals,
-        isDark
+        isDark,
+        isSSR
       )
     },
     data: {
@@ -272,7 +290,8 @@ export const makeMatrixChartConfig = (
   isDark?: boolean,
   decimals: string = 'auto',
   userTier?: number,
-  showCaption: boolean = true
+  showCaption: boolean = true,
+  isSSR: boolean = false
 ) => {
   const config = makeBarLineChartConfig(
     data,
@@ -286,7 +305,8 @@ export const makeMatrixChartConfig = (
     decimals,
     isDark,
     userTier,
-    showCaption
+    showCaption,
+    isSSR
   ) as unknown as ChartJSConfig<'matrix', MortalityMatrixDataPoint[]>
 
   config.options!.scales = {

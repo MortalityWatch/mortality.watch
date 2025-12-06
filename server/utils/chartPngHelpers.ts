@@ -280,7 +280,8 @@ export function generateChartConfig(
     isPopulationType,
     state.showLabels,
     state.showPercentage,
-    state.showPredictionInterval
+    state.showPredictionInterval,
+    true // isSSR - enable SSR font adjustments
   )
 
   // Add the chart URL for QR code

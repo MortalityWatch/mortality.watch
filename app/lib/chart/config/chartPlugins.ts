@@ -68,6 +68,15 @@ export function createOnResizeHandler() {
 
 /**
  * Create datalabels plugin configuration
+ *
+ * @param data - Chart data
+ * @param showPi - Whether to show prediction intervals
+ * @param isExcess - Whether showing excess mortality
+ * @param showPercentage - Whether to format as percentages
+ * @param showDecimals - Whether to show decimal places
+ * @param decimals - Decimal precision
+ * @param isDark - Dark mode flag
+ * @param isSSR - Server-side rendering flag (applies font metric adjustments)
  */
 export function createDatalabelsConfig(
   data: MortalityChartData,
@@ -76,10 +85,15 @@ export function createDatalabelsConfig(
   showPercentage: boolean,
   showDecimals: boolean,
   decimals: string,
-  isDark?: boolean
+  isDark?: boolean,
+  isSSR?: boolean
 ) {
   // Compute chart-wide precision for consistent label display
   const resolvedDecimals = resolveDecimals(data, decimals, showPercentage)
+
+  // SSR offset adjustment: node-canvas text metrics differ slightly from browser
+  // A small negative offset helps align data labels with browser rendering
+  const ssrOffset = isSSR ? 3 : 0
 
   return {
     anchor: 'end' as const,
@@ -126,7 +140,7 @@ export function createDatalabelsConfig(
     borderRadius: 3,
     padding: 2,
     font: getDatalabelsFont(),
-    offset: 1.5
+    offset: 1.5 + ssrOffset
   }
 }
 
@@ -227,6 +241,19 @@ export function createAnnotationsFromReferenceLines(
 
 /**
  * Create plugins configuration
+ *
+ * @param data - Chart data
+ * @param isExcess - Whether showing excess mortality
+ * @param showPi - Whether to show prediction intervals
+ * @param showPercentage - Whether to format as percentages
+ * @param showDecimals - Whether to show decimal places
+ * @param decimals - Decimal precision
+ * @param showQrCode - Whether to show QR code
+ * @param showLogo - Whether to show logo
+ * @param showCaption - Whether to show caption
+ * @param view - Chart view type
+ * @param isDark - Dark mode flag
+ * @param isSSR - Server-side rendering flag (applies font metric adjustments)
  */
 export function createPluginsConfig(
   data: MortalityChartData,
@@ -239,7 +266,8 @@ export function createPluginsConfig(
   showLogo: boolean,
   showCaption: boolean = true,
   view: string = 'mortality',
-  isDark?: boolean
+  isDark?: boolean,
+  isSSR?: boolean
 ) {
   const basePlugins = {
     title: {
@@ -278,7 +306,8 @@ export function createPluginsConfig(
       showPercentage,
       showDecimals,
       decimals,
-      isDark
+      isDark,
+      isSSR
     ),
     ...(showQrCode && data.url ? { qrCodeUrl: data.url } : {}),
     showLogo,
