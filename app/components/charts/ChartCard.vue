@@ -177,7 +177,6 @@
 </template>
 
 <script setup lang="ts">
-import { handleSilentError } from '@/lib/errors/errorHandler'
 import { formatChartDate } from '@/lib/utils/dates'
 
 interface Chart {
@@ -186,7 +185,7 @@ interface Chart {
   description: string | null
   slug: string | null
   chartType: 'explorer' | 'ranking'
-  chartState: string
+  chartConfig: string // Query string (e.g., "c=SWE&c=DEU&ct=yearly")
   thumbnailUrl: string | null
   isFeatured: boolean
   isPublic?: boolean
@@ -234,60 +233,39 @@ function getChartLink() {
   return getRemixUrl()
 }
 
-// Get the remix URL (explorer or ranking with state)
+// Get the remix URL - chartConfig is already a query string
 function getRemixUrl() {
-  try {
-    const state = JSON.parse(props.chart.chartState)
-    const baseUrl = props.chart.chartType === 'explorer' ? '/explorer' : '/ranking'
+  const baseUrl = props.chart.chartType === 'explorer' ? '/explorer' : '/ranking'
+  const config = props.chart.chartConfig
 
-    const params = new URLSearchParams()
-    Object.entries(state).forEach(([key, value]) => {
-      if (value !== null && value !== undefined) {
-        params.set(key, String(value))
-      }
-    })
-
-    return `${baseUrl}?${params.toString()}`
-  } catch (err) {
-    handleSilentError(err, 'getRemixUrl')
-    return props.chart.chartType === 'explorer' ? '/explorer' : '/ranking'
-  }
+  return config ? `${baseUrl}?${config}` : baseUrl
 }
 
-// Get thumbnail URL
+// Get thumbnail URL - chartConfig is already a query string
 function getThumbnailUrl() {
   if (props.chart.thumbnailUrl) {
     return props.chart.thumbnailUrl
   }
 
-  // Generate thumbnail from chart state
-  try {
-    const colorMode = useColorMode()
-    const state = JSON.parse(props.chart.chartState)
-    const params = new URLSearchParams()
+  const colorMode = useColorMode()
+  const config = props.chart.chartConfig
+  const endpoint = props.chart.chartType === 'ranking' ? '/ranking.png' : '/chart.png'
 
-    Object.entries(state).forEach(([key, value]) => {
-      if (value !== null && value !== undefined) {
-        params.set(key, String(value))
-      }
-    })
+  // Build params for thumbnail-specific options
+  const params = new URLSearchParams(config)
 
-    // Add dark mode parameter if in dark mode
-    if (colorMode.value === 'dark') {
-      params.set('dm', '1')
-    }
-
-    // Hide QR code and logo for thumbnails
-    params.set('hideQr', '1')
-    params.set('hideLogo', '1')
-
-    // Use appropriate endpoint based on chart type
-    const endpoint = props.chart.chartType === 'ranking' ? '/ranking.png' : '/chart.png'
-    return `${endpoint}?${params.toString()}&width=600&height=337`
-  } catch (err) {
-    handleSilentError(err, 'getThumbnailUrl')
-    return '/placeholder-chart.png'
+  // Add dark mode parameter if in dark mode
+  if (colorMode.value === 'dark') {
+    params.set('dm', '1')
   }
+
+  // Hide QR code and logo for thumbnails
+  params.set('hideQr', '1')
+  params.set('hideLogo', '1')
+  params.set('width', '600')
+  params.set('height', '337')
+
+  return `${endpoint}?${params.toString()}`
 }
 
 // Format date for my-charts

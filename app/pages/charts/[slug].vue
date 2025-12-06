@@ -209,10 +209,7 @@
 </template>
 
 <script setup lang="ts">
-import { handleSilentError } from '@/lib/errors/errorHandler'
 import { showToast } from '@/toast'
-import { encodeChartState } from '@/lib/chartState'
-import type { ChartState } from '@/lib/chartState'
 import { formatChartDate } from '@/lib/utils/dates'
 
 const { user } = useAuth()
@@ -225,7 +222,7 @@ interface Chart {
   description: string | null
   slug: string | null
   chartType: 'explorer' | 'ranking'
-  chartState: string
+  chartConfig: string // Query string (e.g., "c=SWE&c=DEU&ct=yearly")
   thumbnailUrl: string | null
   isFeatured: boolean
   isPublic?: boolean
@@ -283,41 +280,16 @@ async function handleTogglePublic(newValue: boolean) {
 const config = useRuntimeConfig()
 const siteUrl = config.public.siteUrl || 'https://sentry.mortality.watch'
 
-// Generate chart image URL from state (relative for display, absolute for OG)
+// Generate chart image URL from config (relative for display, absolute for OG)
 const chartImageUrl = computed(() => {
   if (!chart.value) return null
 
-  try {
-    const state = JSON.parse(chart.value.chartState)
+  const config = chart.value.chartConfig
+  const endpoint = chart.value.chartType === 'ranking' ? '/ranking.png' : '/chart.png'
 
-    // For ranking charts, use ranking.png endpoint
-    if (chart.value.chartType === 'ranking') {
-      const params = new URLSearchParams()
-      Object.entries(state).forEach(([key, value]) => {
-        if (value !== null && value !== undefined) {
-          params.set(key, String(value))
-        }
-      })
-      return `/ranking.png?${params.toString()}&width=1200&height=600`
-    }
-
-    // For explorer charts, encode state using the same encoding as the explorer page
-    const encodedState = encodeChartState(state as Partial<ChartState>)
-    const params = new URLSearchParams()
-
-    Object.entries(encodedState).forEach(([key, value]) => {
-      if (Array.isArray(value)) {
-        value.forEach(v => params.append(key, v))
-      } else {
-        params.set(key, String(value))
-      }
-    })
-
-    return `/chart.png?${params.toString()}&width=1200&height=600`
-  } catch (err) {
-    handleSilentError(err, 'chartImageUrl')
-    return null
-  }
+  // Config is already a query string, just append dimensions
+  const separator = config ? '&' : ''
+  return `${endpoint}?${config}${separator}width=1200&height=600`
 })
 
 // Absolute URL version for OG meta tags
@@ -326,29 +298,14 @@ const absoluteChartImageUrl = computed(() => {
   return relativeUrl ? `${siteUrl}${relativeUrl}` : null
 })
 
-// Get remix URL
+// Get remix URL - chartConfig is already a query string
 function getRemixUrl() {
   if (!chart.value) return '/explorer'
 
-  try {
-    const state = JSON.parse(chart.value.chartState) as Partial<ChartState>
-    const baseUrl = chart.value.chartType === 'explorer' ? '/explorer' : '/ranking'
-    const encodedState = encodeChartState(state)
-    const params = new URLSearchParams()
+  const baseUrl = chart.value.chartType === 'explorer' ? '/explorer' : '/ranking'
+  const config = chart.value.chartConfig
 
-    Object.entries(encodedState).forEach(([key, value]) => {
-      if (Array.isArray(value)) {
-        value.forEach(v => params.append(key, v))
-      } else {
-        params.set(key, String(value))
-      }
-    })
-
-    return `${baseUrl}?${params.toString()}`
-  } catch (err) {
-    handleSilentError(err, 'getRemixUrl')
-    return chart.value.chartType === 'explorer' ? '/explorer' : '/ranking'
-  }
+  return config ? `${baseUrl}?${config}` : baseUrl
 }
 
 // Share chart
