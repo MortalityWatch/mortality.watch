@@ -1,5 +1,5 @@
 import { db } from '../../utils/db'
-import { savedCharts, users } from '../../../db/schema'
+import { savedCharts, users, charts } from '../../../db/schema'
 import { eq, desc, and, sql } from 'drizzle-orm'
 
 /**
@@ -48,7 +48,7 @@ export default defineEventHandler(async (event) => {
     }
 
     if (chartType) {
-      conditions.push(eq(savedCharts.chartType, chartType))
+      conditions.push(eq(charts.page, chartType))
     }
 
     // Determine sort order
@@ -66,15 +66,14 @@ export default defineEventHandler(async (event) => {
         break
     }
 
-    // Query with join to get author info
-    const charts = await db
+    // Query with join to get author info and chart config
+    const savedChartResults = await db
       .select({
         id: savedCharts.id,
+        chartId: savedCharts.chartId,
         name: savedCharts.name,
         description: savedCharts.description,
         slug: savedCharts.slug,
-        chartType: savedCharts.chartType,
-        chartState: savedCharts.chartState,
         thumbnailUrl: savedCharts.thumbnailUrl,
         isFeatured: savedCharts.isFeatured,
         isPublic: savedCharts.isPublic,
@@ -85,10 +84,15 @@ export default defineEventHandler(async (event) => {
         author: {
           displayName: users.displayName,
           firstName: users.firstName
+        },
+        chart: {
+          config: charts.config,
+          page: charts.page
         }
       })
       .from(savedCharts)
       .leftJoin(users, eq(savedCharts.userId, users.id))
+      .leftJoin(charts, eq(savedCharts.chartId, charts.id))
       .where(and(...conditions))
       .orderBy(...orderBy)
       .limit(limit)
@@ -98,15 +102,28 @@ export default defineEventHandler(async (event) => {
     const totalResult = await db
       .select({ count: sql<number>`count(*)` })
       .from(savedCharts)
+      .leftJoin(charts, eq(savedCharts.chartId, charts.id))
       .where(and(...conditions))
 
     const total = totalResult[0]?.count || 0
 
     return {
-      charts: charts.map(chart => ({
-        ...chart,
-        authorName: chart.author?.displayName || chart.author?.firstName || 'Anonymous',
-        author: undefined // Remove nested author object
+      charts: savedChartResults.map(savedChart => ({
+        id: savedChart.id,
+        chartId: savedChart.chartId,
+        name: savedChart.name,
+        description: savedChart.description,
+        slug: savedChart.slug,
+        chartType: savedChart.chart?.page || 'explorer',
+        chartConfig: savedChart.chart?.config || '',
+        thumbnailUrl: savedChart.thumbnailUrl,
+        isFeatured: savedChart.isFeatured,
+        isPublic: savedChart.isPublic,
+        viewCount: savedChart.viewCount,
+        createdAt: savedChart.createdAt,
+        updatedAt: savedChart.updatedAt,
+        userId: savedChart.userId,
+        authorName: savedChart.author?.displayName || savedChart.author?.firstName || 'Anonymous'
       })),
       pagination: {
         total,

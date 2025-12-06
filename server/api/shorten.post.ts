@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { eq, sql } from 'drizzle-orm'
 import { db } from '../utils/db'
-import { shortUrls } from '../../db/schema'
+import { charts } from '../../db/schema'
 
 const requestSchema = z.object({
   hash: z.string().length(12, 'Hash must be exactly 12 characters'),
@@ -11,12 +11,12 @@ const requestSchema = z.object({
 
 /**
  * POST /api/shorten
- * Stores a pre-computed hash → path mapping
+ * Stores a pre-computed hash → config mapping in the charts table
  *
  * The hash is computed client-side (deterministic, instant).
- * This endpoint stores path only (no domain) so URLs work across environments.
+ * This endpoint stores config only (no domain) so URLs work across environments.
  *
- * Request: { hash: string, path: string }
+ * Request: { hash: string, query: string, page: string }
  * Response: { success: true }
  */
 export default defineEventHandler(async (event) => {
@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
   if (!result.success) {
     throw createError({
       statusCode: 400,
-      message: 'Invalid request: hash (12 chars) and path (starting with /) are required'
+      message: 'Invalid request: hash (12 chars) and query are required'
     })
   }
 
@@ -36,24 +36,23 @@ export default defineEventHandler(async (event) => {
   // Check if hash already exists
   const existing = await db
     .select()
-    .from(shortUrls)
-    .where(eq(shortUrls.id, hash))
+    .from(charts)
+    .where(eq(charts.id, hash))
     .limit(1)
 
   if (existing.length > 0) {
     // Already exists - increment createCount to track generation frequency
     await db
-      .update(shortUrls)
-      .set({ createCount: sql`${shortUrls.createCount} + 1` })
-      .where(eq(shortUrls.id, hash))
+      .update(charts)
+      .set({ createCount: sql`${charts.createCount} + 1` })
+      .where(eq(charts.id, hash))
     return { success: true }
   }
 
-  // Insert new mapping (query string, page stored separately)
-  await db.insert(shortUrls).values({
+  // Insert new chart config
+  await db.insert(charts).values({
     id: hash,
-    urlHash: hash,
-    fullUrl: query,
+    config: query,
     page
   })
 

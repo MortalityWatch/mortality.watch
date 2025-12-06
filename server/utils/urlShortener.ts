@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { createHash } from 'crypto'
 import { db } from './db'
-import { shortUrls } from '../../db/schema'
+import { charts } from '../../db/schema'
 
 // Default values that should be omitted from hash (to normalize equivalent configs)
 const DEFAULTS: Record<string, string> = {
@@ -90,22 +90,25 @@ export async function getOrCreateShortUrl(fullUrl: string, baseUrl?: string): Pr
   // Check if this hash already exists
   const existing = await db
     .select()
-    .from(shortUrls)
-    .where(eq(shortUrls.id, hash))
+    .from(charts)
+    .where(eq(charts.id, hash))
     .limit(1)
 
   if (existing.length > 0) {
     return `${siteUrl}/s/${hash}`
   }
 
-  // Extract path only (no domain) for storage
-  const pathAndQuery = parsedUrl.pathname + parsedUrl.search
+  // Extract query string only (no path) for storage
+  const queryString = parsedUrl.search.slice(1) // Remove leading '?'
 
-  // Store new mapping (path only)
-  await db.insert(shortUrls).values({
+  // Detect page type from path
+  const page = parsedUrl.pathname.includes('ranking') ? 'ranking' : 'explorer'
+
+  // Store new chart config
+  await db.insert(charts).values({
     id: hash,
-    urlHash: hash,
-    fullUrl: pathAndQuery
+    config: queryString,
+    page
   })
 
   return `${siteUrl}/s/${hash}`

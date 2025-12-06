@@ -1,7 +1,63 @@
 import { db } from '../../utils/db'
-import { savedCharts } from '../../../db/schema'
+import { savedCharts, charts } from '../../../db/schema'
 import { ChartSaveResponseSchema } from '../../schemas'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, sql } from 'drizzle-orm'
+import { createHash } from 'crypto'
+import { chartStateToQueryString } from '../../../app/lib/chartState'
+
+// Default values that should be omitted from hash (to normalize equivalent configs)
+const DEFAULTS: Record<string, string> = {
+  cs: 'line',
+  ct: 'yearly',
+  bm: 'lin_reg',
+  sp: 'esp',
+  ag: 'all'
+}
+
+/**
+ * Normalize config for consistent hashing (same logic as client-side)
+ */
+function normalizeConfig(params: Record<string, string | undefined>): Record<string, string> {
+  const normalized: Record<string, string> = {}
+  const sortedKeys = Object.keys(params).sort()
+
+  for (const key of sortedKeys) {
+    const value = params[key]
+    if (value === undefined || value === null || value === '') continue
+    if (DEFAULTS[key] === value) continue
+    normalized[key] = value
+  }
+
+  return normalized
+}
+
+/**
+ * Compute SHA-256 hash and return first 12 hex chars
+ */
+function computeConfigHash(params: Record<string, string | undefined>): string {
+  const normalized = normalizeConfig(params)
+  const jsonStr = JSON.stringify(normalized)
+  const hash = createHash('sha256').update(jsonStr).digest('hex')
+  return hash.slice(0, 12)
+}
+
+/**
+ * Convert query string to params object for hashing
+ */
+function queryStringToParams(queryString: string): Record<string, string> {
+  const params: Record<string, string> = {}
+  const searchParams = new URLSearchParams(queryString)
+
+  for (const [key, value] of searchParams.entries()) {
+    if (params[key]) {
+      params[key] = `${params[key]},${value}`
+    } else {
+      params[key] = value
+    }
+  }
+
+  return params
+}
 
 /**
  * POST /api/charts
@@ -48,8 +104,23 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Check for duplicate chart state
-  // Query for existing charts with identical chartState for this user
+  // Parse chartState JSON and convert to query string
+  let chartStateObj: Record<string, unknown>
+  try {
+    chartStateObj = JSON.parse(chartState)
+  } catch {
+    throw createError({
+      statusCode: 400,
+      message: 'Invalid chart state JSON'
+    })
+  }
+
+  // Convert state to query string and compute hash
+  const queryString = chartStateToQueryString(chartStateObj)
+  const params = queryStringToParams(queryString)
+  const chartId = computeConfigHash(params)
+
+  // Check if user already has a chart with this chartId
   try {
     const duplicates = await db
       .select()
@@ -57,15 +128,13 @@ export default defineEventHandler(async (event) => {
       .where(
         and(
           eq(savedCharts.userId, userId),
-          eq(savedCharts.chartState, chartState),
-          eq(savedCharts.chartType, chartType)
+          eq(savedCharts.chartId, chartId)
         )
       )
       .limit(1)
 
     if (duplicates.length > 0 && duplicates[0]) {
       const existingChart = duplicates[0]
-      // Return existing chart info with a duplicate flag
       throw createError({
         statusCode: 409,
         statusMessage: 'Duplicate Chart',
@@ -82,12 +151,32 @@ export default defineEventHandler(async (event) => {
       })
     }
   } catch (err) {
-    // If it's our 409 error, rethrow it
     if (err && typeof err === 'object' && 'statusCode' in err && err.statusCode === 409) {
       throw err
     }
-    // Otherwise, log but continue (don't block save if duplicate check fails)
     logger.error('Error checking for duplicate chart:', err instanceof Error ? err : new Error(String(err)))
+  }
+
+  // Ensure chart config exists in charts table
+  const existingChart = await db
+    .select()
+    .from(charts)
+    .where(eq(charts.id, chartId))
+    .limit(1)
+
+  if (existingChart.length === 0) {
+    // Create chart config entry
+    await db.insert(charts).values({
+      id: chartId,
+      config: queryString,
+      page: chartType as 'explorer' | 'ranking'
+    })
+  } else {
+    // Increment createCount
+    await db
+      .update(charts)
+      .set({ createCount: sql`${charts.createCount} + 1` })
+      .where(eq(charts.id, chartId))
   }
 
   // Generate slug from name
@@ -100,10 +189,9 @@ export default defineEventHandler(async (event) => {
   try {
     const result = await db.insert(savedCharts).values({
       userId,
+      chartId,
       name: name.trim(),
       description: description?.trim() || null,
-      chartState,
-      chartType,
       isPublic: isPublic === true,
       isFeatured: false,
       slug,

@@ -1,5 +1,5 @@
 import { db } from '../../../utils/db'
-import { savedCharts, users } from '../../../../db/schema'
+import { savedCharts, users, charts } from '../../../../db/schema'
 import { eq, sql } from 'drizzle-orm'
 import { logger } from '../../../utils/logger'
 
@@ -23,16 +23,15 @@ export default defineEventHandler(async (event) => {
   const user = await getCurrentUser(event)
 
   try {
-    // Get chart with author info
+    // Get chart with author info and chart config
     const result = await db
       .select({
         id: savedCharts.id,
         userId: savedCharts.userId,
+        chartId: savedCharts.chartId,
         name: savedCharts.name,
         description: savedCharts.description,
         slug: savedCharts.slug,
-        chartType: savedCharts.chartType,
-        chartState: savedCharts.chartState,
         thumbnailUrl: savedCharts.thumbnailUrl,
         isFeatured: savedCharts.isFeatured,
         isPublic: savedCharts.isPublic,
@@ -42,16 +41,21 @@ export default defineEventHandler(async (event) => {
         author: {
           displayName: users.displayName,
           firstName: users.firstName
+        },
+        chart: {
+          config: charts.config,
+          page: charts.page
         }
       })
       .from(savedCharts)
       .leftJoin(users, eq(savedCharts.userId, users.id))
+      .leftJoin(charts, eq(savedCharts.chartId, charts.id))
       .where(eq(savedCharts.slug, slug))
       .limit(1)
 
-    const chart = result[0]
+    const savedChart = result[0]
 
-    if (!chart) {
+    if (!savedChart) {
       throw createError({
         statusCode: 404,
         message: 'Chart not found'
@@ -59,7 +63,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Check access: must be public OR user must be the owner
-    if (!chart.isPublic && chart.userId !== user?.id) {
+    if (!savedChart.isPublic && savedChart.userId !== user?.id) {
       throw createError({
         statusCode: 404,
         message: 'Chart not found'
@@ -68,11 +72,11 @@ export default defineEventHandler(async (event) => {
 
     // Increment view count only for public charts (non-blocking - errors logged but don't fail request)
     let viewCountIncremented = false
-    if (chart.isPublic) {
+    if (savedChart.isPublic) {
       try {
         db.update(savedCharts)
           .set({ viewCount: sql`${savedCharts.viewCount} + 1` })
-          .where(eq(savedCharts.id, chart.id))
+          .where(eq(savedCharts.id, savedChart.id))
           .run()
         viewCountIncremented = true
       } catch (err) {
@@ -80,18 +84,33 @@ export default defineEventHandler(async (event) => {
         logger.error(
           'Failed to increment view count',
           err instanceof Error ? err : new Error(String(err)),
-          { chartId: chart.id, slug: chart.slug }
+          { chartId: savedChart.id, slug: savedChart.slug }
         )
       }
     }
 
+    // Build response with chartState for backwards compatibility
+    // The charts.config is a query string, charts.page is the page type
+    const chartType = savedChart.chart?.page || 'explorer'
+    const config = savedChart.chart?.config || ''
+
     return {
-      ...chart,
-      authorName: chart.author?.displayName || chart.author?.firstName || 'Anonymous',
-      author: undefined, // Remove nested author object
-      // Only return incremented count if update succeeded
-      viewCount: viewCountIncremented ? chart.viewCount + 1 : chart.viewCount
-      // userId is included for ownership checking
+      id: savedChart.id,
+      userId: savedChart.userId,
+      chartId: savedChart.chartId,
+      name: savedChart.name,
+      description: savedChart.description,
+      slug: savedChart.slug,
+      chartType,
+      // Return config as query string - client will use this to redirect
+      chartConfig: config,
+      thumbnailUrl: savedChart.thumbnailUrl,
+      isFeatured: savedChart.isFeatured,
+      isPublic: savedChart.isPublic,
+      viewCount: viewCountIncremented ? savedChart.viewCount + 1 : savedChart.viewCount,
+      createdAt: savedChart.createdAt,
+      updatedAt: savedChart.updatedAt,
+      authorName: savedChart.author?.displayName || savedChart.author?.firstName || 'Anonymous'
     }
   } catch (err) {
     if (err && typeof err === 'object' && 'statusCode' in err) {

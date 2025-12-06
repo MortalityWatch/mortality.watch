@@ -10,10 +10,9 @@ import { ChartTypeSchema } from './common'
 export const SavedChartSchema = z.object({
   id: z.number(),
   userId: z.number(),
+  chartId: z.string(), // Reference to charts table (12-char hash)
   name: z.string(),
   description: z.string().nullable(),
-  chartState: z.string(), // JSON-encoded chart state
-  chartType: ChartTypeSchema,
   thumbnailUrl: z.string().nullable(),
   isFeatured: z.boolean(),
   isPublic: z.boolean(),
@@ -26,9 +25,11 @@ export const SavedChartSchema = z.object({
 // Simple chart schema (for lists)
 export const SimpleChartSchema = z.object({
   id: z.number(),
+  chartId: z.string(),
   name: z.string(),
   description: z.string().nullable(),
   chartType: ChartTypeSchema,
+  chartConfig: z.string(), // Query string config from charts table
   thumbnailUrl: z.string().nullable(),
   isFeatured: z.boolean(),
   isPublic: z.boolean(),
@@ -46,12 +47,12 @@ export const ChartSaveResponseSchema = z.object({
 
 // Charts list response schema
 export const ChartsListResponseSchema = z.object({
-  charts: z.array(SavedChartSchema)
+  charts: z.array(SimpleChartSchema)
 })
 
 // Chart get response schema
 export const ChartGetResponseSchema = z.object({
-  chart: SavedChartSchema
+  chart: SimpleChartSchema
 })
 
 // Chart delete response schema

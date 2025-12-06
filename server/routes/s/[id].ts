@@ -1,11 +1,10 @@
 import { eq, sql } from 'drizzle-orm'
 import { db } from '../../utils/db'
-import { shortUrls } from '../../../db/schema'
+import { charts } from '../../../db/schema'
 
 /**
  * GET /s/:id
- * Redirects to the stored path for the given short ID (12-char hash)
- * Stored paths are domain-agnostic (e.g., /explorer?c=USA)
+ * Redirects to the stored chart config for the given ID (12-char hash)
  * Also increments the access count
  */
 export default defineEventHandler(async (event) => {
@@ -14,15 +13,15 @@ export default defineEventHandler(async (event) => {
   if (!id) {
     throw createError({
       statusCode: 400,
-      message: 'Missing short URL ID'
+      message: 'Missing chart ID'
     })
   }
 
-  // Look up the short URL
+  // Look up the chart
   const result = await db
     .select()
-    .from(shortUrls)
-    .where(eq(shortUrls.id, id))
+    .from(charts)
+    .where(eq(charts.id, id))
     .limit(1)
 
   const entry = result[0]
@@ -30,21 +29,20 @@ export default defineEventHandler(async (event) => {
   if (!entry) {
     throw createError({
       statusCode: 404,
-      message: 'Short URL not found'
+      message: 'Chart not found'
     })
   }
 
   // Increment access count and update last accessed time (non-blocking)
-  db.update(shortUrls)
+  db.update(charts)
     .set({
-      accessCount: sql`${shortUrls.accessCount} + 1`,
+      accessCount: sql`${charts.accessCount} + 1`,
       lastAccessedAt: new Date()
     })
-    .where(eq(shortUrls.id, id))
+    .where(eq(charts.id, id))
     .run()
 
-  // Redirect to the stored page + query
-  // fullUrl contains just the query string, page contains 'explorer' or 'ranking'
-  const redirectPath = `/${entry.page}${entry.fullUrl ? `?${entry.fullUrl}` : ''}`
+  // Redirect to the stored page + config
+  const redirectPath = `/${entry.page}${entry.config ? `?${entry.config}` : ''}`
   return sendRedirect(event, redirectPath, 302)
 })

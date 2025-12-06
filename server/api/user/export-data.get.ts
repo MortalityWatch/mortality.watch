@@ -1,4 +1,4 @@
-import { db, users, savedCharts, subscriptions, sessions } from '#db'
+import { db, users, savedCharts, subscriptions, sessions, charts } from '#db'
 import { eq } from 'drizzle-orm'
 import { requireAuth } from '../../utils/auth'
 
@@ -31,23 +31,27 @@ export default defineEventHandler(async (event) => {
     .where(eq(users.id, currentUser.id))
     .get()
 
-  // Fetch saved charts
-  const charts = await db
+  // Fetch saved charts with their configs
+  const userCharts = await db
     .select({
       id: savedCharts.id,
+      chartId: savedCharts.chartId,
       name: savedCharts.name,
       description: savedCharts.description,
-      chartState: savedCharts.chartState,
-      chartType: savedCharts.chartType,
       thumbnailUrl: savedCharts.thumbnailUrl,
       isFeatured: savedCharts.isFeatured,
       isPublic: savedCharts.isPublic,
       slug: savedCharts.slug,
       viewCount: savedCharts.viewCount,
       createdAt: savedCharts.createdAt,
-      updatedAt: savedCharts.updatedAt
+      updatedAt: savedCharts.updatedAt,
+      chart: {
+        config: charts.config,
+        page: charts.page
+      }
     })
     .from(savedCharts)
+    .leftJoin(charts, eq(savedCharts.chartId, charts.id))
     .where(eq(savedCharts.userId, currentUser.id))
     .all()
 
@@ -87,16 +91,30 @@ export default defineEventHandler(async (event) => {
   const exportData = {
     metadata: {
       exportDate: new Date().toISOString(),
-      dataVersion: '1.0',
+      dataVersion: '2.0', // Updated version for new schema
       userId: currentUser.id,
       exportType: 'GDPR Article 15 - Right to Data Portability'
     },
     profile: userProfile,
-    savedCharts: charts,
+    savedCharts: userCharts.map(chart => ({
+      id: chart.id,
+      chartId: chart.chartId,
+      name: chart.name,
+      description: chart.description,
+      chartType: chart.chart?.page || 'explorer',
+      chartConfig: chart.chart?.config || '',
+      thumbnailUrl: chart.thumbnailUrl,
+      isFeatured: chart.isFeatured,
+      isPublic: chart.isPublic,
+      slug: chart.slug,
+      viewCount: chart.viewCount,
+      createdAt: chart.createdAt,
+      updatedAt: chart.updatedAt
+    })),
     subscription: subscription || null,
     sessions: userSessions,
     summary: {
-      totalCharts: charts.length,
+      totalCharts: userCharts.length,
       totalSessions: userSessions.length,
       accountAge: userProfile?.createdAt
         ? Math.floor(
