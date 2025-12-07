@@ -3,7 +3,6 @@ import type {
   ChartDataset
 } from 'chart.js'
 import {
-  getDatalabelsFont,
   getScaleTitleFont,
   getTicksFont
 } from './chartStyling'
@@ -14,12 +13,10 @@ import {
   textSoftColor,
   textStrongColor
 } from './chartColors'
-import { asPercentage, numberWithCommas, round } from './chartUtils'
 import type {
   ChartJSConfig,
   ChartStyle,
   MatrixData,
-  MatrixDatapoint,
   MortalityChartData,
   MortalityMatrixDataPoint
 } from './chartTypes'
@@ -385,28 +382,23 @@ export const makeMatrixChartConfig = (
         value
       )
   }
+  // Update customDatalabels config for matrix chart style
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const existingConfig = (config.options!.plugins as any).customDatalabels || {}
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ;(config.options!.plugins as any).customDatalabels = {
-    display: (context: DatalabelContext): boolean =>
-      showLabels
-      && !isNaN((context.dataset.data[context.dataIndex] as MatrixDatapoint).v),
-    color: () => {
-      // White in dark mode, black in light mode
-      return isDark ? '#ffffff' : '#000000'
-    },
-    formatter: (x: unknown) => {
-      const dataPoint = x as { v: number }
-      if (showPercentage) {
-        return asPercentage(dataPoint.v, data.labels.length > 15 ? 0 : 1)
-      } else if (isLE) {
-        return numberWithCommas(round(dataPoint.v, 1))
-      } else {
-        return isExcess
-          ? numberWithCommas(round(dataPoint.v), true)
-          : numberWithCommas(round(dataPoint.v))
-      }
-    },
-    font: getDatalabelsFont()
+    ...existingConfig,
+    showLabels,
+    textColor: isDark ? '#ffffff' : '#000000',
+    chartStyle: 'matrix' as const,
+    formatterConfig: {
+      showPi: false,
+      isExcess,
+      showPercentage,
+      showDecimals: true,
+      // Use fewer decimals for dense matrix charts
+      decimals: data.labels.length > 15 ? 0 : 1
+    }
   }
   config.data = {
     datasets: [
