@@ -115,12 +115,13 @@ export default defineEventHandler(async (event) => {
 
         // Build explorer URL from request query params (same params, just /explorer instead of /chart.png)
         // Use request origin so short URL matches client (important for visual parity tests)
-        // Filter out PNG-specific params (width, height) that don't apply to explorer
+        // Filter out PNG-specific params (width, height, dm) that don't apply to explorer
         const requestUrl = getRequestURL(event)
         const siteUrl = requestUrl.origin
         const explorerParams = new URLSearchParams(requestUrl.search)
         explorerParams.delete('width')
         explorerParams.delete('height')
+        explorerParams.delete('dm') // Dark mode is PNG-specific
         const explorerSearch = explorerParams.toString()
         const fullChartUrl = `${siteUrl}/explorer${explorerSearch ? `?${explorerSearch}` : ''}`
 

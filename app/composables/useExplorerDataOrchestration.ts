@@ -49,8 +49,19 @@ export function useExplorerDataOrchestration(
   const dataFetcher = useChartDataFetcher()
 
   // Short URL handling for QR codes
+  // Store original query params to ensure consistent hashing with SSR
+  // (URL may be modified by state resolution before short URL is computed)
   const { getShortUrl } = useShortUrl()
   const currentShortUrl = ref<string | null>(null)
+  const originalQueryParams = ref<Record<string, string | string[] | undefined> | null>(null)
+
+  /**
+   * Save the original query params before any URL modification.
+   * Must be called at the start of page initialization, before StateResolver.applyResolvedState.
+   */
+  const saveOriginalQueryParams = (query: Record<string, string | string[] | undefined>) => {
+    originalQueryParams.value = { ...query }
+  }
 
   // Validation
   const { getValidatedRange } = useDateRangeValidation()
@@ -382,8 +393,9 @@ export function useExplorerDataOrchestration(
 
     // Compute short URL first (instant with local hash computation)
     // This also fires a non-blocking POST to store the mapping in DB
+    // Use original query params if saved (ensures consistency with SSR which uses original request params)
     try {
-      const shortUrl = await getShortUrl()
+      const shortUrl = await getShortUrl(originalQueryParams.value ?? undefined)
       currentShortUrl.value = shortUrl
     } catch {
       // Silently fail - full URL will be used
@@ -588,6 +600,7 @@ export function useExplorerDataOrchestration(
     baselineRange,
 
     // Short URL for QR codes and sharing
-    currentShortUrl
+    currentShortUrl,
+    saveOriginalQueryParams
   }
 }

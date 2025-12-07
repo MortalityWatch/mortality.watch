@@ -31,6 +31,7 @@ import {
   createPluginsConfig,
   createScalesConfig
 } from './config'
+import { getIsDark } from '@/composables/useTheme'
 
 /**
  * Creates a chart configuration based on the specified style and data type.
@@ -80,6 +81,8 @@ export const makeChartConfig = (
   // Cast from generic data structure to MortalityChartData
   // The caller is responsible for providing properly structured data
   const internalData = data as unknown as MortalityChartData
+  // Get dark mode from theme (respects SSR override set by setServerDarkMode)
+  const isDark = getIsDark()
   if (style === 'matrix') {
     return makeMatrixChartConfig(
       internalData,
@@ -92,7 +95,7 @@ export const makeChartConfig = (
       isPopulationType,
       true, // showQrCode
       true, // showLogo
-      undefined, // isDark
+      isDark,
       'auto', // decimals
       undefined, // userTier
       true, // showCaption
@@ -109,7 +112,7 @@ export const makeChartConfig = (
     true, // showQrCode
     true, // showLogo
     'auto', // decimals
-    undefined, // isDark
+    isDark,
     undefined, // userTier
     true, // showCaption
     isSSR

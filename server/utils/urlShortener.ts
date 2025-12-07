@@ -12,12 +12,16 @@ const DEFAULTS: Record<string, string> = {
   ag: 'all' // ageGroups default
 }
 
+// Params to exclude from hash (rendering-specific, not chart config)
+const EXCLUDED_PARAMS = new Set(['dm', 'width', 'height'])
+
 /**
  * Normalize config params for consistent hashing
  * - Sorts keys alphabetically
  * - Preserves value order for order-sensitive keys (c, ag - affects chart colors)
  * - Removes default values
  * - Removes empty/undefined values
+ * - Removes rendering-specific params (dm, width, height)
  * - Does NOT include path (hash is config-only, page stored separately)
  */
 function normalizeConfig(params: Record<string, string | undefined>): Record<string, string> {
@@ -31,6 +35,9 @@ function normalizeConfig(params: Record<string, string | undefined>): Record<str
 
     // Skip undefined/null/empty
     if (value === undefined || value === null || value === '') continue
+
+    // Skip excluded params (rendering-specific, not chart config)
+    if (EXCLUDED_PARAMS.has(key)) continue
 
     // Skip default values
     if (DEFAULTS[key] === value) continue

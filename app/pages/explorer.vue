@@ -162,7 +162,8 @@ const {
   isUpdating: _isUpdating,
   showLoadingOverlay: _showLoadingOverlay,
   chartOptions: _chartOptions,
-  updateData
+  updateData,
+  saveOriginalQueryParams
 } = dataOrchestration
 
 // Date range slider - batch update both dateFrom and dateTo
@@ -441,9 +442,13 @@ useBrowserNavigation({
 })
 
 onMounted(async () => {
+  // 0. Save original query params BEFORE any URL modification
+  // This ensures short URL computation matches SSR (which uses original request params)
+  const route = useRoute()
+  saveOriginalQueryParams(route.query as Record<string, string | string[] | undefined>)
+
   // 1. FIRST: Resolve initial state from URL + apply constraints
   const { StateResolver } = await import('@/lib/state/resolver/StateResolver')
-  const route = useRoute()
   const router = useRouter()
 
   const resolved = StateResolver.resolveInitial(route)

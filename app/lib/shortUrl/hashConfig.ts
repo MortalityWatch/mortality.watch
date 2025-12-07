@@ -16,12 +16,16 @@ const DEFAULTS: Record<string, string> = {
   ag: 'all' // ageGroups default
 }
 
+// Params to exclude from hash (rendering-specific, not chart config)
+const EXCLUDED_PARAMS = new Set(['dm', 'width', 'height'])
+
 /**
  * Normalize config for consistent hashing
  * - Sorts keys alphabetically (for consistency)
  * - Preserves value order for order-sensitive keys (c, ag - affects chart colors)
  * - Removes default values
  * - Removes empty/undefined values
+ * - Removes rendering-specific params (dm, width, height)
  * - Does NOT include path (hash is config-only, path stored separately in DB)
  */
 export function normalizeConfig(
@@ -37,6 +41,9 @@ export function normalizeConfig(
 
     // Skip undefined/null/empty
     if (value === undefined || value === null || value === '') continue
+
+    // Skip excluded params (rendering-specific, not chart config)
+    if (EXCLUDED_PARAMS.has(key)) continue
 
     // Skip default values
     if (DEFAULTS[key] === value) continue
@@ -80,11 +87,27 @@ export function buildShortUrl(hash: string, baseUrl = 'https://www.mortality.wat
 }
 
 /**
- * Extract URL params from current explorer state
+ * Extract URL params from route query object (SSR-compatible)
  * Used to create the config object for hashing
  * Multi-value params (like c=SWE&c=DEU) are joined with commas
+ *
+ * @param routeQuery - Query object from useRoute().query (works on SSR and client)
  */
-export function extractUrlParams(): Record<string, string> {
+export function extractUrlParams(
+  routeQuery?: Record<string, string | string[] | undefined>
+): Record<string, string> {
+  // If route query is provided, use it (SSR-compatible path)
+  if (routeQuery) {
+    const params: Record<string, string> = {}
+    for (const [key, value] of Object.entries(routeQuery)) {
+      if (value === undefined) continue
+      // Join array values with comma
+      params[key] = Array.isArray(value) ? value.join(',') : value
+    }
+    return params
+  }
+
+  // Fallback to window.location for legacy callers (client-only)
   if (typeof window === 'undefined') return {}
 
   const params: Record<string, string> = {}
