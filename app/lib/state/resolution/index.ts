@@ -18,5 +18,7 @@ export {
 
 export {
   resolveChartStateForRendering,
+  resolveChartStateFromSnapshot,
+  toChartFilterConfig,
   type ChartRenderState
 } from './resolveChartState'

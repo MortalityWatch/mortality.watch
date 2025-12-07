@@ -28,12 +28,16 @@ import {
 import { useChartDataFetcher } from '@/composables/useChartDataFetcher'
 import { getFilteredChartDataFromConfig } from '@/lib/chart'
 import type { MortalityChartData } from '@/lib/chart/chartTypes'
-import type { ChartFilterConfig, ChartStateSnapshot } from '@/lib/chart/types'
+import type { ChartStateSnapshot } from '@/lib/chart/types'
 import { useDateRangeValidation } from '@/composables/useDateRangeValidation'
 import { useDateRangeCalculations } from '@/composables/useDateRangeCalculations'
 import { UI_CONFIG } from '@/lib/config/constants'
 import { calculateBaselineRange } from '@/lib/baseline/calculateBaselineRange'
 import { useShortUrl } from '@/composables/useShortUrl'
+import {
+  resolveChartStateFromSnapshot,
+  toChartFilterConfig
+} from '@/lib/state/resolution'
 
 export function useExplorerDataOrchestration(
   state: ReturnType<typeof useExplorerState>,
@@ -336,73 +340,33 @@ export function useExplorerDataOrchestration(
 
   /**
    * Build ChartFilterConfig from a state snapshot.
-   * Applies effective defaults for dates and computes derived flags.
+   *
+   * Uses the unified resolution pipeline (resolveChartStateFromSnapshot + toChartFilterConfig)
+   * to ensure identical behavior between client and SSR chart rendering.
    */
-  const buildFilterConfig = (snapshot: ChartStateSnapshot): ChartFilterConfig => {
-    // Use default range (last ~10 years) when dates are undefined
-    const defaultRange = dateRangeCalc.defaultRange.value
-    const visibleRange = dateRangeCalc.visibleRange.value
-
-    // Fall back to visible range if default range is empty (data not loaded yet)
-    const effectiveDateFrom = snapshot.dateFrom ?? defaultRange.from ?? visibleRange?.min ?? ''
-    const effectiveDateTo = snapshot.dateTo ?? defaultRange.to ?? visibleRange?.max ?? ''
-
-    // Use baselineRange when baseline dates are undefined
-    const effectiveBaselineFrom = snapshot.baselineDateFrom ?? baselineRange.value?.from ?? ''
-    const effectiveBaselineTo = snapshot.baselineDateTo ?? baselineRange.value?.to ?? ''
-
-    // Compute derived flags from snapshot (not from helpers that read refs)
-    const isBarChartStyle = snapshot.chartStyle === 'bar'
-    const isMatrixChartStyle = snapshot.chartStyle === 'matrix'
-    const isAsmrType = snapshot.type === 'asmr' || snapshot.type === 'le'
-    const isPopulationType = snapshot.type === 'population'
-    const isDeathsType = snapshot.type === 'deaths'
-    const isErrorBarType = isBarChartStyle && snapshot.isExcess
-
-    // Compute showCumPi from snapshot
-    const showCumPi = snapshot.cumulative
-      && snapshot.showPredictionInterval
-      && snapshot.baselineMethod !== 'mean'
+  const buildFilterConfig = (snapshot: ChartStateSnapshot) => {
+    // Use the unified resolution function - same logic as SSR
+    const resolvedState = resolveChartStateFromSnapshot(snapshot, allChartLabels.value)
 
     // Build URL from resolved state to match SSR's generateChartUrlFromState()
-    const fullUrl = makeUrlFromState(snapshot, effectiveDateFrom, effectiveDateTo, effectiveBaselineFrom, effectiveBaselineTo)
+    const fullUrl = makeUrlFromState(
+      snapshot,
+      resolvedState.dateFrom,
+      resolvedState.dateTo,
+      resolvedState.baselineDateFrom,
+      resolvedState.baselineDateTo
+    )
 
     // Use short URL if available, otherwise fall back to full URL
     const url = currentShortUrl.value || fullUrl
 
-    return {
-      countries: snapshot.countries,
-      ageGroups: isAsmrType ? ['all'] : snapshot.ageGroups,
-      type: snapshot.type,
-      chartType: snapshot.chartType,
-      standardPopulation: snapshot.standardPopulation,
-      view: snapshot.view,
-      isExcess: snapshot.isExcess,
-      chartStyle: snapshot.chartStyle,
-      isBarChartStyle,
-      isMatrixChartStyle,
-      isErrorBarType,
-      isAsmrType,
-      isPopulationType,
-      isDeathsType,
-      dateFrom: effectiveDateFrom,
-      dateTo: effectiveDateTo,
-      baselineMethod: snapshot.baselineMethod,
-      baselineDateFrom: effectiveBaselineFrom,
-      baselineDateTo: effectiveBaselineTo,
-      showBaseline: snapshot.showBaseline,
-      cumulative: snapshot.cumulative,
-      showTotal: snapshot.showTotal,
-      showPredictionInterval: snapshot.showPredictionInterval,
-      showPercentage: snapshot.showPercentage,
-      showCumPi,
-      maximize: snapshot.maximize,
-      showLabels: snapshot.showLabels,
-      showLogarithmic: snapshot.showLogarithmic,
-      colors: displayColors.value,
-      allCountries: allCountries.value,
+    // Convert to ChartFilterConfig using the unified converter
+    return toChartFilterConfig(
+      resolvedState,
+      allCountries.value,
+      displayColors.value,
       url
-    }
+    )
   }
 
   /**

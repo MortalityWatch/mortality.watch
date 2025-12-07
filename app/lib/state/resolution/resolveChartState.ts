@@ -16,6 +16,8 @@ import type { ViewType } from '../resolver/viewTypes'
 import { stateFieldEncoders, Defaults } from '../config'
 import { computeEffectiveDateRange } from './effectiveDefaults'
 import { calculateBaselineRange } from '@/lib/baseline/calculateBaselineRange'
+import type { ChartFilterConfig, ChartStateSnapshot } from '@/lib/chart/types'
+import type { Country } from '@/model'
 
 /**
  * Complete resolved state ready for chart rendering
@@ -218,5 +220,169 @@ export function resolveChartStateForRendering(
     // Optional
     userColors: constrainedState.userColors as string[] | undefined,
     decimals: (constrainedState.decimals as string) || 'auto'
+  }
+}
+
+/**
+ * Resolve chart state from a ChartStateSnapshot.
+ *
+ * This allows the client to use the same resolution logic as SSR,
+ * but starting from a snapshot (from refs) rather than URL params.
+ *
+ * @param snapshot - Current state snapshot from refs
+ * @param allLabels - All available date labels (for computing effective dates)
+ * @returns Complete resolved state with effective dates/baselines computed
+ */
+export function resolveChartStateFromSnapshot(
+  snapshot: ChartStateSnapshot,
+  allLabels: string[]
+): ChartRenderState {
+  // Detect view from snapshot
+  const view = (snapshot.view as ViewType) || 'mortality'
+
+  // Apply constraints to snapshot state
+  const stateForConstraints: Record<string, unknown> = {
+    ...snapshot,
+    view
+  }
+  const constrainedState = applyConstraints(stateForConstraints, view)
+
+  // Compute effective date range
+  const { effectiveDateFrom, effectiveDateTo } = computeEffectiveDateRange(
+    allLabels,
+    snapshot.chartType as string,
+    snapshot.sliderStart,
+    snapshot.dateFrom,
+    snapshot.dateTo
+  )
+
+  // Compute effective baseline range
+  let effectiveBaselineFrom = snapshot.baselineDateFrom
+  let effectiveBaselineTo = snapshot.baselineDateTo
+
+  if (!effectiveBaselineFrom || !effectiveBaselineTo) {
+    const yearlyLabels = allLabels.map(label => label.substring(0, 4))
+    const baselineRange = calculateBaselineRange(
+      snapshot.chartType as string,
+      allLabels,
+      yearlyLabels
+    )
+    if (baselineRange) {
+      effectiveBaselineFrom = effectiveBaselineFrom || baselineRange.from
+      effectiveBaselineTo = effectiveBaselineTo || baselineRange.to
+    }
+  }
+
+  effectiveBaselineFrom = effectiveBaselineFrom || ''
+  effectiveBaselineTo = effectiveBaselineTo || ''
+
+  return {
+    countries: constrainedState.countries as string[],
+    type: constrainedState.type as string,
+    chartType: constrainedState.chartType as string,
+    chartStyle: constrainedState.chartStyle as string,
+    view,
+    isExcess: view === 'excess',
+    isZScore: view === 'zscore',
+    dateFrom: effectiveDateFrom,
+    dateTo: effectiveDateTo,
+    sliderStart: snapshot.sliderStart || '2010',
+    showBaseline: constrainedState.showBaseline as boolean,
+    baselineMethod: constrainedState.baselineMethod as string,
+    baselineDateFrom: effectiveBaselineFrom,
+    baselineDateTo: effectiveBaselineTo,
+    ageGroups: constrainedState.ageGroups as string[],
+    standardPopulation: constrainedState.standardPopulation as string,
+    cumulative: constrainedState.cumulative as boolean,
+    showTotal: constrainedState.showTotal as boolean,
+    maximize: constrainedState.maximize as boolean,
+    showPredictionInterval: constrainedState.showPredictionInterval as boolean,
+    showLabels: constrainedState.showLabels as boolean,
+    showPercentage: (constrainedState.showPercentage as boolean) ?? false,
+    showLogarithmic: constrainedState.showLogarithmic as boolean,
+    userColors: constrainedState.userColors as string[] | undefined,
+    decimals: (constrainedState.decimals as string) || 'auto'
+  }
+}
+
+/**
+ * Convert ChartRenderState to ChartFilterConfig.
+ *
+ * This is the bridge between the unified state resolution and the chart
+ * filtering/rendering pipeline. Both SSR and client use this to ensure
+ * identical chart output.
+ *
+ * @param state - Resolved chart state
+ * @param allCountries - Country metadata for chart generation
+ * @param colors - Chart colors
+ * @param url - URL for QR code
+ * @returns ChartFilterConfig ready for getFilteredChartDataFromConfig
+ */
+export function toChartFilterConfig(
+  state: ChartRenderState,
+  allCountries: Record<string, Country>,
+  colors: string[],
+  url: string
+): ChartFilterConfig {
+  // Compute derived flags from resolved state
+  const isBarChartStyle = state.chartStyle === 'bar'
+  const isMatrixChartStyle = state.chartStyle === 'matrix'
+  const isAsmrType = state.type === 'asmr' || state.type.startsWith('asmr_')
+  const isPopulationType = state.type === 'population'
+  const isDeathsType = state.type === 'deaths'
+  const isErrorBarType = state.chartType === 'yearly' && state.showPredictionInterval
+
+  // Compute showCumPi from state
+  const showCumPi = state.cumulative
+    && state.showPredictionInterval
+    && state.baselineMethod !== 'mean'
+
+  return {
+    // Data selection
+    countries: state.countries,
+    ageGroups: isAsmrType ? ['all'] : state.ageGroups,
+
+    // Chart type settings
+    type: state.type,
+    chartType: state.chartType,
+    standardPopulation: state.standardPopulation,
+
+    // View and style
+    view: state.view,
+    isExcess: state.isExcess,
+    chartStyle: state.chartStyle,
+    isBarChartStyle,
+    isMatrixChartStyle,
+    isErrorBarType,
+    isAsmrType,
+    isPopulationType,
+    isDeathsType,
+
+    // Date range (already effective values)
+    dateFrom: state.dateFrom,
+    dateTo: state.dateTo,
+
+    // Baseline (already effective values)
+    baselineMethod: state.baselineMethod,
+    baselineDateFrom: state.baselineDateFrom,
+    baselineDateTo: state.baselineDateTo,
+    showBaseline: state.showBaseline,
+
+    // Display options
+    cumulative: state.cumulative,
+    showTotal: state.showTotal,
+    showPredictionInterval: state.showPredictionInterval,
+    showPercentage: state.showPercentage,
+    showCumPi,
+    maximize: state.maximize,
+    showLabels: state.showLabels,
+    showLogarithmic: state.showLogarithmic,
+
+    // Visual
+    colors,
+
+    // Context
+    allCountries,
+    url
   }
 }

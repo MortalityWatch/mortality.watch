@@ -3,10 +3,14 @@ import { dataLoader } from '../services/dataLoader'
 import type { AllChartData, CountryData } from '../../app/model'
 import { ChartPeriod, type ChartType } from '../../app/model/period'
 import { getKeyForType } from '../../app/model/utils'
-import { getFilteredChartData } from '../../app/lib/chart/filtering'
+import { getFilteredChartDataFromConfig } from '../../app/lib/chart/filtering'
 import { getChartColors } from '../../app/colors'
 import { makeChartConfig } from '../../app/lib/chart/chartConfig'
-import { resolveChartStateForRendering, type ChartRenderState } from '../../app/lib/state/resolution'
+import {
+  resolveChartStateForRendering,
+  toChartFilterConfig,
+  type ChartRenderState
+} from '../../app/lib/state/resolution'
 import type { ChartStyle } from '../../app/lib/chart/chartTypes'
 
 /**
@@ -185,15 +189,15 @@ export async function fetchChartData(state: ChartRenderState) {
 /**
  * Transform raw chart data into chart-ready format
  *
- * Uses the unified state resolution from app/lib/state/core to ensure
- * SSR renders identically to the explorer UI.
+ * Uses the unified toChartFilterConfig function to ensure SSR renders
+ * identically to the explorer UI. Both paths now use the same conversion.
  *
  * @param state - Resolved chart state (from resolveChartStateForRendering)
  * @param allCountries - Country metadata
  * @param allLabels - Chart labels
  * @param allChartData - Raw chart data
  * @param chartUrl - Chart URL for QR code
- * @param isAsmrType - Whether chart is ASMR type
+ * @param _isAsmrType - Whether chart is ASMR type (now derived in toChartFilterConfig)
  * @returns Filtered and formatted chart data
  */
 export async function transformChartData(
@@ -202,53 +206,20 @@ export async function transformChartData(
   allLabels: string[],
   allChartData: AllChartData,
   chartUrl: string,
-  isAsmrType: boolean
+  _isAsmrType: boolean
 ) {
   const colors = getChartColors()
 
-  // Derive flags from resolved state
-  const isBarChartStyle = state.chartStyle === 'bar'
-  const isErrorBarType = state.chartType === 'yearly' && state.showPredictionInterval
-  const isMatrixChartStyle = state.chartStyle === 'matrix'
-  const showCumPi = state.cumulative && state.showPredictionInterval
-  const isDeathsType = state.type === 'deaths'
-  const isPopulationType = state.type === 'population'
-  const isLE = state.type === 'le'
+  // Use the unified toChartFilterConfig - same function as client
+  const config = toChartFilterConfig(state, allCountries, colors, chartUrl)
 
-  const chartData = await getFilteredChartData(
-    state.countries,
-    state.standardPopulation,
-    state.ageGroups,
-    state.showPredictionInterval,
-    state.isExcess,
-    state.type,
-    state.cumulative,
-    state.showBaseline,
-    state.baselineMethod,
-    state.baselineDateFrom,
-    state.baselineDateTo,
-    state.showTotal,
-    state.chartType,
-    state.dateFrom, // Already resolved to effective value
-    state.dateTo, // Already resolved to effective value
-    isBarChartStyle,
-    allCountries,
-    isErrorBarType,
-    colors,
-    isMatrixChartStyle,
-    state.showPercentage,
-    showCumPi,
-    isAsmrType,
-    state.maximize,
-    state.showLabels,
-    chartUrl,
-    state.showLogarithmic,
-    isPopulationType,
-    isDeathsType,
-    state.view,
-    allLabels,
-    allChartData.data
-  )
+  // Use getFilteredChartDataFromConfig - same function as client
+  const chartData = getFilteredChartDataFromConfig(config, allLabels, allChartData.data)
+
+  // Derive return flags from config (already computed in toChartFilterConfig)
+  const isDeathsType = config.isDeathsType
+  const isPopulationType = config.isPopulationType
+  const isLE = state.type === 'le'
 
   return { chartData, isDeathsType, isLE, isPopulationType, isExcess: state.isExcess }
 }
