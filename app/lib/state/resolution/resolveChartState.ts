@@ -306,6 +306,61 @@ export function resolveChartStateFromSnapshot(
 }
 
 /**
+ * Generate explorer URL from resolved state.
+ *
+ * Single source of truth for URL generation - used by both client and SSR
+ * to ensure QR codes are identical.
+ *
+ * @param state - Resolved chart state (with effective dates/baselines computed)
+ * @param siteUrl - Base site URL (default: https://www.mortality.watch)
+ * @returns Full explorer URL with all state parameters
+ */
+export function generateUrlFromState(
+  state: ChartRenderState,
+  siteUrl = 'https://www.mortality.watch'
+): string {
+  const params = new URLSearchParams()
+
+  // Core fields
+  if (state.countries.length) params.set('c', state.countries.join(','))
+  params.set('t', state.type)
+  params.set('ct', state.chartType)
+  params.set('cs', state.chartStyle)
+
+  // Date range - use effective values
+  if (state.dateFrom) params.set('df', state.dateFrom)
+  if (state.dateTo) params.set('dt', state.dateTo)
+  if (state.sliderStart) params.set('ss', state.sliderStart)
+
+  // Baseline - use effective values
+  if (state.showBaseline) params.set('sb', '1')
+  params.set('bm', state.baselineMethod)
+  if (state.baselineDateFrom) params.set('bf', state.baselineDateFrom)
+  if (state.baselineDateTo) params.set('bt', state.baselineDateTo)
+
+  // Display options
+  if (state.ageGroups.length && state.ageGroups[0] !== 'all') params.set('ag', state.ageGroups.join(','))
+  if (state.standardPopulation && state.standardPopulation !== 'esp') params.set('sp', state.standardPopulation)
+  if (state.cumulative) params.set('ce', '1')
+  if (state.showTotal) params.set('st', '1')
+  if (state.maximize) params.set('m', '1')
+  if (state.showPredictionInterval) params.set('pi', '1')
+  if (state.showLabels) params.set('sl', '1')
+  if (state.showPercentage) params.set('p', '1')
+  if (state.showLogarithmic) params.set('lg', '1')
+
+  // View indicators
+  if (state.isExcess) params.set('e', '1')
+  if (state.isZScore) params.set('zs', '1')
+
+  // Optional
+  if (state.userColors?.length) params.set('uc', state.userColors.join(','))
+  if (state.decimals && state.decimals !== 'auto') params.set('dec', state.decimals)
+
+  return `${siteUrl}/explorer?${params.toString()}`
+}
+
+/**
  * Convert ChartRenderState to ChartFilterConfig.
  *
  * This is the bridge between the unified state resolution and the chart

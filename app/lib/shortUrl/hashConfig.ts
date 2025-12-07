@@ -108,10 +108,13 @@ export function extractUrlParams(
   }
 
   // Fallback to window.location for legacy callers (client-only)
-  if (typeof window === 'undefined') return {}
+  // Only available in browser context - return empty if not in browser
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const loc = (globalThis as any).location as { search?: string } | undefined
+  if (!loc?.search) return {}
 
   const params: Record<string, string> = {}
-  const searchParams = new URLSearchParams(window.location.search)
+  const searchParams = new URLSearchParams(loc.search)
 
   for (const [key, value] of searchParams.entries()) {
     // For multi-value params (e.g., c=SWE&c=DEU), join with comma

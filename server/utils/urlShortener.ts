@@ -2,55 +2,14 @@ import { eq } from 'drizzle-orm'
 import { createHash } from 'crypto'
 import { db } from './db'
 import { charts } from '../../db/schema'
-
-// Default values that should be omitted from hash (to normalize equivalent configs)
-const DEFAULTS: Record<string, string> = {
-  cs: 'line', // chartStyle default
-  ct: 'yearly', // chartType default
-  bm: 'lin_reg', // baselineMethod default
-  sp: 'esp', // standardPopulation default
-  ag: 'all' // ageGroups default
-}
-
-// Params to exclude from hash (rendering-specific, not chart config)
-const EXCLUDED_PARAMS = new Set(['dm', 'width', 'height'])
-
-/**
- * Normalize config params for consistent hashing
- * - Sorts keys alphabetically
- * - Preserves value order for order-sensitive keys (c, ag - affects chart colors)
- * - Removes default values
- * - Removes empty/undefined values
- * - Removes rendering-specific params (dm, width, height)
- * - Does NOT include path (hash is config-only, page stored separately)
- */
-function normalizeConfig(params: Record<string, string | undefined>): Record<string, string> {
-  const normalized: Record<string, string> = {}
-
-  // Sort keys alphabetically for consistent hashing
-  const sortedKeys = Object.keys(params).sort()
-
-  for (const key of sortedKeys) {
-    const value = params[key]
-
-    // Skip undefined/null/empty
-    if (value === undefined || value === null || value === '') continue
-
-    // Skip excluded params (rendering-specific, not chart config)
-    if (EXCLUDED_PARAMS.has(key)) continue
-
-    // Skip default values
-    if (DEFAULTS[key] === value) continue
-
-    normalized[key] = value
-  }
-
-  return normalized
-}
+import { normalizeConfig } from '../../app/lib/shortUrl/hashConfig'
 
 /**
  * Compute SHA-256 hash of normalized config, return first 12 hex chars
  * Hash is config-only (no path) so same config = same hash across pages
+ *
+ * Note: Uses Node.js crypto for server-side (sync), while client uses Web Crypto (async).
+ * Both produce identical hashes since they use the same normalization and SHA-256.
  */
 function computeConfigHash(params: Record<string, string | undefined>): string {
   const normalized = normalizeConfig(params)

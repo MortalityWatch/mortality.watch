@@ -10,10 +10,10 @@ import { charts } from '../../../db/schema'
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
 
-  if (!id) {
+  if (!id || !/^[0-9a-f]{12}$/.test(id)) {
     throw createError({
       statusCode: 400,
-      message: 'Missing chart ID'
+      message: 'Invalid chart ID'
     })
   }
 

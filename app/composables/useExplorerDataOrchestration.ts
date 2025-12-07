@@ -36,7 +36,8 @@ import { calculateBaselineRange } from '@/lib/baseline/calculateBaselineRange'
 import { useShortUrl } from '@/composables/useShortUrl'
 import {
   resolveChartStateFromSnapshot,
-  toChartFilterConfig
+  toChartFilterConfig,
+  generateUrlFromState
 } from '@/lib/state/resolution'
 
 export function useExplorerDataOrchestration(
@@ -162,59 +163,7 @@ export function useExplorerDataOrchestration(
     showLogarithmicOption: true
   })
 
-  /**
-   * Generate URL for QR code from resolved state.
-   * Matches SSR's generateChartUrlFromState() approach to ensure identical QR codes.
-   * Uses effective (resolved) values for dates and baselines, not raw snapshot values.
-   */
-  const makeUrlFromState = (
-    snapshot: ChartStateSnapshot,
-    effectiveDateFrom: string,
-    effectiveDateTo: string,
-    effectiveBaselineFrom: string,
-    effectiveBaselineTo: string
-  ) => {
-    const siteUrl = 'https://www.mortality.watch'
-    const params = new URLSearchParams()
-
-    // Core fields
-    if (snapshot.countries.length) params.set('c', snapshot.countries.join(','))
-    params.set('t', snapshot.type)
-    params.set('ct', snapshot.chartType)
-    params.set('cs', snapshot.chartStyle)
-
-    // Date range - use effective values
-    if (effectiveDateFrom) params.set('df', effectiveDateFrom)
-    if (effectiveDateTo) params.set('dt', effectiveDateTo)
-    if (snapshot.sliderStart) params.set('ss', snapshot.sliderStart)
-
-    // Baseline - use effective values
-    if (snapshot.showBaseline) params.set('sb', '1')
-    params.set('bm', snapshot.baselineMethod)
-    if (effectiveBaselineFrom) params.set('bf', effectiveBaselineFrom)
-    if (effectiveBaselineTo) params.set('bt', effectiveBaselineTo)
-
-    // Display options
-    if (snapshot.ageGroups.length && snapshot.ageGroups[0] !== 'all') params.set('ag', snapshot.ageGroups.join(','))
-    if (snapshot.standardPopulation && snapshot.standardPopulation !== 'esp') params.set('sp', snapshot.standardPopulation)
-    if (snapshot.cumulative) params.set('ce', '1')
-    if (snapshot.showTotal) params.set('st', '1')
-    if (snapshot.maximize) params.set('m', '1')
-    if (snapshot.showPredictionInterval) params.set('pi', '1')
-    if (snapshot.showLabels) params.set('sl', '1')
-    if (snapshot.showPercentage) params.set('p', '1')
-    if (snapshot.showLogarithmic) params.set('lg', '1')
-
-    // View indicators
-    if (snapshot.isExcess) params.set('e', '1')
-    if (snapshot.isZScore) params.set('zs', '1')
-
-    // Optional
-    if (snapshot.userColors?.length) params.set('uc', snapshot.userColors.join(','))
-    if (snapshot.decimals && snapshot.decimals !== 'auto') params.set('dec', snapshot.decimals)
-
-    return `${siteUrl}/explorer?${params.toString()}`
-  }
+  // URL generation uses the shared generateUrlFromState function from resolution module
 
   // Memoized computations
   const dataKey = computed(() => {
@@ -359,14 +308,8 @@ export function useExplorerDataOrchestration(
     // Use the unified resolution function - same logic as SSR
     const resolvedState = resolveChartStateFromSnapshot(snapshot, allChartLabels.value)
 
-    // Build URL from resolved state to match SSR's generateChartUrlFromState()
-    const fullUrl = makeUrlFromState(
-      snapshot,
-      resolvedState.dateFrom,
-      resolvedState.dateTo,
-      resolvedState.baselineDateFrom,
-      resolvedState.baselineDateTo
-    )
+    // Build URL from resolved state using the shared function (same as SSR)
+    const fullUrl = generateUrlFromState(resolvedState)
 
     // Use short URL if available, otherwise fall back to full URL
     const url = currentShortUrl.value || fullUrl

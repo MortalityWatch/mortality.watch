@@ -9,6 +9,7 @@ import { makeChartConfig } from '../../app/lib/chart/chartConfig'
 import {
   resolveChartStateForRendering,
   toChartFilterConfig,
+  generateUrlFromState,
   type ChartRenderState
 } from '../../app/lib/state/resolution'
 import type { ChartStyle } from '../../app/lib/chart/chartTypes'
@@ -285,47 +286,7 @@ export function generateChartUrl(query: Record<string, unknown>): string {
  */
 export function generateChartUrlFromState(state: ChartRenderState): string {
   const siteUrl = process.env.NUXT_PUBLIC_SITE_URL || 'https://www.mortality.watch'
-
-  // Build URL params from resolved state using the same keys as fieldEncoders
-  const params = new URLSearchParams()
-
-  // Core fields
-  if (state.countries.length) params.set('c', state.countries.join(','))
-  params.set('t', state.type)
-  params.set('ct', state.chartType)
-  params.set('cs', state.chartStyle)
-
-  // Date range
-  if (state.dateFrom) params.set('df', state.dateFrom)
-  if (state.dateTo) params.set('dt', state.dateTo)
-  if (state.sliderStart) params.set('ss', state.sliderStart)
-
-  // Baseline
-  if (state.showBaseline) params.set('sb', '1')
-  params.set('bm', state.baselineMethod)
-  if (state.baselineDateFrom) params.set('bf', state.baselineDateFrom)
-  if (state.baselineDateTo) params.set('bt', state.baselineDateTo)
-
-  // Display options
-  if (state.ageGroups.length && state.ageGroups[0] !== 'all') params.set('ag', state.ageGroups.join(','))
-  if (state.standardPopulation && state.standardPopulation !== 'esp') params.set('sp', state.standardPopulation)
-  if (state.cumulative) params.set('ce', '1')
-  if (state.showTotal) params.set('st', '1')
-  if (state.maximize) params.set('m', '1')
-  if (state.showPredictionInterval) params.set('pi', '1')
-  if (state.showLabels) params.set('sl', '1')
-  if (state.showPercentage) params.set('p', '1')
-  if (state.showLogarithmic) params.set('lg', '1')
-
-  // View indicators
-  if (state.isExcess) params.set('e', '1')
-  if (state.isZScore) params.set('zs', '1')
-
-  // Optional
-  if (state.userColors?.length) params.set('uc', state.userColors.join(','))
-  if (state.decimals && state.decimals !== 'auto') params.set('dec', state.decimals)
-
-  return `${siteUrl}/explorer?${params.toString()}`
+  return generateUrlFromState(state, siteUrl)
 }
 
 // Re-export the unified state resolution function for use in chart.png route

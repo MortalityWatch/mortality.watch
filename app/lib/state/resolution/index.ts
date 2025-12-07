@@ -20,5 +20,6 @@ export {
   resolveChartStateForRendering,
   resolveChartStateFromSnapshot,
   toChartFilterConfig,
+  generateUrlFromState,
   type ChartRenderState
 } from './resolveChartState'
