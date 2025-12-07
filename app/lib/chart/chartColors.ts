@@ -36,8 +36,8 @@ export const borderColor = (isDark?: boolean) => {
 
 export const backgroundColor = (isDark?: boolean) => {
   const dark = isDark !== undefined ? isDark : getIsDarkTheme()
-  // Dark mode: #202020 (must match app/colors.ts for visual parity)
-  return dark ? '#202020' : '#ffffff'
+  // Dark mode: #111827 (gray-900, must match SSR chartRenderer.ts and useExplorerChartActions.ts)
+  return dark ? '#111827' : '#ffffff'
 }
 
 export const getColorPalette = (
