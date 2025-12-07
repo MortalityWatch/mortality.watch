@@ -1,6 +1,7 @@
 import { showToast } from '@/toast'
 import { handleError } from '@/lib/errors/errorHandler'
 import { useSaveChart } from '@/composables/useSaveChart'
+import { useShortUrl } from '@/composables/useShortUrl'
 import { generateChartFilename } from '@/lib/utils/strings'
 import { generateExplorerTitle, generateExplorerDescription } from '@/lib/utils/chartTitles'
 import Papa from 'papaparse'
@@ -26,10 +27,12 @@ export function useExplorerChartActions(
   chartData?: Ref<MortalityChartData | undefined> | { value: MortalityChartData | undefined },
   allCountries?: Ref<Record<string, Country>> | { value: Record<string, Country> }
 ) {
-  // Copy chart link to clipboard
+  // Copy short URL to clipboard (uses local hash computation + fire-and-forget DB store)
+  const { getShortUrl } = useShortUrl()
   const copyChartLink = async () => {
     try {
-      await navigator.clipboard.writeText(window.location.href)
+      const shortUrl = await getShortUrl()
+      await navigator.clipboard.writeText(shortUrl)
       showToast('Link copied to clipboard!', 'success')
     } catch (error) {
       handleError(error, 'Failed to copy link', 'copyChartLink')
@@ -78,17 +81,16 @@ export function useExplorerChartActions(
   // Download chart as PNG via server-side rendering (for social media/OG images)
   const downloadChart = () => {
     try {
-      let url = window.location.href
-        .replaceAll('/?', '/chart.png?')
-        .replaceAll('/explorer?', '/chart.png?')
+      const params = new URLSearchParams(window.location.search)
 
       // Add dark mode parameter if currently in dark mode
       const isDarkMode = document.documentElement.classList.contains('dark')
       if (isDarkMode) {
-        const separator = url.includes('?') ? '&' : '?'
-        url += `${separator}dm=1`
+        params.set('dm', '1')
       }
 
+      const query = params.toString()
+      const url = `${window.location.origin}/chart.png${query ? `?${query}` : ''}`
       window.open(url, '_blank')
     } catch (error) {
       handleError(error, 'Failed to download chart', 'downloadChart')

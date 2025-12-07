@@ -35,9 +35,9 @@ else
   echo "ℹ️  No existing database found at $DB_PATH"
 fi
 
-# Run migrations to create fresh tables
+# Initialize fresh tables
 echo ""
-echo "🔄 Running migrations..."
+echo "🔄 Initializing database..."
 npm run db:migrate
 
 echo ""

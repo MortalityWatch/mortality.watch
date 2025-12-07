@@ -3,7 +3,6 @@ import type {
   ChartDataset
 } from 'chart.js'
 import {
-  getDatalabelsFont,
   getScaleTitleFont,
   getTicksFont
 } from './chartStyling'
@@ -14,23 +13,22 @@ import {
   textSoftColor,
   textStrongColor
 } from './chartColors'
-import { asPercentage, numberWithCommas, round } from './chartUtils'
 import type {
   ChartJSConfig,
   ChartStyle,
   MatrixData,
-  MatrixDatapoint,
   MortalityChartData,
   MortalityMatrixDataPoint
 } from './chartTypes'
-import type { Context } from 'chartjs-plugin-datalabels'
 import type { MatrixDataPoint } from 'chartjs-chart-matrix'
+import type { DatalabelContext } from './customDatalabelsPlugin'
 import {
   createBackgroundPlugin,
   createOnResizeHandler,
   createPluginsConfig,
   createScalesConfig
 } from './config'
+import { getIsDark } from '@/composables/useTheme'
 
 /**
  * Creates a chart configuration based on the specified style and data type.
@@ -74,11 +72,14 @@ export const makeChartConfig = (
   isPopulationType: boolean,
   showLabels: boolean,
   showPercentage: boolean,
-  showPi: boolean
+  showPi: boolean,
+  isSSR: boolean = false
 ): Record<string, unknown> => {
   // Cast from generic data structure to MortalityChartData
   // The caller is responsible for providing properly structured data
   const internalData = data as unknown as MortalityChartData
+  // Get dark mode from theme (respects SSR override set by setServerDarkMode)
+  const isDark = getIsDark()
   if (style === 'matrix') {
     return makeMatrixChartConfig(
       internalData,
@@ -88,7 +89,14 @@ export const makeChartConfig = (
       showPercentage,
       showLabels,
       isDeathsType,
-      isPopulationType
+      isPopulationType,
+      true, // showQrCode
+      true, // showLogo
+      isDark,
+      'auto', // decimals
+      undefined, // userTier
+      true, // showCaption
+      isSSR
     ) as unknown as Record<string, unknown>
   }
   return makeBarLineChartConfig(
@@ -97,7 +105,15 @@ export const makeChartConfig = (
     showPi,
     showPercentage,
     isDeathsType,
-    isPopulationType
+    isPopulationType,
+    true, // showQrCode
+    true, // showLogo
+    'auto', // decimals
+    isDark,
+    undefined, // userTier
+    true, // showCaption
+    isSSR,
+    style as 'bar' | 'line'
   ) as unknown as Record<string, unknown>
 }
 
@@ -153,7 +169,9 @@ export const makeBarLineChartConfig = (
   decimals: string = 'auto',
   isDark?: boolean,
   userTier?: number,
-  showCaption: boolean = true
+  showCaption: boolean = true,
+  isSSR: boolean = false,
+  chartStyle: 'bar' | 'line' = 'line'
 ) => {
   // Feature gating: Only Pro users (tier 2) can hide the watermark/QR code
   if (userTier !== undefined && userTier < 2) {
@@ -192,7 +210,9 @@ export const makeBarLineChartConfig = (
         showLogo,
         showCaption,
         data.ytitle.includes('Z-Score') ? 'zscore' : 'mortality', // Detect view from ytitle
-        isDark
+        isDark,
+        isSSR,
+        chartStyle
       ),
       scales: createScalesConfig(
         data,
@@ -200,7 +220,8 @@ export const makeBarLineChartConfig = (
         showPercentage,
         showDecimals,
         decimals,
-        isDark
+        isDark,
+        isSSR
       )
     },
     data: {
@@ -272,7 +293,8 @@ export const makeMatrixChartConfig = (
   isDark?: boolean,
   decimals: string = 'auto',
   userTier?: number,
-  showCaption: boolean = true
+  showCaption: boolean = true,
+  isSSR: boolean = false
 ) => {
   const config = makeBarLineChartConfig(
     data,
@@ -286,8 +308,17 @@ export const makeMatrixChartConfig = (
     decimals,
     isDark,
     userTier,
-    showCaption
+    showCaption,
+    isSSR,
+    'line' // Will be overridden - matrix uses its own data handling
   ) as unknown as ChartJSConfig<'matrix', MortalityMatrixDataPoint[]>
+
+  // Update plugin config with matrix chart style
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if ((config.options?.plugins as any)?.customDatalabels) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (config.options.plugins as any).customDatalabels.chartStyle = 'matrix'
+  }
 
   config.options!.scales = {
     x: {
@@ -324,7 +355,7 @@ export const makeMatrixChartConfig = (
   const matrixData = makeMatrixData(data)
   // Capture isDark in closure for callbacks
   const bgColor = backgroundColor(isDark)
-  const tileBackgroundColor = (context: Context) => {
+  const tileBackgroundColor = (context: DatalabelContext) => {
     const datapoint = context.dataset.data[
       context.dataIndex
     ] as MortalityMatrixDataPoint
@@ -347,31 +378,53 @@ export const makeMatrixChartConfig = (
     if (isNaN(value)) return bgColor
     else
       return getGradientColor(
-        getColorPalette(isPopulationType, isLE, isExcess),
+        getColorPalette(isPopulationType, isLE, isExcess, isDark),
         value
       )
   }
-  config.options!.plugins!.datalabels = {
-    display: (context: Context): boolean =>
-      showLabels
-      && !isNaN((context.dataset.data[context.dataIndex] as MatrixDatapoint).v),
-    color: () => {
-      // White in dark mode, black in light mode
-      return isDark ? '#ffffff' : '#000000'
-    },
-    formatter: (x: { v: number }) => {
-      if (showPercentage) {
-        return asPercentage(x.v, data.labels.length > 15 ? 0 : 1)
-      } else if (isLE) {
-        return numberWithCommas(round(x.v, 1))
-      } else {
-        return isExcess
-          ? numberWithCommas(round(x.v), true)
-          : numberWithCommas(round(x.v))
-      }
-    },
-    font: getDatalabelsFont()
+  // Update customDatalabels config for matrix chart style
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const existingConfig = (config.options!.plugins as any).customDatalabels || {}
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(config.options!.plugins as any).customDatalabels = {
+    ...existingConfig,
+    showLabels,
+    textColor: isDark ? '#ffffff' : '#000000',
+    chartStyle: 'matrix' as const,
+    formatterConfig: {
+      showPi: false,
+      isExcess,
+      showPercentage,
+      showDecimals: true,
+      // Use fewer decimals for dense matrix charts
+      decimals: data.labels.length > 15 ? 0 : 1
+    }
   }
+
+  // Override tooltip for matrix - reads 'v' instead of 'y'
+  config.options!.plugins!.tooltip = {
+    callbacks: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      title: (items: any[]) => {
+        if (!items.length) return ''
+        const raw = items[0]?.raw as MortalityMatrixDataPoint
+        if (!raw) return ''
+        return `${raw.country} - ${raw.x}`
+      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      label: (item: any) => {
+        const raw = item?.raw as MortalityMatrixDataPoint
+        if (!raw) return ''
+        const value = raw.v
+        if (showPercentage) {
+          const sign = value >= 0 ? '+' : ''
+          return `${sign}${(value * 100).toFixed(1)}%`
+        }
+        return value.toLocaleString()
+      }
+    }
+  }
+
   config.data = {
     datasets: [
       {

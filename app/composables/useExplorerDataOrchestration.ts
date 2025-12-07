@@ -28,15 +28,17 @@ import {
 import { useChartDataFetcher } from '@/composables/useChartDataFetcher'
 import { getFilteredChartDataFromConfig } from '@/lib/chart'
 import type { MortalityChartData } from '@/lib/chart/chartTypes'
-import type { ChartFilterConfig, ChartStateSnapshot } from '@/lib/chart/types'
+import type { ChartStateSnapshot } from '@/lib/chart/types'
 import { useDateRangeValidation } from '@/composables/useDateRangeValidation'
 import { useDateRangeCalculations } from '@/composables/useDateRangeCalculations'
 import { UI_CONFIG } from '@/lib/config/constants'
-import {
-  arrayBufferToBase64,
-  compress
-} from '@/lib/compression/compress.browser'
 import { calculateBaselineRange } from '@/lib/baseline/calculateBaselineRange'
+import { useShortUrl } from '@/composables/useShortUrl'
+import {
+  resolveChartStateFromSnapshot,
+  toChartFilterConfig,
+  generateUrlFromState
+} from '@/lib/state/resolution'
 
 export function useExplorerDataOrchestration(
   state: ReturnType<typeof useExplorerState>,
@@ -46,6 +48,21 @@ export function useExplorerDataOrchestration(
 ) {
   // Shared data fetching logic
   const dataFetcher = useChartDataFetcher()
+
+  // Short URL handling for QR codes
+  // Store original query params to ensure consistent hashing with SSR
+  // (URL may be modified by state resolution before short URL is computed)
+  const { getShortUrl } = useShortUrl()
+  const currentShortUrl = ref<string | null>(null)
+  const originalQueryParams = ref<Record<string, string | string[] | undefined> | null>(null)
+
+  /**
+   * Save the original query params before any URL modification.
+   * Must be called at the start of page initialization, before StateResolver.applyResolvedState.
+   */
+  const saveOriginalQueryParams = (query: Record<string, string | string[] | undefined>) => {
+    originalQueryParams.value = { ...query }
+  }
 
   // Validation
   const { getValidatedRange } = useDateRangeValidation()
@@ -146,13 +163,7 @@ export function useExplorerDataOrchestration(
     showLogarithmicOption: true
   })
 
-  // Helper to generate short URL
-  const makeUrl = async () => {
-    const base = 'https://mortality.watch/?qr='
-    const query = JSON.stringify(window.location)
-    const encodedQuery = arrayBufferToBase64(await compress(query))
-    return base + encodeURIComponent(encodedQuery)
-  }
+  // URL generation uses the shared generateUrlFromState function from resolution module
 
   // Memoized computations
   const dataKey = computed(() => {
@@ -289,67 +300,27 @@ export function useExplorerDataOrchestration(
 
   /**
    * Build ChartFilterConfig from a state snapshot.
-   * Applies effective defaults for dates and computes derived flags.
+   *
+   * Uses the unified resolution pipeline (resolveChartStateFromSnapshot + toChartFilterConfig)
+   * to ensure identical behavior between client and SSR chart rendering.
    */
-  const buildFilterConfig = async (snapshot: ChartStateSnapshot): Promise<ChartFilterConfig> => {
-    // Use default range (last ~10 years) when dates are undefined
-    const defaultRange = dateRangeCalc.defaultRange.value
-    const visibleRange = dateRangeCalc.visibleRange.value
+  const buildFilterConfig = (snapshot: ChartStateSnapshot) => {
+    // Use the unified resolution function - same logic as SSR
+    const resolvedState = resolveChartStateFromSnapshot(snapshot, allChartLabels.value)
 
-    // Fall back to visible range if default range is empty (data not loaded yet)
-    const effectiveDateFrom = snapshot.dateFrom ?? defaultRange.from ?? visibleRange?.min ?? ''
-    const effectiveDateTo = snapshot.dateTo ?? defaultRange.to ?? visibleRange?.max ?? ''
+    // Build URL from resolved state using the shared function (same as SSR)
+    const fullUrl = generateUrlFromState(resolvedState)
 
-    // Use baselineRange when baseline dates are undefined
-    const effectiveBaselineFrom = snapshot.baselineDateFrom ?? baselineRange.value?.from ?? ''
-    const effectiveBaselineTo = snapshot.baselineDateTo ?? baselineRange.value?.to ?? ''
+    // Use short URL if available, otherwise fall back to full URL
+    const url = currentShortUrl.value || fullUrl
 
-    // Compute derived flags from snapshot (not from helpers that read refs)
-    const isBarChartStyle = snapshot.chartStyle === 'bar'
-    const isMatrixChartStyle = snapshot.chartStyle === 'matrix'
-    const isAsmrType = snapshot.type === 'asmr' || snapshot.type === 'le'
-    const isPopulationType = snapshot.type === 'population'
-    const isDeathsType = snapshot.type === 'deaths'
-    const isErrorBarType = isBarChartStyle && snapshot.isExcess
-
-    // Compute showCumPi from snapshot
-    const showCumPi = snapshot.cumulative
-      && snapshot.showPredictionInterval
-      && snapshot.baselineMethod !== 'mean'
-
-    return {
-      countries: snapshot.countries,
-      ageGroups: isAsmrType ? ['all'] : snapshot.ageGroups,
-      type: snapshot.type,
-      chartType: snapshot.chartType,
-      standardPopulation: snapshot.standardPopulation,
-      view: snapshot.view,
-      isExcess: snapshot.isExcess,
-      chartStyle: snapshot.chartStyle,
-      isBarChartStyle,
-      isMatrixChartStyle,
-      isErrorBarType,
-      isAsmrType,
-      isPopulationType,
-      isDeathsType,
-      dateFrom: effectiveDateFrom,
-      dateTo: effectiveDateTo,
-      baselineMethod: snapshot.baselineMethod,
-      baselineDateFrom: effectiveBaselineFrom,
-      baselineDateTo: effectiveBaselineTo,
-      showBaseline: snapshot.showBaseline,
-      cumulative: snapshot.cumulative,
-      showTotal: snapshot.showTotal,
-      showPredictionInterval: snapshot.showPredictionInterval,
-      showPercentage: snapshot.showPercentage,
-      showCumPi,
-      maximize: snapshot.maximize,
-      showLabels: snapshot.showLabels,
-      showLogarithmic: snapshot.showLogarithmic,
-      colors: displayColors.value,
-      allCountries: allCountries.value,
-      url: await makeUrl()
-    }
+    // Convert to ChartFilterConfig using the unified converter
+    return toChartFilterConfig(
+      resolvedState,
+      allCountries.value,
+      displayColors.value,
+      url
+    )
   }
 
   /**
@@ -363,11 +334,21 @@ export function useExplorerDataOrchestration(
       return { datasets: [], labels: [] } as unknown as MortalityChartData
     }
 
+    // Compute short URL first (instant with local hash computation)
+    // This also fires a non-blocking POST to store the mapping in DB
+    // Use original query params if saved (ensures consistency with SSR which uses original request params)
+    try {
+      const shortUrl = await getShortUrl(originalQueryParams.value ?? undefined)
+      currentShortUrl.value = shortUrl
+    } catch {
+      // Silently fail - full URL will be used
+    }
+
     // Use provided snapshot or create one from current refs
     const stateSnapshot = snapshot ?? createStateSnapshot()
 
-    // Build filter config from snapshot
-    const config = await buildFilterConfig(stateSnapshot)
+    // Build filter config from snapshot (uses currentShortUrl)
+    const config = buildFilterConfig(stateSnapshot)
 
     // Use the new config-based function
     return getFilteredChartDataFromConfig(config, allChartData.labels, allChartData.data)
@@ -559,6 +540,10 @@ export function useExplorerDataOrchestration(
     // Date range helpers
     defaultRange: dateRangeCalc.defaultRange,
     getDefaultRange: dateRangeCalc.getDefaultRange, // Kept for backward compatibility
-    baselineRange
+    baselineRange,
+
+    // Short URL for QR codes and sharing
+    currentShortUrl,
+    saveOriginalQueryParams
   }
 }

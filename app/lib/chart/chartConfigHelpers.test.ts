@@ -4,7 +4,6 @@
 
 import { describe, it, expect, vi } from 'vitest'
 import type { Chart, TooltipItem, Scale, CoreScaleOptions } from 'chart.js'
-import type { Context } from 'chartjs-plugin-datalabels'
 import {
   createBackgroundPlugin,
   createOnResizeHandler,
@@ -312,96 +311,49 @@ describe('chartConfigHelpers', () => {
       expect(config.align).toBe('end')
     })
 
-    it('should configure display function', () => {
-      const config = createDatalabelsConfig(mockData, false, false, false, true, 'auto')
-
-      expect(config.display).toBeInstanceOf(Function)
-    })
-
     it('should show labels when showLabels is true', () => {
       const config = createDatalabelsConfig(mockData, false, false, false, true, 'auto')
-      const context = {
-        dataset: { label: 'Test', data: [100, 200] },
-        dataIndex: 0
-      }
-
-      const shouldDisplay = config.display(context as unknown as Context)
-
-      expect(shouldDisplay).toBe(true)
+      expect(config.showLabels).toBe(true)
     })
 
     it('should hide labels when showLabels is false', () => {
       const dataWithoutLabels = { ...mockData, showLabels: false }
       const config = createDatalabelsConfig(dataWithoutLabels, false, false, false, true, 'auto')
-      const context = {
-        dataset: { label: 'Test', data: [100, 200] },
-        dataIndex: 0
-      }
-
-      const shouldDisplay = config.display(context as unknown as Context)
-
-      expect(shouldDisplay).toBe(false)
+      expect(config.showLabels).toBe(false)
     })
 
-    it('should hide labels for NaN values', () => {
+    it('should configure formatter config for simple values', () => {
       const config = createDatalabelsConfig(mockData, false, false, false, true, 'auto')
-      const context = {
-        dataset: {
-          label: 'Test',
-          data: [{ y: NaN } as ChartErrorDataPoint]
-        },
-        dataIndex: 0
-      }
-
-      const shouldDisplay = config.display(context as unknown as Context)
-
-      expect(shouldDisplay).toBe(false)
+      expect(config.formatterConfig).toBeDefined()
+      expect(config.formatterConfig?.showPi).toBe(false)
+      expect(config.formatterConfig?.isExcess).toBe(false)
+      expect(config.formatterConfig?.showPercentage).toBe(false)
+      expect(config.formatterConfig?.showDecimals).toBe(true)
     })
 
-    it('should configure formatter function', () => {
-      const config = createDatalabelsConfig(mockData, false, false, false, true, 'auto')
-
-      expect(config.formatter).toBeInstanceOf(Function)
-    })
-
-    it('should format simple number values', () => {
-      const config = createDatalabelsConfig(mockData, false, false, false, true, 'auto')
-
-      const result = config.formatter(100)
-
-      expect(result).toBeDefined()
-    })
-
-    it('should format error bar data points', () => {
+    it('should configure formatter config for prediction intervals', () => {
       const config = createDatalabelsConfig(mockData, true, false, false, true, 'auto')
-      const dataPoint: ChartErrorDataPoint = {
-        x: 0,
-        y: 100,
-        yMin: 90,
-        yMax: 110,
-        yMinMin: undefined,
-        yMaxMax: undefined
-      }
+      expect(config.formatterConfig?.showPi).toBe(true)
+    })
 
-      const result = config.formatter(dataPoint)
+    it('should configure formatter config for excess values', () => {
+      const config = createDatalabelsConfig(mockData, false, true, false, true, 'auto')
+      expect(config.formatterConfig?.isExcess).toBe(true)
+    })
 
-      expect(result).toBeDefined()
+    it('should configure formatter config for percentage values', () => {
+      const config = createDatalabelsConfig(mockData, false, false, true, true, 'auto')
+      expect(config.formatterConfig?.showPercentage).toBe(true)
     })
 
     it('should use light color for dark theme', () => {
       const config = createDatalabelsConfig(mockData, false, false, false, true, 'auto', true)
-
-      const color = config.color()
-
-      expect(color).toBe('#ffffff')
+      expect(config.textColor).toBe('#ffffff')
     })
 
     it('should use dark color for light theme', () => {
       const config = createDatalabelsConfig(mockData, false, false, false, true, 'auto', false)
-
-      const color = config.color()
-
-      expect(color).toBe('#000000')
+      expect(config.textColor).toBe('#000000')
     })
   })
 
@@ -430,7 +382,7 @@ describe('chartConfigHelpers', () => {
       expect(config.subtitle).toBeDefined()
       expect(config.legend).toBeDefined()
       expect(config.tooltip).toBeDefined()
-      expect(config.datalabels).toBeDefined()
+      expect(config.customDatalabels).toBeDefined()
     })
 
     it('should configure title with data.title', () => {

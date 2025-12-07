@@ -94,6 +94,12 @@ vi.mock('chart.js', async () => {
     updated = false
     static registeredComponents: unknown[] = []
     static registeredPlugins: unknown[] = []
+    static defaults = {
+      font: {
+        family: 'sans-serif'
+      }
+    }
+
     static register = vi.fn((...components: unknown[]) => {
       MockChart.registeredComponents.push(...components)
     })

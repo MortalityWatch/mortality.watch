@@ -2,10 +2,6 @@
 import { openNewWindowWithBase64Url } from '@/utils'
 import { showToast } from '../../toast'
 import { ref } from 'vue'
-import {
-  compress,
-  arrayBufferToBase64
-} from '@/lib/compression/compress.browser'
 
 const isOpen = ref(false)
 
@@ -38,16 +34,10 @@ const saveImage = () => {
   isOpen.value = false
 }
 
-const makeUrl = async () => {
-  const base = 'https://mortality.watch/?qr='
-  const query = JSON.stringify(window.location)
-  const encodedQuery = arrayBufferToBase64(await compress(query))
-  return base + encodeURIComponent(encodedQuery)
-}
-
-const getImage = async () => {
-  const url = await makeUrl()
-  window.open(url.replaceAll('/?qr', '/chart.png?qr'), '_blank')
+const getImage = () => {
+  // Use the current URL's query params directly for the chart.png endpoint
+  const chartUrl = window.location.href.replace('/explorer', '/chart.png')
+  window.open(chartUrl, '_blank')
   isOpen.value = false
 }
 

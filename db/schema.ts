@@ -91,7 +91,8 @@ export const users = sqliteTable(
 )
 
 /**
- * Saved charts table - stores user-saved chart configurations
+ * Saved charts table - user's bookmarked charts with metadata
+ * References charts table for the actual configuration
  */
 export const savedCharts = sqliteTable(
   'saved_charts',
@@ -100,10 +101,11 @@ export const savedCharts = sqliteTable(
     userId: integer('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
+    chartId: text('chart_id')
+      .notNull()
+      .references(() => charts.id),
     name: text('name').notNull(),
     description: text('description'),
-    chartState: text('chart_state').notNull(), // JSON-encoded chart state
-    chartType: text('chart_type', { enum: ['explorer', 'ranking'] }).notNull(),
     thumbnailUrl: text('thumbnail_url'),
     isFeatured: integer('is_featured', { mode: 'boolean' })
       .notNull()
@@ -120,6 +122,7 @@ export const savedCharts = sqliteTable(
   },
   table => ({
     userIdx: index('idx_saved_charts_user').on(table.userId),
+    chartIdx: index('idx_saved_charts_chart').on(table.chartId),
     featuredIdx: index('idx_saved_charts_featured').on(table.isFeatured),
     publicIdx: index('idx_saved_charts_public').on(table.isPublic),
     slugIdx: index('idx_saved_charts_slug').on(table.slug),
@@ -261,6 +264,30 @@ export const dataQualityOverrides = sqliteTable(
   })
 )
 
+/**
+ * Charts table - canonical storage for chart configurations
+ * Used for short URLs, QR codes, and as base for saved_charts
+ * Hash is computed from normalized config (deterministic - same config = same hash)
+ */
+export const charts = sqliteTable(
+  'charts',
+  {
+    id: text('id').primaryKey(), // 12-char hash of normalized config
+    config: text('config').notNull(), // Query string (e.g., c=SWE&c=DEU&ct=yearly)
+    page: text('page', { enum: ['explorer', 'ranking'] }).notNull().default('explorer'),
+    createCount: integer('create_count').notNull().default(1), // Times this config was generated/shared
+    accessCount: integer('access_count').notNull().default(0), // Times the short URL was visited
+    createdAt: integer('created_at', { mode: 'timestamp' })
+      .notNull()
+      .default(sql`(unixepoch())`),
+    lastAccessedAt: integer('last_accessed_at', { mode: 'timestamp' })
+  },
+  table => ({
+    pageIdx: index('idx_charts_page').on(table.page),
+    createdIdx: index('idx_charts_created').on(table.createdAt)
+  })
+)
+
 // Type exports for use in application code
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
@@ -282,3 +309,6 @@ export type NewDataQualityOverride = typeof dataQualityOverrides.$inferInsert
 
 export type InviteCode = typeof inviteCodes.$inferSelect
 export type NewInviteCode = typeof inviteCodes.$inferInsert
+
+export type Chart = typeof charts.$inferSelect
+export type NewChart = typeof charts.$inferInsert

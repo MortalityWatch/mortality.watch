@@ -394,7 +394,7 @@ describe('chartConfig', () => {
               title: { font: {} },
               subtitle: { font: {} },
               legend: { labels: { font: {} } },
-              datalabels: { font: {} }
+              customDatalabels: { font: {} }
             },
             scales: {
               x: { ticks: { font: {} }, title: { font: {} } },
@@ -406,7 +406,8 @@ describe('chartConfig', () => {
         config.options.onResize!(mockChart)
 
         expect(mockChart.options.plugins!.title!.font).toBeDefined()
-        expect(mockChart.options.plugins!.datalabels!.font).toBeDefined()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        expect((mockChart.options.plugins as any).customDatalabels?.font).toBeDefined()
       })
     })
   })
@@ -567,42 +568,23 @@ describe('chartConfig', () => {
     })
 
     describe('data labels', () => {
-      it('should show labels when enabled', () => {
+      it('should set showLabels to true when enabled', () => {
         const data = createMockChartData()
         const config = makeMatrixChartConfig(data, false, false, false, false, true, false, false)
 
-        expect(config.options.plugins!.datalabels!.display).toBeInstanceOf(Function)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        expect((config.options.plugins as any).customDatalabels.showLabels).toBe(true)
       })
 
-      it('should hide labels when disabled', () => {
+      it('should set showLabels to false when disabled', () => {
         const data = createMockChartData()
         const config = makeMatrixChartConfig(data, false, false, false, false, false, false, false)
 
-        const context = {
-          dataset: { data: [{ v: 100 }] },
-          dataIndex: 0
-        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const shouldDisplay = (config.options.plugins!.datalabels!.display as any)(context)
-
-        expect(shouldDisplay).toBe(false)
+        expect((config.options.plugins as any).customDatalabels.showLabels).toBe(false)
       })
 
-      it('should hide labels for NaN values', () => {
-        const data = createMockChartData()
-        const config = makeMatrixChartConfig(data, false, false, false, false, true, false, false)
-
-        const context = {
-          dataset: { data: [{ v: NaN }] },
-          dataIndex: 0
-        }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const shouldDisplay = (config.options.plugins!.datalabels!.display as any)(context)
-
-        expect(shouldDisplay).toBe(false)
-      })
-
-      it('should use white color for dark theme', () => {
+      it('should use white textColor for dark theme', () => {
         const data = createMockChartData()
         const config = makeMatrixChartConfig(
           data,
@@ -619,12 +601,10 @@ describe('chartConfig', () => {
         )
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const color = (config.options.plugins!.datalabels!.color as any)()
-
-        expect(color).toBe('#ffffff')
+        expect((config.options.plugins as any).customDatalabels.textColor).toBe('#ffffff')
       })
 
-      it('should use black color for light theme', () => {
+      it('should use black textColor for light theme', () => {
         const data = createMockChartData()
         const config = makeMatrixChartConfig(
           data,
@@ -641,31 +621,29 @@ describe('chartConfig', () => {
         )
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const color = (config.options.plugins!.datalabels!.color as any)()
-
-        expect(color).toBe('#000000')
+        expect((config.options.plugins as any).customDatalabels.textColor).toBe('#000000')
       })
 
-      it('should format labels as percentages when enabled', () => {
+      it('should set formatterConfig.showPercentage when enabled', () => {
         const data = createMockChartData()
         const config = makeMatrixChartConfig(data, false, false, false, true, true, false, false)
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const formatted = (config.options.plugins!.datalabels!.formatter as any)({ v: 0.5 })
+        const formatterConfig = (config.options.plugins as any).customDatalabels.formatterConfig
 
-        expect(formatted).toContain('%')
+        expect(formatterConfig.showPercentage).toBe(true)
       })
 
-      it('should format labels with fewer decimals for many labels', () => {
+      it('should set formatterConfig with showDecimals', () => {
         const data = createMockChartData({
           labels: Array(20).fill('').map((_, i) => `Label ${i}`)
         })
         const config = makeMatrixChartConfig(data, false, false, false, true, true, false, false)
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const formatted = (config.options.plugins!.datalabels!.formatter as any)({ v: 0.12345 })
+        const formatterConfig = (config.options.plugins as any).customDatalabels.formatterConfig
 
-        expect(formatted).toBeDefined()
+        expect(formatterConfig.showDecimals).toBe(true)
       })
     })
 

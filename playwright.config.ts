@@ -49,36 +49,51 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] }
+      use: { ...devices['Desktop Chrome'] },
+      testIgnore: '**/chart-visual-parity.spec.ts'
     },
 
     {
       name: 'firefox',
-      use: { ...devices['Desktop Firefox'] }
+      use: { ...devices['Desktop Firefox'] },
+      testIgnore: '**/chart-visual-parity.spec.ts'
     },
 
     {
       name: 'webkit',
-      use: { ...devices['Desktop Safari'] }
+      use: { ...devices['Desktop Safari'] },
+      testIgnore: '**/chart-visual-parity.spec.ts'
     },
 
     /* Test against mobile viewports */
     {
       name: 'Mobile Chrome',
-      use: { ...devices['Pixel 5'] }
+      use: { ...devices['Pixel 5'] },
+      testIgnore: '**/chart-visual-parity.spec.ts'
     },
     {
       name: 'Mobile Safari',
-      use: { ...devices['iPhone 12'] }
+      use: { ...devices['iPhone 12'] },
+      testIgnore: '**/chart-visual-parity.spec.ts'
+    },
+
+    /* Visual parity tests - chromium only with 2x scale */
+    {
+      name: 'visual-parity',
+      use: {
+        ...devices['Desktop Chrome'],
+        deviceScaleFactor: 2
+      },
+      testMatch: '**/chart-visual-parity.spec.ts'
     }
   ],
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'bun run preview',
+    command: 'bun run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
-    timeout: 30 * 1000, // 30 seconds for preview server startup
+    timeout: 60 * 1000, // 60 seconds for dev server startup
     stdout: 'pipe', // Show server output in test logs
     stderr: 'pipe', // Show server errors in test logs
     env: {

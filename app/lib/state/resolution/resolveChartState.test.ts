@@ -175,11 +175,12 @@ describe('resolveChartStateForRendering', () => {
   describe('baseline date computation', () => {
     const labels = generateLabels('yearly', 2010, 2024)
 
-    it('should use chart date range as baseline when not specified', () => {
+    it('should use calculateBaselineRange default when not specified', () => {
       const state = resolveChartStateForRendering({ c: 'USA', ct: 'yearly' }, labels)
-      // Baseline should match effective date range
-      expect(state.baselineDateFrom).toBe(state.dateFrom)
-      expect(state.baselineDateTo).toBe(state.dateTo)
+      // Baseline uses calculateBaselineRange which defaults to 2017 for yearly charts
+      // (2016 for fluseason/midyear, 2017 for others)
+      expect(state.baselineDateFrom).toBe('2017')
+      expect(state.baselineDateTo).toBe('2019')
     })
 
     it('should respect user-provided baseline dates', () => {

@@ -95,12 +95,12 @@ export const CHART_PRESETS: ChartPreset[] = [
   { name: 'Large (1280×720)', width: 1280, height: 720, category: 'Standard' },
   { name: 'X-Large (1920×1080)', width: 1920, height: 1080, category: 'Standard' },
 
-  // Social Media Ready (rendered @2x for crisp display)
-  { name: 'Twitter/X', width: 600, height: 338, category: 'Social Media' },
-  { name: 'Facebook', width: 600, height: 315, category: 'Social Media' },
-  { name: 'Instagram Square', width: 540, height: 540, category: 'Social Media' },
-  { name: 'Instagram Story', width: 540, height: 960, category: 'Social Media' },
-  { name: 'LinkedIn', width: 600, height: 314, category: 'Social Media' },
+  // Social Media (output dimensions - displayed scaled by devicePixelRatio)
+  { name: 'Twitter/X', width: 1200, height: 675, category: 'Social Media' },
+  { name: 'Facebook', width: 1200, height: 630, category: 'Social Media' },
+  { name: 'Instagram Square', width: 1080, height: 1080, category: 'Social Media' },
+  { name: 'Instagram Story', width: 1080, height: 1920, category: 'Social Media' },
+  { name: 'LinkedIn', width: 1200, height: 628, category: 'Social Media' },
 
   // Presentation
   { name: 'Slide 16:9 (1600×900)', width: 1600, height: 900, category: 'Presentation' },

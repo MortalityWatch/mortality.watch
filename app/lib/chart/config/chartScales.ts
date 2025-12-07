@@ -38,6 +38,14 @@ function computeAxisPrecision(data: MortalityChartData, isPercentage: boolean): 
 
 /**
  * Create scales configuration
+ *
+ * @param data - Chart data with axis titles and display options
+ * @param isExcess - Whether showing excess mortality
+ * @param showPercentage - Whether to format as percentages
+ * @param showDecimals - Whether to show decimal places
+ * @param decimals - Decimal precision ('auto' or number string)
+ * @param isDark - Dark mode flag
+ * @param isSSR - Server-side rendering flag (applies font metric adjustments)
  */
 export function createScalesConfig(
   data: MortalityChartData,
@@ -45,12 +53,17 @@ export function createScalesConfig(
   showPercentage: boolean,
   showDecimals: boolean,
   decimals: string,
-  isDark?: boolean
+  isDark?: boolean,
+  isSSR?: boolean
 ) {
   // Compute axis-specific precision (less than data labels)
   const axisPrecision = decimals === 'auto'
     ? computeAxisPrecision(data, showPercentage)
     : parseInt(decimals)
+
+  // SSR font adjustments: node-canvas has slightly different text metrics
+  // These offsets help align SSR output with browser rendering
+  const ssrTickPadding = isSSR ? 2 : 0
 
   return {
     x: {
@@ -66,7 +79,8 @@ export function createScalesConfig(
       },
       ticks: {
         color: textSoftColor(isDark),
-        font: getTicksFont()
+        font: getTicksFont(),
+        padding: ssrTickPadding
       }
     },
     y: {
@@ -87,6 +101,7 @@ export function createScalesConfig(
       ticks: {
         color: textSoftColor(isDark),
         font: getTicksFont(),
+        padding: ssrTickPadding,
         callback: function (
           this: Scale,
           tickValue: number | string

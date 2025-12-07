@@ -85,7 +85,7 @@ const emit = defineEmits<{
               Copy Link
             </div>
             <div class="text-xs text-gray-500 dark:text-gray-400">
-              Share this chart via URL
+              Share this chart via short URL
             </div>
           </div>
           <UIcon

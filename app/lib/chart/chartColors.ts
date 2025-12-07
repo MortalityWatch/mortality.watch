@@ -36,19 +36,20 @@ export const borderColor = (isDark?: boolean) => {
 
 export const backgroundColor = (isDark?: boolean) => {
   const dark = isDark !== undefined ? isDark : getIsDarkTheme()
-  // Dark mode: #202020 (must match app/colors.ts for visual parity)
-  return dark ? '#202020' : '#ffffff'
+  // Dark mode: #111827 (gray-900, must match SSR chartRenderer.ts and useExplorerChartActions.ts)
+  return dark ? '#111827' : '#ffffff'
 }
 
 export const getColorPalette = (
   isPopulationType: boolean,
   isLifeExpectancyType: boolean,
-  isExcess: boolean
+  isExcess: boolean,
+  isDark?: boolean
 ) => {
-  if (isPopulationType) return color_scale_pop()
-  if (isLifeExpectancyType) return color_scale_bad_good()
-  if (isExcess) return color_scale_diverging()
-  else return color_scale()
+  if (isPopulationType) return color_scale_pop(isDark)
+  if (isLifeExpectancyType) return color_scale_bad_good(isDark)
+  if (isExcess) return color_scale_diverging(isDark)
+  else return color_scale(isDark)
 }
 
 export const getGradientColor = (
@@ -107,8 +108,8 @@ const color_scale_pop_light = [
   '#6b9efc',
   '#5992fc'
 ]
-export const color_scale_pop = () => {
-  const isDark = getIsDarkTheme()
+export const color_scale_pop = (isDarkOverride?: boolean) => {
+  const isDark = isDarkOverride !== undefined ? isDarkOverride : getIsDarkTheme()
   return isDark ? color_scale_pop_light.map(toDarkTheme) : color_scale_pop_light
 }
 
@@ -118,8 +119,8 @@ export const getColorScale = (colors: string[], count: number) =>
 // Life expectancy scale (bad red to good green)
 const color_scale_bad_good_light = getColorScale(['#ff5393', '#5dac20'], 9)
 
-export const color_scale_bad_good = () => {
-  const isDark = getIsDarkTheme()
+export const color_scale_bad_good = (isDarkOverride?: boolean) => {
+  const isDark = isDarkOverride !== undefined ? isDarkOverride : getIsDarkTheme()
   return isDark ? color_scale_bad_good_light.map(toDarkTheme) : color_scale_bad_good_light
 }
 
@@ -135,8 +136,8 @@ const color_scale_diverging_light = [
   '#ff7c78',
   '#ff5853'
 ]
-export const color_scale_diverging = () => {
-  const isDark = getIsDarkTheme()
+export const color_scale_diverging = (isDarkOverride?: boolean) => {
+  const isDark = isDarkOverride !== undefined ? isDarkOverride : getIsDarkTheme()
   return isDark ? color_scale_diverging_light.map(toDarkTheme) : color_scale_diverging_light
 }
 
@@ -152,7 +153,7 @@ const color_scale_light = [
   '#ff6c67',
   '#ff5853'
 ]
-export const color_scale = () => {
-  const isDark = getIsDarkTheme()
+export const color_scale = (isDarkOverride?: boolean) => {
+  const isDark = isDarkOverride !== undefined ? isDarkOverride : getIsDarkTheme()
   return isDark ? color_scale_light.map(toDarkTheme) : color_scale_light
 }

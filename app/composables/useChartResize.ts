@@ -64,6 +64,9 @@ export function useChartResize() {
       return
     }
 
+    // Update chartPreset so isCustomMode computed property works correctly
+    chartPreset.value = preset.name
+
     // Special case: "Custom" enables resize handle with current or default dimensions
     if (preset.width === -1 && preset.height === -1) {
       hasBeenResized.value = true
@@ -108,12 +111,19 @@ export function useChartResize() {
     }
 
     hasBeenResized.value = true
-    targetElement.style.width = `${preset.width}px`
-    targetElement.style.height = `${preset.height}px`
 
-    // Save dimensions to local state (session-only)
-    chartWidth.value = preset.width
-    chartHeight.value = preset.height
+    // Scale by devicePixelRatio so preset represents output size, not CSS size
+    // e.g., "800×600" preset on 2x display → 400×300 CSS → 800×600 canvas
+    const dpr = window.devicePixelRatio || 1
+    const cssWidth = Math.round(preset.width / dpr)
+    const cssHeight = Math.round(preset.height / dpr)
+
+    targetElement.style.width = `${cssWidth}px`
+    targetElement.style.height = `${cssHeight}px`
+
+    // Save the CSS dimensions to local state (session-only)
+    chartWidth.value = cssWidth
+    chartHeight.value = cssHeight
 
     // Update the size label to show preset name
     containerSize.value = preset.name

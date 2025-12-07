@@ -26,3 +26,9 @@ export const decodeString = (str: string | undefined): string | undefined => {
   if (str === undefined) return undefined
   return decodeURIComponent(str)
 }
+
+export const decodeArray = (value: string | number | undefined): string[] | undefined => {
+  if (value === undefined) return undefined
+  const str = String(value)
+  return str.split(',').map(s => s.trim()).filter(s => s.length > 0)
+}

@@ -99,6 +99,16 @@ vi.mock('@/lib/compression/compress.browser', () => ({
   compress: vi.fn(() => Promise.resolve(new ArrayBuffer(8)))
 }))
 
+vi.mock('./useShortUrl', () => ({
+  useShortUrl: vi.fn(() => ({
+    getShortUrl: vi.fn(() => Promise.resolve('https://mortality.watch/s/abc123')),
+    shortUrl: { value: null },
+    isLoading: { value: false },
+    error: { value: null },
+    clearCache: vi.fn()
+  }))
+}))
+
 vi.mock('@/model', () => ({
   getKeyForType: vi.fn(() => ['cmr']),
   ChartPeriod: vi.fn().mockImplementation(labels => ({

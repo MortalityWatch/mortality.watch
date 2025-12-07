@@ -227,7 +227,7 @@ interface FeaturedChart {
   description: string | null
   slug: string | null
   chartType: 'explorer' | 'ranking'
-  chartState: string
+  chartConfig: string // Query string (e.g., "c=SWE&c=DEU&ct=yearly")
   thumbnailUrl: string | null
   isFeatured: boolean
   isPublic?: boolean

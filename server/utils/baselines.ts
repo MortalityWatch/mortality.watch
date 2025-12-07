@@ -151,6 +151,20 @@ const calculateBaseline = async (
         ? `${baseUrl}cum?y=${dataParam}&bs=${bs}&be=${be}&t=${trend ? 1 : 0}`
         : `${baseUrl}?y=${dataParam}&bs=${bs}&be=${be}&s=${s}&t=${trend ? 1 : 0}&m=${method}`
 
+    // Debug: Log the URL being sent (truncate data for readability)
+    console.log('SSR Baseline API call:', {
+      iso3c: data.iso3c?.[0],
+      baselineStartIdx,
+      baselineEndIdx,
+      bs,
+      be,
+      method,
+      chartType,
+      s,
+      dataLength: all_data.length,
+      urlPrefix: url.substring(0, 100) + '...'
+    })
+
     // Use server-side fetch with circuit breaker
     const text = await fetchBaselineWithCircuitBreaker(url)
     const json = JSON.parse(text)
@@ -201,9 +215,20 @@ const calculateBaseline = async (
       )
 
       // Create baseline array for full data length
+      // Baseline mean is available for all periods
       const baselineArray = new Array(all_data.length).fill(mean)
-      const lowerArray = new Array(all_data.length).fill(mean - 2 * stdDev)
-      const upperArray = new Array(all_data.length).fill(mean + 2 * stdDev)
+
+      // PI (lower/upper) is only calculated AFTER baseline period ends
+      // During and before baseline period, PI values are undefined
+      // This matches the stats API behavior
+      const lowerArray = new Array(all_data.length).fill(undefined)
+      const upperArray = new Array(all_data.length).fill(undefined)
+
+      // Only fill PI values for periods AFTER the baseline period (index > baselineEndIdx)
+      for (let i = baselineEndIdx + 1; i < all_data.length; i++) {
+        lowerArray[i] = mean - 2 * stdDev
+        upperArray[i] = mean + 2 * stdDev
+      }
 
       if (keys[1]) data[keys[1]] = baselineArray as DataVector
       if (keys[2]) data[keys[2]] = lowerArray as DataVector

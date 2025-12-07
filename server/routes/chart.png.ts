@@ -8,12 +8,12 @@ import {
   fetchChartData,
   transformChartData,
   generateChartConfig,
-  generateChartUrl,
   resolveChartStateForRendering
 } from '../utils/chartPngHelpers'
 import { dataLoader } from '../services/dataLoader'
 import { renderChart } from '../utils/chartRenderer'
 import { setServerDarkMode } from '../../app/composables/useTheme'
+import { getOrCreateShortUrl } from '../utils/urlShortener'
 
 /**
  * Server-side chart PNG rendering endpoint
@@ -46,6 +46,14 @@ export default defineEventHandler(async (event) => {
     const query = getQuery(event)
     const queryParams = parseQueryParams(query as Record<string, unknown>)
 
+    // Extract countries from query params for filename
+    const countriesParam = queryParams.c
+    const countries = Array.isArray(countriesParam)
+      ? countriesParam
+      : typeof countriesParam === 'string'
+        ? countriesParam.split(',')
+        : [] // Empty = no suffix in filename
+
     // Check for dark mode parameter
     const darkMode = queryParams.dm === '1' || queryParams.dm === 'true'
 
@@ -55,20 +63,22 @@ export default defineEventHandler(async (event) => {
     // Generate cache key from query parameters (including width/height and dark mode)
     const cacheKey = generateCacheKey({ ...queryParams, width, height, dm: darkMode ? '1' : '0' })
 
-    // Check filesystem cache first (7-day TTL)
-    const cachedBuffer = await getCachedChart(cacheKey)
-    if (cachedBuffer) {
-      // Return cached version with 7-day Cache-Control
-      setResponseHeaders(event, getChartResponseHeaders(cachedBuffer, [], true))
-      return cachedBuffer
+    // Skip cache in dev mode for easier debugging
+    const isDev = import.meta.dev
+
+    // Check filesystem cache first (7-day TTL) - skip in dev mode
+    if (!isDev) {
+      const cachedBuffer = await getCachedChart(cacheKey)
+      if (cachedBuffer) {
+        // Return cached version with 7-day Cache-Control
+        setResponseHeaders(event, getChartResponseHeaders(cachedBuffer, countries, true))
+        return cachedBuffer
+      }
     }
 
     // Queue the chart rendering to limit concurrency
     const buffer = await chartRenderQueue.enqueue(async () => {
       try {
-        // Generate chart URL for QR code
-        const chartUrl = generateChartUrl(queryParams)
-
         // Step 1: Do preliminary state resolution to get data loading params
         // We need allLabels to compute effective date range, but we need
         // countries/chartType/ageGroups to load data first
@@ -103,18 +113,49 @@ export default defineEventHandler(async (event) => {
         // This applies constraints AND computes effective date ranges
         const state = resolveChartStateForRendering(queryParams, allLabels)
 
+        // Build explorer URL from request query params (same params, just /explorer instead of /chart.png)
+        // Use request origin so short URL matches client (important for visual parity tests)
+        // Filter out PNG-specific params (width, height, dm) that don't apply to explorer
+        const requestUrl = getRequestURL(event)
+        const siteUrl = requestUrl.origin
+        const explorerParams = new URLSearchParams(requestUrl.search)
+        explorerParams.delete('width')
+        explorerParams.delete('height')
+        explorerParams.delete('dm') // Dark mode is PNG-specific
+        const explorerSearch = explorerParams.toString()
+        const fullChartUrl = `${siteUrl}/explorer${explorerSearch ? `?${explorerSearch}` : ''}`
+
+        // Get short URL for QR code (smaller QR code = easier to scan)
+        const chartUrl = await getOrCreateShortUrl(fullChartUrl, siteUrl)
+
+        // Debug: Log resolved state
+        logger.info('SSR Chart State:', {
+          queryParams,
+          resolvedState: state,
+          fullChartUrl,
+          shortUrl: chartUrl
+        })
+
         // Step 4: Fetch all required chart data with resolved state
         const { allCountries, allChartData } = await fetchChartData(state)
 
         // Step 5: Transform data into chart-ready format
+        // Use allChartData.labels (sliced from sliderStart) to match baseline data alignment
         const { chartData, isDeathsType, isLE, isPopulationType } = await transformChartData(
           state,
           allCountries,
-          allLabels,
+          allChartData.labels,
           allChartData,
           chartUrl,
           isAsmrType
         )
+
+        // Debug: Log chart data
+        logger.info('SSR Chart Data:', {
+          title: (chartData as { title?: string }).title,
+          subtitle: (chartData as { subtitle?: string }).subtitle,
+          url: (chartData as { url?: string }).url
+        })
 
         // Step 6: Generate chart configuration
         // Set dark mode override so color functions use correct theme
@@ -128,6 +169,13 @@ export default defineEventHandler(async (event) => {
             isPopulationType,
             chartUrl
           )
+
+          // Debug: Log chart config subtitle settings
+          const configOptions = chartConfig.options as Record<string, unknown>
+          const plugins = configOptions?.plugins as Record<string, unknown>
+          logger.info('SSR Chart Config Subtitle:', {
+            subtitle: plugins?.subtitle
+          })
 
           // Determine chart type for renderer
           const chartType = state.chartStyle === 'bar'
@@ -148,13 +196,15 @@ export default defineEventHandler(async (event) => {
       }
     })
 
-    // Save to filesystem cache (async, non-blocking)
-    saveCachedChart(cacheKey, buffer).catch((err) => {
-      logger.error('Failed to save chart to cache:', err instanceof Error ? err : new Error(String(err)))
-    })
+    // Save to filesystem cache (async, non-blocking) - skip in dev mode
+    if (!isDev) {
+      saveCachedChart(cacheKey, buffer).catch((err) => {
+        logger.error('Failed to save chart to cache:', err instanceof Error ? err : new Error(String(err)))
+      })
+    }
 
     // Set response headers with 7-day cache
-    setResponseHeaders(event, getChartResponseHeaders(buffer, [], false))
+    setResponseHeaders(event, getChartResponseHeaders(buffer, countries, false))
 
     return buffer
   } catch (error) {
