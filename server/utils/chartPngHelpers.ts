@@ -155,12 +155,13 @@ export async function fetchChartData(state: ChartRenderState) {
 
   // Get baseline keys for fetching (similar to useExplorerHelpers.getBaseKeysForFetch)
   // Population type doesn't need baseline
-  // IMPORTANT: Pass isExcess=false to get baseline keys needed for calculation
-  // The excess values are calculated from baseline, so we need the baseline keys
-  // Pass showPredictionInterval to include PI upper/lower keys when needed
+  // IMPORTANT: Always pass showBaseline=true (via !isPopulationType) to ensure baseline keys
+  // are included for calculation. The excess values are calculated from baseline data,
+  // so we always need the baseline keys even when baseline display is off.
+  // This matches the client's getBaseKeysForFetch which passes !isPopulationType(), not showBaseline.
   const isPopulationType = state.type === 'population'
   const baseKeys = !isPopulationType
-    ? getKeyForType(state.type, state.showBaseline, state.standardPopulation, false, state.showPredictionInterval)
+    ? getKeyForType(state.type, !isPopulationType, state.standardPopulation, false, state.showPredictionInterval)
     : undefined
 
   // Calculate startDateIndex from sliderStart to match client behavior
@@ -177,7 +178,9 @@ export async function fetchChartData(state: ChartRenderState) {
     cumulative: state.cumulative,
     ageGroupFilter: state.ageGroups,
     countryCodeFilter: state.countries,
-    baselineMethod: state.showBaseline ? state.baselineMethod : undefined,
+    // Always pass baselineMethod - excess mode needs baselines to calculate excess values
+    // even though the baseline line itself isn't displayed
+    baselineMethod: state.baselineMethod,
     baselineDateFrom: state.baselineDateFrom,
     baselineDateTo: state.baselineDateTo,
     keys: baseKeys
