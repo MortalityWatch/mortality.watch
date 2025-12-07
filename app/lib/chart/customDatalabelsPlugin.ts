@@ -156,7 +156,7 @@ export const customDatalabelsPlugin: Plugin<ChartType> = {
 
     const {
       borderRadius = 3,
-      padding = 2,
+      padding = 4,
       offset = 1.5,
       font = { size: 10, weight: 'bold' }
     } = options
@@ -220,11 +220,11 @@ export const customDatalabelsPlugin: Plugin<ChartType> = {
         // Measure text
         const textMetrics = ctx.measureText(text)
         const textWidth = textMetrics.width
-        const textHeight = font.size || 10
+        const fontSize = font.size || 10
 
         // Calculate background box dimensions
         const boxWidth = textWidth + padding * 2
-        const boxHeight = textHeight + padding * 2
+        const boxHeight = fontSize + padding * 2
 
         // Calculate position adjustments based on chart style and SSR
         // Note: increasing offset moves label AWAY from data point (higher for positive values)
@@ -293,13 +293,15 @@ export const customDatalabelsPlugin: Plugin<ChartType> = {
         ctx.fill()
         ctx.restore()
 
-        // Draw text
+        // Draw text centered in box
         ctx.save()
         ctx.fillStyle = labelTextColor
         ctx.font = fontStyle
         ctx.textBaseline = 'middle'
         ctx.textAlign = 'center'
-        ctx.fillText(text, labelX, labelY + boxHeight / 2)
+        // Text center = box center
+        const textY = boxY + boxHeight / 2
+        ctx.fillText(text, labelX, textY)
         ctx.restore()
       })
     })

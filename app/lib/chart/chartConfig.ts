@@ -378,7 +378,7 @@ export const makeMatrixChartConfig = (
     if (isNaN(value)) return bgColor
     else
       return getGradientColor(
-        getColorPalette(isPopulationType, isLE, isExcess),
+        getColorPalette(isPopulationType, isLE, isExcess, isDark),
         value
       )
   }
@@ -400,6 +400,31 @@ export const makeMatrixChartConfig = (
       decimals: data.labels.length > 15 ? 0 : 1
     }
   }
+
+  // Override tooltip for matrix - reads 'v' instead of 'y'
+  config.options!.plugins!.tooltip = {
+    callbacks: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      title: (items: any[]) => {
+        if (!items.length) return ''
+        const raw = items[0]?.raw as MortalityMatrixDataPoint
+        if (!raw) return ''
+        return `${raw.country} - ${raw.x}`
+      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      label: (item: any) => {
+        const raw = item?.raw as MortalityMatrixDataPoint
+        if (!raw) return ''
+        const value = raw.v
+        if (showPercentage) {
+          const sign = value >= 0 ? '+' : ''
+          return `${sign}${(value * 100).toFixed(1)}%`
+        }
+        return value.toLocaleString()
+      }
+    }
+  }
+
   config.data = {
     datasets: [
       {

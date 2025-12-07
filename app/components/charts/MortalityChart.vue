@@ -256,7 +256,7 @@ onMounted(() => {
   <Matrix
     v-if="matrixConfig?.data"
     id="chart"
-    :key="`matrix-${props.chartStyle}`"
+    :key="`matrix-${props.chartStyle}-${colorMode.value}`"
     ref="matrixChart"
     :data="matrixConfig.data"
     :options="matrixConfig.options"
