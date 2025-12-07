@@ -9,9 +9,8 @@ import type {
   Chart,
   ScaleOptionsByType
 } from 'chart.js'
-import type { Context } from 'chartjs-plugin-datalabels'
+import type { CustomDatalabelsConfig } from '../customDatalabelsPlugin'
 import {
-  bgColor,
   getDatalabelsFont,
   getLegendFont,
   getScaleTitleFont,
@@ -24,8 +23,8 @@ import {
   textColor,
   textSoftColor
 } from '../chartColors'
-import type { ChartErrorDataPoint, MortalityChartData } from '../chartTypes'
-import { getLabelText, resolveDecimals } from './chartLabels'
+import type { MortalityChartData } from '../chartTypes'
+import { resolveDecimals } from './chartLabels'
 import { createTooltipCallbacks } from './chartTooltips'
 import { getChartView, type ReferenceLineConfig } from '../chartViews/index'
 import type { ViewType } from '../../state'
@@ -62,7 +61,11 @@ export function createOnResizeHandler() {
       .font! = getTicksFont()
     ;(chart.options.scales!.y! as CartesianScaleOptions).title.font
       = getScaleTitleFont()
-    chart.options.plugins!.datalabels!.font! = getDatalabelsFont()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const customDatalabels = (chart.options.plugins as any)?.customDatalabels
+    if (customDatalabels) {
+      customDatalabels.font = getDatalabelsFont()
+    }
   }
 }
 
@@ -77,6 +80,7 @@ export function createOnResizeHandler() {
  * @param decimals - Decimal precision
  * @param isDark - Dark mode flag
  * @param isSSR - Server-side rendering flag (applies font metric adjustments)
+ * @param chartStyle - Chart style for positioning adjustments
  */
 export function createDatalabelsConfig(
   data: MortalityChartData,
@@ -86,61 +90,30 @@ export function createDatalabelsConfig(
   showDecimals: boolean,
   decimals: string,
   isDark?: boolean,
-  isSSR?: boolean
-) {
+  isSSR?: boolean,
+  chartStyle?: 'bar' | 'line' | 'matrix'
+): CustomDatalabelsConfig {
   // Compute chart-wide precision for consistent label display
   const resolvedDecimals = resolveDecimals(data, decimals, showPercentage)
-
-  // SSR offset adjustment: node-canvas text metrics differ slightly from browser
-  // A small negative offset helps align data labels with browser rendering
-  const ssrOffset = isSSR ? 3 : 0
 
   return {
     anchor: 'end' as const,
     align: 'end' as const,
-    display: (context: Context): boolean => {
-      const showLabels = data.showLabels
-      const hasLabels = context.dataset.label
-        ? context.dataset.label.length > 0
-        : false
-      const x = context.dataset.data[context.dataIndex]
-      if (
-        x
-        && typeof x === 'object'
-        && isNaN((x as ChartErrorDataPoint).y)
-      )
-        return false
-      const isErrorPoint = typeof x === 'object'
-      const hasValue = !isNaN(x as number)
-      return showLabels && hasLabels && (isErrorPoint || hasValue)
-    },
-    backgroundColor: bgColor,
-    color: () => {
-      return isDark ? '#ffffff' : '#000000'
-    },
-    formatter: (x: number | ChartErrorDataPoint) => {
-      let label = ''
-      const value = typeof x === 'number' ? x : x.y
-      const val = x as ChartErrorDataPoint
-      const min = val.yMin || val.yMinMin
-      const max = val.yMax || val.yMaxMax
-      const pi = showPi && min && max ? { min, max } : undefined
-      label = getLabelText(
-        label,
-        value,
-        pi,
-        true,
-        isExcess,
-        showPercentage,
-        showDecimals,
-        resolvedDecimals
-      )
-      return label
+    showLabels: data.showLabels,
+    textColor: isDark ? '#ffffff' : '#000000',
+    chartStyle,
+    isSSR,
+    formatterConfig: {
+      showPi,
+      isExcess,
+      showPercentage,
+      showDecimals,
+      decimals: typeof resolvedDecimals === 'number' ? resolvedDecimals : parseInt(resolvedDecimals, 10)
     },
     borderRadius: 3,
     padding: 2,
     font: getDatalabelsFont(),
-    offset: 1.5 + ssrOffset
+    offset: 1.5
   }
 }
 
@@ -254,6 +227,7 @@ export function createAnnotationsFromReferenceLines(
  * @param view - Chart view type
  * @param isDark - Dark mode flag
  * @param isSSR - Server-side rendering flag (applies font metric adjustments)
+ * @param chartStyle - Chart style for label positioning
  */
 export function createPluginsConfig(
   data: MortalityChartData,
@@ -267,7 +241,8 @@ export function createPluginsConfig(
   showCaption: boolean = true,
   view: string = 'mortality',
   isDark?: boolean,
-  isSSR?: boolean
+  isSSR?: boolean,
+  chartStyle?: 'bar' | 'line' | 'matrix'
 ) {
   const basePlugins = {
     title: {
@@ -299,7 +274,7 @@ export function createPluginsConfig(
         decimals
       )
     },
-    datalabels: createDatalabelsConfig(
+    customDatalabels: createDatalabelsConfig(
       data,
       showPi,
       isExcess,
@@ -307,7 +282,8 @@ export function createPluginsConfig(
       showDecimals,
       decimals,
       isDark,
-      isSSR
+      isSSR,
+      chartStyle
     ),
     ...(showQrCode && data.url ? { qrCodeUrl: data.url } : {}),
     showLogo,

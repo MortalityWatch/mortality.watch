@@ -22,8 +22,8 @@ import {
   BarWithErrorBar,
   BarWithErrorBarsController
 } from 'chartjs-chart-error-bars'
-import ChartDataLabels from 'chartjs-plugin-datalabels'
 import annotationPlugin from 'chartjs-plugin-annotation'
+import { getCustomDatalabelsPlugin } from '@/lib/chart/customDatalabelsPlugin'
 import type {
   MatrixDataPoint } from 'chartjs-chart-matrix'
 import {
@@ -76,7 +76,7 @@ Chart.register(
   SubTitle,
   Filler,
   BarWithErrorBar,
-  ChartDataLabels,
+  getCustomDatalabelsPlugin(),
   annotationPlugin,
   MatrixController,
   MatrixElement,
@@ -122,7 +122,9 @@ const lineConfig = computed(() => {
     props.decimals,
     isDark,
     undefined, // userTier
-    props.showCaption
+    props.showCaption,
+    false, // isSSR
+    'line'
   ) as unknown as ChartJSConfig<'line', (number | null)[]>
 })
 
@@ -142,7 +144,9 @@ const barConfig = computed(() => {
     props.decimals,
     isDark,
     undefined, // userTier
-    props.showCaption
+    props.showCaption,
+    false, // isSSR
+    'bar'
   ) as unknown as ChartJSConfig<'bar', (number | null)[]>
 })
 

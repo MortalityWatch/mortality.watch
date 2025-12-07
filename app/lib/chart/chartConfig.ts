@@ -23,8 +23,8 @@ import type {
   MortalityChartData,
   MortalityMatrixDataPoint
 } from './chartTypes'
-import type { Context } from 'chartjs-plugin-datalabels'
 import type { MatrixDataPoint } from 'chartjs-chart-matrix'
+import type { DatalabelContext } from './customDatalabelsPlugin'
 import {
   createBackgroundPlugin,
   createOnResizeHandler,
@@ -115,7 +115,8 @@ export const makeChartConfig = (
     isDark,
     undefined, // userTier
     true, // showCaption
-    isSSR
+    isSSR,
+    style as 'bar' | 'line'
   ) as unknown as Record<string, unknown>
 }
 
@@ -172,7 +173,8 @@ export const makeBarLineChartConfig = (
   isDark?: boolean,
   userTier?: number,
   showCaption: boolean = true,
-  isSSR: boolean = false
+  isSSR: boolean = false,
+  chartStyle: 'bar' | 'line' = 'line'
 ) => {
   // Feature gating: Only Pro users (tier 2) can hide the watermark/QR code
   if (userTier !== undefined && userTier < 2) {
@@ -212,7 +214,8 @@ export const makeBarLineChartConfig = (
         showCaption,
         data.ytitle.includes('Z-Score') ? 'zscore' : 'mortality', // Detect view from ytitle
         isDark,
-        isSSR
+        isSSR,
+        chartStyle
       ),
       scales: createScalesConfig(
         data,
@@ -309,8 +312,16 @@ export const makeMatrixChartConfig = (
     isDark,
     userTier,
     showCaption,
-    isSSR
+    isSSR,
+    'line' // Will be overridden - matrix uses its own data handling
   ) as unknown as ChartJSConfig<'matrix', MortalityMatrixDataPoint[]>
+
+  // Update plugin config with matrix chart style
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if ((config.options?.plugins as any)?.customDatalabels) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (config.options.plugins as any).customDatalabels.chartStyle = 'matrix'
+  }
 
   config.options!.scales = {
     x: {
@@ -347,7 +358,7 @@ export const makeMatrixChartConfig = (
   const matrixData = makeMatrixData(data)
   // Capture isDark in closure for callbacks
   const bgColor = backgroundColor(isDark)
-  const tileBackgroundColor = (context: Context) => {
+  const tileBackgroundColor = (context: DatalabelContext) => {
     const datapoint = context.dataset.data[
       context.dataIndex
     ] as MortalityMatrixDataPoint
@@ -374,23 +385,25 @@ export const makeMatrixChartConfig = (
         value
       )
   }
-  config.options!.plugins!.datalabels = {
-    display: (context: Context): boolean =>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(config.options!.plugins as any).customDatalabels = {
+    display: (context: DatalabelContext): boolean =>
       showLabels
       && !isNaN((context.dataset.data[context.dataIndex] as MatrixDatapoint).v),
     color: () => {
       // White in dark mode, black in light mode
       return isDark ? '#ffffff' : '#000000'
     },
-    formatter: (x: { v: number }) => {
+    formatter: (x: unknown) => {
+      const dataPoint = x as { v: number }
       if (showPercentage) {
-        return asPercentage(x.v, data.labels.length > 15 ? 0 : 1)
+        return asPercentage(dataPoint.v, data.labels.length > 15 ? 0 : 1)
       } else if (isLE) {
-        return numberWithCommas(round(x.v, 1))
+        return numberWithCommas(round(dataPoint.v, 1))
       } else {
         return isExcess
-          ? numberWithCommas(round(x.v), true)
-          : numberWithCommas(round(x.v))
+          ? numberWithCommas(round(dataPoint.v), true)
+          : numberWithCommas(round(dataPoint.v))
       }
     },
     font: getDatalabelsFont()

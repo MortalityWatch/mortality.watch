@@ -29,8 +29,8 @@ import {
   BarWithErrorBar,
   BarWithErrorBarsController
 } from 'chartjs-chart-error-bars'
-import ChartDataLabels from 'chartjs-plugin-datalabels'
 import annotationPlugin from 'chartjs-plugin-annotation'
+import { getCustomDatalabelsPlugin } from '../../app/lib/chart/customDatalabelsPlugin'
 import { MatrixController, MatrixElement } from 'chartjs-chart-matrix'
 import QRCode from 'qrcode'
 import { withTimeout, cleanupCanvas } from './memoryManager'
@@ -109,7 +109,7 @@ Chart.register(
   BarWithErrorBarsController,
   MatrixController,
   MatrixElement,
-  ChartDataLabels,
+  getCustomDatalabelsPlugin(),
   annotationPlugin
 )
 
