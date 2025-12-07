@@ -90,10 +90,10 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'bun run preview',
+    command: 'bun run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
-    timeout: 30 * 1000, // 30 seconds for preview server startup
+    timeout: 60 * 1000, // 60 seconds for dev server startup
     stdout: 'pipe', // Show server output in test logs
     stderr: 'pipe', // Show server errors in test logs
     env: {
