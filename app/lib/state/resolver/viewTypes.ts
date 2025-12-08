@@ -142,4 +142,7 @@ export interface ViewConfig {
 
   /** Which chart styles are compatible */
   compatibleChartStyles?: ChartStyle[]
+
+  /** Which chart types are compatible (e.g., yearly, fluseason, weekly, monthly) */
+  compatibleChartTypes?: string[]
 }
