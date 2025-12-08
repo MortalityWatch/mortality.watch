@@ -18,6 +18,7 @@ const emit = defineEmits<{
 
 // Period length management
 const periodLengthOptions = [
+  { label: '1 year', value: 1 },
   { label: '3 years', value: 3 },
   { label: '5 years', value: 5 },
   { label: '10 years', value: 10 },
@@ -25,10 +26,11 @@ const periodLengthOptions = [
 ]
 
 // Get default period length based on baseline method
-// ETS needs at least 10 years of data to work properly
+// Different methods have different optimal period lengths
 const getDefaultPeriodLength = (method: string): number => {
-  if (method === 'exp') return 10 // ETS requires 10 years
-  return 3 // Default for other methods
+  if (method === 'naive') return 1 // Last value only needs 1 year
+  if (method === 'exp' || method === 'lin_reg') return 10 // ETS and linear regression need 10 years
+  return 3 // Default for mean/median
 }
 
 /**
@@ -50,21 +52,33 @@ const calculatePeriodLength = (sliderValue: string[], fallbackMethod?: string): 
     return fallbackMethod ? getDefaultPeriodLength(fallbackMethod) : 3
   }
 
-  // Extract years and validate they're valid numbers
-  const startYear = parseInt(startDate.substring(0, 4))
-  const endYear = parseInt(endDate.substring(0, 4))
+  // Find the actual number of labels spanned by this period
+  const startIdx = props.labels.indexOf(startDate)
+  const endIdx = props.labels.indexOf(endDate)
 
-  if (isNaN(startYear) || isNaN(endYear)) {
+  if (startIdx === -1 || endIdx === -1) {
     return fallbackMethod ? getDefaultPeriodLength(fallbackMethod) : 3
   }
 
-  // Calculate approximate years (add 1 because range is inclusive)
-  const years = endYear - startYear + 1
+  // Calculate the span in labels (inclusive)
+  const labelSpan = endIdx - startIdx + 1
 
-  // Match to preset options
-  if (years === 3) return 3
-  if (years === 5) return 5
-  if (years === 10) return 10
+  // Calculate expected label spans for each preset based on labels per year
+  const uniqueYears = Array.from(new Set(props.labels.filter(l => l).map(l => l.substring(0, 4))))
+  const labelsPerYear = Math.round(props.labels.length / uniqueYears.length)
+
+  // Expected spans for each preset (allowing for small rounding differences)
+  const expected1 = 1 * labelsPerYear
+  const expected3 = 3 * labelsPerYear
+  const expected5 = 5 * labelsPerYear
+  const expected10 = 10 * labelsPerYear
+
+  // Match to preset options with tolerance for off-by-one errors
+  // This is necessary because of rounding in the calculation
+  if (Math.abs(labelSpan - expected1) <= 1) return 1
+  if (Math.abs(labelSpan - expected3) <= 1) return 3
+  if (Math.abs(labelSpan - expected5) <= 1) return 5
+  if (Math.abs(labelSpan - expected10) <= 1) return 10
 
   // Otherwise it's custom
   return 0
@@ -104,6 +118,9 @@ watch(() => props.baselineMethod, (newMethod) => {
 watch(() => selectedPeriodLength.value, (newLength, oldLength) => {
   // Skip if Custom (0) or if this is the initial value
   if (!newLength || newLength === 0 || oldLength === undefined) return
+
+  // Skip for naive method - it uses single-value mode and doesn't need period adjustment
+  if (props.baselineMethod === 'naive') return
 
   // Calculate new baseline range based on the period length
   // Keep the start date, adjust the end date
