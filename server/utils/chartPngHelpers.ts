@@ -271,10 +271,12 @@ export function generateChartConfig(
       true // isSSR
     )
 
-    // Add the chart URL for QR code
-    const configOptions = config.options as Record<string, unknown> || {}
-    const plugins = configOptions.plugins as Record<string, unknown> || {}
-    plugins.qrCodeUrl = chartUrl
+    // Add the chart URL for QR code (only if showQrCode is true)
+    if (state.showQrCode) {
+      const configOptions = config.options as Record<string, unknown> || {}
+      const plugins = configOptions.plugins as Record<string, unknown> || {}
+      plugins.qrCodeUrl = chartUrl
+    }
 
     return config as unknown as Record<string, unknown>
   } else {
@@ -295,10 +297,12 @@ export function generateChartConfig(
       state.chartStyle as 'bar' | 'line'
     )
 
-    // Add the chart URL for QR code
-    const configOptions = config.options as Record<string, unknown> || {}
-    const plugins = configOptions.plugins as Record<string, unknown> || {}
-    plugins.qrCodeUrl = chartUrl
+    // Add the chart URL for QR code (only if showQrCode is true)
+    if (state.showQrCode) {
+      const configOptions = config.options as Record<string, unknown> || {}
+      const plugins = configOptions.plugins as Record<string, unknown> || {}
+      plugins.qrCodeUrl = chartUrl
+    }
 
     return config as unknown as Record<string, unknown>
   }

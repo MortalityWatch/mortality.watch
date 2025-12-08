@@ -147,7 +147,7 @@ async function preloadLogo(darkMode: boolean = false) {
  * Full logo plugin for server-side rendering
  * Includes logo and QR code (drawn after images are pre-loaded)
  */
-const createLogoPlugin = (logoImage: CanvasImage, qrImage: CanvasImage | null, darkMode: boolean = false) => {
+const createLogoPlugin = (logoImage: CanvasImage | null, qrImage: CanvasImage | null, darkMode: boolean = false) => {
   return {
     id: 'LogoPlugin',
     beforeDraw: (chart: Chart) => {
@@ -236,8 +236,9 @@ export async function renderChart(
     // Wrap entire rendering in timeout (10 seconds)
     return await withTimeout(
       (async () => {
-        // Pre-load logo with appropriate theme
-        const logoImage = await preloadLogo(darkMode)
+        // Pre-load logo with appropriate theme (only if showLogo is true)
+        const showLogo = chartConfig.options?.plugins?.showLogo !== false
+        const logoImage = showLogo ? await preloadLogo(darkMode) : null
 
         // Pre-load QR code if URL provided
         let qrImage: CanvasImage | null = null
