@@ -56,6 +56,31 @@ export function getDimensions(query: Record<string, unknown>): { width: number, 
 }
 
 /**
+ * Extract device pixel ratio from query parameters with default
+ * Default is 2 for high-quality OG images, use 1 for thumbnails
+ * @param query - Query parameters
+ * @returns Device pixel ratio (1-3)
+ */
+export function getDevicePixelRatio(query: Record<string, unknown>): number {
+  const dp = parseInt((query.dp as string) || '2')
+  return Math.max(1, Math.min(3, dp))
+}
+
+/**
+ * Extract zoom level from query parameters with default
+ * Zoom renders chart at larger internal size, then scales down.
+ * z > 1: text/elements appear larger (render bigger, scale down)
+ * z < 1: text/elements appear smaller (render smaller, scale up)
+ * Default is 1 (no zoom).
+ * @param query - Query parameters
+ * @returns Zoom level (0.25-4)
+ */
+export function getZoomLevel(query: Record<string, unknown>): number {
+  const z = parseFloat((query.z as string) || '1')
+  return Math.max(0.25, Math.min(4, z))
+}
+
+/**
  * Generate chart title from state
  * @param state - Resolved chart state
  * @returns Chart title string
@@ -268,6 +293,7 @@ export function generateChartConfig(
       state.decimals,
       undefined, // userTier
       state.showCaption,
+      state.showTitle,
       true // isSSR
     )
 
@@ -293,6 +319,7 @@ export function generateChartConfig(
       isDark,
       undefined, // userTier
       state.showCaption,
+      state.showTitle,
       true, // isSSR
       state.chartStyle as 'bar' | 'line'
     )

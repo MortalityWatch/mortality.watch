@@ -104,6 +104,7 @@ export interface ExplorerStateValues {
   showLogo: boolean
   showQrCode: boolean
   showCaption: boolean
+  showTitle: boolean
   decimals: string
   dateFrom: string
   dateTo: string

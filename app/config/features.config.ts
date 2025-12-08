@@ -174,6 +174,13 @@ export const FEATURES = {
     category: 'branding'
   },
 
+  HIDE_TITLE: {
+    tier: TIERS.PRO,
+    name: 'Hide Title',
+    description: 'Hide chart title',
+    category: 'branding'
+  },
+
   ADVANCED_LE: {
     tier: TIERS.PRO,
     name: 'Advanced Life Expectancy',

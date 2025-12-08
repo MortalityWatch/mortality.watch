@@ -96,6 +96,7 @@ export const makeChartConfig = (
       'auto', // decimals
       undefined, // userTier
       true, // showCaption
+      true, // showTitle
       isSSR
     ) as unknown as Record<string, unknown>
   }
@@ -112,6 +113,7 @@ export const makeChartConfig = (
     isDark,
     undefined, // userTier
     true, // showCaption
+    true, // showTitle
     isSSR,
     style as 'bar' | 'line'
   ) as unknown as Record<string, unknown>
@@ -170,6 +172,7 @@ export const makeBarLineChartConfig = (
   isDark?: boolean,
   userTier?: number,
   showCaption: boolean = true,
+  showTitle: boolean = true,
   isSSR: boolean = false,
   chartStyle: 'bar' | 'line' = 'line'
 ) => {
@@ -209,6 +212,7 @@ export const makeBarLineChartConfig = (
         showQrCode,
         showLogo,
         showCaption,
+        showTitle,
         data.ytitle.includes('Z-Score') ? 'zscore' : 'mortality', // Detect view from ytitle
         isDark,
         isSSR,
@@ -294,6 +298,7 @@ export const makeMatrixChartConfig = (
   decimals: string = 'auto',
   userTier?: number,
   showCaption: boolean = true,
+  showTitle: boolean = true,
   isSSR: boolean = false
 ) => {
   const config = makeBarLineChartConfig(
@@ -309,6 +314,7 @@ export const makeMatrixChartConfig = (
     isDark,
     userTier,
     showCaption,
+    showTitle,
     isSSR,
     'line' // Will be overridden - matrix uses its own data handling
   ) as unknown as ChartJSConfig<'matrix', MortalityMatrixDataPoint[]>

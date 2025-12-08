@@ -4,6 +4,8 @@ import {
   getClientIp,
   parseQueryParams,
   getDimensions,
+  getDevicePixelRatio,
+  getZoomLevel,
   getChartResponseHeaders,
   fetchChartData,
   transformChartData,
@@ -60,8 +62,14 @@ export default defineEventHandler(async (event) => {
     // Get dimensions from query or use defaults (OG image size)
     const { width, height } = getDimensions(query as Record<string, unknown>)
 
-    // Generate cache key from query parameters (including width/height and dark mode)
-    const cacheKey = generateCacheKey({ ...queryParams, width, height, dm: darkMode ? '1' : '0' })
+    // Get device pixel ratio (default 2 for OG images, 1 for thumbnails)
+    const devicePixelRatio = getDevicePixelRatio(query as Record<string, unknown>)
+
+    // Get zoom level (default 1, use 1.5-2 for thumbnails to make text larger)
+    const zoom = getZoomLevel(query as Record<string, unknown>)
+
+    // Generate cache key from query parameters (including width/height, dark mode, dp, and zoom)
+    const cacheKey = generateCacheKey({ ...queryParams, width, height, dm: darkMode ? '1' : '0', dp: devicePixelRatio, z: zoom })
 
     // Skip cache in dev mode for easier debugging
     const isDev = import.meta.dev
@@ -185,7 +193,7 @@ export default defineEventHandler(async (event) => {
               : 'line'
 
           // Step 7: Render chart using server-side Canvas renderer
-          return await renderChart(width, height, chartConfig, chartType, darkMode)
+          return await renderChart(width, height, chartConfig, chartType, darkMode, devicePixelRatio, zoom)
         } finally {
           // Clear dark mode override
           setServerDarkMode(null)

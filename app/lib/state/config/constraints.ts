@@ -69,6 +69,7 @@ export const FIELD_UPDATE_STRATEGY: Record<string, FieldUpdateType> = {
   showLogo: 'none',
   showQrCode: 'none',
   showCaption: 'none',
+  showTitle: 'none',
   decimals: 'none',
   chartPreset: 'none'
 }

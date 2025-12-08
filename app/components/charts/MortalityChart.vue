@@ -57,6 +57,7 @@ const props = defineProps<{
   showLogo: boolean
   showQrCode: boolean
   showCaption: boolean
+  showTitle: boolean
   decimals?: string
 }>()
 
@@ -123,6 +124,7 @@ const lineConfig = computed(() => {
     isDark,
     undefined, // userTier
     props.showCaption,
+    props.showTitle,
     false, // isSSR
     'line'
   ) as unknown as ChartJSConfig<'line', (number | null)[]>
@@ -145,6 +147,7 @@ const barConfig = computed(() => {
     isDark,
     undefined, // userTier
     props.showCaption,
+    props.showTitle,
     false, // isSSR
     'bar'
   ) as unknown as ChartJSConfig<'bar', (number | null)[]>
@@ -168,7 +171,8 @@ const matrixConfig = computed(() => {
     isDark,
     props.decimals,
     undefined, // userTier
-    props.showCaption
+    props.showCaption,
+    props.showTitle
   ) as unknown as ChartJSConfig<'matrix', MatrixDataPoint[]>
 })
 

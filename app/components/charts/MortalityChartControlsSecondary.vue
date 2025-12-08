@@ -52,6 +52,7 @@ const props = defineProps<{
   showLogo: boolean
   showQrCode: boolean
   showCaption: boolean
+  showTitle: boolean
   decimals: string
 }>()
 
@@ -78,6 +79,7 @@ const emit = defineEmits<{
   showLogoChanged: [value: boolean]
   showQrCodeChanged: [value: boolean]
   showCaptionChanged: [value: boolean]
+  showTitleChanged: [value: boolean]
   decimalsChanged: [value: string]
 }>()
 
@@ -213,6 +215,11 @@ const showQrCode = computed({
 const showCaption = computed({
   get: () => props.showCaption,
   set: (v: boolean) => emit('showCaptionChanged', v)
+})
+
+const showTitle = computed({
+  get: () => props.showTitle,
+  set: (v: boolean) => emit('showTitleChanged', v)
 })
 
 const selectedDecimals = computed({
@@ -367,6 +374,7 @@ const activeTab = ref('data')
         :is-matrix-chart-style="props.isMatrixChartStyle"
         :is-updating="props.isUpdating"
         :show-labels="showLabels"
+        :show-title="showTitle"
         :show-caption="showCaption"
         :show-logo="showLogo"
         :show-qr-code="showQrCode"
@@ -374,6 +382,7 @@ const activeTab = ref('data')
         @update:selected-decimals="selectedDecimals = $event"
         @colors-changed="(val) => emit('userColorsChanged', val)"
         @update:show-labels="showLabels = $event"
+        @update:show-title="showTitle = $event"
         @update:show-caption="showCaption = $event"
         @update:show-logo="showLogo = $event"
         @update:show-qr-code="showQrCode = $event"

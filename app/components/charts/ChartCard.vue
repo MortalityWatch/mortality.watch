@@ -58,7 +58,7 @@
       >
         <NuxtLink :to="getChartLink()">
           <img
-            :src="getThumbnailUrl()"
+            :src="getThumbnailUrl"
             :alt="chart.name"
             class="w-full h-full object-cover object-top hover:scale-105 transition-transform"
             loading="lazy"
@@ -241,8 +241,8 @@ function getRemixUrl() {
   return config ? `${baseUrl}?${config}` : baseUrl
 }
 
-// Get thumbnail URL - chartConfig is already a query string
-function getThumbnailUrl() {
+// Get thumbnail URL - chartConfig is already a query string (reactive to theme changes)
+const getThumbnailUrl = computed(() => {
   if (props.chart.thumbnailUrl) {
     return props.chart.thumbnailUrl
   }
@@ -259,14 +259,19 @@ function getThumbnailUrl() {
     params.set('dm', '1')
   }
 
-  // Hide QR code and logo for thumbnails
+  // Hide title, QR code and logo for thumbnails
+  params.set('ti', '0')
   params.set('qr', '0')
   params.set('l', '0')
-  params.set('width', '600')
-  params.set('height', '337')
+  params.set('cap', '0')
+  // Use 2x device pixel ratio for thumbnails and adjusted zoom
+  params.set('dp', '2')
+  params.set('z', '1.33')
+  params.set('width', '352')
+  params.set('height', '198')
 
   return `${endpoint}?${params.toString()}`
-}
+})
 
 // Format date for my-charts
 function formatDate(value: number | string | Date) {
