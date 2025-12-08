@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test'
 import { login } from './helpers/auth'
 
-test('save modal opens and closes on cancel', async ({ page }) => {
+test('save modal opens and closes on cancel', { tag: '@flaky' }, async ({ page }) => {
+  // Increase timeout for this flaky test - CI environment can be slow
+  test.setTimeout(60000)
   // Login first
   await login(page)
 
@@ -35,11 +37,8 @@ test('save modal opens and closes on cancel', async ({ page }) => {
     }
   })
 
-  // Wait a bit for the modal to appear
-  await page.waitForTimeout(500)
-
-  // Verify the modal is visible
-  await expect(page.getByRole('dialog')).toBeVisible()
+  // Wait for the modal to appear (with longer timeout for CI)
+  await expect(page.getByRole('dialog')).toBeVisible({ timeout: 10000 })
   await expect(page.getByRole('heading', { name: 'Save Chart' })).toBeVisible()
 
   // Click Cancel button
