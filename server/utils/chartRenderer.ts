@@ -147,7 +147,7 @@ async function preloadLogo(darkMode: boolean = false) {
  * Full logo plugin for server-side rendering
  * Includes logo and QR code (drawn after images are pre-loaded)
  */
-const createLogoPlugin = (logoImage: CanvasImage, qrImage: CanvasImage | null, darkMode: boolean = false) => {
+const createLogoPlugin = (logoImage: CanvasImage | null, qrImage: CanvasImage | null, darkMode: boolean = false) => {
   return {
     id: 'LogoPlugin',
     beforeDraw: (chart: Chart) => {
@@ -219,6 +219,8 @@ export function createChartCanvas(width: number, height: number) {
  * @param chartConfig - Chart.js configuration object
  * @param chartType - Chart type (line, bar, or matrix)
  * @param darkMode - Whether to render in dark mode (default: false)
+ * @param devicePixelRatio - Device pixel ratio for scaling (default: 2 for OG images, 1 for thumbnails)
+ * @param zoom - Zoom level for making text/elements larger (default: 1, renders at larger size then scales down)
  * @returns PNG buffer of rendered chart
  */
 export async function renderChart(
@@ -226,9 +228,19 @@ export async function renderChart(
   height: number,
   chartConfig: ServerChartConfig,
   chartType: 'line' | 'bar' | 'matrix' = 'line',
-  darkMode: boolean = false
+  darkMode: boolean = false,
+  devicePixelRatio: number = 2,
+  zoom: number = 1
 ): Promise<Buffer> {
-  const { canvas, ctx } = createChartCanvas(width, height)
+  // Render at zoomed logical size (elements appear larger when downscaled)
+  const renderWidth = Math.round(width * zoom)
+  const renderHeight = Math.round(height * zoom)
+
+  // Target output size
+  const targetWidth = Math.round(width * devicePixelRatio)
+  const targetHeight = Math.round(height * devicePixelRatio)
+
+  const { canvas, ctx } = createChartCanvas(renderWidth, renderHeight)
   let chart: ServerChart | null = null
   let logoPlugin: { id: string } | null = null
 
@@ -236,8 +248,9 @@ export async function renderChart(
     // Wrap entire rendering in timeout (10 seconds)
     return await withTimeout(
       (async () => {
-        // Pre-load logo with appropriate theme
-        const logoImage = await preloadLogo(darkMode)
+        // Pre-load logo with appropriate theme (only if showLogo is true)
+        const showLogo = chartConfig.options?.plugins?.showLogo !== false
+        const logoImage = showLogo ? await preloadLogo(darkMode) : null
 
         // Pre-load QR code if URL provided
         let qrImage: CanvasImage | null = null
@@ -273,7 +286,7 @@ export async function renderChart(
             ...(chartConfig.options || {}),
             responsive: false,
             animation: false,
-            devicePixelRatio: 2
+            devicePixelRatio
           },
           data: chartConfig.data || { labels: [], datasets: [] }
         }
@@ -290,7 +303,24 @@ export async function renderChart(
           chart.update()
         }
 
-        return canvas.toBuffer('image/png')
+        // Check actual canvas size (Chart.js may have modified it)
+        const actualWidth = canvas.width
+        const actualHeight = canvas.height
+
+        // If actual size matches target, no scaling needed
+        if (actualWidth === targetWidth && actualHeight === targetHeight) {
+          return canvas.toBuffer('image/png')
+        }
+
+        // Scale to target size (high quality)
+        const targetCanvas = createCanvas(targetWidth, targetHeight)
+        const targetCtx = targetCanvas.getContext('2d')
+        targetCtx.imageSmoothingEnabled = true
+        // node-canvas supports imageSmoothingQuality at runtime
+        ;(targetCtx as unknown as { imageSmoothingQuality: string }).imageSmoothingQuality = 'high'
+        targetCtx.drawImage(canvas, 0, 0, targetWidth, targetHeight)
+
+        return targetCanvas.toBuffer('image/png')
       })(),
       10000, // 10 second timeout
       'Chart rendering'

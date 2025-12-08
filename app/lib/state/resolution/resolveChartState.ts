@@ -59,6 +59,11 @@ export interface ChartRenderState {
   // Optional
   userColors?: string[]
   decimals: string
+  showLogo: boolean
+  showQrCode: boolean
+  showCaption: boolean
+  showTitle: boolean
+  darkMode: boolean
 }
 
 /**
@@ -219,7 +224,12 @@ export function resolveChartStateForRendering(
 
     // Optional
     userColors: constrainedState.userColors as string[] | undefined,
-    decimals: (constrainedState.decimals as string) || 'auto'
+    decimals: (constrainedState.decimals as string) || 'auto',
+    showLogo: (constrainedState.showLogo as boolean) ?? true,
+    showQrCode: (constrainedState.showQrCode as boolean) ?? true,
+    showCaption: (constrainedState.showCaption as boolean) ?? true,
+    showTitle: (constrainedState.showTitle as boolean) ?? true,
+    darkMode: (constrainedState.darkMode as boolean) ?? false
   }
 }
 
@@ -301,7 +311,12 @@ export function resolveChartStateFromSnapshot(
     showPercentage: (constrainedState.showPercentage as boolean) ?? false,
     showLogarithmic: constrainedState.showLogarithmic as boolean,
     userColors: constrainedState.userColors as string[] | undefined,
-    decimals: (constrainedState.decimals as string) || 'auto'
+    decimals: (constrainedState.decimals as string) || 'auto',
+    showLogo: (constrainedState.showLogo as boolean) ?? true,
+    showQrCode: (constrainedState.showQrCode as boolean) ?? true,
+    showCaption: (constrainedState.showCaption as boolean) ?? true,
+    showTitle: (constrainedState.showTitle as boolean) ?? true,
+    darkMode: (constrainedState.darkMode as boolean) ?? false
   }
 }
 

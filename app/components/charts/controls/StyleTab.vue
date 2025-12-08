@@ -11,6 +11,7 @@ const props = defineProps<{
   isMatrixChartStyle: boolean
   isUpdating: boolean
   showLabels: boolean
+  showTitle: boolean
   showCaption: boolean
   showLogo: boolean
   showQrCode: boolean
@@ -21,6 +22,7 @@ const emit = defineEmits<{
   'update:selectedDecimals': [value: string]
   'colors-changed': [value: string[]]
   'update:showLabels': [value: boolean]
+  'update:showTitle': [value: boolean]
   'update:showCaption': [value: boolean]
   'update:showLogo': [value: boolean]
   'update:showQrCode': [value: boolean]
@@ -30,6 +32,11 @@ const emit = defineEmits<{
 const showLabelsModel = computed({
   get: () => props.showLabels,
   set: v => emit('update:showLabels', v)
+})
+
+const showTitleModel = computed({
+  get: () => props.showTitle,
+  set: v => emit('update:showTitle', v)
 })
 
 const showCaptionModel = computed({
@@ -108,15 +115,47 @@ const selectedDecimalsModel = computed({
         <span class="w-1 h-4 bg-primary-500 rounded-full" />
         Text &amp; Labels
       </h3>
-      <div class="flex flex-col gap-4">
-        <div class="flex flex-wrap gap-4">
-          <UiSwitchRow
-            v-model="showLabelsModel"
-            label="Show Labels"
-          />
-        </div>
+      <div class="flex flex-wrap gap-4">
+        <!-- Feature gate: Only Pro users can hide title -->
+        <FeatureGate feature="HIDE_TITLE">
+          <UiControlRow>
+            <template #default>
+              <label class="text-sm font-medium whitespace-nowrap">
+                Show Title
+                <FeatureBadge
+                  feature="HIDE_TITLE"
+                  class="ml-2"
+                />
+              </label>
+              <USwitch v-model="showTitleModel" />
+            </template>
+          </UiControlRow>
+        </FeatureGate>
 
-        <!-- Feature gate: Only Pro users can customize number precision -->
+        <!-- Feature gate: Only Pro users can show caption -->
+        <FeatureGate feature="SHOW_CAPTION">
+          <UiControlRow>
+            <template #default>
+              <label class="text-sm font-medium whitespace-nowrap">
+                Show Caption
+                <FeatureBadge
+                  feature="SHOW_CAPTION"
+                  class="ml-2"
+                />
+              </label>
+              <USwitch v-model="showCaptionModel" />
+            </template>
+          </UiControlRow>
+        </FeatureGate>
+
+        <UiSwitchRow
+          v-model="showLabelsModel"
+          label="Show Labels"
+        />
+      </div>
+
+      <!-- Feature gate: Only Pro users can customize number precision -->
+      <div class="mt-4">
         <FeatureGate feature="CUSTOM_DECIMALS">
           <UiControlRow>
             <template #default>
@@ -139,43 +178,6 @@ const selectedDecimalsModel = computed({
             </template>
           </UiControlRow>
         </FeatureGate>
-
-        <div class="flex flex-wrap gap-4">
-          <!-- Feature gate: Only Pro users can show caption -->
-          <FeatureGate feature="SHOW_CAPTION">
-            <UiControlRow>
-              <template #default>
-                <label class="text-sm font-medium whitespace-nowrap">
-                  Show Caption
-                  <FeatureBadge
-                    feature="SHOW_CAPTION"
-                    class="ml-2"
-                  />
-                </label>
-                <USwitch v-model="showCaptionModel" />
-              </template>
-            </UiControlRow>
-            <template #disabled>
-              <UiControlRow>
-                <template #default>
-                  <div class="opacity-50 flex items-center gap-2">
-                    <label class="text-sm font-medium whitespace-nowrap">
-                      Show Caption
-                      <FeatureBadge
-                        feature="SHOW_CAPTION"
-                        class="ml-2"
-                      />
-                    </label>
-                    <USwitch
-                      v-model="showCaptionModel"
-                      disabled
-                    />
-                  </div>
-                </template>
-              </UiControlRow>
-            </template>
-          </FeatureGate>
-        </div>
       </div>
     </div>
 

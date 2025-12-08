@@ -239,6 +239,7 @@ export function createPluginsConfig(
   showQrCode: boolean,
   showLogo: boolean,
   showCaption: boolean = true,
+  showTitle: boolean = true,
   view: string = 'mortality',
   isDark?: boolean,
   isSSR?: boolean,
@@ -246,7 +247,7 @@ export function createPluginsConfig(
 ) {
   const basePlugins = {
     title: {
-      display: true,
+      display: showTitle,
       text: data.title,
       color: textColor(isDark),
       font: getTitleFont()
