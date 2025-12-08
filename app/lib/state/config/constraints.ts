@@ -148,6 +148,27 @@ const baselineOffConstraints: StateConstraint = {
 }
 
 /**
+ * Baseline ON restoration constraint
+ * When baseline is enabled and PI is not explicitly overridden by user,
+ * restore PI to view default. This fixes the issue where PI stays disabled
+ * after baseline disable→enable cycle.
+ *
+ * Only applies to mortality view where PI defaults to true.
+ * Excess and Z-score views have PI=false by default.
+ *
+ * Priority 0 (lowest) ensures user overrides take precedence.
+ */
+const baselineOnRestorePI: StateConstraint = {
+  when: state => state.showBaseline === true && (state.view === 'mortality' || state.view === undefined),
+  apply: {
+    showPredictionInterval: true // Restore to mortality view default
+  },
+  reason: 'Restore prediction interval to default when baseline is enabled',
+  allowUserOverride: true, // Allow user to explicitly set PI=false
+  priority: 0 // Lowest priority - only acts as fallback default
+}
+
+/**
  * Population type constraints
  * Population doesn't support baseline or prediction intervals
  * Note: Population is not compatible with excess view (handled by view.compatibleMetrics)
@@ -268,5 +289,8 @@ export const STATE_CONSTRAINTS: StateConstraint[] = [
 
   // Priority 1: Normal business rules
   baselineOffConstraints,
-  cumulativeOffConstraints
+  cumulativeOffConstraints,
+
+  // Priority 0: Soft defaults (lowest priority, allow user override)
+  baselineOnRestorePI
 ]
