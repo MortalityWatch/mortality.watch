@@ -115,8 +115,28 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Convert state to query string and compute hash
-  const queryString = chartStateToQueryString(chartStateObj)
+  // Convert state to query string
+  // For ranking charts, the state object already uses URL parameter keys (a, p, j, etc.)
+  // For explorer charts, we need to convert field names to URL keys using chartStateToQueryString
+  let queryString: string
+  if (chartType === 'ranking') {
+    // Ranking: state already has URL keys, just convert to query string
+    const urlParams = new URLSearchParams()
+    for (const [key, value] of Object.entries(chartStateObj)) {
+      if (value !== undefined && value !== null) {
+        if (Array.isArray(value)) {
+          value.forEach(v => urlParams.append(key, String(v)))
+        } else {
+          urlParams.set(key, String(value))
+        }
+      }
+    }
+    queryString = urlParams.toString()
+  } else {
+    // Explorer: use chartStateToQueryString to convert field names to URL keys
+    queryString = chartStateToQueryString(chartStateObj)
+  }
+
   const params = queryStringToParams(queryString)
   const chartId = computeConfigHash(params)
 
