@@ -5,14 +5,14 @@ import { ChartPeriod, type ChartType } from '../../app/model/period'
 import { getKeyForType } from '../../app/model/utils'
 import { getFilteredChartDataFromConfig } from '../../app/lib/chart/filtering'
 import { getChartColors } from '../../app/colors'
-import { makeChartConfig } from '../../app/lib/chart/chartConfig'
+import { makeBarLineChartConfig, makeMatrixChartConfig } from '../../app/lib/chart/chartConfig'
+import type { MortalityChartData } from '../../app/lib/chart/chartTypes'
 import {
   resolveChartStateForRendering,
   toChartFilterConfig,
   generateUrlFromState,
   type ChartRenderState
 } from '../../app/lib/state/resolution'
-import type { ChartStyle } from '../../app/lib/chart/chartTypes'
 
 /**
  * Chart PNG generation helper functions
@@ -245,26 +245,63 @@ export function generateChartConfig(
   isLE: boolean,
   isPopulationType: boolean,
   chartUrl: string
-) {
-  const config = makeChartConfig(
-    state.chartStyle as ChartStyle,
-    chartData as unknown as Array<Record<string, unknown>>,
-    isDeathsType,
-    state.isExcess,
-    isLE,
-    isPopulationType,
-    state.showLabels,
-    state.showPercentage,
-    state.showPredictionInterval,
-    true // isSSR - enable SSR font adjustments
-  )
+): Record<string, unknown> {
+  // Use makeBarLineChartConfig or makeMatrixChartConfig directly to pass all params
+  const isDark = state.darkMode ?? false
 
-  // Add the chart URL for QR code
-  const configOptions = config.options as Record<string, unknown> || {}
-  const plugins = configOptions.plugins as Record<string, unknown> || {}
-  plugins.qrCodeUrl = chartUrl
+  // Cast chartData to MortalityChartData (structure is validated upstream)
+  const data = chartData as unknown as MortalityChartData
 
-  return config
+  if (state.chartStyle === 'matrix') {
+    const config = makeMatrixChartConfig(
+      data,
+      state.isExcess,
+      isLE,
+      state.showPredictionInterval,
+      state.showPercentage,
+      state.showLabels,
+      isDeathsType,
+      isPopulationType,
+      state.showQrCode,
+      state.showLogo,
+      isDark,
+      state.decimals,
+      undefined, // userTier
+      state.showCaption,
+      true // isSSR
+    )
+
+    // Add the chart URL for QR code
+    const configOptions = config.options as Record<string, unknown> || {}
+    const plugins = configOptions.plugins as Record<string, unknown> || {}
+    plugins.qrCodeUrl = chartUrl
+
+    return config as unknown as Record<string, unknown>
+  } else {
+    const config = makeBarLineChartConfig(
+      data,
+      state.isExcess,
+      state.showPredictionInterval,
+      state.showPercentage,
+      isDeathsType,
+      isPopulationType,
+      state.showQrCode,
+      state.showLogo,
+      state.decimals,
+      isDark,
+      undefined, // userTier
+      state.showCaption,
+      true, // isSSR
+      state.chartStyle as 'bar' | 'line'
+    )
+
+    // Add the chart URL for QR code
+    const configOptions = config.options as Record<string, unknown> || {}
+    const plugins = configOptions.plugins as Record<string, unknown> || {}
+    plugins.qrCodeUrl = chartUrl
+
+    return config as unknown as Record<string, unknown>
+  }
 }
 
 /**

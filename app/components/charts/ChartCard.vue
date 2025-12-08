@@ -260,8 +260,8 @@ function getThumbnailUrl() {
   }
 
   // Hide QR code and logo for thumbnails
-  params.set('hideQr', '1')
-  params.set('hideLogo', '1')
+  params.set('qr', '0')
+  params.set('l', '0')
   params.set('width', '600')
   params.set('height', '337')
 
