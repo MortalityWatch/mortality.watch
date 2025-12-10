@@ -175,7 +175,8 @@ export default defineEventHandler(async (event) => {
             isDeathsType,
             isLE,
             isPopulationType,
-            chartUrl
+            chartUrl,
+            width
           )
 
           // Debug: Log chart config subtitle settings

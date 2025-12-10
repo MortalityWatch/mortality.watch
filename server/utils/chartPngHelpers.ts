@@ -13,6 +13,7 @@ import {
   generateUrlFromState,
   type ChartRenderState
 } from '../../app/lib/state/resolution'
+import { shouldShowLabels } from '../../app/lib/chart/labelVisibility'
 
 /**
  * Chart PNG generation helper functions
@@ -261,6 +262,7 @@ export async function transformChartData(
  * @param isLE - Whether chart is life expectancy type
  * @param isPopulationType - Whether chart is population type
  * @param chartUrl - Chart URL for QR code
+ * @param chartWidth - Chart width in pixels for label visibility calculation
  * @returns Chart configuration object
  */
 export function generateChartConfig(
@@ -269,7 +271,8 @@ export function generateChartConfig(
   isDeathsType: boolean,
   isLE: boolean,
   isPopulationType: boolean,
-  chartUrl: string
+  chartUrl: string,
+  chartWidth: number = 600
 ): Record<string, unknown> {
   // Use makeBarLineChartConfig or makeMatrixChartConfig directly to pass all params
   const isDark = state.darkMode ?? false
@@ -277,14 +280,28 @@ export function generateChartConfig(
   // Cast chartData to MortalityChartData (structure is validated upstream)
   const data = chartData as unknown as MortalityChartData
 
+  // Calculate effective showLabels with auto-hide logic
+  // The client auto-hides labels when there are too many data points (dataPoints > chartWidth/20)
+  // SSR needs to apply the same logic to match client behavior
+  const dataPointCount = data.labels?.length || 0
+
+  // When showLabels is true, pass undefined to enable auto-calculation
+  // When showLabels is false, pass false to force labels off (user override)
+  const userOverride = state.showLabels ? undefined : false
+  const effectiveShowLabels = shouldShowLabels(dataPointCount, chartWidth, userOverride)
+
+  // Override data.showLabels with effective value (same as client-side MortalityChart.vue)
+  // This ensures bar/line charts also respect the auto-hide logic
+  const dataWithEffectiveLabels = { ...data, showLabels: effectiveShowLabels }
+
   if (state.chartStyle === 'matrix') {
     const config = makeMatrixChartConfig(
-      data,
+      dataWithEffectiveLabels,
       state.isExcess,
       isLE,
       state.showPredictionInterval,
       state.showPercentage,
-      state.showLabels,
+      dataWithEffectiveLabels.showLabels, // Use from data object for consistency
       isDeathsType,
       isPopulationType,
       state.showQrCode,
@@ -307,7 +324,7 @@ export function generateChartConfig(
     return config as unknown as Record<string, unknown>
   } else {
     const config = makeBarLineChartConfig(
-      data,
+      dataWithEffectiveLabels,
       state.isExcess,
       state.showPredictionInterval,
       state.showPercentage,
