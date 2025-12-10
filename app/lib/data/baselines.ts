@@ -71,6 +71,69 @@ const getSeasonType = (chartType: string) => {
 const DEFAULT_STATS_URL = 'https://stats.mortality.watch/'
 
 /**
+ * Convert a chart label to the xs (start time) parameter format for the stats API
+ *
+ * Label formats by chart type:
+ * - Weekly: "2020 W01" -> "2020W01"
+ * - Monthly: "2020 Jan" -> "2020-01"
+ * - Quarterly: "2020 Q1" -> "2020Q1"
+ * - Yearly: "2020" -> "2020"
+ * - Fluseason/midyear: "2019/20" -> "2019" (use start year)
+ */
+const labelToXsParam = (label: string, chartType: string): string | null => {
+  if (!label) return null
+
+  // Weekly: "2020 W01" -> "2020W01"
+  if (chartType.startsWith('weekly')) {
+    const match = label.match(/^(\d{4})\s*W(\d{2})$/)
+    if (match) {
+      return `${match[1]}W${match[2]}`
+    }
+    return null
+  }
+
+  // Monthly: "2020 Jan" -> "2020-01"
+  if (chartType === 'monthly') {
+    const months: Record<string, string> = {
+      Jan: '01', Feb: '02', Mar: '03', Apr: '04',
+      May: '05', Jun: '06', Jul: '07', Aug: '08',
+      Sep: '09', Oct: '10', Nov: '11', Dec: '12'
+    }
+    const match = label.match(/^(\d{4})\s+(\w{3})$/)
+    if (match && match[1] && match[2] && months[match[2]]) {
+      return `${match[1]}-${months[match[2]]}`
+    }
+    return null
+  }
+
+  // Quarterly: "2020 Q1" -> "2020Q1"
+  if (chartType === 'quarterly') {
+    const match = label.match(/^(\d{4})\s*Q(\d)$/)
+    if (match && match[1] && match[2]) {
+      return `${match[1]}Q${match[2]}`
+    }
+    return null
+  }
+
+  // Fluseason/midyear: "2019/20" -> "2019" (use start year, treated as yearly)
+  if (chartType === 'fluseason' || chartType === 'midyear') {
+    const match = label.match(/^(\d{4})\/\d{2}$/)
+    if (match && match[1]) {
+      return match[1]
+    }
+    return null
+  }
+
+  // Yearly: "2020" -> "2020"
+  const yearMatch = label.match(/^(\d{4})$/)
+  if (yearMatch && yearMatch[1]) {
+    return yearMatch[1]
+  }
+
+  return null
+}
+
+/**
  * Calculate baseline for a single dataset entry
  *
  * Sends full data to stats API with bs/be parameters to specify baseline range.
@@ -175,11 +238,17 @@ const calculateBaseline = async (
     const bs = 1
     const be = baselineEndIdx - baselineStartIdx + 1
 
+    // Get the starting time period for proper seasonal alignment
+    // The xs parameter tells the server what calendar period the first data point represents
+    const startLabel = labels[baselineStartIdx]
+    const xs = startLabel ? labelToXsParam(startLabel, chartType) : null
+    const xsParam = xs ? `&xs=${xs}` : ''
+
     // With bs/be, PI is calculated for all post-be periods - no h needed
     const url
       = cumulative && s === 1
-        ? `${baseUrl}cum?y=${dataParam}&bs=${bs}&be=${be}&t=${trend ? 1 : 0}`
-        : `${baseUrl}?y=${dataParam}&bs=${bs}&be=${be}&s=${s}&t=${trend ? 1 : 0}&m=${method}`
+        ? `${baseUrl}cum?y=${dataParam}&bs=${bs}&be=${be}&t=${trend ? 1 : 0}${xsParam}`
+        : `${baseUrl}?y=${dataParam}&bs=${bs}&be=${be}&s=${s}&t=${trend ? 1 : 0}&m=${method}${xsParam}`
 
     const text = await dataLoader.fetchBaseline(url)
     const json = JSON.parse(text)
