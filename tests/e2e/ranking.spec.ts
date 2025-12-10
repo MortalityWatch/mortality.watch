@@ -139,7 +139,10 @@ test.describe('Ranking Page', () => {
     expect(page.url()).toBe(urlWithParams)
   })
 
-  test('should update rankings on browser back/forward navigation', async ({ page }) => {
+  test('should update rankings on browser back/forward navigation', { tag: '@flaky' }, async ({ page }) => {
+    // Increase timeout for this test - multiple S3 fetches in CI can be slow
+    test.setTimeout(90000)
+
     // Start with default date range
     await page.goto('/ranking')
     await page.waitForLoadState('networkidle')

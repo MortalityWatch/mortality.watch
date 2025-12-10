@@ -76,18 +76,33 @@ describe('StateResolver', () => {
       expect(resolved.userOverrides.size).toBe(0)
     })
 
-    it('should apply URL params as user overrides', () => {
+    it('should apply URL params as user overrides only when different from defaults', () => {
       const route = createMockRoute({
-        c: ['USA', 'SWE'],
-        t: 'deaths',
+        c: ['DEU', 'FRA'], // Different from default ['USA', 'SWE']
+        t: 'deaths', // Different from default 'asmr'
         e: '1'
       })
       const resolved = StateResolver.resolveInitial(route)
 
-      expect(resolved.state.countries).toEqual(['USA', 'SWE'])
+      expect(resolved.state.countries).toEqual(['DEU', 'FRA'])
       expect(resolved.state.type).toBe('deaths')
+      // Only values different from defaults become user overrides
       expect(resolved.userOverrides.has('countries')).toBe(true)
       expect(resolved.userOverrides.has('type')).toBe(true)
+    })
+
+    it('should NOT mark URL params as user overrides when they match defaults', () => {
+      const route = createMockRoute({
+        c: ['USA', 'SWE'], // Same as default
+        t: 'asmr' // Same as default
+      })
+      const resolved = StateResolver.resolveInitial(route)
+
+      expect(resolved.state.countries).toEqual(['USA', 'SWE'])
+      expect(resolved.state.type).toBe('asmr')
+      // Values matching defaults are not user overrides
+      expect(resolved.userOverrides.has('countries')).toBe(false)
+      expect(resolved.userOverrides.has('type')).toBe(false)
     })
 
     it('should apply constraints after URL params', () => {

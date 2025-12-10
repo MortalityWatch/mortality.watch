@@ -88,26 +88,32 @@ export class StateResolver {
     const validatedUrlParams = this.validateUrlParams(route)
 
     for (const [field, value] of Object.entries(validatedUrlParams)) {
-      userOverrides.add(field)
-      log.userOverridesFromUrl.push(field)
+      const defaultValue = state[field] // state is initialized from viewDefaults
 
-      const oldValue = state[field]
+      // Only mark as user override if value differs from default
+      // This prevents "sticky" URL params that match defaults from blocking soft constraints
+      const isDifferentFromDefault = !this.valuesEqual(value, defaultValue)
+      if (isDifferentFromDefault) {
+        userOverrides.add(field)
+        log.userOverridesFromUrl.push(field)
+      }
+
       state[field] = value
 
       const urlKey = stateFieldEncoders[field as keyof typeof stateFieldEncoders]?.key || field
       metadata[field] = {
         value,
-        priority: 'user',
-        reason: 'Set in URL',
-        changed: true,
+        priority: isDifferentFromDefault ? 'user' : 'default',
+        reason: isDifferentFromDefault ? 'Set in URL' : 'URL matches default',
+        changed: isDifferentFromDefault,
         urlKey
       }
 
-      if (oldValue !== value) {
+      if (isDifferentFromDefault) {
         log.changes.push({
           field,
           urlKey,
-          oldValue,
+          oldValue: defaultValue,
           newValue: value,
           priority: 'user',
           reason: 'Set in URL'
