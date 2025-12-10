@@ -274,10 +274,13 @@ const title = computed(() => {
 })
 
 const subtitle = computed(() => {
+  if (!baselineSliderValue.value[0] || !baselineSliderValue.value[1]) {
+    return ''
+  }
   return blDescription(
     selectedBaselineMethod.value || 'mean',
-    baselineSliderValue.value[0] || '',
-    baselineSliderValue.value[1] || ''
+    baselineSliderValue.value[0],
+    baselineSliderValue.value[1]
   )
 })
 
