@@ -13,7 +13,8 @@ import {
   getDisabledReason,
   evaluateCondition,
   isMetricCompatible,
-  isChartStyleCompatible
+  isChartStyleCompatible,
+  isChartTypeCompatible
 } from './viewHelpers'
 import type { UIElement, ExplorerStateValues } from './viewTypes'
 
@@ -356,6 +357,26 @@ describe('viewHelpers', () => {
 
     it('returns false for incompatible chart styles', () => {
       expect(isChartStyleCompatible('matrix', 'zscore')).toBe(false)
+    })
+  })
+
+  describe('isChartTypeCompatible', () => {
+    it('returns true when view has no chart type restrictions', () => {
+      expect(isChartTypeCompatible('yearly', 'mortality')).toBe(true)
+      expect(isChartTypeCompatible('weekly', 'mortality')).toBe(true)
+      expect(isChartTypeCompatible('monthly', 'mortality')).toBe(true)
+    })
+
+    it('returns true for compatible chart types', () => {
+      expect(isChartTypeCompatible('yearly', 'zscore')).toBe(true)
+      expect(isChartTypeCompatible('fluseason', 'zscore')).toBe(true)
+      expect(isChartTypeCompatible('midyear', 'zscore')).toBe(true)
+    })
+
+    it('returns false for incompatible chart types', () => {
+      expect(isChartTypeCompatible('weekly', 'zscore')).toBe(false)
+      expect(isChartTypeCompatible('monthly', 'zscore')).toBe(false)
+      expect(isChartTypeCompatible('quarterly', 'zscore')).toBe(false)
     })
   })
 })

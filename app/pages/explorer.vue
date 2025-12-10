@@ -412,6 +412,7 @@ const handleSliderStartChanged = (v: string | undefined) => handleStateChange({ 
 const handleShowLogoChanged = (v: boolean) => handleUIStateChange({ field: 'showLogo', value: v })
 const handleShowQrCodeChanged = (v: boolean) => handleUIStateChange({ field: 'showQrCode', value: v })
 const handleShowCaptionChanged = (v: boolean) => handleUIStateChange({ field: 'showCaption', value: v })
+const handleShowTitleChanged = (v: boolean) => handleUIStateChange({ field: 'showTitle', value: v })
 const handleDecimalsChanged = (v: string) => handleUIStateChange({ field: 'decimals', value: v })
 
 // Handle browser back/forward navigation
@@ -653,6 +654,7 @@ watch(
             :show-logo="state.showLogo.value"
             :show-qr-code="state.showQrCode.value"
             :show-caption="state.showCaption.value"
+            :show-title="state.showTitle.value"
             :decimals="state.decimals.value"
             :show-loading-overlay="dataOrchestration.showLoadingOverlay.value"
             :show-size-label="showSizeLabel"
@@ -694,6 +696,7 @@ watch(
             @show-logo-changed="handleShowLogoChanged"
             @show-qr-code-changed="handleShowQrCodeChanged"
             @show-caption-changed="handleShowCaptionChanged"
+            @show-title-changed="handleShowTitleChanged"
             @decimals-changed="handleDecimalsChanged"
           />
 

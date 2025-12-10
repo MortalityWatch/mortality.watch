@@ -10,7 +10,7 @@
  * - Works for all chart types: yearly, fluseason, weekly, monthly, etc.
  */
 
-import { getBaselineYear } from '@/lib/constants'
+import { getBaselineYear, getMaxBaselinePeriod, getMaxBaselineYears } from '@/lib/constants'
 
 const MIN_BASELINE_SPAN = 3
 
@@ -106,4 +106,104 @@ export function calculateBaselineRange(
   const defaultTo = allChartLabels[toIndex]!
 
   return { from: defaultFrom, to: defaultTo }
+}
+
+/**
+ * Validation result for baseline period
+ */
+export interface BaselineValidationResult {
+  isValid: boolean
+  periodLength: number
+  maxPeriod: number
+  maxYears: number
+  exceededBy?: number
+}
+
+/**
+ * Validate baseline period length against maximum limits
+ *
+ * Prevents excessively large baseline periods that cause server timeouts.
+ *
+ * @param chartType - The type of chart (weekly, monthly, quarterly, yearly)
+ * @param allChartLabels - All available date labels
+ * @param baselineFrom - Start date of baseline period
+ * @param baselineTo - End date of baseline period
+ * @returns Validation result with period info and whether it exceeds limits
+ */
+export function validateBaselinePeriod(
+  chartType: string,
+  allChartLabels: string[],
+  baselineFrom: string,
+  baselineTo: string
+): BaselineValidationResult {
+  const maxPeriod = getMaxBaselinePeriod(chartType)
+  const maxYears = getMaxBaselineYears(chartType)
+
+  // Find indices of baseline dates
+  const fromIndex = allChartLabels.indexOf(baselineFrom)
+  const toIndex = allChartLabels.indexOf(baselineTo)
+
+  // If dates not found, consider invalid
+  if (fromIndex === -1 || toIndex === -1) {
+    return {
+      isValid: false,
+      periodLength: 0,
+      maxPeriod,
+      maxYears
+    }
+  }
+
+  // Calculate period length (inclusive)
+  const periodLength = toIndex - fromIndex + 1
+
+  const isValid = periodLength <= maxPeriod
+  const exceededBy = isValid ? undefined : periodLength - maxPeriod
+
+  return {
+    isValid,
+    periodLength,
+    maxPeriod,
+    maxYears,
+    exceededBy
+  }
+}
+
+/**
+ * Clamp baseline period to maximum allowed length
+ *
+ * If the period exceeds the maximum, returns an adjusted end date
+ * that brings the period within limits while keeping the start date.
+ *
+ * @param chartType - The type of chart
+ * @param allChartLabels - All available date labels
+ * @param baselineFrom - Start date of baseline period
+ * @param baselineTo - End date of baseline period
+ * @returns Clamped baseline range
+ */
+export function clampBaselinePeriod(
+  chartType: string,
+  allChartLabels: string[],
+  baselineFrom: string,
+  baselineTo: string
+): BaselineRange {
+  const validation = validateBaselinePeriod(chartType, allChartLabels, baselineFrom, baselineTo)
+
+  if (validation.isValid) {
+    return { from: baselineFrom, to: baselineTo }
+  }
+
+  // Find the from index and calculate max allowed end index
+  const fromIndex = allChartLabels.indexOf(baselineFrom)
+  if (fromIndex === -1) {
+    return { from: baselineFrom, to: baselineTo }
+  }
+
+  const maxEndIndex = Math.min(
+    fromIndex + validation.maxPeriod - 1,
+    allChartLabels.length - 1
+  )
+
+  const clampedTo = allChartLabels[maxEndIndex] ?? baselineTo
+
+  return { from: baselineFrom, to: clampedTo }
 }

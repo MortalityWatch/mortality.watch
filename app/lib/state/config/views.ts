@@ -83,6 +83,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       showLogo: true,
       showQrCode: true,
       showCaption: true,
+      showTitle: true,
       userColors: undefined as string[] | undefined,
       darkMode: false
     },
@@ -237,6 +238,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
     ],
 
     compatibleMetrics: ['cmr', 'asmr', 'deaths'], // All metrics that support baselines
-    compatibleChartStyles: ['line', 'bar'] // No matrix for z-scores
+    compatibleChartStyles: ['line', 'bar'], // No matrix for z-scores
+    compatibleChartTypes: ['yearly', 'fluseason', 'midyear'] // Z-scores only available for yearly aggregations (s=1)
   }
 }

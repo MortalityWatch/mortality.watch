@@ -5,14 +5,14 @@ import { ChartPeriod, type ChartType } from '../../app/model/period'
 import { getKeyForType } from '../../app/model/utils'
 import { getFilteredChartDataFromConfig } from '../../app/lib/chart/filtering'
 import { getChartColors } from '../../app/colors'
-import { makeChartConfig } from '../../app/lib/chart/chartConfig'
+import { makeBarLineChartConfig, makeMatrixChartConfig } from '../../app/lib/chart/chartConfig'
+import type { MortalityChartData } from '../../app/lib/chart/chartTypes'
 import {
   resolveChartStateForRendering,
   toChartFilterConfig,
   generateUrlFromState,
   type ChartRenderState
 } from '../../app/lib/state/resolution'
-import type { ChartStyle } from '../../app/lib/chart/chartTypes'
 
 /**
  * Chart PNG generation helper functions
@@ -53,6 +53,31 @@ export function getDimensions(query: Record<string, unknown>): { width: number, 
   const width = parseInt((query.width as string) || '600')
   const height = parseInt((query.height as string) || '338')
   return { width, height }
+}
+
+/**
+ * Extract device pixel ratio from query parameters with default
+ * Default is 2 for high-quality OG images, use 1 for thumbnails
+ * @param query - Query parameters
+ * @returns Device pixel ratio (1-3)
+ */
+export function getDevicePixelRatio(query: Record<string, unknown>): number {
+  const dp = parseInt((query.dp as string) || '2')
+  return Math.max(1, Math.min(3, dp))
+}
+
+/**
+ * Extract zoom level from query parameters with default
+ * Zoom renders chart at larger internal size, then scales down.
+ * z > 1: text/elements appear larger (render bigger, scale down)
+ * z < 1: text/elements appear smaller (render smaller, scale up)
+ * Default is 1 (no zoom).
+ * @param query - Query parameters
+ * @returns Zoom level (0.25-4)
+ */
+export function getZoomLevel(query: Record<string, unknown>): number {
+  const z = parseFloat((query.z as string) || '1')
+  return Math.max(0.25, Math.min(4, z))
 }
 
 /**
@@ -245,26 +270,69 @@ export function generateChartConfig(
   isLE: boolean,
   isPopulationType: boolean,
   chartUrl: string
-) {
-  const config = makeChartConfig(
-    state.chartStyle as ChartStyle,
-    chartData as unknown as Array<Record<string, unknown>>,
-    isDeathsType,
-    state.isExcess,
-    isLE,
-    isPopulationType,
-    state.showLabels,
-    state.showPercentage,
-    state.showPredictionInterval,
-    true // isSSR - enable SSR font adjustments
-  )
+): Record<string, unknown> {
+  // Use makeBarLineChartConfig or makeMatrixChartConfig directly to pass all params
+  const isDark = state.darkMode ?? false
 
-  // Add the chart URL for QR code
-  const configOptions = config.options as Record<string, unknown> || {}
-  const plugins = configOptions.plugins as Record<string, unknown> || {}
-  plugins.qrCodeUrl = chartUrl
+  // Cast chartData to MortalityChartData (structure is validated upstream)
+  const data = chartData as unknown as MortalityChartData
 
-  return config
+  if (state.chartStyle === 'matrix') {
+    const config = makeMatrixChartConfig(
+      data,
+      state.isExcess,
+      isLE,
+      state.showPredictionInterval,
+      state.showPercentage,
+      state.showLabels,
+      isDeathsType,
+      isPopulationType,
+      state.showQrCode,
+      state.showLogo,
+      isDark,
+      state.decimals,
+      undefined, // userTier
+      state.showCaption,
+      state.showTitle,
+      true // isSSR
+    )
+
+    // Add the chart URL for QR code (only if showQrCode is true)
+    if (state.showQrCode) {
+      const configOptions = config.options as Record<string, unknown> || {}
+      const plugins = configOptions.plugins as Record<string, unknown> || {}
+      plugins.qrCodeUrl = chartUrl
+    }
+
+    return config as unknown as Record<string, unknown>
+  } else {
+    const config = makeBarLineChartConfig(
+      data,
+      state.isExcess,
+      state.showPredictionInterval,
+      state.showPercentage,
+      isDeathsType,
+      isPopulationType,
+      state.showQrCode,
+      state.showLogo,
+      state.decimals,
+      isDark,
+      undefined, // userTier
+      state.showCaption,
+      state.showTitle,
+      true, // isSSR
+      state.chartStyle as 'bar' | 'line'
+    )
+
+    // Add the chart URL for QR code (only if showQrCode is true)
+    if (state.showQrCode) {
+      const configOptions = config.options as Record<string, unknown> || {}
+      const plugins = configOptions.plugins as Record<string, unknown> || {}
+      plugins.qrCodeUrl = chartUrl
+    }
+
+    return config as unknown as Record<string, unknown>
+  }
 }
 
 /**

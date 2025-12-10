@@ -48,6 +48,7 @@ export {
   evaluateCondition,
   isMetricCompatible,
   isChartStyleCompatible,
+  isChartTypeCompatible,
   inferIsExcessFromFlags,
   getViewDefaults
 } from './viewHelpers'

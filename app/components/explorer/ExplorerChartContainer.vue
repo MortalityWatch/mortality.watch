@@ -19,6 +19,7 @@ const props = defineProps<{
   showLogo: boolean
   showQrCode: boolean
   showCaption: boolean
+  showTitle: boolean
   decimals: string
   showLoadingOverlay: boolean
   showSizeLabel: boolean
@@ -80,6 +81,7 @@ defineExpose({
         :show-logo="props.showLogo"
         :show-qr-code="props.showQrCode"
         :show-caption="props.showCaption"
+        :show-title="props.showTitle"
         :decimals="props.decimals"
       />
     </div>

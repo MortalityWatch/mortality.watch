@@ -119,6 +119,7 @@ export function useExplorerState() {
   const showLogo = ref<boolean>(getDefault('showLogo', true))
   const showQrCode = ref<boolean>(getDefault('showQrCode', true))
   const showCaption = ref<boolean>(getDefault('showCaption', true))
+  const showTitle = ref<boolean>(getDefault('showTitle', true))
   const decimals = ref<string>(getDefault('decimals', 'auto'))
 
   // Local State - Chart Size (not synced to URL)
@@ -321,6 +322,7 @@ export function useExplorerState() {
       showLogo: showLogo.value,
       showQrCode: showQrCode.value,
       showCaption: showCaption.value,
+      showTitle: showTitle.value,
       chartPreset: chartPreset.value
     }
   }
@@ -428,6 +430,9 @@ export function useExplorerState() {
     if (state.showCaption !== undefined && state.showCaption !== showCaption.value) {
       showCaption.value = state.showCaption as boolean
     }
+    if (state.showTitle !== undefined && state.showTitle !== showTitle.value) {
+      showTitle.value = state.showTitle as boolean
+    }
     if ('userColors' in state && !arraysEqual(state.userColors as string[] | undefined, userColors.value)) {
       userColors.value = state.userColors as string[] | undefined
     }
@@ -472,6 +477,7 @@ export function useExplorerState() {
     showLogo,
     showQrCode,
     showCaption,
+    showTitle,
     decimals,
 
     // Local state

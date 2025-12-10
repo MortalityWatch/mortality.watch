@@ -63,8 +63,9 @@ export class StateResolver {
     }
 
     // 1. Detect view from URL params FIRST (e=1 → excess, zs=1 → zscore)
-    const view = detectView(route.query)
-    const viewConfig = VIEWS[view as ViewType] || VIEWS.mortality
+    const requestedView = detectView(route.query)
+    let view = requestedView
+    let viewConfig = VIEWS[view as ViewType] || VIEWS.mortality
 
     // 2. Start with view-specific defaults (includes all fields)
     const viewDefaults = getViewDefaults(view as ViewType)
@@ -117,6 +118,43 @@ export class StateResolver {
           priority: 'user',
           reason: 'Set in URL'
         })
+      }
+    }
+
+    // 4. Validate view compatibility with chart type
+    // If z-score view was requested but chart type is not yearly, fall back to mortality view
+    if (state.view === 'zscore') {
+      const chartType = state.chartType as string
+      const compatibleTypes = viewConfig.compatibleChartTypes || []
+      const isCompatible = compatibleTypes.length === 0 || compatibleTypes.includes(chartType)
+
+      if (!isCompatible) {
+        console.warn(`Z-score view not compatible with chart type ${chartType}, falling back to mortality view`)
+        const oldView = state.view
+        state.view = 'mortality'
+        view = 'mortality'
+        viewConfig = VIEWS.mortality
+
+        // Update log and metadata
+        log.changes.push({
+          field: 'view',
+          urlKey: 'zs',
+          oldValue: oldView,
+          newValue: 'mortality',
+          priority: 'constraint',
+          reason: `Z-score view requires yearly chart type (yearly, fluseason, or midyear), got ${chartType}`
+        })
+
+        metadata.view = {
+          value: 'mortality',
+          priority: 'constraint',
+          reason: `Z-score view not compatible with ${chartType}`,
+          changed: true,
+          urlKey: 'zs'
+        }
+
+        // Remove view from user overrides since it was constrained
+        userOverrides.delete('view')
       }
     }
 
@@ -256,16 +294,29 @@ export class StateResolver {
     // Clone user overrides to avoid mutation
     const userOverrides = new Set(currentUserOverrides)
 
+    // 0. Validate view compatibility with chart type
+    // If the requested view is not compatible, fall back to 'mortality'
+    const currentChartType = state.chartType as string
+    const viewConfig = VIEWS[newView]
+    const isCompatible = !viewConfig.compatibleChartTypes
+      || viewConfig.compatibleChartTypes.includes(currentChartType)
+
+    let actualView = newView
+    if (!isCompatible) {
+      actualView = 'mortality'
+      console.warn(`View ${newView} not compatible with chart type ${currentChartType}, falling back to mortality view`)
+    }
+
     // 1. Update view
     const oldView = state.view
-    state.view = newView
+    state.view = actualView
     userOverrides.add('view')
 
     const urlKey = 'view'
     metadata.view = {
-      value: newView,
+      value: actualView,
       priority: 'user',
-      reason: 'User changed view',
+      reason: isCompatible ? 'User changed view' : `View ${newView} not compatible with chart type ${currentChartType}`,
       changed: true,
       urlKey
     }
@@ -274,16 +325,16 @@ export class StateResolver {
       field: 'view',
       urlKey,
       oldValue: oldView,
-      newValue: newView,
+      newValue: actualView,
       priority: 'user',
-      reason: 'User changed view'
+      reason: isCompatible ? 'User changed view' : `View ${newView} not compatible with chart type ${currentChartType}, using mortality`
     })
 
     // 2. Apply view defaults
     // When switching views, chartStyle should always use the new view's default
     // because chartStyle is set BY the view, not by explicit user action
-    const viewConfig = VIEWS[newView]
-    for (const [field, value] of Object.entries(viewConfig.defaults || {})) {
+    const actualViewConfig = VIEWS[actualView]
+    for (const [field, value] of Object.entries(actualViewConfig.defaults || {})) {
       // Special case: chartStyle is always set by view defaults, not user override
       const shouldApply = field === 'chartStyle' || !userOverrides.has(field)
 
@@ -299,7 +350,7 @@ export class StateResolver {
             oldValue,
             newValue: value,
             priority: 'view-default',
-            reason: `${viewConfig.label} view default`
+            reason: `${actualViewConfig.label} view default`
           })
         }
 
@@ -316,7 +367,7 @@ export class StateResolver {
     log.after = { ...constrainedState }
 
     // 4. Compute UI state from view configuration
-    const ui = computeUIState(viewConfig, constrainedState)
+    const ui = computeUIState(actualViewConfig, constrainedState)
 
     const result = {
       state: constrainedState,

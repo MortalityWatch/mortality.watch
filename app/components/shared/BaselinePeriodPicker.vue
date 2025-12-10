@@ -1,8 +1,13 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import DateSlider from '@/components/charts/DateSlider.vue'
 import { specialColor } from '@/colors'
 import type { ChartType } from '@/model/period'
+import {
+  validateBaselinePeriod,
+  clampBaselinePeriod
+} from '@/lib/baseline/calculateBaselineRange'
+import { getMaxBaselineYears } from '@/lib/constants'
 
 const props = defineProps<{
   baselineMethod: string
@@ -133,7 +138,33 @@ watch(() => selectedPeriodLength.value, (newLength, oldLength) => {
 
 const baselineMinRange = (method: string) => method === 'mean' ? 0 : 2
 
+// Validate current baseline period and show warning if too large
+const baselineValidation = computed(() => {
+  if (!props.sliderValue || props.sliderValue.length !== 2 || !props.labels.length) {
+    return null
+  }
+  const from = props.sliderValue[0]
+  const to = props.sliderValue[1]
+  if (!from || !to) return null
+
+  return validateBaselinePeriod(props.chartType, props.labels, from, to)
+})
+
+const maxYears = computed(() => getMaxBaselineYears(props.chartType))
+
 const baselineSliderChanged = (values: string[]) => {
+  // Validate and clamp if necessary
+  if (values.length === 2 && values[0] && values[1]) {
+    const validation = validateBaselinePeriod(props.chartType, props.labels, values[0], values[1])
+
+    if (!validation.isValid) {
+      // Clamp to maximum allowed period
+      const clamped = clampBaselinePeriod(props.chartType, props.labels, values[0], values[1])
+      emit('slider-changed', [clamped.from, clamped.to])
+      return
+    }
+  }
+
   emit('slider-changed', values)
 }
 </script>
@@ -173,6 +204,18 @@ const baselineSliderChanged = (values: string[]) => {
         :delay-emit="true"
         @slider-changed="baselineSliderChanged"
       />
+    </div>
+    <!-- Warning when baseline period approaches limit -->
+    <div
+      v-if="baselineValidation && baselineValidation.periodLength > baselineValidation.maxPeriod * 0.8"
+      class="mt-2 text-xs text-amber-600 dark:text-amber-400"
+    >
+      <template v-if="!baselineValidation.isValid">
+        Baseline period limited to {{ maxYears }} years max for this chart type.
+      </template>
+      <template v-else>
+        Note: Max baseline period is {{ maxYears }} years for this chart type.
+      </template>
     </div>
   </div>
 </template>

@@ -23,7 +23,7 @@
             name="i-lucide-globe"
             class="w-4 h-4 text-primary-600 dark:text-primary-400"
           />
-          <span class="text-sm font-semibold text-primary-900 dark:text-primary-100">100+ countries</span>
+          <span class="text-sm font-semibold text-primary-900 dark:text-primary-100">300+ regions</span>
         </div>
         <div class="inline-flex items-center gap-2 px-4 py-2 bg-primary-50 dark:bg-primary-950/30 rounded-full border border-primary-200 dark:border-primary-800">
           <UIcon
@@ -37,7 +37,7 @@
             name="i-lucide-chart-line"
             class="w-4 h-4 text-primary-600 dark:text-primary-400"
           />
-          <span class="text-sm font-semibold text-primary-900 dark:text-primary-100">14 models</span>
+          <span class="text-sm font-semibold text-primary-900 dark:text-primary-100">5 methods</span>
         </div>
       </div>
 
@@ -177,7 +177,7 @@
               class="text-5xl mb-4 text-primary-600 dark:text-primary-400"
             />
             <h3 class="text-lg font-semibold mb-2">
-              100+ Countries & Regions
+              300+ Countries & Regions
             </h3>
             <p class="text-gray-600 dark:text-gray-400 text-sm">
               Weekly, monthly, and yearly mortality data with age stratification
@@ -190,11 +190,11 @@
               class="text-5xl mb-4 text-primary-600 dark:text-primary-400"
             />
             <h3 class="text-lg font-semibold mb-2">
-              14 Statistical Models
+              5 Baseline Methods
             </h3>
             <p class="text-gray-600 dark:text-gray-400 text-sm">
-              Linear regression, ETS, moving averages, and 11 other baseline
-              methods for accurate excess mortality calculations
+              Last value, average, median, linear regression, and ETS for
+              accurate excess mortality calculations
             </p>
           </div>
           <div class="text-center">
@@ -258,12 +258,12 @@ definePageMeta({
 // SEO metadata
 useSeoMeta({
   title: 'MortalityWatch - Track Global Mortality Trends and Excess Deaths',
-  description: 'The world\'s most comprehensive open mortality database with daily updates from 100+ countries. Explore excess deaths, compare regions, and analyze trends with 14 statistical models.',
+  description: 'The world\'s most comprehensive open mortality database with daily updates from 300+ countries and regions. Explore excess deaths, compare regions, and analyze trends with 5 baseline methods.',
   ogTitle: 'MortalityWatch - Track Global Mortality Trends',
-  ogDescription: 'Free, open-source platform with 100+ countries, 14 statistical models, and daily updates from official sources.',
+  ogDescription: 'Free, open-source platform with 300+ regions, 5 baseline methods, and daily updates from official sources.',
   ogImage: '/og-image.png',
   twitterTitle: 'MortalityWatch - Global Mortality Database',
-  twitterDescription: 'Track mortality trends and excess deaths across 100+ countries with advanced statistical analysis.',
+  twitterDescription: 'Track mortality trends and excess deaths across 300+ countries and regions with advanced statistical analysis.',
   twitterImage: '/og-image.png',
   twitterCard: 'summary_large_image'
 })

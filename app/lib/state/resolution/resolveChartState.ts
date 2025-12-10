@@ -59,6 +59,11 @@ export interface ChartRenderState {
   // Optional
   userColors?: string[]
   decimals: string
+  showLogo: boolean
+  showQrCode: boolean
+  showCaption: boolean
+  showTitle: boolean
+  darkMode: boolean
 }
 
 /**
@@ -219,7 +224,12 @@ export function resolveChartStateForRendering(
 
     // Optional
     userColors: constrainedState.userColors as string[] | undefined,
-    decimals: (constrainedState.decimals as string) || 'auto'
+    decimals: (constrainedState.decimals as string) || 'auto',
+    showLogo: (constrainedState.showLogo as boolean) ?? true,
+    showQrCode: (constrainedState.showQrCode as boolean) ?? true,
+    showCaption: (constrainedState.showCaption as boolean) ?? true,
+    showTitle: (constrainedState.showTitle as boolean) ?? true,
+    darkMode: (constrainedState.darkMode as boolean) ?? false
   }
 }
 
@@ -299,7 +309,14 @@ export function resolveChartStateFromSnapshot(
     showPercentage: snapshot.showPercentage ?? false,
     showLogarithmic: snapshot.showLogarithmic,
     userColors: snapshot.userColors,
-    decimals: snapshot.decimals || 'auto'
+    decimals: snapshot.decimals || 'auto',
+    // These fields aren't in ChartStateSnapshot - use defaults
+    // (They're only needed for SSR chart rendering, not client-side)
+    showLogo: true,
+    showQrCode: true,
+    showCaption: true,
+    showTitle: true,
+    darkMode: false
   }
 }
 
