@@ -163,6 +163,18 @@ export function isChartStyleCompatible(
 }
 
 /**
+ * Check if a chart type is compatible with a view
+ */
+export function isChartTypeCompatible(
+  chartType: string,
+  view: ViewType
+): boolean {
+  const viewConfig = VIEWS[view]
+  if (!viewConfig.compatibleChartTypes) return true
+  return viewConfig.compatibleChartTypes.includes(chartType)
+}
+
+/**
  * Infer if excess mode is active from state flags
  *
  * Since isExcess is now a computed property derived from view,

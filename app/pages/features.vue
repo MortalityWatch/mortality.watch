@@ -37,12 +37,12 @@
         :badge="tier === 1 ? { label: 'Current Plan', color: 'primary' } : tier >= 2 ? { label: 'Active', color: 'primary' } : undefined"
         :features="[
           { title: 'All Public features, plus:' },
-          { title: 'Save charts to My Charts', icon: 'i-lucide-save' },
-          { title: 'Custom color schemes', icon: 'i-lucide-palette' },
+          { title: 'Save charts', icon: 'i-lucide-save' },
+          { title: 'Custom colors', icon: 'i-lucide-palette' },
           { title: 'All baseline methods', icon: 'i-lucide-chart-line' },
-          { title: 'Export data (CSV/JSON)', icon: 'i-lucide-download' },
-          { title: 'Full historical data access', icon: 'i-lucide-calendar' },
-          { title: 'Publish and share charts', icon: 'i-lucide-share-2' }
+          { title: 'Export data', icon: 'i-lucide-file-spreadsheet' },
+          { title: 'Extended time periods', icon: 'i-lucide-calendar' },
+          { title: 'Share charts', icon: 'i-lucide-share-2' }
         ]"
         :button="tier >= 1
           ? { label: 'Start Exploring', to: '/explorer', color: 'neutral' }
@@ -60,12 +60,12 @@
         :badge="tier === 2 ? { label: 'Current Plan', color: 'primary' } : undefined"
         :features="[
           { title: 'All Free features, plus:' },
-          { title: 'Remove watermarks', icon: 'i-lucide-image-off' },
-          { title: 'Remove QR codes', icon: 'i-lucide-scan-line' },
+          { title: 'No watermarks', icon: 'i-lucide-image-off' },
+          { title: 'No QR codes', icon: 'i-lucide-scan-line' },
           { title: 'Single age group LE (Coming Soon)', icon: 'i-lucide-activity' },
           { title: 'Age standardized deaths (Coming Soon)', icon: 'i-lucide-trending-up' },
           { title: 'Z-score calculations', icon: 'i-lucide-calculator' },
-          { title: 'Priority email support', icon: 'i-lucide-headphones' }
+          { title: 'Priority support', icon: 'i-lucide-headphones' }
         ]"
         :button="tier === 2
           ? { label: 'Start Exploring', to: '/explorer', color: 'neutral' }

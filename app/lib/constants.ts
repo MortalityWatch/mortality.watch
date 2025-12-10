@@ -112,3 +112,58 @@ export const CHART_PRESETS: ChartPreset[] = [
   { name: 'Square (800×800)', width: 800, height: 800, category: 'Specialized' },
   { name: 'Portrait (800×1200)', width: 800, height: 1200, category: 'Specialized' }
 ]
+
+/**
+ * Maximum baseline period limits by seasonality type
+ *
+ * These limits prevent server timeouts when calculating baselines.
+ * The stats API times out with excessively large baseline periods due to:
+ * 1. Fitting a seasonal model (52-dummy for weekly, etc.) to many data points
+ * 2. Calculating pre-baseline z-scores by forecasting backwards
+ *
+ * Limits are in data points (not years):
+ * - Weekly (s=4): 520 weeks = ~10 years
+ * - Monthly (s=3): 180 months = 15 years
+ * - Quarterly (s=2): 80 quarters = 20 years
+ * - Yearly (s=1): 30 years
+ */
+export const BASELINE_PERIOD_LIMITS = {
+  weekly: 520, // ~10 years of weekly data
+  monthly: 180, // 15 years of monthly data
+  quarterly: 80, // 20 years of quarterly data
+  yearly: 30 // 30 years
+} as const
+
+/**
+ * Get maximum baseline period in data points for a chart type
+ */
+export function getMaxBaselinePeriod(chartType: string): number {
+  if (chartType.startsWith('weekly')) {
+    return BASELINE_PERIOD_LIMITS.weekly
+  }
+  switch (chartType) {
+    case 'monthly':
+      return BASELINE_PERIOD_LIMITS.monthly
+    case 'quarterly':
+      return BASELINE_PERIOD_LIMITS.quarterly
+    default:
+      return BASELINE_PERIOD_LIMITS.yearly
+  }
+}
+
+/**
+ * Get maximum baseline period in years for a chart type
+ */
+export function getMaxBaselineYears(chartType: string): number {
+  if (chartType.startsWith('weekly')) {
+    return 10
+  }
+  switch (chartType) {
+    case 'monthly':
+      return 15
+    case 'quarterly':
+      return 20
+    default:
+      return 30
+  }
+}

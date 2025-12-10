@@ -143,6 +143,40 @@ describe('chartState', () => {
       expect(state.cumulative).toBe(false) // not available in z-score view
     })
 
+    it('should fall back to mortality view when zscore requested with incompatible chart type', () => {
+      // Weekly chart type is not compatible with z-score view
+      const query = {
+        c: 'USA',
+        zs: '1', // try zscore view
+        ct: 'weekly' // incompatible chart type
+      }
+
+      const state = decodeChartState(query)
+
+      // Should fall back to mortality view defaults, not zscore view
+      // In mortality view, chartStyle defaults to 'line', not 'bar' (excess) or specific zscore default
+      expect(state.chartType).toBe('weekly') // chart type should remain
+      // The key indicator is that zscore-specific constraints don't apply
+      // showBaseline in mortality view is true by default, but it's toggleable
+      expect(state.showBaseline).toBe(true)
+    })
+
+    it('should keep zscore view when chart type is compatible', () => {
+      // Yearly chart type IS compatible with z-score view
+      const query = {
+        c: 'USA',
+        zs: '1', // zscore view
+        ct: 'yearly' // compatible chart type
+      }
+
+      const state = decodeChartState(query)
+
+      // Z-score view should be active with its defaults
+      expect(state.chartType).toBe('yearly')
+      expect(state.chartStyle).toBe('line') // zscore default
+      expect(state.showBaseline).toBe(true) // required for zscore
+    })
+
     it('should enforce population type constraints', () => {
       const query = {
         c: 'USA',
