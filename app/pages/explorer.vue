@@ -337,6 +337,22 @@ const handleViewChanged = async (newView: ViewType) => {
     new Set() // Pass empty set since we cleared overrides
   )
 
+  // 2b. For excess/zscore views, adjust dateFrom to baseline start if needed
+  // The visible date range is restricted to baseline start in these views
+  if (newView === 'excess' || newView === 'zscore') {
+    const baselineStart = dataOrchestration.baselineRange.value?.from
+    if (baselineStart) {
+      const currentFrom = resolved.state.dateFrom as string | undefined
+      const allLabels = dataOrchestration.allChartLabels.value
+      const baselineIdx = allLabels.indexOf(baselineStart)
+      const currentIdx = currentFrom ? allLabels.indexOf(currentFrom) : -1
+      // If dateFrom is before baseline start (or undefined/invalid), set it to baseline start
+      if (currentIdx < baselineIdx) {
+        resolved.state.dateFrom = baselineStart
+      }
+    }
+  }
+
   // 3. Create a state snapshot from the resolved state BEFORE applying to refs
   // This ensures chart data is generated with consistent state values
   const snapshot = await createSnapshotFromResolved(resolved.state)
@@ -628,6 +644,7 @@ watch(
         :slider-start="state.sliderStart.value"
         :all-yearly-chart-labels-unique="dataOrchestration.allYearlyChartLabelsUnique.value"
         :chart-type="state.chartType.value as ChartType"
+        :hide-slider-start="dataOrchestration.isBaselineRestrictedView.value"
         @countries-changed="handleCountriesChanged"
         @age-groups-changed="handleAgeGroupsChanged"
         @slider-start-changed="handleSliderStartChanged"

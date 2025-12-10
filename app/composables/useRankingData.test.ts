@@ -109,7 +109,8 @@ vi.mock('./useDateRangeCalculations', () => ({
     findClosestYearLabel: vi.fn(() => null),
     matchDateToLabel: vi.fn(() => null),
     hasExtendedTimeAccess: computed(() => true),
-    effectiveMinDate: computed(() => null)
+    effectiveMinDate: computed(() => null),
+    isBaselineRestrictedView: computed(() => false)
   }))
 }))
 

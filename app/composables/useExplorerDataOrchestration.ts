@@ -77,22 +77,53 @@ export function useExplorerDataOrchestration(
    */
   const allChartLabels = ref<string[]>([])
 
-  // Date range calculations (single source of truth for date logic)
-  const dateRangeCalc = useDateRangeCalculations(
-    state.chartType,
-    state.sliderStart,
-    state.dateFrom,
-    state.dateTo,
-    allChartLabels
-  )
-
   /**
    * Yearly representation of all labels (for calculating indices)
    * - For yearly charts: same as allChartLabels
    * - For other types: year portion only ['2010', '2011', ...]
    * Used by getStartIndex() to find where sliderStart begins
+   * NOTE: Moved before dateRangeCalc to enable baseline range calculation
    */
   const allYearlyChartLabels = ref<string[]>([])
+
+  /**
+   * Computed baseline range - provides default baseline dates without polluting URL
+   * Uses chart-type-aware baseline year as the reference point, independent of sliderStart
+   * - Yearly: 2017 → 2017, 2018, 2019
+   * - Fluseason/Midyear: 2016 → 2016/17, 2017/18, 2018/19 (pre-pandemic)
+   * This ensures baseline stays constant when user changes the data range slider
+   * Only syncs to URL when user explicitly changes baseline via slider
+   * NOTE: Moved before dateRangeCalc to enable effective baseline calculation
+   */
+  const baselineRange = computed(() => {
+    return calculateBaselineRange(
+      state.chartType.value,
+      allChartLabels.value,
+      allYearlyChartLabels.value
+    )
+  })
+
+  /**
+   * Effective baseline start date - uses explicit value or falls back to computed default
+   * This is needed for view restriction in excess/zscore modes
+   */
+  const effectiveBaselineDateFrom = computed(() => {
+    return state.baselineDateFrom.value ?? baselineRange.value?.from
+  })
+
+  // Date range calculations (single source of truth for date logic)
+  // Pass view options to restrict date range in excess/zscore views
+  const dateRangeCalc = useDateRangeCalculations(
+    state.chartType,
+    state.sliderStart,
+    state.dateFrom,
+    state.dateTo,
+    allChartLabels,
+    {
+      view: state.view,
+      baselineDateFrom: effectiveBaselineDateFrom
+    }
+  )
 
   /**
    * Unique years available for the date range picker "From" dropdown
@@ -113,21 +144,8 @@ export function useExplorerDataOrchestration(
     }
   })
 
-  /**
-   * Computed baseline range - provides default baseline dates without polluting URL
-   * Uses chart-type-aware baseline year as the reference point, independent of sliderStart
-   * - Yearly: 2017 → 2017, 2018, 2019
-   * - Fluseason/Midyear: 2016 → 2016/17, 2017/18, 2018/19 (pre-pandemic)
-   * This ensures baseline stays constant when user changes the data range slider
-   * Only syncs to URL when user explicitly changes baseline via slider
-   */
-  const baselineRange = computed(() => {
-    return calculateBaselineRange(
-      state.chartType.value,
-      allChartLabels.value,
-      allYearlyChartLabels.value
-    )
-  })
+  // NOTE: baselineRange and allYearlyChartLabels are now defined earlier (before dateRangeCalc)
+  // to enable effectiveBaselineDateFrom calculation
 
   /**
    * Chart data for current selection (filtered by dateFrom/dateTo)
@@ -209,13 +227,14 @@ export function useExplorerDataOrchestration(
    * 1. Data is first loaded (visibleLabels becomes available)
    * 2. Chart type changes (may invalidate current selection)
    * 3. sliderStart changes (visible range changes)
+   * 4. View changes (excess/zscore restrict visible range to baseline start)
    *
    * Logic:
    * 1. If current dateFrom/dateTo are valid, keep them (preserve user selection)
    * 2. Otherwise, set to default range (first to last visible label)
    * 3. Try to preserve year when chart type changes (e.g., yearly → fluseason)
    */
-  watch([dateRangeCalc.visibleLabels, state.chartType], () => {
+  watch([dateRangeCalc.visibleLabels, state.chartType, state.view], () => {
     const labels = dateRangeCalc.visibleLabels.value
     if (labels.length === 0) return
 
@@ -237,10 +256,14 @@ export function useExplorerDataOrchestration(
       return
     }
 
+    // In excess/zscore views, we must set explicit dates so the slider shows correctly
+    // (the visible range is restricted to baseline start, so we need to update the slider)
+    const isRestrictedView = dateRangeCalc.isBaselineRestrictedView.value
+
     // Don't auto-initialize dates if user never set them (keeps URL clean)
-    // The chart will use visibleLabels range when dates are undefined
+    // Exception: In restricted views, we need to set dates for the slider to update
     const userNeverSetDates = !state.isUserSet('dateFrom') && !state.isUserSet('dateTo')
-    if (userNeverSetDates) {
+    if (userNeverSetDates && !isRestrictedView) {
       return
     }
 
@@ -541,6 +564,9 @@ export function useExplorerDataOrchestration(
     defaultRange: dateRangeCalc.defaultRange,
     getDefaultRange: dateRangeCalc.getDefaultRange, // Kept for backward compatibility
     baselineRange,
+
+    // View restrictions (for hiding "From" dropdown in excess/zscore views)
+    isBaselineRestrictedView: dateRangeCalc.isBaselineRestrictedView,
 
     // Short URL for QR codes and sharing
     currentShortUrl,
