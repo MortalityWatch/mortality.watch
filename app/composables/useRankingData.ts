@@ -374,11 +374,16 @@ export function useRankingData(
    *
    * Resets dates to defaults for the new period type.
    * Reactive watcher ensures validation happens automatically.
+   *
+   * IMPORTANT: Batches all state updates into a single router.push to prevent race condition
+   * where sequential state updates each trigger separate router.push calls that read from
+   * stale route.query, causing later pushes to overwrite earlier changes.
    */
   const periodOfTimeChanged = (val: string) => {
-    state.periodOfTime.value = val
+    const router = useRouter()
+    const route = useRoute()
 
-    // Reset dates to defaults for new period type
+    // Calculate defaults for new period type
     const defaultFrom = getPeriodStart(RANKING_START_YEAR, val)
     const defaultTo = getPeriodEnd(RANKING_END_YEAR, val)
 
@@ -389,10 +394,17 @@ export function useRankingData(
     const defaultBaselineFrom = getSeasonString(val, baselineStartYear)
     const defaultBaselineTo = defaultBaselineToDate(val) || ''
 
-    state.dateFrom.value = defaultFrom
-    state.dateTo.value = defaultTo
-    state.baselineDateFrom.value = defaultBaselineFrom
-    state.baselineDateTo.value = defaultBaselineTo
+    // BATCH all updates into single router.push to avoid race condition
+    const newQuery = {
+      ...route.query,
+      p: val,
+      df: defaultFrom,
+      dt: defaultTo,
+      bf: defaultBaselineFrom,
+      bt: defaultBaselineTo
+    }
+
+    router.push({ query: newQuery })
   }
 
   // ============================================================================

@@ -35,6 +35,11 @@ globalThis.useRouter = vi.fn(() => ({
   }))
 }))
 
+// @ts-expect-error - Adding useRoute to globalThis for testing
+globalThis.useRoute = vi.fn(() => ({
+  query: {}
+}))
+
 // Mock dependencies
 vi.mock('#app', () => ({
   useRouter: () => ({
@@ -42,6 +47,9 @@ vi.mock('#app', () => ({
     resolve: vi.fn(({ path, query }) => ({
       href: `${path}?${Object.entries(query || {}).map(([k, v]) => `${k}=${v}`).join('&')}`
     }))
+  }),
+  useRoute: () => ({
+    query: {}
   })
 }))
 
@@ -88,9 +96,13 @@ vi.mock('@/model/baseline', () => ({
 
 vi.mock('vue-router', () => ({
   useRouter: vi.fn(() => ({
+    push: vi.fn(),
     resolve: vi.fn(({ path, query }) => ({
       href: `${path}?${Object.entries(query).map(([k, v]) => `${k}=${v}`).join('&')}`
     }))
+  })),
+  useRoute: vi.fn(() => ({
+    query: {}
   }))
 }))
 
@@ -507,26 +519,55 @@ describe('useRankingData', () => {
 
   describe('period type changes', () => {
     it('should reset dates when period type changes', async () => {
+      const mockPush = vi.fn()
+      const mockRouter = {
+        push: mockPush,
+        resolve: vi.fn(({ path, query }) => ({
+          href: `${path}?${Object.entries(query || {}).map(([k, v]) => `${k}=${v}`).join('&')}`
+        }))
+      }
+      // @ts-expect-error - Override global mock for this test
+      globalThis.useRouter = vi.fn(() => mockRouter)
+
       const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       await ranking.loadData()
 
       ranking.periodOfTimeChanged('monthly')
 
-      expect(mockState.periodOfTime.value).toBe('monthly')
+      // Should batch all state updates into single router.push to avoid race condition
+      expect(mockPush).toHaveBeenCalledWith({
+        query: expect.objectContaining({
+          p: 'monthly'
+        })
+      })
     })
 
     it('should update baseline dates on period change', async () => {
+      const mockPush = vi.fn()
+      const mockRouter = {
+        push: mockPush,
+        resolve: vi.fn(({ path, query }) => ({
+          href: `${path}?${Object.entries(query || {}).map(([k, v]) => `${k}=${v}`).join('&')}`
+        }))
+      }
+      // @ts-expect-error - Override global mock for this test
+      globalThis.useRouter = vi.fn(() => mockRouter)
+
       const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       await ranking.loadData()
 
-      const oldBaselineFrom = mockState.baselineDateFrom.value
-
       ranking.periodOfTimeChanged('monthly')
 
-      // Baseline dates should be recalculated
-      expect(mockState.baselineDateFrom.value).toBeDefined()
+      // Should include baseline dates in the batched router.push
+      expect(mockPush).toHaveBeenCalledWith({
+        query: expect.objectContaining({
+          p: 'monthly',
+          bf: expect.any(String),
+          bt: expect.any(String)
+        })
+      })
     })
   })
 
