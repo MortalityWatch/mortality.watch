@@ -240,12 +240,10 @@ export function resolveChartStateFromSnapshot(
   // Detect view from snapshot
   const view = (snapshot.view as ViewType) || 'mortality'
 
-  // Apply constraints to snapshot state
-  const stateForConstraints: Record<string, unknown> = {
-    ...snapshot,
-    view
-  }
-  const constrainedState = applyConstraints(stateForConstraints, view)
+  // Note: We don't apply constraints here because the snapshot has already been
+  // constrained by StateResolver on the client. This function is only used by
+  // the client (SSR uses resolveChartStateForRendering which starts from URL params).
+  // We just need to compute effective dates for undefined values.
 
   // Compute effective date range
   const { effectiveDateFrom, effectiveDateTo } = computeEffectiveDateRange(
@@ -277,31 +275,31 @@ export function resolveChartStateFromSnapshot(
   effectiveBaselineTo = effectiveBaselineTo || ''
 
   return {
-    countries: constrainedState.countries as string[],
-    type: constrainedState.type as string,
-    chartType: constrainedState.chartType as string,
-    chartStyle: constrainedState.chartStyle as string,
+    countries: snapshot.countries,
+    type: snapshot.type,
+    chartType: snapshot.chartType,
+    chartStyle: snapshot.chartStyle,
     view,
-    isExcess: view === 'excess',
-    isZScore: view === 'zscore',
+    isExcess: snapshot.isExcess,
+    isZScore: snapshot.isZScore,
     dateFrom: effectiveDateFrom,
     dateTo: effectiveDateTo,
     sliderStart: snapshot.sliderStart || '2010',
-    showBaseline: constrainedState.showBaseline as boolean,
-    baselineMethod: constrainedState.baselineMethod as string,
+    showBaseline: snapshot.showBaseline,
+    baselineMethod: snapshot.baselineMethod,
     baselineDateFrom: effectiveBaselineFrom,
     baselineDateTo: effectiveBaselineTo,
-    ageGroups: constrainedState.ageGroups as string[],
-    standardPopulation: constrainedState.standardPopulation as string,
-    cumulative: constrainedState.cumulative as boolean,
-    showTotal: constrainedState.showTotal as boolean,
-    maximize: constrainedState.maximize as boolean,
-    showPredictionInterval: constrainedState.showPredictionInterval as boolean,
-    showLabels: constrainedState.showLabels as boolean,
-    showPercentage: (constrainedState.showPercentage as boolean) ?? false,
-    showLogarithmic: constrainedState.showLogarithmic as boolean,
-    userColors: constrainedState.userColors as string[] | undefined,
-    decimals: (constrainedState.decimals as string) || 'auto'
+    ageGroups: snapshot.ageGroups,
+    standardPopulation: snapshot.standardPopulation,
+    cumulative: snapshot.cumulative,
+    showTotal: snapshot.showTotal,
+    maximize: snapshot.maximize,
+    showPredictionInterval: snapshot.showPredictionInterval,
+    showLabels: snapshot.showLabels,
+    showPercentage: snapshot.showPercentage ?? false,
+    showLogarithmic: snapshot.showLogarithmic,
+    userColors: snapshot.userColors,
+    decimals: snapshot.decimals || 'auto'
   }
 }
 
