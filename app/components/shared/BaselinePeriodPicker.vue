@@ -17,8 +17,9 @@ const emit = defineEmits<{
 }>()
 
 // Period length management
+// Note: 1 year is not offered as an option - it's only used internally for naive method
+// which has the period selector hidden anyway (uses single-value mode)
 const periodLengthOptions = [
-  { label: '1 year', value: 1 },
   { label: '3 years', value: 3 },
   { label: '5 years', value: 5 },
   { label: '10 years', value: 10 },
@@ -74,14 +75,12 @@ const calculatePeriodLength = (sliderValue: string[], fallbackMethod?: string): 
   const labelsPerYear = Math.round(props.labels.length / uniqueYears.length)
 
   // Expected spans for each preset (allowing for small rounding differences)
-  const expected1 = 1 * labelsPerYear
   const expected3 = 3 * labelsPerYear
   const expected5 = 5 * labelsPerYear
   const expected10 = 10 * labelsPerYear
 
   // Match to preset options with tolerance for off-by-one errors
   // This is necessary because of rounding in the calculation
-  if (Math.abs(labelSpan - expected1) <= 1) return 1
   if (Math.abs(labelSpan - expected3) <= 1) return 3
   if (Math.abs(labelSpan - expected5) <= 1) return 5
   if (Math.abs(labelSpan - expected10) <= 1) return 10
