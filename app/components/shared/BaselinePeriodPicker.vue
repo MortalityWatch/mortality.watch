@@ -65,6 +65,12 @@ const calculatePeriodLength = (sliderValue: string[], fallbackMethod?: string): 
 
   // Calculate expected label spans for each preset based on labels per year
   const uniqueYears = Array.from(new Set(props.labels.filter(l => l).map(l => l.substring(0, 4))))
+
+  // Guard against empty labels (prevent divide-by-zero)
+  if (uniqueYears.length === 0) {
+    return fallbackMethod ? getDefaultPeriodLength(fallbackMethod) : 3
+  }
+
   const labelsPerYear = Math.round(props.labels.length / uniqueYears.length)
 
   // Expected spans for each preset (allowing for small rounding differences)
@@ -135,6 +141,10 @@ watch(() => selectedPeriodLength.value, (newLength, oldLength) => {
     // For yearly charts: 3 years = 3 labels (2017, 2018, 2019)
     // For weekly charts: 3 years = ~156 labels
     const uniqueYears = Array.from(new Set(props.labels.filter(l => l).map(l => l.substring(0, 4))))
+
+    // Guard against empty labels (prevent divide-by-zero)
+    if (uniqueYears.length === 0) return
+
     const labelsPerYear = Math.round(props.labels.length / uniqueYears.length)
     const periodIndices = newLength * labelsPerYear - 1 // -1 for inclusive range
 
