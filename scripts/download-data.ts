@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 import { writeFileSync, mkdirSync, existsSync } from 'fs'
 import { join, dirname } from 'path'
+import { CACHE_CONFIG } from '../app/lib/config/constants'
 
 const S3_BASE = 'https://s3.mortality.watch/data/mortality'
-const CACHE_DIR = '.data/cache/mortality'
+const CACHE_DIR = CACHE_CONFIG.MORTALITY_DATA_DIR
 
 // Chart types to download
 const CHART_TYPES = [

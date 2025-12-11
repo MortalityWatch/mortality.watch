@@ -30,10 +30,11 @@ import { ChartPeriod, type ChartType } from '../../app/model/period'
 import { getObjectOfArrays, prefillUndefined, fromYearMonthString, left, right } from '../../app/utils'
 import { filesystemCache } from '../utils/cache'
 import { calculateBaselines } from '../utils/baselines'
+import { CACHE_CONFIG } from '../../app/lib/config/constants'
 
 // Default configuration constants
 const DEFAULT_S3_BASE = 'https://s3.mortality.watch/data/mortality'
-const DEFAULT_CACHE_DIR = '.data/cache/mortality'
+const DEFAULT_CACHE_DIR = CACHE_CONFIG.MORTALITY_DATA_DIR
 const DEFAULT_FETCH_TIMEOUT_MS = 30000
 
 /**

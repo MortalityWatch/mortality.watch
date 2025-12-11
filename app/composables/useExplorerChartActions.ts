@@ -4,6 +4,7 @@ import { useSaveChart } from '@/composables/useSaveChart'
 import { useShortUrl } from '@/composables/useShortUrl'
 import { generateChartFilename } from '@/lib/utils/strings'
 import { generateExplorerTitle, generateExplorerDescription } from '@/lib/utils/chartTitles'
+import { THEME_COLORS } from '@/lib/config/constants'
 import Papa from 'papaparse'
 import type { Ref } from 'vue'
 import type { MortalityChartData } from '@/lib/chart/chartTypes'
@@ -68,7 +69,7 @@ export function useExplorerChartActions(
 
       // Detect dark mode and set appropriate background color
       const isDark = document.documentElement.classList.contains('dark')
-      ctx.fillStyle = isDark ? '#111827' : '#ffffff'
+      ctx.fillStyle = isDark ? THEME_COLORS.BG_DARK : THEME_COLORS.BG_LIGHT
       ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height)
 
       // Draw the chart on top of the background

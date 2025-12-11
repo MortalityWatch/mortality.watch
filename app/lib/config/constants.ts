@@ -129,6 +129,21 @@ export const isDesktop = () => {
 }
 
 // =============================================================================
+// THEME COLORS
+// =============================================================================
+
+/**
+ * Background colors for light/dark theme
+ * Used in chart rendering (client and SSR) to ensure consistency
+ */
+export const THEME_COLORS = {
+  /** Dark mode background color (gray-900) */
+  BG_DARK: '#111827',
+  /** Light mode background color */
+  BG_LIGHT: '#ffffff'
+} as const
+
+// =============================================================================
 // CHART CONFIGURATION
 // =============================================================================
 
@@ -270,7 +285,28 @@ export const CACHE_CONFIG = {
   /**
    * Time-to-live for metadata cache (1 day in milliseconds)
    */
-  METADATA_CACHE_TTL: 24 * 60 * 60 * 1000
+  METADATA_CACHE_TTL: 24 * 60 * 60 * 1000,
+
+  /**
+   * Default directory for cached mortality data
+   * Used by data loader and download scripts
+   */
+  MORTALITY_DATA_DIR: '.data/cache/mortality'
+} as const
+
+// =============================================================================
+// EXTERNAL SERVICES
+// =============================================================================
+
+/**
+ * External service URLs
+ */
+export const EXTERNAL_SERVICES = {
+  /**
+   * Statistics API URL for baseline calculations
+   * Used by client and server baseline computation
+   */
+  STATS_API_URL: 'https://stats.mortality.watch/'
 } as const
 
 // =============================================================================
