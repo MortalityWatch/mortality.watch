@@ -18,18 +18,14 @@ import {
   getCamelCase,
   parseFourDigitNumber,
   getFilename,
-  shuffleArray,
   isNumberArray,
   typedKeys,
   isStringArray,
   getDataTypeDescription,
-  getSortedArray,
   getObjectOfArrays,
   delay,
   fromYearMonthString,
   prefillUndefined,
-  postfillUndefined,
-  getFirstIndexOf,
   left,
   right
 } from './utils'
@@ -468,36 +464,6 @@ describe('utils', () => {
     })
   })
 
-  describe('shuffleArray', () => {
-    it('should return array with same length', () => {
-      const arr = [1, 2, 3, 4, 5]
-      const shuffled = shuffleArray([...arr])
-      expect(shuffled.length).toBe(arr.length)
-    })
-
-    it('should contain same elements', () => {
-      const arr = [1, 2, 3, 4, 5]
-      const shuffled = shuffleArray([...arr])
-      expect(shuffled.sort()).toEqual(arr.sort())
-    })
-
-    it('should handle empty array', () => {
-      const result = shuffleArray([])
-      expect(result).toEqual([])
-    })
-
-    it('should handle single element', () => {
-      const result = shuffleArray([1])
-      expect(result).toEqual([1])
-    })
-
-    it('should handle array of objects', () => {
-      const arr = [{ a: 1 }, { b: 2 }]
-      const shuffled = shuffleArray([...arr])
-      expect(shuffled.length).toBe(2)
-    })
-  })
-
   describe('isNumberArray', () => {
     it('should return true for array of numbers', () => {
       expect(isNumberArray([1, 2, 3])).toBe(true)
@@ -583,32 +549,6 @@ describe('utils', () => {
     it('should return the input for unknown types', () => {
       expect(getDataTypeDescription('4')).toBe('4')
       expect(getDataTypeDescription('unknown')).toBe('unknown')
-    })
-  })
-
-  describe('getSortedArray', () => {
-    it('should sort a set of numbers', () => {
-      const set = new Set([3, 1, 2])
-      const result = getSortedArray(set)
-      expect(result).toEqual([1, 2, 3])
-    })
-
-    it('should sort a set of strings', () => {
-      const set = new Set(['c', 'a', 'b'])
-      const result = getSortedArray(set)
-      expect(result).toEqual(['a', 'b', 'c'])
-    })
-
-    it('should handle empty set', () => {
-      const set = new Set<string>()
-      const result = getSortedArray(set)
-      expect(result).toEqual([])
-    })
-
-    it('should handle single element', () => {
-      const set = new Set(['a'])
-      const result = getSortedArray(set)
-      expect(result).toEqual(['a'])
     })
   })
 
@@ -763,60 +703,6 @@ describe('utils', () => {
       expect(result[0]).toBeUndefined()
       expect(result[1]).toBe('a')
       expect(result[2]).toBe('b')
-    })
-  })
-
-  describe('postfillUndefined', () => {
-    it('should add undefined values to end of array', () => {
-      const arr = [1, 2, 3]
-      const result = postfillUndefined(arr, 2)
-      expect(result).toHaveLength(5)
-      expect(result[0]).toBe(1)
-      expect(result[1]).toBe(2)
-      expect(result[2]).toBe(3)
-      expect(result[3]).toBeUndefined()
-      expect(result[4]).toBeUndefined()
-    })
-
-    it('should handle zero postfill', () => {
-      const arr = [1, 2, 3]
-      const result = postfillUndefined(arr, 0)
-      expect(result).toHaveLength(3)
-    })
-
-    it('should work with string arrays', () => {
-      const arr = ['a', 'b']
-      const result = postfillUndefined(arr, 1)
-      expect(result).toHaveLength(3)
-      expect(result[0]).toBe('a')
-      expect(result[1]).toBe('b')
-      expect(result[2]).toBeUndefined()
-    })
-  })
-
-  describe('getFirstIndexOf', () => {
-    it('should find first index containing needle', () => {
-      const haystack = ['apple', 'banana', 'cherry']
-      expect(getFirstIndexOf('ban', haystack)).toBe(1)
-    })
-
-    it('should return -1 if not found', () => {
-      const haystack = ['apple', 'banana', 'cherry']
-      expect(getFirstIndexOf('xyz', haystack)).toBe(-1)
-    })
-
-    it('should find partial matches', () => {
-      const haystack = ['test123', 'hello', 'test456']
-      expect(getFirstIndexOf('test', haystack)).toBe(0)
-    })
-
-    it('should return first match when multiple exist', () => {
-      const haystack = ['foo', 'bar', 'foobar']
-      expect(getFirstIndexOf('foo', haystack)).toBe(0)
-    })
-
-    it('should handle empty haystack', () => {
-      expect(getFirstIndexOf('test', [])).toBe(-1)
     })
   })
 })

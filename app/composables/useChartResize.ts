@@ -1,6 +1,6 @@
 import { ref, computed, onBeforeUnmount } from 'vue'
 import { isMobile } from '@/utils'
-import { CHART_RESIZE, CHART_PRESETS } from '@/lib/constants'
+import { CHART_RESIZE, CHART_PRESETS } from '@/lib/config/constants'
 
 /**
  * Manages chart resizing functionality including presets and manual resize

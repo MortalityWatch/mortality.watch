@@ -26,4 +26,4 @@ export * from './guards'
 export * from './misc'
 
 // Re-export viewport helpers from constants
-export { isMobile, isTablet, isDesktop, BREAKPOINTS } from '../constants'
+export { isMobile, isTablet, isDesktop, BREAKPOINTS } from '../config/constants'

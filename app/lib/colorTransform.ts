@@ -13,7 +13,7 @@ interface RgbColor {
   blue: number
 }
 
-interface HslColor {
+export interface HslColor {
   hue: number
   saturation: number
   lightness: number
@@ -48,7 +48,7 @@ function rgbToHex(red: number, green: number, blue: number): string {
 /**
  * Parse hex color to HSL values
  */
-function parseToHsl(color: string): HslColor {
+export function parseToHsl(color: string): HslColor {
   const { red, green, blue } = parseToRgb(color)
   const r = red / 255
   const g = green / 255
