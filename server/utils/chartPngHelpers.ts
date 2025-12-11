@@ -1,4 +1,4 @@
-import type { H3Event } from 'h3'
+import { type H3Event, getRequestHeader } from 'h3'
 import { dataLoader } from '../services/dataLoader'
 import type { AllChartData, CountryData } from '../../app/model'
 import { ChartPeriod, type ChartType } from '../../app/model/period'

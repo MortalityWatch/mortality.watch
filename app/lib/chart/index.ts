@@ -14,8 +14,6 @@ export { getChartLabels, blDescription } from './labels'
 
 // Filtering
 export {
-  getFilteredLabelAndData,
-  getFilteredChartData,
   getFilteredChartDataFromConfig,
   baselineMinRange
 } from './filtering'
