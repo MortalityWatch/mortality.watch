@@ -80,15 +80,18 @@ export function useRankingData(
    *
    * Similar to Explorer's date watcher - ensures dates are valid when:
    * 1. Data is first loaded (visibleLabels becomes available)
-   * 2. Chart type changes (may invalidate current selection)
-   * 3. sliderStart changes (visible range changes)
+   * 2. sliderStart changes (visible range changes)
+   *
+   * NOTE: We do NOT watch periodOfTime here because periodOfTimeChanged() already
+   * sets correct dates for the new period type. Watching periodOfTime would cause
+   * a race condition where the watcher runs before the new labels are loaded,
+   * trying to validate old-format dates against new-format labels.
    *
    * Logic:
    * 1. If current dateFrom/dateTo are valid, keep them (preserve user selection)
    * 2. Otherwise, correct invalid dates to closest valid dates
-   * 3. Try to preserve year when chart type changes
    */
-  watch([dateRangeCalc.visibleLabels, computed(() => state.periodOfTime.value)], () => {
+  watch([dateRangeCalc.visibleLabels], () => {
     const labels = dateRangeCalc.visibleLabels.value
     if (labels.length === 0) return
 
@@ -129,12 +132,17 @@ export function useRankingData(
       { from: defaultFrom, to: defaultTo }
     )
 
-    // Update state only if values changed
-    if (validatedRange.from !== currentFrom) {
-      state.dateFrom.value = validatedRange.from
-    }
-    if (validatedRange.to !== currentTo) {
-      state.dateTo.value = validatedRange.to
+    // IMPORTANT: Use batchUpdate to update both dates in a single router.push
+    // This prevents race condition where sequential state updates each trigger
+    // separate router.push calls that read from stale route.query
+    const dateFromChanged = validatedRange.from !== currentFrom
+    const dateToChanged = validatedRange.to !== currentTo
+
+    if (dateFromChanged || dateToChanged) {
+      const updates: { dateFrom?: string, dateTo?: string } = {}
+      if (dateFromChanged) updates.dateFrom = validatedRange.from
+      if (dateToChanged) updates.dateTo = validatedRange.to
+      state.batchUpdate(updates)
     }
   })
 
@@ -373,13 +381,18 @@ export function useRankingData(
    * Handle period type changes
    *
    * Resets dates to defaults for the new period type.
-   * Reactive watcher ensures validation happens automatically.
+   * Uses "2019/20 to latest" defaults to match the page's initial load behavior.
+   *
+   * IMPORTANT: Uses batchUpdate to batch all state updates into a single router.push
+   * to prevent race condition where sequential state updates each trigger separate
+   * router.push calls that read from stale route.query.
    */
   const periodOfTimeChanged = (val: string) => {
-    state.periodOfTime.value = val
-
-    // Reset dates to defaults for new period type
-    const defaultFrom = getPeriodStart(RANKING_START_YEAR, val)
+    // Calculate defaults for new period type
+    // Use 2019/2020 as start (consistent with page's initial load defaults)
+    // For yearly: 2019, for fluseason/midyear: 2019/20, for quarterly: 2020 Q1, for monthly: 2020 Jan
+    const defaultStartYear = val === 'yearly' ? 2019 : 2020
+    const defaultFrom = getPeriodStart(defaultStartYear, val)
     const defaultTo = getPeriodEnd(RANKING_END_YEAR, val)
 
     // Reset baseline dates
@@ -389,10 +402,14 @@ export function useRankingData(
     const defaultBaselineFrom = getSeasonString(val, baselineStartYear)
     const defaultBaselineTo = defaultBaselineToDate(val) || ''
 
-    state.dateFrom.value = defaultFrom
-    state.dateTo.value = defaultTo
-    state.baselineDateFrom.value = defaultBaselineFrom
-    state.baselineDateTo.value = defaultBaselineTo
+    // BATCH all updates into single router.push via batchUpdate to avoid race condition
+    state.batchUpdate({
+      periodOfTime: val,
+      dateFrom: defaultFrom,
+      dateTo: defaultTo,
+      baselineDateFrom: defaultBaselineFrom,
+      baselineDateTo: defaultBaselineTo
+    })
   }
 
   // ============================================================================

@@ -190,13 +190,13 @@ describe('rankingSchema', () => {
         expect(result.success).toBe(true)
       })
 
-      it('should accept YYYY/YY format for quarterly', () => {
+      it('should accept YYYY Q# format for quarterly', () => {
         const state = createValidState()
         state.periodOfTime = 'quarterly'
-        state.dateFrom = '2020/21'
-        state.dateTo = '2023/24'
-        state.baselineDateFrom = '2015/16'
-        state.baselineDateTo = '2019/20'
+        state.dateFrom = '2020 Q1'
+        state.dateTo = '2023 Q4'
+        state.baselineDateFrom = '2015 Q1'
+        state.baselineDateTo = '2019 Q4'
         const result = rankingStateSchema.safeParse(state)
         expect(result.success).toBe(true)
       })

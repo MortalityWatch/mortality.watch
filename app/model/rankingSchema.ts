@@ -133,6 +133,7 @@ export const rankingStateSchema = rankingStateBaseSchema.superRefine(
     // Rule 5: Date format must match period type (only validate if dates are set)
     const yearlyPattern = /^\d{4}$/
     const fluseasonPattern = /^\d{4}\/\d{2}$/
+    const quarterlyPattern = /^\d{4} Q[1-4]$/
 
     if (data.dateFrom && data.periodOfTime === 'yearly' && !yearlyPattern.test(data.dateFrom)) {
       ctx.addIssue({
@@ -152,7 +153,7 @@ export const rankingStateSchema = rankingStateBaseSchema.superRefine(
 
     if (
       data.dateFrom
-      && (data.periodOfTime === 'fluseason' || data.periodOfTime === 'midyear' || data.periodOfTime === 'quarterly')
+      && (data.periodOfTime === 'fluseason' || data.periodOfTime === 'midyear')
       && !fluseasonPattern.test(data.dateFrom)
     ) {
       ctx.addIssue({
@@ -164,12 +165,28 @@ export const rankingStateSchema = rankingStateBaseSchema.superRefine(
 
     if (
       data.dateTo
-      && (data.periodOfTime === 'fluseason' || data.periodOfTime === 'midyear' || data.periodOfTime === 'quarterly')
+      && (data.periodOfTime === 'fluseason' || data.periodOfTime === 'midyear')
       && !fluseasonPattern.test(data.dateTo)
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: `Date format must be YYYY/YY for ${data.periodOfTime} periods (got: ${data.dateTo})`,
+        path: ['dateTo']
+      })
+    }
+
+    if (data.dateFrom && data.periodOfTime === 'quarterly' && !quarterlyPattern.test(data.dateFrom)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Date format must be YYYY Q# for quarterly periods (got: ${data.dateFrom})`,
+        path: ['dateFrom']
+      })
+    }
+
+    if (data.dateTo && data.periodOfTime === 'quarterly' && !quarterlyPattern.test(data.dateTo)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Date format must be YYYY Q# for quarterly periods (got: ${data.dateTo})`,
         path: ['dateTo']
       })
     }

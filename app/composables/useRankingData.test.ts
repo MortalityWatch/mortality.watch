@@ -35,6 +35,11 @@ globalThis.useRouter = vi.fn(() => ({
   }))
 }))
 
+// @ts-expect-error - Adding useRoute to globalThis for testing
+globalThis.useRoute = vi.fn(() => ({
+  query: {}
+}))
+
 // Mock dependencies
 vi.mock('#app', () => ({
   useRouter: () => ({
@@ -42,6 +47,9 @@ vi.mock('#app', () => ({
     resolve: vi.fn(({ path, query }) => ({
       href: `${path}?${Object.entries(query || {}).map(([k, v]) => `${k}=${v}`).join('&')}`
     }))
+  }),
+  useRoute: () => ({
+    query: {}
   })
 }))
 
@@ -88,9 +96,13 @@ vi.mock('@/model/baseline', () => ({
 
 vi.mock('vue-router', () => ({
   useRouter: vi.fn(() => ({
+    push: vi.fn(),
     resolve: vi.fn(({ path, query }) => ({
       href: `${path}?${Object.entries(query).map(([k, v]) => `${k}=${v}`).join('&')}`
     }))
+  })),
+  useRoute: vi.fn(() => ({
+    query: {}
   }))
 }))
 
@@ -141,7 +153,9 @@ describe('useRankingData', () => {
       showPercentage: ref(false),
       showTotals: ref(false),
       showTotalsOnly: ref(false),
-      hideIncomplete: ref(false)
+      hideIncomplete: ref(false),
+      // batchUpdate mocks the state.batchUpdate function
+      batchUpdate: vi.fn()
     } as any
 
     // Create mock metadata
@@ -507,14 +521,19 @@ describe('useRankingData', () => {
   // ============================================================================
 
   describe('period type changes', () => {
-    it('should reset dates when period type changes', async () => {
+    it('should batch state updates when period type changes', async () => {
       const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       await ranking.loadData()
 
       ranking.periodOfTimeChanged('monthly')
 
-      expect(mockState.periodOfTime.value).toBe('monthly')
+      // Should use batchUpdate to batch all state updates into single router.push
+      expect(mockState.batchUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          periodOfTime: 'monthly'
+        })
+      )
     })
 
     it('should update baseline dates on period change', async () => {
@@ -522,12 +541,35 @@ describe('useRankingData', () => {
 
       await ranking.loadData()
 
-      const oldBaselineFrom = mockState.baselineDateFrom.value
+      ranking.periodOfTimeChanged('monthly')
+
+      // Should include baseline dates in the batched update
+      expect(mockState.batchUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          periodOfTime: 'monthly',
+          baselineDateFrom: expect.any(String),
+          baselineDateTo: expect.any(String)
+        })
+      )
+    })
+
+    it('should include date range in batch update', async () => {
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
+
+      await ranking.loadData()
 
       ranking.periodOfTimeChanged('monthly')
 
-      // Baseline dates should be recalculated
-      expect(mockState.baselineDateFrom.value).toBeDefined()
+      // Should include dateFrom and dateTo in the batched update
+      expect(mockState.batchUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          periodOfTime: 'monthly',
+          dateFrom: expect.any(String),
+          dateTo: expect.any(String),
+          baselineDateFrom: expect.any(String),
+          baselineDateTo: expect.any(String)
+        })
+      )
     })
   })
 

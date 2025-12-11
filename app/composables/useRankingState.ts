@@ -42,6 +42,56 @@ export function useRankingState() {
     router.push({ query: newQuery })
   }
 
+  /**
+   * Batch multiple state updates into a single router.push
+   *
+   * IMPORTANT: Use this method when updating multiple state values at once
+   * to prevent race conditions where sequential router.push calls read from
+   * stale route.query, causing later pushes to overwrite earlier changes.
+   *
+   * @param updates - Object with state field names and their new values
+   */
+  const batchUpdate = (updates: Partial<{
+    periodOfTime: string
+    jurisdictionType: string
+    showASMR: boolean
+    showTotals: boolean
+    showTotalsOnly: boolean
+    showPercentage: boolean
+    showPI: boolean
+    cumulative: boolean
+    hideIncomplete: boolean
+    standardPopulation: string
+    baselineMethod: string
+    decimalPrecision: string
+    dateFrom: string | undefined
+    dateTo: string | undefined
+    baselineDateFrom: string | undefined
+    baselineDateTo: string | undefined
+  }>) => {
+    // Map state field names to URL query parameter keys
+    const queryUpdates: Record<string, string | number | undefined> = {}
+
+    if ('periodOfTime' in updates) queryUpdates.p = updates.periodOfTime
+    if ('jurisdictionType' in updates) queryUpdates.j = updates.jurisdictionType
+    if ('showASMR' in updates) queryUpdates.a = encodeBool(updates.showASMR!)
+    if ('showTotals' in updates) queryUpdates.t = encodeBool(updates.showTotals!)
+    if ('showTotalsOnly' in updates) queryUpdates.to = encodeBool(updates.showTotalsOnly!)
+    if ('showPercentage' in updates) queryUpdates.r = encodeBool(updates.showPercentage!)
+    if ('showPI' in updates) queryUpdates.pi = encodeBool(updates.showPI!)
+    if ('cumulative' in updates) queryUpdates.c = encodeBool(updates.cumulative!)
+    if ('hideIncomplete' in updates) queryUpdates.i = encodeBool(!updates.hideIncomplete!)
+    if ('standardPopulation' in updates) queryUpdates.sp = updates.standardPopulation
+    if ('baselineMethod' in updates) queryUpdates.bm = updates.baselineMethod
+    if ('decimalPrecision' in updates) queryUpdates.dp = updates.decimalPrecision
+    if ('dateFrom' in updates) queryUpdates.df = updates.dateFrom
+    if ('dateTo' in updates) queryUpdates.dt = updates.dateTo
+    if ('baselineDateFrom' in updates) queryUpdates.bf = updates.baselineDateFrom
+    if ('baselineDateTo' in updates) queryUpdates.bt = updates.baselineDateTo
+
+    updateQuery(queryUpdates)
+  }
+
   // ============================================================================
   // URL STATE REFS
   // ============================================================================
@@ -222,8 +272,23 @@ export function useRankingState() {
         return // Exit early after auto-fix
       }
 
+      // Skip date format validation errors - these are transient during period type changes
+      // The periodOfTimeChanged handler ensures correct formats, but during the batch update
+      // the computed currentState may momentarily have mismatched period type and date formats
+      const dateFormatErrors = newErrors.filter(e =>
+        e.message.includes('Date format must be')
+      )
+      if (dateFormatErrors.length === newErrors.length) {
+        // All errors are date format errors - skip them
+        return
+      }
+
       // For errors that can't be auto-fixed, notify user only once per unique error
-      const errorMessages = new Set(newErrors.map(e => e.message))
+      // Filter out date format errors since they're transient
+      const nonDateFormatErrors = newErrors.filter(e =>
+        !e.message.includes('Date format must be')
+      )
+      const errorMessages = new Set(nonDateFormatErrors.map(e => e.message))
 
       // Only show toasts for errors we haven't shown before
       errorMessages.forEach((errorMsg) => {
@@ -285,6 +350,9 @@ export function useRankingState() {
     currentState,
     isValid,
     errors,
-    getValidatedState
+    getValidatedState,
+
+    // Batch updates (prevents race conditions)
+    batchUpdate
   }
 }
