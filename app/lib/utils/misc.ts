@@ -27,10 +27,11 @@ export const getObjectOfArrays = (rows: CountryData[]): DatasetEntry => {
 export const getByValue = (
   map: Record<string, string>,
   searchValue: string
-) => {
+): string | undefined => {
   for (const [key, value] of Object.entries(map)) {
     if (value === searchValue) return key
   }
+  return undefined
 }
 
 export const getColor = (value: number) => {
