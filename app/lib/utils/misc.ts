@@ -3,7 +3,7 @@
  */
 
 import { datasetEntryKeys, type CountryData, type DatasetEntry } from '@/model'
-import { color_scale_diverging_css } from '@/colors'
+import { color_scale_diverging_css } from '@/lib/chart/chartColors'
 import { CSS_CLASSES } from '@/lib/config/constants'
 
 export const getObjectOfArrays = (rows: CountryData[]): DatasetEntry => {

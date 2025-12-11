@@ -1,6 +1,5 @@
 import { computed, type Ref } from 'vue'
-import { getChartColors } from '@/colors'
-import { getColorScale } from '@/lib/chart/chartColors'
+import { getChartColors, getColorScale } from '@/lib/chart/chartColors'
 
 /**
  * Explorer Colors Composable

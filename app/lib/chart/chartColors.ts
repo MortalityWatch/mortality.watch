@@ -157,3 +157,60 @@ export const color_scale = (isDarkOverride?: boolean) => {
   const isDark = isDarkOverride !== undefined ? isDarkOverride : getIsDarkTheme()
   return isDark ? color_scale_light.map(toDarkTheme) : color_scale_light
 }
+
+// ============================================================================
+// Chart Line/Bar Colors (from colors.ts)
+// ============================================================================
+
+// Main chart colors for line/bar charts (light theme)
+export const chartLineColors = [
+  '#ff5393',
+  '#5dac20',
+  '#5992fc',
+  '#ffa243',
+  '#ff56f5',
+  '#23b9d3',
+  '#bad31f'
+]
+
+// Get chart line colors based on current theme
+export const getChartColors = (isDarkOverride?: boolean) => {
+  const isDark = isDarkOverride !== undefined ? isDarkOverride : getIsDarkTheme()
+  return isDark ? chartLineColors.map(toDarkTheme) : chartLineColors
+}
+
+// Get interpolated color palette for a specific count of items
+export const getChartColorPalette = (count: number, isDarkOverride?: boolean) =>
+  chroma
+    .scale(getChartColors(isDarkOverride).slice(0, count))
+    .mode('rgb')
+    .colors(count)
+
+// ============================================================================
+// UI Colors (from colors.ts)
+// ============================================================================
+
+// Special UI accent color (blue)
+export const specialColor = (isDarkOverride?: boolean) => {
+  const isDark = isDarkOverride !== undefined ? isDarkOverride : getIsDarkTheme()
+  return !isDark ? '#1a82fb' : '#5189ec'
+}
+
+// Green accent color (for positive indicators)
+export const greenColor = (isDarkOverride?: boolean) => {
+  const isDark = isDarkOverride !== undefined ? isDarkOverride : getIsDarkTheme()
+  return !isDark ? '#44781d' : '#5f8b3e'
+}
+
+// CSS class names for diverging color scale (used in ranking table)
+export const color_scale_diverging_css = () => [
+  'color-scale-1',
+  'color-scale-2',
+  'color-scale-3',
+  'color-scale-4',
+  'color-scale-5',
+  'color-scale-6',
+  'color-scale-7',
+  'color-scale-8',
+  'color-scale-9'
+]

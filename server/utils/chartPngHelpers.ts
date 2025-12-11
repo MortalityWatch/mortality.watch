@@ -4,7 +4,7 @@ import type { AllChartData, CountryData } from '../../app/model'
 import { ChartPeriod, type ChartType } from '../../app/model/period'
 import { getKeyForType } from '../../app/model/utils'
 import { getFilteredChartDataFromConfig } from '../../app/lib/chart/filtering'
-import { getChartColors } from '../../app/colors'
+import { getChartColors } from '../../app/lib/chart/chartColors'
 import { makeBarLineChartConfig, makeMatrixChartConfig } from '../../app/lib/chart/chartConfig'
 import type { MortalityChartData } from '../../app/lib/chart/chartTypes'
 import {

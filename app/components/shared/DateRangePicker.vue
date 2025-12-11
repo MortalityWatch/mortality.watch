@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import type { ChartType } from '@/model/period'
 import DateSlider from '@/components/charts/DateSlider.vue'
-import { specialColor } from '@/colors'
+import { specialColor } from '@/lib/chart/chartColors'
 
 const props = defineProps<{
   sliderStart: string
