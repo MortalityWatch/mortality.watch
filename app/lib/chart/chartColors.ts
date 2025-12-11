@@ -1,41 +1,34 @@
 import chroma from 'chroma-js'
-import { toDarkTheme } from '../colorTransform'
+import { toDarkTheme, parseToHsl } from '../colorTransform'
 import { getIsDark } from '@/composables/useTheme'
 
-// Helper function to safely get dark theme state
-// Returns boolean value for use in non-reactive contexts
-export const getIsDarkTheme = () => {
-  const value = getIsDark()
-  return value
-}
-
 export const textColor = (isDark?: boolean) => {
-  const dark = isDark !== undefined ? isDark : getIsDarkTheme()
+  const dark = isDark !== undefined ? isDark : getIsDark()
   return dark ? '#ffffff' : '#25304a'
 }
 
 export const textSoftColor = (isDark?: boolean) => {
-  const dark = isDark !== undefined ? isDark : getIsDarkTheme()
+  const dark = isDark !== undefined ? isDark : getIsDark()
   return dark ? '#9ca3af' : '#6b7280' // light gray in dark mode, dark gray in light mode
 }
 
 export const textStrongColor = (isDark?: boolean) => {
-  const dark = isDark !== undefined ? isDark : getIsDarkTheme()
+  const dark = isDark !== undefined ? isDark : getIsDark()
   return dark ? '#ffffff' : '#000000'
 }
 
 export const isLightColor = (color: string) => {
-  const hsl = hexToHsl(color)
-  return (hsl[2] || 0) >= (!getIsDarkTheme() ? 0.3 : 0.7)
+  const hsl = parseToHsl(color)
+  return hsl.lightness >= (!getIsDark() ? 0.3 : 0.7)
 }
 
 export const borderColor = (isDark?: boolean) => {
-  const dark = isDark !== undefined ? isDark : getIsDarkTheme()
+  const dark = isDark !== undefined ? isDark : getIsDark()
   return dark ? '#2a3041' : '#e0e6fb'
 }
 
 export const backgroundColor = (isDark?: boolean) => {
-  const dark = isDark !== undefined ? isDark : getIsDarkTheme()
+  const dark = isDark !== undefined ? isDark : getIsDark()
   // Dark mode: #111827 (gray-900, must match SSR chartRenderer.ts and useExplorerChartActions.ts)
   return dark ? '#111827' : '#ffffff'
 }
@@ -60,42 +53,6 @@ export const getGradientColor = (
   return palette[index] || palette[0] || ''
 }
 
-const hexToHsl = (color: string): number[] => {
-  let r = parseInt(color.substring(1, 3), 16)
-  let g = parseInt(color.substring(3, 5), 16)
-  let b = parseInt(color.substring(5, 7), 16)
-  r /= 255
-  g /= 255
-  b /= 255
-  const max = Math.max(r, g, b)
-  const min = Math.min(r, g, b)
-  let h
-  let s
-  const l = (max + min) / 2
-
-  if (max == min) {
-    h = s = 0 // achromatic
-  } else {
-    const d = max - min
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
-    switch (max) {
-      case r:
-        h = (g - b) / d + (g < b ? 6 : 0)
-        break
-      case g:
-        h = (b - r) / d + 2
-        break
-      case b:
-        h = (r - g) / d + 4
-        break
-      default:
-        throw new Error('h undefined')
-    }
-    h /= 6
-  }
-  return [h, s, l]
-}
-
 // Population type scale (blue sequential)
 const color_scale_pop_light = [
   '#ebefff',
@@ -109,7 +66,7 @@ const color_scale_pop_light = [
   '#5992fc'
 ]
 export const color_scale_pop = (isDarkOverride?: boolean) => {
-  const isDark = isDarkOverride !== undefined ? isDarkOverride : getIsDarkTheme()
+  const isDark = isDarkOverride !== undefined ? isDarkOverride : getIsDark()
   return isDark ? color_scale_pop_light.map(toDarkTheme) : color_scale_pop_light
 }
 
@@ -120,7 +77,7 @@ export const getColorScale = (colors: string[], count: number) =>
 const color_scale_bad_good_light = getColorScale(['#ff5393', '#5dac20'], 9)
 
 export const color_scale_bad_good = (isDarkOverride?: boolean) => {
-  const isDark = isDarkOverride !== undefined ? isDarkOverride : getIsDarkTheme()
+  const isDark = isDarkOverride !== undefined ? isDarkOverride : getIsDark()
   return isDark ? color_scale_bad_good_light.map(toDarkTheme) : color_scale_bad_good_light
 }
 
@@ -137,7 +94,7 @@ const color_scale_diverging_light = [
   '#ff5853'
 ]
 export const color_scale_diverging = (isDarkOverride?: boolean) => {
-  const isDark = isDarkOverride !== undefined ? isDarkOverride : getIsDarkTheme()
+  const isDark = isDarkOverride !== undefined ? isDarkOverride : getIsDark()
   return isDark ? color_scale_diverging_light.map(toDarkTheme) : color_scale_diverging_light
 }
 
@@ -154,7 +111,7 @@ const color_scale_light = [
   '#ff5853'
 ]
 export const color_scale = (isDarkOverride?: boolean) => {
-  const isDark = isDarkOverride !== undefined ? isDarkOverride : getIsDarkTheme()
+  const isDark = isDarkOverride !== undefined ? isDarkOverride : getIsDark()
   return isDark ? color_scale_light.map(toDarkTheme) : color_scale_light
 }
 
@@ -175,7 +132,7 @@ export const chartLineColors = [
 
 // Get chart line colors based on current theme
 export const getChartColors = (isDarkOverride?: boolean) => {
-  const isDark = isDarkOverride !== undefined ? isDarkOverride : getIsDarkTheme()
+  const isDark = isDarkOverride !== undefined ? isDarkOverride : getIsDark()
   return isDark ? chartLineColors.map(toDarkTheme) : chartLineColors
 }
 
@@ -192,13 +149,13 @@ export const getChartColorPalette = (count: number, isDarkOverride?: boolean) =>
 
 // Special UI accent color (blue)
 export const specialColor = (isDarkOverride?: boolean) => {
-  const isDark = isDarkOverride !== undefined ? isDarkOverride : getIsDarkTheme()
+  const isDark = isDarkOverride !== undefined ? isDarkOverride : getIsDark()
   return !isDark ? '#1a82fb' : '#5189ec'
 }
 
 // Green accent color (for positive indicators)
 export const greenColor = (isDarkOverride?: boolean) => {
-  const isDark = isDarkOverride !== undefined ? isDarkOverride : getIsDarkTheme()
+  const isDark = isDarkOverride !== undefined ? isDarkOverride : getIsDark()
   return !isDark ? '#44781d' : '#5f8b3e'
 }
 

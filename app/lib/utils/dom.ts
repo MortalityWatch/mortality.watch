@@ -53,30 +53,6 @@ export const getWindow = (): BrowserWindow | undefined => {
   return undefined
 }
 
-/**
- * Display a base64 URL inside an iframe in another window.
- */
-export const openNewWindowWithBase64Url = (base64: string) => {
-  const win = getGlobal().window
-  if (!win) throw new Error('Window not available')
-  const newWin = win.open()
-  if (!newWin) throw new Error('Cannot open new window')
-  newWin.document.write(
-    '<iframe src="'
-    + base64
-    + '" frameborder="0" style="border:0; '
-    + 'top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" '
-    + 'allowfullscreen></iframe>'
-  )
-}
-
-export const appearanceChanged = (cb: () => void) => {
-  const win = getGlobal().window
-  if (!win) return
-  win.matchMedia('(prefers-color-scheme: dark)')
-    .addEventListener('change', cb)
-}
-
 const timeoutIds: Record<number, ReturnType<typeof setTimeout> | undefined> = {}
 export const delay = (fun: () => void, time: number = 333) => {
   const hash = hashCode(fun.toString())
@@ -86,17 +62,3 @@ export const delay = (fun: () => void, time: number = 333) => {
     timeoutIds[hashCode(fun.toString())] = undefined
   }, time)
 }
-
-export const removeMetaTag = (name: string) =>
-  new Promise<void>((resolve) => {
-    const doc = getGlobal().document
-    if (!doc) {
-      resolve()
-      return
-    }
-    const tag = doc.querySelector(`meta[name="${name}"]`)
-    if (tag) {
-      tag.remove()
-    }
-    resolve()
-  })

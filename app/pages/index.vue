@@ -209,6 +209,19 @@
           </div>
           <div class="text-center">
             <UIcon
+              name="i-lucide-refresh-cw"
+              class="text-5xl mb-4 text-primary-600 dark:text-primary-400"
+            />
+            <h3 class="text-lg font-semibold mb-2">
+              Daily Automatic Updates
+            </h3>
+            <p class="text-gray-600 dark:text-gray-400 text-sm">
+              Data is automatically fetched and updated daily from official government
+              statistical agencies worldwide
+            </p>
+          </div>
+          <div class="text-center">
+            <UIcon
               name="i-lucide-code"
               class="text-5xl mb-4 text-primary-600 dark:text-primary-400"
             />
@@ -229,19 +242,6 @@
             >
               View on GitHub
             </UButton>
-          </div>
-          <div class="text-center">
-            <UIcon
-              name="i-lucide-refresh-cw"
-              class="text-5xl mb-4 text-primary-600 dark:text-primary-400"
-            />
-            <h3 class="text-lg font-semibold mb-2">
-              Daily Automatic Updates
-            </h3>
-            <p class="text-gray-600 dark:text-gray-400 text-sm">
-              Data is automatically fetched and updated daily from official government
-              statistical agencies worldwide
-            </p>
           </div>
           <div class="text-center">
             <UIcon

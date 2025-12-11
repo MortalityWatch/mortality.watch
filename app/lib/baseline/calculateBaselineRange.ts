@@ -10,7 +10,7 @@
  * - Works for all chart types: yearly, fluseason, weekly, monthly, etc.
  */
 
-import { getBaselineYear, getMaxBaselinePeriod, getMaxBaselineYears } from '@/lib/constants'
+import { getBaselineYear, getMaxBaselinePeriod, getMaxBaselineYears } from '@/lib/config/constants'
 
 const MIN_BASELINE_SPAN = 3
 

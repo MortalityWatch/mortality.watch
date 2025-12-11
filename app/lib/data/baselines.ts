@@ -5,7 +5,7 @@ import type {
   DataVector
 } from '@/model'
 import { dataLoader } from '../dataLoader'
-import { getMaxBaselinePeriod } from '../constants'
+import { getMaxBaselinePeriod } from '../config/constants'
 
 /**
  * Calculate excess mortality from baseline data

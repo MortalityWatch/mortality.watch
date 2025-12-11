@@ -7,7 +7,7 @@ import {
   validateBaselinePeriod,
   clampBaselinePeriod
 } from '@/lib/baseline/calculateBaselineRange'
-import { getMaxBaselineYears } from '@/lib/constants'
+import { getMaxBaselineYears } from '@/lib/config/constants'
 
 const props = defineProps<{
   baselineMethod: string
