@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import DateSlider from '@/components/charts/DateSlider.vue'
-import { specialColor } from '@/colors'
+import { specialColor } from '@/lib/chart/chartColors'
 import type { ChartType } from '@/model/period'
 import {
   validateBaselinePeriod,

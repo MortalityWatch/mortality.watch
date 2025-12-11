@@ -20,10 +20,18 @@ import type { Country } from '@/model'
  * - Save chart to database with current state
  * - Export chart data as CSV
  * - Export chart data as JSON
+ *
+ * Note: The state parameter uses `any` type to avoid TypeScript's excessive
+ * type recursion with the complex Vue ref-based state object. The actual
+ * state comes from useExplorerState() and contains refs for: countries,
+ * type, chartType, ageGroups, chartStyle, isExcess, showBaseline,
+ * baselineMethod, baselineDates, cumulative, showPercentage,
+ * showPredictionInterval, showTotal, dates, standardPopulation,
+ * showLogarithmic, maximize, showLabels, view.
  */
 export function useExplorerChartActions(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  state: any, // Using any to avoid deep type recursion with State proxy
+  state: any,
   chartData?: Ref<MortalityChartData | undefined> | { value: MortalityChartData | undefined },
   allCountries?: Ref<Record<string, Country>> | { value: Record<string, Country> }
 ) {

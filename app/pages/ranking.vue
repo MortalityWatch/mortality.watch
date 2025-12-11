@@ -25,7 +25,7 @@ import {
   jurisdictionTypes
 } from '@/model'
 import { isMobile } from '@/utils'
-import { greenColor } from '@/colors'
+import { greenColor } from '@/lib/chart/chartColors'
 import { blDescription } from '@/lib/chart'
 import { useRankingState } from '@/composables/useRankingState'
 import { useRankingData } from '@/composables/useRankingData'
