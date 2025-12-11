@@ -11,10 +11,10 @@
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { ref, computed, nextTick } from 'vue'
-import { useDataQualityFilters } from '~/composables/useDataQualityFilters'
-import { useDataQualityOverrides } from '~/composables/useDataQualityOverrides'
-import { useDataQualityTable } from '~/composables/useDataQualityTable'
-import type { DataQualityReport, CountryQuality } from '~/composables/useDataQualityFilters'
+import { useDataQualityFilters } from '@/composables/useDataQualityFilters'
+import { useDataQualityOverrides } from '@/composables/useDataQualityOverrides'
+import { useDataQualityTable } from '@/composables/useDataQualityTable'
+import type { DataQualityReport, CountryQuality } from '@/composables/useDataQualityFilters'
 
 // Mock $fetch globally
 interface GlobalWithMocks {

@@ -5,9 +5,9 @@
  * This file maintains backward compatibility by re-exporting everything.
  *
  * For new code, prefer importing from specific modules:
- * - import { round } from '~/lib/utils/formatting'
- * - import { last } from '~/lib/utils/array'
- * - import { isBrowser } from '~/lib/utils/dom'
+ * - import { round } from '@/lib/utils/formatting'
+ * - import { last } from '@/lib/utils/array'
+ * - import { isBrowser } from '@/lib/utils/dom'
  */
 
 // Re-export everything from the new modular structure

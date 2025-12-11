@@ -2,7 +2,7 @@
  * Strategy for transforming data to total sums
  */
 
-import { sum } from '~/utils'
+import { sum } from '@/utils'
 
 /**
  * Transforms data values to a single total sum

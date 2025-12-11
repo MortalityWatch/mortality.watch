@@ -9,12 +9,12 @@
  */
 
 import { ref, onMounted } from 'vue'
-import { usePagination } from '~/composables/usePagination'
-import { UI_CONFIG } from '~/lib/config/constants'
-import { useDataQualityFilters } from '~/composables/useDataQualityFilters'
-import { useDataQualityOverrides } from '~/composables/useDataQualityOverrides'
-import { useDataQualityTable } from '~/composables/useDataQualityTable'
-import type { DataQualityReport } from '~/composables/useDataQualityFilters'
+import { usePagination } from '@/composables/usePagination'
+import { UI_CONFIG } from '@/lib/config/constants'
+import { useDataQualityFilters } from '@/composables/useDataQualityFilters'
+import { useDataQualityOverrides } from '@/composables/useDataQualityOverrides'
+import { useDataQualityTable } from '@/composables/useDataQualityTable'
+import type { DataQualityReport } from '@/composables/useDataQualityFilters'
 
 definePageMeta({
   middleware: 'admin'

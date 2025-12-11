@@ -2,7 +2,7 @@
  * Array utility functions
  */
 
-import type { NumberArray, StringArray } from '~/model'
+import type { NumberArray, StringArray } from '@/model'
 
 export const prefillUndefined = (
   ds: StringArray | NumberArray,

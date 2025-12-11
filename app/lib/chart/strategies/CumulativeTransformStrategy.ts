@@ -2,7 +2,7 @@
  * Strategy for transforming data to cumulative sums
  */
 
-import { cumulativeSum } from '~/utils'
+import { cumulativeSum } from '@/utils'
 
 /**
  * Transforms data values to cumulative sums

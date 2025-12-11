@@ -2,7 +2,7 @@
  * Country-related classes and types
  */
 
-import { maybeTransformFluSeason } from '~/utils'
+import { maybeTransformFluSeason } from '@/utils'
 
 export interface CountryRaw {
   iso3c: string

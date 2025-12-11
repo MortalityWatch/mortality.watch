@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { User } from '#db/schema'
-import { passwordChangeSchema } from '~/schemas/profile'
+import { passwordChangeSchema } from '@/schemas/profile'
 
 type AuthUser = Omit<User, 'passwordHash'>
 

@@ -5,8 +5,8 @@
 import { describe, it, expect } from 'vitest'
 import { getDatasets } from './datasets'
 import type { DataTransformationConfig } from './types'
-import type { Dataset, DatasetEntry, NumberArray } from '~/model'
-import { Country } from '~/model'
+import type { Dataset, DatasetEntry, NumberArray } from '@/model'
+import { Country } from '@/model'
 
 describe('datasets', () => {
   const mockCountries: Record<string, Country> = {

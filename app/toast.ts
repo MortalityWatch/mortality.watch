@@ -1,21 +1,23 @@
 import { useNuxtApp } from '#app'
+import { logger } from '@/lib/logger'
+
+const log = logger.withPrefix('Toast')
 
 export const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') => {
-  // Always log toasts to console for debugging
-  const logPrefix = `[Toast:${type.toUpperCase()}]`
+  // Log toasts for debugging (respects log level settings)
   if (type === 'error') {
-    console.error(logPrefix, message)
+    log.error(message)
   } else if (type === 'warning') {
-    console.warn(logPrefix, message)
+    log.warn(message)
   } else {
-    console.log(logPrefix, message)
+    log.info(message)
   }
 
   const nuxtApp = useNuxtApp()
   const toast = nuxtApp.$toast
 
   if (!toast) {
-    console.warn('[showToast] Toast UI not available')
+    log.warn('Toast UI not available')
     return
   }
 

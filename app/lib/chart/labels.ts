@@ -2,8 +2,8 @@
  * Chart label builders
  */
 
-import { baselineMethods, type ChartLabels } from '~/model'
-import { isMobile } from '~/utils'
+import { baselineMethods, type ChartLabels } from '@/model'
+import { isMobile } from '@/utils'
 import { getChartView, type ChartContext } from './chartViews/index'
 import type { ViewType } from '../state'
 

@@ -3,7 +3,7 @@ import type {
   DatasetEntry,
   NumberArray,
   DataVector
-} from '~/model'
+} from '@/model'
 import { dataLoader } from '../dataLoader'
 import { getMaxBaselinePeriod } from '../constants'
 

@@ -8,6 +8,9 @@
 import { z } from 'zod'
 import Papa from 'papaparse'
 import type { CountryRaw, CountryDataRaw } from '@/model/country'
+import { logger } from '@/lib/logger'
+
+const log = logger.withPrefix('Validation')
 
 /**
  * Zod schema for country metadata validation
@@ -180,8 +183,7 @@ export async function validateMetadata(
     // Log CSV parsing errors but don't fail immediately
     // Some rows may be corrupt but others valid
     if (parsed.errors.length > 0) {
-      console.warn(`CSV parsing warnings: ${parsed.errors.length} errors found`)
-      console.warn('Sample errors:', parsed.errors.slice(0, 3))
+      log.warn(`CSV parsing warnings: ${parsed.errors.length} errors found`, { sampleErrors: parsed.errors.slice(0, 3) })
     }
 
     // Validate each row with Zod
@@ -209,8 +211,7 @@ export async function validateMetadata(
 
       // Log warnings for invalid rows but don't fail
       if (errors.length > 0) {
-        console.warn(`Metadata validation warnings: ${errors.length} invalid rows`)
-        console.warn('First few errors:', errors.slice(0, 3))
+        log.warn(`Metadata validation warnings: ${errors.length} invalid rows`, { sampleErrors: errors.slice(0, 3) })
       }
 
       return {
@@ -221,7 +222,7 @@ export async function validateMetadata(
 
     // All rows failed - try to use cached version
     if (validationCache.metadata) {
-      console.error('All metadata rows failed validation, using cached version')
+      log.error('All metadata rows failed validation, using cached version')
       const cachedParsed = Papa.parse(validationCache.metadata, {
         header: true,
         skipEmptyLines: true
@@ -237,7 +238,7 @@ export async function validateMetadata(
     // No cache available - fail
     throw new Error('Metadata validation failed and no cache available')
   } catch (error) {
-    console.error('Metadata validation error:', error)
+    log.error('Metadata validation error', error)
 
     // Try to use cached version
     if (validationCache.metadata) {
@@ -343,8 +344,7 @@ export async function validateMortalityData(
     // Log CSV parsing errors but don't fail immediately
     // Some rows may be corrupt but others valid
     if (parsed.errors.length > 0) {
-      console.warn(`Mortality data CSV parsing warnings for ${cacheKey}: ${parsed.errors.length} errors found`)
-      console.warn('Sample errors:', parsed.errors.slice(0, 3))
+      log.warn(`Mortality data CSV parsing warnings for ${cacheKey}: ${parsed.errors.length} errors found`, { sampleErrors: parsed.errors.slice(0, 3) })
     }
 
     // Validate each row with Zod (but be lenient)
@@ -372,7 +372,7 @@ export async function validateMortalityData(
 
       // Log warnings for invalid rows but don't fail
       if (errors.length > 0) {
-        console.warn(`Mortality data validation warnings for ${cacheKey}: ${errors.length} invalid rows`)
+        log.warn(`Mortality data validation warnings for ${cacheKey}: ${errors.length} invalid rows`)
       }
 
       return {
@@ -384,7 +384,7 @@ export async function validateMortalityData(
     // All rows failed - try to use cached version
     const cached = validationCache.mortalityData.get(cacheKey)
     if (cached) {
-      console.error(`All rows failed validation for ${cacheKey}, using cached version`)
+      log.error(`All rows failed validation for ${cacheKey}, using cached version`)
       const cachedParsed = Papa.parse(cached, {
         header: true,
         delimiter: ',',
@@ -401,7 +401,7 @@ export async function validateMortalityData(
     // No cache available - fail
     throw new Error(`Mortality data validation failed for ${cacheKey} and no cache available`)
   } catch (error) {
-    console.error(`Mortality data validation error for ${cacheKey}:`, error)
+    log.error(`Mortality data validation error for ${cacheKey}`, error)
 
     // Try to use cached version
     const cached = validationCache.mortalityData.get(cacheKey)

@@ -33,8 +33,8 @@
 </template>
 
 <script setup lang="ts">
-import type { FeatureKey } from '~/lib/featureFlags'
-import { FEATURES, TIERS } from '~/config/features.config'
+import type { FeatureKey } from '@/lib/featureFlags'
+import { FEATURES, TIERS } from '@/config/features.config'
 
 const props = defineProps<{
   feature: FeatureKey

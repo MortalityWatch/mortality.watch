@@ -9,7 +9,7 @@
  * - Reduces redundant CSV parsing across 6+ call sites
  */
 
-import type { Country, CountryRaw } from '~/model'
+import type { Country, CountryRaw } from '@/model'
 
 interface CacheEntry {
   data: Record<string, Country>

@@ -1,6 +1,6 @@
 import chroma from 'chroma-js'
 import { toDarkTheme } from '../colorTransform'
-import { getIsDark } from '~/composables/useTheme'
+import { getIsDark } from '@/composables/useTheme'
 
 // Helper function to safely get dark theme state
 // Returns boolean value for use in non-reactive contexts
@@ -61,9 +61,9 @@ export const getGradientColor = (
 }
 
 const hexToHsl = (color: string): number[] => {
-  let r = parseInt(color.substring(1, 2), 16)
-  let g = parseInt(color.substring(3, 2), 16)
-  let b = parseInt(color.substring(5, 2), 16)
+  let r = parseInt(color.substring(1, 3), 16)
+  let g = parseInt(color.substring(3, 5), 16)
+  let b = parseInt(color.substring(5, 7), 16)
   r /= 255
   g /= 255
   b /= 255

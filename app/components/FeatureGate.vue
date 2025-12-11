@@ -70,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-import type { FeatureKey } from '~/lib/featureFlags'
+import type { FeatureKey } from '@/lib/featureFlags'
 
 withDefaults(
   defineProps<{

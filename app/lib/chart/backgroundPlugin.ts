@@ -1,4 +1,4 @@
-import { backgroundColor } from '../../colors'
+import { backgroundColor } from './chartColors'
 import type { Chart } from 'chart.js'
 
 export const getBackgroundPlugin = () => {

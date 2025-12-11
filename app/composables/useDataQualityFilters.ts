@@ -16,7 +16,7 @@
 
 import { ref, computed, watch } from 'vue'
 import type { Ref } from 'vue'
-import { getSourceDescription } from '~/lib/data/utils'
+import { getSourceDescription } from '@/lib/data/utils'
 
 export interface CountryQuality {
   iso3c: string

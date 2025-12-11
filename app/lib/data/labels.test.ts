@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import type { DatasetRaw, CountryData } from '~/model'
+import type { DatasetRaw, CountryData } from '@/model'
 import { getLabels, getAllChartLabels, getStartIndex } from './labels'
 
 describe('app/lib/data/labels', () => {
