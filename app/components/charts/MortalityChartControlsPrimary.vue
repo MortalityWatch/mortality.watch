@@ -16,6 +16,9 @@ const props = defineProps<{
 
 const emit = defineEmits(['countriesChanged', 'ageGroupsChanged'])
 
+type ChipColor = 'error' | 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'neutral'
+type ChipSize = '2xl' | 'md' | '3xs' | '2xs' | 'xs' | 'sm' | 'lg' | 'xl' | '3xl'
+
 type CountryOption = {
   label: string
   value: string
@@ -25,8 +28,8 @@ type CountryOption = {
   icon?: string
   chip?: {
     text: string
-    color?: string
-    size?: string
+    color?: ChipColor
+    size?: ChipSize
   }
 }
 
@@ -185,12 +188,12 @@ const options = computed(() => {
       >
         <template #item-leading="{ item }">
           <UBadge
-            v-if="item.chip"
-            :color="item.chip.color"
+            v-if="item && typeof item === 'object' && 'chip' in item && item.chip"
+            :color="(item.chip as { color?: ChipColor }).color"
             size="xs"
             variant="subtle"
           >
-            {{ item.chip.text }}
+            {{ (item.chip as { text: string }).text }}
           </UBadge>
         </template>
       </UInputMenu>
