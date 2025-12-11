@@ -57,8 +57,8 @@ const timeoutIds: Record<number, ReturnType<typeof setTimeout> | undefined> = {}
 export const delay = (fun: () => void, time: number = 333) => {
   const hash = hashCode(fun.toString())
   if (timeoutIds[hash]) clearTimeout(timeoutIds[hash])
-  timeoutIds[hash] = setTimeout(async () => {
+  timeoutIds[hash] = setTimeout(() => {
     fun()
-    timeoutIds[hashCode(fun.toString())] = undefined
+    timeoutIds[hash] = undefined
   }, time)
 }
