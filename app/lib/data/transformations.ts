@@ -5,6 +5,7 @@ import type {
 } from '@/model'
 import { getObjectOfArrays } from '@/utils'
 import { fetchData } from './queries'
+import { logger } from '../logger'
 
 /**
  * Concurrency limiter for controlled parallel execution
@@ -66,7 +67,7 @@ export const updateDataset = async (
 
     return data
   } catch (error) {
-    console.error(error)
+    logger.error('Failed to process raw data', error)
     return {}
   }
 }

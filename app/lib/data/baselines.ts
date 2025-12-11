@@ -6,6 +6,7 @@ import type {
 } from '@/model'
 import { dataLoader } from '../dataLoader'
 import { getMaxBaselinePeriod } from '../config/constants'
+import { logger } from '../logger'
 
 /**
  * Calculate excess mortality from baseline data
@@ -170,7 +171,7 @@ const calculateBaseline = async (
 
   // Validate indices before making API call
   if (baselineStartIdx < 0 || baselineEndIdx < 0) {
-    console.warn('Invalid baseline indices:', {
+    logger.warn('Invalid baseline indices', {
       baselineStartIdx,
       baselineEndIdx,
       chartType,
@@ -184,7 +185,7 @@ const calculateBaseline = async (
   // Ensure we have enough data points for meaningful baseline calculation
   const validDataPoints = bl_data.filter(x => x != null && !isNaN(x as number)).length
   if (validDataPoints < 3) {
-    console.warn('Insufficient data points for baseline calculation:', {
+    logger.warn('Insufficient data points for baseline calculation', {
       iso3c: data.iso3c?.[0],
       validDataPoints,
       blDataLength: bl_data.length,
@@ -199,7 +200,7 @@ const calculateBaseline = async (
   const baselinePeriodLength = baselineEndIdx - baselineStartIdx + 1
   const maxPeriod = getMaxBaselinePeriod(chartType)
   if (baselinePeriodLength > maxPeriod) {
-    console.warn('Baseline period too large, using fallback calculation:', {
+    logger.warn('Baseline period too large, using fallback calculation', {
       iso3c: data.iso3c?.[0],
       baselinePeriodLength,
       maxPeriod,
@@ -281,15 +282,14 @@ const calculateBaseline = async (
       data[zscoreKey] = [...prefill, ...json.zscore] as DataVector
     }
   } catch (error) {
-    console.error('Baseline calculation failed, using simple mean fallback:', {
+    logger.error('Baseline calculation failed, using simple mean fallback', error, {
       iso3c: data.iso3c?.[0],
       chartType,
       method,
       baselineStartIdx,
       baselineEndIdx,
       blDataLength: bl_data.length,
-      validDataPoints,
-      error
+      validDataPoints
     })
 
     // Fallback: Use simple mean baseline when external service fails
