@@ -152,7 +152,9 @@ describe('useRankingData', () => {
       showPercentage: ref(false),
       showTotals: ref(false),
       showTotalsOnly: ref(false),
-      hideIncomplete: ref(false)
+      hideIncomplete: ref(false),
+      // batchUpdate mocks the state.batchUpdate function
+      batchUpdate: vi.fn()
     } as any
 
     // Create mock metadata
@@ -518,56 +520,55 @@ describe('useRankingData', () => {
   // ============================================================================
 
   describe('period type changes', () => {
-    it('should reset dates when period type changes', async () => {
-      const mockPush = vi.fn()
-      const mockRouter = {
-        push: mockPush,
-        resolve: vi.fn(({ path, query }) => ({
-          href: `${path}?${Object.entries(query || {}).map(([k, v]) => `${k}=${v}`).join('&')}`
-        }))
-      }
-      // @ts-expect-error - Override global mock for this test
-      globalThis.useRouter = vi.fn(() => mockRouter)
-
+    it('should batch state updates when period type changes', async () => {
       const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       await ranking.loadData()
 
       ranking.periodOfTimeChanged('monthly')
 
-      // Should batch all state updates into single router.push to avoid race condition
-      expect(mockPush).toHaveBeenCalledWith({
-        query: expect.objectContaining({
-          p: 'monthly'
+      // Should use batchUpdate to batch all state updates into single router.push
+      expect(mockState.batchUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          periodOfTime: 'monthly'
         })
-      })
+      )
     })
 
     it('should update baseline dates on period change', async () => {
-      const mockPush = vi.fn()
-      const mockRouter = {
-        push: mockPush,
-        resolve: vi.fn(({ path, query }) => ({
-          href: `${path}?${Object.entries(query || {}).map(([k, v]) => `${k}=${v}`).join('&')}`
-        }))
-      }
-      // @ts-expect-error - Override global mock for this test
-      globalThis.useRouter = vi.fn(() => mockRouter)
-
       const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       await ranking.loadData()
 
       ranking.periodOfTimeChanged('monthly')
 
-      // Should include baseline dates in the batched router.push
-      expect(mockPush).toHaveBeenCalledWith({
-        query: expect.objectContaining({
-          p: 'monthly',
-          bf: expect.any(String),
-          bt: expect.any(String)
+      // Should include baseline dates in the batched update
+      expect(mockState.batchUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          periodOfTime: 'monthly',
+          baselineDateFrom: expect.any(String),
+          baselineDateTo: expect.any(String)
         })
-      })
+      )
+    })
+
+    it('should include date range in batch update', async () => {
+      const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
+
+      await ranking.loadData()
+
+      ranking.periodOfTimeChanged('monthly')
+
+      // Should include dateFrom and dateTo in the batched update
+      expect(mockState.batchUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          periodOfTime: 'monthly',
+          dateFrom: expect.any(String),
+          dateTo: expect.any(String),
+          baselineDateFrom: expect.any(String),
+          baselineDateTo: expect.any(String)
+        })
+      )
     })
   })
 

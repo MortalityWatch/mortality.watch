@@ -1,6 +1,7 @@
 <template>
   <div
-    class="absolute inset-0 bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm flex justify-center items-center z-10 rounded-lg"
+    class="absolute inset-0 bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm flex justify-center z-10 rounded-lg"
+    :class="position === 'top' ? 'items-start pt-8' : 'items-center'"
   >
     <div class="bg-white/90 dark:bg-gray-800/90 backdrop-blur rounded-lg px-8 py-6 shadow-xl">
       <div class="flex items-center gap-4 m-4">
@@ -29,10 +30,12 @@ interface Props {
   title?: string
   progress?: number
   showProgress?: boolean
+  position?: 'center' | 'top'
 }
 
 withDefaults(defineProps<Props>(), {
   title: 'Loading...',
-  showProgress: false
+  showProgress: false,
+  position: 'center'
 })
 </script>
