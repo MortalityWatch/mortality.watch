@@ -18,6 +18,8 @@ const props = defineProps<{
   sliderStart: string
   allYearlyChartLabelsUnique: string[]
   chartType: ChartType
+  /** Hide the "From" dropdown (used in excess/zscore views where range is fixed to baseline start) */
+  hideSliderStart?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -63,6 +65,7 @@ const emit = defineEmits<{
         :slider-value="props.sliderValue"
         :labels="props.labels"
         :chart-type="props.chartType"
+        :hide-slider-start="props.hideSliderStart"
         @update:slider-start="emit('sliderStartChanged', $event)"
         @slider-changed="emit('dateSliderChanged', $event)"
       />

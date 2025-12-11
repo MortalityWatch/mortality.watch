@@ -11,6 +11,8 @@ const props = defineProps<{
   labels: string[]
   chartType: ChartType
   disabled?: boolean
+  /** Hide the "From" dropdown (used in excess/zscore views where range is fixed to baseline start) */
+  hideSliderStart?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -55,52 +57,66 @@ const availableYears = computed(() => {
     data-tour="date-range"
   >
     <div class="flex items-center gap-3">
-      <!-- From dropdown -->
-      <div class="flex items-center gap-2">
-        <label class="text-sm font-medium whitespace-nowrap">From</label>
-        <USelectMenu
-          :model-value="props.sliderStart"
-          :items="availableYears"
-          placeholder="Start"
-          size="sm"
-          class="w-24"
-          :disabled="props.disabled"
-          value-key="value"
-          @update:model-value="emit('update:sliderStart', $event)"
-        />
-        <UPopover>
-          <UButton
-            icon="i-lucide-info"
-            color="neutral"
-            variant="ghost"
-            size="xs"
-            aria-label="Start period information"
+      <!-- Info text for excess/zscore views (explains why slider starts at baseline) -->
+      <template v-if="props.hideSliderStart">
+        <div class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+          <UIcon
+            name="i-lucide-info"
+            class="w-3.5 h-3.5 shrink-0"
           />
-          <template #content>
-            <div class="p-3 space-y-2 max-w-xs">
-              <div class="text-xs text-gray-700 dark:text-gray-300">
-                <template v-if="!hasExtendedTimeAccess">
-                  <div class="mb-2">
-                    {{ getUpgradeMessage('EXTENDED_TIME_PERIODS') }}
-                  </div>
-                  <NuxtLink
-                    :to="getFeatureUpgradeUrl('EXTENDED_TIME_PERIODS')"
-                    class="text-primary hover:underline font-medium"
-                  >
-                    {{ getFeatureUpgradeCTA('EXTENDED_TIME_PERIODS') }} →
-                  </NuxtLink>
-                </template>
-                <template v-else>
-                  Sets the earliest year in the available data range. The slider will start from this year.
-                </template>
-              </div>
-            </div>
-          </template>
-        </UPopover>
-      </div>
+          <span>Starts at baseline</span>
+        </div>
+        <div class="h-6 w-px bg-gray-300 dark:bg-gray-600" />
+      </template>
 
-      <!-- Divider -->
-      <div class="h-6 w-px bg-gray-300 dark:bg-gray-600" />
+      <!-- From dropdown (hidden in excess/zscore views) -->
+      <template v-if="!props.hideSliderStart">
+        <div class="flex items-center gap-2">
+          <label class="text-sm font-medium whitespace-nowrap">From</label>
+          <USelectMenu
+            :model-value="props.sliderStart"
+            :items="availableYears"
+            placeholder="Start"
+            size="sm"
+            class="w-24"
+            :disabled="props.disabled"
+            value-key="value"
+            @update:model-value="emit('update:sliderStart', $event)"
+          />
+          <UPopover>
+            <UButton
+              icon="i-lucide-info"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              aria-label="Start period information"
+            />
+            <template #content>
+              <div class="p-3 space-y-2 max-w-xs">
+                <div class="text-xs text-gray-700 dark:text-gray-300">
+                  <template v-if="!hasExtendedTimeAccess">
+                    <div class="mb-2">
+                      {{ getUpgradeMessage('EXTENDED_TIME_PERIODS') }}
+                    </div>
+                    <NuxtLink
+                      :to="getFeatureUpgradeUrl('EXTENDED_TIME_PERIODS')"
+                      class="text-primary hover:underline font-medium"
+                    >
+                      {{ getFeatureUpgradeCTA('EXTENDED_TIME_PERIODS') }} →
+                    </NuxtLink>
+                  </template>
+                  <template v-else>
+                    Sets the earliest year in the available data range. The slider will start from this year.
+                  </template>
+                </div>
+              </div>
+            </template>
+          </UPopover>
+        </div>
+
+        <!-- Divider -->
+        <div class="h-6 w-px bg-gray-300 dark:bg-gray-600" />
+      </template>
 
       <!-- Date Range Slider -->
       <div class="flex-1 flex items-center gap-2">
