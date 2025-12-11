@@ -6,14 +6,12 @@
         Track Global Mortality Trends and Excess Deaths
       </h1>
       <p class="text-xl text-gray-700 dark:text-gray-300 leading-relaxed max-w-4xl mx-auto">
-        MortalityWatch provides the world's most comprehensive open mortality database with daily
-        updates from over 100 countries. Explore excess deaths, compare regions,
-        analyze trends by age groups, and understand the true impact of global
-        health events.
+        The world's most comprehensive open mortality database with 300+ regions and historical data from 1950 onwards.
+        Explore excess deaths, compare regions, analyze trends by age groups, and understand the true impact of global health events.
       </p>
       <p class="text-lg text-gray-600 dark:text-gray-400 max-w-4xl mx-auto">
-        Free, open-source, and transparent. All data from official government
-        sources. Used by researchers, journalists, and policymakers worldwide.
+        Free, open-source, and transparent. All data from official government sources.
+        Used by researchers, journalists, and policymakers worldwide.
       </p>
 
       <!-- Trust Indicators -->
@@ -23,21 +21,21 @@
             name="i-lucide-globe"
             class="w-4 h-4 text-primary-600 dark:text-primary-400"
           />
-          <span class="text-sm font-semibold text-primary-900 dark:text-primary-100">300+ regions</span>
+          <span class="text-sm font-semibold text-primary-900 dark:text-primary-100">300+ Regions</span>
+        </div>
+        <div class="inline-flex items-center gap-2 px-4 py-2 bg-primary-50 dark:bg-primary-950/30 rounded-full border border-primary-200 dark:border-primary-800">
+          <UIcon
+            name="i-lucide-code"
+            class="w-4 h-4 text-primary-600 dark:text-primary-400"
+          />
+          <span class="text-sm font-semibold text-primary-900 dark:text-primary-100">Open Source & Transparent</span>
         </div>
         <div class="inline-flex items-center gap-2 px-4 py-2 bg-primary-50 dark:bg-primary-950/30 rounded-full border border-primary-200 dark:border-primary-800">
           <UIcon
             name="i-lucide-refresh-cw"
             class="w-4 h-4 text-primary-600 dark:text-primary-400"
           />
-          <span class="text-sm font-semibold text-primary-900 dark:text-primary-100">Updated daily</span>
-        </div>
-        <div class="inline-flex items-center gap-2 px-4 py-2 bg-primary-50 dark:bg-primary-950/30 rounded-full border border-primary-200 dark:border-primary-800">
-          <UIcon
-            name="i-lucide-chart-line"
-            class="w-4 h-4 text-primary-600 dark:text-primary-400"
-          />
-          <span class="text-sm font-semibold text-primary-900 dark:text-primary-100">5 methods</span>
+          <span class="text-sm font-semibold text-primary-900 dark:text-primary-100">Updated Daily</span>
         </div>
       </div>
 
@@ -170,7 +168,7 @@
             Why Choose MortalityWatch?
           </h2>
         </template>
-        <div class="grid gap-8 md:grid-cols-3">
+        <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           <div class="text-center">
             <UIcon
               name="i-lucide-globe"
@@ -190,7 +188,7 @@
               class="text-5xl mb-4 text-primary-600 dark:text-primary-400"
             />
             <h3 class="text-lg font-semibold mb-2">
-              5 Baseline Methods
+              Five Baseline Methods
             </h3>
             <p class="text-gray-600 dark:text-gray-400 text-sm">
               Last value, average, median, linear regression, and ETS for
@@ -207,6 +205,55 @@
             </h3>
             <p class="text-gray-600 dark:text-gray-400 text-sm">
               Download visualizations as PNG and data as CSV/JSON (free account required for data export)
+            </p>
+          </div>
+          <div class="text-center">
+            <UIcon
+              name="i-lucide-code"
+              class="text-5xl mb-4 text-primary-600 dark:text-primary-400"
+            />
+            <h3 class="text-lg font-semibold mb-2">
+              Open Source & Transparent
+            </h3>
+            <p class="text-gray-600 dark:text-gray-400 text-sm mb-3">
+              Fully open-source codebase with transparent methodology. All data processing
+              and calculations are publicly auditable
+            </p>
+            <UButton
+              to="https://github.com/akarlsten/mortality.watch"
+              target="_blank"
+              size="xs"
+              variant="outline"
+              color="neutral"
+              icon="i-lucide-github"
+            >
+              View on GitHub
+            </UButton>
+          </div>
+          <div class="text-center">
+            <UIcon
+              name="i-lucide-refresh-cw"
+              class="text-5xl mb-4 text-primary-600 dark:text-primary-400"
+            />
+            <h3 class="text-lg font-semibold mb-2">
+              Daily Automatic Updates
+            </h3>
+            <p class="text-gray-600 dark:text-gray-400 text-sm">
+              Data is automatically fetched and updated daily from official government
+              statistical agencies worldwide
+            </p>
+          </div>
+          <div class="text-center">
+            <UIcon
+              name="i-lucide-shield-check"
+              class="text-5xl mb-4 text-primary-600 dark:text-primary-400"
+            />
+            <h3 class="text-lg font-semibold mb-2">
+              Trusted by Researchers
+            </h3>
+            <p class="text-gray-600 dark:text-gray-400 text-sm">
+              Used by academics, journalists, and policymakers for
+              evidence-based analysis and reporting
             </p>
           </div>
         </div>
@@ -258,9 +305,9 @@ definePageMeta({
 // SEO metadata
 useSeoMeta({
   title: 'MortalityWatch - Track Global Mortality Trends and Excess Deaths',
-  description: 'The world\'s most comprehensive open mortality database with daily updates from 300+ countries and regions. Explore excess deaths, compare regions, and analyze trends with 5 baseline methods.',
+  description: 'The world\'s most comprehensive open mortality database with daily updates from 300+ countries and regions. Explore excess deaths, compare regions, and analyze trends with Five Baseline Methods.',
   ogTitle: 'MortalityWatch - Track Global Mortality Trends',
-  ogDescription: 'Free, open-source platform with 300+ regions, 5 baseline methods, and daily updates from official sources.',
+  ogDescription: 'Free, open-source platform with 300+ regions, Five Baseline Methods, and daily updates from official sources.',
   ogImage: '/og-image.png',
   twitterTitle: 'MortalityWatch - Global Mortality Database',
   twitterDescription: 'Track mortality trends and excess deaths across 300+ countries and regions with advanced statistical analysis.',

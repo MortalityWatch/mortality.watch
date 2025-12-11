@@ -11,7 +11,7 @@
       <UPopover v-if="helpContent || $slots.help">
         <UButton
           icon="i-lucide-info"
-          color="neutral"
+          :color="helpWarning ? 'warning' : 'neutral'"
           variant="ghost"
           size="xs"
           :aria-label="helpAriaLabel"
@@ -54,6 +54,11 @@ interface Props {
    * Optional title for the help tooltip
    */
   helpTitle?: string
+
+  /**
+   * Show help button in warning (orange) color
+   */
+  helpWarning?: boolean
 }
 
 const props = defineProps<Props>()

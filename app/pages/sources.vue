@@ -204,7 +204,7 @@ definePageMeta({
 // SEO metadata
 useSeoMeta({
   title: 'Data Sources - Mortality Watch',
-  description: 'Explore comprehensive mortality data sources from over 100 countries, including official statistics, population data, and age-standardization references.',
+  description: 'Explore comprehensive mortality data sources from over 300+ regions, including official statistics, population data, and age-standardization references.',
   ogTitle: 'Data Sources - Mortality Watch',
   ogDescription: 'Official mortality statistics and population data sources used by Mortality Watch.',
   ogImage: '/og-image.png',
@@ -225,7 +225,7 @@ useSeoMeta({
         <p>
           Mortality Watch aggregates data from official statistical offices and
           international organizations to provide comprehensive mortality statistics.
-          We collect daily updates from over 100 countries and territories, ensuring
+          We collect daily updates from over 300+ regions, ensuring
           the most current and reliable mortality data available.
         </p>
 
