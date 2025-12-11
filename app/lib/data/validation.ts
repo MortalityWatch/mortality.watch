@@ -336,7 +336,8 @@ export async function validateMortalityData(
     const parsed = Papa.parse(csvText, {
       header: true,
       delimiter: ',',
-      newline: '\n'
+      newline: '\n',
+      skipEmptyLines: true
     })
 
     // Log CSV parsing errors but don't fail immediately
