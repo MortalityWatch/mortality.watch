@@ -16,6 +16,9 @@ const props = defineProps<{
 
 const emit = defineEmits(['countriesChanged', 'ageGroupsChanged'])
 
+type ChipColor = 'error' | 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'neutral'
+type ChipSize = '2xl' | 'md' | '3xs' | '2xs' | 'xs' | 'sm' | 'lg' | 'xl' | '3xl'
+
 type CountryOption = {
   label: string
   value: string
@@ -23,6 +26,11 @@ type CountryOption = {
   ageGroups?: string[]
   disabled?: boolean
   icon?: string
+  chip?: {
+    text: string
+    color?: ChipColor
+    size?: ChipSize
+  }
 }
 
 const getCountryList = (
@@ -36,11 +44,24 @@ const getCountryList = (
     const hasAsmr = country.age_groups().size > 1
 
     // Disable countries that don't have the data type we need
-    const isDisabled = !allInSet
-      || (props.isAsmrType && !hasAsmr)
-      || (props.isLifeExpectancyType && !hasAsmr)
+    const needsAsmr = props.isAsmrType || props.isLifeExpectancyType
+    const isDisabled = !allInSet || (needsAsmr && !hasAsmr)
 
-    const iconName = hasAsmr ? 'i-lucide-layers' : 'i-lucide-circle'
+    // Add badge chip to show data type availability
+    let chip: CountryOption['chip'] | undefined
+    if (hasAsmr) {
+      chip = {
+        text: 'Stratified',
+        color: 'primary',
+        size: '2xs'
+      }
+    } else {
+      chip = {
+        text: 'All-ages',
+        color: 'neutral',
+        size: '2xs'
+      }
+    }
 
     result.push({
       label: country.jurisdiction,
@@ -50,7 +71,8 @@ const getCountryList = (
         ? Array.from(countryAgs).filter(x => x !== 'all')
         : undefined,
       disabled: isDisabled,
-      icon: iconName
+      // Don't set icon - we'll use custom slot instead
+      chip
     })
   }
   return result
@@ -151,38 +173,83 @@ const options = computed(() => {
     <UiControlRow
       label="Jurisdictions"
       help-title="Data Availability"
+      :help-warning="props.isAsmrType || props.isLifeExpectancyType"
     >
       <UInputMenu
         v-model="selectedCountries"
         :items="options"
-        :icon="selectedCountries.length === 1 ? selectedCountries[0]?.icon : undefined"
         multiple
         searchable
         size="sm"
         class="flex-1"
         delete-icon="i-lucide-x"
         :disabled="props.isUpdating"
-        option-icon="icon"
         @update:model-value="handleCountryChange"
-      />
+      >
+        <template #item-leading="{ item }">
+          <UBadge
+            v-if="item && typeof item === 'object' && 'chip' in item && item.chip"
+            :color="(item.chip as { color?: ChipColor }).color"
+            size="xs"
+            variant="subtle"
+          >
+            {{ (item.chip as { text: string }).text }}
+          </UBadge>
+        </template>
+      </UInputMenu>
       <template #help>
-        <div class="space-y-2">
-          <div class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+        <div class="space-y-3">
+          <!-- Warning for restricted views -->
+          <div
+            v-if="props.isAsmrType || props.isLifeExpectancyType"
+            class="flex items-start gap-2 p-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md"
+          >
             <UIcon
-              name="i-lucide-layers"
-              class="w-4 h-4"
+              name="i-lucide-alert-circle"
+              class="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5"
             />
-            <span>Age-stratified data available</span>
+            <div class="text-xs text-amber-800 dark:text-amber-200">
+              <p class="font-medium">
+                Age-stratified data required
+              </p>
+              <p class="text-amber-700 dark:text-amber-300 mt-0.5">
+                Only jurisdictions with {{ props.isAsmrType ? 'ASMR' : 'LE' }} badges are available in {{ props.isAsmrType ? 'ASMR' : 'Life Expectancy' }} view.
+              </p>
+            </div>
           </div>
-          <div class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-            <UIcon
-              name="i-lucide-circle"
-              class="w-4 h-4"
-            />
-            <span>All-ages data only</span>
+
+          <div class="space-y-2">
+            <div class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+              <UBadge
+                color="primary"
+                size="xs"
+                variant="subtle"
+              >
+                {{ props.isAsmrType ? 'ASMR' : props.isLifeExpectancyType ? 'LE' : 'ASMR' }}
+              </UBadge>
+              <span class="font-medium">
+                {{ props.isAsmrType ? 'Age-Standardized Mortality Rate' : props.isLifeExpectancyType ? 'Life Expectancy' : 'Age-Standardized Mortality Rate' }}
+              </span>
+            </div>
+            <p class="text-xs text-gray-600 dark:text-gray-400 ml-1">
+              Age-stratified data available. Required for ASMR and Life Expectancy views.
+            </p>
           </div>
-          <div class="text-xs text-gray-500 dark:text-gray-400 mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-            Age-stratified data is required for ASMR and Life Expectancy metrics
+
+          <div class="space-y-2">
+            <div class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+              <UBadge
+                color="neutral"
+                size="xs"
+                variant="subtle"
+              >
+                CMR
+              </UBadge>
+              <span class="font-medium">Crude Mortality Rate</span>
+            </div>
+            <p class="text-xs text-gray-600 dark:text-gray-400 ml-1">
+              All-ages data only. Not available for ASMR or Life Expectancy views.
+            </p>
           </div>
         </div>
       </template>
