@@ -21,7 +21,7 @@ import {
   TIER_INFO,
   type FeatureKey,
   type UserTier
-} from '~/lib/featureFlags'
+} from '@/lib/featureFlags'
 
 /**
  * Composable for checking feature access and tier status

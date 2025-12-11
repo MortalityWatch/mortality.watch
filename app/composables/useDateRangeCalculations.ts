@@ -5,9 +5,9 @@
  * Consolidates feature gating logic from DateRangePicker, DateSlider, and useDataAvailability.
  */
 
-import type { ChartType } from '~/model/period'
+import type { ChartType } from '@/model/period'
 import type { Ref, ComputedRef } from 'vue'
-import { ChartPeriod } from '~/model/period'
+import { ChartPeriod } from '@/model/period'
 
 export interface DateRangeCalculations {
   // Available data (from metadata/fetch)

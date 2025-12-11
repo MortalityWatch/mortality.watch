@@ -2,8 +2,8 @@
  * Miscellaneous utilities that don't fit into other categories
  */
 
-import { datasetEntryKeys, type CountryData, type DatasetEntry } from '~/model'
-import { color_scale_diverging_css } from '~/colors'
+import { datasetEntryKeys, type CountryData, type DatasetEntry } from '@/model'
+import { color_scale_diverging_css } from '@/colors'
 import { CSS_CLASSES } from '@/lib/config/constants'
 
 export const getObjectOfArrays = (rows: CountryData[]): DatasetEntry => {

@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getSourceDescription } from '~/lib/data'
-import { getDataTypeDescription } from '~/utils'
-import { usePagination } from '~/composables/usePagination'
-import { useBrowserNavigation } from '~/composables/useBrowserNavigation'
-import { dataLoader } from '~/lib/dataLoader'
+import { getSourceDescription } from '@/lib/data'
+import { getDataTypeDescription } from '@/utils'
+import { usePagination } from '@/composables/usePagination'
+import { useBrowserNavigation } from '@/composables/useBrowserNavigation'
+import { dataLoader } from '@/lib/dataLoader'
 import Papa from 'papaparse'
-import type { CountryRaw } from '~/model/country'
+import type { CountryRaw } from '@/model/country'
 import {
   tabs,
   mortalityColumns,
@@ -15,8 +15,8 @@ import {
   standardColumns,
   standardSources,
   populationSources
-} from '~/lib/sourcesConstants'
-import { UI_CONFIG } from '~/lib/config/constants'
+} from '@/lib/sourcesConstants'
+import { UI_CONFIG } from '@/lib/config/constants'
 
 const route = useRoute()
 const router = useRouter()

@@ -12,13 +12,13 @@ describe('ErrorHandler', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let consoleWarnSpy: any
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let consoleLogSpy: any
+  let consoleInfoSpy: any
 
   beforeEach(() => {
-    // Spy on console methods
+    // Spy on console methods (logger uses console.info for info level)
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {})
   })
 
   afterEach(() => {
@@ -70,7 +70,10 @@ describe('ErrorHandler', () => {
         context: 'testFunction'
       })
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith('[testFunction] Test')
+      // Logger formats: [context] message
+      expect(consoleErrorSpy).toHaveBeenCalled()
+      expect(consoleErrorSpy.mock.calls[0][0]).toContain('testFunction')
+      expect(consoleErrorSpy.mock.calls[0][0]).toContain('Test')
     })
 
     it('should use correct console method based on severity', () => {
@@ -88,12 +91,12 @@ describe('ErrorHandler', () => {
       })
       expect(consoleWarnSpy).toHaveBeenCalled()
 
-      // Info severity
+      // Info severity (logger uses console.info)
       ErrorHandler.handle('Info message', {
         severity: ErrorSeverity.Info,
         showToast: false
       })
-      expect(consoleLogSpy).toHaveBeenCalled()
+      expect(consoleInfoSpy).toHaveBeenCalled()
     })
 
     it('should suppress all output in silent mode', () => {
@@ -122,7 +125,9 @@ describe('ErrorHandler', () => {
       const result = handleError(error, 'Failed to save data', 'saveFunction')
 
       expect(result).toBe('API failed')
-      expect(consoleErrorSpy).toHaveBeenCalledWith('[saveFunction] API failed')
+      expect(consoleErrorSpy).toHaveBeenCalled()
+      expect(consoleErrorSpy.mock.calls[0][0]).toContain('saveFunction')
+      expect(consoleErrorSpy.mock.calls[0][0]).toContain('API failed')
     })
   })
 
@@ -132,7 +137,9 @@ describe('ErrorHandler', () => {
       const result = handleApiError(error, 'fetch user data', 'getUserData')
 
       expect(result).toBe('Network error')
-      expect(consoleErrorSpy).toHaveBeenCalledWith('[getUserData] Network error')
+      expect(consoleErrorSpy).toHaveBeenCalled()
+      expect(consoleErrorSpy.mock.calls[0][0]).toContain('getUserData')
+      expect(consoleErrorSpy.mock.calls[0][0]).toContain('Network error')
     })
   })
 
@@ -142,7 +149,9 @@ describe('ErrorHandler', () => {
       const result = handleSilentError(error, 'backgroundTask')
 
       expect(result).toBe('Background error')
-      expect(consoleWarnSpy).toHaveBeenCalledWith('[backgroundTask] Background error')
+      expect(consoleWarnSpy).toHaveBeenCalled()
+      expect(consoleWarnSpy.mock.calls[0][0]).toContain('backgroundTask')
+      expect(consoleWarnSpy.mock.calls[0][0]).toContain('Background error')
     })
   })
 

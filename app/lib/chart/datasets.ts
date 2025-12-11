@@ -8,8 +8,8 @@ import {
   getKeyForType,
   type DatasetReturn,
   type Dataset
-} from '~/model'
-import { getCamelCase } from '~/utils'
+} from '@/model'
+import { getCamelCase } from '@/utils'
 import { isBl, isPredictionIntervalKey } from './predicates'
 import { DataTransformationPipeline } from './strategies/DataTransformationPipeline'
 import { DATA_CONFIG } from '@/lib/config/constants'

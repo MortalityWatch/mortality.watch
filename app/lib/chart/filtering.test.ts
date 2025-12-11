@@ -4,12 +4,12 @@
 
 import { describe, it, expect } from 'vitest'
 import { getFilteredLabelAndData, baselineMinRange } from './filtering'
-import type { Dataset } from '~/model'
-import type { ChartType } from '~/model/period'
+import type { Dataset, DatasetEntry } from '@/model'
+import type { ChartType } from '@/model/period'
 
 describe('filtering', () => {
   describe('getFilteredLabelAndData', () => {
-    const createMockDatasetEntry = (overrides: Partial<import('~/model').DatasetEntry> = {}): import('~/model').DatasetEntry => ({
+    const createMockDatasetEntry = (overrides: Partial<DatasetEntry> = {}): DatasetEntry => ({
       iso3c: ['USA', 'USA', 'USA', 'USA', 'USA'],
       age_group: ['all', 'all', 'all', 'all', 'all'],
       date: ['2020-W01', '2020-W02', '2020-W03', '2020-W04', '2020-W05'],
@@ -19,7 +19,7 @@ describe('filtering', () => {
       deaths: [100, 200, 300, 400, 500],
       population: [1000000, 1000000, 1000000, 1000000, 1000000],
       ...overrides
-    } as import('~/model').DatasetEntry)
+    } as DatasetEntry)
 
     const createMockDataset = (): Dataset => ({
       all: {

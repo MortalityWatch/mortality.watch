@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { MetadataCache } from './metadataCache'
-import { Country, type CountryRaw } from '~/model'
+import { Country, type CountryRaw } from '@/model'
 
 describe('MetadataCache', () => {
   let cache: MetadataCache

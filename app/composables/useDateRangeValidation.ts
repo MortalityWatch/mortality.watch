@@ -1,4 +1,4 @@
-import type { ChartPeriod } from '~/model/period'
+import type { ChartPeriod } from '@/model/period'
 
 export interface DateRange {
   from: string

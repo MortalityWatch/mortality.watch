@@ -3,12 +3,13 @@ import {
   Country,
   type CountryRaw,
   type CountryDataRaw
-} from '~/model'
+} from '@/model'
 import { dataLoader } from '../dataLoader'
 import { metadataCache } from '../cache/metadataCache'
 import { validateMetadata, validateMortalityData } from './validation'
+import { logger } from '@/lib/logger'
 
-const errHandler = (err: string) => console.error(err)
+const log = logger.withPrefix('DataQueries')
 
 /**
  * Load country metadata as Record indexed by iso3c code
@@ -36,7 +37,7 @@ export const loadCountryMetadata = async (options?: {
 
     // Log if we used cached data due to validation failure
     if (validationResult.usedCache) {
-      console.warn('Using cached metadata due to validation failure')
+      log.warn('Using cached metadata due to validation failure')
     }
 
     const rawObjects = validationResult.data
@@ -70,7 +71,7 @@ export const loadCountryMetadata = async (options?: {
 
     return data
   } catch (error) {
-    console.error('Error loading metadata:', error)
+    log.error('Error loading metadata', error)
     throw error
   }
 }
@@ -95,7 +96,7 @@ export const fetchData = async (
 
     // Log if we used cached data due to validation failure
     if (validationResult.usedCache) {
-      console.warn(`Using cached data for ${country}/${chartType}/${ageGroup} due to validation failure`)
+      log.warn(`Using cached data for ${country}/${chartType}/${ageGroup} due to validation failure`)
     }
 
     const rawObjects = validationResult.data
@@ -109,8 +110,7 @@ export const fetchData = async (
 
     return data
   } catch (error) {
-    console.error(`Error fetching ${country}/${chartType}/${ageGroup}:`, error)
-    errHandler(error as string)
+    log.error(`Error fetching ${country}/${chartType}/${ageGroup}`, error)
     return []
   }
 }

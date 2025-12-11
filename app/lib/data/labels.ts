@@ -1,6 +1,6 @@
-import type { CountryData, DatasetRaw } from '~/model'
-import { ChartPeriod } from '~/model/period'
-import { fromYearMonthString, left, right } from '~/utils'
+import type { CountryData, DatasetRaw } from '@/model'
+import { ChartPeriod } from '@/model/period'
+import { fromYearMonthString, left, right } from '@/utils'
 
 /**
  * Sort labels based on chart type

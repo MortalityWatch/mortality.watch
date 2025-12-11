@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, computed, nextTick } from 'vue'
-import { ChartPeriod, type ChartType } from '~/model/period'
+import { ChartPeriod, type ChartType } from '@/model/period'
 
 const props = defineProps<{
   sliderValue: string[]

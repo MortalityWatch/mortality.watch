@@ -11,7 +11,7 @@ import {
   TIER_INFO,
   type FeatureKey,
   type UserTier
-} from '~/config/features.config'
+} from '@/config/features.config'
 
 /**
  * Check if a user has access to a specific feature

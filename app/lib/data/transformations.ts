@@ -2,8 +2,8 @@ import type {
   CountryData,
   DatasetRaw,
   DatasetEntry
-} from '~/model'
-import { getObjectOfArrays } from '~/utils'
+} from '@/model'
+import { getObjectOfArrays } from '@/utils'
 import { fetchData } from './queries'
 
 /**

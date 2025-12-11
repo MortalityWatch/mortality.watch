@@ -6,10 +6,10 @@ import type {
   AllChartData,
   NumberArray,
   StringArray
-} from '~/model'
-import { stringKeys, numberKeys } from '~/model'
-import { ChartPeriod, type ChartType } from '~/model/period'
-import { prefillUndefined } from '~/utils'
+} from '@/model'
+import { stringKeys, numberKeys } from '@/model'
+import { ChartPeriod, type ChartType } from '@/model/period'
+import { prefillUndefined } from '@/utils'
 import { getDataForCountry } from './transformations'
 import { getLabels } from './labels'
 import { calculateBaselines } from './baselines'

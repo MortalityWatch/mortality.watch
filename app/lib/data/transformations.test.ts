@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { CountryData } from '~/model'
+import type { CountryData } from '@/model'
 import { updateDataset, getDataForCountry } from './transformations'
 
 import { fetchData } from './queries'

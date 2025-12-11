@@ -1,4 +1,5 @@
 import { showToast } from '@/toast'
+import { logger } from '@/lib/logger'
 
 /**
  * Error Severity Levels
@@ -229,19 +230,18 @@ export class ErrorHandler {
     severity: ErrorSeverity,
     context?: string
   ): void {
-    const prefix = context ? `[${context}]` : '[Error]'
-    const logMessage = `${prefix} ${message}`
+    const log = context ? logger.withPrefix(context) : logger.withPrefix('Error')
 
     switch (severity) {
       case ErrorSeverity.Critical:
       case ErrorSeverity.Error:
-        console.error(logMessage)
+        log.error(message)
         break
       case ErrorSeverity.Warning:
-        console.warn(logMessage)
+        log.warn(message)
         break
       case ErrorSeverity.Info:
-        console.log(logMessage)
+        log.info(message)
         break
     }
   }

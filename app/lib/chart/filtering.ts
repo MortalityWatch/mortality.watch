@@ -10,8 +10,8 @@ import {
   datasetEntryKeys,
   type FilteredChartData,
   type DataVector
-} from '~/model'
-import { ChartPeriod, type ChartType } from '~/model/period'
+} from '@/model'
+import { ChartPeriod, type ChartType } from '@/model/period'
 import type { MortalityChartData } from './chartTypes'
 import type { DataTransformationConfig, ChartFilterConfig } from './types'
 import { getDatasets } from './datasets'

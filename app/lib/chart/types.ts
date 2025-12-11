@@ -2,8 +2,8 @@
  * Type definitions for chart data transformation
  */
 
-import type { Country } from '~/model'
-import type { ChartType } from '~/model/period'
+import type { Country } from '@/model'
+import type { ChartType } from '@/model/period'
 
 /**
  * Configuration for data transformation pipeline
