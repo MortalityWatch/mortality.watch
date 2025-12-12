@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
   const { name, email, subject, message, chartUrl } = result.data
 
   // Get support email from environment or use default
-  const supportEmail = process.env.SUPPORT_EMAIL || 'support@mortality.watch'
+  const supportEmail = process.env.SUPPORT_EMAIL || 'mortalitywatch@proton.me'
 
   // Build email body
   const emailBody = `

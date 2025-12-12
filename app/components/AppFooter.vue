@@ -57,24 +57,10 @@ const { tier } = useAuth()
         </ULink>
         <span class="mx-1 hidden lg:inline">·</span>
         <ULink
-          to="/legal/terms"
+          to="/legal"
           class="text-muted hover:text-default hidden lg:inline"
         >
-          Terms
-        </ULink>
-        <span class="mx-1 hidden lg:inline">·</span>
-        <ULink
-          to="/legal/privacy"
-          class="text-muted hover:text-default hidden lg:inline"
-        >
-          Privacy
-        </ULink>
-        <span class="mx-1 hidden lg:inline">·</span>
-        <ULink
-          to="/legal/refund"
-          class="text-muted hover:text-default hidden lg:inline"
-        >
-          Refund
+          Legal
         </ULink>
       </p>
     </template>

@@ -5,7 +5,7 @@
         Terms of Service
       </h1>
       <p class="text-center text-gray-600 dark:text-gray-400 mb-8">
-        Last Updated: October 30, 2025
+        Last Updated: December 12, 2025
       </p>
 
       <div class="space-y-6 text-gray-700 dark:text-gray-300">
@@ -373,10 +373,10 @@
             <p class="font-semibold">
               Email:
               <ULink
-                to="mailto:support@mortality.watch"
+                to="mailto:mortalitywatch@proton.me"
                 class="text-primary hover:underline"
               >
-                support@mortality.watch
+                mortalitywatch@proton.me
               </ULink>
             </p>
           </div>

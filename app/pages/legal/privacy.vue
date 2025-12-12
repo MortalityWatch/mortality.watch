@@ -5,7 +5,7 @@
         Privacy Policy
       </h1>
       <p class="text-center text-gray-600 dark:text-gray-400 mb-8">
-        Last Updated: October 30, 2025
+        Last Updated: December 12, 2025
       </p>
 
       <div class="space-y-6 text-gray-700 dark:text-gray-300">
@@ -65,7 +65,6 @@
             <ul class="list-disc pl-6 space-y-2">
               <li><strong>Usage Data:</strong> Pages visited, features used, time spent on pages, charts created</li>
               <li><strong>Device Information:</strong> Browser type, operating system, device type, IP address</li>
-              <li><strong>Analytics Data:</strong> Aggregated usage statistics collected via Umami Analytics (see Section 4.4)</li>
               <li><strong>Cookies:</strong> Small data files stored on your device (see Section 8)</li>
             </ul>
 
@@ -165,50 +164,26 @@
             </p>
 
             <p class="mt-4">
-              <strong>4.3 Bugsink (Error Tracking):</strong>
+              <strong>4.3 Sentry (Error Tracking):</strong>
             </p>
             <p>
               We use
               <ULink
-                to="https://bugsink.com"
+                to="https://sentry.io"
                 target="_blank"
                 class="text-primary hover:underline"
               >
-                Bugsink
+                Sentry
               </ULink>
-              for error tracking and debugging. When errors occur, Bugsink may collect technical
+              for error tracking and debugging. When errors occur, Sentry may collect technical
               information about the error, including stack traces and request details. Personal
-              information is minimized in error reports. Bugsink's privacy policy is available at
+              information is minimized in error reports. Sentry's privacy policy is available at
               <ULink
-                to="https://bugsink.com/privacy"
+                to="https://sentry.io/privacy"
                 target="_blank"
                 class="text-primary hover:underline"
               >
-                https://bugsink.com/privacy
-              </ULink>.
-            </p>
-
-            <p class="mt-4">
-              <strong>4.4 Umami Analytics (Usage Analytics):</strong>
-            </p>
-            <p>
-              We use
-              <ULink
-                to="https://umami.is"
-                target="_blank"
-                class="text-primary hover:underline"
-              >
-                Umami Analytics
-              </ULink>, a privacy-focused analytics service that does not use cookies and does not
-              track personally identifiable information. Umami collects only aggregated, anonymized
-              usage statistics (page views, referrers, device types). Umami's privacy policy is
-              available at
-              <ULink
-                to="https://umami.is/privacy"
-                target="_blank"
-                class="text-primary hover:underline"
-              >
-                https://umami.is/privacy
+                https://sentry.io/privacy
               </ULink>.
             </p>
           </div>
@@ -230,7 +205,7 @@
               <li><strong>Account Data:</strong> Retained while your account is active. If you delete your account, we will delete your personal information within 30 days, except as required for legal or security purposes.</li>
               <li><strong>Saved Charts:</strong> Retained while your account is active. Deleted when you delete your account or individual charts.</li>
               <li><strong>Payment Records:</strong> Retained for tax and accounting purposes as required by law (typically 7 years).</li>
-              <li><strong>Usage Analytics:</strong> Aggregated analytics data is retained indefinitely but is anonymized and not linked to individual users.</li>
+              <li><strong>Server Logs:</strong> Server logs are retained for up to 30 days for debugging and security purposes.</li>
             </ul>
           </div>
         </UCard>
@@ -276,10 +251,10 @@
             <p>
               To exercise any of these rights, please contact us at
               <ULink
-                to="mailto:support@mortality.watch"
+                to="mailto:mortalitywatch@proton.me"
                 class="text-primary hover:underline"
               >
-                support@mortality.watch
+                mortalitywatch@proton.me
               </ULink>. We will respond to your request within 30 days (or as required by applicable law).
             </p>
             <p>
@@ -344,11 +319,11 @@
             </p>
 
             <p class="mt-4">
-              <strong>8.3 Analytics Cookies:</strong>
+              <strong>8.3 Analytics:</strong>
             </p>
             <p>
-              We use Umami Analytics, which does not set cookies and does not track personally
-              identifiable information. Umami collects only aggregated, anonymized usage statistics.
+              We do not use third-party analytics services that track personally identifiable
+              information. Any usage data collected is aggregated and anonymized.
             </p>
 
             <p class="mt-4">
@@ -394,10 +369,10 @@
               not knowingly collect personal information from children. If you believe we have collected
               information from a child, please contact us at
               <ULink
-                to="mailto:support@mortality.watch"
+                to="mailto:mortalitywatch@proton.me"
                 class="text-primary hover:underline"
               >
-                support@mortality.watch
+                mortalitywatch@proton.me
               </ULink>, and we will promptly delete such information.
             </p>
           </div>
@@ -440,10 +415,10 @@
             <p class="font-semibold">
               Email:
               <ULink
-                to="mailto:support@mortality.watch"
+                to="mailto:mortalitywatch@proton.me"
                 class="text-primary hover:underline"
               >
-                support@mortality.watch
+                mortalitywatch@proton.me
               </ULink>
             </p>
             <p class="mt-4">
