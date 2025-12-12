@@ -367,16 +367,13 @@ describe('viewHelpers', () => {
       expect(isChartTypeCompatible('monthly', 'mortality')).toBe(true)
     })
 
-    it('returns true for compatible chart types', () => {
+    it('returns true for all chart types in zscore view (no restrictions)', () => {
       expect(isChartTypeCompatible('yearly', 'zscore')).toBe(true)
       expect(isChartTypeCompatible('fluseason', 'zscore')).toBe(true)
       expect(isChartTypeCompatible('midyear', 'zscore')).toBe(true)
-    })
-
-    it('returns false for incompatible chart types', () => {
-      expect(isChartTypeCompatible('weekly', 'zscore')).toBe(false)
-      expect(isChartTypeCompatible('monthly', 'zscore')).toBe(false)
-      expect(isChartTypeCompatible('quarterly', 'zscore')).toBe(false)
+      expect(isChartTypeCompatible('weekly', 'zscore')).toBe(true)
+      expect(isChartTypeCompatible('monthly', 'zscore')).toBe(true)
+      expect(isChartTypeCompatible('quarterly', 'zscore')).toBe(true)
     })
   })
 })
