@@ -13,6 +13,7 @@ import type {
 } from '../../app/model'
 import { fetchBaselineWithCircuitBreaker } from './baselineApi'
 import { EXTERNAL_SERVICES } from '../../app/lib/config/constants'
+import { logger } from '../../app/lib/logger'
 
 // Default stats API URL - can be overridden via NUXT_PUBLIC_STATS_URL
 const DEFAULT_STATS_URL = EXTERNAL_SERVICES.STATS_API_URL
@@ -114,7 +115,7 @@ const calculateBaseline = async (
 
   // Validate indices before making API call
   if (baselineStartIdx < 0 || baselineEndIdx < 0) {
-    console.warn('Invalid baseline indices:', {
+    logger.warn('Invalid baseline indices', {
       baselineStartIdx,
       baselineEndIdx,
       chartType,
@@ -128,7 +129,7 @@ const calculateBaseline = async (
   // Ensure we have enough data points for meaningful baseline calculation
   const validDataPoints = bl_data.filter(x => x != null && !isNaN(x as number)).length
   if (validDataPoints < 3) {
-    console.warn('Insufficient data points for baseline calculation:', {
+    logger.warn('Insufficient data points for baseline calculation', {
       iso3c: data.iso3c?.[0],
       validDataPoints,
       blDataLength: bl_data.length,
@@ -153,7 +154,7 @@ const calculateBaseline = async (
         : `${baseUrl}?y=${dataParam}&bs=${bs}&be=${be}&s=${s}&t=${trend ? 1 : 0}&m=${method}`
 
     // Debug: Log the URL being sent (truncate data for readability)
-    console.log('SSR Baseline API call:', {
+    logger.debug('SSR Baseline API call', {
       iso3c: data.iso3c?.[0],
       baselineStartIdx,
       baselineEndIdx,
@@ -196,7 +197,7 @@ const calculateBaseline = async (
       data[zscoreKey] = json.zscore as DataVector
     }
   } catch (error) {
-    console.error('Baseline calculation failed, using simple mean fallback:', {
+    logger.error('Baseline calculation failed, using simple mean fallback', {
       iso3c: data.iso3c?.[0],
       chartType,
       method,
