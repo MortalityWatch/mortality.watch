@@ -132,17 +132,9 @@ const secondaryItems = computed<MenuItem[]>(() => {
     icon: 'i-lucide-heart',
     to: '/donate'
   }, {
-    label: 'Terms',
-    icon: 'i-lucide-file-text',
-    to: '/legal/terms'
-  }, {
-    label: 'Privacy',
-    icon: 'i-lucide-shield',
-    to: '/legal/privacy'
-  }, {
-    label: 'Refund',
-    icon: 'i-lucide-receipt',
-    to: '/legal/refund'
+    label: 'Legal',
+    icon: 'i-lucide-scale',
+    to: '/legal'
   })
 
   return navItems

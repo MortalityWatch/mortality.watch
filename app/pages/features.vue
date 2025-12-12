@@ -149,7 +149,7 @@
         Have questions? We're here to help.
       </p>
       <UButton
-        to="/about"
+        to="/contact"
         color="neutral"
         variant="outline"
         size="lg"
