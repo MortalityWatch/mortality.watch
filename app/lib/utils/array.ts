@@ -8,8 +8,8 @@ export const prefillUndefined = (
   ds: StringArray | NumberArray,
   n: number
 ): StringArray | NumberArray => {
-  for (let i = 0; i < n; i++) ds.unshift(undefined)
-  return ds
+  // Create new array with undefined prefix (O(n) vs O(n²) with repeated unshift)
+  return [...new Array(n).fill(undefined), ...ds]
 }
 
 export const cumulativeSum = (arr: number[]): number[] => {

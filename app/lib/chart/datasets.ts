@@ -227,7 +227,7 @@ export const getDatasets = (
   if (config.display.showTotal) {
     return {
       datasets: datasets.sort(
-        (a, b) => (a.data[0] as number) - (b.data[0] as number)
+        (a, b) => ((a.data[0] as number) ?? 0) - ((b.data[0] as number) ?? 0)
       ),
       sources: Array.from(sources)
     }
