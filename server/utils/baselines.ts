@@ -12,9 +12,10 @@ import type {
   DataVector
 } from '../../app/model'
 import { fetchBaselineWithCircuitBreaker } from './baselineApi'
+import { EXTERNAL_SERVICES } from '../../app/lib/config/constants'
 
 // Default stats API URL - can be overridden via NUXT_PUBLIC_STATS_URL
-const DEFAULT_STATS_URL = 'https://stats.mortality.watch/'
+const DEFAULT_STATS_URL = EXTERNAL_SERVICES.STATS_API_URL
 
 /**
  * Calculate excess mortality from baseline data

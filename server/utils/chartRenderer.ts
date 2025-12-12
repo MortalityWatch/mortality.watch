@@ -35,6 +35,7 @@ import { MatrixController, MatrixElement } from 'chartjs-chart-matrix'
 import QRCode from 'qrcode'
 import { withTimeout, cleanupCanvas } from './memoryManager'
 import { logger } from './logger'
+import { THEME_COLORS } from '../../app/lib/config/constants'
 
 /**
  * node-canvas Image type
@@ -157,8 +158,8 @@ const createLogoPlugin = (logoImage: CanvasImage | null, qrImage: CanvasImage | 
       ctx.save()
       ctx.globalCompositeOperation = 'destination-over'
       // Use dark background in dark mode, white in light mode
-      // Must match client screenshot in useExplorerChartActions.ts (#111827 for dark, #ffffff for light)
-      ctx.fillStyle = darkMode ? '#111827' : '#ffffff'
+      // Colors from THEME_COLORS to match client screenshot in useExplorerChartActions.ts
+      ctx.fillStyle = darkMode ? THEME_COLORS.BG_DARK : THEME_COLORS.BG_LIGHT
       ctx.fillRect(0, 0, chart.width, chart.height)
       ctx.restore()
     },
@@ -174,7 +175,7 @@ const createLogoPlugin = (logoImage: CanvasImage | null, qrImage: CanvasImage | 
 
           ctx.save()
           // Background behind logo matches chart background
-          ctx.fillStyle = darkMode ? '#111827' : '#ffffff'
+          ctx.fillStyle = darkMode ? THEME_COLORS.BG_DARK : THEME_COLORS.BG_LIGHT
           ctx.fillRect(10, 10, w, h)
           ctx.restore()
           // node-canvas Image is compatible with Canvas API but TypeScript doesn't recognize it

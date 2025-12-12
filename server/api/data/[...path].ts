@@ -1,9 +1,10 @@
 import { readFileSync, existsSync } from 'fs'
 import { join, resolve, normalize } from 'path'
 import { filesystemCache } from '../../utils/cache'
+import { CACHE_CONFIG } from '../../../app/lib/config/constants'
 
 const S3_BASE = 'https://s3.mortality.watch/data/mortality'
-const CACHE_DIR = '.data/cache/mortality'
+const CACHE_DIR = CACHE_CONFIG.MORTALITY_DATA_DIR
 
 // Allowed patterns for data paths:
 // - world_meta.csv (metadata file)

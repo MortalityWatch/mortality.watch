@@ -1,6 +1,7 @@
 import chroma from 'chroma-js'
 import { toDarkTheme, parseToHsl } from '../colorTransform'
 import { getIsDark } from '@/composables/useTheme'
+import { THEME_COLORS } from '../config/constants'
 
 /**
  * Resolve dark mode from optional override or current theme
@@ -31,8 +32,7 @@ export const borderColor = (isDark?: boolean) => {
 }
 
 export const backgroundColor = (isDark?: boolean) => {
-  // Dark mode: #111827 (gray-900, must match SSR chartRenderer.ts and useExplorerChartActions.ts)
-  return resolveDarkMode(isDark) ? '#111827' : '#ffffff'
+  return resolveDarkMode(isDark) ? THEME_COLORS.BG_DARK : THEME_COLORS.BG_LIGHT
 }
 
 export const getColorPalette = (

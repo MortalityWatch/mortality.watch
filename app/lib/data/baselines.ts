@@ -5,7 +5,7 @@ import type {
   DataVector
 } from '@/model'
 import { dataLoader } from '../dataLoader'
-import { getMaxBaselinePeriod } from '../config/constants'
+import { getMaxBaselinePeriod, EXTERNAL_SERVICES } from '../config/constants'
 import { logger } from '../logger'
 
 /**
@@ -69,7 +69,7 @@ const getSeasonType = (chartType: string) => {
 }
 
 // Default stats API URL - can be overridden via NUXT_PUBLIC_STATS_URL
-const DEFAULT_STATS_URL = 'https://stats.mortality.watch/'
+const DEFAULT_STATS_URL = EXTERNAL_SERVICES.STATS_API_URL
 
 /**
  * Convert a chart label to the xs (start time) parameter format for the stats API
