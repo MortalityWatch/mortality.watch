@@ -325,19 +325,17 @@ const handleViewChanged = async (newView: ViewType) => {
   const router = useRouter()
   const route = useRoute()
 
-  // 1. Clear user overrides - when switching views, user wants the new view's defaults
-  state.clearUserOverrides()
-
-  // 2. Resolve view change through StateResolver
-  // This applies view defaults, constraints, and computes UI state
+  // 1. Resolve view change through StateResolver
+  // Keep user overrides - data selection settings (chartType, countries, dates) should persist
+  // View-specific display settings will use view defaults via resolveViewChange logic
   const { StateResolver } = await import('@/lib/state/resolver/StateResolver')
   const resolved = StateResolver.resolveViewChange(
     newView,
     state.getCurrentStateValues(),
-    new Set() // Pass empty set since we cleared overrides
+    state.getUserOverrides()
   )
 
-  // 2b. For excess/zscore views, adjust dateFrom to baseline start if needed
+  // 2. For excess/zscore views, adjust dateFrom to baseline start if needed
   // The visible date range is restricted to baseline start in these views
   if (newView === 'excess' || newView === 'zscore') {
     const baselineStart = dataOrchestration.baselineRange.value?.from

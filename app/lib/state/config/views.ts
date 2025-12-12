@@ -241,7 +241,6 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
     ],
 
     compatibleMetrics: ['cmr', 'asmr', 'deaths'], // All metrics that support baselines
-    compatibleChartStyles: ['line', 'bar'], // No matrix for z-scores
-    compatibleChartTypes: ['yearly', 'fluseason', 'midyear'] // Z-scores only available for yearly aggregations (s=1)
+    compatibleChartStyles: ['line', 'bar'] // No matrix for z-scores
   }
 }
