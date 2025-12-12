@@ -1,5 +1,6 @@
 import type { ZodSchema, ZodError } from 'zod'
 import { ref } from 'vue'
+import { logger } from '@/lib/logger'
 
 /**
  * Validation result containing validity state and error messages
@@ -110,7 +111,7 @@ export function useFormValidation<T extends ZodSchema>(schema: T) {
     const fieldSchema = schema.shape?.[fieldName]
 
     if (!fieldSchema) {
-      console.warn(`Field "${fieldName}" not found in schema`)
+      logger.warn(`Field "${fieldName}" not found in schema`)
       return null
     }
 

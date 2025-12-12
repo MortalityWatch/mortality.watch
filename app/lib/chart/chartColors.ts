@@ -2,19 +2,23 @@ import chroma from 'chroma-js'
 import { toDarkTheme, parseToHsl } from '../colorTransform'
 import { getIsDark } from '@/composables/useTheme'
 
+/**
+ * Resolve dark mode from optional override or current theme
+ * Reduces duplication of `isDark !== undefined ? isDark : getIsDark()` pattern
+ */
+const resolveDarkMode = (isDarkOverride?: boolean): boolean =>
+  isDarkOverride !== undefined ? isDarkOverride : getIsDark()
+
 export const textColor = (isDark?: boolean) => {
-  const dark = isDark !== undefined ? isDark : getIsDark()
-  return dark ? '#ffffff' : '#25304a'
+  return resolveDarkMode(isDark) ? '#ffffff' : '#25304a'
 }
 
 export const textSoftColor = (isDark?: boolean) => {
-  const dark = isDark !== undefined ? isDark : getIsDark()
-  return dark ? '#9ca3af' : '#6b7280' // light gray in dark mode, dark gray in light mode
+  return resolveDarkMode(isDark) ? '#9ca3af' : '#6b7280' // light gray in dark mode, dark gray in light mode
 }
 
 export const textStrongColor = (isDark?: boolean) => {
-  const dark = isDark !== undefined ? isDark : getIsDark()
-  return dark ? '#ffffff' : '#000000'
+  return resolveDarkMode(isDark) ? '#ffffff' : '#000000'
 }
 
 export const isLightColor = (color: string) => {
@@ -23,14 +27,12 @@ export const isLightColor = (color: string) => {
 }
 
 export const borderColor = (isDark?: boolean) => {
-  const dark = isDark !== undefined ? isDark : getIsDark()
-  return dark ? '#2a3041' : '#e0e6fb'
+  return resolveDarkMode(isDark) ? '#2a3041' : '#e0e6fb'
 }
 
 export const backgroundColor = (isDark?: boolean) => {
-  const dark = isDark !== undefined ? isDark : getIsDark()
   // Dark mode: #111827 (gray-900, must match SSR chartRenderer.ts and useExplorerChartActions.ts)
-  return dark ? '#111827' : '#ffffff'
+  return resolveDarkMode(isDark) ? '#111827' : '#ffffff'
 }
 
 export const getColorPalette = (
@@ -66,8 +68,7 @@ const color_scale_pop_light = [
   '#5992fc'
 ]
 export const color_scale_pop = (isDarkOverride?: boolean) => {
-  const isDark = isDarkOverride !== undefined ? isDarkOverride : getIsDark()
-  return isDark ? color_scale_pop_light.map(toDarkTheme) : color_scale_pop_light
+  return resolveDarkMode(isDarkOverride) ? color_scale_pop_light.map(toDarkTheme) : color_scale_pop_light
 }
 
 export const getColorScale = (colors: string[], count: number) =>
@@ -77,8 +78,7 @@ export const getColorScale = (colors: string[], count: number) =>
 const color_scale_bad_good_light = getColorScale(['#ff5393', '#5dac20'], 9)
 
 export const color_scale_bad_good = (isDarkOverride?: boolean) => {
-  const isDark = isDarkOverride !== undefined ? isDarkOverride : getIsDark()
-  return isDark ? color_scale_bad_good_light.map(toDarkTheme) : color_scale_bad_good_light
+  return resolveDarkMode(isDarkOverride) ? color_scale_bad_good_light.map(toDarkTheme) : color_scale_bad_good_light
 }
 
 // Diverging blue-to-red scale (for excess mortality)
@@ -94,8 +94,7 @@ const color_scale_diverging_light = [
   '#ff5853'
 ]
 export const color_scale_diverging = (isDarkOverride?: boolean) => {
-  const isDark = isDarkOverride !== undefined ? isDarkOverride : getIsDark()
-  return isDark ? color_scale_diverging_light.map(toDarkTheme) : color_scale_diverging_light
+  return resolveDarkMode(isDarkOverride) ? color_scale_diverging_light.map(toDarkTheme) : color_scale_diverging_light
 }
 
 // Sequential red scale (for general heatmaps)
@@ -111,8 +110,7 @@ const color_scale_light = [
   '#ff5853'
 ]
 export const color_scale = (isDarkOverride?: boolean) => {
-  const isDark = isDarkOverride !== undefined ? isDarkOverride : getIsDark()
-  return isDark ? color_scale_light.map(toDarkTheme) : color_scale_light
+  return resolveDarkMode(isDarkOverride) ? color_scale_light.map(toDarkTheme) : color_scale_light
 }
 
 // ============================================================================

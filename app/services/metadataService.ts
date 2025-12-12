@@ -9,6 +9,7 @@
 import Papa from 'papaparse'
 import { dataLoader } from '@/lib/dataLoader'
 import { getSeasonString } from '@/model/baseline'
+import { logger } from '@/lib/logger'
 
 export interface MetadataEntry {
   iso3c: string
@@ -195,7 +196,7 @@ export class MetadataService {
     const formattedMinDate = getSeasonString(chartType, isFluSeason ? minYear + 1 : minYear)
     const formattedMaxDate = getSeasonString(chartType, isFluSeason ? maxYear + 1 : maxYear)
 
-    console.log('[MetadataService] Date range:', {
+    logger.debug('[MetadataService] Date range', {
       rawMin: minDate,
       rawMax: maxDate,
       minYear,

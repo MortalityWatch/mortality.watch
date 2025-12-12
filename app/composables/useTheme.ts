@@ -1,4 +1,5 @@
 import { computed } from 'vue'
+import { logger } from '@/lib/logger'
 
 /**
  * Unified theme composable for accessing color mode state (Vue components only)
@@ -33,7 +34,7 @@ export const useTheme = () => {
       colorMode
     }
   } catch (e) {
-    console.error('[useTheme] Error accessing color mode:', e)
+    logger.error('[useTheme] Error accessing color mode', e)
     // Fallback to light mode
     return {
       isDark: computed(() => false),
@@ -90,7 +91,7 @@ export const getIsDark = (): boolean => {
     const colorMode = useColorModeFunc()
     return colorMode.value === 'dark'
   } catch (e) {
-    console.error('[useTheme] Error getting dark theme:', e)
+    logger.error('[useTheme] Error getting dark theme', e)
     return false
   }
 }
