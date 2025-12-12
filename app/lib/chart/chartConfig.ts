@@ -445,7 +445,7 @@ export const makeMatrixChartConfig = (
           (chart.chartArea || {}).width / data.labels.length,
         height: ({ chart }: { chart: Chart }) =>
           (chart.chartArea || {}).height
-          / data.datasets.filter(a => a.label && a.label?.length > 0).length
+          / data.datasets.filter(a => a.label && a.label.length > 0).length
       }
     ]
   }
@@ -502,7 +502,7 @@ const makeMatrixData = (chartData: MortalityChartData): MatrixData => {
     let localMin = Number.MAX_SAFE_INTEGER
     let localMax = Number.MIN_SAFE_INTEGER
     for (const label of chartData.labels) {
-      if (!ds.label || !ds.label?.length) continue
+      if (!ds.label || !ds.label.length) continue
       const v = ds.data[i++] as number
       min = min > v ? v : min
       max = max < v ? v : max
