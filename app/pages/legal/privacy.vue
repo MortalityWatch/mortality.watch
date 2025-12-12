@@ -251,10 +251,10 @@
             <p>
               To exercise any of these rights, please contact us at
               <ULink
-                to="mailto:support@mortality.watch"
+                to="mailto:mortalitywatch@proton.me"
                 class="text-primary hover:underline"
               >
-                support@mortality.watch
+                mortalitywatch@proton.me
               </ULink>. We will respond to your request within 30 days (or as required by applicable law).
             </p>
             <p>
@@ -369,10 +369,10 @@
               not knowingly collect personal information from children. If you believe we have collected
               information from a child, please contact us at
               <ULink
-                to="mailto:support@mortality.watch"
+                to="mailto:mortalitywatch@proton.me"
                 class="text-primary hover:underline"
               >
-                support@mortality.watch
+                mortalitywatch@proton.me
               </ULink>, and we will promptly delete such information.
             </p>
           </div>
@@ -415,10 +415,10 @@
             <p class="font-semibold">
               Email:
               <ULink
-                to="mailto:support@mortality.watch"
+                to="mailto:mortalitywatch@proton.me"
                 class="text-primary hover:underline"
               >
-                support@mortality.watch
+                mortalitywatch@proton.me
               </ULink>
             </p>
             <p class="mt-4">

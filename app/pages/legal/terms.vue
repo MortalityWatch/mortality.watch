@@ -373,10 +373,10 @@
             <p class="font-semibold">
               Email:
               <ULink
-                to="mailto:support@mortality.watch"
+                to="mailto:mortalitywatch@proton.me"
                 class="text-primary hover:underline"
               >
-                support@mortality.watch
+                mortalitywatch@proton.me
               </ULink>
             </p>
           </div>

@@ -124,7 +124,7 @@
             </h3>
           </template>
           <p class="text-sm text-gray-600 dark:text-gray-400">
-            Yes! Please contact us at support@mortality.watch with proof of your academic
+            Yes! Please contact us at mortalitywatch@proton.me with proof of your academic
             affiliation for special pricing.
           </p>
         </UCard>

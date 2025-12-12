@@ -91,10 +91,10 @@
             <p>
               Send an email to
               <ULink
-                to="mailto:support@mortality.watch"
+                to="mailto:mortalitywatch@proton.me"
                 class="text-primary hover:underline font-semibold"
               >
-                support@mortality.watch
+                mortalitywatch@proton.me
               </ULink>
               with the subject line "Refund Request".
             </p>
@@ -197,10 +197,10 @@
           If you were charged due to a billing error (e.g., duplicate charge, incorrect amount),
           we will issue a full refund regardless of the 30-day window. Please contact us at
           <ULink
-            to="mailto:support@mortality.watch"
+            to="mailto:mortalitywatch@proton.me"
             class="text-primary hover:underline"
           >
-            support@mortality.watch
+            mortalitywatch@proton.me
           </ULink>
           immediately if you notice a billing error.
         </p>
@@ -282,10 +282,10 @@
           your bank or card issuer, as processing times may vary. If the issue persists, contact
           us at
           <ULink
-            to="mailto:support@mortality.watch"
+            to="mailto:mortalitywatch@proton.me"
             class="text-primary hover:underline"
           >
-            support@mortality.watch
+            mortalitywatch@proton.me
           </ULink>.
         </p>
       </div>
@@ -342,10 +342,10 @@
           </p>
           <p>
             <ULink
-              to="mailto:support@mortality.watch"
+              to="mailto:mortalitywatch@proton.me"
               class="text-primary hover:underline text-lg font-semibold"
             >
-              support@mortality.watch
+              mortalitywatch@proton.me
             </ULink>
           </p>
           <p class="mt-4 text-sm text-gray-600 dark:text-gray-400">
