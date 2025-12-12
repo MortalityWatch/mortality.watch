@@ -10,13 +10,6 @@ import { THEME_COLORS } from '../config/constants'
 const resolveDarkMode = (isDarkOverride?: boolean): boolean =>
   isDarkOverride !== undefined ? isDarkOverride : getIsDark()
 
-/**
- * Resolve dark mode from optional override or current theme
- * Reduces duplication of `isDark !== undefined ? isDark : getIsDark()` pattern
- */
-const resolveDarkMode = (isDarkOverride?: boolean): boolean =>
-  isDarkOverride !== undefined ? isDarkOverride : getIsDark()
-
 export const textColor = (isDark?: boolean) => {
   return resolveDarkMode(isDark) ? '#ffffff' : '#25304a'
 }
