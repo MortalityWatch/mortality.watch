@@ -25,14 +25,9 @@ class Logger {
   }
 
   private getDefaultLogLevel(): LogLevel {
-    // In browser, check for development mode
-    if (typeof window !== 'undefined') {
-      // Nuxt sets this in development
-      const isDev = import.meta.dev
-      return isDev ? 'debug' : 'warn'
-    }
-    // SSR fallback
-    return process.env.NODE_ENV === 'production' ? 'warn' : 'debug'
+    // Use Nuxt's import.meta.dev for client/dev, fallback to NODE_ENV for SSR/test
+    const isDev = import.meta.dev || process.env.NODE_ENV !== 'production'
+    return isDev ? 'debug' : 'warn'
   }
 
   private shouldLog(level: LogLevel): boolean {
