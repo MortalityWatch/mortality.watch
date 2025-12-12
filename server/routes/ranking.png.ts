@@ -52,7 +52,9 @@ export default defineEventHandler(async (event) => {
       try {
         // Build the URL for the ranking page with all query params
         // Always use localhost for screenshots (can't screenshot external URL from server)
-        const baseUrl = 'http://localhost:3000'
+        // Use PORT env var (set by Dokku/production) or default to 3000 (dev)
+        const port = process.env.PORT || process.env.NITRO_PORT || '3000'
+        const baseUrl = `http://localhost:${port}`
 
         // Remove width/height from query params (not part of ranking state)
         const { width: _w, height: _h, ...rankingParams } = queryParams

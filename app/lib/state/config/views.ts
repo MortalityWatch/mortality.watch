@@ -59,6 +59,9 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       chartStyle: 'line',
       ageGroups: ['all'],
       standardPopulation: 'who',
+      // View indicators (false by default in mortality view)
+      isExcess: false,
+      isZScore: false,
 
       // Date range (undefined = use data availability defaults)
       dateFrom: undefined as string | undefined,
