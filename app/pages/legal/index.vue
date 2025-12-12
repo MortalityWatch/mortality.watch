@@ -81,7 +81,7 @@ useSeoMeta({
         Legal
       </h1>
       <p class="text-center text-gray-600 dark:text-gray-400 mb-8">
-        Last Updated: October 30, 2025
+        Last Updated: December 12, 2025
       </p>
 
       <UCard>
