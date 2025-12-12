@@ -31,7 +31,9 @@ export const stateFieldEncoders = {
   countries: { key: 'c', decode: decodeArray },
   type: { key: 't' },
   chartType: { key: 'ct' },
-  // Note: 'e' param now handled by view system (see viewDetector.ts)
+  // View indicators - detected by viewDetector.ts, must be encoded when saving charts
+  isExcess: { key: 'e', encode: encodeBool, decode: decodeBool },
+  isZScore: { key: 'zs', encode: encodeBool, decode: decodeBool },
   chartStyle: { key: 'cs' },
   dateFrom: { key: 'df' },
   dateTo: { key: 'dt' },

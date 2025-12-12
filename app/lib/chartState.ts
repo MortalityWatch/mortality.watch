@@ -11,9 +11,9 @@ import type { ViewType } from './state'
 export interface ChartState {
   countries: string[]
   type: string
-  // NOTE: isExcess removed - now handled by view system (see viewDetector.ts)
-  // NOTE: showZScores removed - now handled by view system (see viewDetector.ts)
-  // View is derived from URL params (e=1, zs=1, etc.) not stored in state
+  // View indicators - encoded as e=1 and zs=1 in URL
+  isExcess?: boolean
+  isZScore?: boolean
   chartType: string
   chartStyle: string
   dateFrom?: string

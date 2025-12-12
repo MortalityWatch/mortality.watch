@@ -90,6 +90,9 @@ export interface ExplorerStateValues {
   chartStyle: ChartStyle
   ageGroups: string[]
   standardPopulation: string
+  // View indicators
+  isExcess: boolean
+  isZScore: boolean
   showPredictionInterval: boolean
   showBaseline: boolean
   baselineMethod: string
