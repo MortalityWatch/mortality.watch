@@ -176,6 +176,7 @@ export function useExplorerChartActions(
       ageGroups: state.ageGroups.value,
       chartStyle: state.chartStyle.value,
       isExcess: state.isExcess.value,
+      isZScore: state.isZScore.value,
       showBaseline: state.showBaseline.value,
       baselineMethod: state.baselineMethod.value,
       baselineDateFrom: state.baselineDateFrom.value,

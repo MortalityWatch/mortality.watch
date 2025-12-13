@@ -193,16 +193,45 @@
           </h2>
         </template>
 
-        <ChartsChartControls
-          :is-public="chart.isPublic ?? false"
-          :is-featured="chart.isFeatured"
-          :is-owner="!!isOwner"
-          :is-admin="isAdmin"
-          :is-toggling-public="togglingPublic === chart.id"
-          :is-toggling-featured="togglingFeatured === chart.id"
-          @toggle-public="handleTogglePublic"
-          @toggle-featured="handleToggleFeatured"
-        />
+        <div class="space-y-6">
+          <ChartsChartControls
+            :is-public="chart.isPublic ?? false"
+            :is-featured="chart.isFeatured"
+            :is-owner="!!isOwner"
+            :is-admin="isAdmin"
+            :is-toggling-public="togglingPublic === chart.id"
+            :is-toggling-featured="togglingFeatured === chart.id"
+            @toggle-public="handleTogglePublic"
+            @toggle-featured="handleToggleFeatured"
+          />
+
+          <!-- Delete Section -->
+          <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="font-medium text-sm text-error-600 dark:text-error-400">
+                  Delete Chart
+                </div>
+                <div class="text-xs text-gray-500 dark:text-gray-400">
+                  Permanently remove this chart
+                </div>
+              </div>
+              <UButton
+                color="error"
+                variant="soft"
+                size="sm"
+                :loading="isDeleting"
+                @click="handleDelete"
+              >
+                <Icon
+                  name="i-lucide-trash-2"
+                  class="w-4 h-4"
+                />
+                Delete
+              </UButton>
+            </div>
+          </div>
+        </div>
       </UCard>
     </div>
   </div>
@@ -211,8 +240,10 @@
 <script setup lang="ts">
 import { showToast } from '@/toast'
 import { formatChartDate } from '@/lib/utils/dates'
+import { handleApiError } from '@/lib/errors/errorHandler'
 
 const { user } = useAuth()
+const router = useRouter()
 const isAdmin = computed(() => user.value?.role === 'admin')
 const isOwner = computed(() => chart.value && user.value && chart.value.userId === user.value.id)
 
@@ -273,6 +304,30 @@ async function handleTogglePublic(newValue: boolean) {
     if (chart.value.isPublic !== undefined) {
       chart.value.isPublic = oldValue
     }
+  }
+}
+
+// Delete chart
+const isDeleting = ref(false)
+
+async function handleDelete() {
+  if (!chart.value) return
+
+  if (!confirm('Are you sure you want to delete this chart? This action cannot be undone.')) {
+    return
+  }
+
+  isDeleting.value = true
+  try {
+    await $fetch(`/api/charts/${chart.value.id}`, {
+      method: 'DELETE'
+    })
+    showToast('Chart deleted successfully', 'success')
+    router.push('/charts')
+  } catch (err) {
+    handleApiError(err, 'delete chart', 'handleDelete')
+  } finally {
+    isDeleting.value = false
   }
 }
 
