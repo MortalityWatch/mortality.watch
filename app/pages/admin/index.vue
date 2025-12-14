@@ -10,40 +10,36 @@ useSeoMeta({
 
 const { user } = useAuth()
 
-/**
- * Admin Dashboard Statistics
- *
- * Currently using static mock data as a placeholder for the admin dashboard UI.
- * These stats can be enhanced in the future when analytics tracking is implemented.
- *
- * To implement real stats, create an API endpoint at /api/admin/stats that returns:
- * - Total user count from the database
- * - Today's signups (filtered by createdAt date)
- * - Pro subscriber count (filtered by subscription status)
- * - Total saved charts count
- */
-const stats = ref([
+// Fetch real stats from API
+const { data: statsData } = await useFetch<{
+  totalUsers: number
+  signupsToday: number
+  proSubscribers: number
+  savedCharts: number
+}>('/api/admin/stats')
+
+const stats = computed(() => [
   {
     label: 'Total Users',
-    value: '1',
+    value: String(statsData.value?.totalUsers || 0),
     icon: 'i-lucide-users',
     color: 'primary' as const
   },
   {
     label: 'Signups Today',
-    value: '0',
+    value: String(statsData.value?.signupsToday || 0),
     icon: 'i-lucide-user-plus',
     color: 'success' as const
   },
   {
     label: 'Pro Subscribers',
-    value: '0',
+    value: String(statsData.value?.proSubscribers || 0),
     icon: 'i-lucide-crown',
     color: 'warning' as const
   },
   {
     label: 'Saved Charts',
-    value: '0',
+    value: String(statsData.value?.savedCharts || 0),
     icon: 'i-lucide-bar-chart',
     color: 'info' as const
   }

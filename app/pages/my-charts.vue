@@ -143,8 +143,12 @@ interface Chart {
 
 // Page meta
 definePageMeta({
-  title: 'My Charts',
   middleware: 'auth'
+})
+
+useSeoMeta({
+  title: 'My Charts',
+  description: 'View, edit, and manage your saved charts and rankings'
 })
 
 // Import constants
