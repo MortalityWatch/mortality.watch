@@ -94,6 +94,31 @@ defineExpose({
   overflow: hidden;
 }
 
+/* Mobile-specific sizing: Use viewport-relative height for better mobile experience */
+@media (max-width: 639px) {
+  .chart-card {
+    aspect-ratio: unset;
+    height: 60vh; /* 60% of viewport height on mobile */
+    min-height: 300px;
+    max-height: 500px;
+  }
+
+  /* Ensure full height chain through UCard internal elements */
+  .chart-card :deep(> div) {
+    height: 100%;
+  }
+
+  .chart-wrapper {
+    height: 100%;
+  }
+
+  /* Make chart canvas fill the wrapper */
+  .chart-wrapper :deep(canvas) {
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
+
 .chart-card :deep(.p-4) {
   padding: 0 !important;
 }

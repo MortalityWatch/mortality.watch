@@ -7,6 +7,7 @@ import StyleTab from './controls/StyleTab.vue'
 import { CHART_PRESETS } from '@/lib/config/constants'
 import { chartStyles, baselineMethods, decimalPrecisions } from '@/model'
 import { useChartUIState } from '@/composables/useChartUIState'
+import { isMobile } from '@/utils'
 import type { ChartStyle } from '@/lib/chart/chartTypes'
 import type { ViewType } from '@/lib/state'
 
@@ -236,12 +237,18 @@ const showBaselineOption = computed(() =>
 )
 
 // Chart presets for dropdown
-const chartPresetOptions = CHART_PRESETS.map(preset => ({
-  name: preset.name,
-  value: preset.name,
-  label: preset.name,
-  category: preset.category
-}))
+// Filter out "Custom" on mobile since drag-to-resize doesn't work with touch
+const chartPresetOptions = computed(() => {
+  const presets = isMobile()
+    ? CHART_PRESETS.filter(p => p.name !== 'Custom')
+    : CHART_PRESETS
+  return presets.map(preset => ({
+    name: preset.name,
+    value: preset.name,
+    label: preset.name,
+    category: preset.category
+  }))
+})
 
 // Tab management
 const activeTab = ref('data')
