@@ -225,9 +225,11 @@ const userMenuItems = computed<MenuItem[]>(() => {
           variant="ghost"
           label="Sign In"
         />
+        <!-- Hide Sign Up on mobile to prevent top bar overflow -->
         <UButton
           to="/signup"
           label="Sign Up"
+          class="hidden sm:inline-flex"
         />
       </template>
     </template>
