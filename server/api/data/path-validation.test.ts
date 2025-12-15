@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 
 // Test the path validation regex pattern
-const VALID_PATH_PATTERN = /^(?:world_meta\.csv|[A-Z]{2,3}\/[a-z]+(?:_[\w-]+)?\.csv)$/
+const VALID_PATH_PATTERN = /^(?:world_meta\.csv|[A-Z]{2,3}\/[a-z]+(?:_[\w+-]+)?\.csv)$/
 
 describe('data path validation', () => {
   describe('valid paths', () => {
@@ -19,7 +19,8 @@ describe('data path validation', () => {
       expect(VALID_PATH_PATTERN.test('USA/weekly_0-14.csv')).toBe(true)
       expect(VALID_PATH_PATTERN.test('GBR/monthly_15-64.csv')).toBe(true)
       expect(VALID_PATH_PATTERN.test('USA/weekly_65-74.csv')).toBe(true)
-      expect(VALID_PATH_PATTERN.test('USA/weekly_85plus.csv')).toBe(true)
+      expect(VALID_PATH_PATTERN.test('USA/weekly_75-84.csv')).toBe(true)
+      expect(VALID_PATH_PATTERN.test('USA/weekly_85+.csv')).toBe(true)
     })
 
     it('should accept 2-letter and 3-letter country codes', () => {

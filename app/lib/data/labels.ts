@@ -38,7 +38,14 @@ export const getAllChartLabels = (
 ): string[] => {
   const allLabels = new Set<string>()
   const ageGroups = ageGroupFilter ?? Object.keys(rawData || {})
-  const countryCodes = countryCodeFilter ?? Object.keys(rawData.all ?? {})
+  // Get country codes from the first available age group if not filtered
+  // This handles age-group-specific data where rawData.all doesn't exist
+  const countryCodes = countryCodeFilter ?? (() => {
+    const firstAgeGroup = ageGroups[0]
+    return firstAgeGroup && rawData[firstAgeGroup]
+      ? Object.keys(rawData[firstAgeGroup])
+      : []
+  })()
   const type = getEmptyLabelFilterKey(isAsmrType)
 
   for (const ag of ageGroups) {
