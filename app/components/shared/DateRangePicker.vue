@@ -56,7 +56,8 @@ const availableYears = computed(() => {
     class="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
     data-tour="date-range"
   >
-    <div class="flex items-center gap-3">
+    <!-- Mobile: stack vertically, Desktop: single row -->
+    <div class="flex flex-col sm:flex-row sm:items-center gap-3">
       <!-- Info text for excess/zscore views (explains why slider starts at baseline) -->
       <template v-if="props.hideSliderStart">
         <div class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
@@ -66,7 +67,7 @@ const availableYears = computed(() => {
           />
           <span>Starts at baseline</span>
         </div>
-        <div class="h-6 w-px bg-gray-300 dark:bg-gray-600" />
+        <div class="hidden sm:block h-6 w-px bg-gray-300 dark:bg-gray-600" />
       </template>
 
       <!-- From dropdown (hidden in excess/zscore views) -->
@@ -114,12 +115,12 @@ const availableYears = computed(() => {
           </UPopover>
         </div>
 
-        <!-- Divider -->
-        <div class="h-6 w-px bg-gray-300 dark:bg-gray-600" />
+        <!-- Divider - hidden on mobile -->
+        <div class="hidden sm:block h-6 w-px bg-gray-300 dark:bg-gray-600" />
       </template>
 
-      <!-- Date Range Slider -->
-      <div class="flex-1 flex items-center gap-2">
+      <!-- Date Range Slider - full width on mobile -->
+      <div class="flex-1 flex items-center gap-2 w-full sm:w-auto">
         <div class="flex-1">
           <DateSlider
             :slider-value="props.sliderValue"
