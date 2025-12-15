@@ -1,20 +1,15 @@
 import { sql, eq, gte } from 'drizzle-orm'
 import { db } from '../../utils/db'
 import { users, savedCharts, subscriptions } from '../../../db/schema'
+import { requireAdmin } from '../../utils/auth'
 
 /**
  * GET /api/admin/stats
  * Returns dashboard statistics for the admin panel
  */
 export default defineEventHandler(async (event) => {
-  // Verify admin access
-  const user = event.context.user
-  if (!user || user.role !== 'admin') {
-    throw createError({
-      statusCode: 403,
-      message: 'Admin access required'
-    })
-  }
+  // Verify admin access (handles auth and role check)
+  await requireAdmin(event)
 
   // Get today's date at midnight for filtering
   const today = new Date()
