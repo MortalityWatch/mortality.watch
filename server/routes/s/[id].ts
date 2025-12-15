@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
   if (!entry) {
     throw createError({
       statusCode: 404,
-      message: 'Chart not found'
+      message: `Chart with ID "${id}" not found. The chart may have been deleted or the link may be invalid.`
     })
   }
 
