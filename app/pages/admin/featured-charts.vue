@@ -121,19 +121,20 @@
         v-for="chart in charts"
         :key="chart.id"
       >
-        <div class="flex items-center gap-6">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
           <!-- Thumbnail -->
           <div
-            class="shrink-0 w-32 h-20 bg-gray-100 dark:bg-gray-800 rounded overflow-hidden"
+            class="shrink-0 w-full sm:w-32 h-32 sm:h-20 bg-gray-100 dark:bg-gray-800 rounded overflow-hidden"
           >
             <img
-              v-if="chart.thumbnailUrl"
-              :src="chart.thumbnailUrl"
+              v-if="chart.thumbnailUrl || chart.chartConfig"
+              :src="chart.thumbnailUrl || getChartImageUrl(chart)"
               :alt="chart.name"
               class="w-full h-full object-cover"
+              @error="($event.target as HTMLImageElement).style.display = 'none'"
             >
             <div
-              v-else
+              v-if="!chart.thumbnailUrl && !chart.chartConfig"
               class="w-full h-full flex items-center justify-center text-gray-400"
             >
               <Icon
@@ -144,22 +145,18 @@
           </div>
 
           <!-- Chart Info -->
-          <div class="flex-1 min-w-0">
-            <div class="flex items-start justify-between mb-2">
-              <div class="flex-1">
-                <h3 class="text-lg font-semibold truncate">
-                  {{ chart.name }}
-                </h3>
-                <p
-                  v-if="chart.description"
-                  class="text-sm text-gray-600 dark:text-gray-400 truncate"
-                >
-                  {{ chart.description }}
-                </p>
-              </div>
-            </div>
+          <div class="flex-1 min-w-0 overflow-hidden">
+            <h3 class="text-lg font-semibold truncate mb-1">
+              {{ chart.name }}
+            </h3>
+            <p
+              v-if="chart.description"
+              class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2"
+            >
+              {{ chart.description }}
+            </p>
 
-            <div class="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+            <div class="flex flex-wrap items-center gap-2 sm:gap-4 text-xs text-gray-500 dark:text-gray-400">
               <span>
                 <Icon
                   name="i-lucide-user"
@@ -185,7 +182,7 @@
           </div>
 
           <!-- Actions -->
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 shrink-0">
             <UButton
               :to="`/charts/${chart.slug}`"
               color="neutral"
@@ -205,7 +202,7 @@
               @update:model-value="(value: boolean) => toggleFeatured(chart.id, value)"
             />
 
-            <span class="text-sm font-medium">
+            <span class="text-sm font-medium whitespace-nowrap">
               {{ chart.isFeatured ? 'Featured' : 'Feature' }}
             </span>
           </div>
@@ -252,13 +249,25 @@ interface Chart {
   description: string | null
   slug: string | null
   chartType: 'explorer' | 'ranking'
-  chartState: string
+  chartConfig: string
   thumbnailUrl: string | null
   isFeatured: boolean
   viewCount: number
   createdAt: number
   updatedAt: number
   authorName: string
+}
+
+/**
+ * Generate chart image URL from chart config
+ * Includes display params to render clean thumbnails without UI elements
+ */
+function getChartImageUrl(chart: Chart): string {
+  const endpoint = chart.chartType === 'ranking' ? '/ranking.png' : '/chart.png'
+  const config = chart.chartConfig || ''
+  const separator = config ? '&' : ''
+  // ti=0 (no title), qr=0 (no QR), l=0 (no logo), cap=0 (no caption), dp=2 (decimal precision), z=2 (zoom)
+  return `${endpoint}?${config}${separator}width=256&height=160&ti=0&qr=0&l=0&cap=0&dp=2&z=2`
 }
 
 interface Pagination {
@@ -278,8 +287,12 @@ interface CacheStats {
 
 // Page meta
 definePageMeta({
-  middleware: 'admin',
-  title: 'Featured Charts Management'
+  middleware: 'admin'
+})
+
+useSeoMeta({
+  title: 'Featured Charts - Admin',
+  description: 'Manage which charts appear on the homepage'
 })
 
 // Filters
