@@ -332,19 +332,27 @@ async function handleDelete() {
 }
 
 // Get site URL for absolute OG image URLs
-const config = useRuntimeConfig()
-const siteUrl = config.public.siteUrl || 'https://sentry.mortality.watch'
+const runtimeConfig = useRuntimeConfig()
+const siteUrl = runtimeConfig.public.siteUrl || 'https://sentry.mortality.watch'
+
+// Get color mode to pass dark mode to chart image
+const colorMode = useColorMode()
 
 // Generate chart image URL from config (relative for display, absolute for OG)
 const chartImageUrl = computed(() => {
   if (!chart.value) return null
 
-  const config = chart.value.chartConfig
+  const chartConfig = chart.value.chartConfig
   const endpoint = chart.value.chartType === 'ranking' ? '/ranking.png' : '/chart.png'
 
   // Config is already a query string, just append dimensions
-  const separator = config ? '&' : ''
-  return `${endpoint}?${config}${separator}width=1200&height=600`
+  const separator = chartConfig ? '&' : ''
+
+  // Add dark mode parameter based on user's color preference
+  const isDarkMode = colorMode.value === 'dark'
+  const dmParam = isDarkMode ? '&dm=1' : ''
+
+  return `${endpoint}?${chartConfig}${separator}width=1200&height=600${dmParam}`
 })
 
 // Absolute URL version for OG meta tags
