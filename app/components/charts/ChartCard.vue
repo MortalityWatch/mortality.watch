@@ -51,19 +51,24 @@
         {{ chart.description }}
       </p>
 
-      <!-- Thumbnail -->
+      <!-- Thumbnail - wrapped in ClientOnly to prevent SSR/hydration race with color mode -->
       <div
         class="overflow-hidden rounded-md bg-gray-100 dark:bg-gray-800"
         style="aspect-ratio: 16/9"
       >
-        <NuxtLink :to="getChartLink()">
-          <img
-            :src="getThumbnailUrl"
-            :alt="chart.name"
-            class="w-full h-full object-cover object-top hover:scale-105 transition-transform"
-            loading="lazy"
-          >
-        </NuxtLink>
+        <ClientOnly>
+          <NuxtLink :to="getChartLink()">
+            <img
+              :src="getThumbnailUrl"
+              :alt="chart.name"
+              class="w-full h-full object-cover object-top hover:scale-105 transition-transform"
+              loading="lazy"
+            >
+          </NuxtLink>
+          <template #fallback>
+            <div class="w-full h-full animate-pulse bg-gray-200 dark:bg-gray-700" />
+          </template>
+        </ClientOnly>
       </div>
 
       <!-- Meta info (not shown on homepage) -->
