@@ -43,18 +43,22 @@ const CountryRawSchema = z.object({
  * All numeric fields are stored as strings in the CSV and will be
  * parsed to numbers during processing.
  *
+ * Note: Age-group-specific CSV files (e.g., fluseason_85+.csv) do NOT contain
+ * ASMR fields - only the aggregate files have them. Therefore ASMR fields
+ * are optional in this schema.
+ *
  * @property {string} iso3c - Three-letter country code
  * @property {string} population - Population count (as string)
  * @property {string} date - Date/period of the data record
  * @property {string} type - Data type indicator
  * @property {string} source - Primary data source identifier
- * @property {string} source_asmr - ASMR data source identifier
+ * @property {string} [source_asmr] - ASMR data source identifier (optional, not in age-group files)
  * @property {string} deaths - Total deaths count (as string)
  * @property {string} cmr - Crude mortality rate (as string)
- * @property {string} asmr_who - Age-standardized mortality rate (WHO standard)
- * @property {string} asmr_esp - Age-standardized mortality rate (European standard)
- * @property {string} asmr_usa - Age-standardized mortality rate (US standard)
- * @property {string} asmr_country - Age-standardized mortality rate (country-specific standard)
+ * @property {string} [asmr_who] - Age-standardized mortality rate (WHO standard, optional)
+ * @property {string} [asmr_esp] - Age-standardized mortality rate (European standard, optional)
+ * @property {string} [asmr_usa] - Age-standardized mortality rate (US standard, optional)
+ * @property {string} [asmr_country] - Age-standardized mortality rate (country-specific, optional)
  */
 const CountryDataRawSchema = z.object({
   iso3c: z.string().min(3).max(3),
@@ -62,13 +66,13 @@ const CountryDataRawSchema = z.object({
   date: z.string(),
   type: z.string(),
   source: z.string(),
-  source_asmr: z.string(),
+  source_asmr: z.string().optional(),
   deaths: z.string(),
   cmr: z.string(),
-  asmr_who: z.string(),
-  asmr_esp: z.string(),
-  asmr_usa: z.string(),
-  asmr_country: z.string()
+  asmr_who: z.string().optional(),
+  asmr_esp: z.string().optional(),
+  asmr_usa: z.string().optional(),
+  asmr_country: z.string().optional()
 })
 
 /**

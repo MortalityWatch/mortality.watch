@@ -111,7 +111,8 @@ const colorMode = useColorMode()
 const { displayColors } = useExplorerColors(
   state.countries,
   state.userColors,
-  colorMode
+  colorMode,
+  state.ageGroups
 )
 
 // Bootstrap data - loaded here and passed to data orchestration composable
