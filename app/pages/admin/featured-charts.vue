@@ -260,12 +260,14 @@ interface Chart {
 
 /**
  * Generate chart image URL from chart config
+ * Includes display params to render clean thumbnails without UI elements
  */
 function getChartImageUrl(chart: Chart): string {
   const endpoint = chart.chartType === 'ranking' ? '/ranking.png' : '/chart.png'
   const config = chart.chartConfig || ''
   const separator = config ? '&' : ''
-  return `${endpoint}?${config}${separator}width=256&height=160`
+  // ti=0 (no title), qr=0 (no QR), l=0 (no logo), cap=0 (no caption), dp=2 (decimal precision), z=2 (zoom)
+  return `${endpoint}?${config}${separator}width=256&height=160&ti=0&qr=0&l=0&cap=0&dp=2&z=2`
 }
 
 interface Pagination {
