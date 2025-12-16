@@ -12,7 +12,7 @@ import type {
   DataVector
 } from '../../app/model'
 import { fetchBaselineWithCircuitBreaker } from './baselineApi'
-import { EXTERNAL_SERVICES } from '../../app/lib/config/constants'
+import { EXTERNAL_SERVICES, BASELINE_DATA_PRECISION } from '../../app/lib/config/constants'
 import { logger } from '../../app/lib/logger'
 
 // Default stats API URL - can be overridden via NUXT_PUBLIC_STATS_URL
@@ -144,7 +144,10 @@ const calculateBaseline = async (
     const baseUrl = statsUrl || DEFAULT_STATS_URL
     // Send full dataset with bs/be params to specify baseline range
     // API uses 1-indexed values, so add 1 to our 0-indexed values
-    const dataParam = (all_data as (string | number)[]).join(',')
+    // Round numbers to avoid floating point precision issues (e.g., 82.15455999999999 -> 82.1546)
+    const dataParam = (all_data as (string | number)[])
+      .map(v => typeof v === 'number' ? Number(v.toFixed(BASELINE_DATA_PRECISION)) : v)
+      .join(',')
     const bs = baselineStartIdx + 1 // Convert to 1-indexed
     const be = baselineEndIdx + 1 // Convert to 1-indexed
     // With bs/be, PI is calculated for all post-be periods - no h needed

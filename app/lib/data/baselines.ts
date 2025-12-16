@@ -5,7 +5,7 @@ import type {
   DataVector
 } from '@/model'
 import { dataLoader } from '../dataLoader'
-import { getMaxBaselinePeriod, EXTERNAL_SERVICES } from '../config/constants'
+import { getMaxBaselinePeriod, EXTERNAL_SERVICES, BASELINE_DATA_PRECISION } from '../config/constants'
 import { logger } from '../logger'
 
 /**
@@ -232,7 +232,10 @@ const calculateBaseline = async (
     // Only send data from baseline start onwards to reduce payload size
     // This significantly reduces the URL length and server processing time
     const trimmed_data = all_data.slice(baselineStartIdx)
-    const dataParam = (trimmed_data as (string | number)[]).join(',')
+    // Round numbers to avoid floating point precision issues (e.g., 82.15455999999999 -> 82.1546)
+    const dataParam = (trimmed_data as (string | number)[])
+      .map(v => typeof v === 'number' ? Number(v.toFixed(BASELINE_DATA_PRECISION)) : v)
+      .join(',')
 
     // Adjust bs/be to be relative to trimmed data (1-indexed)
     // Since we start from baselineStartIdx, baseline now starts at index 1
