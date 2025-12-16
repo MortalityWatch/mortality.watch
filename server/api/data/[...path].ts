@@ -10,7 +10,8 @@ const CACHE_DIR = CACHE_CONFIG.MORTALITY_DATA_DIR
 // - world_meta.csv (metadata file)
 // - {country}/{chartType}.csv (e.g., USA/weekly.csv)
 // - {country}/{chartType}_{ageGroup}.csv (e.g., USA/weekly_0-14.csv, USA/weekly_85+.csv)
-const VALID_PATH_PATTERN = /^(?:world_meta\.csv|[A-Z]{2,3}\/[a-z]+(?:_[\w+-]+)?\.csv)$/
+// - {jurisdiction}/{chartType}.csv (e.g., USA-FL/weekly.csv for sub-country jurisdictions)
+const VALID_PATH_PATTERN = /^(?:world_meta\.csv|[A-Z]{2,3}(?:-[A-Z]{2,3})?\/[a-z]+(?:_[\w+-]+)?\.csv)$/
 
 /**
  * Validates and sanitizes the path parameter to prevent path traversal attacks.

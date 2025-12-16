@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 
 // Test the path validation regex pattern
-const VALID_PATH_PATTERN = /^(?:world_meta\.csv|[A-Z]{2,3}\/[a-z]+(?:_[\w+-]+)?\.csv)$/
+const VALID_PATH_PATTERN = /^(?:world_meta\.csv|[A-Z]{2,3}(?:-[A-Z]{2,3})?\/[a-z]+(?:_[\w+-]+)?\.csv)$/
 
 describe('data path validation', () => {
   describe('valid paths', () => {
@@ -28,6 +28,15 @@ describe('data path validation', () => {
       expect(VALID_PATH_PATTERN.test('USA/weekly.csv')).toBe(true)
       expect(VALID_PATH_PATTERN.test('GB/monthly.csv')).toBe(true)
       expect(VALID_PATH_PATTERN.test('GBR/monthly.csv')).toBe(true)
+    })
+
+    it('should accept sub-country jurisdiction codes', () => {
+      expect(VALID_PATH_PATTERN.test('USA-FL/weekly.csv')).toBe(true)
+      expect(VALID_PATH_PATTERN.test('USA-CA/fluseason.csv')).toBe(true)
+      expect(VALID_PATH_PATTERN.test('DEU-SN/monthly.csv')).toBe(true)
+      expect(VALID_PATH_PATTERN.test('CAN-ON/yearly.csv')).toBe(true)
+      expect(VALID_PATH_PATTERN.test('USA-FL/weekly_0-14.csv')).toBe(true)
+      expect(VALID_PATH_PATTERN.test('USA-CA/weekly_85+.csv')).toBe(true)
     })
   })
 
@@ -88,6 +97,9 @@ describe('data path validation', () => {
     it('should reject country codes that are too long or short', () => {
       expect(VALID_PATH_PATTERN.test('U/weekly.csv')).toBe(false)
       expect(VALID_PATH_PATTERN.test('USAA/weekly.csv')).toBe(false)
+      // But sub-country jurisdictions with hyphen are valid
+      expect(VALID_PATH_PATTERN.test('USA-FLOR/weekly.csv')).toBe(false) // second part > 3 chars
+      expect(VALID_PATH_PATTERN.test('USAA-FL/weekly.csv')).toBe(false) // first part > 3 chars
     })
   })
 })
