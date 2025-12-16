@@ -233,7 +233,7 @@
               and calculations are publicly auditable
             </p>
             <UButton
-              to="https://github.com/akarlsten/mortality.watch"
+              to="https://github.com/MortalityWatch/mortality.watch"
               target="_blank"
               size="xs"
               variant="outline"
