@@ -237,9 +237,9 @@ describe('DataTransformationPipeline', () => {
       const result = pipeline.transformErrorBarData(config, data, 'key1')
 
       expect(result).toHaveLength(3)
-      expect(result[0]).toMatchObject({ x: 0, y: 10, yMin: undefined, yMax: undefined })
-      expect(result[1]).toMatchObject({ x: 1, y: 30, yMin: undefined, yMax: undefined })
-      expect(result[2]).toMatchObject({ x: 2, y: 60, yMin: undefined, yMax: undefined })
+      expect(result[0]).toMatchObject({ x: 0, y: 10, yMin: null, yMax: null })
+      expect(result[1]).toMatchObject({ x: 1, y: 30, yMin: null, yMax: null })
+      expect(result[2]).toMatchObject({ x: 2, y: 60, yMin: null, yMax: null })
     })
 
     it('should transform total error bar data', () => {

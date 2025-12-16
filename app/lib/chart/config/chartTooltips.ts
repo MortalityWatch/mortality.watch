@@ -22,6 +22,8 @@ export function createTooltipCallbacks(
     label: (context: TooltipItem<'line' | 'bar'>) => {
       let label = context.dataset.label || ''
       const value = context.parsed as unknown as ChartErrorDataPoint
+      // Skip tooltip for null values (gaps in chart)
+      if (value.y === null) return ''
       const min = value.yMin || value.yMinMin
       const max = value.yMax || value.yMaxMax
       const pi = showPi && min && max ? { min, max } : undefined

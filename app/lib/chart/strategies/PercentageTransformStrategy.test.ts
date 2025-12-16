@@ -67,14 +67,14 @@ describe('PercentageTransformStrategy', () => {
   })
 
   describe('transformPreservingUndefined', () => {
-    it('should preserve undefined values in data for error bar bounds', () => {
-      const data: (number | undefined)[] = [10, undefined, 30]
+    it('should preserve null values in data for error bar bounds', () => {
+      const data: (number | null)[] = [10, null, 30]
       const baseline = [5, 10, 15]
 
       const result = strategy.transformPreservingUndefined(data, baseline)
 
       expect(result[0]).toBe(2)
-      expect(result[1]).toBe(undefined) // undefined preserved for PI hiding
+      expect(result[1]).toBe(null) // null preserved for Chart.js gaps
       expect(result[2]).toBe(2)
     })
 

@@ -271,9 +271,10 @@ const calculateBaseline = async (
       json.zscore = (json.zscore as (string | number)[]).slice(0, trimmedLength)
     }
 
-    // Prefill arrays for indices before baselineStartIdx with undefined
+    // Prefill arrays for indices before baselineStartIdx with null
     // Response is aligned with trimmed input starting at baselineStartIdx
-    const prefill = new Array(baselineStartIdx).fill(undefined)
+    // Note: Chart.js uses null (not undefined) to create gaps in line charts
+    const prefill = new Array(baselineStartIdx).fill(null)
 
     if (keys[1]) data[keys[1]] = [...prefill, ...json.y] as DataVector
     if (keys[2]) data[keys[2]] = [...prefill, ...json.lower] as DataVector
