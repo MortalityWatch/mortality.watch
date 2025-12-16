@@ -18,8 +18,8 @@ const log = logger.withPrefix('Validation')
  * Validates the structure of country metadata records from CSV files.
  * Each field is required and must match the expected format.
  *
- * @property {string} iso3c - Three-letter country code (e.g., "USA", "GBR")
- * @property {string} jurisdiction - Country/region name (e.g., "United States")
+ * @property {string} iso3c - Country/jurisdiction code (e.g., "USA", "GBR", "USA-FL", "DEU-SN")
+ * @property {string} jurisdiction - Country/region name (e.g., "United States", "USA - Florida")
  * @property {string} min_date - Earliest available data date
  * @property {string} max_date - Latest available data date
  * @property {string} type - Data type indicator
@@ -27,7 +27,8 @@ const log = logger.withPrefix('Validation')
  * @property {string} source - Data source identifier
  */
 const CountryRawSchema = z.object({
-  iso3c: z.string().min(3).max(3),
+  // Allow 3-letter codes (USA, DEU) or hyphenated sub-country codes (USA-FL, DEU-SN, CAN-ON)
+  iso3c: z.string().min(3).max(6),
   jurisdiction: z.string().min(1),
   min_date: z.string(),
   max_date: z.string(),
@@ -47,7 +48,7 @@ const CountryRawSchema = z.object({
  * ASMR fields - only the aggregate files have them. Therefore ASMR fields
  * are optional in this schema.
  *
- * @property {string} iso3c - Three-letter country code
+ * @property {string} iso3c - Country/jurisdiction code (e.g., "USA", "USA-FL", "DEU-SN")
  * @property {string} population - Population count (as string)
  * @property {string} date - Date/period of the data record
  * @property {string} type - Data type indicator
@@ -61,7 +62,8 @@ const CountryRawSchema = z.object({
  * @property {string} [asmr_country] - Age-standardized mortality rate (country-specific, optional)
  */
 const CountryDataRawSchema = z.object({
-  iso3c: z.string().min(3).max(3),
+  // Allow 3-letter codes (USA, DEU) or hyphenated sub-country codes (USA-FL, DEU-SN, CAN-ON)
+  iso3c: z.string().min(3).max(6),
   population: z.string(),
   date: z.string(),
   type: z.string(),
