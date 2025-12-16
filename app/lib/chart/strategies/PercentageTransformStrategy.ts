@@ -22,19 +22,19 @@ export class PercentageTransformStrategy {
   }
 
   /**
-   * Transform data row to percentage values, preserving undefined.
-   * Used for error bar bounds where undefined hides the error bar.
+   * Transform data row to percentage values, preserving null.
+   * Used for error bar bounds where null hides the error bar.
    * @param dataRow - The data values to transform
    * @param blRow - The baseline values to use as denominator
-   * @returns Percentage values, with undefined preserved
+   * @returns Percentage values, with null preserved for Chart.js gaps
    */
-  transformPreservingUndefined(dataRow: (number | undefined)[], blRow: (number | undefined)[]): (number | undefined)[] {
-    const result: (number | undefined)[] = []
+  transformPreservingUndefined(dataRow: (number | null | undefined)[], blRow: (number | null | undefined)[]): (number | null)[] {
+    const result: (number | null)[] = []
     for (let i = 0; i < dataRow.length; i++) {
       const data = dataRow[i]
-      // Preserve undefined to hide error bars for periods without PI
-      if (data === undefined) {
-        result.push(undefined)
+      // Preserve null to hide error bars for periods without PI (Chart.js uses null for gaps)
+      if (data === undefined || data === null) {
+        result.push(null)
       } else {
         result.push(data / (blRow[i] ?? 1))
       }

@@ -118,9 +118,20 @@ export class MetadataService {
         e => e.iso3c === country && e.type === dataType
       )
 
-      // Data derivation: For yearly/monthly types, also check weekly data (type 3)
-      // since we can aggregate weekly data to yearly or monthly
-      if (dataType === '1' || dataType === '2') {
+      // Data derivation: Higher frequency data can be aggregated to lower frequency
+      // - Weekly (type 3) can be aggregated to yearly or monthly
+      // - Monthly (type 2) can be aggregated to yearly
+      if (dataType === '1') {
+        // For yearly, also check monthly and weekly data
+        const monthlyEntries = this.metadata!.filter(
+          e => e.iso3c === country && e.type === '2'
+        )
+        const weeklyEntries = this.metadata!.filter(
+          e => e.iso3c === country && e.type === '3'
+        )
+        entries = [...entries, ...monthlyEntries, ...weeklyEntries]
+      } else if (dataType === '2') {
+        // For monthly, also check weekly data
         const weeklyEntries = this.metadata!.filter(
           e => e.iso3c === country && e.type === '3'
         )
@@ -162,9 +173,24 @@ export class MetadataService {
       && ageGroups.some(ag => e.ageGroups.includes(ag))
     )
 
-    // Data derivation: For yearly/monthly types, also check weekly data (type 3)
-    // since we can aggregate weekly data to yearly or monthly
-    if (dataType === '1' || dataType === '2') {
+    // Data derivation: Higher frequency data can be aggregated to lower frequency
+    // - Weekly (type 3) can be aggregated to yearly or monthly
+    // - Monthly (type 2) can be aggregated to yearly
+    if (dataType === '1') {
+      // For yearly, also check monthly and weekly data
+      const monthlyEntries = this.metadata.filter(e =>
+        countries.includes(e.iso3c)
+        && e.type === '2'
+        && ageGroups.some(ag => e.ageGroups.includes(ag))
+      )
+      const weeklyEntries = this.metadata.filter(e =>
+        countries.includes(e.iso3c)
+        && e.type === '3'
+        && ageGroups.some(ag => e.ageGroups.includes(ag))
+      )
+      entries = [...entries, ...monthlyEntries, ...weeklyEntries]
+    } else if (dataType === '2') {
+      // For monthly, also check weekly data
       const weeklyEntries = this.metadata.filter(e =>
         countries.includes(e.iso3c)
         && e.type === '3'

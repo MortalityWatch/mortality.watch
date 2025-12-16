@@ -41,11 +41,11 @@ export type MatrixDatapoint = {
 
 export type ChartErrorDataPoint = {
   x: number
-  y: number
-  yMin: number | undefined
-  yMax: number | undefined
-  yMinMin: number | undefined
-  yMaxMax: number | undefined
+  y: number | null // null creates gaps in Chart.js
+  yMin: number | null | undefined
+  yMax: number | null | undefined
+  yMinMin: number | null | undefined
+  yMaxMax: number | null | undefined
 }
 
 export type ChartJSConfig<

@@ -20,19 +20,21 @@ interface TransformConfig {
 
 /**
  * Helper to create error bar data points
+ * Note: null values create gaps in Chart.js (undefined is converted to 0)
  */
 function makeErrorBarData(
-  row: number[],
-  lowerRow: (number | undefined)[],
-  upperRow: (number | undefined)[]
+  row: (number | null)[],
+  lowerRow: (number | null | undefined)[],
+  upperRow: (number | null | undefined)[]
 ): ChartErrorDataPoint[] {
   const result: ChartErrorDataPoint[] = []
   for (let i = 0; i < row.length; i++) {
+    const y = row[i]
     result.push({
       x: i,
-      y: row[i] ?? 0,
-      yMin: lowerRow[i],
-      yMax: upperRow[i],
+      y: y ?? null, // null values create gaps in Chart.js
+      yMin: lowerRow[i] ?? null,
+      yMax: upperRow[i] ?? null,
       yMinMin: undefined,
       yMaxMax: undefined
     })
@@ -214,8 +216,8 @@ export class DataTransformationPipeline {
 
     return makeErrorBarData(
       this.percentageStrategy.transform(cumData, cumBl),
-      repeat(undefined, data.length),
-      repeat(undefined, data.length)
+      repeat(null, data.length),
+      repeat(null, data.length)
     )
   }
 
@@ -251,8 +253,8 @@ export class DataTransformationPipeline {
 
     return makeErrorBarData(
       this.percentageStrategy.transform(totalData, totalBl),
-      [undefined],
-      [undefined]
+      [null],
+      [null]
     )
   }
 
@@ -297,8 +299,8 @@ export class DataTransformationPipeline {
 
     return makeErrorBarData(
       this.cumulativeStrategy.transform(data),
-      repeat(undefined, data.length),
-      repeat(undefined, data.length)
+      repeat(null, data.length),
+      repeat(null, data.length)
     )
   }
 
@@ -321,8 +323,8 @@ export class DataTransformationPipeline {
 
     return makeErrorBarData(
       this.totalStrategy.transform(data),
-      [undefined],
-      [undefined]
+      [null],
+      [null]
     )
   }
 }
