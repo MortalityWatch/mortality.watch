@@ -11,6 +11,12 @@ import { getWindow } from '../utils/dom'
 // =============================================================================
 
 /**
+ * Decimal precision for baseline API data values
+ * Prevents floating point artifacts (e.g., 82.15455999999999 -> 82.1546)
+ */
+export const BASELINE_DATA_PRECISION = 4
+
+/**
  * Default baseline year for mortality data comparisons
  * For yearly charts: 2017, 2018, 2019
  * For fluseason/midyear charts: 2016/17, 2017/18, 2018/19 (starts at 2016)
