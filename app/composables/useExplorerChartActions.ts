@@ -126,7 +126,11 @@ export function useExplorerChartActions(
     markAsModified,
     resetSavedState,
     isDuplicate,
-    existingChart
+    existingChart,
+    detectedChart,
+    setDetectedChart,
+    saveAsNew: saveAsNewComposable,
+    updateExistingChart
   } = useSaveChart({
     chartType: 'explorer',
     generateDefaultTitle: () => {
@@ -388,6 +392,9 @@ export function useExplorerChartActions(
     exportJSON,
     markAsModified,
     resetSavedState,
+    saveAsNew: saveAsNewComposable,
+    updateExistingChart,
+    setDetectedChart,
 
     // Save modal state
     showSaveModal,
@@ -404,6 +411,7 @@ export function useExplorerChartActions(
     buttonLabel,
     isButtonDisabled,
     isDuplicate,
-    existingChart
+    existingChart,
+    detectedChart
   } as const
 }
