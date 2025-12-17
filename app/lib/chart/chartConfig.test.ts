@@ -114,8 +114,20 @@ describe('chartConfig', () => {
         expect(config.options.maintainAspectRatio).toBe(false)
       })
 
-      it('should configure layout padding', () => {
-        const data = createMockChartData()
+      it('should configure layout padding with extra right padding when labels are shown', () => {
+        const data = createMockChartData() // showLabels: true by default
+        const config = makeBarLineChartConfig(data, false, false, false, false, false)
+
+        expect(config.options.layout.padding).toEqual({
+          top: 10,
+          right: 20, // Extra padding to prevent label cutoff
+          bottom: 10,
+          left: 10
+        })
+      })
+
+      it('should configure layout padding with standard right padding when labels are hidden', () => {
+        const data = createMockChartData({ showLabels: false })
         const config = makeBarLineChartConfig(data, false, false, false, false, false)
 
         expect(config.options.layout.padding).toEqual({
