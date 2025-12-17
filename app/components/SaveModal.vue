@@ -13,6 +13,12 @@ interface ExistingChart {
   createdAt: number | null
 }
 
+interface DetectedChart {
+  id: number
+  slug: string | null
+  name: string
+}
+
 const props = withDefaults(defineProps<{
   modelValue: boolean
   saving: boolean
@@ -31,6 +37,7 @@ const props = withDefaults(defineProps<{
   buttonLabel?: string
   isDuplicate?: boolean
   existingChart?: ExistingChart | null
+  detectedChart?: DetectedChart | null
 }>(), {
   type: 'chart',
   generateDefaultTitle: undefined,
@@ -40,7 +47,8 @@ const props = withDefaults(defineProps<{
   savedChartSlug: null,
   isButtonDisabled: false,
   isDuplicate: false,
-  existingChart: null
+  existingChart: null,
+  detectedChart: null
 })
 
 const emit = defineEmits<{
@@ -49,6 +57,8 @@ const emit = defineEmits<{
   (e: 'update:description', value: string): void
   (e: 'update:isPublic', value: boolean): void
   (e: 'save'): void
+  (e: 'saveAsNew'): void
+  (e: 'updateExisting'): void
 }>()
 
 const localShow = computed({
@@ -141,6 +151,34 @@ const handleOpenModal = (): void => {
     >
       <template #body>
         <div class="space-y-4 w-full">
+          <!-- Info when user has existing saved chart -->
+          <UAlert
+            v-if="(detectedChart || (isSaved && isModified)) && !isDuplicate"
+            color="info"
+            variant="subtle"
+            :title="isModified ? 'You have unsaved modifications' : 'Similar chart found in your library'"
+          >
+            <template #description>
+              <p class="text-sm">
+                <template v-if="isModified">
+                  You've modified a previously saved {{ typeLabelLower }}.
+                </template>
+                <template v-else-if="detectedChart">
+                  You have a saved {{ typeLabelLower }} with this configuration:
+                  <strong>"{{ detectedChart.name }}"</strong>
+                </template>
+              </p>
+              <p class="text-sm mt-1 text-gray-600 dark:text-gray-400">
+                <template v-if="isModified">
+                  Update the original to replace it, or save as a new {{ typeLabelLower }}.
+                </template>
+                <template v-else>
+                  You can update the existing {{ typeLabelLower }} or save as a new one.
+                </template>
+              </p>
+            </template>
+          </UAlert>
+
           <!-- Name Input -->
           <UFormField
             :label="`${typeLabel} Name`"
@@ -248,9 +286,29 @@ const handleOpenModal = (): void => {
             label="Cancel"
             @click="localShow = false"
           />
+          <!-- Show two buttons when user has a saved chart (detected or previously saved) -->
+          <template v-if="(detectedChart || (isSaved && isModified)) && !isDuplicate">
+            <UButton
+              color="neutral"
+              variant="outline"
+              :label="`Save as New ${typeLabel}`"
+              :loading="saving"
+              :disabled="!name.trim()"
+              @click="emit('saveAsNew')"
+            />
+            <UButton
+              color="primary"
+              :label="isModified ? `Update Original` : `Update Existing`"
+              :loading="saving"
+              :disabled="!name.trim()"
+              @click="emit('updateExisting')"
+            />
+          </template>
+          <!-- Default single save button -->
           <UButton
+            v-else
             color="primary"
-            :label="isSaved && isModified ? `Update ${typeLabel}` : `Save ${typeLabel}`"
+            :label="`Save ${typeLabel}`"
             :loading="saving"
             :disabled="!name.trim()"
             @click="emit('save')"

@@ -30,6 +30,12 @@ interface ExistingChart {
   createdAt: number | null
 }
 
+interface DetectedChart {
+  id: number
+  slug: string | null
+  name: string
+}
+
 /**
  * Composable for managing save chart/ranking functionality
  * @param options Configuration options for the save behavior
@@ -53,9 +59,12 @@ export function useSaveChart(options: SaveChartOptions) {
   const isSaved = ref(false)
   const isModified = ref(false)
 
-  // Duplicate detection state
+  // Duplicate detection state (from 409 response)
   const isDuplicate = ref(false)
   const existingChart = ref<ExistingChart | null>(null)
+
+  // Pre-detected chart state (from mount check)
+  const detectedChart = ref<DetectedChart | null>(null)
 
   // Compute button state
   const buttonLabel = computed(() => {
@@ -75,11 +84,16 @@ export function useSaveChart(options: SaveChartOptions) {
   /**
    * Opens the save modal and resets all form state
    * Auto-populates the title field if generateDefaultTitle is provided
+   * Pre-fills with detected chart name if one exists
    */
   const openSaveModal = () => {
     showSaveModal.value = true
-    // Generate default title and description if functions provided
-    saveChartName.value = generateDefaultTitle ? generateDefaultTitle() : ''
+    // If a detected chart exists, pre-fill with its name; otherwise use generated default
+    if (detectedChart.value) {
+      saveChartName.value = detectedChart.value.name
+    } else {
+      saveChartName.value = generateDefaultTitle ? generateDefaultTitle() : ''
+    }
     saveChartDescription.value = generateDefaultDescription ? generateDefaultDescription() : ''
     saveChartPublic.value = false
     saveError.value = ''
@@ -189,6 +203,122 @@ export function useSaveChart(options: SaveChartOptions) {
     isModified.value = false
     savedChartSlug.value = null
     savedChartId.value = null
+    detectedChart.value = null
+  }
+
+  /**
+   * Set detected chart (called from page mount when existing chart is found)
+   */
+  const setDetectedChart = (chart: DetectedChart | null) => {
+    detectedChart.value = chart
+    if (chart) {
+      isSaved.value = true
+      isModified.value = false
+      savedChartSlug.value = chart.slug
+      savedChartId.value = chart.id.toString()
+    }
+  }
+
+  /**
+   * Update an existing saved chart's metadata and optionally its configuration
+   * @param chartId The ID of the saved chart to update
+   * @param stateData Optional state data to update the chart configuration (for modified charts)
+   * @returns Promise that resolves when update is complete
+   */
+  const updateExistingChart = async (chartId: number, stateData?: Record<string, unknown>) => {
+    if (!saveChartName.value.trim()) {
+      saveError.value = `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} name is required`
+      return
+    }
+
+    savingChart.value = true
+    saveError.value = ''
+
+    try {
+      const body: Record<string, unknown> = {
+        name: saveChartName.value.trim(),
+        description: saveChartDescription.value.trim() || null,
+        isPublic: saveChartPublic.value
+      }
+
+      // If state data provided, include it to update the chart configuration
+      if (stateData) {
+        body.chartState = JSON.stringify(stateData)
+        body.chartType = chartType
+      }
+
+      const response = await $fetch<{ success: boolean, chart: { slug: string | null } }>(`/api/charts/${chartId}`, {
+        method: 'PATCH',
+        body
+      })
+
+      // Update saved state
+      isSaved.value = true
+      isModified.value = false
+      savedChartSlug.value = response.chart?.slug || null
+      saveSuccess.value = true
+      showSaveModal.value = false
+
+      showToast(
+        `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} updated!`,
+        'success'
+      )
+    } catch (err: unknown) {
+      console.error(`Failed to update ${entityName}:`, err)
+      saveError.value = err instanceof Error ? err.message : `Failed to update ${entityName}`
+    } finally {
+      savingChart.value = false
+    }
+  }
+
+  /**
+   * Save as a new chart (bypassing duplicate detection)
+   * @param stateData The serialized state data to save
+   * @returns Promise that resolves when save is complete
+   */
+  const saveAsNew = async (stateData: Record<string, unknown>) => {
+    if (!saveChartName.value.trim()) {
+      saveError.value = `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} name is required`
+      return
+    }
+
+    savingChart.value = true
+    saveError.value = ''
+    saveSuccess.value = false
+
+    try {
+      const response = await $fetch<SaveResponse>('/api/charts', {
+        method: 'POST',
+        body: {
+          name: saveChartName.value.trim(),
+          description: saveChartDescription.value.trim() || null,
+          chartState: JSON.stringify(stateData),
+          chartType,
+          isPublic: saveChartPublic.value,
+          forceNew: true
+        }
+      })
+
+      // Update saved state
+      isSaved.value = true
+      isModified.value = false
+      savedChartSlug.value = response.chart?.slug || null
+      savedChartId.value = response.chart?.id || null
+      saveSuccess.value = true
+      detectedChart.value = null // Clear detected chart since we now have a new save
+
+      showSaveModal.value = false
+
+      showToast(
+        `${entityName.charAt(0).toUpperCase() + entityName.slice(1)} saved!`,
+        'success'
+      )
+    } catch (err: unknown) {
+      console.error(`Failed to save ${entityName}:`, err)
+      saveError.value = err instanceof Error ? err.message : `Failed to save ${entityName}`
+    } finally {
+      savingChart.value = false
+    }
   }
 
   return {
@@ -209,14 +339,20 @@ export function useSaveChart(options: SaveChartOptions) {
     buttonLabel,
     isButtonDisabled,
 
-    // Duplicate detection
+    // Duplicate detection (from 409)
     isDuplicate,
     existingChart,
+
+    // Pre-detected chart (from mount check)
+    detectedChart,
 
     // Functions
     openSaveModal,
     closeSaveModal,
     saveToDB,
+    saveAsNew,
+    updateExistingChart,
+    setDetectedChart,
     markAsModified,
     resetSavedState
   }

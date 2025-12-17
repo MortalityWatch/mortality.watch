@@ -29,6 +29,7 @@ import ExplorerSettings from '@/components/explorer/ExplorerSettings.vue'
 import ChartActions from '@/components/charts/ChartActions.vue'
 import SaveModal from '@/components/SaveModal.vue'
 import { generateExplorerTitle, generateExplorerDescription } from '@/lib/utils/chartTitles'
+import { computeConfigHash, extractUrlParams } from '@/lib/shortUrl/hashConfig'
 
 // Auth state for conditional features
 const { isAuthenticated } = useAuth()
@@ -518,6 +519,23 @@ onMounted(async () => {
   // Setup resize observer for drag resizing (only if not in Auto mode)
   setupResizeObserver()
 
+  // Check if current state matches a saved chart (fire-and-forget)
+  // Only check if user is authenticated
+  if (isAuthenticated.value) {
+    const params = extractUrlParams(route.query as Record<string, string | string[] | undefined>)
+    computeConfigHash(params).then((hash) => {
+      $fetch<{ id: number, slug: string | null, name: string }>(`/api/charts/mine/${hash}`).then((saved) => {
+        if (saved) {
+          setDetectedChart(saved)
+        }
+      }).catch(() => {
+        // Not saved - ignore
+      })
+    }).catch(() => {
+      // Hash computation failed - ignore
+    })
+  }
+
   // Auto-start tutorial for first-time users (skip if skipTutorial query param is present)
   if (!route.query.skipTutorial) {
     autoStartTutorial()
@@ -544,13 +562,17 @@ const {
   isSaved,
   isModified,
   savedChartSlug,
-  savedChartId: _savedChartId,
+  savedChartId,
   buttonLabel,
   isButtonDisabled,
   markAsModified,
   resetSavedState: _resetSavedState,
   isDuplicate,
-  existingChart
+  existingChart,
+  detectedChart,
+  setDetectedChart,
+  saveAsNew: saveAsNewComposable,
+  updateExistingChart
 } = chartActions
 
 // Wrap showSaveModal in computed for proper v-model binding
@@ -602,6 +624,25 @@ const getDefaultExplorerDescription = () => {
     showPercentage: state.showPercentage.value,
     standardPopulation: state.standardPopulation.value
   })
+}
+
+// Wrapper to save as new chart (bypasses duplicate detection)
+const saveAsNew = () => {
+  saveAsNewComposable(state.getCurrentStateValues())
+}
+
+// Wrapper to update existing chart
+const handleUpdateExisting = () => {
+  // Get the chart ID - either from detected chart or from saved chart
+  const chartId = detectedChart.value?.id || (savedChartId.value ? parseInt(savedChartId.value, 10) : null)
+  if (chartId) {
+    // If modified, pass current state to update the chart config; otherwise just update metadata
+    if (isModified.value) {
+      updateExistingChart(chartId, state.getCurrentStateValues())
+    } else {
+      updateExistingChart(chartId)
+    }
+  }
 }
 
 // Watch for state changes to mark chart as modified
@@ -750,11 +791,14 @@ watch(
                 :button-label="buttonLabel"
                 :is-duplicate="isDuplicate"
                 :existing-chart="existingChart"
+                :detected-chart="detectedChart"
                 type="chart"
                 :generate-default-title="getDefaultExplorerTitle"
                 :generate-default-description="getDefaultExplorerDescription"
                 data-tour="save-button"
                 @save="saveToDB"
+                @save-as-new="saveAsNew"
+                @update-existing="handleUpdateExisting"
               />
             </template>
           </ChartActions>

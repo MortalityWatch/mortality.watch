@@ -80,7 +80,7 @@ export default defineEventHandler(async (event) => {
   const userId = user.id
 
   const body = await readBody(event)
-  const { name, description, chartState, chartType, isPublic } = body
+  const { name, description, chartState, chartType, isPublic, forceNew } = body
 
   // Validation
   if (!name || typeof name !== 'string' || name.trim().length === 0) {
@@ -140,41 +140,43 @@ export default defineEventHandler(async (event) => {
   const params = queryStringToParams(queryString)
   const chartId = computeConfigHash(params)
 
-  // Check if user already has a chart with this chartId
-  try {
-    const duplicates = await db
-      .select()
-      .from(savedCharts)
-      .where(
-        and(
-          eq(savedCharts.userId, userId),
-          eq(savedCharts.chartId, chartId)
+  // Check if user already has a chart with this chartId (skip if forceNew is true)
+  if (!forceNew) {
+    try {
+      const duplicates = await db
+        .select()
+        .from(savedCharts)
+        .where(
+          and(
+            eq(savedCharts.userId, userId),
+            eq(savedCharts.chartId, chartId)
+          )
         )
-      )
-      .limit(1)
+        .limit(1)
 
-    if (duplicates.length > 0 && duplicates[0]) {
-      const existingChart = duplicates[0]
-      throw createError({
-        statusCode: 409,
-        statusMessage: 'Duplicate Chart',
-        message: 'You have already saved an identical chart',
-        data: {
-          duplicate: true,
-          existingChart: {
-            id: existingChart.id,
-            slug: existingChart.slug,
-            name: existingChart.name,
-            createdAt: existingChart.createdAt
+      if (duplicates.length > 0 && duplicates[0]) {
+        const existingChart = duplicates[0]
+        throw createError({
+          statusCode: 409,
+          statusMessage: 'Duplicate Chart',
+          message: 'You have already saved an identical chart',
+          data: {
+            duplicate: true,
+            existingChart: {
+              id: existingChart.id,
+              slug: existingChart.slug,
+              name: existingChart.name,
+              createdAt: existingChart.createdAt
+            }
           }
-        }
-      })
+        })
+      }
+    } catch (err) {
+      if (err && typeof err === 'object' && 'statusCode' in err && err.statusCode === 409) {
+        throw err
+      }
+      logger.error('Error checking for duplicate chart:', err instanceof Error ? err : new Error(String(err)))
     }
-  } catch (err) {
-    if (err && typeof err === 'object' && 'statusCode' in err && err.statusCode === 409) {
-      throw err
-    }
-    logger.error('Error checking for duplicate chart:', err instanceof Error ? err : new Error(String(err)))
   }
 
   // Ensure chart config exists in charts table
