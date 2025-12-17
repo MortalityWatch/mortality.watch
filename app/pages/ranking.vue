@@ -34,6 +34,7 @@ import { useRankingTableSort } from '@/composables/useRankingTableSort'
 import { useCountryFilter } from '@/composables/useCountryFilter'
 import { useSaveChart } from '@/composables/useSaveChart'
 import { generateRankingTitle } from '@/lib/utils/chartTitles'
+import { computeConfigHash, extractUrlParams } from '@/lib/shortUrl/hashConfig'
 import RankingHeader from '@/components/ranking/RankingHeader.vue'
 import RankingDataSelection from '@/components/ranking/RankingDataSelection.vue'
 import SaveModal from '@/components/SaveModal.vue'
@@ -307,6 +308,23 @@ onMounted(() => {
   if (!route.query.skipTutorial) {
     autoStartTutorial('ranking')
   }
+
+  // Check if current state matches a saved chart (fire-and-forget)
+  // Only check if user is authenticated
+  if (isAuthenticated.value) {
+    const params = extractUrlParams(route.query as Record<string, string | string[] | undefined>)
+    computeConfigHash(params).then((hash) => {
+      $fetch<{ id: number, slug: string | null, name: string }>(`/api/charts/mine/${hash}`).then((saved) => {
+        if (saved) {
+          setDetectedChart(saved)
+        }
+      }).catch(() => {
+        // Not saved - ignore
+      })
+    }).catch(() => {
+      // Hash computation failed - ignore
+    })
+  }
 })
 
 // Handle browser back/forward navigation
@@ -330,14 +348,18 @@ const {
   isSaved,
   isModified,
   savedChartSlug,
-  savedChartId: _savedChartId,
+  savedChartId,
   buttonLabel,
   isButtonDisabled,
   markAsModified,
   resetSavedState: _resetSavedState,
   saveToDB: saveToDBComposable,
   isDuplicate,
-  existingChart
+  existingChart,
+  detectedChart,
+  setDetectedChart,
+  saveAsNew: saveAsNewComposable,
+  updateExistingChart
 } = useSaveChart({
   chartType: 'ranking',
   generateDefaultTitle: () => generateRankingTitle({
@@ -385,6 +407,25 @@ const rankingStateData = computed(() => ({
 // Wrapper function to serialize state and call composable
 const saveToDB = async () => {
   await saveToDBComposable(rankingStateData.value)
+}
+
+// Wrapper to save as new ranking (bypasses duplicate detection)
+const saveAsNew = () => {
+  saveAsNewComposable(rankingStateData.value)
+}
+
+// Wrapper to update existing ranking
+const handleUpdateExisting = () => {
+  // Get the chart ID - either from detected chart or from saved chart
+  const chartId = detectedChart.value?.id || (savedChartId.value ? parseInt(savedChartId.value, 10) : null)
+  if (chartId) {
+    // If modified, pass current state to update the chart config; otherwise just update metadata
+    if (isModified.value) {
+      updateExistingChart(chartId, rankingStateData.value)
+    } else {
+      updateExistingChart(chartId)
+    }
+  }
 }
 
 // Generate default title for ranking charts
@@ -690,10 +731,13 @@ watch(
                 :button-label="buttonLabel"
                 :is-duplicate="isDuplicate"
                 :existing-chart="existingChart"
+                :detected-chart="detectedChart"
                 type="ranking"
                 :generate-default-title="getDefaultRankingTitle"
                 data-tour="ranking-save-button"
                 @save="saveToDB"
+                @save-as-new="saveAsNew"
+                @update-existing="handleUpdateExisting"
               />
             </template>
           </ChartActions>
@@ -755,10 +799,13 @@ watch(
                 :button-label="buttonLabel"
                 :is-duplicate="isDuplicate"
                 :existing-chart="existingChart"
+                :detected-chart="detectedChart"
                 type="ranking"
                 :generate-default-title="getDefaultRankingTitle"
                 data-tour="ranking-save-button"
                 @save="saveToDB"
+                @save-as-new="saveAsNew"
+                @update-existing="handleUpdateExisting"
               />
             </template>
           </ChartActions>
