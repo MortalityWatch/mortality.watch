@@ -99,23 +99,20 @@ const selectedPeriodLength = ref(
   calculatePeriodLength(props.sliderValue, props.baselineMethod)
 )
 
-// Timestamp of last method change - used to ignore slider updates for a short window
-let lastMethodChangeTime = 0
-const METHOD_CHANGE_IGNORE_WINDOW_MS = 100
-
 // Update period length when slider value changes externally (e.g., URL navigation)
 watch(() => props.sliderValue, (newValue) => {
-  // Skip updates within the ignore window after a method change
-  // This prevents race conditions where slider updates from the method change
-  // would recalculate and override the correct period length
-  if (Date.now() - lastMethodChangeTime < METHOD_CHANGE_IGNORE_WINDOW_MS) {
+  const calculated = calculatePeriodLength(newValue)
+
+  // Only update if the calculated value is different from current
+  // This prevents overriding method-triggered changes when the slider
+  // updates to reflect the new period (the calculated value would match)
+  if (calculated === selectedPeriodLength.value) {
     return
   }
 
-  const calculated = calculatePeriodLength(newValue)
   // Update if:
-  // 1. The calculated value is a preset (3, 5, 10) AND current is also a preset
-  // 2. OR the calculated value is Custom (0) - always reflect custom ranges
+  // 1. The calculated value is Custom (0) - always reflect custom ranges
+  // 2. OR current is a preset (not Custom) - allow recalculation
   if (calculated === 0 || selectedPeriodLength.value !== 0) {
     selectedPeriodLength.value = calculated
   }
@@ -129,8 +126,6 @@ watch(() => props.baselineMethod, (newMethod) => {
 
   const defaultLength = getDefaultPeriodLength(newMethod)
   if (selectedPeriodLength.value !== defaultLength) {
-    // Mark the time of this method change to ignore subsequent slider updates
-    lastMethodChangeTime = Date.now()
     selectedPeriodLength.value = defaultLength
   }
 })
