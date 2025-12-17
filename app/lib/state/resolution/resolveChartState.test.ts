@@ -8,6 +8,7 @@
 import { describe, it, expect } from 'vitest'
 import { resolveChartStateForRendering } from './resolveChartState'
 import { computeEffectiveDateRange, getDefaultPeriods, getVisibleLabels } from './effectiveDefaults'
+import { getDefaultSliderStart } from '@/lib/config/constants'
 
 // Generate test labels for different chart types
 function generateLabels(chartType: string, startYear: number, endYear: number): string[] {
@@ -166,9 +167,9 @@ describe('resolveChartStateForRendering', () => {
       expect(state.dateTo).toBe('2024')
     })
 
-    it('should use default sliderStart of 2009', () => {
+    it('should use default sliderStart of 20 years back', () => {
       const state = resolveChartStateForRendering({ c: 'USA', ct: 'yearly' }, yearlyLabels)
-      expect(state.sliderStart).toBe('2009')
+      expect(state.sliderStart).toBe(getDefaultSliderStart())
     })
   })
 
@@ -321,7 +322,7 @@ describe('SSR vs Explorer parity', () => {
     )
 
     // useDateRangeCalculations would:
-    // 1. Apply sliderStart (default '2010') - all labels visible
+    // 1. Apply sliderStart (default: current year - 20) - all labels visible
     // 2. Compute default range: last 10 periods
     // Result: 2015-2024
 

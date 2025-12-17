@@ -1,6 +1,5 @@
 import { readFileSync, existsSync } from 'fs'
 import { join, resolve, normalize } from 'path'
-import { filesystemCache } from '../../utils/cache'
 import { CACHE_CONFIG } from '../../../app/lib/config/constants'
 
 const S3_BASE = 'https://s3.mortality.watch/data/mortality'
@@ -67,8 +66,8 @@ export default defineEventHandler(async (event) => {
   const configValue = config.public.useLocalCache as unknown
   const useLocalCacheOnly = configValue === true || configValue === 'true'
 
-  // Dev: Check local dev cache first (for downloaded data)
-  if (isDev || useLocalCacheOnly) {
+  // Check local files only when USE_LOCAL_CACHE=true (offline dev mode)
+  if (useLocalCacheOnly) {
     const localPath = join(CACHE_DIR, path)
 
     // Additional safety check: ensure resolved path is within cache directory
@@ -91,56 +90,19 @@ export default defineEventHandler(async (event) => {
         return data
       } catch (error) {
         logger.error(`Error reading local file ${localPath}:`, error instanceof Error ? error : new Error(String(error)))
-        // Fall through to S3 fetch (unless local-only mode)
       }
     }
 
-    // If local-only mode is enabled, fail instead of falling back to S3
-    if (useLocalCacheOnly) {
-      throw createError({
-        statusCode: 404,
-        message: `Local file not found: ${path}. Run 'npm run download-data' to cache data locally.`
-      })
-    }
-
-    // If local file doesn't exist in dev, warn and fall back to S3
-    logger.warn(`Local file not found: ${localPath}, fetching from S3`)
+    throw createError({
+      statusCode: 404,
+      message: `Local file not found: ${path}. Run 'npm run download-data' to cache data locally.`
+    })
   }
 
-  // Production: Check TTL-based cache first
-  if (!isDev && path === 'world_meta.csv') {
-    const cached = await filesystemCache.getMetadata()
-    if (cached) {
-      setResponseHeaders(event, {
-        'Content-Type': 'text/csv',
-        'Cache-Control': 'public, max-age=3600'
-      })
-      return cached
-    }
-  } else if (!isDev) {
-    // Parse path to extract country, chartType, ageGroup
-    const parts = path.split('/')
-    if (parts.length === 2 && parts[0] && parts[1]) {
-      const country = parts[0]
-      const filename = parts[1].replace('.csv', '')
-      const ageParts = filename.split('_')
-      const chartType = ageParts[0]
-      const ageGroup = ageParts[1] || 'all'
+  // Production: Fetch directly from S3 (no server-side caching to avoid stale data)
+  // Browser caching via Cache-Control headers handles client-side caching
 
-      if (chartType) {
-        const cached = await filesystemCache.getMortalityData(country, chartType, ageGroup)
-        if (cached) {
-          setResponseHeaders(event, {
-            'Content-Type': 'text/csv',
-            'Cache-Control': 'public, max-age=86400'
-          })
-          return cached
-        }
-      }
-    }
-  }
-
-  // Cache miss: Fetch from S3
+  // Fetch from S3
   const s3Url = `${S3_BASE}/${path}`
 
   try {
@@ -156,25 +118,6 @@ export default defineEventHandler(async (event) => {
     }
 
     const data = await response.text()
-
-    // Write to production cache
-    if (!isDev) {
-      if (path === 'world_meta.csv') {
-        await filesystemCache.setMetadata(data)
-      } else {
-        const parts = path.split('/')
-        if (parts.length === 2 && parts[0] && parts[1]) {
-          const country = parts[0]
-          const filename = parts[1].replace('.csv', '')
-          const ageParts = filename.split('_')
-          const chartType = ageParts[0]
-          const ageGroup = ageParts[1] || 'all'
-          if (chartType) {
-            await filesystemCache.setMortalityData(country, chartType, ageGroup, data)
-          }
-        }
-      }
-    }
 
     setResponseHeaders(event, {
       'Content-Type': 'text/csv',

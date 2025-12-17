@@ -18,6 +18,7 @@ import { computeEffectiveDateRange } from './effectiveDefaults'
 import { calculateBaselineRange } from '@/lib/baseline/calculateBaselineRange'
 import type { ChartFilterConfig, ChartStateSnapshot } from '@/lib/chart/types'
 import type { Country } from '@/model'
+import { getDefaultSliderStart } from '@/lib/config/constants'
 
 /**
  * Complete resolved state ready for chart rendering
@@ -203,7 +204,7 @@ export function resolveChartStateForRendering(
     // Date range (effective values)
     dateFrom: effectiveDateFrom,
     dateTo: effectiveDateTo,
-    sliderStart: (constrainedState.sliderStart as string) || '2010',
+    sliderStart: (constrainedState.sliderStart as string) || getDefaultSliderStart(),
 
     // Baseline (effective values)
     showBaseline: constrainedState.showBaseline as boolean,
@@ -294,7 +295,7 @@ export function resolveChartStateFromSnapshot(
     isZScore: snapshot.isZScore,
     dateFrom: effectiveDateFrom,
     dateTo: effectiveDateTo,
-    sliderStart: snapshot.sliderStart || '2010',
+    sliderStart: snapshot.sliderStart || getDefaultSliderStart(),
     showBaseline: snapshot.showBaseline,
     baselineMethod: snapshot.baselineMethod,
     baselineDateFrom: effectiveBaselineFrom,

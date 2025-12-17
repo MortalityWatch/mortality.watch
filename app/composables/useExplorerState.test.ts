@@ -14,6 +14,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { nextTick, ref } from 'vue'
 import { useExplorerState } from './useExplorerState'
+import { getDefaultSliderStart } from '@/lib/config/constants'
 
 import { showToast } from '@/toast'
 
@@ -389,10 +390,10 @@ describe('useExplorerState', () => {
   // ============================================================================
 
   describe('slider start', () => {
-    it('should default slider start to 2009', () => {
+    it('should default slider start to 20 years back from current year', () => {
       const state = useExplorerState()
 
-      expect(state.sliderStart.value).toBe('2009')
+      expect(state.sliderStart.value).toBe(getDefaultSliderStart())
     })
 
     it('should update slider start', () => {

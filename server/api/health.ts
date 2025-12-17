@@ -4,12 +4,10 @@
  * Provides system health status including:
  * - Chart rendering queue statistics
  * - Request throttle statistics
- * - Cache statistics
  * - Memory usage
  */
 
 import { chartRenderQueue, chartRenderThrottle } from '../utils/requestQueue'
-import { filesystemCache } from '../utils/cache'
 import { getMemoryUsage, isMemoryPressure } from '../utils/memoryManager'
 import { baselineCircuitBreaker } from '../utils/circuitBreaker'
 
@@ -20,9 +18,6 @@ export default defineEventHandler(async (event) => {
 
     // Get throttle statistics
     const throttleStats = chartRenderThrottle.getStats()
-
-    // Get cache statistics
-    const cacheStats = await filesystemCache.getStats()
 
     // Get memory usage
     const memoryUsage = getMemoryUsage()
@@ -55,12 +50,6 @@ export default defineEventHandler(async (event) => {
         trackedIdentifiers: throttleStats.trackedIdentifiers,
         windowMs: throttleStats.windowMs,
         maxRequests: throttleStats.maxRequests
-      },
-
-      cache: {
-        files: cacheStats.files,
-        sizeBytes: cacheStats.size,
-        sizeMB: Math.round(cacheStats.size / 1024 / 1024 * 100) / 100
       },
 
       circuitBreaker: {

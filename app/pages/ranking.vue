@@ -28,6 +28,7 @@ import { isMobile } from '@/utils'
 import { greenColor } from '@/lib/chart/chartColors'
 import { blDescription } from '@/lib/chart'
 import { useRankingState } from '@/composables/useRankingState'
+import { getDefaultSliderStart } from '@/lib/config/constants'
 import { useRankingData } from '@/composables/useRankingData'
 import { useRankingTableSort } from '@/composables/useRankingTableSort'
 import { useCountryFilter } from '@/composables/useCountryFilter'
@@ -122,7 +123,7 @@ const metaData = computed(() => {
 
 // Additional state refs for compatibility
 const hasLoaded = ref(false)
-const sliderStart = ref('2010')
+const sliderStart = ref(getDefaultSliderStart())
 
 const {
   allLabels,
