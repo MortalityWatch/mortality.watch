@@ -57,8 +57,13 @@ const { ogImageUrl, ogTitle, ogDescription } = useChartOgImage(chartState)
 useSeoMeta({
   title: ogTitle,
   description: ogDescription,
+  ogTitle: ogTitle,
+  ogDescription: ogDescription,
   ogImage: ogImageUrl,
-  twitterCard: 'summary_large_image'
+  twitterCard: 'summary_large_image',
+  twitterImage: ogImageUrl,
+  twitterTitle: ogTitle,
+  twitterDescription: ogDescription
 })
 
 // Type predicates and computed helpers based on state
