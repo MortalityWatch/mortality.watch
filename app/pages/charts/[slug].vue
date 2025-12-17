@@ -339,6 +339,7 @@ const siteUrl = runtimeConfig.public.siteUrl || 'https://sentry.mortality.watch'
 const colorMode = useColorMode()
 
 // Generate chart image URL from config (relative for display, absolute for OG)
+// Dark mode is only applied client-side since colorMode.value isn't resolved during SSR
 const chartImageUrl = computed(() => {
   if (!chart.value) return null
 
@@ -348,8 +349,10 @@ const chartImageUrl = computed(() => {
   // Config is already a query string, just append dimensions
   const separator = chartConfig ? '&' : ''
 
-  // Add dark mode parameter based on user's color preference
-  const isDarkMode = colorMode.value === 'dark'
+  // Add dark mode parameter based on user's color preference (client-side only)
+  // During SSR, colorMode.value may not reflect user's preference, so we skip dm param
+  // The image will re-render correctly once the client hydrates
+  const isDarkMode = !import.meta.server && colorMode.value === 'dark'
   const dmParam = isDarkMode ? '&dm=1' : ''
 
   return `${endpoint}?${chartConfig}${separator}width=1200&height=600${dmParam}`
