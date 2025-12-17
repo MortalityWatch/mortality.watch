@@ -85,9 +85,7 @@
           as remaining LE at specific ages.
         </p>
         <p class="text-gray-700 dark:text-gray-300">
-          LE is calculated using Chiang's abridged life table methodology. For
-          sub-yearly data (weekly/monthly), we apply STL trend extraction for
-          smoothing before calculation.
+          LE is calculated using Chiang's abridged life table methodology.
         </p>
         <div class="bg-gray-100 dark:bg-gray-800 p-3 rounded font-mono text-sm space-y-1">
           <div class="font-semibold">
@@ -100,10 +98,15 @@
           <div>• Ages 1-4: 1.5 years</div>
           <div>• Ages 5+: n/2 (midpoint assumption)</div>
           <div>• Open-ended (85+): 1/M<sub>x</sub> (Keyfitz)</div>
-          <div class="mt-2">
-            Sub-yearly: STL trend extraction for smoothing
-          </div>
         </div>
+        <p class="text-gray-700 dark:text-gray-300 mt-3">
+          <strong>Sub-yearly smoothing:</strong> For weekly/monthly data, we apply
+          STL decomposition and extract only the <em>trend</em> component. This removes
+          both seasonal artifacts and noise. The apparent "seasonality" in weekly LE
+          (e.g., lower values in winter) is a calculation artifact from short-term
+          mortality fluctuations—not real LE changes. A person's expected lifespan
+          doesn't actually vary week to week; the trend captures the true underlying LE.
+        </p>
         <p class="text-sm text-gray-600 dark:text-gray-400 italic">
           Pro users can view remaining life expectancy at specific ages
           (e.g., LE at age 40 shows expected remaining years for someone aged 40)
