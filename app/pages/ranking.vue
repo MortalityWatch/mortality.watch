@@ -47,6 +47,7 @@ definePageMeta({
 
 // Auth state for conditional features
 const { isAuthenticated } = useAuth()
+const { goToSignup } = useAuthRedirect()
 
 // Tutorial for first-time users
 const { autoStartTutorial } = useTutorial()
@@ -719,7 +720,7 @@ watch(
             :explorer-link="explorerLink()"
             data-tour="ranking-actions"
             @copy-link="copyRankingLink"
-            @save-chart="navigateTo('/signup')"
+            @save-chart="goToSignup"
             @export-c-s-v="exportCSV"
             @export-j-s-o-n="exportJSON"
           >
@@ -787,7 +788,7 @@ watch(
             :show-screenshot="false"
             :explorer-link="explorerLink()"
             @copy-link="copyRankingLink"
-            @save-chart="navigateTo('/signup')"
+            @save-chart="goToSignup"
             @export-c-s-v="exportCSV"
             @export-j-s-o-n="exportJSON"
           >

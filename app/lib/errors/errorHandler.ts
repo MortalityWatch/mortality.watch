@@ -184,19 +184,21 @@ export class ErrorHandler {
 
   /**
    * Extract human-readable message from error object
+   *
+   * Note: Order matters! FetchError extends Error but has a `data` property
+   * with the actual API error message. We must check for `data.message`
+   * BEFORE checking `instanceof Error`, otherwise we get the ugly
+   * "[POST] /api/foo: 401 Server Error" message instead of the real one.
    */
   static extractErrorMessage(error: unknown): string {
     if (typeof error === 'string') {
       return error
     }
 
-    if (error instanceof Error) {
-      return error.message
-    }
-
-    // Handle Nuxt/Nitro API errors (from $fetch)
+    // Handle Nuxt/Nitro API errors (from $fetch) - check BEFORE instanceof Error
+    // because FetchError extends Error but has useful data.message
     if (error && typeof error === 'object') {
-      // Check for data.message (Nitro error format)
+      // Check for data.message (Nitro/FetchError format)
       if ('data' in error && error.data && typeof error.data === 'object') {
         // First try data.message
         if ('message' in error.data && error.data.message) {
@@ -213,10 +215,19 @@ export class ErrorHandler {
         return String(error.statusMessage)
       }
 
-      // Fallback to message property
+      // Fallback to message property (but not for FetchError which has ugly messages)
       if ('message' in error && error.message) {
-        return String(error.message)
+        const msg = String(error.message)
+        // Skip FetchError's formatted message like "[POST] /api/foo: 401 Server Error"
+        if (!msg.startsWith('[') || !msg.includes('Server Error')) {
+          return msg
+        }
       }
+    }
+
+    // Standard Error objects (non-FetchError)
+    if (error instanceof Error) {
+      return error.message
     }
 
     return 'An unexpected error occurred'

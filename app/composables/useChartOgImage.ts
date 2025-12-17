@@ -18,7 +18,8 @@ export function useChartOgImage(state: MaybeRef<Partial<ChartState>>) {
 
   const ogImageUrl = computed(() => {
     const currentState = unref(state)
-    const queryString = chartStateToQueryString(currentState)
+    // Include defaults so OG images always have complete state
+    const queryString = chartStateToQueryString(currentState, true)
 
     // Generate chart.png URL with state
     return `${siteUrl}/chart.png?${queryString}`

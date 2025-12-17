@@ -18,6 +18,12 @@ const { formError, handleAuthError, clearError } = useAuthError()
 const { withRetry } = useErrorRecovery()
 const tosAccepted = ref(false)
 
+// Preserve redirect URL through signup flow
+const redirectUrl = computed(() => route.query.redirect as string || '')
+const loginUrlWithRedirect = computed(() =>
+  redirectUrl.value ? `/login?redirect=${encodeURIComponent(redirectUrl.value)}` : '/login'
+)
+
 // Invite code handling
 const inviteCode = ref<string | null>(null)
 const inviteCodeValidating = ref(false)
@@ -92,10 +98,14 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
       context: 'signup'
     })
 
-    // Redirect to verification page with email
+    // Redirect to verification page with email (preserve redirect URL)
+    const checkEmailQuery: Record<string, string> = { email: event.data.email }
+    if (redirectUrl.value) {
+      checkEmailQuery.redirect = redirectUrl.value
+    }
     await router.push({
       path: '/check-email',
-      query: { email: event.data.email }
+      query: checkEmailQuery
     })
   } catch (error: unknown) {
     handleAuthError(error, 'signup')
@@ -146,7 +156,7 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
     >
       <template #description>
         Already have an account? <ULink
-          to="/login"
+          :to="loginUrlWithRedirect"
           class="text-primary font-medium"
         >Login</ULink>.
       </template>

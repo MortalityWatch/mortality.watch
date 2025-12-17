@@ -427,9 +427,9 @@ useSeoMeta({
   description: () => chart.value?.description || 'Mortality data visualization',
   ogTitle: () => chart.value?.name || 'Chart',
   ogDescription: () => chart.value?.description || 'Mortality data visualization',
-  ogImage: absoluteChartImageUrl,
+  ogImage: () => absoluteChartImageUrl.value,
   twitterCard: 'summary_large_image',
-  twitterImage: absoluteChartImageUrl,
+  twitterImage: () => absoluteChartImageUrl.value,
   twitterTitle: () => chart.value?.name || 'Chart',
   twitterDescription: () => chart.value?.description || 'Mortality data visualization'
 })

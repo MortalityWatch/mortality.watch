@@ -55,7 +55,7 @@ export default defineNuxtConfig({
 
   // Route-specific rendering rules
   routeRules: {
-    '/explorer': { ssr: false }, // Client-only (interactive)
+    '/explorer': { ssr: true }, // SSR enabled for OG meta tags
     // Disable all prerendering to avoid build hangs from database connections
     '/': { ssr: true, prerender: false }, // Server-rendered (fetches dynamic featured charts)
     '/about': { ssr: true, prerender: false },

@@ -33,6 +33,7 @@ import { computeConfigHash, extractUrlParams } from '@/lib/shortUrl/hashConfig'
 
 // Auth state for conditional features
 const { isAuthenticated } = useAuth()
+const { goToSignup } = useAuthRedirect()
 
 // Tutorial for first-time users
 const { autoStartTutorial } = useTutorial()
@@ -768,7 +769,7 @@ watch(
             @copy-link="copyChartLink"
             @download-chart="downloadChart"
             @screenshot="screenshotChart"
-            @save-chart="navigateTo('/signup')"
+            @save-chart="goToSignup"
             @export-c-s-v="exportCSV"
             @export-j-s-o-n="exportJSON"
           >

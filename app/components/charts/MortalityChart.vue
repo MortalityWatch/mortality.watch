@@ -91,6 +91,9 @@ const Matrix = createTypedChart('matrix', MatrixController)
 // Get color mode for theme reactivity
 const colorMode = useColorMode()
 
+// Get user tier for feature gating (logo/QR visibility)
+const { tier } = useAuth()
+
 // Track chart width for auto-hide label logic
 const chartWidth = ref<number>(800)
 
@@ -122,7 +125,7 @@ const lineConfig = computed(() => {
     props.showLogo,
     props.decimals,
     isDark,
-    undefined, // userTier
+    tier.value, // userTier: enforce logo/QR visibility based on viewer's tier
     props.showCaption,
     props.showTitle,
     false, // isSSR
@@ -145,7 +148,7 @@ const barConfig = computed(() => {
     props.showLogo,
     props.decimals,
     isDark,
-    undefined, // userTier
+    tier.value, // userTier: enforce logo/QR visibility based on viewer's tier
     props.showCaption,
     props.showTitle,
     false, // isSSR
@@ -170,7 +173,7 @@ const matrixConfig = computed(() => {
     props.showLogo,
     isDark,
     props.decimals,
-    undefined, // userTier
+    tier.value, // userTier: enforce logo/QR visibility based on viewer's tier
     props.showCaption,
     props.showTitle
   ) as unknown as ChartJSConfig<'matrix', MatrixDataPoint[]>

@@ -113,24 +113,29 @@ export function decodeChartState(query: Record<string, string | string[]>): Char
 
 /**
  * Encode chart state to query parameters
+ * @param state - Chart state to encode
+ * @param includeDefaults - If true, include values even if they match defaults (useful for OG images)
  */
-export function encodeChartState(state: Partial<ChartState>): Record<string, string | string[]> {
+export function encodeChartState(state: Partial<ChartState>, includeDefaults: boolean = false): Record<string, string | string[]> {
   const query: Record<string, string | string[]> = {}
 
   for (const [field, config] of Object.entries(stateFieldEncoders)) {
     const value = state[field as keyof ChartState]
     const defaultValue = Defaults[field as keyof typeof Defaults]
 
-    // Skip if value is undefined or matches default
+    // Skip if value is undefined
     if (value === undefined) continue
 
-    // Deep equality check for arrays
-    if (Array.isArray(value) && Array.isArray(defaultValue)) {
-      if (value.length === defaultValue.length && value.every((v, i) => v === defaultValue[i])) {
+    // Skip values that match defaults (unless includeDefaults is true)
+    if (!includeDefaults) {
+      // Deep equality check for arrays
+      if (Array.isArray(value) && Array.isArray(defaultValue)) {
+        if (value.length === defaultValue.length && value.every((v, i) => v === defaultValue[i])) {
+          continue
+        }
+      } else if (value === defaultValue) {
         continue
       }
-    } else if (value === defaultValue) {
-      continue
     }
 
     const key = config.key
@@ -155,9 +160,11 @@ export function encodeChartState(state: Partial<ChartState>): Record<string, str
 
 /**
  * Convert chart state to URL query string
+ * @param state - Chart state to encode
+ * @param includeDefaults - If true, include values even if they match defaults (useful for OG images)
  */
-export function chartStateToQueryString(state: Partial<ChartState>): string {
-  const query = encodeChartState(state)
+export function chartStateToQueryString(state: Partial<ChartState>, includeDefaults: boolean = false): string {
+  const query = encodeChartState(state, includeDefaults)
   const params = new URLSearchParams()
 
   for (const [key, value] of Object.entries(query)) {

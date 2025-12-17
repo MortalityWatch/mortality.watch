@@ -118,8 +118,8 @@ test.describe('Authentication Flow', () => {
       await page.getByRole('textbox', { name: 'Password*' }).fill('WrongPassword1!')
       await page.getByRole('button', { name: 'Continue' }).click()
 
-      // Should show error alert (401 Server Error)
-      await expect(page.getByText(/401 Server Error|Invalid email or password/i)).toBeVisible()
+      // Should show user-friendly error message
+      await expect(page.getByText('Invalid email or password')).toBeVisible()
 
       // Should stay on login page
       await expect(page).toHaveURL('/login')

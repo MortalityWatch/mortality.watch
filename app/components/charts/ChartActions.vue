@@ -2,6 +2,7 @@
 // Feature access for data export
 const { can } = useFeatureAccess()
 const canExportData = computed(() => can('EXPORT_DATA'))
+const { goToSignup } = useAuthRedirect()
 
 const props = withDefaults(defineProps<{
   showSaveButton?: boolean
@@ -153,7 +154,7 @@ const emit = defineEmits<{
           <!-- CSV Export -->
           <button
             :class="canExportData ? 'chart-option-button' : 'chart-option-button opacity-60'"
-            @click="canExportData ? emit('exportCSV') : navigateTo('/signup')"
+            @click="canExportData ? emit('exportCSV') : goToSignup()"
           >
             <UIcon
               name="i-lucide-file-spreadsheet"
@@ -182,7 +183,7 @@ const emit = defineEmits<{
           <!-- JSON Export -->
           <button
             :class="canExportData ? 'chart-option-button' : 'chart-option-button opacity-60'"
-            @click="canExportData ? emit('exportJSON') : navigateTo('/signup')"
+            @click="canExportData ? emit('exportJSON') : goToSignup()"
           >
             <UIcon
               name="i-lucide-braces"
