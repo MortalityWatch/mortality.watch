@@ -50,10 +50,24 @@ const { isAuthenticated } = useAuth()
 // Tutorial for first-time users
 const { autoStartTutorial } = useTutorial()
 
-// Set page title
+// Set page meta (note: ranking page is CSR-only, so OG tags won't be seen by crawlers)
+// Static fallback values are used since dynamic state isn't available during SSR
+const rankingTitle = 'Excess Mortality Ranking - Mortality Watch'
+const rankingDescription = 'Compare excess mortality rates across countries and regions. Interactive ranking table with customizable time periods and metrics.'
+const config = useRuntimeConfig()
+const siteUrl = config.public.siteUrl || 'https://www.mortality.watch'
+const rankingOgImage = `${siteUrl}/ranking.png`
+
 useSeoMeta({
-  title: 'Excess Mortality Ranking - Mortality Watch',
-  description: 'Compare excess mortality rates across countries and regions. Interactive ranking table with customizable time periods and metrics.'
+  title: rankingTitle,
+  description: rankingDescription,
+  ogTitle: rankingTitle,
+  ogDescription: rankingDescription,
+  ogImage: rankingOgImage,
+  twitterCard: 'summary_large_image',
+  twitterImage: rankingOgImage,
+  twitterTitle: rankingTitle,
+  twitterDescription: rankingDescription
 })
 
 // ============================================================================
