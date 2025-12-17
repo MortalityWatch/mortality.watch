@@ -187,17 +187,23 @@ const activeTab = ref('metric')
     <!-- Display Tab -->
     <div v-if="activeTab === 'display'">
       <div class="flex flex-wrap gap-4">
-        <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-          <label class="text-sm font-medium whitespace-nowrap">Show Totals</label>
-          <USwitch v-model="showTotalsLocal" />
-        </div>
-
-        <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-          <label class="text-sm font-medium whitespace-nowrap">Totals Only</label>
-          <USwitch
-            v-model="showTotalsOnlyLocal"
-            :disabled="rankingUIState.totalsOnlyDisabled.value"
-          />
+        <!-- Cumulative & Total group -->
+        <div class="flex flex-wrap items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30">
+          <div class="flex items-center gap-2 px-2 py-1 rounded bg-gray-100 dark:bg-gray-800/50">
+            <label class="text-sm font-medium whitespace-nowrap">Cumulative</label>
+            <USwitch v-model="cumulativeLocal" />
+          </div>
+          <div class="flex items-center gap-2 px-2 py-1 rounded bg-gray-100 dark:bg-gray-800/50">
+            <label class="text-sm font-medium whitespace-nowrap">Show Totals</label>
+            <USwitch v-model="showTotalsLocal" />
+          </div>
+          <div class="flex items-center gap-2 px-2 py-1 rounded bg-gray-100 dark:bg-gray-800/50">
+            <label class="text-sm font-medium whitespace-nowrap">Totals Only</label>
+            <USwitch
+              v-model="showTotalsOnlyLocal"
+              :disabled="rankingUIState.totalsOnlyDisabled.value"
+            />
+          </div>
         </div>
 
         <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
@@ -208,11 +214,6 @@ const activeTab = ref('metric')
         <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
           <label class="text-sm font-medium whitespace-nowrap">Percentage</label>
           <USwitch v-model="showPercentageLocal" />
-        </div>
-
-        <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-          <label class="text-sm font-medium whitespace-nowrap">Cumulative</label>
-          <USwitch v-model="cumulativeLocal" />
         </div>
 
         <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
