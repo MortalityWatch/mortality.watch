@@ -190,7 +190,14 @@ export function useExplorerChartActions(
       standardPopulation: state.standardPopulation.value,
       showLogarithmic: state.showLogarithmic.value,
       maximize: state.maximize.value,
-      showLabels: state.showLabels.value
+      showLabels: state.showLabels.value,
+      userColors: state.userColors.value,
+      sliderStart: state.sliderStart.value,
+      decimals: state.decimals.value,
+      showLogo: state.showLogo.value,
+      showQrCode: state.showQrCode.value,
+      showCaption: state.showCaption.value,
+      showTitle: state.showTitle.value
     }
 
     await saveToDBComposable(chartStateData)
