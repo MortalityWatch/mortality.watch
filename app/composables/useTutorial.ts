@@ -261,9 +261,11 @@ export function useTutorial() {
 
   /**
    * Auto-start tutorial on first visit (call this in onMounted)
+   * Never auto-starts for authenticated users - they already know the interface
    */
   const autoStartTutorial = (pageType: 'explorer' | 'ranking' = 'explorer'): void => {
-    if (import.meta.client && !hasCompletedTutorial(pageType)) {
+    // Never auto-start tutorial for logged-in users (Issue #320)
+    if (import.meta.client && !isAuthenticated.value && !hasCompletedTutorial(pageType)) {
       // Add a delay to ensure DOM is ready and elements are visible
       // Ranking page needs more time since data needs to load first (v-if="hasLoaded")
       const delay = pageType === 'ranking' ? 2000 : 1000
