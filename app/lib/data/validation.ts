@@ -71,6 +71,7 @@ const CountryDataRawSchema = z.object({
   source_asmr: z.string().optional(),
   deaths: z.string(),
   cmr: z.string(),
+  le: z.string().optional(), // Life expectancy (direct value from age-stratified files)
   asmr_who: z.string().optional(),
   asmr_esp: z.string().optional(),
   asmr_usa: z.string().optional(),

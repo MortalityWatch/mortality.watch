@@ -23,6 +23,7 @@ export interface CountryDataRaw {
   source_asmr: string
   deaths: string
   cmr: string
+  le?: string // Direct LE value from CSV (used for age-stratified data)
   asmr_who: string
   asmr_esp: string
   asmr_usa: string
@@ -131,7 +132,7 @@ export class CountryData {
   asmr_usa_zscore: number | undefined
   asmr_country_zscore: number | undefined
 
-  constructor(obj: CountryDataRaw, age_group: string, chartType: string) {
+  constructor(obj: CountryDataRaw, age_group: string, _chartType: string) {
     this.iso3c = obj.iso3c
     this.age_group = age_group
     this.population
@@ -183,30 +184,13 @@ export class CountryData {
     this.asmr_country_excess = undefined
     this.asmr_country_excess_lower = undefined
     this.asmr_country_excess_upper = undefined
-    this.le
-      = obj.asmr_who === ''
-        ? undefined
-        : calculateLeWho(parseFloat(obj.asmr_who), chartType)
+    // Read LE directly from CSV
+    this.le = obj.le && obj.le !== '' ? parseFloat(obj.le) : undefined
     this.le_baseline = undefined
     this.le_baseline_lower = undefined
     this.le_baseline_upper = undefined
     this.le_excess = undefined
     this.le_excess_lower = undefined
     this.le_excess_upper = undefined
-  }
-}
-
-const calculateLeWho = (asmr: number, chartType: string) =>
-  90.96 - (((2.24 * asmr) / 100) * 365) / daysForChartType(chartType)
-
-const daysForChartType = (chartType: string) => {
-  switch (chartType) {
-    case 'monthly':
-      return 365 / 12
-    case 'quarterly':
-      return 365 / 4
-    default:
-      if (chartType.startsWith('weekly')) return 7
-      return 365
   }
 }
