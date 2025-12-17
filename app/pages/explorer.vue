@@ -553,6 +553,7 @@ const {
   saveToDB,
   exportCSV,
   exportJSON,
+  sortByLatestValue,
   showSaveModal: _showSaveModal,
   savingChart,
   saveChartName,
@@ -766,12 +767,14 @@ watch(
           <ChartActions
             class="mt-3"
             :show-save-button="!isAuthenticated"
+            :show-sort-by-latest="true"
             @copy-link="copyChartLink"
             @download-chart="downloadChart"
             @screenshot="screenshotChart"
             @save-chart="goToSignup"
             @export-c-s-v="exportCSV"
             @export-j-s-o-n="exportJSON"
+            @sort-by-latest="sortByLatestValue"
           >
             <template
               v-if="isAuthenticated"

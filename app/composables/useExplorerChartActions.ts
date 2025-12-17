@@ -5,6 +5,7 @@ import { useShortUrl } from '@/composables/useShortUrl'
 import { generateChartFilename } from '@/lib/utils/strings'
 import { generateExplorerTitle, generateExplorerDescription } from '@/lib/utils/chartTitles'
 import { THEME_COLORS } from '@/lib/config/constants'
+import { sortDatasetsByLatestValue, reorderCountriesByLabels } from '@/lib/chart/sortUtils'
 import Papa from 'papaparse'
 import type { Ref } from 'vue'
 import type { MortalityChartData } from '@/lib/chart/chartTypes'
@@ -278,6 +279,55 @@ export function useExplorerChartActions(
     }
   }
 
+  // Sort chart series by their latest (last) data point value
+  // This reorders countries so series with highest absolute values appear first
+  const sortByLatestValue = () => {
+    if (!chartData || !chartData.value) {
+      showToast('No chart data available', 'error')
+      return
+    }
+
+    try {
+      const data = chartData.value
+      if (!data.datasets || data.datasets.length === 0) {
+        showToast('No data to sort', 'error')
+        return
+      }
+
+      // Sort datasets by their last valid value
+      const sortedLabels = sortDatasetsByLatestValue(data.datasets)
+
+      // Get current countries and their metadata
+      const currentCountries: string[] = state.countries.value
+      const countriesMap = allCountries?.value || {}
+
+      // Create a map of country name -> country code
+      const nameToCode: Record<string, string> = {}
+      for (const code of currentCountries) {
+        const country = countriesMap[code]
+        if (country) {
+          nameToCode[country.jurisdiction || code] = code
+        }
+      }
+
+      // Reorder countries based on sorted labels
+      const sortedCountries = reorderCountriesByLabels(sortedLabels, currentCountries, nameToCode)
+
+      // Check if order actually changed
+      if (JSON.stringify(sortedCountries) === JSON.stringify(currentCountries)) {
+        showToast('Series already sorted by latest value', 'info')
+        return
+      }
+
+      // Update the state - this triggers chart rebuild with new order
+      // The datasets.ts now respects countries array order
+      state.countries.value = sortedCountries
+      showToast('Series sorted by latest value', 'success')
+    } catch (error) {
+      handleError(error, 'Failed to sort series', 'sortByLatestValue')
+    }
+  }
+
   // Export chart data as JSON
   const exportJSON = () => {
     if (!chartData || !chartData.value) {
@@ -386,6 +436,7 @@ export function useExplorerChartActions(
     saveToDB,
     exportCSV,
     exportJSON,
+    sortByLatestValue,
     markAsModified,
     resetSavedState,
 

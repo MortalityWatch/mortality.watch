@@ -195,6 +195,13 @@ export const FEATURES = {
     category: 'analysis'
   },
 
+  SORT_BY_VALUE: {
+    tier: TIERS.PRO,
+    name: 'Sort by Value',
+    description: 'Reorder chart series by latest data value',
+    category: 'analysis'
+  },
+
   AGE_STANDARDIZED: {
     tier: TIERS.PRO,
     name: 'Age Standardized Deaths',
