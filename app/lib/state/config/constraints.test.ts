@@ -211,6 +211,20 @@ describe('StateResolver Constraints', () => {
     })
   })
 
+  describe('Cumulative On Constraints', () => {
+    it('should default maximize to true when cumulative is on (soft constraint)', () => {
+      const state = { cumulative: true }
+      const constraint = STATE_CONSTRAINTS.find(
+        c => c.when(state) && c.apply.maximize === true
+      )
+
+      expect(constraint).toBeDefined()
+      expect(constraint?.apply.maximize).toBe(true)
+      expect(constraint?.allowUserOverride).toBe(true) // soft constraint - user can override
+      expect(constraint?.priority).toBe(0) // lowest priority
+    })
+  })
+
   describe('Priority Levels', () => {
     it('should have hard constraints with priority 2', () => {
       const hardConstraints = STATE_CONSTRAINTS.filter(c => c.priority === 2)
@@ -230,9 +244,14 @@ describe('StateResolver Constraints', () => {
       })
     })
 
-    // NOTE: Test for priority 0 (soft defaults) removed
-    // All priority 0 constraints were excess-related and moved to view system
-    // If we add new priority 0 constraints in the future, they should allow user override
+    it('should have soft default constraints with priority 0', () => {
+      const softConstraints = STATE_CONSTRAINTS.filter(c => c.priority === 0)
+
+      expect(softConstraints.length).toBeGreaterThan(0)
+      softConstraints.forEach((constraint) => {
+        expect(constraint.allowUserOverride).toBe(true) // soft defaults can be overridden
+      })
+    })
 
     it('should sort constraints by priority (high to low)', () => {
       const sorted = [...STATE_CONSTRAINTS].sort((a, b) => {

@@ -232,6 +232,21 @@ const cumulativeOffConstraints: StateConstraint = {
 }
 
 /**
+ * Cumulative ON constraints
+ * When cumulative is enabled, default maximize to true for better visualization
+ * of cumulative data ranges. User can still disable maximize if desired.
+ */
+const cumulativeOnConstraints: StateConstraint = {
+  when: state => state.cumulative === true,
+  apply: {
+    maximize: true
+  },
+  reason: 'Default to maximize for better cumulative data visualization',
+  allowUserOverride: true,
+  priority: 0 // Lowest priority - only acts as fallback default
+}
+
+/**
  * View synchronization constraints
  * Synchronize isExcess and isZScore flags with the view field
  */
@@ -294,5 +309,6 @@ export const STATE_CONSTRAINTS: StateConstraint[] = [
   cumulativeOffConstraints,
 
   // Priority 0: Soft defaults (lowest priority, allow user override)
-  baselineOnRestorePI
+  baselineOnRestorePI,
+  cumulativeOnConstraints
 ]
