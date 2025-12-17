@@ -81,6 +81,11 @@ vi.mock('#db', () => ({
   eq: vi.fn((field: unknown, value: unknown) => ({ field, value }))
 }))
 
+// Mock inviteCode module to prevent database access
+vi.mock('./inviteCode', () => ({
+  checkAndExpireTrialSubscription: vi.fn(async () => false)
+}))
+
 describe('Auth Utilities', () => {
   let originalEnv: NodeJS.ProcessEnv
 

@@ -187,6 +187,9 @@ export const makeBarLineChartConfig = (
   // Logo and QR code plugins overlay the chart, so no padding needed for them
   // They draw at absolute positions in corners without affecting chart layout
 
+  // Increase right padding when data labels are enabled to prevent cutoff
+  const rightPadding = data.showLabels ? 20 : 10
+
   return {
     plugins: [createBackgroundPlugin(isDark)],
     options: {
@@ -196,7 +199,7 @@ export const makeBarLineChartConfig = (
       layout: {
         padding: {
           top: 10,
-          right: 10,
+          right: rightPadding,
           bottom: 10,
           left: 10
         }
