@@ -186,15 +186,16 @@ const populationTypeConstraints: StateConstraint = {
 }
 
 /**
- * ASMR and Life Expectancy type constraints
- * These types only support 'all' age group
+ * ASMR type constraints
+ * ASMR only supports 'all' age group (age standardization applies to all ages)
+ * Note: LE single age groups are gated as a Pro feature in the UI
  */
-const asmrLeTypeConstraints: StateConstraint = {
-  when: state => state.type === 'asmr' || state.type === 'le',
+const asmrTypeConstraints: StateConstraint = {
+  when: state => state.type === 'asmr',
   apply: {
     ageGroups: ['all']
   },
-  reason: 'ASMR and Life Expectancy only support "all" age group',
+  reason: 'ASMR only supports "all" age group',
   allowUserOverride: false,
   priority: 2
 }
@@ -280,7 +281,7 @@ export const STATE_CONSTRAINTS: StateConstraint[] = [
   // Note: Excess-related constraints moved to view-based system (views.ts)
   // Note: Z-score constraints moved to view-based system (views.ts)
   populationTypeConstraints,
-  asmrLeTypeConstraints,
+  asmrTypeConstraints,
   matrixStyleConstraints,
 
   // View synchronization (keep isExcess/isZScore in sync with view field)
