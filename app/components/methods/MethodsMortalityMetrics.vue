@@ -78,18 +78,36 @@
           Life Expectancy
         </h3>
         <p class="text-gray-700 dark:text-gray-300">
-          Estimated life expectancy at birth, calculated from age-standardized
-          mortality rates using WHO methodology. This converts mortality rates
-          into an intuitive measure of population health.
+          Life Expectancy (LE) is defined as the average remaining years of life
+          expected by a hypothetical cohort of individuals who would be subject
+          to the mortality rates of the year of interest over the course of their
+          remaining life. We provide both period LE at birth (all ages) as well
+          as remaining LE at specific ages.
         </p>
         <p class="text-gray-700 dark:text-gray-300">
-          The calculation uses the relationship between ASMR and life
-          expectancy based on standard life table methods. Lower mortality
-          rates correspond to higher life expectancy.
+          LE is calculated using Chiang's abridged life table methodology. For
+          sub-yearly data (weekly/monthly), we apply STL trend extraction for
+          smoothing before calculation.
         </p>
-        <div class="bg-gray-100 dark:bg-gray-800 p-3 rounded font-mono text-sm">
-          LE ≈ f(ASMR) using WHO life table methodology
+        <div class="bg-gray-100 dark:bg-gray-800 p-3 rounded font-mono text-sm space-y-1">
+          <div class="font-semibold">
+            Method: Chiang's abridged life table
+          </div>
+          <div class="mt-2">
+            n<sub>a</sub>x (avg. years lived by decedents):
+          </div>
+          <div>• Age 0: Coale-Demeny coefficients (mortality-dependent)</div>
+          <div>• Ages 1-4: 1.5 years</div>
+          <div>• Ages 5+: n/2 (midpoint assumption)</div>
+          <div>• Open-ended (85+): 1/M<sub>x</sub> (Keyfitz)</div>
+          <div class="mt-2">
+            Sub-yearly: STL trend extraction for smoothing
+          </div>
         </div>
+        <p class="text-sm text-gray-600 dark:text-gray-400 italic">
+          Pro users can view remaining life expectancy at specific ages
+          (e.g., LE at age 40 shows expected remaining years for someone aged 40)
+        </p>
       </div>
     </div>
   </UCard>

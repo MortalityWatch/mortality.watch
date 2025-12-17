@@ -62,7 +62,7 @@
           { title: 'All Free features, plus:' },
           { title: 'No watermarks', icon: 'i-lucide-image-off' },
           { title: 'No QR codes', icon: 'i-lucide-scan-line' },
-          { title: 'Single age group LE (Coming Soon)', icon: 'i-lucide-activity' },
+          { title: 'Single age group LE', icon: 'i-lucide-activity' },
           { title: 'Age standardized deaths (Coming Soon)', icon: 'i-lucide-trending-up' },
           { title: 'Z-score calculations', icon: 'i-lucide-calculator' },
           { title: 'Priority support', icon: 'i-lucide-headphones' }

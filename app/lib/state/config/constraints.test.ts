@@ -127,7 +127,7 @@ describe('StateResolver Constraints', () => {
     })
   })
 
-  describe('ASMR and Life Expectancy Type Constraints', () => {
+  describe('ASMR Type Constraints', () => {
     it('should force "all" age group for ASMR type', () => {
       const state = { type: 'asmr' }
       const constraint = STATE_CONSTRAINTS.find(
@@ -140,14 +140,15 @@ describe('StateResolver Constraints', () => {
       expect(constraint?.priority).toBe(2)
     })
 
-    it('should force "all" age group for Life Expectancy type', () => {
+    it('should NOT force age group for Life Expectancy type (Pro feature gated in UI)', () => {
       const state = { type: 'le' }
       const constraint = STATE_CONSTRAINTS.find(
         c => c.when(state) && Array.isArray(c.apply.ageGroups)
       )
 
-      expect(constraint).toBeDefined()
-      expect(constraint?.apply.ageGroups).toEqual(['all'])
+      // LE age group selection is now a Pro feature gated in the UI,
+      // not enforced by constraints
+      expect(constraint).toBeUndefined()
     })
   })
 

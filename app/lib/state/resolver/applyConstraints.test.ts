@@ -193,7 +193,7 @@ describe('applyConstraints', () => {
     })
   })
 
-  describe('ASMR/LE type constraints', () => {
+  describe('ASMR type constraints', () => {
     it('should force ageGroups=["all"] for asmr type', () => {
       const state = {
         view: 'mortality',
@@ -206,16 +206,18 @@ describe('applyConstraints', () => {
       expect(result.ageGroups).toEqual(['all'])
     })
 
-    it('should force ageGroups=["all"] for le type', () => {
+    it('should NOT force ageGroups for le type (Pro feature gated in UI)', () => {
       const state = {
         view: 'mortality',
         type: 'le',
-        ageGroups: ['65-74', '75+'] // should be forced to ['all']
+        ageGroups: ['65-74', '75+'] // should NOT be forced - LE single age groups is a Pro feature
       }
 
       const result = applyConstraints(state, 'mortality')
 
-      expect(result.ageGroups).toEqual(['all'])
+      // LE age group selection is now a Pro feature gated in the UI,
+      // not enforced by constraints - age groups should remain unchanged
+      expect(result.ageGroups).toEqual(['65-74', '75+'])
     })
   })
 

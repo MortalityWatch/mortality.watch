@@ -3,6 +3,10 @@ import type { Country } from '@/model'
 import { computed, toRaw } from 'vue'
 import { showToast } from '../../toast'
 
+// Feature access for LE single age groups (Pro feature)
+const { can } = useFeatureAccess()
+const canAdvancedLE = can('ADVANCED_LE')
+
 const props = defineProps<{
   allCountries: Record<string, Country>
   allAgeGroups: string[]
@@ -256,7 +260,7 @@ const options = computed(() => {
     </UiControlRow>
 
     <UiControlRow
-      v-if="!props.isAsmrType && !props.isLifeExpectancyType"
+      v-if="!props.isAsmrType && (!props.isLifeExpectancyType || canAdvancedLE)"
       label="Age Groups"
     >
       <UInputMenu
