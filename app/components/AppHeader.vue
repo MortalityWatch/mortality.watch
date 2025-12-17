@@ -10,6 +10,7 @@ interface MenuItem {
 const { isIncognito } = useIncognitoMode()
 const { isAuthenticated, user, tier } = useAuth()
 const { startTutorial } = useTutorial()
+const { loginUrl, signupUrl } = useAuthRedirect()
 const colorMode = useColorMode()
 
 // Color mode toggle - cycles through light -> dark -> system
@@ -221,13 +222,13 @@ const userMenuItems = computed<MenuItem[]>(() => {
       </template>
       <template v-else>
         <UButton
-          to="/login"
+          :to="loginUrl"
           variant="ghost"
           label="Sign In"
         />
         <!-- Hide Sign Up on mobile to prevent top bar overflow -->
         <UButton
-          to="/signup"
+          :to="signupUrl"
           label="Sign Up"
           class="hidden sm:inline-flex"
         />

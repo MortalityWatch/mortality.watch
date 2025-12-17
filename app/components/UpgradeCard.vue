@@ -112,7 +112,7 @@
         <!-- CTA -->
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
           <UButton
-            to="/signup"
+            :to="signupUrl"
             color="primary"
             size="xl"
           >
@@ -316,4 +316,5 @@
 <script setup lang="ts">
 // Get user from auth composable
 const { user } = useAuth()
+const { signupUrl } = useAuthRedirect()
 </script>

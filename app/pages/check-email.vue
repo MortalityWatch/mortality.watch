@@ -19,6 +19,12 @@ const rawEmail = route.query.email as string || ''
 const emailValidation = z.string().email().safeParse(rawEmail)
 const email = emailValidation.success ? rawEmail : ''
 
+// Preserve redirect URL for login link
+const redirectUrl = computed(() => route.query.redirect as string || '')
+const loginUrlWithRedirect = computed(() =>
+  redirectUrl.value ? `/login?redirect=${encodeURIComponent(redirectUrl.value)}` : '/login'
+)
+
 async function resendVerification(): Promise<void> {
   if (!email) {
     toast.add({
@@ -160,7 +166,7 @@ async function resendVerification(): Promise<void> {
 
       <div class="pt-4 border-t border-default">
         <ULink
-          to="/login"
+          :to="loginUrlWithRedirect"
           class="text-sm text-primary hover:underline"
         >
           Back to Login

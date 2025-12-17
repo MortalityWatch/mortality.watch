@@ -312,7 +312,7 @@ export function generateChartConfig(
       state.showLogo,
       isDark,
       state.decimals,
-      undefined, // userTier
+      0, // userTier: PUBLIC tier - always show logo/QR for SSR (unauthenticated context)
       state.showCaption,
       state.showTitle,
       true // isSSR
@@ -338,7 +338,7 @@ export function generateChartConfig(
       state.showLogo,
       state.decimals,
       isDark,
-      undefined, // userTier
+      0, // userTier: PUBLIC tier - always show logo/QR for SSR (unauthenticated context)
       state.showCaption,
       state.showTitle,
       true, // isSSR
