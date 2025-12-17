@@ -15,6 +15,7 @@ import {
   requiresFilterUpdate
 } from './constraints'
 import { VIEWS } from './views'
+import { getDefaultSliderStart } from '@/lib/config/constants'
 
 // Single source of truth for defaults is VIEWS.mortality.defaults
 const DEFAULT_VALUES = VIEWS.mortality.defaults
@@ -55,7 +56,7 @@ describe('StateResolver Constraints', () => {
       expect(DEFAULT_VALUES.maximize).toBe(false)
       expect(DEFAULT_VALUES.showLogarithmic).toBe(false)
       expect(DEFAULT_VALUES.showLabels).toBe(true)
-      expect(DEFAULT_VALUES.sliderStart).toBe('2009')
+      expect(DEFAULT_VALUES.sliderStart).toBe(getDefaultSliderStart())
       expect(DEFAULT_VALUES.baselineMethod).toBe('mean')
     })
   })

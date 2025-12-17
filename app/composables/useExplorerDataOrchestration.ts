@@ -517,14 +517,14 @@ export function useExplorerDataOrchestration(
    * Date Range Refactor: Directly expose useDateRangeCalculations.visibleLabels
    *
    * This represents the FULL RANGE that should be available on the slider,
-   * starting from the user's chosen sliderStart year (default: 2010) and
-   * respecting year 2000 restriction for non-premium users.
+   * starting from the user's chosen sliderStart year (default: current year - 20)
+   * and respecting year 2000 restriction for non-premium users.
    *
-   * Example:
+   * Example (in 2025):
    * - allChartLabels: ['1950/51', ..., '2024/25'] (all data)
-   * - sliderStart: '2010'
+   * - sliderStart: '2005' (2025 - 20)
    * - hasExtendedTimeAccess: false
-   * - visibleLabels: ['2010/11', ..., '2024/25'] (from max(2010, 2000) onwards)
+   * - visibleLabels: ['2005/06', ..., '2024/25'] (from sliderStart onwards)
    *
    * Used by:
    * - Explorer DateRangePicker for slider range

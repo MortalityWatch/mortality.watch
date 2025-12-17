@@ -8,7 +8,6 @@
  * - Country metadata loading with filtering
  * - Mortality data loading with parameters
  * - Data aggregation and transformation
- * - Built-in caching via filesystemCache
  * - Consistent error handling and logging
  */
 
@@ -28,7 +27,6 @@ import type {
 import { Country, CountryData, stringKeys, numberKeys } from '../../app/model'
 import { ChartPeriod, type ChartType } from '../../app/model/period'
 import { getObjectOfArrays, prefillUndefined, fromYearMonthString, left, right } from '../../app/utils'
-import { filesystemCache } from '../utils/cache'
 import { calculateBaselines } from '../utils/baselines'
 import { CACHE_CONFIG } from '../../app/lib/config/constants'
 
@@ -465,8 +463,8 @@ export class DataLoaderService {
    * Fetch metadata CSV from S3 or local cache
    */
   private async fetchMetadataCsv(): Promise<string> {
-    // Dev: Check local cache first
-    if (this.isDev || this.useLocalCacheOnly) {
+    // Check local files only when USE_LOCAL_CACHE=true (offline dev mode)
+    if (this.useLocalCacheOnly) {
       const localPath = join(this.cacheDir, 'world_meta.csv')
       if (existsSync(localPath)) {
         try {
@@ -476,23 +474,11 @@ export class DataLoaderService {
         }
       }
 
-      if (this.useLocalCacheOnly) {
-        throw new Error(
-          `Local metadata file not found at: ${localPath}\n`
-          + 'Please run "npm run download-data" to cache data locally.\n'
-          + 'Alternatively, set NUXT_PUBLIC_USE_LOCAL_CACHE=false to fetch from S3.'
-        )
-      }
-
-      console.warn(`Local metadata file not found, fetching from S3`)
-    }
-
-    // Production: Check TTL cache
-    if (!this.isDev) {
-      const cached = await filesystemCache.getMetadata()
-      if (cached) {
-        return cached
-      }
+      throw new Error(
+        `Local metadata file not found at: ${localPath}\n`
+        + 'Please run "npm run download-data" to cache data locally.\n'
+        + 'Alternatively, set NUXT_PUBLIC_USE_LOCAL_CACHE=false to fetch from S3.'
+      )
     }
 
     // Fetch from S3
@@ -511,11 +497,6 @@ export class DataLoaderService {
 
     const data = await response.text()
 
-    // Cache in production
-    if (!this.isDev) {
-      await filesystemCache.setMetadata(data)
-    }
-
     return data
   }
 
@@ -531,8 +512,8 @@ export class DataLoaderService {
       const ageSuffix = ageGroup === 'all' ? '' : `_${ageGroup}`
       const path = `${country}/${chartType}${ageSuffix}.csv`
 
-      // Dev: Check local cache first
-      if (this.isDev || this.useLocalCacheOnly) {
+      // Check local files only when USE_LOCAL_CACHE=true (offline dev mode)
+      if (this.useLocalCacheOnly) {
         const localPath = join(this.cacheDir, path)
         if (existsSync(localPath)) {
           try {
@@ -543,24 +524,12 @@ export class DataLoaderService {
           }
         }
 
-        if (this.useLocalCacheOnly) {
-          throw new Error(
-            `Local mortality data file not found at: ${localPath}\n`
-            + `Missing: ${country}/${chartType}/${ageGroup}\n`
-            + 'Please run "npm run download-data" to cache data locally.\n'
-            + 'Alternatively, set NUXT_PUBLIC_USE_LOCAL_CACHE=false to fetch from S3.'
-          )
-        }
-
-        console.warn(`Local file not found: ${localPath}, fetching from S3`)
-      }
-
-      // Production: Check TTL cache
-      if (!this.isDev) {
-        const cached = await filesystemCache.getMortalityData(country, chartType, ageGroup)
-        if (cached) {
-          return this.parseCountryData(cached, ageGroup, chartType)
-        }
+        throw new Error(
+          `Local mortality data file not found at: ${localPath}\n`
+          + `Missing: ${country}/${chartType}/${ageGroup}\n`
+          + 'Please run "npm run download-data" to cache data locally.\n'
+          + 'Alternatively, set NUXT_PUBLIC_USE_LOCAL_CACHE=false to fetch from S3.'
+        )
       }
 
       // Fetch from S3
@@ -579,11 +548,6 @@ export class DataLoaderService {
       }
 
       const csvText = await response.text()
-
-      // Cache in production
-      if (!this.isDev) {
-        await filesystemCache.setMortalityData(country, chartType, ageGroup, csvText)
-      }
 
       return this.parseCountryData(csvText, ageGroup, chartType)
     } catch (error) {

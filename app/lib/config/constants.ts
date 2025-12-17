@@ -38,6 +38,21 @@ export function getBaselineYear(chartType: string): number {
 }
 
 /**
+ * Default slider start year (20 years from current year)
+ * This determines how far back the data slider extends by default.
+ */
+export const DEFAULT_SLIDER_START_YEARS_BACK = 20
+
+/**
+ * Get default slider start year
+ * Calculated as current year minus DEFAULT_SLIDER_START_YEARS_BACK
+ */
+export function getDefaultSliderStart(): string {
+  const currentYear = new Date().getFullYear()
+  return String(currentYear - DEFAULT_SLIDER_START_YEARS_BACK)
+}
+
+/**
  * Maximum baseline period limits by seasonality type
  *
  * These limits prevent server timeouts when calculating baselines.

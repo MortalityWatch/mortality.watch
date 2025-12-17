@@ -5,6 +5,7 @@
  */
 
 import type { ViewConfig, ViewType, UIElement, UICondition } from '../resolver/viewTypes'
+import { getDefaultSliderStart } from '@/lib/config/constants'
 
 /** Helper functions for common UI element patterns */
 const hidden = (): UIElement => ({
@@ -66,7 +67,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       // Date range (undefined = use data availability defaults)
       dateFrom: undefined as string | undefined,
       dateTo: undefined as string | undefined,
-      sliderStart: '2009',
+      sliderStart: getDefaultSliderStart(),
       baselineDateFrom: undefined as string | undefined,
       baselineDateTo: undefined as string | undefined,
 

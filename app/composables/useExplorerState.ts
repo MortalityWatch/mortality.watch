@@ -20,6 +20,7 @@ import {
   type MetricType,
   type ChartStyle
 } from '@/lib/state'
+import { getDefaultSliderStart } from '@/lib/config/constants'
 
 /**
  * Compare two arrays for equality (shallow)
@@ -97,7 +98,7 @@ export function useExplorerState() {
   // Date Range
   const dateFrom = ref<string | undefined>(mortalityDefaults.dateFrom)
   const dateTo = ref<string | undefined>(mortalityDefaults.dateTo)
-  const sliderStart = ref<string>(getDefault('sliderStart', '2010'))
+  const sliderStart = ref<string>(getDefault('sliderStart', getDefaultSliderStart()))
 
   // Baseline
   const baselineDateFrom = ref<string | undefined>(mortalityDefaults.baselineDateFrom)

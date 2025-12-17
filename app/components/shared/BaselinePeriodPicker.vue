@@ -99,8 +99,19 @@ const selectedPeriodLength = ref(
   calculatePeriodLength(props.sliderValue, props.baselineMethod)
 )
 
+// Timestamp of last method change - used to ignore slider updates for a short window
+let lastMethodChangeTime = 0
+const METHOD_CHANGE_IGNORE_WINDOW_MS = 100
+
 // Update period length when slider value changes externally (e.g., URL navigation)
 watch(() => props.sliderValue, (newValue) => {
+  // Skip updates within the ignore window after a method change
+  // This prevents race conditions where slider updates from the method change
+  // would recalculate and override the correct period length
+  if (Date.now() - lastMethodChangeTime < METHOD_CHANGE_IGNORE_WINDOW_MS) {
+    return
+  }
+
   const calculated = calculatePeriodLength(newValue)
   // Update if:
   // 1. The calculated value is a preset (3, 5, 10) AND current is also a preset
@@ -118,6 +129,8 @@ watch(() => props.baselineMethod, (newMethod) => {
 
   const defaultLength = getDefaultPeriodLength(newMethod)
   if (selectedPeriodLength.value !== defaultLength) {
+    // Mark the time of this method change to ignore subsequent slider updates
+    lastMethodChangeTime = Date.now()
     selectedPeriodLength.value = defaultLength
   }
 })
@@ -133,15 +146,15 @@ watch(() => selectedPeriodLength.value, (newLength, oldLength) => {
   if (props.baselineMethod === 'naive') return
 
   // Calculate new baseline range based on the period length
-  // Keep the start date, adjust the end date
+  // Keep the END date fixed, adjust the START date backwards
   if (props.sliderValue && props.sliderValue.length === 2) {
-    const startDate = props.sliderValue[0]
-    if (!startDate || !props.labels.length) return
+    const endDate = props.sliderValue[1]
+    if (!endDate || !props.labels.length) return
 
-    const startIdx = props.labels.indexOf(startDate)
-    if (startIdx === -1) return
+    const endIdx = props.labels.indexOf(endDate)
+    if (endIdx === -1) return
 
-    // Calculate new end index based on period length
+    // Calculate new start index based on period length
     // For yearly charts: 3 years = 3 labels (2017, 2018, 2019)
     // For weekly charts: 3 years = ~156 labels
     const uniqueYears = Array.from(new Set(props.labels.filter(l => l).map(l => l.substring(0, 4))))
@@ -152,12 +165,13 @@ watch(() => selectedPeriodLength.value, (newLength, oldLength) => {
     const labelsPerYear = Math.round(props.labels.length / uniqueYears.length)
     const periodIndices = newLength * labelsPerYear - 1 // -1 for inclusive range
 
-    const newEndIdx = Math.min(startIdx + periodIndices, props.labels.length - 1)
-    const newEndDate = props.labels[newEndIdx]
+    // Extend backwards from the end date
+    const newStartIdx = Math.max(0, endIdx - periodIndices)
+    const newStartDate = props.labels[newStartIdx]
 
-    if (newEndDate && newEndDate !== props.sliderValue[1]) {
+    if (newStartDate && newStartDate !== props.sliderValue[0]) {
       // Emit the new range
-      emit('slider-changed', [startDate, newEndDate])
+      emit('slider-changed', [newStartDate, endDate])
     }
   }
 }, { flush: 'post' })
