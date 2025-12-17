@@ -238,7 +238,11 @@ export async function transformChartData(
   chartUrl: string,
   _isAsmrType: boolean
 ) {
-  const colors = getChartColors()
+  // Use user-defined colors if provided, otherwise fall back to default theme colors
+  const defaultColors = getChartColors(state.darkMode)
+  const colors = state.userColors && state.userColors.length > 0
+    ? [...state.userColors, ...defaultColors.slice(state.userColors.length)]
+    : defaultColors
 
   // Use the unified toChartFilterConfig - same function as client
   const config = toChartFilterConfig(state, allCountries, colors, chartUrl)
