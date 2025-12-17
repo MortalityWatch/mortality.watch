@@ -221,7 +221,22 @@ describe('chartConfigHelpers', () => {
       const callbacks = createTooltipCallbacks(false, false, false, true, 'auto')
 
       expect(callbacks).toBeDefined()
+      expect(callbacks.title).toBeInstanceOf(Function)
       expect(callbacks.label).toBeInstanceOf(Function)
+    })
+
+    it('should format tooltip title with country and period', () => {
+      const callbacks = createTooltipCallbacks(false, false, false, true, 'auto')
+      const items = [{
+        dataset: { label: 'Test Dataset' },
+        label: '2023',
+        parsed: { y: 100 } as unknown as ChartErrorDataPoint
+      }] as any as TooltipItem<'line'>[] // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      const result = callbacks.title(items)
+
+      expect(result).toContain('Test Dataset')
+      expect(result).toContain('2023')
     })
 
     it('should format tooltip label for simple values', () => {
@@ -233,7 +248,7 @@ describe('chartConfigHelpers', () => {
 
       const result = callbacks.label(context)
 
-      expect(result).toContain('Test Dataset')
+      // Label now shows just the value (country is in title)
       expect(result).toContain('100')
     })
 

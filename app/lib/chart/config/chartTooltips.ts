@@ -25,8 +25,8 @@ export function createTooltipCallbacks(
   return {
     // Show country name and period as title
     title: (items: TooltipItem<'line' | 'bar'>[]) => {
-      if (!items.length) return ''
       const item = items[0]
+      if (!item) return ''
       const country = item.dataset.label || ''
       const period = item.label || ''
       if (!country) return period
