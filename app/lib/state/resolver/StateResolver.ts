@@ -783,6 +783,7 @@ export class StateResolver {
       showLabels: (resolvedState.showLabels ?? current.showLabels ?? true) as boolean,
       showPercentage: (resolvedState.showPercentage ?? current.showPercentage ?? false) as boolean,
       showLogarithmic: (resolvedState.showLogarithmic ?? current.showLogarithmic ?? false) as boolean,
+      leAdjusted: (resolvedState.leAdjusted ?? current.leAdjusted ?? true) as boolean,
       userColors: (resolvedState.userColors ?? current.userColors) as string[] | undefined,
       decimals: (resolvedState.decimals ?? current.decimals ?? 'auto') as string
     }

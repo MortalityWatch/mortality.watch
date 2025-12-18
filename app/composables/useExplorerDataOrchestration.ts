@@ -323,6 +323,7 @@ export function useExplorerDataOrchestration(
     showLabels: state.showLabels.value,
     showPercentage: state.showPercentage.value,
     showLogarithmic: state.showLogarithmic.value,
+    leAdjusted: state.leAdjusted.value,
     userColors: state.userColors.value,
     decimals: state.decimals.value
   })

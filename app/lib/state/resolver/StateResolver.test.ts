@@ -261,6 +261,7 @@ describe('StateResolver', () => {
         showLabels: true,
         showPercentage: false,
         showLogarithmic: false,
+        leAdjusted: true,
         userColors: ['#ff0000', '#00ff00'],
         decimals: 'auto'
       }

@@ -19,6 +19,7 @@ export interface DataTransformationConfig {
     showBaseline: boolean
     showPredictionInterval: boolean
     view: string
+    leAdjusted: boolean
   }
 
   /** Chart configuration */
@@ -89,6 +90,7 @@ export interface ChartStateSnapshot {
   showLabels: boolean
   showPercentage: boolean
   showLogarithmic: boolean
+  leAdjusted: boolean // LE seasonal adjustment
 
   // Chart appearance
   userColors: string[] | undefined
@@ -140,6 +142,7 @@ export interface ChartFilterConfig {
   maximize: boolean
   showLabels: boolean
   showLogarithmic: boolean
+  leAdjusted: boolean // LE seasonal adjustment
 
   // Visual
   colors: string[]

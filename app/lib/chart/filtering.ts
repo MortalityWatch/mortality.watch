@@ -118,7 +118,8 @@ export const getFilteredChartDataFromConfig = (
       showCumPi: config.showCumPi,
       showBaseline: config.showBaseline,
       showPredictionInterval: config.showPredictionInterval,
-      view: config.view
+      view: config.view,
+      leAdjusted: config.leAdjusted
     },
     chart: {
       type: config.type,
@@ -226,6 +227,7 @@ export const getFilteredChartData = async (
     maximize,
     showLabels,
     showLogarithmic,
+    leAdjusted: true, // Legacy function defaults to adjusted
     colors,
     allCountries,
     url
