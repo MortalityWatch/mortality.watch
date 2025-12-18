@@ -45,7 +45,8 @@ export const stringKeys = [
  */
 
 // Base mortality metrics
-type Metric = 'deaths' | 'cmr' | 'asmr_who' | 'asmr_esp' | 'asmr_usa' | 'asmr_country' | 'le'
+// Note: le_adj is seasonally adjusted life expectancy (only for sub-yearly data)
+type Metric = 'deaths' | 'cmr' | 'asmr_who' | 'asmr_esp' | 'asmr_usa' | 'asmr_country' | 'le' | 'le_adj'
 
 // Generate metric field combinations
 // Each metric has: base + (baseline|excess) + optional (lower|upper) + zscore
@@ -81,7 +82,7 @@ export type NumberEntryFields = {
  * - <metric>_excess, <metric>_excess_lower, <metric>_excess_upper
  */
 
-const metrics = ['deaths', 'cmr', 'asmr_who', 'asmr_esp', 'asmr_usa', 'asmr_country', 'le'] as const
+const metrics = ['deaths', 'cmr', 'asmr_who', 'asmr_esp', 'asmr_usa', 'asmr_country', 'le', 'le_adj'] as const
 
 // Generate all metric field combinations following the pattern
 const metricFields: MetricField[] = []
