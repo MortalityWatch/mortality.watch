@@ -16,14 +16,14 @@ import {
 } from '@/lib/config/rankingConfig'
 
 export function useRankingUIState(
-  showASMR: Ref<boolean> | ComputedRef<boolean>,
+  metricType: Ref<string> | ComputedRef<string>,
   showTotals: Ref<boolean> | ComputedRef<boolean>,
   cumulative: Ref<boolean> | ComputedRef<boolean>,
   showTotalsOnly: Ref<boolean> | ComputedRef<boolean>
 ) {
   const uiState = computed<RankingUIState>(() =>
     computeRankingUIState(
-      unref(showASMR),
+      unref(metricType),
       unref(showTotals),
       unref(cumulative),
       unref(showTotalsOnly)
@@ -31,7 +31,7 @@ export function useRankingUIState(
   )
 
   // Also expose metric config
-  const metricConfig = computed(() => getRankingMetricConfig(unref(showASMR)))
+  const metricConfig = computed(() => getRankingMetricConfig(unref(metricType)))
 
   return {
     // Main UI State
@@ -48,7 +48,7 @@ export function useRankingUIState(
     isExcessMode: computed(() => uiState.value.isExcessMode),
 
     // Helper functions
-    isStandardPopulationEnabled: computed(() => shouldEnableStandardPopulation(unref(showASMR))),
+    isStandardPopulationEnabled: computed(() => shouldEnableStandardPopulation(unref(metricType))),
     getDisabledReason: (option: 'standardPopulation' | 'totalsOnly' | 'predictionInterval') =>
       getDisabledReason(option, uiState.value)
   }

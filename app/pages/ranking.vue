@@ -82,7 +82,7 @@ const state = useRankingState()
 const {
   periodOfTime,
   jurisdictionType,
-  showASMR,
+  metricType,
   showTotals,
   showTotalsOnly,
   showPercentage,
@@ -273,13 +273,22 @@ const totalPages = computed(() => getTotalPages(sortedResult.value))
 
 // Memoized title computation for performance
 const title = computed(() => {
-  let titleResult = 'Excess '
+  let titleResult = ''
 
-  if (showASMR.value)
+  // Build title based on metric type
+  if (metricType.value === 'le') {
     titleResult = isMobile()
-      ? `${titleResult}ASMR`
-      : `${titleResult}Age-Standardized Mortality Rate`
-  else titleResult = isMobile() ? `${titleResult}CMR` : `${titleResult}Crude Mortality Rate`
+      ? 'Change in LE'
+      : 'Change in Life Expectancy'
+  } else if (metricType.value === 'asmr') {
+    titleResult = isMobile()
+      ? 'Excess ASMR'
+      : 'Excess Age-Standardized Mortality Rate'
+  } else {
+    titleResult = isMobile()
+      ? 'Excess CMR'
+      : 'Excess Crude Mortality Rate'
+  }
 
   if (selectedJurisdictionType.value !== 'countries') {
     // Look up the display name from the items array
@@ -381,7 +390,7 @@ const {
     jurisdictionType: selectedJurisdictionType.value,
     dateFrom: sliderValue.value[0],
     dateTo: sliderValue.value[1],
-    showASMR: showASMR.value,
+    metricType: metricType.value,
     showTotalsOnly: showTotalsOnly.value
   })
 })
@@ -389,7 +398,7 @@ const {
 // Memoized ranking state serialization
 const rankingStateData = computed(() => ({
   // Main type selection
-  a: showASMR.value,
+  m: metricType.value,
   p: selectedPeriodOfTime.value,
   j: selectedJurisdictionType.value,
 
@@ -449,7 +458,7 @@ const getDefaultRankingTitle = () => {
     jurisdictionType: selectedJurisdictionType.value,
     dateFrom: sliderValue.value[0],
     dateTo: sliderValue.value[1],
-    showASMR: showASMR.value,
+    metricType: metricType.value,
     showTotalsOnly: showTotalsOnly.value
   })
 }
@@ -581,7 +590,7 @@ const exportJSON = () => {
 // Watch for state changes to mark ranking as modified
 watch(
   [
-    showASMR,
+    metricType,
     selectedPeriodOfTime,
     selectedJurisdictionType,
     sliderValue,
@@ -692,7 +701,7 @@ watch(
           />
 
           <RankingSettings
-            v-model:show-a-s-m-r="showASMR"
+            v-model:metric-type="metricType"
             v-model:selected-standard-population="selectedStandardPopulation"
             v-model:show-totals="showTotals"
             v-model:show-totals-only="showTotalsOnly"
@@ -761,7 +770,7 @@ watch(
         <!-- Settings - Third on mobile only -->
         <div class="order-3 lg:hidden">
           <RankingSettings
-            v-model:show-a-s-m-r="showASMR"
+            v-model:metric-type="metricType"
             v-model:selected-standard-population="selectedStandardPopulation"
             v-model:show-totals="showTotals"
             v-model:show-totals-only="showTotalsOnly"

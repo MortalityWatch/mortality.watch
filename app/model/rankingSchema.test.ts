@@ -6,7 +6,7 @@ describe('rankingSchema', () => {
   const createValidState = (): RankingState => ({
     periodOfTime: 'fluseason',
     jurisdictionType: 'countries',
-    showASMR: true,
+    metricType: 'asmr',
     showTotals: true,
     showTotalsOnly: false,
     showPercentage: true,
@@ -44,7 +44,7 @@ describe('rankingSchema', () => {
   describe('Rule 1: ASMR requires standardPopulation', () => {
     it('should accept ASMR with standardPopulation', () => {
       const state = createValidState()
-      state.showASMR = true
+      state.metricType = 'asmr'
       state.standardPopulation = 'who'
       const result = rankingStateSchema.safeParse(state)
       expect(result.success).toBe(true)
@@ -52,15 +52,22 @@ describe('rankingSchema', () => {
 
     it('should reject ASMR without standardPopulation', () => {
       const state = createValidState()
-      state.showASMR = true
+      state.metricType = 'asmr'
       state.standardPopulation = undefined as unknown as typeof state.standardPopulation
       const result = rankingStateSchema.safeParse(state)
       expect(result.success).toBe(false)
     })
 
-    it('should accept non-ASMR without standardPopulation check', () => {
+    it('should accept CMR without standardPopulation check', () => {
       const state = createValidState()
-      state.showASMR = false
+      state.metricType = 'cmr'
+      const result = rankingStateSchema.safeParse(state)
+      expect(result.success).toBe(true)
+    })
+
+    it('should accept LE without standardPopulation check', () => {
+      const state = createValidState()
+      state.metricType = 'le'
       const result = rankingStateSchema.safeParse(state)
       expect(result.success).toBe(true)
     })

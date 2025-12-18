@@ -174,10 +174,16 @@ export function useRankingData(
     )
   })
 
-  const key = (): keyof CountryData =>
-    (state.showASMR.value
-      ? 'asmr_' + state.standardPopulation.value
-      : 'cmr') as keyof CountryData
+  const key = (): keyof CountryData => {
+    const metricType = state.metricType.value
+    if (metricType === 'asmr') {
+      return `asmr_${state.standardPopulation.value}` as keyof CountryData
+    }
+    if (metricType === 'le') {
+      return 'le' as keyof CountryData
+    }
+    return 'cmr' as keyof CountryData
+  }
 
   const startPeriod = (): string =>
     getPeriodStart(RANKING_START_YEAR, state.periodOfTime.value)
@@ -225,11 +231,11 @@ export function useRankingData(
    * Fetch and prepare chart data using shared fetcher
    */
   const fetchChartData = async () => {
-    const type = state.showASMR.value ? 'asmr' : 'cmr'
+    const metricType = state.metricType.value
     const dataKey = key()
     const periodOfTime = state.periodOfTime.value || 'yearly'
 
-    // Filter countries based on jurisdiction and ASMR availability
+    // Filter countries based on jurisdiction and metric availability
     const countryFilter = Object.keys(metaData.value).filter((iso3c) => {
       // Check jurisdiction filter
       if (!shouldShowCountry(iso3c, state.jurisdictionType.value)) {
@@ -237,14 +243,20 @@ export function useRankingData(
       }
 
       // Check ASMR availability if needed
-      if (state.showASMR.value) {
+      if (metricType === 'asmr') {
         return metaData.value[iso3c]?.has_asmr() ?? false
       }
+
+      // Note: LE availability could be checked here if needed
+      // For now, assume LE data is available for all countries with CMR data
 
       return true
     })
 
     const ageFilter = ['all']
+
+    // Determine base type for getKeyForType
+    const baseType = metricType === 'le' ? 'le' : metricType
 
     // Use shared data fetcher
     const result = await dataFetcher.fetchChartData({
@@ -257,15 +269,17 @@ export function useRankingData(
       baselineDateTo: state.baselineDateTo.value,
       sliderStart: sliderStart.value, // Layer 2 offset
       cumulative: state.cumulative.value,
-      isAsmr: type === 'asmr',
-      baseKeys: getKeyForType(type, true, state.standardPopulation.value || 'who')
+      isAsmr: metricType === 'asmr',
+      baseKeys: getKeyForType(baseType, true, state.standardPopulation.value || 'who')
     })
 
     if (!result) {
-      const errorMessage = type === 'asmr'
-        ? 'No ASMR data for selected countries. Please select CMR'
-        : 'No data available for selected countries'
-      showToast(errorMessage, 'warning')
+      const errorMessages: Record<string, string> = {
+        asmr: 'No ASMR data for selected countries. Please select CMR',
+        le: 'No Life Expectancy data for selected countries',
+        cmr: 'No data available for selected countries'
+      }
+      showToast(errorMessages[metricType] ?? errorMessages.cmr!, 'warning')
       return null
     }
 
@@ -421,7 +435,7 @@ export function useRankingData(
     [
       () => state.periodOfTime.value,
       () => state.jurisdictionType.value,
-      () => state.showASMR.value,
+      () => state.metricType.value,
       () => state.standardPopulation.value,
       () => state.baselineMethod.value,
       () => state.cumulative.value

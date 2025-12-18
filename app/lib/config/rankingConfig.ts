@@ -28,8 +28,9 @@ export interface RankingUIState {
 // ============================================================================
 
 export interface RankingMetricConfig {
-  value: 'cmr' | 'asmr'
+  value: 'cmr' | 'asmr' | 'le'
   name: string
+  shortName: string
   requiresStandardPopulation: boolean
 }
 
@@ -37,12 +38,20 @@ export const RANKING_METRIC_CONFIGS: Record<string, RankingMetricConfig> = {
   cmr: {
     value: 'cmr',
     name: 'Crude Mortality Rate',
+    shortName: 'CMR',
     requiresStandardPopulation: false
   },
   asmr: {
     value: 'asmr',
     name: 'Age-Standardized Mortality Rate',
+    shortName: 'ASMR',
     requiresStandardPopulation: true
+  },
+  le: {
+    value: 'le',
+    name: 'Life Expectancy',
+    shortName: 'LE',
+    requiresStandardPopulation: false
   }
 }
 
@@ -56,25 +65,23 @@ export const RANKING_METRIC_CONFIGS: Record<string, RankingMetricConfig> = {
  * This function encapsulates all the business logic about what should be
  * visible/disabled based on the combination of settings.
  *
- * @param showASMR - Whether ASMR (vs CMR) is selected
+ * @param metricType - The selected metric type ('cmr', 'asmr', or 'le')
  * @param showTotals - Whether the totals column is shown
  * @param cumulative - Whether cumulative mode is active
  * @param showTotalsOnly - Whether only the total column is shown
  * @returns Complete UI state with all visibility and disabled flags
  */
 export function computeRankingUIState(
-  showASMR: boolean,
+  metricType: string,
   showTotals: boolean,
   cumulative: boolean,
   showTotalsOnly: boolean
 ): RankingUIState {
-  const metricConfig = showASMR
-    ? RANKING_METRIC_CONFIGS.asmr!
-    : RANKING_METRIC_CONFIGS.cmr!
+  const metricConfig = RANKING_METRIC_CONFIGS[metricType] || RANKING_METRIC_CONFIGS.asmr!
 
   return {
     // Visibility
-    showStandardPopulation: true, // Always shown, but disabled for CMR
+    showStandardPopulation: true, // Always shown, but disabled for CMR and LE
 
     // Disabled States
     // Standard Population is only relevant for ASMR
@@ -99,15 +106,25 @@ export function computeRankingUIState(
 /**
  * Get metric configuration by type
  */
-export function getRankingMetricConfig(showASMR: boolean): RankingMetricConfig {
-  return showASMR ? RANKING_METRIC_CONFIGS.asmr! : RANKING_METRIC_CONFIGS.cmr!
+export function getRankingMetricConfig(metricType: string): RankingMetricConfig {
+  return RANKING_METRIC_CONFIGS[metricType] || RANKING_METRIC_CONFIGS.asmr!
 }
 
 /**
  * Check if standard population selector should be visible and enabled
  */
-export function shouldEnableStandardPopulation(showASMR: boolean): boolean {
-  return getRankingMetricConfig(showASMR).requiresStandardPopulation
+export function shouldEnableStandardPopulation(metricType: string): boolean {
+  return getRankingMetricConfig(metricType).requiresStandardPopulation
+}
+
+/**
+ * Get metric items for dropdown selector
+ */
+export function getMetricTypeItems() {
+  return Object.values(RANKING_METRIC_CONFIGS).map(config => ({
+    value: config.value,
+    label: config.shortName
+  }))
 }
 
 /**
@@ -119,7 +136,7 @@ const disabledReasons: Record<
 > = {
   standardPopulation: state =>
     state.standardPopulationDisabled
-      ? 'Standard Population is only used with ASMR'
+      ? 'Standard Population is only available for ASMR'
       : null,
   totalsOnly: state =>
     state.totalsOnlyDisabled ? 'Enable "Show Totals" first' : null,

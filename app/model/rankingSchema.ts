@@ -47,9 +47,12 @@ export const JurisdictionTypeEnum = z.enum([
   'deu'
 ])
 
+export const MetricTypeEnum = z.enum(['cmr', 'asmr', 'le'])
+
 // Export TypeScript types from Zod enums
 export type RankingPeriod = z.infer<typeof RankingPeriodEnum>
 export type JurisdictionType = z.infer<typeof JurisdictionTypeEnum>
+export type MetricType = z.infer<typeof MetricTypeEnum>
 
 // Re-export shared types
 export type {
@@ -67,8 +70,10 @@ const rankingStateBaseSchema = z.object({
   periodOfTime: RankingPeriodEnum,
   jurisdictionType: JurisdictionTypeEnum,
 
+  // Metric type (CMR, ASMR, or Life Expectancy)
+  metricType: MetricTypeEnum,
+
   // Display toggles
-  showASMR: z.boolean(),
   showTotals: z.boolean(),
   showTotalsOnly: z.boolean(),
   showPercentage: z.boolean(),
@@ -95,7 +100,7 @@ const rankingStateBaseSchema = z.object({
 export const rankingStateSchema = rankingStateBaseSchema.superRefine(
   (data, ctx) => {
     // Rule 1: ASMR requires standardPopulation
-    if (data.showASMR && !data.standardPopulation) {
+    if (data.metricType === 'asmr' && !data.standardPopulation) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'ASMR requires a standard population',

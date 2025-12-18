@@ -13,9 +13,12 @@
 
 import { computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { rankingStateSchema, type RankingState } from '@/model/rankingSchema'
+import { rankingStateSchema, type RankingState, type MetricType } from '@/model/rankingSchema'
 import { showToast } from '@/toast'
 import { encodeBool, decodeBool } from '@/lib/state'
+
+// Valid metric types for validation
+const VALID_METRIC_TYPES = ['cmr', 'asmr', 'le'] as const
 
 export function useRankingState() {
   const route = useRoute()
@@ -54,7 +57,7 @@ export function useRankingState() {
   const batchUpdate = (updates: Partial<{
     periodOfTime: string
     jurisdictionType: string
-    showASMR: boolean
+    metricType: MetricType
     showTotals: boolean
     showTotalsOnly: boolean
     showPercentage: boolean
@@ -74,7 +77,7 @@ export function useRankingState() {
 
     if ('periodOfTime' in updates) queryUpdates.p = updates.periodOfTime
     if ('jurisdictionType' in updates) queryUpdates.j = updates.jurisdictionType
-    if ('showASMR' in updates) queryUpdates.a = encodeBool(updates.showASMR!)
+    if ('metricType' in updates) queryUpdates.m = updates.metricType
     if ('showTotals' in updates) queryUpdates.t = encodeBool(updates.showTotals!)
     if ('showTotalsOnly' in updates) queryUpdates.to = encodeBool(updates.showTotalsOnly!)
     if ('showPercentage' in updates) queryUpdates.r = encodeBool(updates.showPercentage!)
@@ -107,10 +110,24 @@ export function useRankingState() {
     set: (val: string) => updateQuery({ j: val })
   })
 
-  // Display toggles
-  const showASMR = computed({
-    get: () => decodeBool(route.query.a as string) ?? true, // Default to ASMR for standardized comparison
-    set: (val: boolean) => updateQuery({ a: encodeBool(val) })
+  // Metric type (CMR, ASMR, or Life Expectancy)
+  // Supports backwards compatibility with legacy 'a' param (a=1 → asmr, a=0 → cmr)
+  const metricType = computed({
+    get: (): MetricType => {
+      // First check new 'm' param
+      const m = route.query.m as string
+      if (m && VALID_METRIC_TYPES.includes(m as MetricType)) {
+        return m as MetricType
+      }
+      // Fall back to legacy 'a' param for backwards compatibility
+      const legacyA = route.query.a as string
+      if (legacyA !== undefined) {
+        return decodeBool(legacyA) ? 'asmr' : 'cmr'
+      }
+      // Default to ASMR for standardized comparison
+      return 'asmr'
+    },
+    set: (val: MetricType) => updateQuery({ m: val, a: undefined }) // Clear legacy 'a' param
   })
 
   const showTotals = computed({
@@ -195,7 +212,7 @@ export function useRankingState() {
   const currentState = computed<RankingState>(() => ({
     periodOfTime: periodOfTime.value as RankingState['periodOfTime'],
     jurisdictionType: jurisdictionType.value as RankingState['jurisdictionType'],
-    showASMR: showASMR.value,
+    metricType: metricType.value,
     showTotals: showTotals.value,
     showTotalsOnly: showTotalsOnly.value,
     showPercentage: showPercentage.value,
@@ -326,8 +343,10 @@ export function useRankingState() {
     periodOfTime,
     jurisdictionType,
 
+    // Metric type (CMR, ASMR, or Life Expectancy)
+    metricType,
+
     // Display toggles
-    showASMR,
     showTotals,
     showTotalsOnly,
     showPercentage,

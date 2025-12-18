@@ -94,21 +94,21 @@ function getMetricName(type: string, view?: 'mortality' | 'excess' | 'zscore'): 
 
 /**
  * Generate default title for ranking charts
- * Format: {countries} - {ageGroup} - {dateRange}
- * Example: "USA vs GBR - All Ages - 2020-2023"
+ * Format: {countries} - {metric} - {dateRange}
+ * Example: "USA vs GBR - ASMR - 2020-2023"
  */
 export function generateRankingTitle(params: {
   jurisdictionType?: string
   dateFrom?: string
   dateTo?: string
-  showASMR?: boolean
+  metricType?: 'cmr' | 'asmr' | 'le'
   showTotalsOnly?: boolean
 }): string {
   const {
     jurisdictionType = 'countries',
     dateFrom,
     dateTo,
-    showASMR = false,
+    metricType = 'asmr',
     showTotalsOnly = false
   } = params
 
@@ -134,9 +134,14 @@ export function generateRankingTitle(params: {
     parts.push('Ranking')
   }
 
-  // Age group (implicit from ASMR vs CMR)
+  // Metric type
   if (!showTotalsOnly) {
-    parts.push(showASMR ? 'ASMR' : 'CMR')
+    const metricLabels: Record<string, string> = {
+      cmr: 'CMR',
+      asmr: 'ASMR',
+      le: 'Life Expectancy'
+    }
+    parts.push(metricLabels[metricType] || metricType.toUpperCase())
   }
 
   // Date range

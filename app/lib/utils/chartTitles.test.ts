@@ -9,7 +9,7 @@ describe('chartTitles', () => {
         jurisdictionType: 'countries',
         dateFrom: '2020/01',
         dateTo: '2023/12',
-        showASMR: false,
+        metricType: 'cmr',
         showTotalsOnly: false
       })
       expect(result).toBe('Ranking - CMR - 2020-2023')
@@ -20,7 +20,7 @@ describe('chartTitles', () => {
         jurisdictionType: 'countries',
         dateFrom: '2020/01',
         dateTo: '2023/12',
-        showASMR: true,
+        metricType: 'asmr',
         showTotalsOnly: false
       })
       expect(result).toBe('Ranking - ASMR - 2020-2023')
@@ -31,7 +31,7 @@ describe('chartTitles', () => {
         jurisdictionType: 'countries',
         dateFrom: '2020/01',
         dateTo: '2023/12',
-        showASMR: false,
+        metricType: 'cmr',
         showTotalsOnly: true
       })
       expect(result).toBe('Ranking - 2020-2023')
@@ -42,7 +42,7 @@ describe('chartTitles', () => {
         jurisdictionType: 'countries',
         dateFrom: '2020/01',
         dateTo: '2020/12',
-        showASMR: false,
+        metricType: 'cmr',
         showTotalsOnly: false
       })
       expect(result).toBe('Ranking - CMR - 2020')
@@ -53,7 +53,7 @@ describe('chartTitles', () => {
         jurisdictionType: 'usa',
         dateFrom: '2020/01',
         dateTo: '2023/12',
-        showASMR: false,
+        metricType: 'cmr',
         showTotalsOnly: false
       })
       expect(result).toBe('US States - CMR - 2020-2023')
@@ -64,7 +64,7 @@ describe('chartTitles', () => {
         jurisdictionType: 'can',
         dateFrom: '2020/01',
         dateTo: '2023/12',
-        showASMR: true,
+        metricType: 'asmr',
         showTotalsOnly: false
       })
       expect(result).toBe('Canadian Provinces - ASMR - 2020-2023')
@@ -75,7 +75,7 @@ describe('chartTitles', () => {
         jurisdictionType: 'eu27',
         dateFrom: '2019/01',
         dateTo: '2024/12',
-        showASMR: false,
+        metricType: 'cmr',
         showTotalsOnly: false
       })
       expect(result).toBe('EU27 - CMR - 2019-2024')
@@ -86,7 +86,7 @@ describe('chartTitles', () => {
         jurisdictionType: 'deu',
         dateFrom: '2020/01',
         dateTo: '2023/12',
-        showASMR: false,
+        metricType: 'cmr',
         showTotalsOnly: false
       })
       expect(result).toBe('German States - CMR - 2020-2023')
@@ -97,7 +97,7 @@ describe('chartTitles', () => {
         jurisdictionType: 'af',
         dateFrom: '2020/01',
         dateTo: '2023/12',
-        showASMR: false,
+        metricType: 'cmr',
         showTotalsOnly: false
       })
       expect(result).toBe('Africa - CMR - 2020-2023')
@@ -108,7 +108,7 @@ describe('chartTitles', () => {
         jurisdictionType: 'as',
         dateFrom: '2020/01',
         dateTo: '2023/12',
-        showASMR: false,
+        metricType: 'cmr',
         showTotalsOnly: false
       })
       expect(result).toBe('Asia - CMR - 2020-2023')
@@ -119,7 +119,7 @@ describe('chartTitles', () => {
         jurisdictionType: 'eu',
         dateFrom: '2020/01',
         dateTo: '2023/12',
-        showASMR: false,
+        metricType: 'cmr',
         showTotalsOnly: false
       })
       expect(result).toBe('Europe - CMR - 2020-2023')
@@ -130,7 +130,7 @@ describe('chartTitles', () => {
         jurisdictionType: 'na',
         dateFrom: '2020/01',
         dateTo: '2023/12',
-        showASMR: false,
+        metricType: 'cmr',
         showTotalsOnly: false
       })
       expect(result).toBe('North America - CMR - 2020-2023')
@@ -141,7 +141,7 @@ describe('chartTitles', () => {
         jurisdictionType: 'oc',
         dateFrom: '2020/01',
         dateTo: '2023/12',
-        showASMR: false,
+        metricType: 'cmr',
         showTotalsOnly: false
       })
       expect(result).toBe('Oceania - CMR - 2020-2023')
@@ -152,7 +152,7 @@ describe('chartTitles', () => {
         jurisdictionType: 'sa',
         dateFrom: '2020/01',
         dateTo: '2023/12',
-        showASMR: false,
+        metricType: 'cmr',
         showTotalsOnly: false
       })
       expect(result).toBe('South America - CMR - 2020-2023')
@@ -163,7 +163,7 @@ describe('chartTitles', () => {
         jurisdictionType: 'countries_states',
         dateFrom: '2020/01',
         dateTo: '2023/12',
-        showASMR: false,
+        metricType: 'cmr',
         showTotalsOnly: false
       })
       expect(result).toBe('Countries & States - CMR - 2020-2023')
@@ -174,7 +174,7 @@ describe('chartTitles', () => {
         jurisdictionType: 'unknown_type',
         dateFrom: '2020/01',
         dateTo: '2023/12',
-        showASMR: false,
+        metricType: 'cmr',
         showTotalsOnly: false
       })
       expect(result).toBe('unknown_type - CMR - 2020-2023')
@@ -182,13 +182,13 @@ describe('chartTitles', () => {
 
     it('should use defaults when no parameters provided', () => {
       const result = generateRankingTitle({})
-      expect(result).toBe('Ranking - CMR')
+      expect(result).toBe('Ranking - ASMR') // Default is ASMR for standardized comparison
     })
 
     it('should handle missing date parameters', () => {
       const result = generateRankingTitle({
         jurisdictionType: 'countries',
-        showASMR: false,
+        metricType: 'cmr',
         showTotalsOnly: false
       })
       expect(result).toBe('Ranking - CMR')
@@ -199,7 +199,7 @@ describe('chartTitles', () => {
         jurisdictionType: 'countries',
         dateFrom: undefined,
         dateTo: '2023/12',
-        showASMR: false,
+        metricType: 'cmr',
         showTotalsOnly: false
       })
       expect(result).toBe('Ranking - CMR')
@@ -210,7 +210,7 @@ describe('chartTitles', () => {
         jurisdictionType: 'countries',
         dateFrom: '2020/01',
         dateTo: undefined,
-        showASMR: false,
+        metricType: 'cmr',
         showTotalsOnly: false
       })
       expect(result).toBe('Ranking - CMR')
