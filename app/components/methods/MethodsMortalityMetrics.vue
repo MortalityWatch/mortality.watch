@@ -99,15 +99,36 @@
           <div>• Ages 5+: n/2 (midpoint assumption)</div>
           <div>• Open-ended (85+): 1/M<sub>x</sub> (Keyfitz)</div>
         </div>
-        <p class="text-gray-700 dark:text-gray-300 mt-3">
-          <strong>Sub-yearly smoothing:</strong> For weekly/monthly data, we apply
-          STL decomposition and extract only the <em>trend</em> component. This removes
-          both seasonal artifacts and noise. The apparent "seasonality" in weekly LE
-          (e.g., lower values in winter) is a calculation artifact from short-term
-          mortality fluctuations—not real LE changes. A person's expected lifespan
-          doesn't actually vary week to week; the trend captures the true underlying LE.
-        </p>
-        <p class="text-sm text-gray-600 dark:text-gray-400 italic">
+        <div class="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg mt-3 space-y-3">
+          <h4 class="font-semibold text-gray-800 dark:text-gray-200">
+            Sub-yearly Life Expectancy: Raw vs Seasonally Adjusted
+          </h4>
+          <p class="text-gray-700 dark:text-gray-300">
+            For weekly, monthly, and quarterly data, Pro users can toggle between two display modes:
+          </p>
+          <ul class="list-disc pl-6 space-y-2 text-gray-700 dark:text-gray-300">
+            <li>
+              <strong>Raw Values:</strong> The directly calculated LE values. These show
+              apparent "seasonal" variation (e.g., lower values in winter), but this is
+              a <em>calculation artifact</em> from short-term mortality fluctuations—not
+              real LE changes. A person's expected lifespan doesn't actually vary week
+              to week.
+            </li>
+            <li>
+              <strong>Seasonally Adjusted (STL):</strong> We apply STL decomposition
+              (Seasonal and Trend decomposition using Loess) and remove only the
+              <em>seasonal</em> component, keeping both trend and remainder. This
+              eliminates the artificial seasonal pattern while preserving the true
+              underlying life expectancy signal and any real short-term variations.
+            </li>
+          </ul>
+          <p class="text-sm text-gray-600 dark:text-gray-400 italic">
+            The adjusted values are displayed by default and are recommended for most
+            analyses. Raw values are useful for understanding the calculation artifacts
+            or for research purposes.
+          </p>
+        </div>
+        <p class="text-sm text-gray-600 dark:text-gray-400 italic mt-3">
           Pro users can view remaining life expectancy at specific ages
           (e.g., LE at age 40 shows expected remaining years for someone aged 40)
         </p>

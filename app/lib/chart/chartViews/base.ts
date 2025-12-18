@@ -6,6 +6,7 @@
 
 import type { CompleteChartViewConfig } from './types'
 import { getAgeGroupSuffix, getASMRTitle, getBaselineDescription } from './helpers'
+import { isSubYearlyChartType } from '@/model/utils'
 
 /**
  * Base view configuration
@@ -61,6 +62,10 @@ export const BASE_VIEW: CompleteChartViewConfig = {
     // Life expectancy note
     if (ctx.type === 'le') {
       parts.push('Based on WHO2015 Std. Pop.')
+      // Add seasonal adjustment note for sub-yearly data
+      if (ctx.leAdjusted && isSubYearlyChartType(ctx.chartType)) {
+        parts.push('Seasonally Adjusted (STL)')
+      }
     }
 
     // Baseline description

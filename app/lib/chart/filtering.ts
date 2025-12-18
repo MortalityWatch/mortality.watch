@@ -93,7 +93,8 @@ export const getFilteredChartDataFromConfig = (
     config.baselineDateTo,
     config.showTotal,
     config.chartType,
-    config.view
+    config.view,
+    config.leAdjusted
   )
 
   const filteredData = getFilteredLabelAndData(

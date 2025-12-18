@@ -22,6 +22,7 @@ export interface ChartContext {
   showPredictionInterval: boolean
   showTotal: boolean
   chartType: string
+  leAdjusted?: boolean // LE seasonal adjustment (STL trend extraction)
 
   // Baseline
   baselineMethod: string
