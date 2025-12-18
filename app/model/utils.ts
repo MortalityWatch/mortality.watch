@@ -36,10 +36,11 @@ interface MetricConfig {
  */
 export const isSubYearlyChartType = (chartType?: string): boolean => {
   if (!chartType) return false
-  // Yearly, midyear, fluseason are NOT sub-yearly
-  if (['yearly', 'midyear', 'fluseason'].includes(chartType)) return false
-  // Monthly, quarterly, and weekly variants are sub-yearly
-  return true
+  // Explicit allowlist of sub-yearly chart types
+  // Weekly variants all start with 'weekly'
+  if (chartType.startsWith('weekly')) return true
+  if (['monthly', 'quarterly'].includes(chartType)) return true
+  return false
 }
 
 /**

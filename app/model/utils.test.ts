@@ -346,6 +346,11 @@ describe('app/model/utils', () => {
     it('should return false for empty string', () => {
       expect(isSubYearlyChartType('')).toBe(false)
     })
+
+    it('should return false for unknown chart types', () => {
+      expect(isSubYearlyChartType('unknown')).toBe(false)
+      expect(isSubYearlyChartType('daily')).toBe(false)
+    })
   })
 
   describe('getKeyForType with leAdjusted option (LE seasonal adjustment)', () => {
