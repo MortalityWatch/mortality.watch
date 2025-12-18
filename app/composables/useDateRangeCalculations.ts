@@ -32,8 +32,8 @@ export interface DateRangeCalculations {
   hasExtendedTimeAccess: ComputedRef<boolean>
   effectiveMinDate: ComputedRef<string | null>
 
-  // View restrictions
-  /** True when in excess or z-score view (date range restricted to baseline start) */
+  // View restrictions (DEPRECATED)
+  /** Always false - baseline restrictions have been removed */
   isBaselineRestrictedView: ComputedRef<boolean>
 }
 
@@ -96,11 +96,12 @@ const getStartIndex = (
 
 /**
  * Options for view-specific date range restrictions
+ * (DEPRECATED: View restrictions have been removed - excess/zscore views can now show pre-baseline data)
  */
 export interface ViewRestrictionOptions {
   /** Current view type ('mortality', 'excess', 'zscore') */
   view: Ref<string>
-  /** Start of baseline period - used to restrict range in excess/zscore views */
+  /** Start of baseline period (no longer used for restrictions) */
   baselineDateFrom: Ref<string | undefined>
 }
 
@@ -175,12 +176,11 @@ export function useDateRangeCalculations(
 
   /**
    * Check if current view requires baseline-restricted date range
-   * (excess and z-score views can only show data from baseline start onwards)
+   * (DEPRECATED: excess and z-score views can now show data before baseline)
    */
   const isBaselineRestrictedView = computed(() => {
-    if (!viewOptions) return false
-    const view = viewOptions.view.value
-    return view === 'excess' || view === 'zscore'
+    // Always return false - pre-baseline excess calculation is now supported
+    return false
   })
 
   /**
@@ -188,33 +188,16 @@ export function useDateRangeCalculations(
    *
    * This represents what should be shown on the slider and date picker.
    * Applies:
-   * 1. sliderStart filtering (slice from sliderStart onwards) - BUT in excess/zscore views,
-   *    use baselineStart instead (since data before baseline is meaningless)
+   * 1. sliderStart filtering (slice from sliderStart onwards)
    * 2. Year 2000 restriction for non-premium users
    */
   const visibleLabels = computed(() => {
     const labels = availableLabels.value
     if (labels.length === 0) return []
 
-    let filtered: string[]
-
-    // In excess/zscore views, start from baseline instead of sliderStart
-    // This ensures the visible range always starts from where baseline data exists
-    if (isBaselineRestrictedView.value && viewOptions?.baselineDateFrom.value) {
-      const baselineStart = viewOptions.baselineDateFrom.value
-      const baselineIdx = labels.indexOf(baselineStart)
-      if (baselineIdx >= 0) {
-        filtered = labels.slice(baselineIdx)
-      } else {
-        // Fallback to sliderStart if baseline not found
-        const startIndex = getStartIndex(labels, sliderStart.value, chartType.value as ChartType)
-        filtered = labels.slice(startIndex)
-      }
-    } else {
-      // Normal view: apply sliderStart filter
-      const startIndex = getStartIndex(labels, sliderStart.value, chartType.value as ChartType)
-      filtered = labels.slice(startIndex)
-    }
+    // Apply sliderStart filter
+    const startIndex = getStartIndex(labels, sliderStart.value, chartType.value as ChartType)
+    let filtered = labels.slice(startIndex)
 
     // Apply year 2000 restriction for non-premium users
     if (!hasExtendedTimeAccess.value) {
