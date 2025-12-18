@@ -9,11 +9,45 @@ import { getMaxBaselinePeriod, EXTERNAL_SERVICES, BASELINE_DATA_PRECISION } from
 import { logger } from '../logger'
 
 /**
- * Calculate excess mortality from baseline data
+ * Cumulative sum helper starting from a specific index
+ * Values before startIdx are kept as undefined
  */
-const calculateExcess = (data: DatasetEntry, key: keyof DatasetEntry): void => {
-  const currentValues = data[key] as NumberArray
+const cumulativeSumFrom = (arr: NumberArray, startIdx: number): NumberArray => {
+  const result: NumberArray = []
+  let prev = 0
+  for (let i = 0; i < arr.length; i++) {
+    if (i < startIdx) {
+      result.push(undefined)
+    } else {
+      const val = arr[i] ?? 0
+      const curr = prev + val
+      result.push(curr)
+      if (!isNaN(val)) prev = curr
+    }
+  }
+  return result
+}
+
+/**
+ * Calculate excess mortality from baseline data
+ * @param isBaselineCumulative - When true, baseline values are already cumulative (from /cum endpoint)
+ *                               and observed values need to be cumulated before subtraction
+ * @param baselineStartIdx - Index where baseline data starts (for cumulative alignment)
+ */
+const calculateExcess = (
+  data: DatasetEntry,
+  key: keyof DatasetEntry,
+  isBaselineCumulative = false,
+  baselineStartIdx = 0
+): void => {
+  let currentValues = data[key] as NumberArray
   const baseline = data[`${key}_baseline` as keyof DatasetEntry] as NumberArray
+
+  // When baseline is already cumulative (from /cum endpoint),
+  // we need to cumulate observed values to match, starting from baselineStartIdx
+  if (isBaselineCumulative) {
+    currentValues = cumulativeSumFrom(currentValues, baselineStartIdx)
+  }
   const baselineLower = data[
     `${key}_baseline_lower` as keyof DatasetEntry
   ] as NumberArray
@@ -315,7 +349,9 @@ const calculateBaseline = async (
     }
   }
 
-  if (firstKey) calculateExcess(data, firstKey)
+  // When /cum endpoint is used (cumulative && s === 1), baseline is already cumulative
+  const isBaselineCumulative = cumulative && s === 1
+  if (firstKey) calculateExcess(data, firstKey, isBaselineCumulative, baselineStartIdx)
 }
 
 /**

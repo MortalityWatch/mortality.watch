@@ -89,6 +89,10 @@ export class DataTransformationPipeline {
 
       if (!config.showTotal) {
         // Cumulative percentage
+        // When showCumPi is true, data is already cumulative from /cum endpoint
+        if (config.showCumPi) {
+          return this.percentageStrategy.transform(dataRow, blDataRow)
+        }
         return this.percentageStrategy.transform(
           this.cumulativeStrategy.transform(dataRow),
           this.cumulativeStrategy.transform(blDataRow)
@@ -108,6 +112,10 @@ export class DataTransformationPipeline {
 
       if (!config.showTotal) {
         // Cumulative
+        // When showCumPi is true, data is already cumulative from /cum endpoint
+        if (config.showCumPi) {
+          return dataRow
+        }
         return this.cumulativeStrategy.transform(dataRow)
       }
 
@@ -188,6 +196,9 @@ export class DataTransformationPipeline {
    * - dataL/dataU represent the prediction interval around the excess value
    * - The percentage should show "excess as % of baseline" for both center and bounds
    * - Using baseline bounds would incorrectly mix two different uncertainty measures
+   *
+   * When showCumPi is true, data is already cumulative from /cum endpoint,
+   * so we skip the cumulative transformation to avoid double-cumulation.
    */
   private transformCumulativePercentageErrorBar(
     config: TransformConfig,
@@ -196,23 +207,19 @@ export class DataTransformationPipeline {
     dataU: number[],
     blDataRow: number[]
   ): ChartErrorDataPoint[] {
-    const cumData = this.cumulativeStrategy.transform(data)
-    const cumBl = this.cumulativeStrategy.transform(blDataRow)
-
     if (config.showCumPi) {
-      // Use transformPreservingUndefined to hide PI in baseline period
+      // Data is already cumulative from /cum endpoint - use as-is
+      // blDataRow is also already cumulative (baseline from /cum)
       return makeErrorBarData(
-        this.percentageStrategy.transform(cumData, cumBl),
-        this.percentageStrategy.transformPreservingUndefined(
-          this.cumulativeStrategy.transform(dataL),
-          cumBl
-        ),
-        this.percentageStrategy.transformPreservingUndefined(
-          this.cumulativeStrategy.transform(dataU),
-          cumBl
-        )
+        this.percentageStrategy.transform(data, blDataRow),
+        this.percentageStrategy.transformPreservingUndefined(dataL, blDataRow),
+        this.percentageStrategy.transformPreservingUndefined(dataU, blDataRow)
       )
     }
+
+    // Regular cumulative mode - apply cumsum transformation
+    const cumData = this.cumulativeStrategy.transform(data)
+    const cumBl = this.cumulativeStrategy.transform(blDataRow)
 
     return makeErrorBarData(
       this.percentageStrategy.transform(cumData, cumBl),
@@ -282,6 +289,9 @@ export class DataTransformationPipeline {
 
   /**
    * Transform cumulative absolute error bar data
+   *
+   * When showCumPi is true, data is already cumulative from /cum endpoint,
+   * so we skip the cumulative transformation to avoid double-cumulation.
    */
   private transformCumulativeAbsoluteErrorBar(
     config: TransformConfig,
@@ -290,13 +300,11 @@ export class DataTransformationPipeline {
     dataU: number[]
   ): ChartErrorDataPoint[] {
     if (config.showCumPi) {
-      return makeErrorBarData(
-        this.cumulativeStrategy.transform(data),
-        this.cumulativeStrategy.transform(dataL),
-        this.cumulativeStrategy.transform(dataU)
-      )
+      // Data is already cumulative from /cum endpoint - use as-is
+      return makeErrorBarData(data, dataL, dataU)
     }
 
+    // Regular cumulative mode - apply cumsum transformation
     return makeErrorBarData(
       this.cumulativeStrategy.transform(data),
       repeat(null, data.length),

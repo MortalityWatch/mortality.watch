@@ -197,11 +197,13 @@ describe('DataTransformationPipeline', () => {
       expect(result[2]).toMatchObject({ x: 2, y: 30, yMin: 28, yMax: 32 })
     })
 
-    it('should transform cumulative error bar data', () => {
+    it('should transform cumulative error bar data (showCumPi=true, data already cumulative)', () => {
+      // When showCumPi is true, data is already cumulative from /cum endpoint
+      // so no additional cumulative transformation is applied
       const data = {
-        key1: [10, 20, 30],
-        key1_lower: [8, 18, 28],
-        key1_upper: [12, 22, 32]
+        key1: [10, 30, 60], // Already cumulative
+        key1_lower: [8, 26, 54], // Already cumulative
+        key1_upper: [12, 34, 66] // Already cumulative
       }
       const config = {
         showPercentage: false,
@@ -214,7 +216,7 @@ describe('DataTransformationPipeline', () => {
       const result = pipeline.transformErrorBarData(config, data, 'key1')
 
       expect(result).toHaveLength(3)
-      // Cumulative: [10, 30, 60], [8, 26, 54], [12, 34, 66]
+      // Data returned as-is (already cumulative from backend)
       expect(result[0]).toMatchObject({ x: 0, y: 10, yMin: 8, yMax: 12 })
       expect(result[1]).toMatchObject({ x: 1, y: 30, yMin: 26, yMax: 34 })
       expect(result[2]).toMatchObject({ x: 2, y: 60, yMin: 54, yMax: 66 })
