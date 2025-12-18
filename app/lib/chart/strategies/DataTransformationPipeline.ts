@@ -8,6 +8,7 @@ import { PercentageTransformStrategy } from './PercentageTransformStrategy'
 import { CumulativeTransformStrategy } from './CumulativeTransformStrategy'
 import { TotalTransformStrategy } from './TotalTransformStrategy'
 import { ZScoreTransformStrategy } from './ZScoreTransformStrategy'
+import { ASDTransformStrategy } from './ASDTransformStrategy'
 
 interface TransformConfig {
   showPercentage: boolean
@@ -72,6 +73,7 @@ export class DataTransformationPipeline {
   private cumulativeStrategy = new CumulativeTransformStrategy()
   private totalStrategy = new TotalTransformStrategy()
   private zscoreStrategy = new ZScoreTransformStrategy()
+  private asdStrategy = new ASDTransformStrategy()
 
   /**
    * Transform simple data (non-error-bar data)
@@ -90,6 +92,25 @@ export class DataTransformationPipeline {
       const zscoreKey = this.zscoreStrategy.getZScoreKey(config.isAsmrType, key)
       const zscoreData = data[zscoreKey] ?? []
       return zscoreData
+    }
+
+    // ASD view: Use pre-calculated ASD data from R stats API
+    // ASD data shows age-standardized deaths using the Levitt method
+    if (config.view === 'asd' && !key.includes('baseline') && !key.includes('_lower') && !key.includes('_upper')) {
+      // For ASD view, we use the 'asd' field which contains actual age-standardized deaths
+      // The baseline 'asd_bl' contains expected deaths based on baseline mortality rate
+      const asdKey = this.asdStrategy.getASDKey()
+      const asdData = data[asdKey] ?? []
+
+      // If showing excess (difference from baseline), calculate it
+      if (key.includes('excess')) {
+        const asdBlKey = this.asdStrategy.getASDBaselineKey()
+        const asdBlData = data[asdBlKey] ?? []
+        return this.asdStrategy.calculateExcess(asdData, asdBlData)
+      }
+
+      // Otherwise return the actual ASD data
+      return asdData
     }
 
     if (config.showPercentage) {

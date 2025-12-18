@@ -72,7 +72,7 @@ function formatDateRange(dateFrom: string | undefined, dateTo: string | undefine
 /**
  * Get readable metric name from type value with view mode
  */
-function getMetricName(type: string, view?: 'mortality' | 'excess' | 'zscore'): string {
+function getMetricName(type: string, view?: 'mortality' | 'excess' | 'zscore' | 'asd'): string {
   const typeConfig = types.find(t => t.value === type)
   if (!typeConfig) return type
 
@@ -81,6 +81,11 @@ function getMetricName(type: string, view?: 'mortality' | 'excess' | 'zscore'): 
   // Z-Score view: prefix with "Z-Score "
   if (view === 'zscore') {
     return `Z-Score ${baseName}`
+  }
+
+  // ASD view: prefix with "Age-Standardized "
+  if (view === 'asd') {
+    return `Age-Standardized ${baseName}`
   }
 
   // Excess view: prefix with "Excess " (except for LE and population)
@@ -180,7 +185,7 @@ export function generateExplorerTitle(params: {
   ageGroups?: string[]
   dateFrom?: string
   dateTo?: string
-  view?: 'mortality' | 'excess' | 'zscore'
+  view?: 'mortality' | 'excess' | 'zscore' | 'asd'
 }): string {
   const {
     countries,
@@ -251,12 +256,14 @@ function formatFullDate(date: string | undefined): string {
 /**
  * Get view mode description
  */
-function getViewDescription(view: 'mortality' | 'excess' | 'zscore'): string {
+function getViewDescription(view: 'mortality' | 'excess' | 'zscore' | 'asd'): string {
   switch (view) {
     case 'zscore':
       return 'Z-Score view shows how many standard deviations the current value is from the baseline mean.'
     case 'excess':
       return 'Excess view shows the difference between observed and expected (baseline) values.'
+    case 'asd':
+      return 'Age-Standardized Deaths (ASD) view uses the Levitt method to calculate age-standardized deaths based on baseline mortality rates.'
     default:
       return ''
   }
@@ -291,7 +298,7 @@ export function generateExplorerDescription(params: {
   ageGroups?: string[]
   dateFrom?: string
   dateTo?: string
-  view?: 'mortality' | 'excess' | 'zscore'
+  view?: 'mortality' | 'excess' | 'zscore' | 'asd'
   chartType?: string
   showBaseline?: boolean
   baselineMethod?: string

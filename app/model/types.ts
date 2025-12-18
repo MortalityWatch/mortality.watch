@@ -45,7 +45,7 @@ export const stringKeys = [
  */
 
 // Base mortality metrics (always available)
-type Metric = 'deaths' | 'cmr' | 'asmr_who' | 'asmr_esp' | 'asmr_usa' | 'asmr_country' | 'le'
+type Metric = 'deaths' | 'cmr' | 'asmr_who' | 'asmr_esp' | 'asmr_usa' | 'asmr_country' | 'le' | 'asd'
 
 // le_adj (seasonally adjusted LE) - only available for sub-yearly data
 // These fields are optional since they only exist for certain chart types
@@ -95,7 +95,7 @@ export type NumberEntryFields = {
  * - <metric>_excess, <metric>_excess_lower, <metric>_excess_upper
  */
 
-const metrics = ['deaths', 'cmr', 'asmr_who', 'asmr_esp', 'asmr_usa', 'asmr_country', 'le'] as const
+const metrics = ['deaths', 'cmr', 'asmr_who', 'asmr_esp', 'asmr_usa', 'asmr_country', 'le', 'asd'] as const
 
 // le_adj fields for runtime key generation (kept separate from core metrics)
 const leAdjFields = [

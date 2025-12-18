@@ -20,6 +20,7 @@ import { BASE_VIEW } from './base'
 import { MORTALITY_VIEW } from './mortality'
 import { EXCESS_VIEW } from './excess'
 import { ZSCORE_VIEW } from './zscore'
+import { ASD_VIEW } from './asd'
 
 // Re-export types for external use
 export type { ChartContext, ReferenceLineConfig, ChartViewConfig, CompleteChartViewConfig } from './types'
@@ -46,7 +47,8 @@ function mergeWithBase(viewConfig: ChartViewConfig): CompleteChartViewConfig {
 export const CHART_VIEWS: Record<ViewType, CompleteChartViewConfig> = {
   mortality: mergeWithBase(MORTALITY_VIEW),
   excess: mergeWithBase(EXCESS_VIEW),
-  zscore: mergeWithBase(ZSCORE_VIEW)
+  zscore: mergeWithBase(ZSCORE_VIEW),
+  asd: mergeWithBase(ASD_VIEW)
 }
 
 /**

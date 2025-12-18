@@ -356,9 +356,9 @@ const handleViewChanged = async (newView: ViewType) => {
     state.getUserOverrides()
   )
 
-  // 2. For excess/zscore views, adjust dateFrom to baseline start if needed
+  // 2. For excess/zscore/asd views, adjust dateFrom to baseline start if needed
   // The visible date range is restricted to baseline start in these views
-  if (newView === 'excess' || newView === 'zscore') {
+  if (newView === 'excess' || newView === 'zscore' || newView === 'asd') {
     const baselineStart = dataOrchestration.baselineRange.value?.from
     if (baselineStart) {
       const currentFrom = resolved.state.dateFrom as string | undefined
