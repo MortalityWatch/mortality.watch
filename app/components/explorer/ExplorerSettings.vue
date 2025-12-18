@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import MortalityChartControlsSecondary from '@/components/charts/MortalityChartControlsSecondary.vue'
 import type { useExplorerState } from '@/composables/useExplorerState'
 import type { ViewType } from '@/lib/state'
+import { isSubYearlyChartType } from '@/model/utils'
 
 const props = defineProps<{
   state: ReturnType<typeof useExplorerState>
@@ -58,18 +59,9 @@ const showPredictionIntervalOption = computed(() => props.state.ui.value.predict
 // Feature access for LE seasonal adjustment
 const { can } = useFeatureAccess()
 
-// Check if chart type is sub-yearly (weekly/monthly/quarterly)
-const isSubYearlyChartType = computed(() => {
-  const chartType = props.state.chartType.value
-  // Yearly, midyear, fluseason are NOT sub-yearly
-  if (['yearly', 'midyear', 'fluseason'].includes(chartType)) return false
-  // Monthly, quarterly, and weekly variants are sub-yearly
-  return true
-})
-
 // Show LE Adjusted toggle when: type=le AND sub-yearly AND Pro user
 const showLeAdjustedOption = computed(() =>
-  props.state.type.value === 'le' && isSubYearlyChartType.value && can('ADVANCED_LE')
+  props.state.type.value === 'le' && isSubYearlyChartType(props.state.chartType.value) && can('ADVANCED_LE')
 )
 
 // Computed values derived from state

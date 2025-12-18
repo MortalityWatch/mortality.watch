@@ -62,6 +62,9 @@ export const FIELD_UPDATE_STRATEGY: Record<string, FieldUpdateType> = {
   showTotal: 'filter',
   userColors: 'filter',
 
+  // Download: LE seasonal adjustment (switches between le and le_adj columns)
+  leAdjusted: 'download',
+
   // None: Display-only, no data refresh needed
   showLabels: 'none',
   maximize: 'none',

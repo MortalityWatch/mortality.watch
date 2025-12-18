@@ -34,7 +34,7 @@ interface MetricConfig {
  * Check if chart type is sub-yearly (weekly/monthly/quarterly)
  * These are the only types that have seasonal adjustment available
  */
-const isSubYearlyChartType = (chartType?: string): boolean => {
+export const isSubYearlyChartType = (chartType?: string): boolean => {
   if (!chartType) return false
   // Yearly, midyear, fluseason are NOT sub-yearly
   if (['yearly', 'midyear', 'fluseason'].includes(chartType)) return false
