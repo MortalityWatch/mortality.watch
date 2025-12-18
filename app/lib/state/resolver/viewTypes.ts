@@ -10,7 +10,7 @@ import type { StateConstraint } from './types'
 /**
  * View Type identifiers
  */
-export type ViewType = 'mortality' | 'excess' | 'zscore'
+export type ViewType = 'mortality' | 'excess' | 'zscore' | 'asd'
 
 /**
  * Chart style types
@@ -93,6 +93,7 @@ export interface ExplorerStateValues {
   // View indicators
   isExcess: boolean
   isZScore: boolean
+  isASD: boolean
   showPredictionInterval: boolean
   showBaseline: boolean
   baselineMethod: string

@@ -63,6 +63,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       // View indicators (false by default in mortality view)
       isExcess: false,
       isZScore: false,
+      isASD: false,
 
       // Date range (undefined = use data availability defaults)
       dateFrom: undefined as string | undefined,
@@ -244,5 +245,73 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
 
     compatibleMetrics: ['cmr', 'asmr', 'deaths'], // All metrics that support baselines
     compatibleChartStyles: ['line', 'bar'] // No matrix for z-scores
+  },
+
+  /**
+   * ASD View (Age-Standardized Deaths)
+   * Analysis mode using the Levitt method for age-standardized death calculations
+   */
+  asd: {
+    id: 'asd',
+    label: 'Age-Standardized Deaths',
+    urlParam: 'asd', // URL: ?asd=1
+
+    ui: {
+      baseline: required(true), // forced ON - required for ASD calculation
+      predictionInterval: toggleable(),
+      logarithmic: hidden(), // not available in ASD
+      maximize: conditional({
+        field: 'chartStyle',
+        is: 'bar'
+      }),
+      labels: toggleable(),
+      cumulative: toggleable(),
+      percentage: toggleable(),
+      showTotal: conditional({
+        and: [
+          { field: 'chartStyle', is: 'bar' },
+          { field: 'cumulative', is: true }
+        ]
+      })
+    },
+
+    defaults: {
+      chartStyle: 'line',
+      showBaseline: true, // forced - required for ASD calculation
+      showPredictionInterval: false,
+      showPercentage: false,
+      cumulative: false,
+      showLogarithmic: false
+    },
+
+    constraints: [
+      // ASD REQUIRES baseline for calculation (priority 2 - hard constraint)
+      {
+        when: () => true,
+        apply: { showBaseline: true },
+        reason: 'Age-standardized deaths calculation requires baseline data',
+        allowUserOverride: false,
+        priority: 2
+      },
+      // ASD disables logarithmic (priority 2 - hard constraint)
+      {
+        when: () => true,
+        apply: { showLogarithmic: false },
+        reason: 'Logarithmic scale not available in ASD mode',
+        allowUserOverride: false,
+        priority: 2
+      },
+      // Cumulative OFF disables showTotal
+      {
+        when: s => s.cumulative === false,
+        apply: { showTotal: false },
+        reason: 'Show total requires cumulative mode',
+        allowUserOverride: false,
+        priority: 1
+      }
+    ],
+
+    compatibleMetrics: ['deaths'], // ASD only works with deaths data
+    compatibleChartStyles: ['line', 'bar'] // Standard chart styles
   }
 }
