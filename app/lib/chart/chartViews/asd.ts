@@ -62,7 +62,7 @@ export const ASD_VIEW: ChartViewConfig = {
   /**
    * Add: Baseline reference line (similar to excess view)
    */
-  referenceLines: (ctx: ChartContext, isDark: boolean) => {
+  referenceLines: (ctx: ChartContext, _isDark: boolean) => {
     // Only show baseline reference if not showing as percentage
     if (ctx.showBaseline && !ctx.cumulative) {
       return [
