@@ -12,6 +12,7 @@ import type {
   DataVector
 } from '../../app/model'
 import { fetchBaselineWithCircuitBreaker } from './baselineApi'
+import { serverBaselineQueue } from './baselineQueue'
 import { EXTERNAL_SERVICES, BASELINE_DATA_PRECISION } from '../../app/lib/config/constants'
 import { logger } from '../../app/lib/logger'
 
@@ -170,8 +171,8 @@ const calculateBaseline = async (
       urlPrefix: url.substring(0, 100) + '...'
     })
 
-    // Use server-side fetch with circuit breaker
-    const text = await fetchBaselineWithCircuitBreaker(url)
+    // Use server-side fetch with circuit breaker and queue
+    const text = await serverBaselineQueue.enqueue(() => fetchBaselineWithCircuitBreaker(url))
     const json = JSON.parse(text)
 
     // Update NA/null to undefined and trim forecast values (API returns input length + h)

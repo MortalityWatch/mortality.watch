@@ -7,6 +7,7 @@ import type {
 import { dataLoader } from '../dataLoader'
 import { getMaxBaselinePeriod, EXTERNAL_SERVICES, BASELINE_DATA_PRECISION } from '../config/constants'
 import { logger } from '../logger'
+import { baselineQueue } from './baselineQueue'
 
 /**
  * Cumulative sum helper starting from a specific index
@@ -288,7 +289,7 @@ const calculateBaseline = async (
         ? `${baseUrl}cum?y=${dataParam}&bs=${bs}&be=${be}&t=${trend ? 1 : 0}${xsParam}`
         : `${baseUrl}?y=${dataParam}&bs=${bs}&be=${be}&s=${s}&t=${trend ? 1 : 0}&m=${method}${xsParam}`
 
-    const text = await dataLoader.fetchBaseline(url)
+    const text = await baselineQueue.enqueue(() => dataLoader.fetchBaseline(url))
     const json = JSON.parse(text)
 
     // Update NA/null to undefined and trim forecast values (API returns input length + h)
