@@ -44,20 +44,8 @@ export const stringKeys = [
  * There is no deaths_lower, only deaths_baseline_lower and deaths_excess_lower.
  */
 
-// Base mortality metrics (always available)
+// Base mortality metrics
 type Metric = 'deaths' | 'cmr' | 'asmr_who' | 'asmr_esp' | 'asmr_usa' | 'asmr_country' | 'le'
-
-// le_adj is seasonally adjusted life expectancy (only for sub-yearly data)
-// These fields are optional since they only exist for certain chart types
-type LeAdjField
-  = | 'le_adj'
-    | 'le_adj_baseline'
-    | 'le_adj_baseline_lower'
-    | 'le_adj_baseline_upper'
-    | 'le_adj_excess'
-    | 'le_adj_excess_lower'
-    | 'le_adj_excess_upper'
-    | 'le_adj_zscore'
 
 // Generate metric field combinations
 // Each metric has: base + (baseline|excess) + optional (lower|upper) + zscore
@@ -80,8 +68,6 @@ export type NumberEntryFields = {
 } & {
   [K in ComputedMetricField]?: NumberArray // Z-scores are computed, so optional
 } & {
-  [K in LeAdjField]?: NumberArray // le_adj fields are optional (only for sub-yearly data)
-} & {
   population: NumberArray // Special case: population doesn't follow the metric pattern
 }
 
@@ -96,18 +82,6 @@ export type NumberEntryFields = {
  */
 
 const metrics = ['deaths', 'cmr', 'asmr_who', 'asmr_esp', 'asmr_usa', 'asmr_country', 'le'] as const
-
-// le_adj fields for runtime key generation (kept separate from core metrics)
-const leAdjFields = [
-  'le_adj',
-  'le_adj_baseline',
-  'le_adj_baseline_lower',
-  'le_adj_baseline_upper',
-  'le_adj_excess',
-  'le_adj_excess_lower',
-  'le_adj_excess_upper',
-  'le_adj_zscore'
-] as const
 
 // Generate all metric field combinations following the pattern
 const metricFields: MetricField[] = []
@@ -126,8 +100,8 @@ for (const metric of metrics) {
   metricFields.push(`${metric}_zscore` as MetricField)
 }
 
-// numberKeys includes population plus all auto-generated metric fields plus le_adj fields
-export const numberKeys = ['population', ...metricFields, ...leAdjFields] as const
+// numberKeys includes population plus all auto-generated metric fields
+export const numberKeys = ['population', ...metricFields] as const
 
 export const datasetEntryKeys = [...stringKeys, ...numberKeys] as const
 export type DatasetEntry = StringEntryFields & NumberEntryFields
