@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import MortalityChartControlsSecondary from '@/components/charts/MortalityChartControlsSecondary.vue'
 import type { useExplorerState } from '@/composables/useExplorerState'
 import type { ViewType } from '@/lib/state'
+import { isSubYearlyChartType } from '@/model/utils'
 
 const props = defineProps<{
   state: ReturnType<typeof useExplorerState>
@@ -31,6 +32,7 @@ const emit = defineEmits<{
   showPercentageChanged: [value: boolean]
   cumulativeChanged: [value: boolean]
   showTotalChanged: [value: boolean]
+  leAdjustedChanged: [value: boolean]
   sliderStartChanged: [value: string]
   userColorsChanged: [value: string[]]
   chartPresetChanged: [value: string]
@@ -53,6 +55,14 @@ const showPercentageOption = computed(() => props.state.ui.value.percentage?.vis
 const showCumulativeOption = computed(() => props.state.ui.value.cumulative?.visible ?? false)
 const showTotalOption = computed(() => props.state.ui.value.showTotal?.visible ?? false)
 const showPredictionIntervalOption = computed(() => props.state.ui.value.predictionInterval?.visible ?? false)
+
+// Feature access for LE seasonal adjustment
+const { can } = useFeatureAccess()
+
+// Show LE Adjusted toggle when: type=le AND sub-yearly AND Pro user
+const showLeAdjustedOption = computed(() =>
+  props.state.type.value === 'le' && isSubYearlyChartType(props.state.chartType.value) && can('ADVANCED_LE')
+)
 
 // Computed values derived from state
 const isPopulationType = computed(() => props.state.type.value === 'population')
@@ -112,6 +122,7 @@ const baselineSliderValue = computed(() => {
       :show-percentage="props.state.showPercentage.value || false"
       :cumulative="props.state.cumulative.value"
       :show-total="props.state.showTotal.value"
+      :le-adjusted="props.state.leAdjusted.value"
       :show-logarithmic-option="showLogarithmicOption"
       :show-maximize-option="showMaximizeOption"
       :show-maximize-option-disabled="props.showMaximizeOptionDisabled"
@@ -121,6 +132,7 @@ const baselineSliderValue = computed(() => {
       :show-total-option-disabled="props.showTotalOptionDisabled"
       :show-prediction-interval-option="showPredictionIntervalOption"
       :show-prediction-interval-option-disabled="props.showPredictionIntervalDisabled"
+      :show-le-adjusted-option="showLeAdjustedOption"
       :is-matrix-chart-style="isMatrixChartStyle"
       :colors="props.colors"
       :chart-preset="props.state.chartPreset.value"
@@ -144,6 +156,7 @@ const baselineSliderValue = computed(() => {
       @show-percentage-changed="emit('showPercentageChanged', $event)"
       @cumulative-changed="emit('cumulativeChanged', $event)"
       @show-total-changed="emit('showTotalChanged', $event)"
+      @le-adjusted-changed="emit('leAdjustedChanged', $event)"
       @slider-start-changed="emit('sliderStartChanged', $event)"
       @user-colors-changed="emit('userColorsChanged', $event)"
       @chart-preset-changed="emit('chartPresetChanged', $event)"

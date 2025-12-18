@@ -163,7 +163,8 @@ export const getDatasets = (
         shouldIncludeBaseline,
         config.chart.standardPopulation,
         config.chart.isExcess,
-        true
+        true,
+        { leAdjusted: config.display.leAdjusted, chartType: config.chart.chartType }
       )
       const country = config.context.allCountries[iso3c]
       if (!country) throw new Error(`No country found for iso3c ${iso3c}`)
@@ -192,20 +193,20 @@ export const getDatasets = (
               .forEach(x => sources.add(x))
           }
         }
+        const transformedData = config.chart.isErrorBarType && config.display.showPredictionInterval
+          ? transformPipeline.transformErrorBarData(
+              transformConfig,
+              dsRecord as Record<string, number[]>,
+              key
+            )
+          : transformPipeline.transformData(
+              transformConfig,
+              dsRecord as Record<string, number[]>,
+              key
+            )
         datasets.push({
           label,
-          data:
-            config.chart.isErrorBarType && config.display.showPredictionInterval
-              ? transformPipeline.transformErrorBarData(
-                  transformConfig,
-                  dsRecord as Record<string, number[]>,
-                  key
-                )
-              : transformPipeline.transformData(
-                  transformConfig,
-                  dsRecord as Record<string, number[]>,
-                  key
-                ),
+          data: transformedData,
           borderColor: config.visual.colors[countryIndex],
           backgroundColor: getBackgroundColor(key, color),
           fill: fillTarget,

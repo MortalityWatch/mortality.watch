@@ -95,7 +95,8 @@ const {
   state.baselineMethod,
   state.showBaseline,
   state.chartType,
-  state.isZScore
+  state.isZScore,
+  state.leAdjusted
 )
 
 // Adapter: Convert separate date refs to array format for DateSlider component
@@ -423,6 +424,9 @@ const handleShowLogarithmicChanged = (v: boolean) => handleUIStateChange({ field
 const handleShowPercentageChanged = (v: boolean) => handleStateChange({ field: 'showPercentage', value: v }, '_showPercentage')
 const handleCumulativeChanged = (v: boolean) => handleStateChange({ field: 'cumulative', value: v }, '_cumulative')
 const handleShowTotalChanged = (v: boolean) => handleStateChange({ field: 'showTotal', value: v }, '_showTotal')
+
+// Life expectancy seasonal adjustment
+const handleLeAdjustedChanged = (v: boolean) => handleStateChange({ field: 'leAdjusted', value: v }, '_leAdjusted')
 
 // Colors
 const handleUserColorsChanged = (v: string[] | undefined) => handleStateChange({ field: 'userColors', value: v }, '_userColors')
@@ -753,6 +757,7 @@ watch(
             @show-percentage-changed="handleShowPercentageChanged"
             @cumulative-changed="handleCumulativeChanged"
             @show-total-changed="handleShowTotalChanged"
+            @le-adjusted-changed="handleLeAdjustedChanged"
             @slider-start-changed="handleSliderStartChanged"
             @user-colors-changed="handleUserColorsChanged"
             @chart-preset-changed="handleChartPresetChanged"

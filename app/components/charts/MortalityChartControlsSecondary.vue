@@ -55,6 +55,8 @@ const props = defineProps<{
   showCaption: boolean
   showTitle: boolean
   decimals: string
+  leAdjusted: boolean
+  showLeAdjustedOption: boolean
 }>()
 
 // Emits
@@ -74,6 +76,7 @@ const emit = defineEmits<{
   showPercentageChanged: [value: boolean]
   cumulativeChanged: [value: boolean]
   showTotalChanged: [value: boolean]
+  leAdjustedChanged: [value: boolean]
   userColorsChanged: [value: string[]]
   sliderStartChanged: [value: string]
   chartPresetChanged: [value: string]
@@ -189,6 +192,11 @@ const cumulative = computed({
 const showTotal = computed({
   get: () => props.showTotal,
   set: (v: boolean) => emit('showTotalChanged', v)
+})
+
+const leAdjusted = computed({
+  get: () => props.leAdjusted,
+  set: (v: boolean) => emit('leAdjustedChanged', v)
 })
 
 const _sliderStart = computed({
@@ -333,6 +341,7 @@ const activeTab = ref('data')
         :show-percentage="props.showPercentage || false"
         :cumulative="props.cumulative"
         :show-total="props.showTotal"
+        :le-adjusted="props.leAdjusted"
         :is-population-type="props.isPopulationType"
         :show-baseline-option="showBaselineOption"
         :show-prediction-interval-option-disabled="props.showPredictionIntervalOptionDisabled"
@@ -344,6 +353,7 @@ const activeTab = ref('data')
         :show-percentage-option="props.showPercentageOption"
         :show-cumulative-option="props.showCumulativeOption"
         :show-total-option="props.showTotalOption"
+        :show-le-adjusted-option="props.showLeAdjustedOption"
         :chart-preset="chartPreset"
         :chart-preset-options="chartPresetOptions"
         @update:show-baseline="showBaseline = $event"
@@ -353,6 +363,7 @@ const activeTab = ref('data')
         @update:show-percentage="showPercentage = $event"
         @update:cumulative="cumulative = $event"
         @update:show-total="showTotal = $event"
+        @update:le-adjusted="leAdjusted = $event"
         @update:chart-preset="chartPreset = $event"
       />
 

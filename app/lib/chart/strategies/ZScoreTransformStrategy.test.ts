@@ -24,6 +24,16 @@ describe('ZScoreTransformStrategy', () => {
       expect(result).toBe('cmr_zscore')
     })
 
+    it('should return z-score key for le (non-ASMR)', () => {
+      const result = strategy.getZScoreKey(false, 'le')
+      expect(result).toBe('le_zscore')
+    })
+
+    it('should return z-score key for le_adj (seasonally adjusted LE)', () => {
+      const result = strategy.getZScoreKey(false, 'le_adj')
+      expect(result).toBe('le_adj_zscore')
+    })
+
     it('should return z-score key for asmr_who (ASMR)', () => {
       const result = strategy.getZScoreKey(true, 'asmr_who')
       expect(result).toBe('asmr_who_zscore')

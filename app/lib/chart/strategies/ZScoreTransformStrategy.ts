@@ -19,8 +19,11 @@ export class ZScoreTransformStrategy {
     if (isAsmr) {
       // For ASMR: asmr_who -> asmr_who_zscore
       return `${key.split('_')[0]}_${key.split('_')[1]}_zscore`
+    } else if (key === 'le_adj') {
+      // For seasonally adjusted LE: le_adj -> le_adj_zscore
+      return 'le_adj_zscore'
     } else {
-      // For other metrics: deaths -> deaths_zscore
+      // For other metrics: deaths -> deaths_zscore, le -> le_zscore
       return `${key.split('_')[0]}_zscore`
     }
   }

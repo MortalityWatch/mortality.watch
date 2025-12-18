@@ -3,7 +3,8 @@ import {
   getChartTypeOrdinal,
   getChartTypeFromOrdinal,
   getKeyForType,
-  getBaseKeysForType
+  getBaseKeysForType,
+  isSubYearlyChartType
 } from './utils'
 
 describe('app/model/utils', () => {
@@ -303,6 +304,132 @@ describe('app/model/utils', () => {
 
     it('should throw error for unknown type', () => {
       expect(() => getBaseKeysForType('unknown', false, 'who')).toThrow('Unknown type key provided.')
+    })
+  })
+
+  describe('isSubYearlyChartType', () => {
+    it('should return false for yearly chart type', () => {
+      expect(isSubYearlyChartType('yearly')).toBe(false)
+    })
+
+    it('should return false for midyear chart type', () => {
+      expect(isSubYearlyChartType('midyear')).toBe(false)
+    })
+
+    it('should return false for fluseason chart type', () => {
+      expect(isSubYearlyChartType('fluseason')).toBe(false)
+    })
+
+    it('should return true for monthly chart type', () => {
+      expect(isSubYearlyChartType('monthly')).toBe(true)
+    })
+
+    it('should return true for quarterly chart type', () => {
+      expect(isSubYearlyChartType('quarterly')).toBe(true)
+    })
+
+    it('should return true for weekly chart type', () => {
+      expect(isSubYearlyChartType('weekly')).toBe(true)
+    })
+
+    it('should return true for weekly variants', () => {
+      expect(isSubYearlyChartType('weekly_13w_sma')).toBe(true)
+      expect(isSubYearlyChartType('weekly_26w_sma')).toBe(true)
+      expect(isSubYearlyChartType('weekly_52w_sma')).toBe(true)
+      expect(isSubYearlyChartType('weekly_104w_sma')).toBe(true)
+    })
+
+    it('should return false for undefined', () => {
+      expect(isSubYearlyChartType(undefined)).toBe(false)
+    })
+
+    it('should return false for empty string', () => {
+      expect(isSubYearlyChartType('')).toBe(false)
+    })
+
+    it('should return false for unknown chart types', () => {
+      expect(isSubYearlyChartType('unknown')).toBe(false)
+      expect(isSubYearlyChartType('daily')).toBe(false)
+    })
+  })
+
+  describe('getKeyForType with leAdjusted option (LE seasonal adjustment)', () => {
+    describe('LE with leAdjusted=true and sub-yearly chart types', () => {
+      it('should return le_adj for monthly chart type', () => {
+        expect(getKeyForType('le', false, 'who', false, false, { leAdjusted: true, chartType: 'monthly' }))
+          .toEqual(['le_adj'])
+      })
+
+      it('should return le_adj for weekly chart type', () => {
+        expect(getKeyForType('le', false, 'who', false, false, { leAdjusted: true, chartType: 'weekly' }))
+          .toEqual(['le_adj'])
+      })
+
+      it('should return le_adj for quarterly chart type', () => {
+        expect(getKeyForType('le', false, 'who', false, false, { leAdjusted: true, chartType: 'quarterly' }))
+          .toEqual(['le_adj'])
+      })
+
+      it('should return le_adj with baseline keys when showBaseline is true', () => {
+        expect(getKeyForType('le', true, 'who', false, false, { leAdjusted: true, chartType: 'monthly' }))
+          .toEqual(['le_adj', 'le_adj_baseline', 'le_adj_baseline_lower', 'le_adj_baseline_upper'])
+      })
+    })
+
+    describe('LE with leAdjusted=true and yearly chart types (no adjustment available)', () => {
+      it('should return le for yearly chart type (no le_adj for yearly)', () => {
+        expect(getKeyForType('le', false, 'who', false, false, { leAdjusted: true, chartType: 'yearly' }))
+          .toEqual(['le'])
+      })
+
+      it('should return le for midyear chart type', () => {
+        expect(getKeyForType('le', false, 'who', false, false, { leAdjusted: true, chartType: 'midyear' }))
+          .toEqual(['le'])
+      })
+
+      it('should return le for fluseason chart type', () => {
+        expect(getKeyForType('le', false, 'who', false, false, { leAdjusted: true, chartType: 'fluseason' }))
+          .toEqual(['le'])
+      })
+    })
+
+    describe('LE with leAdjusted=false (raw values)', () => {
+      it('should return le for monthly chart type when leAdjusted is false', () => {
+        expect(getKeyForType('le', false, 'who', false, false, { leAdjusted: false, chartType: 'monthly' }))
+          .toEqual(['le'])
+      })
+
+      it('should return le for weekly chart type when leAdjusted is false', () => {
+        expect(getKeyForType('le', false, 'who', false, false, { leAdjusted: false, chartType: 'weekly' }))
+          .toEqual(['le'])
+      })
+    })
+
+    describe('LE without options (backward compatibility)', () => {
+      it('should return le when no options provided', () => {
+        expect(getKeyForType('le', false, 'who')).toEqual(['le'])
+      })
+
+      it('should return le with baseline when no options provided', () => {
+        expect(getKeyForType('le', true, 'who')).toEqual([
+          'le',
+          'le_baseline',
+          'le_baseline_lower',
+          'le_baseline_upper'
+        ])
+      })
+    })
+
+    describe('non-LE types ignore leAdjusted option', () => {
+      it('deaths should ignore leAdjusted option', () => {
+        expect(getKeyForType('deaths', false, 'who', false, false, { leAdjusted: true, chartType: 'monthly' }))
+          .toEqual(['deaths'])
+      })
+
+      it('asmr should ignore leAdjusted option', () => {
+        expect(getKeyForType('asmr', false, 'who', false, false, { leAdjusted: true, chartType: 'monthly' }))
+          .toEqual(['asmr_who'])
+      })
     })
   })
 })

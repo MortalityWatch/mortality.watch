@@ -188,7 +188,13 @@ export function useExplorerDataOrchestration(
     return getKeyForType(
       state.type.value,
       state.showBaseline.value,
-      state.standardPopulation.value
+      state.standardPopulation.value,
+      false, // isExcess
+      false, // includePi
+      {
+        leAdjusted: state.leAdjusted.value,
+        chartType: state.chartType.value
+      }
     )[0]
   })
 
@@ -317,6 +323,7 @@ export function useExplorerDataOrchestration(
     showLabels: state.showLabels.value,
     showPercentage: state.showPercentage.value,
     showLogarithmic: state.showLogarithmic.value,
+    leAdjusted: state.leAdjusted.value,
     userColors: state.userColors.value,
     decimals: state.decimals.value
   })

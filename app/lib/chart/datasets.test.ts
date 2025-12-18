@@ -38,7 +38,8 @@ describe('datasets', () => {
       showCumPi: false,
       showBaseline: false,
       showPredictionInterval: false,
-      view: 'mortality'
+      view: 'mortality',
+      leAdjusted: false
     },
     chart: {
       type: 'deaths',
