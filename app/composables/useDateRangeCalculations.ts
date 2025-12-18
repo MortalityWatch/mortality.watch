@@ -124,7 +124,7 @@ export function useDateRangeCalculations(
   dateFrom: Ref<string | null | undefined>,
   dateTo: Ref<string | null | undefined>,
   allLabels: Ref<string[]>,
-  viewOptions?: ViewRestrictionOptions
+  _viewOptions?: ViewRestrictionOptions
 ): DateRangeCalculations {
   // Feature access for extended time periods (year 2000 restriction)
   const { can } = useFeatureAccess()
