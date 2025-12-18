@@ -64,9 +64,11 @@ export function processCountryRow(options: ProcessCountryRowOptions): { row: Tab
     dataLabels,
     metaData,
     explorerLink,
-    display: { showPercentage, cumulative, hideIncomplete },
+    display: { showPercentage, cumulative, hideIncomplete, displayMode },
     totalRowKey
   } = options
+
+  const isAbsolute = displayMode === 'absolute'
 
   const row: Record<string, string | number | undefined> = {
     country: metaData[iso3c]?.jurisdiction || iso3c,
@@ -76,31 +78,58 @@ export function processCountryRow(options: ProcessCountryRowOptions): { row: Tab
 
   const hasData: boolean[] = []
 
-  // Extract metric and baseline data
-  const metric = (countryData[`${dataKey}_excess` as keyof DatasetEntry] || []).slice(
-    startIndex,
-    endIndex
-  ) as number[]
-  const metricLower = (countryData[`${dataKey}_excess_lower` as keyof DatasetEntry] || []).slice(
-    startIndex,
-    endIndex
-  ) as number[]
-  const metricUpper = (countryData[`${dataKey}_excess_upper` as keyof DatasetEntry] || []).slice(
-    startIndex,
-    endIndex
-  ) as number[]
-  const baseline = (countryData[`${dataKey}_baseline` as keyof DatasetEntry] || []).slice(
-    startIndex,
-    endIndex
-  ) as number[]
-  const baselineLower = (countryData[`${dataKey}_baseline_lower` as keyof DatasetEntry] || []).slice(
-    startIndex,
-    endIndex
-  ) as number[]
-  const baselineUpper = (countryData[`${dataKey}_baseline_upper` as keyof DatasetEntry] || []).slice(
-    startIndex,
-    endIndex
-  ) as number[]
+  // For absolute mode: use raw values directly (no baseline/excess calculation needed)
+  // For relative mode: use excess values (observed - baseline)
+  let metric: number[]
+  let metricLower: number[]
+  let metricUpper: number[]
+  let baseline: number[]
+  let baselineLower: number[]
+  let baselineUpper: number[]
+
+  if (isAbsolute) {
+    // Absolute mode: read raw values directly from the data key
+    metric = (countryData[dataKey as keyof DatasetEntry] || []).slice(
+      startIndex,
+      endIndex
+    ) as number[]
+    // No prediction intervals in absolute mode
+    metricLower = metric
+    metricUpper = metric
+    baseline = [] // Not used in absolute mode
+    baselineLower = []
+    baselineUpper = []
+  } else {
+    // Relative mode: use excess and baseline data
+    const excess = (countryData[`${dataKey}_excess` as keyof DatasetEntry] || []).slice(
+      startIndex,
+      endIndex
+    ) as number[]
+    const excessLower = (countryData[`${dataKey}_excess_lower` as keyof DatasetEntry] || []).slice(
+      startIndex,
+      endIndex
+    ) as number[]
+    const excessUpper = (countryData[`${dataKey}_excess_upper` as keyof DatasetEntry] || []).slice(
+      startIndex,
+      endIndex
+    ) as number[]
+    baseline = (countryData[`${dataKey}_baseline` as keyof DatasetEntry] || []).slice(
+      startIndex,
+      endIndex
+    ) as number[]
+    baselineLower = (countryData[`${dataKey}_baseline_lower` as keyof DatasetEntry] || []).slice(
+      startIndex,
+      endIndex
+    ) as number[]
+    baselineUpper = (countryData[`${dataKey}_baseline_upper` as keyof DatasetEntry] || []).slice(
+      startIndex,
+      endIndex
+    ) as number[]
+
+    metric = excess
+    metricLower = excessLower
+    metricUpper = excessUpper
+  }
 
   // Calculate cumulative sums
   const arrays = [metric, metricLower, metricUpper, baseline]
@@ -108,8 +137,20 @@ export function processCountryRow(options: ProcessCountryRowOptions): { row: Tab
     cumulativeSum(sanitizeArray(arr))
   )
 
-  // Calculate relative excess if needed
-  if (showPercentage) {
+  // Calculate total row value based on display mode
+  if (isAbsolute) {
+    // For absolute mode, show average of valid values (since rates/LE don't sum meaningfully)
+    const validMetric = metric.filter(v => v != null && !isNaN(v))
+    const validMetricLower = metricLower.filter(v => v != null && !isNaN(v))
+    const validMetricUpper = metricUpper.filter(v => v != null && !isNaN(v))
+
+    const average = (arr: number[]) => arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : NaN
+
+    row[totalRowKey] = average(validMetric)
+    row[`${totalRowKey}_l`] = average(validMetricLower)
+    row[`${totalRowKey}_u`] = average(validMetricUpper)
+  } else if (showPercentage) {
+    // For relative mode with percentage, show relative excess ratio
     const { excessCum, excessCumLower, excessCumUpper } = calculateRelativeExcessArrays(
       cumMetric,
       cumMetricLower,
@@ -125,7 +166,7 @@ export function processCountryRow(options: ProcessCountryRowOptions): { row: Tab
     row[`${totalRowKey}_l`] = last(filteredExcessCumLower)
     row[`${totalRowKey}_u`] = last(filteredExcessCumUpper)
   } else {
-    // For absolute mode, use cumulative sum as total
+    // For relative mode without percentage, show cumulative excess
     const filteredCumMetric = (cumMetric || []).filter(v => v != null && !isNaN(v))
     const filteredCumMetricLower = (cumMetricLower || []).filter(v => v != null && !isNaN(v))
     const filteredCumMetricUpper = (cumMetricUpper || []).filter(v => v != null && !isNaN(v))
@@ -143,7 +184,19 @@ export function processCountryRow(options: ProcessCountryRowOptions): { row: Tab
     const label = dataLabels[i]
     if (!label) continue
 
-    if (showPercentage) {
+    if (isAbsolute) {
+      // Absolute mode: show actual values (already computed in metric array)
+      // Treat 0 or near-zero as missing data (actual rates are never exactly 0)
+      const val = metricVal[i]
+      const valLower = metricLower[i]
+      const valUpper = metricUpper[i]
+      const isMissing = val === undefined || val === null || val === 0 || Math.abs(val) < 0.001
+
+      row[label] = isMissing ? Number.MIN_SAFE_INTEGER : round(val, 3)
+      row[`${label}_l`] = isMissing ? Number.MIN_SAFE_INTEGER : round(valLower || 0, 3)
+      row[`${label}_u`] = isMissing ? Number.MIN_SAFE_INTEGER : round(valUpper || 0, 3)
+    } else if (showPercentage) {
+      // Relative mode with percentage: show excess as ratio of baseline
       const metVal = metricVal[i]
       const metLower = metricLower[i]
       const metUpper = metricUpper[i]
@@ -155,6 +208,7 @@ export function processCountryRow(options: ProcessCountryRowOptions): { row: Tab
       row[`${label}_l`] = round(calculateRelativeExcess(metLower, baseLower), 3)
       row[`${label}_u`] = round(calculateRelativeExcess(metUpper, baseUpper), 3)
     } else {
+      // Relative mode without percentage: show excess values
       row[label] = round(metricVal[i] || 0, 3)
       row[`${label}_l`] = round(metricLower[i] || 0, 3)
       row[`${label}_u`] = round(metricUpper[i] || 0, 3)

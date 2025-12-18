@@ -258,15 +258,19 @@ export function useRankingData(
     // Determine base type for getKeyForType
     const baseType = metricType === 'le' ? 'le' : metricType
 
+    // In absolute mode, skip baseline calculations entirely (no stats API calls needed)
+    const isAbsoluteMode = state.displayMode.value === 'absolute'
+
     // Use shared data fetcher
     const result = await dataFetcher.fetchChartData({
       chartType: periodOfTime as ChartType,
       countries: countryFilter,
       ageGroups: ageFilter,
       dataKey,
-      baselineMethod: state.baselineMethod.value || 'mean',
-      baselineDateFrom: state.baselineDateFrom.value,
-      baselineDateTo: state.baselineDateTo.value,
+      // Skip baseline method in absolute mode to avoid stats API calls
+      baselineMethod: isAbsoluteMode ? undefined : (state.baselineMethod.value || 'mean'),
+      baselineDateFrom: isAbsoluteMode ? undefined : state.baselineDateFrom.value,
+      baselineDateTo: isAbsoluteMode ? undefined : state.baselineDateTo.value,
       sliderStart: sliderStart.value, // Layer 2 offset
       cumulative: state.cumulative.value,
       isAsmr: metricType === 'asmr',
@@ -361,7 +365,8 @@ export function useRankingData(
           display: {
             showPercentage: state.showPercentage.value,
             cumulative: state.cumulative.value,
-            hideIncomplete
+            hideIncomplete,
+            displayMode: state.displayMode.value
           },
           totalRowKey: total_row_key
         })
@@ -436,6 +441,7 @@ export function useRankingData(
       () => state.periodOfTime.value,
       () => state.jurisdictionType.value,
       () => state.metricType.value,
+      () => state.displayMode.value,
       () => state.standardPopulation.value,
       () => state.baselineMethod.value,
       () => state.cumulative.value

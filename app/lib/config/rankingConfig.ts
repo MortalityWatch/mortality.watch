@@ -13,14 +13,17 @@
 export interface RankingUIState {
   // Visibility - what options are shown
   showStandardPopulation: boolean
+  showBaselineOptions: boolean // Hidden in absolute mode
 
   // Disabled States - what options are disabled
   standardPopulationDisabled: boolean
   totalsOnlyDisabled: boolean
   predictionIntervalDisabled: boolean
+  percentageDisabled: boolean // Disabled in absolute mode
 
   // Computed Values
-  isExcessMode: boolean // Always true for ranking (excess mortality)
+  isAbsoluteMode: boolean // True when showing absolute values
+  isRelativeMode: boolean // True when showing relative/excess values
 }
 
 // ============================================================================
@@ -66,6 +69,7 @@ export const RANKING_METRIC_CONFIGS: Record<string, RankingMetricConfig> = {
  * visible/disabled based on the combination of settings.
  *
  * @param metricType - The selected metric type ('cmr', 'asmr', or 'le')
+ * @param displayMode - The display mode ('absolute' or 'relative')
  * @param showTotals - Whether the totals column is shown
  * @param cumulative - Whether cumulative mode is active
  * @param showTotalsOnly - Whether only the total column is shown
@@ -73,15 +77,18 @@ export const RANKING_METRIC_CONFIGS: Record<string, RankingMetricConfig> = {
  */
 export function computeRankingUIState(
   metricType: string,
+  displayMode: string,
   showTotals: boolean,
   cumulative: boolean,
   showTotalsOnly: boolean
 ): RankingUIState {
   const metricConfig = RANKING_METRIC_CONFIGS[metricType] || RANKING_METRIC_CONFIGS.asmr!
+  const isAbsolute = displayMode === 'absolute'
 
   return {
     // Visibility
     showStandardPopulation: true, // Always shown, but disabled for CMR and LE
+    showBaselineOptions: !isAbsolute, // Hide baseline options in absolute mode
 
     // Disabled States
     // Standard Population is only relevant for ASMR
@@ -94,8 +101,12 @@ export function computeRankingUIState(
     // Reason: PI is per-period, but cumulative sums and totals aggregate across periods
     predictionIntervalDisabled: cumulative || showTotalsOnly,
 
+    // Percentage toggle disabled in absolute mode (absolute values aren't percentages)
+    percentageDisabled: isAbsolute,
+
     // Computed Values
-    isExcessMode: true // Ranking always shows excess mortality
+    isAbsoluteMode: isAbsolute,
+    isRelativeMode: !isAbsolute
   }
 }
 
@@ -119,19 +130,30 @@ export function shouldEnableStandardPopulation(metricType: string): boolean {
 
 /**
  * Get metric items for dropdown selector
+ * Uses full name with abbreviation to match explorer page format
  */
 export function getMetricTypeItems() {
   return Object.values(RANKING_METRIC_CONFIGS).map(config => ({
     value: config.value,
-    label: config.shortName
+    label: `${config.name} (${config.shortName})`
   }))
+}
+
+/**
+ * Get display mode items for dropdown/toggle selector
+ */
+export function getDisplayModeItems() {
+  return [
+    { value: 'relative', label: 'Relative' },
+    { value: 'absolute', label: 'Absolute' }
+  ]
 }
 
 /**
  * Get user-friendly explanation for why an option is disabled
  */
 const disabledReasons: Record<
-  'standardPopulation' | 'totalsOnly' | 'predictionInterval',
+  'standardPopulation' | 'totalsOnly' | 'predictionInterval' | 'percentage',
   (state: RankingUIState) => string | null
 > = {
   standardPopulation: state =>
@@ -143,11 +165,15 @@ const disabledReasons: Record<
   predictionInterval: state =>
     state.predictionIntervalDisabled
       ? 'Prediction Interval is not available in cumulative or totals-only mode'
+      : null,
+  percentage: state =>
+    state.percentageDisabled
+      ? 'Percentage is only available in Relative mode'
       : null
 }
 
 export function getDisabledReason(
-  option: 'standardPopulation' | 'totalsOnly' | 'predictionInterval',
+  option: 'standardPopulation' | 'totalsOnly' | 'predictionInterval' | 'percentage',
   state: RankingUIState
 ): string | null {
   return disabledReasons[option]?.(state) ?? null

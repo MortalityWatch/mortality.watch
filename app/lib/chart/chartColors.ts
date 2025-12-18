@@ -157,7 +157,7 @@ export const greenColor = (isDarkOverride?: boolean) => {
   return !isDark ? '#44781d' : '#5f8b3e'
 }
 
-// CSS class names for diverging color scale (used in ranking table)
+// CSS class names for diverging color scale (used in ranking table - excess mode)
 export const color_scale_diverging_css = () => [
   'color-scale-1',
   'color-scale-2',
@@ -169,3 +169,129 @@ export const color_scale_diverging_css = () => [
   'color-scale-8',
   'color-scale-9'
 ]
+
+// CSS class names for Life Expectancy scale (high = good/green, low = bad/red)
+export const color_scale_le_css = () => [
+  'color-scale-le-1',
+  'color-scale-le-2',
+  'color-scale-le-3',
+  'color-scale-le-4',
+  'color-scale-le-5',
+  'color-scale-le-6',
+  'color-scale-le-7',
+  'color-scale-le-8',
+  'color-scale-le-9'
+]
+
+// CSS class names for mortality rate scale (high = bad/red, low = good/light)
+export const color_scale_mr_css = () => [
+  'color-scale-mr-1',
+  'color-scale-mr-2',
+  'color-scale-mr-3',
+  'color-scale-mr-4',
+  'color-scale-mr-5',
+  'color-scale-mr-6',
+  'color-scale-mr-7',
+  'color-scale-mr-8',
+  'color-scale-mr-9'
+]
+
+// ============================================================================
+// Continuous Color Scales for Ranking Table (using chroma.js + ColorBrewer)
+// ============================================================================
+
+/**
+ * ColorBrewer palettes for ranking table coloring.
+ * These are perceptually uniform and colorblind-friendly.
+ *
+ * See: https://colorbrewer2.org/
+ */
+const BREWER_PALETTES = {
+  // Diverging: Blue (negative) → White → Red (positive) for excess mortality
+  RdBu: chroma.brewer.RdBu,
+  // Sequential: Orange-Red for mortality rates (higher = worse)
+  OrRd: chroma.brewer.OrRd,
+  // Sequential: Red-Yellow-Green for life expectancy (higher = better)
+  RdYlGn: chroma.brewer.RdYlGn
+}
+
+/**
+ * Creates a continuous color scale function for ranking table cells.
+ * Uses ColorBrewer palettes for perceptual uniformity.
+ * Returns both background color and appropriate text color for contrast.
+ *
+ * Scale types:
+ * - Relative mode: RdBu diverging (blue=negative, white=zero, red=positive)
+ * - Absolute LE: RdYlGn (red=low/bad, green=high/good)
+ * - Absolute CMR/ASMR: OrRd (light=low/good, red=high/bad)
+ */
+export function createRankingColorScale(
+  values: number[],
+  displayMode: 'absolute' | 'relative',
+  metricType: 'cmr' | 'asmr' | 'le',
+  isDark?: boolean
+): (value: number) => { bg: string, text: string } {
+  // Filter out invalid values
+  const validValues = values.filter(v =>
+    v !== undefined
+    && v !== null
+    && !isNaN(v)
+    && v !== Number.MIN_SAFE_INTEGER
+  )
+
+  const darkMode = resolveDarkMode(isDark)
+
+  if (validValues.length === 0) {
+    return () => ({ bg: 'transparent', text: darkMode ? '#ffffff' : '#111111' })
+  }
+
+  // Determine palette and domain based on display mode and metric type
+  let palette: string[]
+  let domain: number[]
+
+  if (displayMode === 'relative') {
+    // Diverging scale centered on 0: RdBu (reversed so blue=negative, red=positive)
+    palette = [...BREWER_PALETTES.RdBu].reverse()
+    const maxAbs = Math.max(...validValues.map(Math.abs))
+    // Ensure some spread even if all values are near 0
+    const spread = maxAbs || 1
+    domain = [-spread, 0, spread]
+  } else if (metricType === 'le') {
+    // Life expectancy: higher is better - RdYlGn (red=low, green=high)
+    palette = BREWER_PALETTES.RdYlGn
+    const min = Math.min(...validValues)
+    const max = Math.max(...validValues)
+    domain = [min, max]
+  } else {
+    // CMR/ASMR: higher is worse - OrRd (light=low, red=high)
+    palette = BREWER_PALETTES.OrRd
+    const min = Math.min(...validValues)
+    const max = Math.max(...validValues)
+    domain = [min, max]
+  }
+
+  // Create chroma scale with LAB interpolation for perceptual uniformity
+  const scale = chroma.scale(palette).domain(domain).mode('lab')
+
+  return (value: number) => {
+    if (value === undefined || value === null || isNaN(value) || value === Number.MIN_SAFE_INTEGER) {
+      return { bg: 'transparent', text: darkMode ? '#ffffff' : '#111111' }
+    }
+
+    let bgColor = scale(value).hex()
+
+    // Adjust for dark mode - reduce lightness while preserving hue
+    if (darkMode) {
+      const hsl = chroma(bgColor).hsl()
+      // Reduce lightness for dark theme
+      const newLightness = Math.max(0.12, (hsl[2] || 0) * 0.4)
+      bgColor = chroma.hsl(hsl[0] || 0, Math.min(1, (hsl[1] || 0) * 1.1), newLightness).hex()
+    }
+
+    // Determine text color based on background luminance for readability
+    const luminance = chroma(bgColor).luminance()
+    const textColor = luminance > 0.35 ? '#111111' : '#ffffff'
+
+    return { bg: bgColor, text: textColor }
+  }
+}

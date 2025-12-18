@@ -17,6 +17,7 @@ import {
 
 export function useRankingUIState(
   metricType: Ref<string> | ComputedRef<string>,
+  displayMode: Ref<string> | ComputedRef<string>,
   showTotals: Ref<boolean> | ComputedRef<boolean>,
   cumulative: Ref<boolean> | ComputedRef<boolean>,
   showTotalsOnly: Ref<boolean> | ComputedRef<boolean>
@@ -24,6 +25,7 @@ export function useRankingUIState(
   const uiState = computed<RankingUIState>(() =>
     computeRankingUIState(
       unref(metricType),
+      unref(displayMode),
       unref(showTotals),
       unref(cumulative),
       unref(showTotalsOnly)
@@ -42,14 +44,17 @@ export function useRankingUIState(
 
     // Convenience computed properties (extract from uiState)
     showStandardPopulation: computed(() => uiState.value.showStandardPopulation),
+    showBaselineOptions: computed(() => uiState.value.showBaselineOptions),
     standardPopulationDisabled: computed(() => uiState.value.standardPopulationDisabled),
     totalsOnlyDisabled: computed(() => uiState.value.totalsOnlyDisabled),
     predictionIntervalDisabled: computed(() => uiState.value.predictionIntervalDisabled),
-    isExcessMode: computed(() => uiState.value.isExcessMode),
+    percentageDisabled: computed(() => uiState.value.percentageDisabled),
+    isAbsoluteMode: computed(() => uiState.value.isAbsoluteMode),
+    isRelativeMode: computed(() => uiState.value.isRelativeMode),
 
     // Helper functions
     isStandardPopulationEnabled: computed(() => shouldEnableStandardPopulation(unref(metricType))),
-    getDisabledReason: (option: 'standardPopulation' | 'totalsOnly' | 'predictionInterval') =>
+    getDisabledReason: (option: 'standardPopulation' | 'totalsOnly' | 'predictionInterval' | 'percentage') =>
       getDisabledReason(option, uiState.value)
   }
 }

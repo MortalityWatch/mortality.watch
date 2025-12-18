@@ -83,6 +83,7 @@ const {
   periodOfTime,
   jurisdictionType,
   metricType,
+  displayMode,
   showTotals,
   showTotalsOnly,
   showPercentage,
@@ -274,20 +275,27 @@ const totalPages = computed(() => getTotalPages(sortedResult.value))
 // Memoized title computation for performance
 const title = computed(() => {
   let titleResult = ''
+  const isAbsolute = displayMode.value === 'absolute'
 
-  // Build title based on metric type
-  if (metricType.value === 'le') {
-    titleResult = isMobile()
-      ? 'Change in LE'
-      : 'Change in Life Expectancy'
-  } else if (metricType.value === 'asmr') {
-    titleResult = isMobile()
-      ? 'Excess ASMR'
-      : 'Excess Age-Standardized Mortality Rate'
+  // Build title based on metric type and display mode
+  if (isAbsolute) {
+    // Absolute mode: no "Excess" or "Change in" prefix
+    if (metricType.value === 'le') {
+      titleResult = isMobile() ? 'LE' : 'Life Expectancy'
+    } else if (metricType.value === 'asmr') {
+      titleResult = isMobile() ? 'ASMR' : 'Age-Standardized Mortality Rate'
+    } else {
+      titleResult = isMobile() ? 'CMR' : 'Crude Mortality Rate'
+    }
   } else {
-    titleResult = isMobile()
-      ? 'Excess CMR'
-      : 'Excess Crude Mortality Rate'
+    // Relative mode: "Excess" for CMR/ASMR, "Change in" for LE
+    if (metricType.value === 'le') {
+      titleResult = isMobile() ? 'Change in LE' : 'Change in Life Expectancy'
+    } else if (metricType.value === 'asmr') {
+      titleResult = isMobile() ? 'Excess ASMR' : 'Excess Age-Standardized Mortality Rate'
+    } else {
+      titleResult = isMobile() ? 'Excess CMR' : 'Excess Crude Mortality Rate'
+    }
   }
 
   if (selectedJurisdictionType.value !== 'countries') {
@@ -300,6 +308,10 @@ const title = computed(() => {
 })
 
 const subtitle = computed(() => {
+  // No baseline subtitle in absolute mode
+  if (displayMode.value === 'absolute') {
+    return ''
+  }
   if (!baselineSliderValue.value[0] || !baselineSliderValue.value[1]) {
     return ''
   }
@@ -317,7 +329,9 @@ const displaySettings = computed(() => ({
   totalRowKey: 'TOTAL',
   selectedBaselineMethod: selectedBaselineMethod.value || 'mean',
   decimalPrecision: selectedDecimalPrecision.value || '1',
-  subtitle: subtitle.value
+  subtitle: subtitle.value,
+  displayMode: displayMode.value,
+  metricType: metricType.value
 }))
 
 // ============================================================================
@@ -391,6 +405,7 @@ const {
     dateFrom: sliderValue.value[0],
     dateTo: sliderValue.value[1],
     metricType: metricType.value,
+    displayMode: displayMode.value,
     showTotalsOnly: showTotalsOnly.value
   })
 })
@@ -399,6 +414,7 @@ const {
 const rankingStateData = computed(() => ({
   // Main type selection
   m: metricType.value,
+  dm: displayMode.value,
   p: selectedPeriodOfTime.value,
   j: selectedJurisdictionType.value,
 
@@ -459,6 +475,7 @@ const getDefaultRankingTitle = () => {
     dateFrom: sliderValue.value[0],
     dateTo: sliderValue.value[1],
     metricType: metricType.value,
+    displayMode: displayMode.value,
     showTotalsOnly: showTotalsOnly.value
   })
 }
@@ -591,6 +608,7 @@ const exportJSON = () => {
 watch(
   [
     metricType,
+    displayMode,
     selectedPeriodOfTime,
     selectedJurisdictionType,
     sliderValue,
@@ -616,7 +634,7 @@ watch(
 
 <template>
   <div class="container mx-auto px-4 py-8">
-    <RankingHeader />
+    <RankingHeader :display-mode="displayMode" />
 
     <div class="flex flex-col gap-6 mx-auto">
       <LoadingSpinner
@@ -702,6 +720,7 @@ watch(
 
           <RankingSettings
             v-model:metric-type="metricType"
+            v-model:display-mode="displayMode"
             v-model:selected-standard-population="selectedStandardPopulation"
             v-model:show-totals="showTotals"
             v-model:show-totals-only="showTotalsOnly"
@@ -771,6 +790,7 @@ watch(
         <div class="order-3 lg:hidden">
           <RankingSettings
             v-model:metric-type="metricType"
+            v-model:display-mode="displayMode"
             v-model:selected-standard-population="selectedStandardPopulation"
             v-model:show-totals="showTotals"
             v-model:show-totals-only="showTotalsOnly"

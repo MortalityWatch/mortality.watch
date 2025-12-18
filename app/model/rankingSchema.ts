@@ -49,10 +49,13 @@ export const JurisdictionTypeEnum = z.enum([
 
 export const MetricTypeEnum = z.enum(['cmr', 'asmr', 'le'])
 
+export const DisplayModeEnum = z.enum(['absolute', 'relative'])
+
 // Export TypeScript types from Zod enums
 export type RankingPeriod = z.infer<typeof RankingPeriodEnum>
 export type JurisdictionType = z.infer<typeof JurisdictionTypeEnum>
 export type MetricType = z.infer<typeof MetricTypeEnum>
+export type DisplayMode = z.infer<typeof DisplayModeEnum>
 
 // Re-export shared types
 export type {
@@ -72,6 +75,9 @@ const rankingStateBaseSchema = z.object({
 
   // Metric type (CMR, ASMR, or Life Expectancy)
   metricType: MetricTypeEnum,
+
+  // Display mode (absolute values vs relative/excess from baseline)
+  displayMode: DisplayModeEnum,
 
   // Display toggles
   showTotals: z.boolean(),

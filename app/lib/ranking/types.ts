@@ -34,6 +34,8 @@ export interface TableDisplay {
   selectedBaselineMethod: string
   decimalPrecision: string
   subtitle: string
+  displayMode: 'absolute' | 'relative'
+  metricType: 'cmr' | 'asmr' | 'le'
 }
 
 export interface TableSort {
@@ -70,6 +72,7 @@ export interface ProcessCountryRowOptions {
     showPercentage: boolean
     cumulative: boolean
     hideIncomplete: boolean
+    displayMode: 'absolute' | 'relative'
   }
   totalRowKey: string
 }

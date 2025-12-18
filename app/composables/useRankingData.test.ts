@@ -143,6 +143,7 @@ describe('useRankingData', () => {
       periodOfTime: ref('yearly'),
       jurisdictionType: ref('all'),
       metricType: ref('cmr'),
+      displayMode: ref('relative'),
       standardPopulation: ref('who'),
       baselineMethod: ref('mean'),
       baselineDateFrom: ref('2017'),

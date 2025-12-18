@@ -13,7 +13,7 @@
 
 import { computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { rankingStateSchema, type RankingState, type MetricType } from '@/model/rankingSchema'
+import { rankingStateSchema, type RankingState, type MetricType, type DisplayMode } from '@/model/rankingSchema'
 import { showToast } from '@/toast'
 import { encodeBool, decodeBool } from '@/lib/state'
 
@@ -58,6 +58,7 @@ export function useRankingState() {
     periodOfTime: string
     jurisdictionType: string
     metricType: MetricType
+    displayMode: DisplayMode
     showTotals: boolean
     showTotalsOnly: boolean
     showPercentage: boolean
@@ -78,6 +79,7 @@ export function useRankingState() {
     if ('periodOfTime' in updates) queryUpdates.p = updates.periodOfTime
     if ('jurisdictionType' in updates) queryUpdates.j = updates.jurisdictionType
     if ('metricType' in updates) queryUpdates.m = updates.metricType
+    if ('displayMode' in updates) queryUpdates.e = updates.displayMode === 'relative' ? undefined : '0'
     if ('showTotals' in updates) queryUpdates.t = encodeBool(updates.showTotals!)
     if ('showTotalsOnly' in updates) queryUpdates.to = encodeBool(updates.showTotalsOnly!)
     if ('showPercentage' in updates) queryUpdates.r = encodeBool(updates.showPercentage!)
@@ -128,6 +130,18 @@ export function useRankingState() {
       return 'asmr'
     },
     set: (val: MetricType) => updateQuery({ m: val, a: undefined }) // Clear legacy 'a' param
+  })
+
+  // Display mode (absolute values vs relative/excess from baseline)
+  // Uses e=1 or absent for excess (relative) mode, e=0 for raw (absolute) mode
+  // Default is excess mode (relative) - this matches ranking page expectations
+  const displayMode = computed({
+    get: (): DisplayMode => {
+      const e = route.query.e as string
+      // e=0 means raw/absolute mode, anything else (including absent) means excess/relative
+      return e === '0' ? 'absolute' : 'relative'
+    },
+    set: (val: DisplayMode) => updateQuery({ e: val === 'relative' ? undefined : '0' })
   })
 
   const showTotals = computed({
@@ -213,6 +227,7 @@ export function useRankingState() {
     periodOfTime: periodOfTime.value as RankingState['periodOfTime'],
     jurisdictionType: jurisdictionType.value as RankingState['jurisdictionType'],
     metricType: metricType.value,
+    displayMode: displayMode.value,
     showTotals: showTotals.value,
     showTotalsOnly: showTotalsOnly.value,
     showPercentage: showPercentage.value,
@@ -345,6 +360,9 @@ export function useRankingState() {
 
     // Metric type (CMR, ASMR, or Life Expectancy)
     metricType,
+
+    // Display mode (absolute vs relative/excess)
+    displayMode,
 
     // Display toggles
     showTotals,

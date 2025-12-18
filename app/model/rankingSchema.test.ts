@@ -7,6 +7,7 @@ describe('rankingSchema', () => {
     periodOfTime: 'fluseason',
     jurisdictionType: 'countries',
     metricType: 'asmr',
+    displayMode: 'relative',
     showTotals: true,
     showTotalsOnly: false,
     showPercentage: true,
