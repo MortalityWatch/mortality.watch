@@ -24,6 +24,7 @@ export interface CountryDataRaw {
   deaths: string
   cmr: string
   le?: string // Direct LE value from CSV (used for age-stratified data)
+  le_adj?: string // Seasonally adjusted LE (only for sub-yearly data)
   asmr_who: string
   asmr_esp: string
   asmr_usa: string
@@ -125,6 +126,13 @@ export class CountryData {
   le_excess: number | undefined
   le_excess_lower: number | undefined
   le_excess_upper: number | undefined
+  le_adj: number | undefined // Seasonally adjusted LE (only for sub-yearly data)
+  le_adj_baseline: number | undefined
+  le_adj_baseline_lower: number | undefined
+  le_adj_baseline_upper: number | undefined
+  le_adj_excess: number | undefined
+  le_adj_excess_lower: number | undefined
+  le_adj_excess_upper: number | undefined
   deaths_zscore: number | undefined
   cmr_zscore: number | undefined
   asmr_who_zscore: number | undefined
@@ -192,5 +200,13 @@ export class CountryData {
     this.le_excess = undefined
     this.le_excess_lower = undefined
     this.le_excess_upper = undefined
+    // Seasonally adjusted LE (only for sub-yearly data)
+    this.le_adj = obj.le_adj && obj.le_adj !== '' ? parseFloat(obj.le_adj) : undefined
+    this.le_adj_baseline = undefined
+    this.le_adj_baseline_lower = undefined
+    this.le_adj_baseline_upper = undefined
+    this.le_adj_excess = undefined
+    this.le_adj_excess_lower = undefined
+    this.le_adj_excess_upper = undefined
   }
 }
