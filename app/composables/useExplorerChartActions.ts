@@ -5,6 +5,7 @@ import { useShortUrl } from '@/composables/useShortUrl'
 import { generateChartFilename } from '@/lib/utils/strings'
 import { generateExplorerTitle, generateExplorerDescription } from '@/lib/utils/chartTitles'
 import { THEME_COLORS } from '@/lib/config/constants'
+import { sortDatasetsByLatestValue, reorderCountriesByLabels } from '@/lib/chart/sortUtils'
 import Papa from 'papaparse'
 import type { Ref } from 'vue'
 import type { MortalityChartData } from '@/lib/chart/chartTypes'
@@ -34,7 +35,10 @@ export function useExplorerChartActions(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   state: any,
   chartData?: Ref<MortalityChartData | undefined> | { value: MortalityChartData | undefined },
-  allCountries?: Ref<Record<string, Country>> | { value: Record<string, Country> }
+  allCountries?: Ref<Record<string, Country>> | { value: Record<string, Country> },
+  options?: {
+    onCountriesReorder?: (sortedCountries: string[]) => Promise<void>
+  }
 ) {
   // Copy short URL to clipboard (uses local hash computation + fire-and-forget DB store)
   const { getShortUrl } = useShortUrl()
@@ -282,6 +286,60 @@ export function useExplorerChartActions(
     }
   }
 
+  // Sort chart series by their latest (last) data point value
+  // This reorders countries so series with highest absolute values appear first
+  const sortByLatestValue = async () => {
+    if (!chartData || !chartData.value) {
+      showToast('No chart data available', 'error')
+      return
+    }
+
+    try {
+      const data = chartData.value
+      if (!data.datasets || data.datasets.length === 0) {
+        showToast('No data to sort', 'error')
+        return
+      }
+
+      // Sort datasets by their last valid value
+      const sortedLabels = sortDatasetsByLatestValue(data.datasets)
+
+      // Get current countries and their metadata
+      const currentCountries: string[] = state.countries.value
+      const countriesMap = allCountries?.value || {}
+
+      // Create a map of country name -> country code
+      const nameToCode: Record<string, string> = {}
+      for (const code of currentCountries) {
+        const country = countriesMap[code]
+        if (country) {
+          nameToCode[country.jurisdiction || code] = code
+        }
+      }
+
+      // Reorder countries based on sorted labels
+      const sortedCountries = reorderCountriesByLabels(sortedLabels, currentCountries, nameToCode)
+
+      // Check if order actually changed
+      if (JSON.stringify(sortedCountries) === JSON.stringify(currentCountries)) {
+        showToast('Series already sorted by latest value', 'info')
+        return
+      }
+
+      // Use callback to trigger proper state update with chart regeneration
+      // This ensures the chart is rebuilt with the new country order
+      if (options?.onCountriesReorder) {
+        await options.onCountriesReorder(sortedCountries)
+      } else {
+        // Fallback: direct state update (won't trigger chart rebuild)
+        state.countries.value = sortedCountries
+      }
+      showToast('Series sorted by latest value', 'success')
+    } catch (error) {
+      handleError(error, 'Failed to sort series', 'sortByLatestValue')
+    }
+  }
+
   // Export chart data as JSON
   const exportJSON = () => {
     if (!chartData || !chartData.value) {
@@ -390,6 +448,7 @@ export function useExplorerChartActions(
     saveToDB,
     exportCSV,
     exportJSON,
+    sortByLatestValue,
     markAsModified,
     resetSavedState,
     saveAsNew: saveAsNewComposable,

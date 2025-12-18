@@ -549,7 +549,13 @@ onMounted(async () => {
 
 // Note: Using 'any' type to avoid excessive type recursion with State proxy
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const chartActions: any = useExplorerChartActions(state as any, dataOrchestration.chartData as any, allCountries)
+const chartActions: any = useExplorerChartActions(state as any, dataOrchestration.chartData as any, allCountries, {
+  // Callback to handle countries reorder from sortByLatestValue
+  // Goes through the normal state change flow to trigger chart regeneration
+  onCountriesReorder: async (sortedCountries: string[]) => {
+    await handleStateChange({ field: 'countries', value: sortedCountries }, '_countries')
+  }
+})
 const {
   copyChartLink,
   screenshotChart,
@@ -557,6 +563,7 @@ const {
   saveToDB,
   exportCSV,
   exportJSON,
+  sortByLatestValue,
   showSaveModal: _showSaveModal,
   savingChart,
   saveChartName,
@@ -771,12 +778,14 @@ watch(
           <ChartActions
             class="mt-3"
             :show-save-button="!isAuthenticated"
+            :show-sort-by-latest="true"
             @copy-link="copyChartLink"
             @download-chart="downloadChart"
             @screenshot="screenshotChart"
             @save-chart="goToSignup"
             @export-c-s-v="exportCSV"
             @export-j-s-o-n="exportJSON"
+            @sort-by-latest="sortByLatestValue"
           >
             <template
               v-if="isAuthenticated"

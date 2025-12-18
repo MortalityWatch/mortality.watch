@@ -148,7 +148,9 @@ export const getDatasets = (
   for (const ag of ags) {
     const agData = data[ag]
     if (!agData) continue
-    for (const iso3c of Object.keys(agData)) {
+    // Iterate countries in order specified by config.context.countries
+    // This ensures chart series order matches the countries array order
+    for (const iso3c of config.context.countries) {
       const ds = agData[iso3c]
       if (!ds) continue
       const dsRecord: Record<string, unknown[]> = ds

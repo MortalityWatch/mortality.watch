@@ -1,7 +1,8 @@
 <script setup lang="ts">
-// Feature access for data export
+// Feature access for gated features
 const { can } = useFeatureAccess()
 const canExportData = computed(() => can('EXPORT_DATA'))
+const canSortByValue = computed(() => can('SORT_BY_VALUE'))
 const { goToSignup } = useAuthRedirect()
 
 const props = withDefaults(defineProps<{
@@ -9,11 +10,13 @@ const props = withDefaults(defineProps<{
   showDownloadChart?: boolean
   showScreenshot?: boolean
   showExportData?: boolean
+  showSortByLatest?: boolean
   explorerLink?: string
 }>(), {
   showDownloadChart: true,
   showScreenshot: true,
-  showExportData: true
+  showExportData: true,
+  showSortByLatest: false
 })
 
 const emit = defineEmits<{
@@ -23,6 +26,7 @@ const emit = defineEmits<{
   saveChart: []
   exportCSV: []
   exportJSON: []
+  sortByLatest: []
 }>()
 </script>
 
@@ -138,6 +142,37 @@ const emit = defineEmits<{
               </div>
               <div class="text-xs text-gray-500 dark:text-gray-400">
                 Capture current view as image
+              </div>
+            </div>
+            <UIcon
+              name="i-lucide-chevron-right"
+              class="w-3 h-3 text-gray-400"
+            />
+          </button>
+        </template>
+
+        <!-- Sort Series by Latest Value -->
+        <template v-if="props.showSortByLatest">
+          <div class="border-t border-gray-200 dark:border-gray-700" />
+
+          <button
+            :class="canSortByValue ? 'chart-option-button' : 'chart-option-button opacity-60'"
+            @click="canSortByValue ? emit('sortByLatest') : goToSignup()"
+          >
+            <UIcon
+              name="i-lucide-arrow-up-down"
+              class="w-4 h-4 shrink-0"
+            />
+            <div class="flex-1 text-left">
+              <div class="text-sm font-medium">
+                Sort by Latest Value
+                <FeatureBadge
+                  feature="SORT_BY_VALUE"
+                  class="ml-2"
+                />
+              </div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">
+                Reorder series by last data point
               </div>
             </div>
             <UIcon
