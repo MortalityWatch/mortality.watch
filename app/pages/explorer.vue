@@ -545,7 +545,13 @@ onMounted(async () => {
 
 // Note: Using 'any' type to avoid excessive type recursion with State proxy
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const chartActions: any = useExplorerChartActions(state as any, dataOrchestration.chartData as any, allCountries)
+const chartActions: any = useExplorerChartActions(state as any, dataOrchestration.chartData as any, allCountries, {
+  // Callback to handle countries reorder from sortByLatestValue
+  // Goes through the normal state change flow to trigger chart regeneration
+  onCountriesReorder: async (sortedCountries: string[]) => {
+    await handleStateChange({ field: 'countries', value: sortedCountries }, '_countries')
+  }
+})
 const {
   copyChartLink,
   screenshotChart,
