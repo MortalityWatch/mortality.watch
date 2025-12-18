@@ -14,12 +14,32 @@ export const getChartTypeFromOrdinal = (ordinal: number): string =>
   ['yearly', 'monthly', 'weekly'][ordinal - 1] || 'yearly'
 
 /**
+ * Options for key generation
+ */
+export interface KeyGenerationOptions {
+  leAdjusted?: boolean
+  chartType?: string
+}
+
+/**
  * Configuration for metric field name generation
  */
 interface MetricConfig {
-  baseFieldName: (standardPopulation?: string) => string
+  baseFieldName: (standardPopulation?: string, options?: KeyGenerationOptions) => string
   supportsBaseline: boolean
   supportsExcess: boolean
+}
+
+/**
+ * Check if chart type is sub-yearly (weekly/monthly/quarterly)
+ * These are the only types that have seasonal adjustment available
+ */
+const isSubYearlyChartType = (chartType?: string): boolean => {
+  if (!chartType) return false
+  // Yearly, midyear, fluseason are NOT sub-yearly
+  if (['yearly', 'midyear', 'fluseason'].includes(chartType)) return false
+  // Monthly, quarterly, and weekly variants are sub-yearly
+  return true
 }
 
 /**
@@ -47,7 +67,13 @@ const METRIC_CONFIGS: Record<string, MetricConfig> = {
     supportsExcess: true
   },
   le: {
-    baseFieldName: () => 'le',
+    // For LE, use le_adj for sub-yearly data when leAdjusted is true
+    baseFieldName: (_standardPopulation, options) => {
+      if (options?.leAdjusted && isSubYearlyChartType(options?.chartType)) {
+        return 'le_adj'
+      }
+      return 'le'
+    },
     supportsBaseline: true,
     supportsExcess: true
   }
@@ -95,7 +121,8 @@ export const getKeyForType = (
   showBaseline: boolean,
   standardPopulation: string,
   isExcess = false,
-  includePi = false
+  includePi = false,
+  options?: KeyGenerationOptions
 ): (keyof NumberEntryFields)[] => {
   const config = METRIC_CONFIGS[type]
 
@@ -103,8 +130,8 @@ export const getKeyForType = (
     throw new Error('Unknown type key provided.')
   }
 
-  // Get base field name (e.g., 'deaths', 'asmr_who', 'le')
-  const baseField = config.baseFieldName(standardPopulation)
+  // Get base field name (e.g., 'deaths', 'asmr_who', 'le', 'le_adj')
+  const baseField = config.baseFieldName(standardPopulation, options)
 
   // Build field keys based on configuration
   const keys = buildFieldKeys(baseField, showBaseline, isExcess, includePi)
@@ -115,5 +142,6 @@ export const getKeyForType = (
 export const getBaseKeysForType = (
   type: string,
   showBaseline: boolean,
-  standardPopulation: string
-): string[] => getKeyForType(type, showBaseline, standardPopulation, false)
+  standardPopulation: string,
+  options?: KeyGenerationOptions
+): string[] => getKeyForType(type, showBaseline, standardPopulation, false, false, options)

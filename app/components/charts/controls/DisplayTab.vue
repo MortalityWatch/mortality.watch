@@ -10,6 +10,7 @@ const props = defineProps<{
   showPercentage: boolean
   cumulative: boolean
   showTotal: boolean
+  leAdjusted: boolean
   // Disabled states
   isPopulationType: boolean
   showBaselineOption: boolean
@@ -23,6 +24,7 @@ const props = defineProps<{
   showPercentageOption: boolean
   showCumulativeOption: boolean
   showTotalOption: boolean
+  showLeAdjustedOption: boolean // Show when: type=le AND sub-yearly AND Pro
   // Chart preset
   chartPreset?: string
   chartPresetOptions: { name: string, value: string, label: string, category: string }[]
@@ -36,6 +38,7 @@ const emit = defineEmits<{
   'update:showPercentage': [value: boolean]
   'update:cumulative': [value: boolean]
   'update:showTotal': [value: boolean]
+  'update:leAdjusted': [value: boolean]
   'update:chartPreset': [value: string | undefined]
 }>()
 
@@ -74,6 +77,11 @@ const cumulativeModel = computed({
 const showTotalModel = computed({
   get: () => props.showTotal,
   set: v => emit('update:showTotal', v)
+})
+
+const leAdjustedModel = computed({
+  get: () => props.leAdjusted,
+  set: v => emit('update:leAdjusted', v)
 })
 
 const chartPresetModel = computed({
@@ -130,6 +138,14 @@ const chartPresetModel = computed({
           v-model="showLogarithmicModel"
           label="Log Scale"
           :disabled="!props.showLogarithmicOption"
+        />
+
+        <!-- LE Seasonal Adjustment Toggle (Pro feature, only for sub-yearly LE data) -->
+        <UiSwitchRow
+          v-if="props.showLeAdjustedOption"
+          v-model="leAdjustedModel"
+          label="Adjusted"
+          help-content="Seasonal adjustment removes calculation artifacts from short-term mortality fluctuations. Raw values may show apparent 'seasonality' that doesn't reflect real life expectancy changes."
         />
       </div>
     </div>

@@ -173,6 +173,7 @@ describe('useExplorerDataOrchestration', () => {
       maximize: ref(false),
       showLabels: ref(true),
       showLogarithmic: ref(false),
+      leAdjusted: ref(true),
       dateFrom: ref('2020'),
       dateTo: ref('2023'),
       sliderStart: ref('2010'),

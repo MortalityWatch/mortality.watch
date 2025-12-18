@@ -79,6 +79,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       showTotal: false,
       showPercentage: false,
       showLogarithmic: false,
+      leAdjusted: true, // Seasonal adjustment for LE (default: ON)
       maximize: false,
       showLabels: true,
 

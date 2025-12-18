@@ -104,6 +104,7 @@ export interface ExplorerStateValues {
   maximize: boolean
   showLogarithmic: boolean
   showLabels: boolean
+  leAdjusted: boolean
   showLogo: boolean
   showQrCode: boolean
   showCaption: boolean

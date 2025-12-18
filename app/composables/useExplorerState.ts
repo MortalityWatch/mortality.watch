@@ -114,6 +114,7 @@ export function useExplorerState() {
   const showLabels = ref<boolean>(getDefault('showLabels', true))
   const showPercentage = ref<boolean>(getDefault('showPercentage', false))
   const showLogarithmic = ref<boolean>(getDefault('showLogarithmic', false))
+  const leAdjusted = ref<boolean>(getDefault('leAdjusted', true)) // Seasonal adjustment for LE (default: ON)
 
   // Chart Appearance
   const userColors = ref<string[] | undefined>(mortalityDefaults.userColors)
@@ -312,6 +313,7 @@ export function useExplorerState() {
       maximize: maximize.value,
       showLogarithmic: showLogarithmic.value,
       showLabels: showLabels.value,
+      leAdjusted: leAdjusted.value,
       baselineMethod: baselineMethod.value,
       baselineDateFrom: baselineDateFrom.value,
       baselineDateTo: baselineDateTo.value,
@@ -400,6 +402,9 @@ export function useExplorerState() {
     if (state.showLabels !== undefined && state.showLabels !== showLabels.value) {
       showLabels.value = state.showLabels as boolean
     }
+    if (state.leAdjusted !== undefined && state.leAdjusted !== leAdjusted.value) {
+      leAdjusted.value = state.leAdjusted as boolean
+    }
     if (state.baselineMethod !== undefined && state.baselineMethod !== baselineMethod.value) {
       baselineMethod.value = state.baselineMethod as string
     }
@@ -472,6 +477,7 @@ export function useExplorerState() {
     showLabels,
     showPercentage,
     showLogarithmic,
+    leAdjusted,
 
     // Chart appearance
     userColors,

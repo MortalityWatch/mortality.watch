@@ -52,7 +52,8 @@ export function useExplorerHelpers(
   baselineMethod: Ref<string>,
   showBaseline: Ref<boolean>,
   chartType: Ref<string>,
-  isZScore: Ref<boolean> = ref(false)
+  isZScore: Ref<boolean> = ref(false),
+  leAdjusted: Ref<boolean> = ref(true)
 ) {
   /**
    * Checks if the current data type is age-standardized mortality rate (ASMR).
@@ -173,7 +174,10 @@ export function useExplorerHelpers(
    * @returns Array of field keys to retrieve from the database
    */
   const getBaseKeysForType = (): (keyof NumberEntryFields)[] =>
-    getKeyForType(type.value, showBaseline.value, standardPopulation.value, false)
+    getKeyForType(type.value, showBaseline.value, standardPopulation.value, false, false, {
+      leAdjusted: leAdjusted.value,
+      chartType: chartType.value
+    })
 
   /**
    * Gets the database field keys for data fetching, always including baseline keys.
@@ -190,7 +194,10 @@ export function useExplorerHelpers(
    * @returns Array of field keys including baseline fields for data fetching
    */
   const getBaseKeysForFetch = (): (keyof NumberEntryFields)[] =>
-    getKeyForType(type.value, !isPopulationType(), standardPopulation.value, false)
+    getKeyForType(type.value, !isPopulationType(), standardPopulation.value, false, false, {
+      leAdjusted: leAdjusted.value,
+      chartType: chartType.value
+    })
 
   /**
    * Computed property indicating if the prediction interval toggle should be disabled.

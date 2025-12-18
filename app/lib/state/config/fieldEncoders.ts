@@ -51,6 +51,7 @@ export const stateFieldEncoders = {
   showLabels: { key: 'sl', encode: encodeBool, decode: decodeBool },
   showPercentage: { key: 'p', encode: encodeBool, decode: decodeBool },
   showLogarithmic: { key: 'lg', encode: encodeBool, decode: decodeBool },
+  leAdjusted: { key: 'la', encode: encodeBool, decode: decodeBool },
   userColors: { key: 'uc', decode: decodeArray },
   decimals: { key: 'dec' },
   showLogo: { key: 'l', encode: encodeBool, decode: decodeBool },

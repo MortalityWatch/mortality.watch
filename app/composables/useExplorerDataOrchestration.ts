@@ -188,7 +188,13 @@ export function useExplorerDataOrchestration(
     return getKeyForType(
       state.type.value,
       state.showBaseline.value,
-      state.standardPopulation.value
+      state.standardPopulation.value,
+      false, // isExcess
+      false, // includePi
+      {
+        leAdjusted: state.leAdjusted.value,
+        chartType: state.chartType.value
+      }
     )[0]
   })
 
