@@ -404,12 +404,20 @@ export function toChartFilterConfig(
   const isAsmrType = state.type === 'asmr' || state.type.startsWith('asmr_')
   const isPopulationType = state.type === 'population'
   const isDeathsType = state.type === 'deaths'
-  const isErrorBarType = state.chartType === 'yearly' && state.showPredictionInterval
 
-  // Compute showCumPi from state
+  // Error bars shown on bar charts in excess mode (matches useExplorerHelpers.isErrorBarType)
+  const isErrorBarType = isBarChartStyle && state.isExcess
+
+  // Helper to check if chart type is yearly (matches useExplorerHelpers.isYearlyChartType)
+  const isYearlyChartType = state.chartType.includes('year')
+    || state.chartType.includes('fluseason')
+    || state.chartType.includes('midyear')
+
+  // Compute showCumPi from state (matches useExplorerHelpers.showCumPi)
+  // Cumulative PIs are only valid for yearly chart types with supported baseline methods
   const showCumPi = state.cumulative
-    && state.showPredictionInterval
-    && state.baselineMethod !== 'mean'
+    && isYearlyChartType
+    && ['lin_reg', 'mean'].includes(state.baselineMethod)
 
   return {
     // Data selection
