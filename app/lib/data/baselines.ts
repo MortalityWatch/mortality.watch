@@ -10,14 +10,14 @@ import { logger } from '../logger'
 
 /**
  * Cumulative sum helper starting from a specific index
- * Values before startIdx are kept as-is (null)
+ * Values before startIdx are kept as undefined
  */
 const cumulativeSumFrom = (arr: NumberArray, startIdx: number): NumberArray => {
   const result: NumberArray = []
   let prev = 0
   for (let i = 0; i < arr.length; i++) {
     if (i < startIdx) {
-      result.push(null)
+      result.push(undefined)
     } else {
       const val = arr[i] ?? 0
       const curr = prev + val
