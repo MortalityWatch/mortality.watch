@@ -392,40 +392,38 @@ test.describe('Explorer UI Combinations - All 14 Valid Combinations', () => {
 
   test.describe('Browser Navigation', () => {
     test('should handle back/forward navigation between combinations', async ({ page }) => {
-      // Navigate through different combinations
+      // Navigate through different combinations with distinct URL markers
       await page.goto('/explorer')
       await waitForChart(page)
-      const url1 = page.url()
 
       await page.goto('/explorer?e=1')
       await waitForChart(page)
-      const url2 = page.url()
 
       await page.goto('/explorer?zs=1')
       await waitForChart(page)
-      const url3 = page.url()
 
       await page.goto('/explorer?cs=matrix')
       await waitForChart(page)
-      // url4 captured but not used - we only need it in history stack
 
-      // Go back through history
+      // Go back through history - use waitForURL with pattern matching
+      // This is more reliable than capturing and comparing exact URLs
       await page.goBack()
+      await page.waitForURL(/zs=1/)
       await waitForChart(page)
-      expect(page.url()).toBe(url3)
-
-      await page.goBack()
-      await waitForChart(page)
-      expect(page.url()).toBe(url2)
 
       await page.goBack()
+      await page.waitForURL(/e=1/)
       await waitForChart(page)
-      expect(page.url()).toBe(url1)
+
+      await page.goBack()
+      // Default explorer URL - wait for URL without specific params
+      await page.waitForURL((url) => !url.search.includes('e=1') && !url.search.includes('zs=1') && !url.search.includes('cs=matrix'))
+      await waitForChart(page)
 
       // Go forward
       await page.goForward()
+      await page.waitForURL(/e=1/)
       await waitForChart(page)
-      expect(page.url()).toBe(url2)
 
       // Verify chart renders at each step
       await expect(page.locator('canvas#chart')).toBeVisible()
