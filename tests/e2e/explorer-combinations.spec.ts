@@ -417,7 +417,7 @@ test.describe('Explorer UI Combinations - All 14 Valid Combinations', () => {
 
       await page.goBack()
       // Default explorer URL - wait for URL without specific params
-      await page.waitForURL((url) => !url.search.includes('e=1') && !url.search.includes('zs=1') && !url.search.includes('cs=matrix'))
+      await page.waitForURL(url => !url.search.includes('e=1') && !url.search.includes('zs=1') && !url.search.includes('cs=matrix'))
       await waitForChart(page)
 
       // Go forward
