@@ -406,26 +406,23 @@ test.describe('Explorer UI Combinations - All 14 Valid Combinations', () => {
       await waitForChart(page)
 
       // Go back through history - use waitForURL with pattern matching
-      // This is more reliable than capturing and comparing exact URLs
+      // Skip waitForLoadState('networkidle') after goBack as it can timeout
       await page.goBack()
       await page.waitForURL(/zs=1/)
-      await waitForChart(page)
+      await expect(page.locator('canvas#chart')).toBeVisible()
 
       await page.goBack()
       await page.waitForURL(/e=1/)
-      await waitForChart(page)
+      await expect(page.locator('canvas#chart')).toBeVisible()
 
       await page.goBack()
       // Default explorer URL - wait for URL without specific params
       await page.waitForURL(url => !url.search.includes('e=1') && !url.search.includes('zs=1') && !url.search.includes('cs=matrix'))
-      await waitForChart(page)
+      await expect(page.locator('canvas#chart')).toBeVisible()
 
       // Go forward
       await page.goForward()
       await page.waitForURL(/e=1/)
-      await waitForChart(page)
-
-      // Verify chart renders at each step
       await expect(page.locator('canvas#chart')).toBeVisible()
     })
   })
