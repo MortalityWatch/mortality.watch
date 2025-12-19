@@ -58,7 +58,7 @@ definePageMeta({
 })
 
 useSeoMeta({
-  title: 'Sign Out - Mortality Watch',
+  title: 'Sign Out',
   robots: 'noindex, nofollow'
 })
 </script>

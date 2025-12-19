@@ -121,7 +121,7 @@ definePageMeta({
 })
 
 useSeoMeta({
-  title: 'Chart Gallery - Mortality Watch',
+  title: 'Chart Gallery',
   description: 'Explore published mortality visualizations from our community. Browse charts by type, popularity, or featured selections.',
   ogTitle: 'Chart Gallery - Mortality Watch',
   ogDescription: 'Explore published mortality visualizations from our community.',
