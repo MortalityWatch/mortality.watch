@@ -444,7 +444,7 @@ definePageMeta({
 
 // SEO metadata
 useSeoMeta({
-  title: 'Privacy Policy - Mortality Watch',
+  title: 'Privacy Policy',
   description: 'Privacy Policy for Mortality Watch. Learn how we collect, use, and protect your personal information in compliance with GDPR and CCPA.',
   ogTitle: 'Privacy Policy - Mortality Watch',
   ogDescription: 'Our commitment to protecting your privacy and personal information.',

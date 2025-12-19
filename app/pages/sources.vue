@@ -203,7 +203,7 @@ definePageMeta({
 
 // SEO metadata
 useSeoMeta({
-  title: 'Data Sources - Mortality Watch',
+  title: 'Data Sources',
   description: 'Explore comprehensive mortality data sources from over 300+ regions, including official statistics, population data, and age-standardization references.',
   ogTitle: 'Data Sources - Mortality Watch',
   ogDescription: 'Official mortality statistics and population data sources used by Mortality Watch.',

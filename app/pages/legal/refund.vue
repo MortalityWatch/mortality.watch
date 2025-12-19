@@ -387,7 +387,7 @@ definePageMeta({
 
 // SEO metadata
 useSeoMeta({
-  title: 'Refund Policy - Mortality Watch',
+  title: 'Refund Policy',
   description: 'Refund Policy for Mortality Watch Pro subscriptions. Learn about our 30-day refund window and how to request a refund.',
   ogTitle: 'Refund Policy - Mortality Watch',
   ogDescription: 'Our 30-day refund policy for Pro subscriptions and how to request a refund.',

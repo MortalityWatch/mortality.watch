@@ -6,7 +6,7 @@ definePageMeta({
 
 // SEO metadata
 useSeoMeta({
-  title: 'Methodology - Mortality Watch',
+  title: 'Methodology',
   description: 'Detailed technical documentation of statistical methods, calculations, and data processing used for mortality analysis including CMR, ASMR, excess mortality, and baseline models.',
   ogTitle: 'Methodology - Mortality Watch',
   ogDescription: 'Technical documentation of mortality metrics, age-standardization, excess mortality calculations, and baseline forecasting methods.',

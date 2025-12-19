@@ -54,7 +54,8 @@ const { autoStartTutorial } = useTutorial()
 
 // Set page meta (note: ranking page is CSR-only, so OG tags won't be seen by crawlers)
 // Static fallback values are used since dynamic state isn't available during SSR
-const rankingTitle = 'Excess Mortality Ranking - Mortality Watch'
+const rankingTitle = 'Excess Mortality Ranking'
+const rankingTitleFull = 'Excess Mortality Ranking - Mortality Watch'
 const rankingDescription = 'Compare excess mortality rates across countries and regions. Interactive ranking table with customizable time periods and metrics.'
 const config = useRuntimeConfig()
 const siteUrl = config.public.siteUrl || 'https://www.mortality.watch'
@@ -63,7 +64,7 @@ const rankingOgImage = `${siteUrl}/ranking.png`
 useSeoMeta({
   title: rankingTitle,
   description: rankingDescription,
-  ogTitle: rankingTitle,
+  ogTitle: rankingTitleFull,
   ogDescription: rankingDescription,
   ogImage: rankingOgImage,
   twitterCard: 'summary_large_image',
