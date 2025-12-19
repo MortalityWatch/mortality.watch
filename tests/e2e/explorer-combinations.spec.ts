@@ -416,11 +416,11 @@ test.describe('Explorer UI Combinations - All 14 Valid Combinations', () => {
       await waitForChart(page)
       expect(page.url()).toContain('cs=matrix')
 
-      // Test combined parameters
-      await page.goto('/explorer?e=1&cs=bar')
+      // Test combined parameters (use cs=line which is non-default for excess view)
+      await page.goto('/explorer?e=1&cs=line')
       await waitForChart(page)
       expect(page.url()).toContain('e=1')
-      expect(page.url()).toContain('cs=bar')
+      expect(page.url()).toContain('cs=line')
     })
   })
 
