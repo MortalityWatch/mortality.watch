@@ -272,22 +272,19 @@ const calculateBaseline = async (
   try {
     const baseUrl = statsUrl || DEFAULT_STATS_URL
 
-    // Only send data from baseline start onwards to reduce payload size
-    // This significantly reduces the URL length and server processing time
-    const trimmed_data = all_data.slice(baselineStartIdx)
+    // Send full data to get baseline calculations for all periods (including pre-baseline)
     // Round numbers to avoid floating point precision issues (e.g., 82.15455999999999 -> 82.1546)
-    const dataParam = (trimmed_data as (string | number)[])
+    const dataParam = (all_data as (string | number)[])
       .map(v => typeof v === 'number' ? Number(v.toFixed(BASELINE_DATA_PRECISION)) : v)
       .join(',')
 
-    // Adjust bs/be to be relative to trimmed data (1-indexed)
-    // Since we start from baselineStartIdx, baseline now starts at index 1
-    const bs = 1
-    const be = baselineEndIdx - baselineStartIdx + 1
+    // bs/be are 1-indexed for R
+    const bs = baselineStartIdx + 1
+    const be = baselineEndIdx + 1
 
     // Get the starting time period for proper seasonal alignment
     // The xs parameter tells the server what calendar period the first data point represents
-    const startLabel = labels[baselineStartIdx]
+    const startLabel = labels[0]
     const xs = startLabel ? labelToXsParam(startLabel, chartType) : null
     const xsParam = xs ? `&xs=${xs}` : ''
 
@@ -300,33 +297,28 @@ const calculateBaseline = async (
     const text = await baselineQueue.enqueue(() => dataLoader.fetchBaseline(url))
     const json = JSON.parse(text)
 
-    // Update NA/null to undefined and trim forecast values (API returns input length + h)
-    // We only want values matching our trimmed input data length
-    const trimmedLength = trimmed_data.length
-    json.y = (json.y as (string | number)[]).slice(0, trimmedLength)
-    json.lower = (json.lower as (string | number | null)[]).slice(0, trimmedLength).map((x: string | number | null) =>
+    // Update NA/null to undefined and trim to match input data length
+    const dataLength = all_data.length
+    json.y = (json.y as (string | number)[]).slice(0, dataLength)
+    json.lower = (json.lower as (string | number | null)[]).slice(0, dataLength).map((x: string | number | null) =>
       x === 'NA' || x === null ? undefined : x
     )
-    json.upper = (json.upper as (string | number | null)[]).slice(0, trimmedLength).map((x: string | number | null) =>
+    json.upper = (json.upper as (string | number | null)[]).slice(0, dataLength).map((x: string | number | null) =>
       x === 'NA' || x === null ? undefined : x
     )
     if (json.zscore) {
-      json.zscore = (json.zscore as (string | number)[]).slice(0, trimmedLength)
+      json.zscore = (json.zscore as (string | number)[]).slice(0, dataLength)
     }
 
-    // Prefill arrays for indices before baselineStartIdx with null
-    // Response is aligned with trimmed input starting at baselineStartIdx
-    // Note: Chart.js uses null (not undefined) to create gaps in line charts
-    const prefill = new Array(baselineStartIdx).fill(null)
-
-    if (keys[1]) data[keys[1]] = [...prefill, ...json.y] as DataVector
-    if (keys[2]) data[keys[2]] = [...prefill, ...json.lower] as DataVector
-    if (keys[3]) data[keys[3]] = [...prefill, ...json.upper] as DataVector
+    // Response now covers full timeline - no prefill needed
+    if (keys[1]) data[keys[1]] = json.y as DataVector
+    if (keys[2]) data[keys[2]] = json.lower as DataVector
+    if (keys[3]) data[keys[3]] = json.upper as DataVector
 
     // Extract z-scores if available
     if (json.zscore && keys[0]) {
       const zscoreKey = `${String(keys[0])}_zscore` as keyof DatasetEntry
-      data[zscoreKey] = [...prefill, ...json.zscore] as DataVector
+      data[zscoreKey] = json.zscore as DataVector
     }
   } catch (error) {
     logger.error('Baseline calculation failed, using simple mean fallback', error, {
