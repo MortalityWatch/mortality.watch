@@ -36,8 +36,8 @@ export interface ChartDataFetchConfig {
   // Data key for fetching
   dataKey: keyof CountryData
 
-  // Baseline configuration
-  baselineMethod: string
+  // Baseline configuration (optional - skip baseline calculations when undefined)
+  baselineMethod?: string
   baselineDateFrom?: string
   baselineDateTo?: string
   baselineStartIdx?: number
@@ -152,14 +152,21 @@ export function useChartDataFetcher() {
         return null
       }
 
-      // Step 3: Validate baseline dates
-      const { from: baselineFrom, to: baselineTo } = validateBaselineDates(
-        allLabels,
-        fetchConfig.chartType,
-        fetchConfig.baselineMethod,
-        fetchConfig.baselineDateFrom,
-        fetchConfig.baselineDateTo
-      )
+      // Step 3: Validate baseline dates (only if baseline method is specified)
+      let baselineFrom: string | undefined
+      let baselineTo: string | undefined
+
+      if (fetchConfig.baselineMethod) {
+        const validated = validateBaselineDates(
+          allLabels,
+          fetchConfig.chartType,
+          fetchConfig.baselineMethod,
+          fetchConfig.baselineDateFrom,
+          fetchConfig.baselineDateTo
+        )
+        baselineFrom = validated.from
+        baselineTo = validated.to
+      }
 
       // Step 4: Calculate data start index from sliderStart (layer 2 offset)
       // This slices data from sliderStart year, not from the beginning
@@ -193,8 +200,8 @@ export function useChartDataFetcher() {
         dataset,
         allLabels,
         chartData,
-        baselineDateFrom: baselineFrom,
-        baselineDateTo: baselineTo
+        baselineDateFrom: baselineFrom ?? '',
+        baselineDateTo: baselineTo ?? ''
       }
     } catch (error) {
       isUpdating.value = false

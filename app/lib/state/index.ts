@@ -24,3 +24,6 @@ export * from './resolver'
 
 // Re-export everything from config
 export * from './config'
+
+// Re-export ranking state as namespace to avoid conflicts
+export * as RankingState from './ranking'

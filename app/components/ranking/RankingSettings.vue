@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { ref, computed, toRef } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { standardPopulationItems, baselineMethodItems, decimalPrecisionItems } from '@/model'
 import type { ChartType } from '@/model/period'
+import type { MetricType, DisplayMode, UIFieldState } from '@/lib/state/ranking'
 import BaselineMethodPicker from '@/components/shared/BaselineMethodPicker.vue'
 import BaselinePeriodPicker from '@/components/shared/BaselinePeriodPicker.vue'
-import { useRankingUIState } from '@/composables/useRankingUIState'
+import { getMetricTypeItems } from '@/lib/config/rankingConfig'
 
 // Props
 interface Props {
-  showASMR: boolean
+  metricType: MetricType
+  displayMode: DisplayMode
   selectedStandardPopulation: string
   showTotals: boolean
   showTotalsOnly: boolean
@@ -24,13 +26,16 @@ interface Props {
   baselineSliderValues: () => string[]
   greenColor: () => string
   chartType: ChartType
+  // UI state from StateResolver
+  ui: Record<string, UIFieldState>
 }
 
 const props = defineProps<Props>()
 
 // Emits
 const emit = defineEmits<{
-  'update:showASMR': [value: boolean]
+  'update:metricType': [value: MetricType]
+  'update:displayMode': [value: DisplayMode]
   'update:selectedStandardPopulation': [value: string]
   'update:showTotals': [value: boolean]
   'update:showTotalsOnly': [value: boolean]
@@ -43,10 +48,57 @@ const emit = defineEmits<{
   'baselineSliderChanged': [value: string[]]
 }>()
 
+// Metric type items for dropdown
+const metricTypeItems = getMetricTypeItems()
+
+// UI state helpers - use props.ui from StateResolver
+const getUIState = (field: string): UIFieldState => {
+  return props.ui[field] || { visible: true, disabled: false }
+}
+
+// Computed UI states
+const showBaselineOptions = computed(() => getUIState('baselineMethod').visible)
+const standardPopulationDisabled = computed(() => getUIState('standardPopulation').disabled)
+const totalsOnlyDisabled = computed(() => getUIState('totalsOnly').disabled)
+const percentageDisabled = computed(() => getUIState('percentage').disabled)
+const predictionIntervalDisabled = computed(() => getUIState('predictionInterval').disabled)
+
+/**
+ * Optimistic UI pattern for display mode toggle.
+ *
+ * Why this is needed:
+ * 1. User clicks toggle → emit fires immediately
+ * 2. Parent updates resolved.value synchronously
+ * 3. BUT Vue batches component updates, so props.displayMode won't update until next tick
+ * 4. Without this, the switch would briefly show the old value (visual flicker)
+ *
+ * pendingDisplayMode provides immediate local state so the switch responds instantly,
+ * then clears itself when props catch up via the watcher below.
+ */
+const pendingDisplayMode = ref<DisplayMode | null>(null)
+
+const handleDisplayModeToggle = (isExcess: boolean) => {
+  const newMode: DisplayMode = isExcess ? 'relative' : 'absolute'
+  // Set pending state immediately for optimistic UI update
+  pendingDisplayMode.value = newMode
+  // Emit to parent (URL update is async)
+  emit('update:displayMode', newMode)
+}
+
 // Local computed values that emit updates
-const showASMRLocal = computed({
-  get: () => props.showASMR,
-  set: val => emit('update:showASMR', val)
+const metricTypeLocal = computed({
+  get: () => props.metricType,
+  set: val => emit('update:metricType', val as MetricType)
+})
+
+const displayModeLocal = computed({
+  get: () => pendingDisplayMode.value ?? props.displayMode,
+  set: val => emit('update:displayMode', val as DisplayMode)
+})
+
+// Sync pending state with props when they update
+watch(() => props.displayMode, () => {
+  pendingDisplayMode.value = null
 })
 
 const selectedStandardPopulationLocal = computed({
@@ -94,14 +146,6 @@ const selectedDecimalPrecisionLocal = computed({
   set: val => emit('update:selectedDecimalPrecision', val)
 })
 
-// Initialize ranking UI state configuration
-const rankingUIState = useRankingUIState(
-  toRef(props, 'showASMR'),
-  toRef(props, 'showTotals'),
-  toRef(props, 'cumulative'),
-  toRef(props, 'showTotalsOnly')
-)
-
 // Tab state
 const activeTab = ref('metric')
 </script>
@@ -139,6 +183,7 @@ const activeTab = ref('metric')
         Display
       </button>
       <button
+        v-if="showBaselineOptions"
         :class="[
           'px-4 py-2 text-sm font-medium',
           activeTab === 'baseline'
@@ -156,14 +201,33 @@ const activeTab = ref('metric')
     <div v-if="activeTab === 'metric'">
       <div class="flex flex-wrap items-center gap-6">
         <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-          <span class="text-sm">CMR</span>
-          <USwitch v-model="showASMRLocal" />
-          <span class="text-sm">ASMR</span>
+          <label
+            class="text-sm font-medium whitespace-nowrap"
+            for="metricType"
+          >
+            Metric
+          </label>
+          <USelect
+            id="metricType"
+            v-model="metricTypeLocal"
+            :items="metricTypeItems"
+            value-key="value"
+            size="sm"
+            class="w-72"
+          />
+        </div>
+
+        <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+          <label class="text-sm font-medium whitespace-nowrap">Excess</label>
+          <USwitch
+            :model-value="displayModeLocal === 'relative'"
+            @update:model-value="handleDisplayModeToggle"
+          />
         </div>
 
         <div
           class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-          :class="{ 'opacity-50 pointer-events-none': rankingUIState.standardPopulationDisabled.value }"
+          :class="{ 'opacity-50 pointer-events-none': standardPopulationDisabled }"
         >
           <label
             class="text-sm font-medium whitespace-nowrap"
@@ -196,7 +260,7 @@ const activeTab = ref('metric')
           <label class="text-sm font-medium whitespace-nowrap">Totals Only</label>
           <USwitch
             v-model="showTotalsOnlyLocal"
-            :disabled="rankingUIState.totalsOnlyDisabled.value"
+            :disabled="totalsOnlyDisabled"
           />
         </div>
 
@@ -205,9 +269,14 @@ const activeTab = ref('metric')
           <USwitch v-model="hideIncompleteLocal" />
         </div>
 
-        <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+        <div
+          v-if="!percentageDisabled"
+          class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+        >
           <label class="text-sm font-medium whitespace-nowrap">Percentage</label>
-          <USwitch v-model="showPercentageLocal" />
+          <USwitch
+            v-model="showPercentageLocal"
+          />
         </div>
 
         <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
@@ -215,12 +284,12 @@ const activeTab = ref('metric')
           <USwitch v-model="cumulativeLocal" />
         </div>
 
-        <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+        <div
+          v-if="!predictionIntervalDisabled"
+          class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+        >
           <label class="text-sm font-medium whitespace-nowrap">Show 95% PI</label>
-          <USwitch
-            v-model="showPILocal"
-            :disabled="rankingUIState.predictionIntervalDisabled.value"
-          />
+          <USwitch v-model="showPILocal" />
         </div>
 
         <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
@@ -243,8 +312,8 @@ const activeTab = ref('metric')
       </div>
     </div>
 
-    <!-- Baseline Tab -->
-    <div v-if="activeTab === 'baseline'">
+    <!-- Baseline Tab (only shown in relative mode) -->
+    <div v-if="activeTab === 'baseline' && showBaselineOptions">
       <div class="flex flex-col gap-4">
         <BaselineMethodPicker
           v-model="selectedBaselineMethodLocal"

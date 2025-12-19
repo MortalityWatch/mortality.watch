@@ -10,6 +10,7 @@
 
 import { ref, computed, watch, onMounted, type ComputedRef } from 'vue'
 import type { useRankingState } from '@/composables/useRankingState'
+import type { RankingPeriod } from '@/lib/state/ranking'
 import type { AllChartData, CountryData, Country } from '@/model'
 import { ChartPeriod, type ChartType } from '@/model/period'
 import { getKeyForType } from '@/model'
@@ -174,10 +175,16 @@ export function useRankingData(
     )
   })
 
-  const key = (): keyof CountryData =>
-    (state.showASMR.value
-      ? 'asmr_' + state.standardPopulation.value
-      : 'cmr') as keyof CountryData
+  const key = (): keyof CountryData => {
+    const metricType = state.metricType.value
+    if (metricType === 'asmr') {
+      return `asmr_${state.standardPopulation.value}` as keyof CountryData
+    }
+    if (metricType === 'le') {
+      return 'le' as keyof CountryData
+    }
+    return 'cmr' as keyof CountryData
+  }
 
   const startPeriod = (): string =>
     getPeriodStart(RANKING_START_YEAR, state.periodOfTime.value)
@@ -225,11 +232,11 @@ export function useRankingData(
    * Fetch and prepare chart data using shared fetcher
    */
   const fetchChartData = async () => {
-    const type = state.showASMR.value ? 'asmr' : 'cmr'
+    const metricType = state.metricType.value
     const dataKey = key()
     const periodOfTime = state.periodOfTime.value || 'yearly'
 
-    // Filter countries based on jurisdiction and ASMR availability
+    // Filter countries based on jurisdiction and metric availability
     const countryFilter = Object.keys(metaData.value).filter((iso3c) => {
       // Check jurisdiction filter
       if (!shouldShowCountry(iso3c, state.jurisdictionType.value)) {
@@ -237,14 +244,23 @@ export function useRankingData(
       }
 
       // Check ASMR availability if needed
-      if (state.showASMR.value) {
+      if (metricType === 'asmr') {
         return metaData.value[iso3c]?.has_asmr() ?? false
       }
+
+      // Note: LE availability could be checked here if needed
+      // For now, assume LE data is available for all countries with CMR data
 
       return true
     })
 
     const ageFilter = ['all']
+
+    // Determine base type for getKeyForType
+    const baseType = metricType === 'le' ? 'le' : metricType
+
+    // In absolute mode, skip baseline calculations entirely (no stats API calls needed)
+    const isAbsoluteMode = state.displayMode.value === 'absolute'
 
     // Use shared data fetcher
     const result = await dataFetcher.fetchChartData({
@@ -252,20 +268,23 @@ export function useRankingData(
       countries: countryFilter,
       ageGroups: ageFilter,
       dataKey,
-      baselineMethod: state.baselineMethod.value || 'mean',
-      baselineDateFrom: state.baselineDateFrom.value,
-      baselineDateTo: state.baselineDateTo.value,
+      // Skip baseline method in absolute mode to avoid stats API calls
+      baselineMethod: isAbsoluteMode ? undefined : (state.baselineMethod.value || 'mean'),
+      baselineDateFrom: isAbsoluteMode ? undefined : state.baselineDateFrom.value,
+      baselineDateTo: isAbsoluteMode ? undefined : state.baselineDateTo.value,
       sliderStart: sliderStart.value, // Layer 2 offset
       cumulative: state.cumulative.value,
-      isAsmr: type === 'asmr',
-      baseKeys: getKeyForType(type, true, state.standardPopulation.value || 'who')
+      isAsmr: metricType === 'asmr',
+      baseKeys: getKeyForType(baseType, true, state.standardPopulation.value || 'who')
     })
 
     if (!result) {
-      const errorMessage = type === 'asmr'
-        ? 'No ASMR data for selected countries. Please select CMR'
-        : 'No data available for selected countries'
-      showToast(errorMessage, 'warning')
+      const errorMessages: Record<string, string> = {
+        asmr: 'No ASMR data for selected countries. Please select CMR',
+        le: 'No Life Expectancy data for selected countries',
+        cmr: 'No data available for selected countries'
+      }
+      showToast(errorMessages[metricType] ?? errorMessages.cmr!, 'warning')
       return null
     }
 
@@ -347,7 +366,8 @@ export function useRankingData(
           display: {
             showPercentage: state.showPercentage.value,
             cumulative: state.cumulative.value,
-            hideIncomplete
+            hideIncomplete,
+            displayMode: state.displayMode.value
           },
           totalRowKey: total_row_key
         })
@@ -404,7 +424,7 @@ export function useRankingData(
 
     // BATCH all updates into single router.push via batchUpdate to avoid race condition
     state.batchUpdate({
-      periodOfTime: val,
+      periodOfTime: val as RankingPeriod,
       dateFrom: defaultFrom,
       dateTo: defaultTo,
       baselineDateFrom: defaultBaselineFrom,
@@ -421,7 +441,8 @@ export function useRankingData(
     [
       () => state.periodOfTime.value,
       () => state.jurisdictionType.value,
-      () => state.showASMR.value,
+      () => state.metricType.value,
+      () => state.displayMode.value,
       () => state.standardPopulation.value,
       () => state.baselineMethod.value,
       () => state.cumulative.value

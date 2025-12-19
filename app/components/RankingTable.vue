@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { abbrev, asPercentage, getColor, isMobile, roundToStr } from '@/utils'
+import { abbrev, asPercentage, isMobile, roundToStr } from '@/utils'
+import { createRankingColorScale } from '@/lib/chart/chartColors'
+import { getIsDark } from '@/composables/useTheme'
 import type {
   TableData,
   TableDisplay,
@@ -30,6 +32,53 @@ const decimalPlaces = computed(() => {
   const parsed = parseInt(props.display.decimalPrecision)
   return isNaN(parsed) ? 1 : parsed
 })
+
+// isExcess = relative mode (showing excess from baseline)
+// Consistent with explorer pattern where e=0 means absolute, e=1/absent means excess
+const isExcess = computed(() => props.display.displayMode === 'relative')
+
+// Extract all numeric values from the dataset for color scale calibration
+const allValues = computed(() => {
+  const values: number[] = []
+  const rows = props.data.sortedResult || []
+  const labels = props.data.labels || []
+
+  for (const row of rows) {
+    for (const label of labels) {
+      const value = row[label]
+      if (typeof value === 'number' && value !== Number.MIN_SAFE_INTEGER) {
+        values.push(value)
+      }
+    }
+  }
+  return values
+})
+
+// Create color scale function based on current data and display settings
+const colorScale = computed(() => {
+  return createRankingColorScale(
+    allValues.value,
+    props.display.displayMode,
+    props.display.metricType,
+    getIsDark()
+  )
+})
+
+// Get cell style for a given value
+// Return transparent during updates to avoid color mismatches while data is loading
+const getCellStyle = (value: number) => {
+  if (props.loading.isUpdating) {
+    return {
+      backgroundColor: 'transparent',
+      color: 'inherit'
+    }
+  }
+  const colors = colorScale.value(value)
+  return {
+    backgroundColor: colors.bg,
+    color: colors.text
+  }
+}
 
 const maybeReplaceShortYear = (label: string): string => {
   if (label.match(/^\d{4}$/)) {
@@ -112,7 +161,7 @@ const selectedItemsPerPage = computed(() =>
               class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
               @click="handleToggleSort('TOTAL')"
             >
-              TOTAL
+              {{ isExcess ? 'TOTAL' : 'AVG' }}
               <UIcon
                 v-if="sort.field === 'TOTAL'"
                 :name="sort.order === 'asc' ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
@@ -153,18 +202,7 @@ const selectedItemsPerPage = computed(() =>
               v-for="label in data.labels?.slice(0, data.labels.length - (display.showTotals ? 1 : 0))"
               :key="label"
               class="px-4 py-3 text-center text-sm"
-              :class="
-                getColor(
-                  row[label] as number
-                    / (row[label] === Number.MIN_SAFE_INTEGER
-                      ? 1
-                      : display.showPercentage
-                        ? 1
-                        : label === 'TOTAL'
-                          ? 1000
-                          : 500)
-                )
-              "
+              :style="getCellStyle(row[label] as number)"
             >
               <span v-if="row[label] !== Number.MIN_SAFE_INTEGER">
                 {{
@@ -192,16 +230,7 @@ const selectedItemsPerPage = computed(() =>
             <td
               v-if="display.showTotals"
               class="px-4 py-3 text-center text-sm font-medium"
-              :class="
-                getColor(
-                  row['TOTAL'] as number
-                    / (row['TOTAL'] === Number.MIN_SAFE_INTEGER
-                      ? 1
-                      : display.showPercentage
-                        ? 1
-                        : 1000)
-                )
-              "
+              :style="getCellStyle(row['TOTAL'] as number)"
             >
               <span v-if="row['TOTAL'] !== Number.MIN_SAFE_INTEGER">
                 {{

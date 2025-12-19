@@ -94,25 +94,49 @@ function getMetricName(type: string, view?: 'mortality' | 'excess' | 'zscore'): 
 
 /**
  * Generate default title for ranking charts
- * Format: {countries} - {ageGroup} - {dateRange}
- * Example: "USA vs GBR - All Ages - 2020-2023"
+ * Format: {prefix} {metric} - {jurisdictionType} - {dateRange}
+ * Example: "Excess ASMR - Ranking - 2020-2023" or "ASMR - Ranking - 2020-2023" (absolute)
  */
 export function generateRankingTitle(params: {
   jurisdictionType?: string
   dateFrom?: string
   dateTo?: string
-  showASMR?: boolean
+  metricType?: 'cmr' | 'asmr' | 'le'
+  displayMode?: 'absolute' | 'relative'
   showTotalsOnly?: boolean
 }): string {
   const {
     jurisdictionType = 'countries',
     dateFrom,
     dateTo,
-    showASMR = false,
+    metricType = 'asmr',
+    displayMode = 'relative',
     showTotalsOnly = false
   } = params
 
   const parts: string[] = []
+
+  // Metric type with appropriate prefix
+  if (!showTotalsOnly) {
+    const metricLabels: Record<string, string> = {
+      cmr: 'CMR',
+      asmr: 'ASMR',
+      le: 'Life Expectancy'
+    }
+    const metricLabel = metricLabels[metricType] || metricType.toUpperCase()
+
+    // Add prefix based on display mode
+    if (displayMode === 'absolute') {
+      parts.push(metricLabel)
+    } else {
+      // Relative mode: "Excess CMR/ASMR" or "Change in LE"
+      if (metricType === 'le') {
+        parts.push(`Change in ${metricLabel}`)
+      } else {
+        parts.push(`Excess ${metricLabel}`)
+      }
+    }
+  }
 
   // Jurisdiction type
   if (jurisdictionType !== 'countries') {
@@ -132,11 +156,6 @@ export function generateRankingTitle(params: {
     parts.push(jurisdictionMap[jurisdictionType] || jurisdictionType)
   } else {
     parts.push('Ranking')
-  }
-
-  // Age group (implicit from ASMR vs CMR)
-  if (!showTotalsOnly) {
-    parts.push(showASMR ? 'ASMR' : 'CMR')
   }
 
   // Date range

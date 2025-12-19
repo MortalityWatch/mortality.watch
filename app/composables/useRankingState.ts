@@ -1,320 +1,290 @@
 /**
  * Ranking State Management Composable
  *
- * Provides:
- * - All URL state refs (maintaining URL-first architecture)
- * - Real-time validation using Zod schema
- * - Auto-fix for incompatible state combinations
- * - User notifications for invalid states
+ * Provides centralized state management for the ranking page using the
+ * StateResolver pattern. All state changes flow through the resolver
+ * which applies constraints and computes UI state.
  *
- * Note: This composable provides validation infrastructure for the ranking page.
- * Actual integration into ranking.vue may come in a later phase.
+ * Features:
+ * - URL-first state synchronization
+ * - Automatic constraint application
+ * - Computed UI state (visible/disabled)
+ * - Audit logging in development
  */
 
-import { computed, watch } from 'vue'
+import { computed, ref, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { rankingStateSchema, type RankingState } from '@/model/rankingSchema'
-import { showToast } from '@/toast'
-import { encodeBool, decodeBool } from '@/lib/state'
+import {
+  RankingStateResolver,
+  RANKING_DEFAULTS,
+  type RankingState,
+  type ResolvedRankingState,
+  type MetricType,
+  type DisplayMode,
+  type RankingViewType,
+  type UIFieldState
+} from '@/lib/state/ranking'
+
+/**
+ * Get default state for initial render before route is available
+ */
+function getDefaultResolvedState(): ResolvedRankingState {
+  return {
+    state: RANKING_DEFAULTS as RankingState,
+    ui: {
+      standardPopulation: { visible: true, disabled: false },
+      baselineMethod: { visible: true, disabled: false },
+      baselinePeriod: { visible: true, disabled: false },
+      percentage: { visible: true, disabled: false },
+      predictionInterval: { visible: true, disabled: false },
+      totalsOnly: { visible: true, disabled: false },
+      cumulative: { visible: true, disabled: false },
+      showTotal: { visible: false, disabled: true }
+    },
+    view: 'relative',
+    userOverrides: new Set(),
+    log: {
+      timestamp: new Date().toISOString(),
+      trigger: 'initial',
+      before: {},
+      after: { ...RANKING_DEFAULTS },
+      changes: [],
+      userOverridesFromUrl: []
+    }
+  }
+}
 
 export function useRankingState() {
   const route = useRoute()
   const router = useRouter()
 
   // ============================================================================
-  // HELPER FUNCTIONS
+  // RESOLVED STATE
   // ============================================================================
 
-  const updateQuery = (updates: Record<string, string | number | undefined>) => {
-    const newQuery: Record<string, string | string[]> = {}
-    for (const [k, v] of Object.entries(route.query)) {
-      if (v !== null && v !== undefined) {
-        newQuery[k] = Array.isArray(v) ? v.filter((x): x is string => x !== null) : v
-      }
+  // Resolved state from StateResolver
+  const resolved = ref<ResolvedRankingState>(getDefaultResolvedState())
+
+  // Flag to prevent re-resolving during URL updates we initiated
+  let isUpdatingUrl = false
+
+  // Initialize on mount
+  onMounted(() => {
+    resolved.value = RankingStateResolver.resolveInitial(route)
+  })
+
+  // Re-resolve when URL changes (e.g., back/forward navigation)
+  watch(
+    () => route.query,
+    () => {
+      // Skip if we're the ones updating the URL
+      if (isUpdatingUrl) return
+
+      resolved.value = RankingStateResolver.resolveInitial(route)
     }
-    for (const [k, v] of Object.entries(updates)) {
-      if (v === undefined) {
-        Reflect.deleteProperty(newQuery, k)
-      } else {
-        newQuery[k] = String(v)
-      }
+  )
+
+  // ============================================================================
+  // STATE ACCESSORS
+  // ============================================================================
+
+  /** Current resolved state */
+  const state = computed(() => resolved.value.state)
+
+  /** Current UI state for all fields */
+  const ui = computed(() => resolved.value.ui)
+
+  /** Current view type */
+  const view = computed(() => resolved.value.view)
+
+  // ============================================================================
+  // UPDATE FUNCTION
+  // ============================================================================
+
+  /**
+   * Update a single state field
+   *
+   * This is the primary way to change state. It:
+   * 1. Resolves the change through the StateResolver
+   * 2. Applies any cascading constraints
+   * 3. Updates the URL
+   */
+  const updateState = async (field: string, value: unknown) => {
+    const newResolved = RankingStateResolver.resolveChange(
+      { field, value },
+      resolved.value.state,
+      resolved.value.userOverrides
+    )
+
+    resolved.value = newResolved
+
+    // Update URL
+    isUpdatingUrl = true
+    try {
+      await RankingStateResolver.applyResolvedState(newResolved, route, router)
+    } finally {
+      isUpdatingUrl = false
     }
-    router.push({ query: newQuery })
   }
 
   /**
-   * Batch multiple state updates into a single router.push
+   * Batch update multiple state fields
    *
-   * IMPORTANT: Use this method when updating multiple state values at once
-   * to prevent race conditions where sequential router.push calls read from
-   * stale route.query, causing later pushes to overwrite earlier changes.
-   *
-   * @param updates - Object with state field names and their new values
+   * More efficient than calling updateState multiple times.
+   * All changes are resolved together before updating URL.
    */
-  const batchUpdate = (updates: Partial<{
-    periodOfTime: string
-    jurisdictionType: string
-    showASMR: boolean
-    showTotals: boolean
-    showTotalsOnly: boolean
-    showPercentage: boolean
-    showPI: boolean
-    cumulative: boolean
-    hideIncomplete: boolean
-    standardPopulation: string
-    baselineMethod: string
-    decimalPrecision: string
-    dateFrom: string | undefined
-    dateTo: string | undefined
-    baselineDateFrom: string | undefined
-    baselineDateTo: string | undefined
-  }>) => {
-    // Map state field names to URL query parameter keys
-    const queryUpdates: Record<string, string | number | undefined> = {}
+  const batchUpdate = async (updates: Partial<RankingState>) => {
+    let currentResolved = resolved.value
 
-    if ('periodOfTime' in updates) queryUpdates.p = updates.periodOfTime
-    if ('jurisdictionType' in updates) queryUpdates.j = updates.jurisdictionType
-    if ('showASMR' in updates) queryUpdates.a = encodeBool(updates.showASMR!)
-    if ('showTotals' in updates) queryUpdates.t = encodeBool(updates.showTotals!)
-    if ('showTotalsOnly' in updates) queryUpdates.to = encodeBool(updates.showTotalsOnly!)
-    if ('showPercentage' in updates) queryUpdates.r = encodeBool(updates.showPercentage!)
-    if ('showPI' in updates) queryUpdates.pi = encodeBool(updates.showPI!)
-    if ('cumulative' in updates) queryUpdates.c = encodeBool(updates.cumulative!)
-    if ('hideIncomplete' in updates) queryUpdates.i = encodeBool(!updates.hideIncomplete!)
-    if ('standardPopulation' in updates) queryUpdates.sp = updates.standardPopulation
-    if ('baselineMethod' in updates) queryUpdates.bm = updates.baselineMethod
-    if ('decimalPrecision' in updates) queryUpdates.dp = updates.decimalPrecision
-    if ('dateFrom' in updates) queryUpdates.df = updates.dateFrom
-    if ('dateTo' in updates) queryUpdates.dt = updates.dateTo
-    if ('baselineDateFrom' in updates) queryUpdates.bf = updates.baselineDateFrom
-    if ('baselineDateTo' in updates) queryUpdates.bt = updates.baselineDateTo
+    // Apply each change sequentially through the resolver
+    for (const [field, value] of Object.entries(updates)) {
+      currentResolved = RankingStateResolver.resolveChange(
+        { field, value },
+        currentResolved.state,
+        currentResolved.userOverrides
+      )
+    }
 
-    updateQuery(queryUpdates)
+    resolved.value = currentResolved
+
+    // Update URL once with final state
+    isUpdatingUrl = true
+    try {
+      await RankingStateResolver.applyResolvedState(currentResolved, route, router)
+    } finally {
+      isUpdatingUrl = false
+    }
   }
 
   // ============================================================================
-  // URL STATE REFS
+  // COMPUTED REFS FOR V-MODEL COMPATIBILITY
   // ============================================================================
 
-  // Period configuration
+  /** Period of time (yearly, fluseason, etc.) */
   const periodOfTime = computed({
-    get: () => (route.query.p as string) || 'fluseason',
-    set: (val: string) => updateQuery({ p: val })
+    get: () => state.value.periodOfTime,
+    set: val => updateState('periodOfTime', val)
   })
 
+  /** Jurisdiction type (countries, usa, eu, etc.) */
   const jurisdictionType = computed({
-    get: () => (route.query.j as string) || 'countries', // Default to 'countries' to match shouldShowCountry expectations
-    set: (val: string) => updateQuery({ j: val })
+    get: () => state.value.jurisdictionType,
+    set: val => updateState('jurisdictionType', val)
   })
 
-  // Display toggles
-  const showASMR = computed({
-    get: () => decodeBool(route.query.a as string) ?? true, // Default to ASMR for standardized comparison
-    set: (val: boolean) => updateQuery({ a: encodeBool(val) })
+  /** Metric type (cmr, asmr, le) */
+  const metricType = computed({
+    get: () => state.value.metricType,
+    set: (val: MetricType) => updateState('metricType', val)
   })
 
+  /** Display mode (absolute, relative) - maps to view */
+  const displayMode = computed({
+    get: (): DisplayMode => state.value.view === 'absolute' ? 'absolute' : 'relative',
+    set: (val: DisplayMode) => updateState('view', val as RankingViewType)
+  })
+
+  /** Show totals column */
   const showTotals = computed({
-    get: () => decodeBool(route.query.t as string) ?? true,
-    set: (val: boolean) => updateQuery({ t: encodeBool(val) })
+    get: () => state.value.showTotals,
+    set: val => updateState('showTotals', val)
   })
 
+  /** Show only the totals column */
   const showTotalsOnly = computed({
-    get: () => {
-      if (!showTotals.value) return false
-      return decodeBool(route.query.to as string) ?? false
-    },
-    set: (val: boolean) => updateQuery({ to: encodeBool(val) })
+    get: () => state.value.showTotalsOnly,
+    set: val => updateState('showTotalsOnly', val)
   })
 
+  /** Show percentage values (excess mode only) */
   const showPercentage = computed({
-    get: () => decodeBool(route.query.r as string) ?? true,
-    set: (val: boolean) => updateQuery({ r: encodeBool(val) })
+    get: () => state.value.showPercentage,
+    set: val => updateState('showPercentage', val)
   })
 
+  /** Show prediction intervals */
   const showPI = computed({
-    get: () => {
-      if (cumulative.value || showTotalsOnly.value) return false
-      return decodeBool(route.query.pi as string) ?? false
-    },
-    set: (val: boolean) => updateQuery({ pi: encodeBool(val) })
+    get: () => state.value.showPI,
+    set: val => updateState('showPI', val)
   })
 
+  /** Cumulative mode */
   const cumulative = computed({
-    get: () => decodeBool(route.query.c as string) ?? false,
-    set: (val: boolean) => updateQuery({ c: encodeBool(val) })
+    get: () => state.value.cumulative,
+    set: val => updateState('cumulative', val)
   })
 
+  /** Hide incomplete data */
   const hideIncomplete = computed({
-    get: () => !(decodeBool(route.query.i as string) ?? false), // Default to false = hide incomplete data
-    set: (val: boolean) => updateQuery({ i: encodeBool(!val) })
+    get: () => state.value.hideIncomplete,
+    set: val => updateState('hideIncomplete', val)
   })
 
-  // Metric configuration
+  /** Standard population for ASMR */
   const standardPopulation = computed({
-    get: () => (route.query.sp as string) || 'who',
-    set: (val: string) => updateQuery({ sp: val })
+    get: () => state.value.standardPopulation,
+    set: val => updateState('standardPopulation', val)
   })
 
+  /** Baseline calculation method */
   const baselineMethod = computed({
-    get: () => (route.query.bm as string) || 'mean',
-    set: (val: string) => updateQuery({ bm: val })
+    get: () => state.value.baselineMethod,
+    set: val => updateState('baselineMethod', val)
   })
 
+  /** Decimal precision for display */
   const decimalPrecision = computed({
-    get: () => (route.query.dp as string) || '1',
-    set: (val: string) => updateQuery({ dp: val })
+    get: () => state.value.decimalPrecision,
+    set: val => updateState('decimalPrecision', val)
   })
 
-  // Date range
-  // Note: undefined defaults - sliderValue in ranking.vue provides computed defaults
-  // This matches explorer pattern and avoids state/URL conflicts
+  /** Start date for data range */
   const dateFrom = computed({
-    get: () => (route.query.df as string) || undefined,
-    set: (val: string | undefined) => updateQuery({ df: val })
+    get: () => state.value.dateFrom,
+    set: val => updateState('dateFrom', val)
   })
 
+  /** End date for data range */
   const dateTo = computed({
-    get: () => (route.query.dt as string) || undefined,
-    set: (val: string | undefined) => updateQuery({ dt: val })
+    get: () => state.value.dateTo,
+    set: val => updateState('dateTo', val)
   })
 
+  /** Start date for baseline calculation */
   const baselineDateFrom = computed({
-    get: () => (route.query.bf as string) || undefined,
-    set: (val: string | undefined) => updateQuery({ bf: val })
+    get: () => state.value.baselineDateFrom,
+    set: val => updateState('baselineDateFrom', val)
   })
 
+  /** End date for baseline calculation */
   const baselineDateTo = computed({
-    get: () => (route.query.bt as string) || undefined,
-    set: (val: string | undefined) => updateQuery({ bt: val })
+    get: () => state.value.baselineDateTo,
+    set: val => updateState('baselineDateTo', val)
   })
 
   // ============================================================================
-  // VALIDATION - Gather complete state and validate
+  // UI STATE HELPERS
   // ============================================================================
 
-  const currentState = computed<RankingState>(() => ({
-    periodOfTime: periodOfTime.value as RankingState['periodOfTime'],
-    jurisdictionType: jurisdictionType.value as RankingState['jurisdictionType'],
-    showASMR: showASMR.value,
-    showTotals: showTotals.value,
-    showTotalsOnly: showTotalsOnly.value,
-    showPercentage: showPercentage.value,
-    showPI: showPI.value,
-    cumulative: cumulative.value,
-    hideIncomplete: hideIncomplete.value,
-    standardPopulation: standardPopulation.value as RankingState['standardPopulation'],
-    baselineMethod: baselineMethod.value as RankingState['baselineMethod'],
-    decimalPrecision: decimalPrecision.value as RankingState['decimalPrecision'],
-    dateFrom: dateFrom.value,
-    dateTo: dateTo.value,
-    baselineDateFrom: baselineDateFrom.value,
-    baselineDateTo: baselineDateTo.value
-  }))
+  /**
+   * Get UI state for a specific field
+   */
+  const getUIState = (field: string): UIFieldState => {
+    return ui.value[field] || { visible: true, disabled: false }
+  }
 
-  const validationResult = computed(() =>
-    rankingStateSchema.safeParse(currentState.value)
-  )
+  /**
+   * Check if a field is visible
+   */
+  const isVisible = (field: string): boolean => {
+    return getUIState(field).visible
+  }
 
-  const isValid = computed(() => validationResult.value.success)
-
-  const errors = computed(() =>
-    validationResult.value.success ? [] : validationResult.value.error.issues
-  )
-
-  // ============================================================================
-  // AUTO-FIX - Automatically correct incompatible state combinations
-  // ============================================================================
-
-  // Track the last set of error messages to avoid duplicate toasts
-  let lastShownErrors = new Set<string>()
-
-  watch(
-    errors,
-    (newErrors) => {
-      if (newErrors.length === 0) {
-        lastShownErrors.clear()
-        return
-      }
-
-      // Skip validation errors when dates are still undefined (initial load)
-      // Also skip if baseline dates are undefined (will use computed defaults)
-      if (!dateFrom.value || !dateTo.value || !baselineDateFrom.value || !baselineDateTo.value) {
-        return
-      }
-
-      // Log validation errors for debugging
-      console.warn('[useRankingState] Validation errors:', newErrors)
-
-      // Auto-fix: showTotalsOnly requires showTotals
-      const totalsOnlyError = newErrors.find(e =>
-        e.message.includes('requires show totals')
-      )
-      if (totalsOnlyError) {
-        showTotalsOnly.value = false
-        return // Exit early after auto-fix
-      }
-
-      // Auto-fix: PI not compatible with cumulative
-      const piCumulativeError = newErrors.find(e =>
-        e.message.includes('cannot be shown with cumulative')
-      )
-      if (piCumulativeError) {
-        showPI.value = false
-        return // Exit early after auto-fix
-      }
-
-      // Auto-fix: PI not compatible with totals only
-      const piTotalsOnlyError = newErrors.find(e =>
-        e.message.includes('cannot be shown with totals only')
-      )
-      if (piTotalsOnlyError) {
-        showPI.value = false
-        return // Exit early after auto-fix
-      }
-
-      // Skip date format validation errors - these are transient during period type changes
-      // The periodOfTimeChanged handler ensures correct formats, but during the batch update
-      // the computed currentState may momentarily have mismatched period type and date formats
-      const dateFormatErrors = newErrors.filter(e =>
-        e.message.includes('Date format must be')
-      )
-      if (dateFormatErrors.length === newErrors.length) {
-        // All errors are date format errors - skip them
-        return
-      }
-
-      // For errors that can't be auto-fixed, notify user only once per unique error
-      // Filter out date format errors since they're transient
-      const nonDateFormatErrors = newErrors.filter(e =>
-        !e.message.includes('Date format must be')
-      )
-      const errorMessages = new Set(nonDateFormatErrors.map(e => e.message))
-
-      // Only show toasts for errors we haven't shown before
-      errorMessages.forEach((errorMsg) => {
-        if (!lastShownErrors.has(errorMsg)) {
-          lastShownErrors.add(errorMsg)
-          // showToast will automatically log to console
-          showToast(errorMsg, 'warning')
-        }
-      })
-
-      // Clean up old errors that are no longer present
-      lastShownErrors = new Set(Array.from(lastShownErrors).filter(msg => errorMessages.has(msg)))
-    },
-    { immediate: false }
-  )
-
-  // ============================================================================
-  // HELPER - Get validated state or throw
-  // ============================================================================
-
-  const getValidatedState = (): RankingState => {
-    const result = rankingStateSchema.safeParse(currentState.value)
-    if (!result.success) {
-      throw new Error(`Invalid state: ${result.error.issues[0]?.message}`)
-    }
-    return result.data
+  /**
+   * Check if a field is disabled
+   */
+  const isDisabled = (field: string): boolean => {
+    return getUIState(field).disabled
   }
 
   // ============================================================================
@@ -322,37 +292,43 @@ export function useRankingState() {
   // ============================================================================
 
   return {
-    // Period configuration
+    // Raw state access
+    state,
+    ui,
+    view,
+
+    // Individual computed refs for v-model
     periodOfTime,
     jurisdictionType,
-
-    // Display toggles
-    showASMR,
+    metricType,
+    displayMode,
     showTotals,
     showTotalsOnly,
     showPercentage,
     showPI,
     cumulative,
     hideIncomplete,
-
-    // Metric configuration
     standardPopulation,
     baselineMethod,
     decimalPrecision,
-
-    // Date range
     dateFrom,
     dateTo,
     baselineDateFrom,
     baselineDateTo,
 
-    // Validation API
-    currentState,
-    isValid,
-    errors,
-    getValidatedState,
+    // Update functions
+    updateState,
+    batchUpdate,
 
-    // Batch updates (prevents race conditions)
-    batchUpdate
+    // UI helpers
+    getUIState,
+    isVisible,
+    isDisabled,
+
+    // Backwards compatibility
+    currentState: state,
+    isValid: computed(() => true), // StateResolver ensures valid state
+    errors: computed(() => []),
+    getValidatedState: () => state.value
   }
 }

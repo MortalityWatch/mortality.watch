@@ -160,7 +160,7 @@ describe('ranking/dataProcessing', () => {
         dataLabels: ['2020', '2021', '2022'],
         metaData: createMockMetadata('USA'),
         explorerLink: codes => `/explorer?c=${codes.join(',')}`,
-        display: { showPercentage: false, cumulative: false, hideIncomplete: false },
+        display: { showPercentage: false, cumulative: false, hideIncomplete: false, displayMode: 'relative' },
         totalRowKey: 'TOTAL'
       }
 
@@ -183,7 +183,7 @@ describe('ranking/dataProcessing', () => {
           dataLabels: ['2020'],
           metaData: createMockMetadata(code),
           explorerLink: () => '/',
-          display: { showPercentage: false, cumulative: false, hideIncomplete: false },
+          display: { showPercentage: false, cumulative: false, hideIncomplete: false, displayMode: 'relative' },
           totalRowKey: 'TOTAL'
         }
 
@@ -201,7 +201,7 @@ describe('ranking/dataProcessing', () => {
         dataLabels: ['2020', '2021', '2022'],
         metaData: createMockMetadata('USA'),
         explorerLink: () => '/',
-        display: { showPercentage: false, cumulative: false, hideIncomplete: false },
+        display: { showPercentage: false, cumulative: false, hideIncomplete: false, displayMode: 'relative' },
         totalRowKey: 'TOTAL'
       }
 
@@ -221,7 +221,7 @@ describe('ranking/dataProcessing', () => {
         dataLabels: ['2020', '2021', '2022'],
         metaData: createMockMetadata('USA'),
         explorerLink: () => '/',
-        display: { showPercentage: true, cumulative: false, hideIncomplete: false },
+        display: { showPercentage: true, cumulative: false, hideIncomplete: false, displayMode: 'relative' },
         totalRowKey: 'TOTAL'
       }
 
@@ -242,7 +242,7 @@ describe('ranking/dataProcessing', () => {
         dataLabels: ['2020', '2021', '2022'],
         metaData: createMockMetadata('USA'),
         explorerLink: () => '/',
-        display: { showPercentage: false, cumulative: true, hideIncomplete: false },
+        display: { showPercentage: false, cumulative: true, hideIncomplete: false, displayMode: 'relative' },
         totalRowKey: 'TOTAL'
       }
 
@@ -263,7 +263,7 @@ describe('ranking/dataProcessing', () => {
         dataLabels: ['2020', '2021'],
         metaData: createMockMetadata('USA'),
         explorerLink: () => '/',
-        display: { showPercentage: false, cumulative: false, hideIncomplete: false },
+        display: { showPercentage: false, cumulative: false, hideIncomplete: false, displayMode: 'relative' },
         totalRowKey: 'TOTAL'
       }
 
@@ -287,7 +287,7 @@ describe('ranking/dataProcessing', () => {
         dataLabels: ['2020', '2021', '2022'],
         metaData: createMockMetadata('USA'),
         explorerLink: () => '/',
-        display: { showPercentage: false, cumulative: false, hideIncomplete: false },
+        display: { showPercentage: false, cumulative: false, hideIncomplete: false, displayMode: 'relative' },
         totalRowKey: 'TOTAL'
       }
 
@@ -309,7 +309,7 @@ describe('ranking/dataProcessing', () => {
         dataLabels: ['2020', '2021', '2022'],
         metaData: createMockMetadata('USA'),
         explorerLink: () => '/',
-        display: { showPercentage: false, cumulative: false, hideIncomplete: false },
+        display: { showPercentage: false, cumulative: false, hideIncomplete: false, displayMode: 'relative' },
         totalRowKey: 'TOTAL'
       }
 
@@ -333,7 +333,7 @@ describe('ranking/dataProcessing', () => {
         dataLabels: ['2020', '2021', '2022'],
         metaData: createMockMetadata('USA'),
         explorerLink: () => '/',
-        display: { showPercentage: false, cumulative: false, hideIncomplete: true },
+        display: { showPercentage: false, cumulative: false, hideIncomplete: true, displayMode: 'relative' },
         totalRowKey: 'TOTAL'
       }
 
@@ -352,7 +352,7 @@ describe('ranking/dataProcessing', () => {
         dataLabels: ['2020', '2021', '2022'],
         metaData: createMockMetadata('USA'),
         explorerLink: () => '/',
-        display: { showPercentage: false, cumulative: false, hideIncomplete: true },
+        display: { showPercentage: false, cumulative: false, hideIncomplete: true, displayMode: 'relative' },
         totalRowKey: 'TOTAL'
       }
 
@@ -372,7 +372,7 @@ describe('ranking/dataProcessing', () => {
         dataLabels: ['2020', '2021', '2022'],
         metaData: createMockMetadata('USA'),
         explorerLink: () => '/',
-        display: { showPercentage: false, cumulative: false, hideIncomplete: false },
+        display: { showPercentage: false, cumulative: false, hideIncomplete: false, displayMode: 'relative' },
         totalRowKey: 'TOTAL'
       }
 
@@ -391,7 +391,7 @@ describe('ranking/dataProcessing', () => {
         dataLabels: ['2021', '2022', '2023'],
         metaData: createMockMetadata('USA'),
         explorerLink: () => '/',
-        display: { showPercentage: false, cumulative: false, hideIncomplete: false },
+        display: { showPercentage: false, cumulative: false, hideIncomplete: false, displayMode: 'relative' },
         totalRowKey: 'TOTAL'
       }
 

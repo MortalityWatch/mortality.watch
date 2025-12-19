@@ -82,7 +82,8 @@ const state = useRankingState()
 const {
   periodOfTime,
   jurisdictionType,
-  showASMR,
+  metricType,
+  displayMode,
   showTotals,
   showTotalsOnly,
   showPercentage,
@@ -91,7 +92,8 @@ const {
   hideIncomplete,
   standardPopulation,
   baselineMethod,
-  decimalPrecision
+  decimalPrecision,
+  ui
 } = state
 
 // Alias state values directly for template - child components now use primitive v-model
@@ -273,13 +275,29 @@ const totalPages = computed(() => getTotalPages(sortedResult.value))
 
 // Memoized title computation for performance
 const title = computed(() => {
-  let titleResult = 'Excess '
+  let titleResult = ''
+  const isAbsolute = displayMode.value === 'absolute'
 
-  if (showASMR.value)
-    titleResult = isMobile()
-      ? `${titleResult}ASMR`
-      : `${titleResult}Age-Standardized Mortality Rate`
-  else titleResult = isMobile() ? `${titleResult}CMR` : `${titleResult}Crude Mortality Rate`
+  // Build title based on metric type and display mode
+  if (isAbsolute) {
+    // Absolute mode: no "Excess" or "Change in" prefix
+    if (metricType.value === 'le') {
+      titleResult = isMobile() ? 'LE' : 'Life Expectancy'
+    } else if (metricType.value === 'asmr') {
+      titleResult = isMobile() ? 'ASMR' : 'Age-Standardized Mortality Rate'
+    } else {
+      titleResult = isMobile() ? 'CMR' : 'Crude Mortality Rate'
+    }
+  } else {
+    // Relative mode: "Excess" for CMR/ASMR, "Change in" for LE
+    if (metricType.value === 'le') {
+      titleResult = isMobile() ? 'Change in LE' : 'Change in Life Expectancy'
+    } else if (metricType.value === 'asmr') {
+      titleResult = isMobile() ? 'Excess ASMR' : 'Excess Age-Standardized Mortality Rate'
+    } else {
+      titleResult = isMobile() ? 'Excess CMR' : 'Excess Crude Mortality Rate'
+    }
+  }
 
   if (selectedJurisdictionType.value !== 'countries') {
     // Look up the display name from the items array
@@ -291,6 +309,10 @@ const title = computed(() => {
 })
 
 const subtitle = computed(() => {
+  // No baseline subtitle in absolute mode
+  if (displayMode.value === 'absolute') {
+    return ''
+  }
   if (!baselineSliderValue.value[0] || !baselineSliderValue.value[1]) {
     return ''
   }
@@ -308,7 +330,9 @@ const displaySettings = computed(() => ({
   totalRowKey: 'TOTAL',
   selectedBaselineMethod: selectedBaselineMethod.value || 'mean',
   decimalPrecision: selectedDecimalPrecision.value || '1',
-  subtitle: subtitle.value
+  subtitle: subtitle.value,
+  displayMode: displayMode.value,
+  metricType: metricType.value
 }))
 
 // ============================================================================
@@ -381,7 +405,8 @@ const {
     jurisdictionType: selectedJurisdictionType.value,
     dateFrom: sliderValue.value[0],
     dateTo: sliderValue.value[1],
-    showASMR: showASMR.value,
+    metricType: metricType.value,
+    displayMode: displayMode.value,
     showTotalsOnly: showTotalsOnly.value
   })
 })
@@ -389,7 +414,8 @@ const {
 // Memoized ranking state serialization
 const rankingStateData = computed(() => ({
   // Main type selection
-  a: showASMR.value,
+  m: metricType.value,
+  dm: displayMode.value,
   p: selectedPeriodOfTime.value,
   j: selectedJurisdictionType.value,
 
@@ -449,7 +475,8 @@ const getDefaultRankingTitle = () => {
     jurisdictionType: selectedJurisdictionType.value,
     dateFrom: sliderValue.value[0],
     dateTo: sliderValue.value[1],
-    showASMR: showASMR.value,
+    metricType: metricType.value,
+    displayMode: displayMode.value,
     showTotalsOnly: showTotalsOnly.value
   })
 }
@@ -581,7 +608,8 @@ const exportJSON = () => {
 // Watch for state changes to mark ranking as modified
 watch(
   [
-    showASMR,
+    metricType,
+    displayMode,
     selectedPeriodOfTime,
     selectedJurisdictionType,
     sliderValue,
@@ -607,7 +635,7 @@ watch(
 
 <template>
   <div class="container mx-auto px-4 py-8">
-    <RankingHeader />
+    <RankingHeader :display-mode="displayMode" />
 
     <div class="flex flex-col gap-6 mx-auto">
       <LoadingSpinner
@@ -692,7 +720,8 @@ watch(
           />
 
           <RankingSettings
-            v-model:show-a-s-m-r="showASMR"
+            v-model:metric-type="metricType"
+            v-model:display-mode="displayMode"
             v-model:selected-standard-population="selectedStandardPopulation"
             v-model:show-totals="showTotals"
             v-model:show-totals-only="showTotalsOnly"
@@ -708,6 +737,7 @@ watch(
             :baseline-slider-values="baselineSliderValues"
             :green-color="greenColor"
             :chart-type="(selectedPeriodOfTime || 'yearly') as ChartType"
+            :ui="ui"
             @baseline-slider-changed="baselineSliderChangedWrapper"
           />
 
@@ -761,7 +791,8 @@ watch(
         <!-- Settings - Third on mobile only -->
         <div class="order-3 lg:hidden">
           <RankingSettings
-            v-model:show-a-s-m-r="showASMR"
+            v-model:metric-type="metricType"
+            v-model:display-mode="displayMode"
             v-model:selected-standard-population="selectedStandardPopulation"
             v-model:show-totals="showTotals"
             v-model:show-totals-only="showTotalsOnly"
@@ -777,6 +808,7 @@ watch(
             :baseline-slider-values="baselineSliderValues"
             :green-color="greenColor"
             :chart-type="(selectedPeriodOfTime || 'yearly') as ChartType"
+            :ui="ui"
             @baseline-slider-changed="baselineSliderChangedWrapper"
           />
 

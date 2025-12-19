@@ -61,6 +61,53 @@
 .dark .color-scale-9 { background-color: #d42026; color: white; }
 .dark .color-scale-na { background-color: transparent; }
 
+/* Color scale for Life Expectancy absolute (uses color_scale_bad_good: red→green)
+   Generated from chroma.scale(['#ff5393', '#5dac20']).mode('rgb').colors(9)
+   Low LE = bad (red), High LE = good (green) */
+.color-scale-le-1 { background-color: #ff5393; color: white; }
+.color-scale-le-2 { background-color: #f46783; color: white; }
+.color-scale-le-3 { background-color: #e97b73; color: #111; }
+.color-scale-le-4 { background-color: #de8f63; color: #111; }
+.color-scale-le-5 { background-color: #d4a353; color: #111; }
+.color-scale-le-6 { background-color: #a9a43f; color: #111; }
+.color-scale-le-7 { background-color: #7fa530; color: white; }
+.color-scale-le-8 { background-color: #56a621; color: white; }
+.color-scale-le-9 { background-color: #5dac20; color: white; }
+
+/* Dark theme LE scale (same hue, reduced saturation/lightness for dark bg) */
+.dark .color-scale-le-1 { background-color: #a6365f; color: white; }
+.dark .color-scale-le-2 { background-color: #9f4255; color: white; }
+.dark .color-scale-le-3 { background-color: #974f4b; color: white; }
+.dark .color-scale-le-4 { background-color: #905c41; color: white; }
+.dark .color-scale-le-5 { background-color: #886937; color: white; }
+.dark .color-scale-le-6 { background-color: #6d6a2a; color: white; }
+.dark .color-scale-le-7 { background-color: #526b20; color: white; }
+.dark .color-scale-le-8 { background-color: #386c16; color: white; }
+.dark .color-scale-le-9 { background-color: #3c7014; color: white; }
+
+/* Color scale for CMR/ASMR absolute (uses color_scale sequential: white→red)
+   Low mortality = good (white/neutral), High mortality = bad (red) */
+.color-scale-mr-1 { background-color: #fff7f3; color: #111; }
+.color-scale-mr-2 { background-color: #ffe3df; color: #111; }
+.color-scale-mr-3 { background-color: #ffd0cb; color: #111; }
+.color-scale-mr-4 { background-color: #ffbcb7; color: #111; }
+.color-scale-mr-5 { background-color: #ffa8a3; color: #111; }
+.color-scale-mr-6 { background-color: #ff948f; color: #111; }
+.color-scale-mr-7 { background-color: #ff807b; color: white; }
+.color-scale-mr-8 { background-color: #ff6c67; color: white; }
+.color-scale-mr-9 { background-color: #ff5853; color: white; }
+
+/* Dark theme MR scale (reduced lightness for dark bg) */
+.dark .color-scale-mr-1 { background-color: #1a1817; color: white; }
+.dark .color-scale-mr-2 { background-color: #2d201e; color: white; }
+.dark .color-scale-mr-3 { background-color: #402825; color: white; }
+.dark .color-scale-mr-4 { background-color: #53302c; color: white; }
+.dark .color-scale-mr-5 { background-color: #663833; color: white; }
+.dark .color-scale-mr-6 { background-color: #79403a; color: white; }
+.dark .color-scale-mr-7 { background-color: #8c4841; color: white; }
+.dark .color-scale-mr-8 { background-color: #9f5048; color: white; }
+.dark .color-scale-mr-9 { background-color: #b2584f; color: white; }
+
 /* Driver.js tutorial popover theme overrides */
 .driver-popover-custom {
   background-color: white;

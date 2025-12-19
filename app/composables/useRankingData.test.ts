@@ -142,7 +142,8 @@ describe('useRankingData', () => {
     mockState = {
       periodOfTime: ref('yearly'),
       jurisdictionType: ref('all'),
-      showASMR: ref(false),
+      metricType: ref('cmr'),
+      displayMode: ref('relative'),
       standardPopulation: ref('who'),
       baselineMethod: ref('mean'),
       baselineDateFrom: ref('2017'),
@@ -249,7 +250,7 @@ describe('useRankingData', () => {
     it('should fetch ASMR data when enabled', async () => {
       const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
-      mockState.showASMR.value = true
+      mockState.metricType.value = 'asmr'
 
       await ranking.loadData()
 
@@ -264,7 +265,7 @@ describe('useRankingData', () => {
     it('should filter countries by ASMR availability', async () => {
       const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
-      mockState.showASMR.value = true
+      mockState.metricType.value = 'asmr'
 
       await ranking.loadData()
 
@@ -277,7 +278,7 @@ describe('useRankingData', () => {
     it('should include all countries for CMR', async () => {
       const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
-      mockState.showASMR.value = false
+      mockState.metricType.value = 'cmr'
 
       await ranking.loadData()
 
@@ -320,7 +321,7 @@ describe('useRankingData', () => {
     it('should handle null response with ASMR error message when ASMR is enabled', async () => {
       const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
-      mockState.showASMR.value = true
+      mockState.metricType.value = 'asmr'
       mockDataFetcher.fetchChartData.mockResolvedValue(null)
 
       await ranking.loadData()
@@ -334,7 +335,7 @@ describe('useRankingData', () => {
     it('should handle null response with CMR error message when CMR is enabled', async () => {
       const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
-      mockState.showASMR.value = false
+      mockState.metricType.value = 'cmr'
       mockDataFetcher.fetchChartData.mockResolvedValue(null)
 
       await ranking.loadData()
@@ -703,7 +704,7 @@ describe('useRankingData', () => {
 
       vi.clearAllMocks()
 
-      mockState.showASMR.value = true
+      mockState.metricType.value = 'asmr'
 
       await nextTick()
 
@@ -839,7 +840,7 @@ describe('useRankingData', () => {
       const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       mockState.standardPopulation.value = 'esp2013'
-      mockState.showASMR.value = true
+      mockState.metricType.value = 'asmr'
 
       await ranking.loadData()
 
