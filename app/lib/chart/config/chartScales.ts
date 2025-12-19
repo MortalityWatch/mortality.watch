@@ -20,8 +20,12 @@ import { extractYValues, getLabelText } from './chartLabels'
 /**
  * Compute axis tick precision based on data range.
  * Uses 0 decimals for large values, more for small ranges.
+ * For count types (deaths/population), always use 0 decimals.
  */
-function computeAxisPrecision(data: MortalityChartData, isPercentage: boolean): number {
+function computeAxisPrecision(data: MortalityChartData, isPercentage: boolean, isCountType: boolean = false): number {
+  // Count types (deaths/population) should always use 0 decimals
+  if (isCountType) return 0
+
   const values = extractYValues(data)
   if (values.length === 0) return 0
 
@@ -46,6 +50,7 @@ function computeAxisPrecision(data: MortalityChartData, isPercentage: boolean): 
  * @param decimals - Decimal precision ('auto' or number string)
  * @param isDark - Dark mode flag
  * @param isSSR - Server-side rendering flag (applies font metric adjustments)
+ * @param isCountType - Whether the data is a count type (deaths/population) that should use 0 decimals
  */
 export function createScalesConfig(
   data: MortalityChartData,
@@ -54,11 +59,12 @@ export function createScalesConfig(
   showDecimals: boolean,
   decimals: string,
   isDark?: boolean,
-  isSSR?: boolean
+  isSSR?: boolean,
+  isCountType: boolean = false
 ) {
   // Compute axis-specific precision (less than data labels)
   const axisPrecision = decimals === 'auto'
-    ? computeAxisPrecision(data, showPercentage)
+    ? computeAxisPrecision(data, showPercentage, isCountType)
     : parseInt(decimals)
 
   // SSR font adjustments: node-canvas has slightly different text metrics

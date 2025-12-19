@@ -182,7 +182,8 @@ export const makeBarLineChartConfig = (
     showQrCode = true
   }
 
-  const showDecimals = !isDeathsType && !isPopulationType
+  const isCountType = isDeathsType || isPopulationType
+  const showDecimals = !isCountType
 
   // Logo and QR code plugins overlay the chart, so no padding needed for them
   // They draw at absolute positions in corners without affecting chart layout
@@ -219,7 +220,8 @@ export const makeBarLineChartConfig = (
         data.ytitle.includes('Z-Score') ? 'zscore' : 'mortality', // Detect view from ytitle
         isDark,
         isSSR,
-        chartStyle
+        chartStyle,
+        isCountType
       ),
       scales: createScalesConfig(
         data,
@@ -228,7 +230,8 @@ export const makeBarLineChartConfig = (
         showDecimals,
         decimals,
         isDark,
-        isSSR
+        isSSR,
+        isCountType
       )
     },
     data: {
