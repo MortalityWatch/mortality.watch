@@ -92,7 +92,8 @@ const {
   hideIncomplete,
   standardPopulation,
   baselineMethod,
-  decimalPrecision
+  decimalPrecision,
+  ui
 } = state
 
 // Alias state values directly for template - child components now use primitive v-model
@@ -736,6 +737,7 @@ watch(
             :baseline-slider-values="baselineSliderValues"
             :green-color="greenColor"
             :chart-type="(selectedPeriodOfTime || 'yearly') as ChartType"
+            :ui="ui"
             @baseline-slider-changed="baselineSliderChangedWrapper"
           />
 
@@ -806,6 +808,7 @@ watch(
             :baseline-slider-values="baselineSliderValues"
             :green-color="greenColor"
             :chart-type="(selectedPeriodOfTime || 'yearly') as ChartType"
+            :ui="ui"
             @baseline-slider-changed="baselineSliderChangedWrapper"
           />
 

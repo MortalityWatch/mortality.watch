@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, toRef, nextTick, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { standardPopulationItems, baselineMethodItems, decimalPrecisionItems } from '@/model'
 import type { ChartType } from '@/model/period'
-import type { MetricType, DisplayMode } from '@/model/rankingSchema'
+import type { MetricType, DisplayMode, UIFieldState } from '@/lib/state/ranking'
 import BaselineMethodPicker from '@/components/shared/BaselineMethodPicker.vue'
 import BaselinePeriodPicker from '@/components/shared/BaselinePeriodPicker.vue'
-import { useRankingUIState } from '@/composables/useRankingUIState'
 import { getMetricTypeItems } from '@/lib/config/rankingConfig'
 
 // Props
@@ -27,6 +26,8 @@ interface Props {
   baselineSliderValues: () => string[]
   greenColor: () => string
   chartType: ChartType
+  // UI state from StateResolver
+  ui: Record<string, UIFieldState>
 }
 
 const props = defineProps<Props>()
@@ -50,38 +51,30 @@ const emit = defineEmits<{
 // Metric type items for dropdown
 const metricTypeItems = getMetricTypeItems()
 
-// Track percentage state before switching to raw mode so we can restore it
-const savedPercentageState = ref<boolean | null>(null)
+// UI state helpers - use props.ui from StateResolver
+const getUIState = (field: string): UIFieldState => {
+  return props.ui[field] || { visible: true, disabled: false }
+}
 
-// Handle display mode toggle - manage percentage state appropriately
+// Computed UI states
+const showBaselineOptions = computed(() => getUIState('baselineMethod').visible)
+const standardPopulationDisabled = computed(() => getUIState('standardPopulation').disabled)
+const totalsOnlyDisabled = computed(() => getUIState('totalsOnly').disabled)
+const percentageDisabled = computed(() => getUIState('percentage').disabled)
+const predictionIntervalDisabled = computed(() => getUIState('predictionInterval').disabled)
+
+// Local state for optimistic UI updates (fixes async URL update lag)
+const pendingDisplayMode = ref<DisplayMode | null>(null)
+
+// Handle display mode toggle - now simpler without savedPercentageState hack
+// The StateResolver handles percentage state based on view constraints
 const handleDisplayModeToggle = (isExcess: boolean) => {
   const newMode: DisplayMode = isExcess ? 'relative' : 'absolute'
   // Set pending state immediately for optimistic UI update
   pendingDisplayMode.value = newMode
   // Emit to parent (URL update is async)
   emit('update:displayMode', newMode)
-
-  if (!isExcess) {
-    // Switching to raw mode: save and turn off percentage
-    savedPercentageState.value = props.showPercentage
-    if (props.showPercentage) {
-      nextTick(() => {
-        emit('update:showPercentage', false)
-      })
-    }
-  } else {
-    // Switching to excess mode: restore percentage if it was on before
-    if (savedPercentageState.value === true) {
-      nextTick(() => {
-        emit('update:showPercentage', true)
-      })
-    }
-    savedPercentageState.value = null
-  }
 }
-
-// Local state for optimistic UI updates (fixes async URL update lag)
-const pendingDisplayMode = ref<DisplayMode | null>(null)
 
 // Local computed values that emit updates
 const metricTypeLocal = computed({
@@ -144,15 +137,6 @@ const selectedDecimalPrecisionLocal = computed({
   set: val => emit('update:selectedDecimalPrecision', val)
 })
 
-// Initialize ranking UI state configuration
-const rankingUIState = useRankingUIState(
-  toRef(props, 'metricType'),
-  toRef(props, 'displayMode'),
-  toRef(props, 'showTotals'),
-  toRef(props, 'cumulative'),
-  toRef(props, 'showTotalsOnly')
-)
-
 // Tab state
 const activeTab = ref('metric')
 </script>
@@ -190,7 +174,7 @@ const activeTab = ref('metric')
         Display
       </button>
       <button
-        v-if="rankingUIState.showBaselineOptions.value"
+        v-if="showBaselineOptions"
         :class="[
           'px-4 py-2 text-sm font-medium',
           activeTab === 'baseline'
@@ -234,7 +218,7 @@ const activeTab = ref('metric')
 
         <div
           class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-          :class="{ 'opacity-50 pointer-events-none': rankingUIState.standardPopulationDisabled.value }"
+          :class="{ 'opacity-50 pointer-events-none': standardPopulationDisabled }"
         >
           <label
             class="text-sm font-medium whitespace-nowrap"
@@ -267,7 +251,7 @@ const activeTab = ref('metric')
           <label class="text-sm font-medium whitespace-nowrap">Totals Only</label>
           <USwitch
             v-model="showTotalsOnlyLocal"
-            :disabled="rankingUIState.totalsOnlyDisabled.value"
+            :disabled="totalsOnlyDisabled"
           />
         </div>
 
@@ -277,13 +261,12 @@ const activeTab = ref('metric')
         </div>
 
         <div
+          v-if="!percentageDisabled"
           class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-          :class="{ 'opacity-50': rankingUIState.percentageDisabled.value }"
         >
           <label class="text-sm font-medium whitespace-nowrap">Percentage</label>
           <USwitch
             v-model="showPercentageLocal"
-            :disabled="rankingUIState.percentageDisabled.value"
           />
         </div>
 
@@ -292,12 +275,12 @@ const activeTab = ref('metric')
           <USwitch v-model="cumulativeLocal" />
         </div>
 
-        <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+        <div
+          v-if="!predictionIntervalDisabled"
+          class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+        >
           <label class="text-sm font-medium whitespace-nowrap">Show 95% PI</label>
-          <USwitch
-            v-model="showPILocal"
-            :disabled="rankingUIState.predictionIntervalDisabled.value"
-          />
+          <USwitch v-model="showPILocal" />
         </div>
 
         <div class="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800/50">
@@ -321,7 +304,7 @@ const activeTab = ref('metric')
     </div>
 
     <!-- Baseline Tab (only shown in relative mode) -->
-    <div v-if="activeTab === 'baseline' && rankingUIState.showBaselineOptions.value">
+    <div v-if="activeTab === 'baseline' && showBaselineOptions">
       <div class="flex flex-col gap-4">
         <BaselineMethodPicker
           v-model="selectedBaselineMethodLocal"

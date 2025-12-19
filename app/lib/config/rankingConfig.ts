@@ -1,33 +1,14 @@
 /**
- * Centralized Ranking Configuration System
+ * Ranking Configuration
  *
- * This file defines all UI behavior rules for the ranking table based on
- * metric type and display settings. Instead of scattered if-statements
- * throughout components, all configuration logic is centralized here.
+ * Provides metric configuration and helper functions for the ranking page.
+ *
+ * NOTE: UI state computation has been moved to the StateResolver pattern.
+ * See @/lib/state/ranking for the new centralized state management.
  */
 
 // ============================================================================
-// 1. CONFIGURATION INTERFACES
-// ============================================================================
-
-export interface RankingUIState {
-  // Visibility - what options are shown
-  showStandardPopulation: boolean
-  showBaselineOptions: boolean // Hidden in absolute mode
-
-  // Disabled States - what options are disabled
-  standardPopulationDisabled: boolean
-  totalsOnlyDisabled: boolean
-  predictionIntervalDisabled: boolean
-  percentageDisabled: boolean // Disabled in absolute mode
-
-  // Computed Values
-  isAbsoluteMode: boolean // True when showing absolute values
-  isRelativeMode: boolean // True when showing relative/excess values
-}
-
-// ============================================================================
-// 2. METRIC CONFIGURATION
+// METRIC CONFIGURATION
 // ============================================================================
 
 export interface RankingMetricConfig {
@@ -59,59 +40,7 @@ export const RANKING_METRIC_CONFIGS: Record<string, RankingMetricConfig> = {
 }
 
 // ============================================================================
-// 3. COMPUTED UI STATE
-// ============================================================================
-
-/**
- * Computes the complete UI state for the ranking page based on current settings.
- *
- * This function encapsulates all the business logic about what should be
- * visible/disabled based on the combination of settings.
- *
- * @param metricType - The selected metric type ('cmr', 'asmr', or 'le')
- * @param displayMode - The display mode ('absolute' or 'relative')
- * @param showTotals - Whether the totals column is shown
- * @param cumulative - Whether cumulative mode is active
- * @param showTotalsOnly - Whether only the total column is shown
- * @returns Complete UI state with all visibility and disabled flags
- */
-export function computeRankingUIState(
-  metricType: string,
-  displayMode: string,
-  showTotals: boolean,
-  cumulative: boolean,
-  showTotalsOnly: boolean
-): RankingUIState {
-  const metricConfig = RANKING_METRIC_CONFIGS[metricType] || RANKING_METRIC_CONFIGS.asmr!
-  const isAbsolute = displayMode === 'absolute'
-
-  return {
-    // Visibility
-    showStandardPopulation: true, // Always shown, but disabled for CMR and LE
-    showBaselineOptions: !isAbsolute, // Hide baseline options in absolute mode
-
-    // Disabled States
-    // Standard Population is only relevant for ASMR
-    standardPopulationDisabled: !metricConfig.requiresStandardPopulation,
-
-    // Totals Only requires Totals to be enabled
-    totalsOnlyDisabled: !showTotals,
-
-    // Prediction Interval cannot be shown with cumulative or totals-only view
-    // Reason: PI is per-period, but cumulative sums and totals aggregate across periods
-    predictionIntervalDisabled: cumulative || showTotalsOnly,
-
-    // Percentage toggle disabled in absolute mode (absolute values aren't percentages)
-    percentageDisabled: isAbsolute,
-
-    // Computed Values
-    isAbsoluteMode: isAbsolute,
-    isRelativeMode: !isAbsolute
-  }
-}
-
-// ============================================================================
-// 4. HELPER FUNCTIONS
+// HELPER FUNCTIONS
 // ============================================================================
 
 /**
@@ -122,7 +51,7 @@ export function getRankingMetricConfig(metricType: string): RankingMetricConfig 
 }
 
 /**
- * Check if standard population selector should be visible and enabled
+ * Check if standard population selector should be enabled for a metric type
  */
 export function shouldEnableStandardPopulation(metricType: string): boolean {
   return getRankingMetricConfig(metricType).requiresStandardPopulation
@@ -147,34 +76,4 @@ export function getDisplayModeItems() {
     { value: 'relative', label: 'Relative' },
     { value: 'absolute', label: 'Absolute' }
   ]
-}
-
-/**
- * Get user-friendly explanation for why an option is disabled
- */
-const disabledReasons: Record<
-  'standardPopulation' | 'totalsOnly' | 'predictionInterval' | 'percentage',
-  (state: RankingUIState) => string | null
-> = {
-  standardPopulation: state =>
-    state.standardPopulationDisabled
-      ? 'Standard Population is only available for ASMR'
-      : null,
-  totalsOnly: state =>
-    state.totalsOnlyDisabled ? 'Enable "Show Totals" first' : null,
-  predictionInterval: state =>
-    state.predictionIntervalDisabled
-      ? 'Prediction Interval is not available in cumulative or totals-only mode'
-      : null,
-  percentage: state =>
-    state.percentageDisabled
-      ? 'Percentage is only available in Relative mode'
-      : null
-}
-
-export function getDisabledReason(
-  option: 'standardPopulation' | 'totalsOnly' | 'predictionInterval' | 'percentage',
-  state: RankingUIState
-): string | null {
-  return disabledReasons[option]?.(state) ?? null
 }
