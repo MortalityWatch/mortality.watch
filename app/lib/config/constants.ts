@@ -327,7 +327,20 @@ export const EXTERNAL_SERVICES = {
    * Statistics API URL for baseline calculations
    * Used by client and server baseline computation
    */
-  STATS_API_URL: 'https://stats.mortality.watch/'
+  STATS_API_URL: 'https://stats.mortality.watch/',
+
+  /**
+   * Maximum concurrent requests to the stats API
+   * Prevents overwhelming the R stats server when many countries are selected
+   * Can be overridden via NUXT_BASELINE_MAX_CONCURRENT_REQUESTS env var
+   */
+  BASELINE_MAX_CONCURRENT_REQUESTS: 5,
+
+  /**
+   * Timeout for stats API requests in milliseconds
+   * Prevents hanging requests from blocking queue slots forever
+   */
+  BASELINE_REQUEST_TIMEOUT_MS: 30000
 } as const
 
 // =============================================================================
