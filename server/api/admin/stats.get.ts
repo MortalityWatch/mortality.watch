@@ -1,4 +1,4 @@
-import { sql, eq, gte } from 'drizzle-orm'
+import { sql, gte } from 'drizzle-orm'
 import { db } from '../../utils/db'
 import { users, savedCharts, subscriptions } from '../../../db/schema'
 import { requireAdmin } from '../../utils/auth'
@@ -11,34 +11,36 @@ export default defineEventHandler(async (event) => {
   // Verify admin access (handles auth and role check)
   await requireAdmin(event)
 
-  // Get today's date at midnight for filtering
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const todayTimestamp = Math.floor(today.getTime() / 1000)
+  // Get start of this week (Monday) for filtering
+  const now = new Date()
+  const dayOfWeek = now.getDay()
+  const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+  const weekStart = new Date(now)
+  weekStart.setDate(now.getDate() - daysToMonday)
+  weekStart.setHours(0, 0, 0, 0)
 
   // Run all queries in parallel for efficiency
   const [
     totalUsersResult,
-    signupsTodayResult,
+    signupsThisWeekResult,
     proSubscribersResult,
     savedChartsResult
   ] = await Promise.all([
     // Total users
     db.select({ count: sql<number>`count(*)` }).from(users),
 
-    // Signups today (createdAt is stored as unix timestamp)
+    // Signups this week (since Monday)
     db
       .select({ count: sql<number>`count(*)` })
       .from(users)
-      .where(gte(users.createdAt, new Date(todayTimestamp * 1000))),
+      .where(gte(users.createdAt, weekStart)),
 
-    // Pro subscribers (tier 2 OR active subscription)
+    // Paying subscribers (active Stripe subscription only)
     db
-      .select({ count: sql<number>`count(distinct ${users.id})` })
-      .from(users)
-      .leftJoin(subscriptions, eq(users.id, subscriptions.userId))
+      .select({ count: sql<number>`count(*)` })
+      .from(subscriptions)
       .where(
-        sql`${users.tier} = 2 OR ${subscriptions.status} = 'active'`
+        sql`${subscriptions.status} = 'active' AND ${subscriptions.stripeSubscriptionId} IS NOT NULL`
       ),
 
     // Saved charts count
@@ -47,7 +49,7 @@ export default defineEventHandler(async (event) => {
 
   return {
     totalUsers: totalUsersResult[0]?.count || 0,
-    signupsToday: signupsTodayResult[0]?.count || 0,
+    signupsThisWeek: signupsThisWeekResult[0]?.count || 0,
     proSubscribers: proSubscribersResult[0]?.count || 0,
     savedCharts: savedChartsResult[0]?.count || 0
   }

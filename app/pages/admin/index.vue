@@ -13,7 +13,7 @@ const { user } = useAuth()
 // Fetch real stats from API
 const { data: statsData } = await useFetch<{
   totalUsers: number
-  signupsToday: number
+  signupsThisWeek: number
   proSubscribers: number
   savedCharts: number
 }>('/api/admin/stats')
@@ -26,13 +26,13 @@ const stats = computed(() => [
     color: 'primary' as const
   },
   {
-    label: 'Signups Today',
-    value: String(statsData.value?.signupsToday || 0),
+    label: 'Signups This Week',
+    value: String(statsData.value?.signupsThisWeek || 0),
     icon: 'i-lucide-user-plus',
     color: 'success' as const
   },
   {
-    label: 'Pro Subscribers',
+    label: 'Paying Subscribers',
     value: String(statsData.value?.proSubscribers || 0),
     icon: 'i-lucide-crown',
     color: 'warning' as const
