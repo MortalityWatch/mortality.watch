@@ -1,6 +1,14 @@
 <script setup lang="ts">
 definePageMeta({
-  middleware: 'auth'
+  middleware: 'auth',
+  title: 'Profile'
+})
+
+useSeoMeta({
+  title: 'Profile - Mortality Watch',
+  description: 'Manage your Mortality Watch account settings, personal information, and subscription.',
+  ogTitle: 'Profile - Mortality Watch',
+  robots: 'noindex, nofollow'
 })
 
 const { user, updateProfile, refreshSession } = useAuth()

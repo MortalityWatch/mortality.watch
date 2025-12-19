@@ -56,4 +56,9 @@ onMounted(async () => {
 definePageMeta({
   title: 'Sign Out'
 })
+
+useSeoMeta({
+  title: 'Sign Out - Mortality Watch',
+  robots: 'noindex, nofollow'
+})
 </script>
