@@ -30,7 +30,7 @@ test.describe('Ranking Page', () => {
     await page.goto('/ranking')
 
     // Wait for page to be interactive
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForTimeout(1000)
 
     // Check for Period of Time selector (exists in DOM, may be hidden on mobile)
@@ -58,7 +58,7 @@ test.describe('Ranking Page', () => {
     await page.goto('/ranking')
 
     // Wait for page load
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Look for "Show in Explorer" button
     const explorerButton = page.getByRole('link', { name: /Show in Explorer/i })
@@ -73,7 +73,7 @@ test.describe('Ranking Page', () => {
     await page.goto('/ranking')
 
     // Wait for page to be interactive
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Initial URL should have some query parameters
     const currentUrl = page.url()
@@ -87,7 +87,7 @@ test.describe('Ranking Page', () => {
     test.skip(isMobile, 'Desktop-only test')
 
     await page.goto('/ranking')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Settings panel should exist (contains baseline method, etc.)
     // This is in the right sidebar on desktop
@@ -97,7 +97,7 @@ test.describe('Ranking Page', () => {
 
   test('should have responsive layout', async ({ page, isMobile }) => {
     await page.goto('/ranking')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Main container should be visible on all screen sizes
     const container = page.locator('.container')
@@ -126,14 +126,14 @@ test.describe('Ranking Page', () => {
 
   test('should persist URL state on page reload', async ({ page }) => {
     await page.goto('/ranking')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Get current URL with query params
     const urlWithParams = page.url()
 
     // Reload the page
     await page.reload()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // URL should be preserved
     expect(page.url()).toBe(urlWithParams)
@@ -145,7 +145,7 @@ test.describe('Ranking Page', () => {
 
     // Start with default date range
     await page.goto('/ranking')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForTimeout(2000)
 
     // Capture initial URL (with defaults applied)
@@ -154,7 +154,7 @@ test.describe('Ranking Page', () => {
     // Navigate to a different date range using period format
     // Use a different range (2021-2022) from the default (2020-2023)
     await page.goto('/ranking?df=2021/22&dt=2022/23')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForTimeout(2000)
 
     // Capture second URL - it should contain the periods we navigated to
@@ -164,7 +164,7 @@ test.describe('Ranking Page', () => {
 
     // Go back using browser navigation
     await page.goBack()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForTimeout(2000)
 
     // URL should be back to initial state
@@ -172,7 +172,7 @@ test.describe('Ranking Page', () => {
 
     // Go forward again
     await page.goForward()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForTimeout(2000)
 
     // URL should be back to second state

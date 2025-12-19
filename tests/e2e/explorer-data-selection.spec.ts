@@ -15,9 +15,9 @@ import { test, expect } from '@playwright/test'
  */
 test.describe('Explorer Data Selection', () => {
   // Helper to wait for chart to be ready
+  // Note: Avoid networkidle as it's flaky with external API calls
   async function waitForChart(page: ReturnType<typeof test['info']>['page']) {
-    await page.waitForLoadState('networkidle')
-    await page.waitForSelector('canvas#chart', { timeout: 15000 })
+    await page.waitForSelector('canvas#chart', { state: 'visible', timeout: 30000 })
   }
 
   test.describe('Country Selection URL State', () => {
