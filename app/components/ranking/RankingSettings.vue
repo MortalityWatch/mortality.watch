@@ -63,11 +63,20 @@ const totalsOnlyDisabled = computed(() => getUIState('totalsOnly').disabled)
 const percentageDisabled = computed(() => getUIState('percentage').disabled)
 const predictionIntervalDisabled = computed(() => getUIState('predictionInterval').disabled)
 
-// Local state for optimistic UI updates (fixes async URL update lag)
+/**
+ * Optimistic UI pattern for display mode toggle.
+ *
+ * Why this is needed:
+ * 1. User clicks toggle → emit fires immediately
+ * 2. Parent updates resolved.value synchronously
+ * 3. BUT Vue batches component updates, so props.displayMode won't update until next tick
+ * 4. Without this, the switch would briefly show the old value (visual flicker)
+ *
+ * pendingDisplayMode provides immediate local state so the switch responds instantly,
+ * then clears itself when props catch up via the watcher below.
+ */
 const pendingDisplayMode = ref<DisplayMode | null>(null)
 
-// Handle display mode toggle - now simpler without savedPercentageState hack
-// The StateResolver handles percentage state based on view constraints
 const handleDisplayModeToggle = (isExcess: boolean) => {
   const newMode: DisplayMode = isExcess ? 'relative' : 'absolute'
   // Set pending state immediately for optimistic UI update

@@ -34,5 +34,13 @@ export * from './constraints'
 // Field encoders
 export * from './fieldEncoders'
 
-// State resolver
+// State resolver - individual functions (preferred)
+export {
+  detectView,
+  resolveInitial,
+  resolveChange,
+  applyResolvedState
+} from './RankingStateResolver'
+
+// State resolver - namespace object (backwards compatibility)
 export { RankingStateResolver } from './RankingStateResolver'
