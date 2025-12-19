@@ -75,7 +75,7 @@ test.describe('Authentication Flow', () => {
     })
 
     test('should successfully login with valid credentials', async ({ page }) => {
-      await page.goto('/login', { waitUntil: 'networkidle' })
+      await page.goto('/login', { waitUntil: 'domcontentloaded' })
 
       // Fill in credentials
       await page.getByRole('textbox', { name: 'Email*' }).fill(TEST_USER.email)
@@ -111,7 +111,7 @@ test.describe('Authentication Flow', () => {
     })
 
     test('should handle invalid credentials', async ({ page }) => {
-      await page.goto('/login', { waitUntil: 'networkidle' })
+      await page.goto('/login', { waitUntil: 'domcontentloaded' })
 
       // Fill in invalid credentials
       await page.getByRole('textbox', { name: 'Email*' }).fill('wrong@example.com')
