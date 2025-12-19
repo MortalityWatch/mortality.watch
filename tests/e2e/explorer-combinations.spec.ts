@@ -407,23 +407,24 @@ test.describe('Explorer UI Combinations - All 14 Valid Combinations', () => {
 
       // Go back through history - use waitForURL with pattern matching
       // Skip waitForLoadState('networkidle') after goBack as it can timeout
+      // Use longer timeouts for CI environment
       await page.goBack()
-      await page.waitForURL(/zs=1/)
-      await expect(page.locator('canvas#chart')).toBeVisible()
+      await page.waitForURL(/zs=1/, { timeout: 10000 })
+      await expect(page.locator('canvas#chart')).toBeVisible({ timeout: 15000 })
 
       await page.goBack()
-      await page.waitForURL(/e=1/)
-      await expect(page.locator('canvas#chart')).toBeVisible()
+      await page.waitForURL(/e=1/, { timeout: 10000 })
+      await expect(page.locator('canvas#chart')).toBeVisible({ timeout: 15000 })
 
       await page.goBack()
       // Default explorer URL - wait for URL without specific params
-      await page.waitForURL(url => !url.search.includes('e=1') && !url.search.includes('zs=1') && !url.search.includes('cs=matrix'))
-      await expect(page.locator('canvas#chart')).toBeVisible()
+      await page.waitForURL(url => !url.search.includes('e=1') && !url.search.includes('zs=1') && !url.search.includes('cs=matrix'), { timeout: 10000 })
+      await expect(page.locator('canvas#chart')).toBeVisible({ timeout: 15000 })
 
       // Go forward
       await page.goForward()
-      await page.waitForURL(/e=1/)
-      await expect(page.locator('canvas#chart')).toBeVisible()
+      await page.waitForURL(/e=1/, { timeout: 10000 })
+      await expect(page.locator('canvas#chart')).toBeVisible({ timeout: 15000 })
     })
   })
 

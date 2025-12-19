@@ -4,11 +4,17 @@ test.describe('Explorer Page', () => {
   test('should load explorer page', async ({ page }) => {
     await page.goto('/explorer')
 
+    // Wait for page to be fully loaded
+    await page.waitForLoadState('networkidle')
+
     // Verify page loaded
     await expect(page).toHaveURL(/\/explorer/)
 
-    // Check for chart controls
-    await expect(page.locator('select, [role="combobox"]').first()).toBeVisible()
+    // Wait for chart to render (indicates page is interactive)
+    await expect(page.locator('canvas#chart')).toBeVisible({ timeout: 15000 })
+
+    // Check for chart controls - use longer timeout for CI
+    await expect(page.locator('select, [role="combobox"]').first()).toBeVisible({ timeout: 10000 })
   })
 
   test('should allow country selection', async ({ page }) => {
