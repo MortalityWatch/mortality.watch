@@ -33,7 +33,8 @@ export const getChartLabels = (
   baselineDateTo: string,
   showTotal: boolean,
   chartType: string,
-  view?: string
+  view?: string,
+  leAdjusted?: boolean
 ): ChartLabels => {
   // Derive view from parameters if not explicitly provided
   // This maintains backward compatibility with isExcess parameter
@@ -54,6 +55,7 @@ export const getChartLabels = (
     showPredictionInterval,
     showTotal,
     chartType,
+    leAdjusted,
     baselineMethod,
     baselineDateFrom,
     baselineDateTo,

@@ -52,6 +52,8 @@ describe('labels', () => {
       baselineDateTo: string
       showTotal: boolean
       chartType: string
+      view: string
+      leAdjusted: boolean
     }> = {}) => {
       const defaults = {
         countries: ['USA'],
@@ -66,7 +68,9 @@ describe('labels', () => {
         baselineDateFrom: '2015',
         baselineDateTo: '2019',
         showTotal: false,
-        chartType: 'weekly'
+        chartType: 'weekly',
+        view: undefined as string | undefined,
+        leAdjusted: undefined as boolean | undefined
       }
       const params = { ...defaults, ...overrides }
       return getChartLabels(
@@ -82,7 +86,9 @@ describe('labels', () => {
         params.baselineDateFrom,
         params.baselineDateTo,
         params.showTotal,
-        params.chartType
+        params.chartType,
+        params.view,
+        params.leAdjusted
       )
     }
 
@@ -433,6 +439,56 @@ describe('labels', () => {
         })
 
         expect(result.title.join(' ')).toContain('Change in')
+      })
+
+      it('should include STL adjustment note for sub-yearly LE when leAdjusted is true', () => {
+        const result = callGetChartLabels({
+          type: 'le',
+          chartType: 'weekly',
+          leAdjusted: true
+        })
+
+        expect(result.subtitle).toContain('Seasonally Adjusted (STL)')
+      })
+
+      it('should include STL adjustment note for monthly LE when leAdjusted is true', () => {
+        const result = callGetChartLabels({
+          type: 'le',
+          chartType: 'monthly',
+          leAdjusted: true
+        })
+
+        expect(result.subtitle).toContain('Seasonally Adjusted (STL)')
+      })
+
+      it('should not include STL adjustment note for yearly LE', () => {
+        const result = callGetChartLabels({
+          type: 'le',
+          chartType: 'yearly',
+          leAdjusted: true
+        })
+
+        expect(result.subtitle).not.toContain('Seasonally Adjusted')
+      })
+
+      it('should not include STL adjustment note when leAdjusted is false', () => {
+        const result = callGetChartLabels({
+          type: 'le',
+          chartType: 'weekly',
+          leAdjusted: false
+        })
+
+        expect(result.subtitle).not.toContain('Seasonally Adjusted')
+      })
+
+      it('should not include STL adjustment note for non-LE types', () => {
+        const result = callGetChartLabels({
+          type: 'deaths',
+          chartType: 'weekly',
+          leAdjusted: true
+        })
+
+        expect(result.subtitle).not.toContain('Seasonally Adjusted')
       })
     })
   })

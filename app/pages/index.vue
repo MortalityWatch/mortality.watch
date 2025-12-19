@@ -3,11 +3,11 @@
   <div class="container mx-auto px-4 py-8">
     <div class="mb-12 mt-6 space-y-6 text-center">
       <h1 class="text-5xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-        Track Global Mortality Trends and Excess Deaths
+        Track Global Mortality, Life Expectancy & Excess Deaths
       </h1>
       <p class="text-xl text-gray-700 dark:text-gray-300 leading-relaxed max-w-4xl mx-auto">
         The world's most comprehensive open mortality database with 300+ regions and historical data from 1950 onwards.
-        Explore excess deaths, compare regions, analyze trends by age groups, and understand the true impact of global health events.
+        Explore excess deaths, life expectancy trends, compare regions, analyze by age groups, and understand the true impact of global health events.
       </p>
       <p class="text-lg text-gray-600 dark:text-gray-400 max-w-4xl mx-auto">
         Free, open-source, and transparent. All data from official government sources.
@@ -184,6 +184,19 @@
           </div>
           <div class="text-center">
             <UIcon
+              name="i-lucide-heart-pulse"
+              class="text-5xl mb-4 text-primary-600 dark:text-primary-400"
+            />
+            <h3 class="text-lg font-semibold mb-2">
+              Life Expectancy Tracking
+            </h3>
+            <p class="text-gray-600 dark:text-gray-400 text-sm">
+              Period life expectancy at birth and by age, with STL seasonal
+              adjustment for weekly/monthly data
+            </p>
+          </div>
+          <div class="text-center">
+            <UIcon
               name="i-lucide-chart-line"
               class="text-5xl mb-4 text-primary-600 dark:text-primary-400"
             />
@@ -304,13 +317,13 @@ definePageMeta({
 
 // SEO metadata
 useSeoMeta({
-  title: 'MortalityWatch - Track Global Mortality Trends and Excess Deaths',
-  description: 'The world\'s most comprehensive open mortality database with daily updates from 300+ countries and regions. Explore excess deaths, compare regions, and analyze trends with Five Baseline Methods.',
-  ogTitle: 'MortalityWatch - Track Global Mortality Trends',
-  ogDescription: 'Free, open-source platform with 300+ regions, Five Baseline Methods, and daily updates from official sources.',
+  title: 'MortalityWatch - Track Global Mortality, Life Expectancy & Excess Deaths',
+  description: 'The world\'s most comprehensive open mortality database with daily updates from 300+ countries and regions. Explore excess deaths, life expectancy trends, compare regions, and analyze with multiple baseline methods.',
+  ogTitle: 'MortalityWatch - Track Global Mortality & Life Expectancy',
+  ogDescription: 'Free, open-source platform with 300+ regions, life expectancy tracking, multiple baseline methods, and daily updates from official sources.',
   ogImage: '/og-image.png',
-  twitterTitle: 'MortalityWatch - Global Mortality Database',
-  twitterDescription: 'Track mortality trends and excess deaths across 300+ countries and regions with advanced statistical analysis.',
+  twitterTitle: 'MortalityWatch - Global Mortality & Life Expectancy Database',
+  twitterDescription: 'Track mortality trends, life expectancy, and excess deaths across 300+ countries and regions with advanced statistical analysis.',
   twitterImage: '/og-image.png',
   twitterCard: 'summary_large_image'
 })
