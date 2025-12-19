@@ -34,8 +34,9 @@ export type RankingViewType = 'absolute' | 'relative'
 
 /**
  * Period types for ranking data
+ * Must match the chart types that are valid for ranking
  */
-export type RankingPeriod = 'yearly' | 'fluseason' | 'midyear' | 'quarterly'
+export type RankingPeriod = 'yearly' | 'fluseason' | 'midyear' | 'quarterly' | 'monthly'
 
 /**
  * Jurisdiction types for filtering countries/regions
@@ -59,18 +60,21 @@ export type JurisdictionType
 
 /**
  * Standard population options for ASMR
+ * Must match explorerSchema.StandardPopulationEnum
  */
-export type StandardPopulation = 'who' | 'esp' | 'usa2000'
+export type StandardPopulation = 'who' | 'esp' | 'usa' | 'country'
 
 /**
  * Baseline calculation methods
+ * Must match explorerSchema.BaselineMethodEnum
  */
-export type BaselineMethod = 'mean' | 'median' | 'auto'
+export type BaselineMethod = 'naive' | 'mean' | 'median' | 'lin_reg' | 'exp'
 
 /**
  * Decimal precision for display
+ * Must match explorerSchema.DecimalPrecisionEnum
  */
-export type DecimalPrecision = '0' | '1' | '2' | '3' | 'auto'
+export type DecimalPrecision = 'auto' | '0' | '1' | '2' | '3'
 
 // ============================================================================
 // STATE INTERFACES

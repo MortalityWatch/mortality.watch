@@ -12,6 +12,9 @@ import type {
   RankingUICondition
 } from './types'
 
+// Re-export the type for external use
+export type { RankingViewConfig } from './types'
+
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================

@@ -64,7 +64,9 @@ function computeUIState(
 ): Record<string, UIFieldState> {
   const ui: Record<string, UIFieldState> = {}
 
-  for (const [field, element] of Object.entries(viewConfig.ui)) {
+  const uiConfig = viewConfig.ui as Record<string, { visibility: { type: string, toggleable?: boolean, when?: RankingUICondition } }>
+
+  for (const [field, element] of Object.entries(uiConfig)) {
     const { visibility } = element
 
     let visible = true
@@ -211,7 +213,7 @@ export class RankingStateResolver {
     const ui = computeUIState(viewConfig, constrainedState)
 
     const result: ResolvedRankingState = {
-      state: constrainedState as RankingState,
+      state: constrainedState as unknown as RankingState,
       ui,
       view,
       userOverrides,
@@ -303,7 +305,7 @@ export class RankingStateResolver {
     const ui = computeUIState(viewConfig, constrainedState)
 
     const result: ResolvedRankingState = {
-      state: constrainedState as RankingState,
+      state: constrainedState as unknown as RankingState,
       ui,
       view,
       userOverrides,

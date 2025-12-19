@@ -10,6 +10,7 @@
 
 import { ref, computed, watch, onMounted, type ComputedRef } from 'vue'
 import type { useRankingState } from '@/composables/useRankingState'
+import type { RankingPeriod } from '@/lib/state/ranking'
 import type { AllChartData, CountryData, Country } from '@/model'
 import { ChartPeriod, type ChartType } from '@/model/period'
 import { getKeyForType } from '@/model'
@@ -423,7 +424,7 @@ export function useRankingData(
 
     // BATCH all updates into single router.push via batchUpdate to avoid race condition
     state.batchUpdate({
-      periodOfTime: val,
+      periodOfTime: val as RankingPeriod,
       dateFrom: defaultFrom,
       dateTo: defaultTo,
       baselineDateFrom: defaultBaselineFrom,
