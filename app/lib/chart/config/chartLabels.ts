@@ -62,13 +62,17 @@ export function computeChartPrecision(allValues: number[]): number {
  * Compute resolved decimals from chart data when in auto mode.
  * For percentages, values are stored as decimals (0.20 = 20%) so we
  * multiply by 100 to get the displayed magnitude.
+ * For count types (deaths/population), always use 0 decimals.
  */
 export function resolveDecimals(
   data: MortalityChartData,
   decimals: string,
-  isPercentage: boolean = false
+  isPercentage: boolean = false,
+  isCountType: boolean = false
 ): string | number {
   if (decimals !== 'auto') return decimals
+  // Count types (deaths/population) should always use 0 decimals
+  if (isCountType) return 0
   const values = extractYValues(data)
   // For percentages, compute precision based on displayed values (after *100)
   const displayedValues = isPercentage ? values.map(v => v * 100) : values

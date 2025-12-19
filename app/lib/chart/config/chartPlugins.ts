@@ -81,6 +81,7 @@ export function createOnResizeHandler() {
  * @param isDark - Dark mode flag
  * @param isSSR - Server-side rendering flag (applies font metric adjustments)
  * @param chartStyle - Chart style for positioning adjustments
+ * @param isCountType - Whether the data is a count type (deaths/population) that should use 0 decimals
  */
 export function createDatalabelsConfig(
   data: MortalityChartData,
@@ -91,10 +92,11 @@ export function createDatalabelsConfig(
   decimals: string,
   isDark?: boolean,
   isSSR?: boolean,
-  chartStyle?: 'bar' | 'line' | 'matrix'
+  chartStyle?: 'bar' | 'line' | 'matrix',
+  isCountType: boolean = false
 ): CustomDatalabelsConfig {
   // Compute chart-wide precision for consistent label display
-  const resolvedDecimals = resolveDecimals(data, decimals, showPercentage)
+  const resolvedDecimals = resolveDecimals(data, decimals, showPercentage, isCountType)
 
   return {
     anchor: 'end' as const,
@@ -228,6 +230,7 @@ export function createAnnotationsFromReferenceLines(
  * @param isDark - Dark mode flag
  * @param isSSR - Server-side rendering flag (applies font metric adjustments)
  * @param chartStyle - Chart style for label positioning
+ * @param isCountType - Whether the data is a count type (deaths/population) that should use 0 decimals
  */
 export function createPluginsConfig(
   data: MortalityChartData,
@@ -243,7 +246,8 @@ export function createPluginsConfig(
   view: string = 'mortality',
   isDark?: boolean,
   isSSR?: boolean,
-  chartStyle?: 'bar' | 'line' | 'matrix'
+  chartStyle?: 'bar' | 'line' | 'matrix',
+  isCountType: boolean = false
 ) {
   const basePlugins = {
     title: {
@@ -284,7 +288,8 @@ export function createPluginsConfig(
       decimals,
       isDark,
       isSSR,
-      chartStyle
+      chartStyle,
+      isCountType
     ),
     ...(showQrCode && data.url ? { qrCodeUrl: data.url } : {}),
     showLogo,
