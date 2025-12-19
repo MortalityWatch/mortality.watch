@@ -49,7 +49,7 @@ const seoTitle = computed(() => {
     privacy: 'Privacy Policy',
     refund: 'Refund Policy'
   }
-  return `${tabTitles[activeTab.value] || 'Legal'} - Mortality Watch`
+  return tabTitles[activeTab.value] || 'Legal'
 })
 
 const seoDescription = computed(() => {

@@ -7,7 +7,7 @@ definePageMeta({
 })
 
 useSeoMeta({
-  title: 'Verify Email - Mortality Watch',
+  title: 'Verify Email',
   robots: 'noindex, nofollow'
 })
 

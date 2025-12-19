@@ -5,7 +5,7 @@ definePageMeta({
 })
 
 useSeoMeta({
-  title: 'Profile - Mortality Watch',
+  title: 'Profile',
   description: 'Manage your Mortality Watch account settings, personal information, and subscription.',
   ogTitle: 'Profile - Mortality Watch',
   robots: 'noindex, nofollow'

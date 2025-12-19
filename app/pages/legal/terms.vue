@@ -398,7 +398,7 @@ definePageMeta({
 
 // SEO metadata
 useSeoMeta({
-  title: 'Terms of Service - Mortality Watch',
+  title: 'Terms of Service',
   description: 'Terms of Service for Mortality Watch, a data visualization platform for analyzing global mortality statistics.',
   ogTitle: 'Terms of Service - Mortality Watch',
   ogDescription: 'Terms governing the use of Mortality Watch services and subscription plans.',
