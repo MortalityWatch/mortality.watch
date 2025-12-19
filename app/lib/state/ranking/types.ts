@@ -60,9 +60,9 @@ export type JurisdictionType
 
 /**
  * Standard population options for ASMR
- * Must match explorerSchema.StandardPopulationEnum
+ * Must match explorerSchema.StandardPopulationEnum plus legacy values
  */
-export type StandardPopulation = 'who' | 'esp' | 'usa' | 'country'
+export type StandardPopulation = 'who' | 'esp' | 'esp2013' | 'usa' | 'country'
 
 /**
  * Baseline calculation methods

@@ -64,7 +64,7 @@ function computeUIState(
 ): Record<string, UIFieldState> {
   const ui: Record<string, UIFieldState> = {}
 
-  const uiConfig = viewConfig.ui as Record<string, { visibility: { type: string, toggleable?: boolean, when?: RankingUICondition } }>
+  const uiConfig = viewConfig.ui as unknown as Record<string, { visibility: { type: string, toggleable?: boolean, when?: RankingUICondition } }>
 
   for (const [field, element] of Object.entries(uiConfig)) {
     const { visibility } = element
