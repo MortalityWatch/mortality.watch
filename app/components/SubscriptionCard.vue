@@ -31,6 +31,11 @@ const statusBadgeColor = computed(() => {
 
   const subscription = subscriptionStatus.value.subscription
 
+  // Treat canceled/inactive as neutral (no subscription)
+  if (subscription.status === 'canceled' || subscription.status === 'inactive') {
+    return 'neutral'
+  }
+
   // If subscription is being canceled at period end, show warning
   if (subscription.cancelAtPeriodEnd && subscription.status === 'active') {
     return 'warning'
@@ -44,9 +49,6 @@ const statusBadgeColor = computed(() => {
     case 'past_due':
     case 'unpaid':
       return 'warning'
-    case 'canceled':
-    case 'inactive':
-      return 'error'
     default:
       return 'neutral'
   }
@@ -56,6 +58,11 @@ const statusLabel = computed(() => {
   if (!subscriptionStatus.value?.subscription) return 'No Subscription'
 
   const subscription = subscriptionStatus.value.subscription
+
+  // Treat canceled/inactive as "No Subscription" since we show subscribe options
+  if (subscription.status === 'canceled' || subscription.status === 'inactive') {
+    return 'No Subscription'
+  }
 
   // If subscription is being canceled at period end, show special label
   if (subscription.cancelAtPeriodEnd && subscription.status === 'active') {
@@ -155,8 +162,8 @@ onActivated(() => {
       v-else-if="subscriptionStatus"
       class="space-y-6"
     >
-      <!-- Active Subscription -->
-      <div v-if="subscriptionStatus.hasSubscription && subscriptionStatus.subscription">
+      <!-- Active Subscription (only show for active/trialing, not canceled) -->
+      <div v-if="subscriptionStatus.subscription?.isActive">
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
@@ -224,13 +231,15 @@ onActivated(() => {
         </div>
       </div>
 
-      <!-- No Subscription -->
+      <!-- No Active Subscription (includes canceled) -->
       <div
         v-else
         class="space-y-6"
       >
         <p class="text-gray-600 dark:text-gray-400">
-          You don't have an active subscription. Upgrade to Pro to unlock all features.
+          {{ subscriptionStatus.subscription?.status === 'canceled'
+            ? 'Your subscription has been canceled. Subscribe again to regain Pro features.'
+            : 'You don\'t have an active subscription. Upgrade to Pro to unlock all features.' }}
         </p>
 
         <div class="grid gap-4 sm:grid-cols-2">
