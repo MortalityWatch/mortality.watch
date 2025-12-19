@@ -2,7 +2,13 @@
 import { handleError } from '@/lib/errors/errorHandler'
 
 definePageMeta({
-  layout: 'auth'
+  layout: 'auth',
+  title: 'Verify Email'
+})
+
+useSeoMeta({
+  title: 'Verify Email - Mortality Watch',
+  robots: 'noindex, nofollow'
 })
 
 const route = useRoute()
