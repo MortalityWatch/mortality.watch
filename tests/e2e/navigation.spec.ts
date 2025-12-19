@@ -36,7 +36,7 @@ test.describe('Navigation', () => {
   test('should preserve URL state when navigating', async ({ page }) => {
     // Navigate to explorer with some state
     await page.goto('/explorer')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // On mobile, navigation is in hamburger menu
     const isMobile = page.viewportSize()!.width < 1024
@@ -51,7 +51,7 @@ test.describe('Navigation', () => {
 
     // Go back
     await page.goBack()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Should be back on explorer page
     await expect(page).toHaveURL(/\/explorer/)

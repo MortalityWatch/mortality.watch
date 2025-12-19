@@ -5,7 +5,7 @@ test.describe('Explorer Page', () => {
     await page.goto('/explorer')
 
     // Wait for page to be fully loaded
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Verify page loaded
     await expect(page).toHaveURL(/\/explorer/)
@@ -21,7 +21,7 @@ test.describe('Explorer Page', () => {
     await page.goto('/explorer')
 
     // Wait for page to be interactive
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Look for country selector (might be a select, combobox, or custom component)
     const countrySelector = page.locator('select, [role="combobox"], input[placeholder*="country" i], button').first()
@@ -35,7 +35,7 @@ test.describe('Explorer Page', () => {
     await page.goto('/explorer')
 
     // Wait for any interaction (this test may need adjustment based on actual UI)
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Basic check - interaction tests can be added as needed
     await expect(page).toHaveURL(/\/explorer/)
@@ -45,7 +45,7 @@ test.describe('Explorer Page', () => {
     await page.goto('/explorer')
 
     // Wait for data to load
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Look for canvas element (Chart.js renders actual chart)
     // With default countries (USA, SWE), chart should render
@@ -58,7 +58,7 @@ test.describe('Explorer Page', () => {
   test('should update chart on browser back/forward navigation', async ({ page }) => {
     // Start with default countries
     await page.goto('/explorer')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForSelector('canvas#chart', { timeout: 10000 })
 
     // Capture initial URL (with defaults applied)
@@ -67,7 +67,7 @@ test.describe('Explorer Page', () => {
     // Navigate to a different state - use different countries which will definitely change the URL
     // This simulates user changing settings, which updates URL
     await page.goto('/explorer?c=GBR&c=FRA&t=asmr')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForSelector('canvas#chart', { timeout: 10000 })
 
     // Capture second URL (should have different countries)
@@ -77,7 +77,7 @@ test.describe('Explorer Page', () => {
 
     // Go back using browser navigation
     await page.goBack()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForSelector('canvas#chart', { timeout: 10000 })
 
     // URL should be back to initial state
@@ -85,7 +85,7 @@ test.describe('Explorer Page', () => {
 
     // Go forward again
     await page.goForward()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForSelector('canvas#chart', { timeout: 10000 })
 
     // URL should be back to second state
@@ -96,7 +96,7 @@ test.describe('Explorer Page', () => {
   test('should toggle excess mode with single click (Issue #147)', async ({ page }) => {
     // Start with default state (no excess)
     await page.goto('/explorer')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForSelector('canvas#chart', { timeout: 10000 })
 
     // Close welcome/tutorial modal if present
@@ -145,7 +145,7 @@ test.describe('Explorer Page', () => {
   test('should preserve user overrides for soft constraints (Issue #147)', async ({ page }) => {
     // Start with excess mode ON + user wants PI ON (overrides default)
     await page.goto('/explorer?e=1&pi=1')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForSelector('canvas#chart', { timeout: 10000 })
 
     // Verify PI stayed ON (user override)
@@ -159,7 +159,7 @@ test.describe('Explorer Page', () => {
   test('should enforce hard constraints even with URL manipulation (Issue #147)', async ({ page }) => {
     // Try to visit URL with invalid state: excess ON but baseline OFF
     await page.goto('/explorer?e=1&sb=0')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // StateResolver should enforce: excess requires baseline
     // The page should either:
@@ -185,7 +185,7 @@ test.describe('Explorer Page', () => {
     // Navigate directly with z-score parameter (bypasses UI feature gating)
     // This tests that the z-score feature works, not the UI access control
     await page.goto('/explorer?zs=1')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForSelector('canvas#chart', { timeout: 10000 })
 
     // Verify z-score parameter is in URL
@@ -205,7 +205,7 @@ test.describe('Explorer Page', () => {
     // Navigate with z-score parameter (bypasses UI feature gating)
     // The StateResolver should ensure excess is OFF when z-score is ON
     await page.goto('/explorer?zs=1')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForSelector('canvas#chart', { timeout: 10000 })
 
     // Z-score should be ON, excess should be OFF (mutually exclusive)
@@ -219,7 +219,7 @@ test.describe('Explorer Page', () => {
   test('should show z-score reference lines (visual check)', async ({ page }) => {
     // Load explorer with z-score view enabled
     await page.goto('/explorer?zs=1')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForSelector('canvas#chart', { timeout: 10000 })
 
     // Verify z-score mode is active
@@ -237,7 +237,7 @@ test.describe('Explorer Page', () => {
   test('should disable baseline toggle in z-score view', async ({ page }) => {
     // Load explorer with z-score view enabled
     await page.goto('/explorer?zs=1')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForSelector('canvas#chart', { timeout: 10000 })
 
     // Navigate to Display tab where toggles are
@@ -253,7 +253,7 @@ test.describe('Explorer Page', () => {
   test('should disable PI toggle in z-score view', async ({ page }) => {
     // Load explorer with z-score view enabled and baseline on (so PI toggle is visible)
     await page.goto('/explorer?zs=1&sb=1')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForSelector('canvas#chart', { timeout: 10000 })
 
     // Navigate to Display tab where toggles are
@@ -269,7 +269,7 @@ test.describe('Explorer Page', () => {
   test('should enable baseline toggle when NOT in z-score view', async ({ page }) => {
     // Load explorer without z-score view
     await page.goto('/explorer')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForSelector('canvas#chart', { timeout: 10000 })
 
     // Navigate to Display tab where toggles are

@@ -24,7 +24,7 @@ test.describe('Profile Page', () => {
     test('should display user email when authenticated', async ({ page }) => {
       await login(page)
       await page.goto('/profile')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('domcontentloaded')
 
       // The email should be displayed somewhere on the page
       await expect(page.getByText(TEST_USER.email)).toBeVisible()

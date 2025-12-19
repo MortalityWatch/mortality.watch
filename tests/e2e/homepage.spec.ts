@@ -12,7 +12,7 @@ test.describe('Homepage', () => {
     await page.goto('/')
 
     // Wait for page to be fully loaded
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Check for showcase section header
     await expect(page.getByRole('heading', { name: /Featured Visualizations/i })).toBeVisible()

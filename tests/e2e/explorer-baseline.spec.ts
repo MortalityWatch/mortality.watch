@@ -15,7 +15,7 @@ import { test, expect } from '@playwright/test'
 test.describe('Explorer Baseline Controls', () => {
   // Helper to wait for chart to be ready
   async function waitForChart(page: ReturnType<typeof test['info']>['page']) {
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForSelector('canvas#chart', { timeout: 15000 })
   }
 

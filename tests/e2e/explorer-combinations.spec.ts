@@ -255,7 +255,7 @@ const COMBINATIONS: CombinationTest[] = [
  * Helper function to wait for chart to be ready
  */
 async function waitForChart(page: Page): Promise<void> {
-  await page.waitForLoadState('networkidle')
+  await page.waitForLoadState('domcontentloaded')
   await page.waitForSelector('canvas#chart', { timeout: 15000 })
 }
 
@@ -483,7 +483,7 @@ test.describe('Explorer UI Combinations - All 14 Valid Combinations', () => {
       // Matrix + Z-score is invalid because z-score doesn't support matrix view.
       // The StateResolver should correct this by keeping zscore and removing matrix.
       await page.goto('/explorer?cs=matrix&zs=1')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('domcontentloaded')
 
       // Wait for state resolution
       await page.waitForTimeout(1000)
@@ -726,13 +726,13 @@ test.describe('Explorer UI Combinations - All 14 Valid Combinations', () => {
       await waitForChart(page)
 
       await page.goto('/explorer?e=1')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('domcontentloaded')
 
       await page.goto('/explorer?zs=1')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('domcontentloaded')
 
       await page.goto('/explorer?cs=matrix')
-      await page.waitForLoadState('networkidle')
+      await page.waitForLoadState('domcontentloaded')
 
       await page.goto('/explorer?cs=bar&t=le')
       await waitForChart(page)

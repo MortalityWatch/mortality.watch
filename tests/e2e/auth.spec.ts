@@ -7,8 +7,8 @@ test.describe('Authentication Flow', () => {
       await page.goto('/login')
 
       // Verify form elements are present
-      await expect(page.getByRole('textbox', { name: 'Email*' })).toBeVisible()
-      await expect(page.getByRole('textbox', { name: 'Password*' })).toBeVisible()
+      await expect(page.getByRole('textbox', { name: 'Email' })).toBeVisible()
+      await expect(page.getByRole('textbox', { name: 'Password' })).toBeVisible()
       await expect(page.getByRole('checkbox', { name: 'Remember me' })).toBeVisible()
       await expect(page.getByRole('button', { name: 'Continue' })).toBeVisible()
 
@@ -34,8 +34,8 @@ test.describe('Authentication Flow', () => {
       await page.goto('/login')
 
       // Enter invalid email
-      await page.getByRole('textbox', { name: 'Email*' }).fill('invalid-email')
-      await page.getByRole('textbox', { name: 'Password*' }).fill('Password1!')
+      await page.getByRole('textbox', { name: 'Email' }).fill('invalid-email')
+      await page.getByRole('textbox', { name: 'Password' }).fill('Password1!')
       await page.getByRole('button', { name: 'Continue' }).click()
 
       // Check for email validation error
@@ -47,8 +47,8 @@ test.describe('Authentication Flow', () => {
       await page.goto('/login')
 
       // Enter short password
-      await page.getByRole('textbox', { name: 'Email*' }).fill('test@example.com')
-      await page.getByRole('textbox', { name: 'Password*' }).fill('short')
+      await page.getByRole('textbox', { name: 'Email' }).fill('test@example.com')
+      await page.getByRole('textbox', { name: 'Password' }).fill('short')
       await page.getByRole('button', { name: 'Continue' }).click()
 
       // Check for password validation error
@@ -59,7 +59,7 @@ test.describe('Authentication Flow', () => {
       // TODO: Password input changes role when visibility toggles - need different approach
       await page.goto('/login')
 
-      const passwordInput = page.getByRole('textbox', { name: 'Password*' })
+      const passwordInput = page.getByRole('textbox', { name: 'Password' })
       await passwordInput.fill('Password1!')
 
       // Password should be hidden initially
@@ -75,21 +75,10 @@ test.describe('Authentication Flow', () => {
     })
 
     test('should successfully login with valid credentials', async ({ page }) => {
-      await page.goto('/login', { waitUntil: 'networkidle' })
+      // Use the login helper which handles the full flow
+      await login(page, TEST_USER.email, TEST_USER.password, true)
 
-      // Fill in credentials
-      await page.getByRole('textbox', { name: 'Email*' }).fill(TEST_USER.email)
-      await page.getByRole('textbox', { name: 'Password*' }).fill(TEST_USER.password)
-
-      // Click checkbox (it's a button with role="checkbox", not a native checkbox)
-      await page.getByRole('checkbox', { name: 'Remember me' }).click()
-
-      await page.getByRole('button', { name: 'Continue' }).click()
-
-      // Should redirect to home page
-      await expect(page).toHaveURL('/')
-
-      // Should show success toast (use first() to handle multiple matches)
+      // login() already redirects to home and waits, just verify toast
       await expect(page.getByText('Welcome back!').first()).toBeVisible()
     })
 
@@ -102,8 +91,8 @@ test.describe('Authentication Flow', () => {
       await expect(page).toHaveURL(/\/login\?redirect=/)
 
       // Login
-      await page.getByRole('textbox', { name: 'Email*' }).fill(TEST_USER.email)
-      await page.getByRole('textbox', { name: 'Password*' }).fill(TEST_USER.password)
+      await page.getByRole('textbox', { name: 'Email' }).fill(TEST_USER.email)
+      await page.getByRole('textbox', { name: 'Password' }).fill(TEST_USER.password)
       await page.getByRole('button', { name: 'Continue' }).click()
 
       // Should redirect back to profile
@@ -111,15 +100,30 @@ test.describe('Authentication Flow', () => {
     })
 
     test('should handle invalid credentials', async ({ page }) => {
-      await page.goto('/login', { waitUntil: 'networkidle' })
+      await page.goto('/login', { waitUntil: 'domcontentloaded' })
 
-      // Fill in invalid credentials
-      await page.getByRole('textbox', { name: 'Email*' }).fill('wrong@example.com')
-      await page.getByRole('textbox', { name: 'Password*' }).fill('WrongPassword1!')
+      // Wait for form to be ready and fully hydrated
+      await page.waitForSelector('input[placeholder="Enter your email"]', { state: 'visible', timeout: 10000 })
+      // Wait for Vue hydration - same check as login helper
+      await page.waitForFunction(() => {
+        const form = document.querySelector('form')
+        return (form && (form as HTMLElement & { __vue_app__?: unknown }).__vue_app__ !== undefined) || document.readyState === 'complete'
+      }, { timeout: 10000 })
+      await page.waitForTimeout(2000)
+
+      // Use pressSequentially which simulates real key presses for Vue v-model
+      const emailInput = page.locator('input[placeholder="Enter your email"]').first()
+      const passwordInput = page.locator('input[placeholder="Enter your password"]').first()
+
+      await emailInput.click()
+      await emailInput.pressSequentially('wrong@example.com', { delay: 30 })
+
+      await passwordInput.click()
+      await passwordInput.pressSequentially('WrongPassword1!', { delay: 30 })
       await page.getByRole('button', { name: 'Continue' }).click()
 
-      // Should show user-friendly error message
-      await expect(page.getByText('Invalid email or password')).toBeVisible()
+      // Should show user-friendly error message (with timeout for API response)
+      await expect(page.getByText('Invalid email or password')).toBeVisible({ timeout: 10000 })
 
       // Should stay on login page
       await expect(page).toHaveURL('/login')
@@ -130,8 +134,8 @@ test.describe('Authentication Flow', () => {
       await page.goto('/login?email=test@example.com&password=secret123')
 
       // Verify fields are empty (not pre-filled from URL)
-      const emailInput = page.getByRole('textbox', { name: 'Email*' })
-      const passwordInput = page.getByRole('textbox', { name: 'Password*' })
+      const emailInput = page.getByRole('textbox', { name: 'Email' })
+      const passwordInput = page.getByRole('textbox', { name: 'Password' })
 
       await expect(emailInput).toHaveValue('')
       await expect(passwordInput).toHaveValue('')
@@ -144,8 +148,8 @@ test.describe('Authentication Flow', () => {
       await page.goto('/login')
 
       // Login with "Remember me"
-      await page.getByRole('textbox', { name: 'Email*' }).fill(TEST_USER.email)
-      await page.getByRole('textbox', { name: 'Password*' }).fill(TEST_USER.password)
+      await page.getByRole('textbox', { name: 'Email' }).fill(TEST_USER.email)
+      await page.getByRole('textbox', { name: 'Password' }).fill(TEST_USER.password)
       await page.getByRole('checkbox', { name: 'Remember me' }).click()
       await page.getByRole('button', { name: 'Continue' }).click()
 

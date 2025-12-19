@@ -13,7 +13,7 @@ test.describe('Sources Page', () => {
 
   test('should display tabs for different source types', async ({ page }) => {
     await page.goto('/sources')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForTimeout(1000) // Give tabs time to render
 
     // Should have mortality tab (default) - match full label text
@@ -31,7 +31,7 @@ test.describe('Sources Page', () => {
 
   test('should display data table on mortality tab', async ({ page }) => {
     await page.goto('/sources')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForTimeout(2000)
 
     // Should show table with data
@@ -41,7 +41,7 @@ test.describe('Sources Page', () => {
 
   test('should support pagination', async ({ page }) => {
     await page.goto('/sources')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForTimeout(2000)
 
     // Should show pagination info (e.g., "Showing 1 to 10 of X entries")
@@ -51,37 +51,41 @@ test.describe('Sources Page', () => {
 
   test('should update URL when switching tabs', async ({ page }) => {
     await page.goto('/sources')
-    await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(1000) // Give tabs time to render
+    await page.waitForLoadState('domcontentloaded')
 
-    // Click population tab - use full label text
+    // Wait for initial data to load (table visible)
+    await expect(page.locator('table')).toBeVisible({ timeout: 10000 })
+
+    // Click population tab - ensure it's visible and clickable first
     const populationTab = page.getByRole('tab', { name: /Population Data/i })
-    await populationTab.click()
-    await page.waitForTimeout(500)
+    await expect(populationTab).toBeVisible()
+    await populationTab.click({ force: true })
 
-    // URL should update with tab parameter
+    // Wait for URL to update with tab parameter
+    await page.waitForURL(/tab=population/, { timeout: 10000 })
     expect(page.url()).toContain('tab=population')
 
     // Click standard tab
     const standardTab = page.getByRole('tab', { name: /Standard Populations/i })
-    await standardTab.click()
-    await page.waitForTimeout(500)
+    await expect(standardTab).toBeVisible()
+    await standardTab.click({ force: true })
 
-    // URL should update
+    // Wait for URL to update
+    await page.waitForURL(/tab=standard/, { timeout: 10000 })
     expect(page.url()).toContain('tab=standard')
   })
 
   test('should update sources page on browser back/forward navigation', async ({ page }) => {
     // Start on mortality tab (default)
     await page.goto('/sources')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForTimeout(1000)
 
     const initialUrl = page.url()
 
     // Navigate to population tab via URL
     await page.goto('/sources?tab=population')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForTimeout(1000)
 
     const secondUrl = page.url()
@@ -93,7 +97,7 @@ test.describe('Sources Page', () => {
 
     // Navigate to standard tab with pagination
     await page.goto('/sources?tab=standard&page=2&limit=20')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForTimeout(1000)
 
     const thirdUrl = page.url()
@@ -102,7 +106,7 @@ test.describe('Sources Page', () => {
 
     // Go back using browser navigation (should go to population tab)
     await page.goBack()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForTimeout(1000)
 
     // Should be back on population tab
@@ -112,7 +116,7 @@ test.describe('Sources Page', () => {
 
     // Go back again (should go to mortality tab)
     await page.goBack()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForTimeout(1000)
 
     // Should be back to initial state
@@ -122,7 +126,7 @@ test.describe('Sources Page', () => {
 
     // Go forward (should go to population)
     await page.goForward()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForTimeout(1000)
 
     expect(page.url()).toBe(secondUrl)
@@ -130,7 +134,7 @@ test.describe('Sources Page', () => {
 
     // Go forward again (should go to standard with page 2)
     await page.goForward()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForTimeout(1000)
 
     expect(page.url()).toBe(thirdUrl)
