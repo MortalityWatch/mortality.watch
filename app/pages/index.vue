@@ -165,7 +165,7 @@
       <UCard class="max-w-5xl mx-auto">
         <template #header>
           <h2 class="text-2xl font-bold text-center">
-            Why Choose MortalityWatch?
+            Why Choose Mortality Watch?
           </h2>
         </template>
         <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
@@ -317,12 +317,12 @@ definePageMeta({
 
 // SEO metadata
 useSeoMeta({
-  title: 'MortalityWatch - Track Global Mortality, Life Expectancy & Excess Deaths',
+  title: 'Mortality Watch - Track Global Mortality, Life Expectancy & Excess Deaths',
   description: 'The world\'s most comprehensive open mortality database with daily updates from 300+ countries and regions. Explore excess deaths, life expectancy trends, compare regions, and analyze with multiple baseline methods.',
-  ogTitle: 'MortalityWatch - Track Global Mortality & Life Expectancy',
+  ogTitle: 'Mortality Watch - Track Global Mortality & Life Expectancy',
   ogDescription: 'Free, open-source platform with 300+ regions, life expectancy tracking, multiple baseline methods, and daily updates from official sources.',
   ogImage: '/og-image.png',
-  twitterTitle: 'MortalityWatch - Global Mortality & Life Expectancy Database',
+  twitterTitle: 'Mortality Watch - Global Mortality & Life Expectancy Database',
   twitterDescription: 'Track mortality trends, life expectancy, and excess deaths across 300+ countries and regions with advanced statistical analysis.',
   twitterImage: '/og-image.png',
   twitterCard: 'summary_large_image'

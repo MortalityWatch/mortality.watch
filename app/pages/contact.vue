@@ -254,9 +254,9 @@ definePageMeta({
 // SEO metadata
 useSeoMeta({
   title: 'Contact Us',
-  description: 'Get in touch with the MortalityWatch team. We\'re here to help with questions, suggestions, and bug reports.',
-  ogTitle: 'Contact MortalityWatch',
-  ogDescription: 'Get in touch with the MortalityWatch team for support and inquiries.',
+  description: 'Get in touch with the Mortality Watch team. We\'re here to help with questions, suggestions, and bug reports.',
+  ogTitle: 'Contact Mortality Watch',
+  ogDescription: 'Get in touch with the Mortality Watch team for support and inquiries.',
   ogImage: '/og-image.png'
 })
 </script>

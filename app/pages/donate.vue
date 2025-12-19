@@ -2,8 +2,8 @@
   <div class="container mx-auto px-4 py-8">
     <div class="max-w-3xl mx-auto">
       <PageHeader
-        title="Support MortalityWatch"
-        description="MortalityWatch is sustained by Pro subscriptions. If you'd like to support our work beyond upgrading to Pro, we gratefully accept donations."
+        title="Support Mortality Watch"
+        description="Mortality Watch is sustained by Pro subscriptions. If you'd like to support our work beyond upgrading to Pro, we gratefully accept donations."
         max-width="md"
       />
 
@@ -158,9 +158,9 @@ definePageMeta({
 
 // SEO metadata
 useSeoMeta({
-  title: 'Support MortalityWatch',
-  description: 'MortalityWatch is sustained by Pro subscriptions. Support our work with a one-time donation or upgrade to Pro for advanced features.',
-  ogTitle: 'Support MortalityWatch',
+  title: 'Support Mortality Watch',
+  description: 'Mortality Watch is sustained by Pro subscriptions. Support our work with a one-time donation or upgrade to Pro for advanced features.',
+  ogTitle: 'Support Mortality Watch',
   ogDescription: 'Support mortality data infrastructure and feature development.',
   ogImage: '/og-image.png'
 })
