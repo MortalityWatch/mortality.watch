@@ -95,7 +95,7 @@ test.describe('Chart Visual Regression', () => {
         // 2. Capture client screenshot
         const explorerUrl = testCase.url.replace('/chart.png', '/explorer')
         await page.goto(explorerUrl)
-        await page.waitForLoadState('networkidle')
+        await page.waitForLoadState('domcontentloaded')
         await page.waitForSelector('canvas#chart', { state: 'visible', timeout: 15000 })
         await page.waitForTimeout(1500)
 

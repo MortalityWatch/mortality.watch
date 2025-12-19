@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 test.describe('Chart Interactions', () => {
   test('should render chart on explorer page', async ({ page }) => {
     await page.goto('/explorer')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Wait for chart to render
     await page.waitForTimeout(2000)
@@ -15,7 +15,7 @@ test.describe('Chart Interactions', () => {
 
   test('should display chart controls', async ({ page }) => {
     await page.goto('/explorer')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Chart controls should be visible
     // Look for common control elements like selects, buttons, sliders
@@ -25,7 +25,7 @@ test.describe('Chart Interactions', () => {
 
   test('should allow interaction with chart controls', async ({ page }) => {
     await page.goto('/explorer')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Wait for page to be interactive
     await page.waitForTimeout(2000)
@@ -37,7 +37,7 @@ test.describe('Chart Interactions', () => {
 
   test('should update URL when interacting with controls', async ({ page }) => {
     await page.goto('/explorer')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     const initialUrl = page.url()
 
@@ -51,7 +51,7 @@ test.describe('Chart Interactions', () => {
 
   test('should handle responsive layout for charts', async ({ page, isMobile }) => {
     await page.goto('/explorer')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Chart container should adjust to viewport
     const container = page.locator('.container, [class*="container"]').first()
@@ -74,7 +74,7 @@ test.describe('Chart Interactions', () => {
     })
 
     await page.goto('/explorer')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForTimeout(3000)
 
     // Filter out known warnings that aren't critical
@@ -102,7 +102,7 @@ test.describe('Chart Interactions', () => {
 
   test('should maintain chart state when navigating away and back', async ({ page }) => {
     await page.goto('/explorer')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForTimeout(2000)
 
     // Navigate away
@@ -139,7 +139,7 @@ test.describe('Chart Interactions', () => {
 
   test('should display chart legend or labels', async ({ page }) => {
     await page.goto('/explorer')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForTimeout(2000)
 
     // Chart.js typically renders canvas, and legend might be in DOM or on canvas
@@ -155,7 +155,7 @@ test.describe('Chart Interactions', () => {
 
   test('should handle window resize gracefully', async ({ page }) => {
     await page.goto('/explorer')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForTimeout(2000)
 
     // Get canvas element

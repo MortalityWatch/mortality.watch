@@ -44,7 +44,7 @@ test.skip('save modal opens and closes on save', async ({ page }) => {
   await page.getByRole('link', { name: 'Explorer' }).first().click()
 
   // Wait for page to load and close any welcome/tutorial modals
-  await page.waitForLoadState('networkidle')
+  await page.waitForLoadState('domcontentloaded')
 
   // Close jurisdiction selection modal if present (use first matching button)
   const closeButtons = page.getByRole('button', { name: 'Close' })

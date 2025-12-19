@@ -27,7 +27,7 @@ const TAB_ANIMATION_DELAY = 300
 test.describe('Explorer Constraint Enforcement', () => {
   // Helper to wait for chart to be ready
   async function waitForChart(page: Page) {
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
     await page.waitForSelector('canvas#chart', { timeout: CHART_TIMEOUT })
   }
 
