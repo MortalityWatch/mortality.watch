@@ -109,8 +109,11 @@ onMounted(() => {
   loadSubscriptionStatus()
 })
 
-// Reload subscription when returning from Stripe portal
+// Reload subscription and reset states when returning from Stripe portal
 onActivated(() => {
+  // Reset loading states in case user navigated back with browser button
+  subscribing.value = false
+  managingSubscription.value = false
   loadSubscriptionStatus()
 })
 </script>

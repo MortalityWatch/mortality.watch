@@ -31,18 +31,16 @@ onMounted(async () => {
       description: 'Your payment was successful. Welcome to Pro! 🎉',
       color: 'success'
     })
-    // Clean up the URL
-    const router = useRouter()
-    router.replace({ query: {} })
+    // Clean up the URL without triggering Vue Router navigation/middleware
+    window.history.replaceState({}, '', '/profile')
   } else if (route.query.canceled === 'true') {
     toast.add({
       title: 'Checkout canceled',
       description: 'You can subscribe anytime from your profile.',
       color: 'info'
     })
-    // Clean up the URL
-    const router = useRouter()
-    router.replace({ query: {} })
+    // Clean up the URL without triggering Vue Router navigation/middleware
+    window.history.replaceState({}, '', '/profile')
   }
 })
 
