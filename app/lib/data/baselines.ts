@@ -71,15 +71,23 @@ const calculateExcess = (
   if (!excess || !excessLower || !excessUpper) return
 
   for (let i = 0; i < currentValues.length; i++) {
-    const currentValue = currentValues[i] ?? 0
-    const base = baseline[i] ?? 0
+    const currentValue = currentValues[i]
+    const base = baseline[i]
     const baseLower = baselineLower[i]
     const baseUpper = baselineUpper[i]
 
-    excess[i] = currentValue - base
-    // Propagate undefined for periods where PI is not calculated (baseline period)
-    excessLower[i] = baseLower !== undefined ? currentValue - baseLower : undefined
-    excessUpper[i] = baseUpper !== undefined ? currentValue - baseUpper : undefined
+    // Pre-baseline periods have null baseline - excess cannot be calculated
+    // Also handle missing current values
+    if (base === null || base === undefined || currentValue === null || currentValue === undefined) {
+      excess[i] = undefined
+      excessLower[i] = undefined
+      excessUpper[i] = undefined
+    } else {
+      excess[i] = currentValue - base
+      // Propagate undefined for periods where PI is not calculated (baseline period)
+      excessLower[i] = baseLower !== undefined && baseLower !== null ? currentValue - baseLower : undefined
+      excessUpper[i] = baseUpper !== undefined && baseUpper !== null ? currentValue - baseUpper : undefined
+    }
   }
 }
 
@@ -264,61 +272,68 @@ const calculateBaseline = async (
   try {
     const baseUrl = statsUrl || DEFAULT_STATS_URL
 
-    // Only send data from baseline start onwards to reduce payload size
-    // This significantly reduces the URL length and server processing time
-    const trimmed_data = all_data.slice(baselineStartIdx)
     // Round numbers to avoid floating point precision issues (e.g., 82.15455999999999 -> 82.1546)
-    const dataParam = (trimmed_data as (string | number)[])
+    // Send as array in POST body to avoid URL length limits with large datasets
+    const yData = (all_data as (string | number)[])
       .map(v => typeof v === 'number' ? Number(v.toFixed(BASELINE_DATA_PRECISION)) : v)
-      .join(',')
 
-    // Adjust bs/be to be relative to trimmed data (1-indexed)
-    // Since we start from baselineStartIdx, baseline now starts at index 1
-    const bs = 1
-    const be = baselineEndIdx - baselineStartIdx + 1
+    // bs/be are 1-indexed for R
+    const bs = baselineStartIdx + 1
+    const be = baselineEndIdx + 1
 
     // Get the starting time period for proper seasonal alignment
     // The xs parameter tells the server what calendar period the first data point represents
-    const startLabel = labels[baselineStartIdx]
+    const startLabel = labels[0]
     const xs = startLabel ? labelToXsParam(startLabel, chartType) : null
-    const xsParam = xs ? `&xs=${xs}` : ''
 
-    // With bs/be, PI is calculated for all post-be periods - no h needed
-    const url
-      = cumulative && s === 1
-        ? `${baseUrl}cum?y=${dataParam}&bs=${bs}&be=${be}&t=${trend ? 1 : 0}${xsParam}`
-        : `${baseUrl}?y=${dataParam}&bs=${bs}&be=${be}&s=${s}&t=${trend ? 1 : 0}&m=${method}${xsParam}`
+    // Use POST with JSON body to avoid URL length limits
+    // This is especially important for weekly/monthly data with long time series
+    const isCumulative = cumulative && s === 1
+    const endpoint = isCumulative ? `${baseUrl}cum` : baseUrl
 
-    const text = await baselineQueue.enqueue(() => dataLoader.fetchBaseline(url))
+    const body: Record<string, unknown> = {
+      y: yData,
+      bs,
+      be,
+      t: trend ? 1 : 0
+    }
+
+    // Add non-cumulative specific params
+    if (!isCumulative) {
+      body.s = s
+      body.m = method
+    }
+
+    // Add optional xs parameter
+    if (xs) {
+      body.xs = xs
+    }
+
+    const text = await baselineQueue.enqueue(() => dataLoader.fetchBaseline(endpoint, body))
     const json = JSON.parse(text)
 
-    // Update NA/null to undefined and trim forecast values (API returns input length + h)
-    // We only want values matching our trimmed input data length
-    const trimmedLength = trimmed_data.length
-    json.y = (json.y as (string | number)[]).slice(0, trimmedLength)
-    json.lower = (json.lower as (string | number | null)[]).slice(0, trimmedLength).map((x: string | number | null) =>
+    // Update NA/null to undefined and trim to match input data length
+    const dataLength = all_data.length
+    json.y = (json.y as (string | number)[]).slice(0, dataLength)
+    json.lower = (json.lower as (string | number | null)[]).slice(0, dataLength).map((x: string | number | null) =>
       x === 'NA' || x === null ? undefined : x
     )
-    json.upper = (json.upper as (string | number | null)[]).slice(0, trimmedLength).map((x: string | number | null) =>
+    json.upper = (json.upper as (string | number | null)[]).slice(0, dataLength).map((x: string | number | null) =>
       x === 'NA' || x === null ? undefined : x
     )
     if (json.zscore) {
-      json.zscore = (json.zscore as (string | number)[]).slice(0, trimmedLength)
+      json.zscore = (json.zscore as (string | number)[]).slice(0, dataLength)
     }
 
-    // Prefill arrays for indices before baselineStartIdx with null
-    // Response is aligned with trimmed input starting at baselineStartIdx
-    // Note: Chart.js uses null (not undefined) to create gaps in line charts
-    const prefill = new Array(baselineStartIdx).fill(null)
-
-    if (keys[1]) data[keys[1]] = [...prefill, ...json.y] as DataVector
-    if (keys[2]) data[keys[2]] = [...prefill, ...json.lower] as DataVector
-    if (keys[3]) data[keys[3]] = [...prefill, ...json.upper] as DataVector
+    // Response now covers full timeline - no prefill needed
+    if (keys[1]) data[keys[1]] = json.y as DataVector
+    if (keys[2]) data[keys[2]] = json.lower as DataVector
+    if (keys[3]) data[keys[3]] = json.upper as DataVector
 
     // Extract z-scores if available
     if (json.zscore && keys[0]) {
       const zscoreKey = `${String(keys[0])}_zscore` as keyof DatasetEntry
-      data[zscoreKey] = [...prefill, ...json.zscore] as DataVector
+      data[zscoreKey] = json.zscore as DataVector
     }
   } catch (error) {
     logger.error('Baseline calculation failed, using simple mean fallback', error, {

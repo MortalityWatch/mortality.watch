@@ -701,7 +701,6 @@ watch(
         :slider-start="state.sliderStart.value"
         :all-yearly-chart-labels-unique="dataOrchestration.allYearlyChartLabelsUnique.value"
         :chart-type="state.chartType.value as ChartType"
-        :hide-slider-start="dataOrchestration.isBaselineRestrictedView.value"
         @countries-changed="handleCountriesChanged"
         @age-groups-changed="handleAgeGroupsChanged"
         @slider-start-changed="handleSliderStartChanged"

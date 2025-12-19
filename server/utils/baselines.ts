@@ -20,6 +20,69 @@ import { logger } from '../../app/lib/logger'
 const DEFAULT_STATS_URL = EXTERNAL_SERVICES.STATS_API_URL
 
 /**
+ * Convert a chart label to the xs (start time) parameter format for the stats API
+ *
+ * Label formats by chart type:
+ * - Weekly: "2020 W01" -> "2020W01"
+ * - Monthly: "2020 Jan" -> "2020-01"
+ * - Quarterly: "2020 Q1" -> "2020Q1"
+ * - Yearly: "2020" -> "2020"
+ * - Fluseason/midyear: "2019/20" -> "2019" (use start year)
+ */
+const labelToXsParam = (label: string, chartType: string): string | null => {
+  if (!label) return null
+
+  // Weekly: "2020 W01" -> "2020W01"
+  if (chartType.startsWith('weekly')) {
+    const match = label.match(/^(\d{4})\s*W(\d{2})$/)
+    if (match) {
+      return `${match[1]}W${match[2]}`
+    }
+    return null
+  }
+
+  // Monthly: "2020 Jan" -> "2020-01"
+  if (chartType === 'monthly') {
+    const months: Record<string, string> = {
+      Jan: '01', Feb: '02', Mar: '03', Apr: '04',
+      May: '05', Jun: '06', Jul: '07', Aug: '08',
+      Sep: '09', Oct: '10', Nov: '11', Dec: '12'
+    }
+    const match = label.match(/^(\d{4})\s+(\w{3})$/)
+    if (match && match[1] && match[2] && months[match[2]]) {
+      return `${match[1]}-${months[match[2]]}`
+    }
+    return null
+  }
+
+  // Quarterly: "2020 Q1" -> "2020Q1"
+  if (chartType === 'quarterly') {
+    const match = label.match(/^(\d{4})\s*Q(\d)$/)
+    if (match && match[1] && match[2]) {
+      return `${match[1]}Q${match[2]}`
+    }
+    return null
+  }
+
+  // Fluseason/midyear: "2019/20" -> "2019" (use start year, treated as yearly)
+  if (chartType === 'fluseason' || chartType === 'midyear') {
+    const match = label.match(/^(\d{4})\/\d{2}$/)
+    if (match && match[1]) {
+      return match[1]
+    }
+    return null
+  }
+
+  // Yearly: "2020" -> "2020"
+  const yearMatch = label.match(/^(\d{4})$/)
+  if (yearMatch && yearMatch[1]) {
+    return yearMatch[1]
+  }
+
+  return null
+}
+
+/**
  * Calculate excess mortality from baseline data
  */
 const calculateExcess = (data: DatasetEntry, key: keyof DatasetEntry): void => {
@@ -47,15 +110,23 @@ const calculateExcess = (data: DatasetEntry, key: keyof DatasetEntry): void => {
   if (!excess || !excessLower || !excessUpper) return
 
   for (let i = 0; i < currentValues.length; i++) {
-    const currentValue = currentValues[i] ?? 0
-    const base = baseline[i] ?? 0
+    const currentValue = currentValues[i]
+    const base = baseline[i]
     const baseLower = baselineLower[i]
     const baseUpper = baselineUpper[i]
 
-    excess[i] = currentValue - base
-    // Propagate undefined for periods where PI is not calculated (baseline period)
-    excessLower[i] = baseLower !== undefined ? currentValue - baseLower : undefined
-    excessUpper[i] = baseUpper !== undefined ? currentValue - baseUpper : undefined
+    // Pre-baseline periods have null baseline - excess cannot be calculated
+    // Also handle missing current values
+    if (base === null || base === undefined || currentValue === null || currentValue === undefined) {
+      excess[i] = undefined
+      excessLower[i] = undefined
+      excessUpper[i] = undefined
+    } else {
+      excess[i] = currentValue - base
+      // Propagate undefined for periods where PI is not calculated (baseline period)
+      excessLower[i] = baseLower !== undefined && baseLower !== null ? currentValue - baseLower : undefined
+      excessUpper[i] = baseUpper !== undefined && baseUpper !== null ? currentValue - baseUpper : undefined
+    }
   }
 }
 
@@ -143,36 +214,60 @@ const calculateBaseline = async (
 
   try {
     const baseUrl = statsUrl || DEFAULT_STATS_URL
-    // Send full dataset with bs/be params to specify baseline range
-    // API uses 1-indexed values, so add 1 to our 0-indexed values
-    // Round numbers to avoid floating point precision issues (e.g., 82.15455999999999 -> 82.1546)
-    const dataParam = (all_data as (string | number)[])
-      .map(v => typeof v === 'number' ? Number(v.toFixed(BASELINE_DATA_PRECISION)) : v)
-      .join(',')
-    const bs = baselineStartIdx + 1 // Convert to 1-indexed
-    const be = baselineEndIdx + 1 // Convert to 1-indexed
-    // With bs/be, PI is calculated for all post-be periods - no h needed
-    const url
-      = cumulative && s === 1
-        ? `${baseUrl}cum?y=${dataParam}&bs=${bs}&be=${be}&t=${trend ? 1 : 0}`
-        : `${baseUrl}?y=${dataParam}&bs=${bs}&be=${be}&s=${s}&t=${trend ? 1 : 0}&m=${method}`
 
-    // Debug: Log the URL being sent (truncate data for readability)
+    // Round numbers to avoid floating point precision issues (e.g., 82.15455999999999 -> 82.1546)
+    // Send as array in POST body to avoid URL length limits with large datasets
+    const yData = (all_data as (string | number)[])
+      .map(v => typeof v === 'number' ? Number(v.toFixed(BASELINE_DATA_PRECISION)) : v)
+
+    const bs = baselineStartIdx + 1 // Convert to 1-indexed for R
+    const be = baselineEndIdx + 1 // Convert to 1-indexed for R
+
+    // Get the starting time period for proper seasonal alignment
+    // The xs parameter tells the server what calendar period the first data point represents
+    const startLabel = labels[0]
+    const xs = startLabel ? labelToXsParam(startLabel, chartType) : null
+
+    // Use POST with JSON body to avoid URL length limits
+    // This is especially important for weekly/monthly data with long time series
+    const isCumulative = cumulative && s === 1
+    const endpoint = isCumulative ? `${baseUrl}cum` : baseUrl
+
+    const body: Record<string, unknown> = {
+      y: yData,
+      bs,
+      be,
+      t: trend ? 1 : 0
+    }
+
+    // Add non-cumulative specific params
+    if (!isCumulative) {
+      body.s = s
+      body.m = method
+    }
+
+    // Add optional xs parameter for seasonal alignment
+    if (xs) {
+      body.xs = xs
+    }
+
+    // Debug: Log the request being sent
     logger.debug('SSR Baseline API call', {
       iso3c: data.iso3c?.[0],
       baselineStartIdx,
       baselineEndIdx,
       bs,
       be,
+      xs,
       method,
       chartType,
       s,
       dataLength: all_data.length,
-      urlPrefix: url.substring(0, 100) + '...'
+      endpoint
     })
 
-    // Use server-side fetch with circuit breaker and queue
-    const text = await serverBaselineQueue.enqueue(() => fetchBaselineWithCircuitBreaker(url))
+    // Use server-side fetch with circuit breaker and queue (POST with JSON body)
+    const text = await serverBaselineQueue.enqueue(() => fetchBaselineWithCircuitBreaker(endpoint, body))
     const json = JSON.parse(text)
 
     // Update NA/null to undefined and trim forecast values (API returns input length + h)

@@ -15,8 +15,8 @@ export default defineConfig({
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
 
-  /* Use 2 workers on CI for 2x speedup (WAL mode supports concurrency) */
-  workers: process.env.CI ? 2 : undefined,
+  /* Workers: 1 on CI (sharding handles parallelism), auto locally */
+  workers: process.env.CI ? 1 : undefined,
 
   /* Reporter to use */
   reporter: [

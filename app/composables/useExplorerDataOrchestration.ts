@@ -103,26 +103,13 @@ export function useExplorerDataOrchestration(
     )
   })
 
-  /**
-   * Effective baseline start date - uses explicit value or falls back to computed default
-   * This is needed for view restriction in excess/zscore modes
-   */
-  const effectiveBaselineDateFrom = computed(() => {
-    return state.baselineDateFrom.value ?? baselineRange.value?.from
-  })
-
   // Date range calculations (single source of truth for date logic)
-  // Pass view options to restrict date range in excess/zscore views
   const dateRangeCalc = useDateRangeCalculations(
     state.chartType,
     state.sliderStart,
     state.dateFrom,
     state.dateTo,
-    allChartLabels,
-    {
-      view: state.view,
-      baselineDateFrom: effectiveBaselineDateFrom
-    }
+    allChartLabels
   )
 
   /**
@@ -143,9 +130,6 @@ export function useExplorerDataOrchestration(
       return Array.from(new Set(yearLabels))
     }
   })
-
-  // NOTE: baselineRange and allYearlyChartLabels are now defined earlier (before dateRangeCalc)
-  // to enable effectiveBaselineDateFrom calculation
 
   /**
    * Chart data for current selection (filtered by dateFrom/dateTo)
@@ -262,14 +246,9 @@ export function useExplorerDataOrchestration(
       return
     }
 
-    // In excess/zscore views, we must set explicit dates so the slider shows correctly
-    // (the visible range is restricted to baseline start, so we need to update the slider)
-    const isRestrictedView = dateRangeCalc.isBaselineRestrictedView.value
-
     // Don't auto-initialize dates if user never set them (keeps URL clean)
-    // Exception: In restricted views, we need to set dates for the slider to update
     const userNeverSetDates = !state.isUserSet('dateFrom') && !state.isUserSet('dateTo')
-    if (userNeverSetDates && !isRestrictedView) {
+    if (userNeverSetDates) {
       return
     }
 
@@ -571,9 +550,6 @@ export function useExplorerDataOrchestration(
     defaultRange: dateRangeCalc.defaultRange,
     getDefaultRange: dateRangeCalc.getDefaultRange, // Kept for backward compatibility
     baselineRange,
-
-    // View restrictions (for hiding "From" dropdown in excess/zscore views)
-    isBaselineRestrictedView: dateRangeCalc.isBaselineRestrictedView,
 
     // Short URL for QR codes and sharing
     currentShortUrl,

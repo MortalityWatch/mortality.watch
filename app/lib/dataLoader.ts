@@ -8,6 +8,7 @@
  */
 
 import { UI_CONFIG } from './config/constants'
+import { fetchWithRetry } from './fetch/fetchWithRetry'
 
 const S3_BASE = 'https://s3.mortality.watch/data/mortality'
 
@@ -65,44 +66,17 @@ export class DataLoader {
    * Fetch baseline calculation from R stats server
    * Note: This always goes to external server, no caching
    * Includes retry logic with timeout for external service reliability
+   *
+   * @param url - Base URL for GET requests, or full URL with query params for GET
+   * @param body - Optional JSON body for POST requests (used when data is too large for URL)
+   * @param retries - Number of retry attempts
    */
-  async fetchBaseline(url: string, retries = 2): Promise<string> {
-    let lastError: Error | null = null
-
-    for (let attempt = 0; attempt <= retries; attempt++) {
-      try {
-        const controller = new AbortController()
-        const timeout = setTimeout(() => controller.abort(), 10000) // 10s timeout
-
-        const response = await fetch(url, {
-          signal: controller.signal
-        })
-
-        clearTimeout(timeout)
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-        }
-
-        return response.text()
-      } catch (error) {
-        lastError = error as Error
-
-        // Don't retry on abort (timeout)
-        if (lastError.name === 'AbortError') {
-          throw new Error(`Baseline calculation timeout after 10s`)
-        }
-
-        // Only retry on network/server errors
-        if (attempt < retries) {
-          // Exponential backoff based on configured retry delay
-          await new Promise(resolve => setTimeout(resolve, UI_CONFIG.RETRY_DELAY * (attempt + 1) / 2))
-          continue
-        }
-      }
-    }
-
-    throw lastError || new Error('Failed to fetch baseline')
+  async fetchBaseline(url: string, body?: Record<string, unknown>, retries = 2): Promise<string> {
+    return fetchWithRetry(url, body, {
+      retries,
+      timeout: 10000,
+      retryDelay: UI_CONFIG.RETRY_DELAY / 2 // Use configured delay
+    })
   }
 }
 
