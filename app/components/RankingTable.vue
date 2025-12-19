@@ -33,6 +33,10 @@ const decimalPlaces = computed(() => {
   return isNaN(parsed) ? 1 : parsed
 })
 
+// isExcess = relative mode (showing excess from baseline)
+// Consistent with explorer pattern where e=0 means absolute, e=1/absent means excess
+const isExcess = computed(() => props.display.displayMode === 'relative')
+
 // Extract all numeric values from the dataset for color scale calibration
 const allValues = computed(() => {
   const values: number[] = []
@@ -157,7 +161,7 @@ const selectedItemsPerPage = computed(() =>
               class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
               @click="handleToggleSort('TOTAL')"
             >
-              TOTAL
+              {{ isExcess ? 'TOTAL' : 'AVG' }}
               <UIcon
                 v-if="sort.field === 'TOTAL'"
                 :name="sort.order === 'asc' ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
