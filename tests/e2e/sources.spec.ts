@@ -52,22 +52,26 @@ test.describe('Sources Page', () => {
   test('should update URL when switching tabs', async ({ page }) => {
     await page.goto('/sources')
     await page.waitForLoadState('domcontentloaded')
-    await page.waitForTimeout(1000) // Give tabs time to render
 
-    // Click population tab - use full label text
+    // Wait for initial data to load (table visible)
+    await expect(page.locator('table')).toBeVisible({ timeout: 10000 })
+
+    // Click population tab - ensure it's visible and clickable first
     const populationTab = page.getByRole('tab', { name: /Population Data/i })
-    await populationTab.click()
-    await page.waitForTimeout(500)
+    await expect(populationTab).toBeVisible()
+    await populationTab.click({ force: true })
 
-    // URL should update with tab parameter
+    // Wait for URL to update with tab parameter
+    await page.waitForURL(/tab=population/, { timeout: 10000 })
     expect(page.url()).toContain('tab=population')
 
     // Click standard tab
     const standardTab = page.getByRole('tab', { name: /Standard Populations/i })
-    await standardTab.click()
-    await page.waitForTimeout(500)
+    await expect(standardTab).toBeVisible()
+    await standardTab.click({ force: true })
 
-    // URL should update
+    // Wait for URL to update
+    await page.waitForURL(/tab=standard/, { timeout: 10000 })
     expect(page.url()).toContain('tab=standard')
   })
 
