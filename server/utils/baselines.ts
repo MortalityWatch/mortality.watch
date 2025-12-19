@@ -143,21 +143,34 @@ const calculateBaseline = async (
 
   try {
     const baseUrl = statsUrl || DEFAULT_STATS_URL
-    // Send full dataset with bs/be params to specify baseline range
-    // API uses 1-indexed values, so add 1 to our 0-indexed values
-    // Round numbers to avoid floating point precision issues (e.g., 82.15455999999999 -> 82.1546)
-    const dataParam = (all_data as (string | number)[])
-      .map(v => typeof v === 'number' ? Number(v.toFixed(BASELINE_DATA_PRECISION)) : v)
-      .join(',')
-    const bs = baselineStartIdx + 1 // Convert to 1-indexed
-    const be = baselineEndIdx + 1 // Convert to 1-indexed
-    // With bs/be, PI is calculated for all post-be periods - no h needed
-    const url
-      = cumulative && s === 1
-        ? `${baseUrl}cum?y=${dataParam}&bs=${bs}&be=${be}&t=${trend ? 1 : 0}`
-        : `${baseUrl}?y=${dataParam}&bs=${bs}&be=${be}&s=${s}&t=${trend ? 1 : 0}&m=${method}`
 
-    // Debug: Log the URL being sent (truncate data for readability)
+    // Round numbers to avoid floating point precision issues (e.g., 82.15455999999999 -> 82.1546)
+    // Send as array in POST body to avoid URL length limits with large datasets
+    const yData = (all_data as (string | number)[])
+      .map(v => typeof v === 'number' ? Number(v.toFixed(BASELINE_DATA_PRECISION)) : v)
+
+    const bs = baselineStartIdx + 1 // Convert to 1-indexed for R
+    const be = baselineEndIdx + 1 // Convert to 1-indexed for R
+
+    // Use POST with JSON body to avoid URL length limits
+    // This is especially important for weekly/monthly data with long time series
+    const isCumulative = cumulative && s === 1
+    const endpoint = isCumulative ? `${baseUrl}cum` : baseUrl
+
+    const body: Record<string, unknown> = {
+      y: yData,
+      bs,
+      be,
+      t: trend ? 1 : 0
+    }
+
+    // Add non-cumulative specific params
+    if (!isCumulative) {
+      body.s = s
+      body.m = method
+    }
+
+    // Debug: Log the request being sent
     logger.debug('SSR Baseline API call', {
       iso3c: data.iso3c?.[0],
       baselineStartIdx,
@@ -168,11 +181,11 @@ const calculateBaseline = async (
       chartType,
       s,
       dataLength: all_data.length,
-      urlPrefix: url.substring(0, 100) + '...'
+      endpoint
     })
 
-    // Use server-side fetch with circuit breaker and queue
-    const text = await serverBaselineQueue.enqueue(() => fetchBaselineWithCircuitBreaker(url))
+    // Use server-side fetch with circuit breaker and queue (POST with JSON body)
+    const text = await serverBaselineQueue.enqueue(() => fetchBaselineWithCircuitBreaker(endpoint, body))
     const json = JSON.parse(text)
 
     // Update NA/null to undefined and trim forecast values (API returns input length + h)

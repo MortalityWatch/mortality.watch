@@ -10,22 +10,38 @@ import { baselineCircuitBreaker } from './circuitBreaker'
 /**
  * Fetch baseline calculation with circuit breaker protection
  * Only available server-side - called from server routes/middleware
+ *
+ * @param url - Base URL for the endpoint
+ * @param body - Optional JSON body for POST requests (used when data is too large for URL)
+ * @param retries - Number of retry attempts
  */
 export async function fetchBaselineWithCircuitBreaker(
   url: string,
+  body?: Record<string, unknown>,
   retries = 2
 ): Promise<string> {
   return await baselineCircuitBreaker.execute(async () => {
     let lastError: Error | null = null
+    const method = body ? 'POST' : 'GET'
 
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
         const controller = new AbortController()
         const timeout = setTimeout(() => controller.abort(), 10000) // 10s timeout
 
-        const response = await fetch(url, {
+        const fetchOptions: RequestInit = {
+          method,
           signal: controller.signal
-        })
+        }
+
+        if (body) {
+          fetchOptions.headers = {
+            'Content-Type': 'application/json'
+          }
+          fetchOptions.body = JSON.stringify(body)
+        }
+
+        const response = await fetch(url, fetchOptions)
 
         clearTimeout(timeout)
 

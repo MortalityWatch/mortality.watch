@@ -65,18 +65,33 @@ export class DataLoader {
    * Fetch baseline calculation from R stats server
    * Note: This always goes to external server, no caching
    * Includes retry logic with timeout for external service reliability
+   *
+   * @param url - Base URL for GET requests, or full URL with query params for GET
+   * @param body - Optional JSON body for POST requests (used when data is too large for URL)
+   * @param retries - Number of retry attempts
    */
-  async fetchBaseline(url: string, retries = 2): Promise<string> {
+  async fetchBaseline(url: string, body?: Record<string, unknown>, retries = 2): Promise<string> {
     let lastError: Error | null = null
+    const method = body ? 'POST' : 'GET'
 
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
         const controller = new AbortController()
         const timeout = setTimeout(() => controller.abort(), 10000) // 10s timeout
 
-        const response = await fetch(url, {
+        const fetchOptions: RequestInit = {
+          method,
           signal: controller.signal
-        })
+        }
+
+        if (body) {
+          fetchOptions.headers = {
+            'Content-Type': 'application/json'
+          }
+          fetchOptions.body = JSON.stringify(body)
+        }
+
+        const response = await fetch(url, fetchOptions)
 
         clearTimeout(timeout)
 
