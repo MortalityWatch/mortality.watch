@@ -58,7 +58,7 @@ export function useChartOgImage(state: MaybeRef<Partial<ChartState>>) {
     const excess = isExcess ? 'Excess' : ''
     const type = currentState.type || 'mortality'
 
-    return `${excess} ${type} data for ${countryNames}. Interactive charts and analysis from MortalityWatch.`
+    return `${excess} ${type} data for ${countryNames}. Interactive charts and analysis from Mortality Watch.`
   })
 
   return {
