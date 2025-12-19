@@ -71,15 +71,23 @@ const calculateExcess = (
   if (!excess || !excessLower || !excessUpper) return
 
   for (let i = 0; i < currentValues.length; i++) {
-    const currentValue = currentValues[i] ?? 0
-    const base = baseline[i] ?? 0
+    const currentValue = currentValues[i]
+    const base = baseline[i]
     const baseLower = baselineLower[i]
     const baseUpper = baselineUpper[i]
 
-    excess[i] = currentValue - base
-    // Propagate undefined for periods where PI is not calculated (baseline period)
-    excessLower[i] = baseLower !== undefined ? currentValue - baseLower : undefined
-    excessUpper[i] = baseUpper !== undefined ? currentValue - baseUpper : undefined
+    // Pre-baseline periods have null baseline - excess cannot be calculated
+    // Also handle missing current values
+    if (base === null || base === undefined || currentValue === null || currentValue === undefined) {
+      excess[i] = undefined
+      excessLower[i] = undefined
+      excessUpper[i] = undefined
+    } else {
+      excess[i] = currentValue - base
+      // Propagate undefined for periods where PI is not calculated (baseline period)
+      excessLower[i] = baseLower !== undefined && baseLower !== null ? currentValue - baseLower : undefined
+      excessUpper[i] = baseUpper !== undefined && baseUpper !== null ? currentValue - baseUpper : undefined
+    }
   }
 }
 
