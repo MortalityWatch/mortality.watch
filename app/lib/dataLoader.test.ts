@@ -137,7 +137,7 @@ describe('DataLoader', () => {
       global.fetch = vi.fn().mockRejectedValue(abortError)
 
       await expect(loader.fetchBaseline('https://stats.mortality.watch/?y=1,2,3'))
-        .rejects.toThrow('Baseline calculation timeout after 10s')
+        .rejects.toThrow('Request timeout after 10000ms')
     })
 
     it('should retry on network errors', async () => {

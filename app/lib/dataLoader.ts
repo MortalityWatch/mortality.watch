@@ -8,6 +8,7 @@
  */
 
 import { UI_CONFIG } from './config/constants'
+import { fetchWithRetry } from './fetch/fetchWithRetry'
 
 const S3_BASE = 'https://s3.mortality.watch/data/mortality'
 
@@ -71,53 +72,11 @@ export class DataLoader {
    * @param retries - Number of retry attempts
    */
   async fetchBaseline(url: string, body?: Record<string, unknown>, retries = 2): Promise<string> {
-    let lastError: Error | null = null
-    const method = body ? 'POST' : 'GET'
-
-    for (let attempt = 0; attempt <= retries; attempt++) {
-      try {
-        const controller = new AbortController()
-        const timeout = setTimeout(() => controller.abort(), 10000) // 10s timeout
-
-        const fetchOptions: RequestInit = {
-          method,
-          signal: controller.signal
-        }
-
-        if (body) {
-          fetchOptions.headers = {
-            'Content-Type': 'application/json'
-          }
-          fetchOptions.body = JSON.stringify(body)
-        }
-
-        const response = await fetch(url, fetchOptions)
-
-        clearTimeout(timeout)
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-        }
-
-        return response.text()
-      } catch (error) {
-        lastError = error as Error
-
-        // Don't retry on abort (timeout)
-        if (lastError.name === 'AbortError') {
-          throw new Error(`Baseline calculation timeout after 10s`)
-        }
-
-        // Only retry on network/server errors
-        if (attempt < retries) {
-          // Exponential backoff based on configured retry delay
-          await new Promise(resolve => setTimeout(resolve, UI_CONFIG.RETRY_DELAY * (attempt + 1) / 2))
-          continue
-        }
-      }
-    }
-
-    throw lastError || new Error('Failed to fetch baseline')
+    return fetchWithRetry(url, body, {
+      retries,
+      timeout: 10000,
+      retryDelay: UI_CONFIG.RETRY_DELAY / 2 // Use configured delay
+    })
   }
 }
 

@@ -31,10 +31,6 @@ export interface DateRangeCalculations {
   // Feature gating
   hasExtendedTimeAccess: ComputedRef<boolean>
   effectiveMinDate: ComputedRef<string | null>
-
-  // View restrictions (DEPRECATED)
-  /** Always false - baseline restrictions have been removed */
-  isBaselineRestrictedView: ComputedRef<boolean>
 }
 
 /**
@@ -95,17 +91,6 @@ const getStartIndex = (
 }
 
 /**
- * Options for view-specific date range restrictions
- * Note: Pre-baseline excess calculation is now supported, so view restrictions are deprecated
- */
-export interface ViewRestrictionOptions {
-  /** Current view type ('mortality', 'excess', 'zscore') */
-  view: Ref<string>
-  /** Start of baseline period (no longer used for restrictions) */
-  baselineDateFrom: Ref<string | undefined>
-}
-
-/**
  * Date Range Calculations Composable
  *
  * Provides centralized date range logic for the explorer and ranking pages.
@@ -115,7 +100,6 @@ export interface ViewRestrictionOptions {
  * @param dateFrom - Selected start date
  * @param dateTo - Selected end date
  * @param allLabels - All available date labels from data
- * @param viewOptions - Optional view-specific restrictions (for excess/zscore views)
  * @returns DateRangeCalculations interface
  */
 export function useDateRangeCalculations(
@@ -123,8 +107,7 @@ export function useDateRangeCalculations(
   sliderStart: Ref<string | null>,
   dateFrom: Ref<string | null | undefined>,
   dateTo: Ref<string | null | undefined>,
-  allLabels: Ref<string[]>,
-  _viewOptions?: ViewRestrictionOptions
+  allLabels: Ref<string[]>
 ): DateRangeCalculations {
   // Feature access for extended time periods (year 2000 restriction)
   const { can } = useFeatureAccess()
@@ -172,15 +155,6 @@ export function useDateRangeCalculations(
 
     // Return whichever is later: year 2000 or actual data start
     return dataMinDate > year2000Start ? dataMinDate : year2000Start
-  })
-
-  /**
-   * Check if current view requires baseline-restricted date range
-   * (DEPRECATED: pre-baseline excess calculation is now supported)
-   */
-  const isBaselineRestrictedView = computed(() => {
-    // Always return false - pre-baseline excess calculation is now supported
-    return false
   })
 
   /**
@@ -382,9 +356,6 @@ export function useDateRangeCalculations(
 
     // Feature gating
     hasExtendedTimeAccess,
-    effectiveMinDate,
-
-    // View restrictions
-    isBaselineRestrictedView
+    effectiveMinDate
   }
 }

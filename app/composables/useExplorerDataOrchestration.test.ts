@@ -84,8 +84,7 @@ vi.mock('./useDateRangeCalculations', () => ({
       effectiveMinDate: computed(() => {
         const labels = allLabels.value || []
         return labels.length > 0 ? labels[0] : null
-      }),
-      isBaselineRestrictedView: computed(() => false)
+      })
     }
   })
 }))

@@ -6,6 +6,7 @@
  */
 
 import { baselineCircuitBreaker } from './circuitBreaker'
+import { fetchWithRetry } from '../../app/lib/fetch/fetchWithRetry'
 
 /**
  * Fetch baseline calculation with circuit breaker protection
@@ -21,52 +22,10 @@ export async function fetchBaselineWithCircuitBreaker(
   retries = 2
 ): Promise<string> {
   return await baselineCircuitBreaker.execute(async () => {
-    let lastError: Error | null = null
-    const method = body ? 'POST' : 'GET'
-
-    for (let attempt = 0; attempt <= retries; attempt++) {
-      try {
-        const controller = new AbortController()
-        const timeout = setTimeout(() => controller.abort(), 10000) // 10s timeout
-
-        const fetchOptions: RequestInit = {
-          method,
-          signal: controller.signal
-        }
-
-        if (body) {
-          fetchOptions.headers = {
-            'Content-Type': 'application/json'
-          }
-          fetchOptions.body = JSON.stringify(body)
-        }
-
-        const response = await fetch(url, fetchOptions)
-
-        clearTimeout(timeout)
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-        }
-
-        return response.text()
-      } catch (error) {
-        lastError = error as Error
-
-        // Don't retry on abort (timeout)
-        if (lastError.name === 'AbortError') {
-          throw new Error(`Baseline calculation timeout after 10s`)
-        }
-
-        // Only retry on network/server errors
-        if (attempt < retries) {
-          // Exponential backoff: 500ms, 1000ms
-          await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)))
-          continue
-        }
-      }
-    }
-
-    throw lastError || new Error('Failed to fetch baseline')
+    return fetchWithRetry(url, body, {
+      retries,
+      timeout: 10000,
+      retryDelay: 500
+    })
   })
 }
