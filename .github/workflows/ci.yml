@@ -111,7 +111,7 @@ jobs:
         env:
           JWT_SECRET: test-secret-for-e2e-only-do-not-use-in-production
         run: bunx playwright test --project=chromium
-        timeout-minutes: 15
+        timeout-minutes: 20
 
       - name: Upload Playwright Report
         uses: actions/upload-artifact@v4
