@@ -118,9 +118,9 @@ US,United States,2020-01-01,2023-12-31,3,0-100,cdc`
         expect(result.success).toBe(false)
       })
 
-      it('should reject invalid ISO3C code (too long, >6 chars)', async () => {
+      it('should reject invalid ISO3C code (too long, >7 chars)', async () => {
         const csv = `iso3c,jurisdiction,min_date,max_date,type,age_groups,source
-USA-FLA,United States,2020-01-01,2023-12-31,3,0-100,cdc`
+USA-FLAX,United States,2020-01-01,2023-12-31,3,0-100,cdc`
 
         const result = await validateMetadata(csv)
 
@@ -134,6 +134,21 @@ USA-FL,USA - Florida,2020-01-01,2023-12-31,3,0-100,cdc`
         const result = await validateMetadata(csv)
 
         expect(result.success).toBe(true)
+      })
+
+      it('should accept UK constituent country codes (7 chars)', async () => {
+        const csv = `iso3c,jurisdiction,min_date,max_date,type,age_groups,source
+GBRTENW,England & Wales,2020-01-01,2023-12-31,3,0-100,mortality_org
+GBR_SCO,Scotland,2020-01-01,2023-12-31,3,0-100,mortality_org
+GBR_NIR,Northern Ireland,2020-01-01,2023-12-31,3,0-100,mortality_org`
+
+        const result = await validateMetadata(csv)
+
+        expect(result.success).toBe(true)
+        expect(result.data).toHaveLength(3)
+        expect(result.data![0]!.iso3c).toBe('GBRTENW')
+        expect(result.data![1]!.iso3c).toBe('GBR_SCO')
+        expect(result.data![2]!.iso3c).toBe('GBR_NIR')
       })
 
       it('should reject empty jurisdiction', async () => {

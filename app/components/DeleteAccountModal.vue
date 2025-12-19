@@ -90,30 +90,12 @@ function handleClose(): void {
 
 <template>
   <UModal
-    :model-value="open"
-    :prevent-close="deleting"
-    @update:model-value="handleClose"
+    :open="open"
+    :title="`Delete Account - Step ${step} of 2`"
+    :close="{ color: 'neutral', variant: 'ghost' }"
+    @update:open="handleClose"
   >
-    <UCard>
-      <template #header>
-        <div class="flex items-center gap-3">
-          <div class="shrink-0 w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
-            <UIcon
-              name="i-lucide-alert-triangle"
-              class="w-5 h-5 text-red-600 dark:text-red-400"
-            />
-          </div>
-          <div>
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-              Delete Account
-            </h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400">
-              Step {{ step }} of 2
-            </p>
-          </div>
-        </div>
-      </template>
-
+    <template #body>
       <!-- Step 1: Confirmation -->
       <div
         v-if="step === 1"
@@ -189,51 +171,51 @@ function handleClose(): void {
           </p>
         </div>
       </div>
+    </template>
 
-      <template #footer>
-        <div class="flex items-center justify-between gap-3">
+    <template #footer>
+      <div class="flex items-center justify-between gap-3 w-full">
+        <UButton
+          v-if="step === 2"
+          color="neutral"
+          variant="ghost"
+          :disabled="deleting"
+          @click="previousStep"
+        >
+          Back
+        </UButton>
+        <div
+          v-else
+          class="flex-1"
+        />
+        <div class="flex items-center gap-3">
           <UButton
-            v-if="step === 2"
             color="neutral"
-            variant="ghost"
+            variant="soft"
             :disabled="deleting"
-            @click="previousStep"
+            @click="handleClose"
           >
-            Back
+            Cancel
           </UButton>
-          <div
+          <UButton
+            v-if="step === 1"
+            color="error"
+            :disabled="!isConfirmValid || deleting"
+            @click="nextStep"
+          >
+            Continue
+          </UButton>
+          <UButton
             v-else
-            class="flex-1"
-          />
-          <div class="flex items-center gap-3">
-            <UButton
-              color="neutral"
-              variant="soft"
-              :disabled="deleting"
-              @click="handleClose"
-            >
-              Cancel
-            </UButton>
-            <UButton
-              v-if="step === 1"
-              color="error"
-              :disabled="!isConfirmValid || deleting"
-              @click="nextStep"
-            >
-              Continue
-            </UButton>
-            <UButton
-              v-else
-              color="error"
-              :loading="deleting"
-              :disabled="!password || deleting"
-              @click="confirmDeletion"
-            >
-              Delete Account Permanently
-            </UButton>
-          </div>
+            color="error"
+            :loading="deleting"
+            :disabled="!password || deleting"
+            @click="confirmDeletion"
+          >
+            Delete Account Permanently
+          </UButton>
         </div>
-      </template>
-    </UCard>
+      </div>
+    </template>
   </UModal>
 </template>

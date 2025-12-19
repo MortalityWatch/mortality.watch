@@ -27,8 +27,9 @@ const log = logger.withPrefix('Validation')
  * @property {string} source - Data source identifier
  */
 const CountryRawSchema = z.object({
-  // Allow 3-letter codes (USA, DEU) or hyphenated sub-country codes (USA-FL, DEU-SN, CAN-ON)
-  iso3c: z.string().min(3).max(6),
+  // Allow 3-letter codes (USA, DEU), hyphenated sub-country codes (USA-FL, DEU-SN, CAN-ON),
+  // or special UK codes (GBRTENW, GBR_SCO, GBR_NIR)
+  iso3c: z.string().min(3).max(7),
   jurisdiction: z.string().min(1),
   min_date: z.string(),
   max_date: z.string(),
@@ -62,8 +63,9 @@ const CountryRawSchema = z.object({
  * @property {string} [asmr_country] - Age-standardized mortality rate (country-specific, optional)
  */
 const CountryDataRawSchema = z.object({
-  // Allow 3-letter codes (USA, DEU) or hyphenated sub-country codes (USA-FL, DEU-SN, CAN-ON)
-  iso3c: z.string().min(3).max(6),
+  // Allow 3-letter codes (USA, DEU), hyphenated sub-country codes (USA-FL, DEU-SN, CAN-ON),
+  // or special UK codes (GBRTENW, GBR_SCO, GBR_NIR)
+  iso3c: z.string().min(3).max(7),
   population: z.string(),
   date: z.string(),
   type: z.string(),
