@@ -149,19 +149,18 @@ export function useAuth(): UseAuthReturn {
 
   /**
    * Refresh session from server
-   * Uses useFetch to properly forward cookies during SSR
+   * Uses useRequestFetch for SSR cookie forwarding, $fetch for client-side
    */
   async function refreshSession() {
     loading.value = true
     try {
-      const { data } = await useFetch<{
+      // Use useRequestFetch on server to forward cookies, $fetch on client
+      const fetchFn = import.meta.server ? useRequestFetch() : $fetch
+      const response = await fetchFn<{
         user: AuthUser | null
         authenticated: boolean
-      }>('/api/auth/session', {
-        // Force fetch on every call, don't use cached data
-        key: `session-${Date.now()}`
-      })
-      user.value = data.value?.user || null
+      }>('/api/auth/session')
+      user.value = response?.user || null
     } catch {
       // Session check failed, user is not authenticated
       user.value = null

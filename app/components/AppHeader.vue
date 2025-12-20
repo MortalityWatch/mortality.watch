@@ -207,19 +207,18 @@ const userMenuItems = computed<MenuItem[]>(() => {
       />
 
       <!-- Authentication buttons -->
-      <template v-if="isAuthenticated">
-        <UDropdownMenu
-          :items="[userMenuItems]"
-          :popper="{ placement: 'bottom-end' }"
-        >
-          <UButton
-            variant="ghost"
-            icon="i-lucide-user"
-            :label="user?.displayName || user?.firstName || 'Account'"
-            trailing-icon="i-lucide-chevron-down"
-          />
-        </UDropdownMenu>
-      </template>
+      <UDropdownMenu
+        v-if="isAuthenticated"
+        :items="[userMenuItems]"
+        :content="{ align: 'end' }"
+      >
+        <UButton
+          variant="ghost"
+          icon="i-lucide-user"
+          :label="user?.displayName || user?.firstName || 'Account'"
+          trailing-icon="i-lucide-chevron-down"
+        />
+      </UDropdownMenu>
       <template v-else>
         <UButton
           :to="loginUrl"
