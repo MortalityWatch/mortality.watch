@@ -8,7 +8,8 @@ interface MenuItem {
 }
 
 const { isIncognito } = useIncognitoMode()
-const { isAuthenticated, user, tier } = useAuth()
+const { isAuthenticated, user } = useAuth()
+const { isPro } = useFeatureAccess()
 const { startTutorial } = useTutorial()
 const { loginUrl, signupUrl } = useAuthRedirect()
 const colorMode = useColorMode()
@@ -91,8 +92,8 @@ const items = computed(() => {
     to: '/charts'
   })
 
-  // Add "Features" for non-pro users (PUBLIC and REGISTERED, tier < 2)
-  if (tier.value < 2) {
+  // Add "Features" for non-pro users (PUBLIC and REGISTERED)
+  if (!isPro.value) {
     navItems.push({
       label: 'Features',
       icon: 'i-lucide-sparkles',
@@ -119,8 +120,8 @@ const secondaryItems = computed<MenuItem[]>(() => {
     to: '/methods'
   }]
 
-  // Add Features if tier 2
-  if (tier.value === 2) {
+  // Add Features for Pro users in secondary nav
+  if (isPro.value) {
     navItems.push({
       label: 'Features',
       icon: 'i-lucide-sparkles',

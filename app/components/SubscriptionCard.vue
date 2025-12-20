@@ -3,6 +3,8 @@ import { handleError } from '@/lib/errors/errorHandler'
 import { formatChartDate } from '@/lib/utils/dates'
 
 const { getSubscriptionStatus, manageSubscription, subscribe } = useStripe()
+const { isAdmin } = useAuth()
+const { isPro } = useFeatureAccess()
 
 interface SubscriptionStatus {
   hasSubscription: boolean
@@ -26,7 +28,17 @@ const loading = ref(true)
 const subscribing = ref(false)
 const managingSubscription = ref(false)
 
+// Check if user has Pro access without an active Stripe subscription (admin or granted tier 2)
+const hasGrantedProAccess = computed(() => {
+  const hasActiveSubscription = subscriptionStatus.value?.subscription?.isActive
+  return isPro.value && !hasActiveSubscription
+})
+
 const statusBadgeColor = computed(() => {
+  // Granted Pro access (admin or tier 2 without subscription)
+  if (hasGrantedProAccess.value) {
+    return 'success'
+  }
   if (!subscriptionStatus.value?.subscription) return 'neutral'
 
   const subscription = subscriptionStatus.value.subscription
@@ -55,6 +67,11 @@ const statusBadgeColor = computed(() => {
 })
 
 const statusLabel = computed(() => {
+  // Granted Pro access (admin or tier 2 without subscription)
+  if (hasGrantedProAccess.value) {
+    return isAdmin.value ? 'Pro (Admin)' : 'Pro Access'
+  }
+
   if (!subscriptionStatus.value?.subscription) return 'No Subscription'
 
   const subscription = subscriptionStatus.value.subscription
@@ -162,8 +179,33 @@ onActivated(() => {
       v-else-if="subscriptionStatus"
       class="space-y-6"
     >
+      <!-- Granted Pro Access (admin or tier 2 without subscription) -->
+      <div
+        v-if="hasGrantedProAccess"
+        class="space-y-4"
+      >
+        <div class="p-4 bg-success-50 dark:bg-success-900/10 rounded-lg border border-success-200 dark:border-success-800">
+          <div class="flex items-start gap-3">
+            <UIcon
+              name="i-lucide-shield-check"
+              class="w-5 h-5 text-success-600 dark:text-success-400 mt-0.5 shrink-0"
+            />
+            <div>
+              <p class="font-medium text-success-800 dark:text-success-200">
+                {{ isAdmin ? 'Administrator Access' : 'Pro Access Granted' }}
+              </p>
+              <p class="text-sm text-success-700 dark:text-success-300 mt-1">
+                {{ isAdmin
+                  ? 'You have full Pro access as an administrator.'
+                  : 'You have been granted Pro access. All Pro features are available.' }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Active Subscription (only show for active/trialing, not canceled) -->
-      <div v-if="subscriptionStatus.subscription?.isActive">
+      <div v-else-if="subscriptionStatus.subscription?.isActive">
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
