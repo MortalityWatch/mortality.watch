@@ -298,6 +298,12 @@ export function generateChartConfig(
   // This ensures bar/line charts also respect the auto-hide logic
   const dataWithEffectiveLabels = { ...data, showLabels: effectiveShowLabels }
 
+  // Determine userTier for feature gating:
+  // - If showLogo or showQrCode are explicitly false (e.g., for thumbnails), pass undefined
+  //   to bypass tier-based enforcement and respect the explicit values
+  // - Otherwise, pass 0 (PUBLIC tier) to enforce logo/QR for unauthenticated SSR
+  const userTier = (!state.showLogo || !state.showQrCode) ? undefined : 0
+
   if (state.chartStyle === 'matrix') {
     const config = makeMatrixChartConfig(
       dataWithEffectiveLabels,
@@ -312,7 +318,7 @@ export function generateChartConfig(
       state.showLogo,
       isDark,
       state.decimals,
-      0, // userTier: PUBLIC tier - always show logo/QR for SSR (unauthenticated context)
+      userTier,
       state.showCaption,
       state.showTitle,
       true // isSSR
@@ -338,7 +344,7 @@ export function generateChartConfig(
       state.showLogo,
       state.decimals,
       isDark,
-      0, // userTier: PUBLIC tier - always show logo/QR for SSR (unauthenticated context)
+      userTier,
       state.showCaption,
       state.showTitle,
       true, // isSSR
