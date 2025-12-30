@@ -189,6 +189,10 @@ export const calculateBaseline = async (
       const zscoreKey = `${String(keys[0])}_zscore` as keyof DatasetEntry
       data[zscoreKey] = json.zscore as DataVector
     }
+    // When /cum endpoint succeeds, baseline is cumulative
+    // Calculate excess with cumulative baseline handling
+    const isBaselineCumulative = cumulative && s === 1
+    if (firstKey) calculateExcess(data, firstKey, isBaselineCumulative, baselineStartIdx)
   } catch (error) {
     logger.error('Baseline calculation failed, using simple mean fallback', error, {
       iso3c: data.iso3c?.[0],
@@ -201,11 +205,11 @@ export const calculateBaseline = async (
     })
 
     applyMeanFallback(data, keys, all_data, bl_data, baselineEndIdx)
-  }
 
-  // When /cum endpoint is used (cumulative && s === 1), baseline is already cumulative
-  const isBaselineCumulative = cumulative && s === 1
-  if (firstKey) calculateExcess(data, firstKey, isBaselineCumulative, baselineStartIdx)
+    // IMPORTANT: Fallback baseline is NOT cumulative - it's just repeated mean values
+    // So we must NOT cumulate observed values when calculating excess
+    if (firstKey) calculateExcess(data, firstKey, false, baselineStartIdx)
+  }
 }
 
 /**

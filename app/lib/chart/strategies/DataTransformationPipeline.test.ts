@@ -39,7 +39,7 @@ describe('DataTransformationPipeline', () => {
       expect(result).toEqual([10, 30, 60])
     })
 
-    it('should calculate total sum', () => {
+    it('should calculate total sum (showCumPi=false)', () => {
       const data = { key1: [10, 20, 30] }
       const config = {
         showPercentage: false,
@@ -51,7 +51,67 @@ describe('DataTransformationPipeline', () => {
 
       const result = pipeline.transformData(config, data, 'key1')
 
+      // Sum all values: 10+20+30=60
       expect(result).toEqual([60])
+    })
+
+    it('should use last value as total when showCumPi=true (data already cumulative)', () => {
+      // When showCumPi=true, data is already cumulative from /cum endpoint
+      // The last value IS the cumulative total
+      const data = { key1: [10, 30, 60] } // Already cumulative
+      const config = {
+        showPercentage: false,
+        cumulative: true,
+        showTotal: true,
+        showCumPi: true,
+        isAsmrType: false
+      }
+
+      const result = pipeline.transformData(config, data, 'key1')
+
+      // Last value used as total (not sum)
+      expect(result).toEqual([60])
+    })
+
+    it('should use last value for total percentage when showCumPi=true', () => {
+      // This tests the fix for the 400% excess bug
+      // When data is already cumulative, we use last values (not sums) for percentage
+      const data = {
+        key1: [10, 30, 60], // Already cumulative excess
+        key1_baseline: [100, 200, 300] // Already cumulative baseline
+      }
+      const config = {
+        showPercentage: true,
+        cumulative: true,
+        showTotal: true,
+        showCumPi: true,
+        isAsmrType: false
+      }
+
+      const result = pipeline.transformData(config, data, 'key1')
+
+      // Last value / last baseline: 60/300 = 0.2 (20%)
+      // NOT: sum(10+30+60) / sum(100+200+300) = 100/600 = 0.167 (wrong!)
+      expect(result).toEqual([0.2])
+    })
+
+    it('should sum values for total percentage when showCumPi=false', () => {
+      const data = {
+        key1: [10, 20, 30],
+        key1_baseline: [100, 100, 100]
+      }
+      const config = {
+        showPercentage: true,
+        cumulative: true,
+        showTotal: true,
+        showCumPi: false,
+        isAsmrType: false
+      }
+
+      const result = pipeline.transformData(config, data, 'key1')
+
+      // Sum all values for total: (10+20+30) / (100+100+100) = 60/300 = 0.2
+      expect(result).toEqual([0.2])
     })
 
     it('should calculate percentage relative to baseline', () => {
@@ -244,11 +304,13 @@ describe('DataTransformationPipeline', () => {
       expect(result[2]).toMatchObject({ x: 2, y: 60, yMin: null, yMax: null })
     })
 
-    it('should transform total error bar data', () => {
+    it('should transform total error bar data (showCumPi=true, data already cumulative)', () => {
+      // When showCumPi=true, data is already cumulative from /cum endpoint
+      // The last value IS the total, so we use it directly instead of summing
       const data = {
-        key1: [10, 20, 30],
-        key1_lower: [8, 18, 28],
-        key1_upper: [12, 22, 32]
+        key1: [10, 30, 60], // Already cumulative
+        key1_lower: [8, 26, 54], // Already cumulative
+        key1_upper: [12, 34, 66] // Already cumulative
       }
       const config = {
         showPercentage: false,
@@ -261,8 +323,30 @@ describe('DataTransformationPipeline', () => {
       const result = pipeline.transformErrorBarData(config, data, 'key1')
 
       expect(result).toHaveLength(1)
-      // Total: [60], [54], [66]
+      // Last value used as total (data is already cumulative)
       expect(result[0]).toMatchObject({ x: 0, y: 60, yMin: 54, yMax: 66 })
+    })
+
+    it('should transform total error bar data (showCumPi=false, sum all values)', () => {
+      // When showCumPi=false, data is not cumulative, so sum all values for total
+      const data = {
+        key1: [10, 20, 30],
+        key1_lower: [8, 18, 28],
+        key1_upper: [12, 22, 32]
+      }
+      const config = {
+        showPercentage: false,
+        cumulative: true,
+        showTotal: true,
+        showCumPi: false,
+        isAsmrType: false
+      }
+
+      const result = pipeline.transformErrorBarData(config, data, 'key1')
+
+      expect(result).toHaveLength(1)
+      // Total by summing: 10+20+30=60, lower/upper are null when showCumPi=false
+      expect(result[0]).toMatchObject({ x: 0, y: 60, yMin: null, yMax: null })
     })
 
     it('should transform percentage error bar data', () => {

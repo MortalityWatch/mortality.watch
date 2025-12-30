@@ -370,6 +370,52 @@ describe('filtering', () => {
         // Should handle missing keys gracefully
         expect(result.data.all?.USA?.deaths).toEqual([100, 200])
       })
+
+      it('should exclude countries with no data for filtered date range', () => {
+        // Simulates Albania case: data ends at W03, but filtering for W04-W05
+        const allLabels = ['2020-W01', '2020-W02', '2020-W03', '2020-W04', '2020-W05']
+        const data: Dataset = {
+          all: {
+            USA: createMockDatasetEntry({
+              iso3c: ['USA', 'USA', 'USA', 'USA', 'USA'],
+              deaths: [100, 200, 300, 400, 500],
+              population: [1000000, 1000000, 1000000, 1000000, 1000000],
+              date: ['2020-W01', '2020-W02', '2020-W03', '2020-W04', '2020-W05'],
+              source: ['Source 1', 'Source 1', 'Source 1', 'Source 1', 'Source 1'],
+              type: ['0', '0', '0', '0', '0']
+            }),
+            // Albania only has data for W01-W03
+            // The date array only has 3 elements - slice(3,5) will return []
+            ALB: createMockDatasetEntry({
+              iso3c: ['ALB', 'ALB', 'ALB'],
+              deaths: [50, 60, 70] as unknown as import('~/model').NumberArray,
+              population: [3000000, 3000000, 3000000] as unknown as import('~/model').NumberArray,
+              date: ['2020-W01', '2020-W02', '2020-W03'],
+              source: ['Source 1', 'Source 1', 'Source 1'],
+              type: ['0', '0', '0']
+            })
+          }
+        }
+
+        const result = getFilteredLabelAndData(
+          allLabels,
+          '2020-W04',
+          '2020-W05',
+          0,
+          'weekly' as ChartType,
+          data
+        )
+
+        // USA should be included (has data for W04-W05)
+        expect(result.data.all?.USA).toBeDefined()
+        expect(result.data.all?.USA?.deaths).toEqual([400, 500])
+
+        // Albania should be excluded (no valid data for W04-W05)
+        expect(result.data.all?.ALB).toBeUndefined()
+
+        // Albania should be listed in noDataForRange
+        expect(result.notes?.noDataForRange).toContain('ALB')
+      })
     })
 
     describe('different chart types', () => {

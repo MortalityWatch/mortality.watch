@@ -50,6 +50,20 @@ function repeat<T>(value: T, length: number): T[] {
 }
 
 /**
+ * Get the last non-null value from an array.
+ * Used for cumulative data where the last value is the total.
+ */
+function getLastValue(arr: (number | null | undefined)[]): number[] {
+  for (let i = arr.length - 1; i >= 0; i--) {
+    const val = arr[i]
+    if (val !== null && val !== undefined && !isNaN(val)) {
+      return [val]
+    }
+  }
+  return [0]
+}
+
+/**
  * Pipeline that applies transformation strategies based on configuration
  * Replaces deeply nested conditionals with clear strategy application
  */
@@ -100,9 +114,14 @@ export class DataTransformationPipeline {
       }
 
       // Cumulative total percentage
+      // When showCumPi is true, data is already cumulative - use last value as total
+      // When showCumPi is false, sum all values to get total
+      const getTotalFn = config.showCumPi ? getLastValue : this.totalStrategy.transform.bind(this.totalStrategy)
+      const totalData = getTotalFn(dataRow)
+      const totalBl = getTotalFn(blDataRow)
       return this.percentageStrategy.transform(
-        this.totalStrategy.transform(dataRow),
-        this.totalStrategy.transform(blDataRow)
+        totalData,
+        totalBl
       )
     } else {
       if (!config.cumulative) {
@@ -120,6 +139,11 @@ export class DataTransformationPipeline {
       }
 
       // Cumulative total
+      // When showCumPi is true, data is already cumulative - use last value as total
+      // When showCumPi is false, sum all values to get total
+      if (config.showCumPi) {
+        return getLastValue(dataRow)
+      }
       return this.totalStrategy.transform(dataRow)
     }
   }
@@ -232,6 +256,9 @@ export class DataTransformationPipeline {
    * Transform total percentage error bar data
    *
    * Note: Error bar bounds use baseline center (see transformCumulativePercentageErrorBar)
+   *
+   * When showCumPi is true, data is already cumulative from /cum endpoint.
+   * The last value IS the cumulative total, so we use getLastValue instead of summing.
    */
   private transformTotalPercentageErrorBar(
     config: TransformConfig,
@@ -240,19 +267,25 @@ export class DataTransformationPipeline {
     dataU: number[],
     blDataRow: number[]
   ): ChartErrorDataPoint[] {
-    const totalData = this.totalStrategy.transform(data)
-    const totalBl = this.totalStrategy.transform(blDataRow)
+    // When showCumPi is true, data is already cumulative - use last value as total
+    // When showCumPi is false, sum all values to get total
+    const getTotalFn = config.showCumPi
+      ? getLastValue
+      : this.totalStrategy.transform.bind(this.totalStrategy)
+
+    const totalData = getTotalFn(data)
+    const totalBl = getTotalFn(blDataRow)
 
     if (config.showCumPi) {
       // Use transformPreservingUndefined to hide PI if any data is undefined
       return makeErrorBarData(
         this.percentageStrategy.transform(totalData, totalBl),
         this.percentageStrategy.transformPreservingUndefined(
-          this.totalStrategy.transform(dataL),
+          getLastValue(dataL),
           totalBl
         ),
         this.percentageStrategy.transformPreservingUndefined(
-          this.totalStrategy.transform(dataU),
+          getLastValue(dataU),
           totalBl
         )
       )
@@ -314,6 +347,9 @@ export class DataTransformationPipeline {
 
   /**
    * Transform total absolute error bar data
+   *
+   * When showCumPi is true, data is already cumulative from /cum endpoint.
+   * The last value IS the cumulative total, so we use getLastValue instead of summing.
    */
   private transformTotalAbsoluteErrorBar(
     config: TransformConfig,
@@ -322,10 +358,11 @@ export class DataTransformationPipeline {
     dataU: number[]
   ): ChartErrorDataPoint[] {
     if (config.showCumPi) {
+      // Data is already cumulative - use last value as total
       return makeErrorBarData(
-        this.totalStrategy.transform(data),
-        this.totalStrategy.transform(dataL),
-        this.totalStrategy.transform(dataU)
+        getLastValue(data),
+        getLastValue(dataL),
+        getLastValue(dataU)
       )
     }
 

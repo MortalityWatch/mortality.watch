@@ -17,6 +17,15 @@ import type { DataTransformationConfig, ChartFilterConfig } from './types'
 import { getDatasets } from './datasets'
 import { getChartLabels } from './labels'
 
+/**
+ * Check if an array has any valid (non-null, non-undefined, non-NaN, non-empty) values
+ */
+const hasValidData = (arr: unknown[]): boolean => {
+  return arr.some(val =>
+    val !== null && val !== undefined && val !== '' && (typeof val !== 'number' || !isNaN(val))
+  )
+}
+
 export const getFilteredLabelAndData = (
   allLabels: string[],
   dateFrom: string,
@@ -31,20 +40,34 @@ export const getFilteredLabelAndData = (
   const to = period.indexOf(dateTo)
   const labels = allLabels.slice(from, to + 1)
   const disaggregatedData: Record<string, number[]> = {}
+  const noDataForRange: string[] = []
 
   const data: Dataset = {}
   for (const ag in allChartData) {
     data[ag] = {}
     for (const iso3c in allChartData[ag]) {
-      data[ag][iso3c] = {} as DatasetEntry
+      const tempEntry = {} as DatasetEntry
       for (const key of datasetEntryKeys) {
         const agData = allChartData[ag]
         if (!agData) continue
         const countryData = agData[iso3c]
         if (!countryData) continue
         const dataRow = countryData[key] ?? []
-        data[ag][iso3c][key] = dataRow.slice(from, to + 1) as DataVector
+        tempEntry[key] = dataRow.slice(from, to + 1) as DataVector
       }
+
+      // Check if country has valid data for the filtered range using the date field
+      // The date field is the definitive indicator of data availability
+      const dateData = tempEntry['date'] ?? []
+      const hasValidDates = hasValidData(dateData)
+
+      if (!hasValidDates) {
+        // Country has no valid data for this date range - skip it
+        noDataForRange.push(iso3c)
+        continue
+      }
+
+      data[ag][iso3c] = tempEntry
       const types = new Set(
         (data[ag][iso3c]['type'] as string[])
           .flatMap((str: undefined | string) => str?.split(', '))
@@ -58,7 +81,7 @@ export const getFilteredLabelAndData = (
       }
     }
   }
-  return { labels, data, notes: { disaggregatedData } }
+  return { labels, data, notes: { disaggregatedData, noDataForRange } }
 }
 
 const getLabels = (dateFrom: string, dateTo: string): string[] => [
