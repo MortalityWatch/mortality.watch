@@ -31,13 +31,23 @@
                   style="aspect-ratio: 16/9"
                 >
                   <ClientOnly>
-                    <img
-                      :src="getThumbnailUrl(chartType, view)"
-                      :alt="`${countryName} ${chartTypeLabels[chartType]} ${viewLabels[view]}`"
-                      class="w-full h-full object-cover object-top"
-                      :class="can(getFeatureKey(view)) ? 'hover:scale-105 transition-transform' : 'grayscale'"
-                      loading="lazy"
-                    >
+                    <template v-if="can(getFeatureKey(view))">
+                      <img
+                        :src="getThumbnailUrl(chartType, view)"
+                        :alt="`${countryName} ${chartTypeLabels[chartType]} ${viewLabels[view]}`"
+                        class="w-full h-full object-cover object-top hover:scale-105 transition-transform"
+                        loading="lazy"
+                      >
+                    </template>
+                    <template v-else>
+                      <!-- Load normal view thumbnail (cached) and blur it for locked features -->
+                      <img
+                        :src="getThumbnailUrl(chartType, 'normal')"
+                        :alt="`${viewLabels[view]} - Pro feature`"
+                        class="w-full h-full object-cover object-top blur-lg grayscale"
+                        loading="lazy"
+                      >
+                    </template>
                     <template #fallback>
                       <div class="w-full h-full animate-pulse bg-gray-200 dark:bg-gray-700" />
                     </template>
@@ -140,10 +150,10 @@ function isProFeature(view: View): boolean {
   return view === 'zscore'
 }
 
-// Get the feature key for a Pro feature
-function getFeatureKey(view: View): FeatureKey {
-  if (view === 'zscore') return 'Z_SCORES'
-  return 'EXCESS_MORTALITY' // Fallback (shouldn't be called for non-Pro views)
+// Get the feature key for a Pro feature (only called for pro views)
+function getFeatureKey(_view: View): FeatureKey {
+  // zscore is the only pro feature view
+  return 'Z_SCORES'
 }
 
 // Get available views for a metric (Population only has 'normal')
