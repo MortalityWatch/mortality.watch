@@ -396,11 +396,15 @@ export async function fetchChartData(state: ChartRenderState) {
   })
 
   // 3. Get all chart labels using DataLoaderService
+  // For ASD, use age-stratified groups to get labels (they may have longer history than 'all')
   const isAsmrType = state.type.startsWith('asmr')
+  const labelsAgeGroups = state.type === 'asd' && asdCountryInfo.size > 0
+    ? Array.from(asdCountryInfo.values())[0]!.ageGroups
+    : state.ageGroups
   const allLabels = dataLoader.getAllChartLabels(
     rawData,
     isAsmrType,
-    state.ageGroups,
+    labelsAgeGroups,
     state.countries,
     state.chartType
   )
