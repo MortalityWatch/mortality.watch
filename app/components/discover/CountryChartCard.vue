@@ -24,11 +24,8 @@
 
       <!-- Country info -->
       <div class="flex items-center gap-2">
-        <span
-          v-if="flagCode"
-          class="text-lg"
-        >
-          {{ getFlagEmoji(flagCode) }}
+        <span class="text-lg">
+          {{ getFlagEmoji(country) }}
         </span>
         <span class="font-medium text-gray-900 dark:text-gray-100 truncate">
           {{ countryName }}
@@ -41,7 +38,7 @@
 <script setup lang="ts">
 import type { DiscoveryPreset } from '@/lib/discover/presets'
 import { presetToExplorerUrl, presetToThumbnailUrl } from '@/lib/discover/presets'
-import countries from 'i18n-iso-countries'
+import { getFlagEmoji } from '@/lib/discover/countryUtils'
 
 interface Props {
   preset: DiscoveryPreset
@@ -52,29 +49,6 @@ interface Props {
 const props = defineProps<Props>()
 
 const colorMode = useColorMode()
-
-// Get ISO2 code for flag
-const flagCode = computed(() => {
-  // Handle special cases for sub-national regions
-  if (props.country.startsWith('USA-')) return 'us'
-  if (props.country.startsWith('CAN-')) return 'ca'
-  if (props.country.startsWith('DEU-')) return 'de'
-  if (props.country === 'GBRTENW') return 'gb'
-  if (props.country === 'GBR_SCO') return 'gb'
-  if (props.country === 'GBR_NIR') return 'gb'
-
-  return countries.alpha3ToAlpha2(props.country)?.toLowerCase() || null
-})
-
-// Convert country code to flag emoji
-function getFlagEmoji(code: string): string {
-  if (!code || code.length !== 2) return ''
-  const codePoints = code
-    .toUpperCase()
-    .split('')
-    .map(char => 127397 + char.charCodeAt(0))
-  return String.fromCodePoint(...codePoints)
-}
 
 // Generate explorer URL
 const explorerUrl = computed(() => {

@@ -114,9 +114,9 @@
 
 <script setup lang="ts">
 import type { Country } from '@/model'
-import countries from 'i18n-iso-countries'
 import { loadCountryMetadata } from '@/lib/data/queries'
 import { getMetricTabs } from '@/lib/discover/constants'
+import { getFlagEmoji } from '@/lib/discover/countryUtils'
 
 const route = useRoute()
 const router = useRouter()
@@ -160,27 +160,7 @@ const countryName = computed(() => {
 })
 
 // Flag emoji
-const flagEmoji = computed(() => {
-  const code = iso3c.value
-  if (code.startsWith('USA-')) return getFlagEmojiFromCode('us')
-  if (code.startsWith('CAN-')) return getFlagEmojiFromCode('ca')
-  if (code.startsWith('DEU-')) return getFlagEmojiFromCode('de')
-  if (code === 'GBRTENW' || code === 'GBR_SCO' || code === 'GBR_NIR') {
-    return getFlagEmojiFromCode('gb')
-  }
-
-  const iso2 = countries.alpha3ToAlpha2(code)?.toLowerCase()
-  return iso2 ? getFlagEmojiFromCode(iso2) : ''
-})
-
-function getFlagEmojiFromCode(code: string): string {
-  if (!code || code.length !== 2) return ''
-  const codePoints = code
-    .toUpperCase()
-    .split('')
-    .map(char => 127397 + char.charCodeAt(0))
-  return String.fromCodePoint(...codePoints)
-}
+const flagEmoji = computed(() => getFlagEmoji(iso3c.value))
 
 // Metric tabs
 const metricTabs = getMetricTabs()

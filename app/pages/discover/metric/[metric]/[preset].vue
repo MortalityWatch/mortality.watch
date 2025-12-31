@@ -122,6 +122,7 @@ import {
   chartTypeLabels,
   viewLabels
 } from '@/lib/discover/constants'
+import { isSubNationalRegion } from '@/lib/discover/countryUtils'
 import { useJurisdictionFilter } from '@/composables/useJurisdictionFilter'
 
 const route = useRoute()
@@ -181,11 +182,7 @@ onMounted(async () => {
 const filteredCountries = computed(() => {
   if (selectedRegion.value === 'all') {
     // Show all countries but exclude sub-national regions by default
-    return allCountries.value.filter(c =>
-      !c.iso3c.startsWith('USA-')
-      && !c.iso3c.startsWith('CAN-')
-      && !c.iso3c.startsWith('DEU-')
-    )
+    return allCountries.value.filter(c => !isSubNationalRegion(c.iso3c))
   }
   return allCountries.value.filter(c =>
     shouldShowCountry(c.iso3c, selectedRegion.value)

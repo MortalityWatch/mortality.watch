@@ -102,8 +102,8 @@
 
 <script setup lang="ts">
 import type { Country } from '@/model'
-import isoCountries from 'i18n-iso-countries'
 import { popularCountries } from '@/lib/discover/constants'
+import { getFlagEmoji, isSubNationalRegion } from '@/lib/discover/countryUtils'
 import { useJurisdictionFilter } from '@/composables/useJurisdictionFilter'
 
 interface Props {
@@ -149,11 +149,7 @@ const filteredCountries = computed(() => {
 
   // Filter out sub-national regions for general browsing
   if (!selectedRegion.value || !['usa', 'deu', 'can'].includes(selectedRegion.value)) {
-    result = result.filter(c =>
-      !c.iso3c.startsWith('USA-')
-      && !c.iso3c.startsWith('CAN-')
-      && !c.iso3c.startsWith('DEU-')
-    )
+    result = result.filter(c => !isSubNationalRegion(c.iso3c))
   }
 
   if (searchQuery.value) {
@@ -168,27 +164,4 @@ const filteredCountries = computed(() => {
 
   return result.sort((a, b) => a.jurisdiction.localeCompare(b.jurisdiction))
 })
-
-// Convert country code to flag emoji
-function getFlagEmoji(iso3c: string): string {
-  // Handle special cases
-  if (iso3c.startsWith('USA-')) return getFlagEmojiFromCode('us')
-  if (iso3c.startsWith('CAN-')) return getFlagEmojiFromCode('ca')
-  if (iso3c.startsWith('DEU-')) return getFlagEmojiFromCode('de')
-  if (iso3c === 'GBRTENW' || iso3c === 'GBR_SCO' || iso3c === 'GBR_NIR') {
-    return getFlagEmojiFromCode('gb')
-  }
-
-  const iso2 = isoCountries.alpha3ToAlpha2(iso3c)?.toLowerCase()
-  return iso2 ? getFlagEmojiFromCode(iso2) : ''
-}
-
-function getFlagEmojiFromCode(code: string): string {
-  if (!code || code.length !== 2) return ''
-  const codePoints = code
-    .toUpperCase()
-    .split('')
-    .map(char => 127397 + char.charCodeAt(0))
-  return String.fromCodePoint(...codePoints)
-}
 </script>

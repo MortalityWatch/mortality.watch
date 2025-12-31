@@ -26,7 +26,7 @@ export interface DiscoveryPreset {
 /**
  * Generate all valid presets (80 total)
  */
-export function generateAllPresets(): DiscoveryPreset[] {
+function createAllPresets(): DiscoveryPreset[] {
   const presets: DiscoveryPreset[] = []
 
   for (const metric of metrics) {
@@ -51,11 +51,21 @@ export function generateAllPresets(): DiscoveryPreset[] {
   return presets
 }
 
+// Memoized preset list - generated once at module load
+const ALL_PRESETS = createAllPresets()
+
+/**
+ * Get all presets (memoized)
+ */
+export function generateAllPresets(): DiscoveryPreset[] {
+  return ALL_PRESETS
+}
+
 /**
  * Get all presets for a specific metric
  */
 export function getPresetsByMetric(metric: Metric): DiscoveryPreset[] {
-  return generateAllPresets().filter(p => p.metric === metric)
+  return ALL_PRESETS.filter(p => p.metric === metric)
 }
 
 /**
@@ -69,7 +79,7 @@ export function getPresetCountByMetric(metric: Metric): number {
  * Get a preset by its ID
  */
 export function getPresetById(id: string): DiscoveryPreset | undefined {
-  return generateAllPresets().find(p => p.id === id)
+  return ALL_PRESETS.find(p => p.id === id)
 }
 
 /**
