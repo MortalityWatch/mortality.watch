@@ -148,9 +148,9 @@ export function useExplorerState() {
   const isZScore = computed(() => view.value === 'zscore')
 
   /**
-   * Check if current view is ASD (Age-Standardized Deaths)
+   * Check if current metric is ASD (Age-Standardized Deaths)
    */
-  const isASD = computed(() => view.value === 'asd')
+  const isASD = computed(() => type.value === 'asd')
 
   // ============================================================================
   // VALIDATION - Gather complete state and validate
@@ -455,7 +455,7 @@ export function useExplorerState() {
     view,
     isExcess, // Backward compat: computed from view === 'excess'
     isZScore, // Computed from view === 'zscore'
-    isASD, // Computed from view === 'asd'
+    isASD, // Computed from type === 'asd'
 
     // Core settings
     countries,

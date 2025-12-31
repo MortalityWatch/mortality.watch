@@ -9,6 +9,7 @@ export const types: ListType[] = [
   { name: 'Age-Standardized Mortality Rate (ASMR)', value: 'asmr' },
   { name: 'Crude Mortality Rate (CMR)', value: 'cmr' },
   { name: 'Deaths', value: 'deaths' },
+  { name: 'Age-Standardized Deaths (ASD)', value: 'asd' },
   { name: 'Population', value: 'population' }
 ]
 

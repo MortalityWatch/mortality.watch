@@ -10,7 +10,7 @@ import type { StateConstraint } from './types'
 /**
  * View Type identifiers
  */
-export type ViewType = 'mortality' | 'excess' | 'zscore' | 'asd'
+export type ViewType = 'mortality' | 'excess' | 'zscore'
 
 /**
  * Chart style types

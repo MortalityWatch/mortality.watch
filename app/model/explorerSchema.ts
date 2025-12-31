@@ -34,6 +34,7 @@ export const MetricTypeEnum = z.enum([
   'deaths',
   'cmr',
   'asmr',
+  'asd',
   'le',
   'population'
 ])

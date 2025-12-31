@@ -402,6 +402,7 @@ export function toChartFilterConfig(
   const isBarChartStyle = state.chartStyle === 'bar'
   const isMatrixChartStyle = state.chartStyle === 'matrix'
   const isAsmrType = state.type === 'asmr' || state.type.startsWith('asmr_')
+  const isASD = state.type === 'asd'
   const isPopulationType = state.type === 'population'
   const isDeathsType = state.type === 'deaths'
 
@@ -437,6 +438,7 @@ export function toChartFilterConfig(
     isMatrixChartStyle,
     isErrorBarType,
     isAsmrType,
+    isASD,
     isPopulationType,
     isDeathsType,
 

@@ -16,6 +16,7 @@ interface TransformConfig {
   showTotal: boolean
   showCumPi: boolean
   isAsmrType: boolean
+  isASD?: boolean
   view?: string
 }
 
@@ -94,10 +95,10 @@ export class DataTransformationPipeline {
       return zscoreData
     }
 
-    // ASD view: Use pre-calculated ASD data from R stats API
+    // ASD metric: Use pre-calculated ASD data from R stats API
     // ASD data shows age-standardized deaths using the Levitt method
-    if (config.view === 'asd' && !key.includes('baseline') && !key.includes('_lower') && !key.includes('_upper')) {
-      // For ASD view, we use the 'asd' field which contains actual age-standardized deaths
+    if (config.isASD && !key.includes('baseline') && !key.includes('_lower') && !key.includes('_upper')) {
+      // For ASD metric, we use the 'asd' field which contains actual age-standardized deaths
       // The baseline 'asd_bl' contains expected deaths based on baseline mortality rate
       const asdKey = this.asdStrategy.getASDKey()
       const asdData = data[asdKey] ?? []

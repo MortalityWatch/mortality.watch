@@ -209,8 +209,8 @@ export function useExplorerDataOrchestration(
    * to display the age-standardized values.
    */
   const fetchAndInjectASDData = async () => {
-    // Only fetch ASD data when in ASD view
-    if (state.view.value !== 'asd') return
+    // Only fetch ASD data when ASD metric is selected
+    if (state.type.value !== 'asd') return
 
     const countries = state.countries.value
     const chartType = state.chartType.value as ChartType
