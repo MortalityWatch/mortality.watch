@@ -50,7 +50,7 @@ test.describe('Discover Feature', () => {
       await expect(page.getByRole('heading', { name: 'Age-Standardized Deaths' })).toBeVisible()
       await expect(page.getByRole('heading', { name: 'Age-Standardized Mortality Rate' })).toBeVisible()
       await expect(page.getByRole('heading', { name: 'Crude Mortality Rate' })).toBeVisible()
-      await expect(page.getByRole('heading', { name: 'Deaths' })).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Deaths', exact: true })).toBeVisible()
       await expect(page.getByRole('heading', { name: 'Population' })).toBeVisible()
     })
 
@@ -158,7 +158,7 @@ test.describe('Discover Feature', () => {
       await expect(page.getByRole('tab', { name: /LE/ })).toBeVisible()
       await expect(page.getByRole('tab', { name: /ASMR/ })).toBeVisible()
       await expect(page.getByRole('tab', { name: /CMR/ })).toBeVisible()
-      await expect(page.getByRole('tab', { name: /Deaths/ })).toBeVisible()
+      await expect(page.getByRole('tab', { name: 'Deaths' })).toBeVisible()
       await expect(page.getByRole('tab', { name: /Population/ })).toBeVisible()
     })
 
