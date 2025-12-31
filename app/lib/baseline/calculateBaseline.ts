@@ -117,8 +117,9 @@ export const calculateBaseline = async (
       chartType
     })
     applyMeanFallback(data, keys, all_data, bl_data, baselineEndIdx)
-    const isBaselineCumulative = cumulative && s === 1
-    if (firstKey) calculateExcess(data, firstKey, isBaselineCumulative, baselineStartIdx)
+    // IMPORTANT: Fallback baseline is NOT cumulative - it's just repeated mean values
+    // So we must NOT cumulate observed values when calculating excess
+    if (firstKey) calculateExcess(data, firstKey, false, baselineStartIdx)
     return
   }
 

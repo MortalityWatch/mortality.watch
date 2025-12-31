@@ -469,6 +469,61 @@ describe('filtering', () => {
     })
   })
 
+  describe('no data detection', () => {
+    const createMockDatasetEntry = (overrides: Partial<DatasetEntry> = {}): DatasetEntry => ({
+      iso3c: ['USA', 'USA', 'USA', 'USA', 'USA'],
+      age_group: ['all', 'all', 'all', 'all', 'all'],
+      date: ['2020-W01', '2020-W02', '2020-W03', '2020-W04', '2020-W05'],
+      source: ['Source 1', 'Source 1', 'Source 1', 'Source 1', 'Source 1'],
+      source_asmr: ['test', 'test', 'test', 'test', 'test'],
+      type: ['0', '0', '0', '0', '0'],
+      deaths: [100, 200, 300, 400, 500],
+      population: [1000000, 1000000, 1000000, 1000000, 1000000],
+      ...overrides
+    } as DatasetEntry)
+
+    it('should handle countries with no data for range', () => {
+      const allLabels = ['2020-W01', '2020-W02', '2020-W03', '2020-W04', '2020-W05']
+      const data: Dataset = {
+        all: {
+          USA: createMockDatasetEntry(),
+          // Albania has no data for W04-W05
+          ALB: createMockDatasetEntry({
+            iso3c: ['ALB', 'ALB', null, null, null] as unknown as string[],
+            date: ['2020-W01', '2020-W02', null, null, null] as unknown as string[],
+            deaths: [50, 60, null, null, null] as unknown as number[]
+          }),
+          // Germany has no data at all
+          DEU: createMockDatasetEntry({
+            iso3c: ['DEU', 'DEU', 'DEU', null, null] as unknown as string[],
+            date: [null, null, null, null, null] as unknown as string[],
+            deaths: [null, null, null, null, null] as unknown as number[]
+          })
+        }
+      }
+
+      const result = getFilteredLabelAndData(
+        allLabels,
+        '2020-W04',
+        '2020-W05',
+        0,
+        'weekly' as ChartType,
+        data
+      )
+
+      // USA has data for W04-W05
+      expect(result.data.all?.USA).toBeDefined()
+      // Albania has no data for W04-W05 range
+      expect(result.notes?.noDataForRange).toContain('ALB')
+      // Germany has no data at all
+      expect(result.notes?.noDataForRange).toContain('DEU')
+    })
+
+    // Note: Partial data detection (based on specific metric field like ASMR)
+    // is handled in getFilteredChartDataFromConfig, not getFilteredLabelAndData,
+    // because it requires knowledge of which metric type is being displayed.
+  })
+
   describe('baselineMinRange', () => {
     it('should return minimum range for linear regression', () => {
       expect(baselineMinRange('lin_reg')).toBe(2)

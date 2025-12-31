@@ -138,4 +138,5 @@ export interface Notes {
   noAsmr?: Set<string>
   disaggregatedData?: Record<string, number[]>
   noDataForRange?: string[]
+  partialDataForRange?: string[]
 }
