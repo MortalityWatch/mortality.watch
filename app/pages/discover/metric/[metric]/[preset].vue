@@ -2,7 +2,10 @@
   <div class="container mx-auto px-4 py-8">
     <!-- Breadcrumb -->
     <div class="mb-6">
-      <nav class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 flex-wrap">
+      <nav
+        aria-label="Breadcrumb"
+        class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 flex-wrap"
+      >
         <NuxtLink
           to="/discover"
           class="hover:text-primary-500"
@@ -33,7 +36,10 @@
           name="i-lucide-chevron-right"
           class="w-4 h-4"
         />
-        <span class="text-gray-900 dark:text-gray-100">{{ presetLabel }}</span>
+        <span
+          aria-current="page"
+          class="text-gray-900 dark:text-gray-100"
+        >{{ presetLabel }}</span>
       </nav>
     </div>
 
@@ -60,15 +66,35 @@
       height="h-64"
     />
 
+    <!-- Error State -->
+    <UCard
+      v-else-if="loadError"
+      class="text-center py-12"
+    >
+      <UIcon
+        name="i-heroicons-exclamation-triangle"
+        class="text-red-500 size-12 mx-auto mb-4"
+      />
+      <p class="text-gray-600 dark:text-gray-400 mb-4">
+        {{ loadError }}
+      </p>
+      <UButton
+        color="primary"
+        @click="$router.go(0)"
+      >
+        Retry
+      </UButton>
+    </UCard>
+
     <!-- Country Grid -->
     <div
-      v-else-if="paginatedCountries.length > 0"
+      v-else-if="currentPreset && paginatedCountries.length > 0"
       class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
     >
       <DiscoverCountryChartCard
         v-for="country in paginatedCountries"
         :key="country.iso3c"
-        :preset="currentPreset!"
+        :preset="currentPreset"
         :country="country.iso3c"
         :country-name="country.jurisdiction"
       />
@@ -161,6 +187,7 @@ const presetLabel = computed(() => {
 
 // State
 const isLoading = ref(true)
+const loadError = ref<string | null>(null)
 const allCountries = ref<Country[]>([])
 const selectedRegion = ref('all')
 const currentPage = ref(1)
@@ -173,6 +200,9 @@ onMounted(async () => {
   try {
     const metadata = await loadCountryMetadata()
     allCountries.value = Object.values(metadata)
+  } catch (error) {
+    loadError.value = 'Failed to load countries. Please try again.'
+    console.error('Failed to load country metadata:', error)
   } finally {
     isLoading.value = false
   }

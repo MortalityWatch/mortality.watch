@@ -44,6 +44,9 @@ export function getFlagEmoji(iso3c: string): string {
   return iso2 ? getFlagEmojiFromCode(iso2) : ''
 }
 
+// UK sub-national region codes
+const UK_REGIONS = ['GBRTENW', 'GBR_SCO', 'GBR_NIR']
+
 /**
  * Check if a country code is a sub-national region
  */
@@ -52,6 +55,7 @@ export function isSubNationalRegion(iso3c: string): boolean {
     iso3c.startsWith('USA-')
     || iso3c.startsWith('CAN-')
     || iso3c.startsWith('DEU-')
+    || UK_REGIONS.includes(iso3c)
   )
 }
 
@@ -62,5 +66,6 @@ export function getParentCountry(iso3c: string): string | null {
   if (iso3c.startsWith('USA-')) return 'USA'
   if (iso3c.startsWith('CAN-')) return 'CAN'
   if (iso3c.startsWith('DEU-')) return 'DEU'
+  if (UK_REGIONS.includes(iso3c)) return 'GBR'
   return null
 }

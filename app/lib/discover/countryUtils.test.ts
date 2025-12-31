@@ -98,6 +98,12 @@ describe('countryUtils', () => {
       expect(isSubNationalRegion('DEU-NW')).toBe(true)
     })
 
+    it('should return true for UK regions', () => {
+      expect(isSubNationalRegion('GBRTENW')).toBe(true)
+      expect(isSubNationalRegion('GBR_SCO')).toBe(true)
+      expect(isSubNationalRegion('GBR_NIR')).toBe(true)
+    })
+
     it('should return false for standard countries', () => {
       expect(isSubNationalRegion('USA')).toBe(false)
       expect(isSubNationalRegion('CAN')).toBe(false)
@@ -119,6 +125,12 @@ describe('countryUtils', () => {
 
     it('should return parent country for German states', () => {
       expect(getParentCountry('DEU-BY')).toBe('DEU')
+    })
+
+    it('should return parent country for UK regions', () => {
+      expect(getParentCountry('GBRTENW')).toBe('GBR')
+      expect(getParentCountry('GBR_SCO')).toBe('GBR')
+      expect(getParentCountry('GBR_NIR')).toBe('GBR')
     })
 
     it('should return null for standard countries', () => {

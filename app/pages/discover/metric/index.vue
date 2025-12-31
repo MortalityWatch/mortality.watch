@@ -2,7 +2,10 @@
   <div class="container mx-auto px-4 py-8">
     <!-- Breadcrumb -->
     <div class="mb-6">
-      <nav class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+      <nav
+        aria-label="Breadcrumb"
+        class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400"
+      >
         <NuxtLink
           to="/discover"
           class="hover:text-primary-500"
@@ -13,7 +16,10 @@
           name="i-lucide-chevron-right"
           class="w-4 h-4"
         />
-        <span class="text-gray-900 dark:text-gray-100">Choose Metric</span>
+        <span
+          aria-current="page"
+          class="text-gray-900 dark:text-gray-100"
+        >Choose Metric</span>
       </nav>
     </div>
 

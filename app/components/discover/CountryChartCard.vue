@@ -8,43 +8,13 @@
       :class="isLocked ? 'opacity-60' : 'hover:shadow-lg'"
     >
       <!-- Thumbnail -->
-      <div
-        class="overflow-hidden rounded-md bg-gray-100 dark:bg-gray-800 mb-3 relative"
-        style="aspect-ratio: 16/9"
-      >
-        <ClientOnly>
-          <template v-if="!isLocked">
-            <img
-              :src="thumbnailUrl"
-              :alt="`${countryName} chart`"
-              class="w-full h-full object-cover object-top hover:scale-105 transition-transform"
-              loading="lazy"
-            >
-          </template>
-          <template v-else>
-            <!-- Load normal view thumbnail (cached) and blur it for locked features -->
-            <img
-              :src="lockedThumbnailUrl"
-              :alt="`${countryName} chart - Pro feature`"
-              class="w-full h-full object-cover object-top blur-lg grayscale"
-              loading="lazy"
-            >
-          </template>
-          <template #fallback>
-            <div class="w-full h-full animate-pulse bg-gray-200 dark:bg-gray-700" />
-          </template>
-        </ClientOnly>
-        <!-- Lock overlay for non-Pro users -->
-        <div
-          v-if="isLocked"
-          class="absolute inset-0 flex items-center justify-center bg-gray-900/20 dark:bg-gray-900/40"
-        >
-          <UIcon
-            name="i-heroicons-lock-closed"
-            class="text-white size-8 drop-shadow-lg"
-          />
-        </div>
-      </div>
+      <DiscoverThumbnail
+        :src="thumbnailUrl"
+        :locked-src="lockedThumbnailUrl"
+        :alt="`${countryName} chart`"
+        :locked="isLocked"
+        class="mb-3"
+      />
 
       <!-- Country info -->
       <div class="flex items-center gap-2">
