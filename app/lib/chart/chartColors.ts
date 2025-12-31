@@ -280,12 +280,9 @@ export function createRankingColorScale(
 
     let bgColor = scale(value).hex()
 
-    // Adjust for dark mode - reduce lightness while preserving hue
+    // Adjust for dark mode using the same logic as toDarkTheme
     if (darkMode) {
-      const hsl = chroma(bgColor).hsl()
-      // Reduce lightness for dark theme
-      const newLightness = Math.max(0.12, (hsl[2] || 0) * 0.4)
-      bgColor = chroma.hsl(hsl[0] || 0, Math.min(1, (hsl[1] || 0) * 1.1), newLightness).hex()
+      bgColor = toDarkTheme(bgColor)
     }
 
     // Determine text color based on background luminance for readability

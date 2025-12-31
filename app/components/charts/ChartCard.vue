@@ -10,35 +10,12 @@
           {{ chart.name }}
         </h3>
       </div>
-      <div
+      <h3
         v-else
-        class="flex items-start justify-between"
+        class="text-lg font-semibold"
       >
-        <h3 class="text-lg font-semibold flex-1">
-          {{ chart.name }}
-        </h3>
-        <div
-          v-if="variant === 'my-charts'"
-          class="flex gap-1"
-        >
-          <UBadge
-            v-if="chart.isPublic"
-            color="success"
-            variant="subtle"
-            size="sm"
-          >
-            Public
-          </UBadge>
-          <UBadge
-            v-else
-            color="neutral"
-            variant="subtle"
-            size="sm"
-          >
-            Private
-          </UBadge>
-        </div>
-      </div>
+        {{ chart.name }}
+      </h3>
     </template>
 
     <!-- Body -->
@@ -99,15 +76,27 @@
         </span>
       </div>
 
-      <!-- Chart type badge (not shown on homepage) -->
-      <UBadge
+      <!-- Chart type and visibility badges (not shown on homepage) -->
+      <div
         v-if="variant !== 'homepage'"
-        :color="chart.chartType === 'explorer' ? 'info' : 'success'"
-        variant="subtle"
-        size="xs"
+        class="flex items-center gap-1.5"
       >
-        {{ chart.chartType === 'explorer' ? 'Explorer' : 'Ranking' }}
-      </UBadge>
+        <UBadge
+          :color="chart.chartType === 'explorer' ? 'info' : 'warning'"
+          variant="subtle"
+          size="xs"
+        >
+          {{ chart.chartType === 'explorer' ? 'Explorer' : 'Ranking' }}
+        </UBadge>
+        <UBadge
+          v-if="variant === 'my-charts'"
+          :color="chart.isPublic ? 'success' : 'neutral'"
+          variant="subtle"
+          size="xs"
+        >
+          {{ chart.isPublic ? 'Public' : 'Private' }}
+        </UBadge>
+      </div>
     </div>
 
     <!-- Footer -->
@@ -172,9 +161,11 @@
           :is-admin="isAdmin"
           :is-toggling-public="isTogglingPublic"
           :is-toggling-featured="isTogglingFeatured"
+          :is-clearing-cache="isClearingCache"
           variant="card"
           @toggle-public="(value: boolean) => $emit('toggle-public', chart.id, value)"
           @toggle-featured="(value: boolean) => $emit('toggle-featured', chart.id, value)"
+          @clear-cache="$emit('clear-cache', chart.id)"
         />
       </div>
     </template>
@@ -207,19 +198,22 @@ interface Props {
   isAdmin?: boolean
   isTogglingFeatured?: boolean
   isTogglingPublic?: boolean
+  isClearingCache?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   isOwner: false,
   isAdmin: false,
   isTogglingFeatured: false,
-  isTogglingPublic: false
+  isTogglingPublic: false,
+  isClearingCache: false
 })
 
 const emit = defineEmits<{
   'delete': [chartId: number]
   'toggle-featured': [chartId: number, value: boolean]
   'toggle-public': [chartId: number, value: boolean]
+  'clear-cache': [chartId: number]
 }>()
 
 // Show footer if not homepage variant

@@ -33,11 +33,11 @@ export default defineEventHandler(async (event) => {
     // Generate cache key from query parameters (including width/height)
     const cacheKey = generateCacheKey({ ...queryParams, width, height, type: 'ranking' })
 
-    // Skip cache in dev mode for easier debugging
-    const isDev = import.meta.dev
+    // Allow bypassing cache with ?nocache=1 (useful for development)
+    const noCache = queryParams.nocache === '1' || queryParams.nocache === 'true'
 
-    // Check filesystem cache first (7-day TTL) - skip in dev mode
-    if (!isDev) {
+    // Check filesystem cache first (7-day TTL)
+    if (!noCache) {
       const cachedBuffer = await getCachedChart(cacheKey)
       if (cachedBuffer) {
         // Return cached version with 7-day Cache-Control
@@ -130,12 +130,10 @@ export default defineEventHandler(async (event) => {
       }
     })
 
-    // Save to filesystem cache (async, non-blocking) - skip in dev mode
-    if (!isDev) {
-      saveCachedChart(cacheKey, buffer).catch((err) => {
-        logger.error('Failed to save ranking screenshot to cache:', err instanceof Error ? err : new Error(String(err)))
-      })
-    }
+    // Save to filesystem cache (async, non-blocking)
+    saveCachedChart(cacheKey, buffer).catch((err) => {
+      logger.error('Failed to save ranking screenshot to cache:', err instanceof Error ? err : new Error(String(err)))
+    })
 
     // Set response headers with 7-day cache
     setResponseHeaders(event, getChartResponseHeaders(buffer, [], false))
