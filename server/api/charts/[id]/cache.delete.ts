@@ -12,17 +12,21 @@ import { db } from '../../../utils/db'
 import { savedCharts, charts } from '../../../../db/schema'
 import { requireAuth } from '../../../utils/auth'
 import { generateCacheKey } from '../../../utils/chartCache'
+import { logger } from '../../../utils/logger'
 
 const CACHE_DIR = '.data/cache/charts'
 
 /**
  * Build cache keys for all common variants of a chart config
  * (thumbnails in light/dark mode, different sizes, etc.)
+ *
+ * Note: This clears the most common cached variants. Charts rendered with
+ * custom dimensions may have additional cache entries that aren't cleared.
  */
-function buildCacheKeys(chartConfig: string, _chartType: 'explorer' | 'ranking'): string[] {
+function buildCacheKeys(chartConfig: string): string[] {
   const keys: string[] = []
 
-  // Common dimension variants
+  // Common dimension variants used by the app
   const variants = [
     // Thumbnail variants (used in ChartCard)
     { width: 352, height: 198, dp: 2, z: 1.33, ti: '0', qr: '0', l: '0', cap: '0' },
@@ -39,7 +43,7 @@ function buildCacheKeys(chartConfig: string, _chartType: 'explorer' | 'ranking')
 
   // Base query params from chart config
   const baseParams = new URLSearchParams(chartConfig)
-  const baseQueryParams: Record<string, unknown> = {}
+  const baseQueryParams: Record<string, string> = {}
   for (const [key, value] of baseParams.entries()) {
     baseQueryParams[key] = value
   }
@@ -112,11 +116,10 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const { config, page } = chartData
+  const { config } = chartData
 
-  // Build cache keys for all variants
-  const chartType = (page || 'explorer') as 'explorer' | 'ranking'
-  const cacheKeys = buildCacheKeys(config, chartType)
+  // Build cache keys for all common variants
+  const cacheKeys = buildCacheKeys(config)
 
   // Delete cache files
   let cleared = 0
@@ -125,8 +128,11 @@ export default defineEventHandler(async (event) => {
     try {
       await fs.unlink(filePath)
       cleared++
-    } catch {
-      // File doesn't exist, ignore
+    } catch (err) {
+      // Only ignore "file not found" errors
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
+        logger.error(`Unexpected error deleting cache file ${key}:`, err instanceof Error ? err : new Error(String(err)))
+      }
     }
   }
 

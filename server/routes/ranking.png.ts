@@ -33,12 +33,17 @@ export default defineEventHandler(async (event) => {
     // Generate cache key from query parameters (including width/height)
     const cacheKey = generateCacheKey({ ...queryParams, width, height, type: 'ranking' })
 
+    // Allow bypassing cache with ?nocache=1 (useful for development)
+    const noCache = queryParams.nocache === '1' || queryParams.nocache === 'true'
+
     // Check filesystem cache first (7-day TTL)
-    const cachedBuffer = await getCachedChart(cacheKey)
-    if (cachedBuffer) {
-      // Return cached version with 7-day Cache-Control
-      setResponseHeaders(event, getChartResponseHeaders(cachedBuffer, [], true))
-      return cachedBuffer
+    if (!noCache) {
+      const cachedBuffer = await getCachedChart(cacheKey)
+      if (cachedBuffer) {
+        // Return cached version with 7-day Cache-Control
+        setResponseHeaders(event, getChartResponseHeaders(cachedBuffer, [], true))
+        return cachedBuffer
+      }
     }
 
     // Queue the screenshot rendering to limit concurrency

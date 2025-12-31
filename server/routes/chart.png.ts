@@ -71,12 +71,17 @@ export default defineEventHandler(async (event) => {
     // Generate cache key from query parameters (including width/height, dark mode, dp, and zoom)
     const cacheKey = generateCacheKey({ ...queryParams, width, height, dm: darkMode ? '1' : '0', dp: devicePixelRatio, z: zoom })
 
+    // Allow bypassing cache with ?nocache=1 (useful for development)
+    const noCache = queryParams.nocache === '1' || queryParams.nocache === 'true'
+
     // Check filesystem cache first (7-day TTL)
-    const cachedBuffer = await getCachedChart(cacheKey)
-    if (cachedBuffer) {
-      // Return cached version with 7-day Cache-Control
-      setResponseHeaders(event, getChartResponseHeaders(cachedBuffer, countries, true))
-      return cachedBuffer
+    if (!noCache) {
+      const cachedBuffer = await getCachedChart(cacheKey)
+      if (cachedBuffer) {
+        // Return cached version with 7-day Cache-Control
+        setResponseHeaders(event, getChartResponseHeaders(cachedBuffer, countries, true))
+        return cachedBuffer
+      }
     }
 
     // Queue the chart rendering to limit concurrency
