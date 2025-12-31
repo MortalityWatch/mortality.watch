@@ -45,20 +45,20 @@ test.describe('Discover Feature', () => {
       await page.goto('/discover/metric')
       await page.waitForLoadState('domcontentloaded')
 
-      // Check for metric labels
-      await expect(page.getByText('Life Expectancy')).toBeVisible()
-      await expect(page.getByText('Age-Standardized Deaths')).toBeVisible()
-      await expect(page.getByText('Age-Standardized Mortality Rate')).toBeVisible()
-      await expect(page.getByText('Crude Mortality Rate')).toBeVisible()
-      await expect(page.getByText('Deaths', { exact: true })).toBeVisible()
-      await expect(page.getByText('Population')).toBeVisible()
+      // Check for metric labels (use heading role to be specific)
+      await expect(page.getByRole('heading', { name: 'Life Expectancy' })).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Age-Standardized Deaths' })).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Age-Standardized Mortality Rate' })).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Crude Mortality Rate' })).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Deaths' })).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Population' })).toBeVisible()
     })
 
     test('should navigate to metric detail page', async ({ page }) => {
       await page.goto('/discover/metric')
       await page.waitForLoadState('domcontentloaded')
 
-      await page.getByText('Age-Standardized Mortality Rate').click()
+      await page.getByRole('heading', { name: 'Age-Standardized Mortality Rate' }).click()
       await expect(page).toHaveURL(/\/discover\/metric\/asmr/)
     })
 
