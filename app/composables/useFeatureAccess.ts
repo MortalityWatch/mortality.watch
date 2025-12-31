@@ -28,12 +28,13 @@ import {
  */
 export function useFeatureAccess() {
   // Get user tier from auth composable
-  const { tier, isAuthenticated } = useAuth()
+  const { tier, isAuthenticated, isAdmin } = useAuth()
 
   // Computed tier helpers
   const isPublic = computed(() => tier.value === TIERS.PUBLIC)
   const isRegistered = computed(() => tier.value >= TIERS.REGISTERED)
-  const isPro = computed(() => tier.value >= TIERS.PRO)
+  // Admins always have Pro-level access regardless of stored tier
+  const isPro = computed(() => tier.value >= TIERS.PRO || isAdmin.value)
 
   /**
    * Check if user can access a specific feature

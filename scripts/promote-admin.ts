@@ -31,7 +31,7 @@ if (user.role === 'admin') {
 
 await db
   .update(users)
-  .set({ role: 'admin', updatedAt: new Date() })
+  .set({ role: 'admin', tier: 2, updatedAt: new Date() })
   .where(eq(users.id, user.id))
 
-console.log(`✅ ${email} promoted to admin`)
+console.log(`✅ ${email} promoted to admin with Pro tier`)
