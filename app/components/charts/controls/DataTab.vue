@@ -25,8 +25,16 @@ const emit = defineEmits<{
   'update:view': [value: ViewType]
 }>()
 
+// Gate ASD metric for Pro users
+const hasASDAccess = can('AGE_STANDARDIZED')
+
 // Add 'label' property for USelect compatibility
-const typesWithLabels = types.map(t => ({ ...t, label: t.name }))
+// Also mark ASD as disabled if user doesn't have Pro access
+const typesWithLabels = computed(() => types.map(t => ({
+  ...t,
+  label: t.value === 'asd' && !hasASDAccess ? `${t.name} (Pro)` : t.name,
+  disabled: t.value === 'asd' && !hasASDAccess
+})))
 const standardPopulationsWithLabels = standardPopulations.map(t => ({ ...t, label: t.name }))
 
 // View options for radio group - gate Z-Score for Pro users
