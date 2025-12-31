@@ -2,9 +2,17 @@
   <div class="container mx-auto px-4 py-8">
     <!-- Header -->
     <div class="mb-8">
-      <h1 class="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-        Chart Gallery
-      </h1>
+      <div class="flex items-center justify-between mb-4">
+        <h1 class="text-4xl font-bold text-gray-900 dark:text-gray-100">
+          Chart Gallery
+        </h1>
+        <UButton
+          to="/charts/browse"
+          variant="outline"
+          icon="i-lucide-list"
+          label="Browse All Charts"
+        />
+      </div>
       <p class="text-lg text-gray-600 dark:text-gray-400">
         Explore published mortality visualizations from our community
       </p>
