@@ -158,7 +158,7 @@ test.describe('Discover Feature', () => {
       await expect(page.getByRole('tab', { name: /LE/ })).toBeVisible()
       await expect(page.getByRole('tab', { name: /ASMR/ })).toBeVisible()
       await expect(page.getByRole('tab', { name: /CMR/ })).toBeVisible()
-      await expect(page.getByRole('tab', { name: 'Deaths' })).toBeVisible()
+      await expect(page.getByRole('tab', { name: /^Deaths/ })).toBeVisible()
       await expect(page.getByRole('tab', { name: /Population/ })).toBeVisible()
     })
 
