@@ -71,17 +71,12 @@ export default defineEventHandler(async (event) => {
     // Generate cache key from query parameters (including width/height, dark mode, dp, and zoom)
     const cacheKey = generateCacheKey({ ...queryParams, width, height, dm: darkMode ? '1' : '0', dp: devicePixelRatio, z: zoom })
 
-    // Skip cache in dev mode for easier debugging
-    const isDev = import.meta.dev
-
-    // Check filesystem cache first (7-day TTL) - skip in dev mode
-    if (!isDev) {
-      const cachedBuffer = await getCachedChart(cacheKey)
-      if (cachedBuffer) {
-        // Return cached version with 7-day Cache-Control
-        setResponseHeaders(event, getChartResponseHeaders(cachedBuffer, countries, true))
-        return cachedBuffer
-      }
+    // Check filesystem cache first (7-day TTL)
+    const cachedBuffer = await getCachedChart(cacheKey)
+    if (cachedBuffer) {
+      // Return cached version with 7-day Cache-Control
+      setResponseHeaders(event, getChartResponseHeaders(cachedBuffer, countries, true))
+      return cachedBuffer
     }
 
     // Queue the chart rendering to limit concurrency
@@ -205,12 +200,10 @@ export default defineEventHandler(async (event) => {
       }
     })
 
-    // Save to filesystem cache (async, non-blocking) - skip in dev mode
-    if (!isDev) {
-      saveCachedChart(cacheKey, buffer).catch((err) => {
-        logger.error('Failed to save chart to cache:', err instanceof Error ? err : new Error(String(err)))
-      })
-    }
+    // Save to filesystem cache (async, non-blocking)
+    saveCachedChart(cacheKey, buffer).catch((err) => {
+      logger.error('Failed to save chart to cache:', err instanceof Error ? err : new Error(String(err)))
+    })
 
     // Set response headers with 7-day cache
     setResponseHeaders(event, getChartResponseHeaders(buffer, countries, false))

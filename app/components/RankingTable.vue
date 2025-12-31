@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { abbrev, asPercentage, isMobile, roundToStr } from '@/utils'
 import { createRankingColorScale } from '@/lib/chart/chartColors'
-import { getIsDark } from '@/composables/useTheme'
+import { useTheme } from '@/composables/useTheme'
 import type {
   TableData,
   TableDisplay,
@@ -26,6 +26,9 @@ interface Emits {
 
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
+
+// Get reactive dark mode state
+const { isDark } = useTheme()
 
 // Computed decimal precision value
 const decimalPlaces = computed(() => {
@@ -55,12 +58,13 @@ const allValues = computed(() => {
 })
 
 // Create color scale function based on current data and display settings
+// Uses reactive isDark to update colors when theme changes
 const colorScale = computed(() => {
   return createRankingColorScale(
     allValues.value,
     props.display.displayMode,
     props.display.metricType,
-    getIsDark()
+    isDark.value
   )
 })
 

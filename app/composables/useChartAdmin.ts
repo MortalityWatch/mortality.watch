@@ -2,11 +2,13 @@ import { handleApiError } from '@/lib/errors/errorHandler'
 
 /**
  * Composable for chart admin operations
- * Handles toggling featured (admin only) and public status (owner or admin)
+ * Handles toggling featured (admin only), public status (owner or admin),
+ * and cache clearing (admin only)
  */
 export function useChartAdmin() {
   const togglingFeatured = ref<number | null>(null)
   const togglingPublic = ref<number | null>(null)
+  const clearingCache = ref<number | null>(null)
 
   /**
    * Toggle featured status for a chart (admin only)
@@ -72,10 +74,37 @@ export function useChartAdmin() {
     }
   }
 
+  /**
+   * Clear cached images for a chart (admin only)
+   * @param chartId - The ID of the chart to clear cache for
+   */
+  async function clearCache(chartId: number) {
+    clearingCache.value = chartId
+    try {
+      const result = await $fetch<{ cleared: number, message: string }>(`/api/charts/${chartId}/cache`, {
+        method: 'DELETE'
+      })
+
+      // Show success toast
+      const toast = useToast()
+      toast.add({
+        title: 'Cache cleared',
+        description: result.message,
+        color: 'success'
+      })
+    } catch (err) {
+      handleApiError(err, 'clear chart cache', 'clearCache')
+    } finally {
+      clearingCache.value = null
+    }
+  }
+
   return {
     togglingFeatured,
     togglingPublic,
+    clearingCache,
     toggleFeatured,
-    togglePublic
+    togglePublic,
+    clearCache
   }
 }
