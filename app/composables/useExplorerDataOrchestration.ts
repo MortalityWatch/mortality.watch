@@ -27,6 +27,7 @@ import {
 } from '@/lib/data'
 import { useChartDataFetcher } from '@/composables/useChartDataFetcher'
 import { useASDData } from '@/composables/useASDData'
+import { metadataService } from '@/services/metadataService'
 import { getFilteredChartDataFromConfig } from '@/lib/chart'
 import type { MortalityChartData } from '@/lib/chart/chartTypes'
 import type { ChartStateSnapshot } from '@/lib/chart/types'
@@ -215,38 +216,45 @@ export function useExplorerDataOrchestration(
     const countries = state.countries.value
     const chartType = state.chartType.value as ChartType
 
-    // Get available sources with age groups for the selected countries
-    const asdDataComposable = getASDData()
-    const sourcesMap = asdDataComposable.getAvailableSources(countries, chartType)
-
-    if (sourcesMap.size === 0) {
-      console.warn('[ASD] No sources with age groups available for selected countries')
-      return
-    }
-
-    // Pick the first available source
-    // TODO: Could add a source selector to the UI for user control
-    const [source, ageGroups] = Array.from(sourcesMap.entries())[0]!
-
-    if (!ageGroups || ageGroups.length === 0) {
-      console.warn('[ASD] No age groups available for source:', source)
-      return
-    }
-
     // Get baseline date range
     const baselineDateFrom = state.baselineDateFrom.value ?? baselineRange.value?.from
     const baselineDateTo = state.baselineDateTo.value ?? baselineRange.value?.to
 
+    const asdDataComposable = getASDData()
+
+    // Fetch ASD data for each country using its best available source
+    // This allows each country to use its optimal source independently
+    // (e.g., USA uses CDC from 1999, Sweden uses eurostat from 2000)
+    type ASDResultNonNull = NonNullable<Awaited<ReturnType<typeof asdDataComposable.fetchASDForCountry>>>
+    const results = new Map<string, ASDResultNonNull>()
+
     try {
-      const results = await asdDataComposable.fetchASD({
-        countries,
-        chartType,
-        source,
-        baselineMethod: state.baselineMethod.value,
-        baselineDateFrom,
-        baselineDateTo,
-        useTrend: state.baselineMethod.value === 'lin_reg'
-      })
+      for (const country of countries) {
+        // Get the best source for this country (longest history)
+        const sourceInfo = metadataService.getBestSourceForCountry(country, chartType)
+
+        if (!sourceInfo) {
+          console.warn(`[ASD] No source with age groups available for ${country}`)
+          continue
+        }
+
+        const { source, ageGroups } = sourceInfo
+
+        const result = await asdDataComposable.fetchASDForCountry(
+          country,
+          chartType,
+          source,
+          ageGroups,
+          state.baselineMethod.value,
+          baselineDateFrom,
+          baselineDateTo,
+          state.baselineMethod.value === 'lin_reg'
+        )
+
+        if (result) {
+          results.set(country, result)
+        }
+      }
 
       // Inject ASD data into allChartData for each country
       // The data structure is: allChartData.data[ageGroup][iso3c]

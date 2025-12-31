@@ -375,6 +375,93 @@ export class MetadataService {
   }
 
   /**
+   * Get the best source for a single country for ASD calculation.
+   *
+   * "Best" means: has age-stratified data and longest history (earliest minDate).
+   * This allows each country to use its optimal source independently.
+   *
+   * @returns { source: string, ageGroups: string[], minDate: string } or null if none available
+   */
+  getBestSourceForCountry(
+    country: string,
+    chartType: string
+  ): { source: string, ageGroups: string[], minDate: string } | null {
+    if (!this.metadata) throw new Error('Metadata not loaded')
+
+    const dataType = this.chartTypeToDataType(chartType)
+
+    // Collect all entries for this country, including derived types
+    let entries = this.metadata.filter(
+      e => e.iso3c === country && e.type === dataType
+    )
+
+    // Data derivation: For yearly, also check monthly and weekly data
+    if (dataType === '1') {
+      const monthlyEntries = this.metadata.filter(
+        e => e.iso3c === country && e.type === '2'
+      )
+      const weeklyEntries = this.metadata.filter(
+        e => e.iso3c === country && e.type === '3'
+      )
+      entries = [...entries, ...monthlyEntries, ...weeklyEntries]
+    } else if (dataType === '2') {
+      const weeklyEntries = this.metadata.filter(
+        e => e.iso3c === country && e.type === '3'
+      )
+      entries = [...entries, ...weeklyEntries]
+    }
+
+    // Build source info with age groups and earliest date
+    const sourceInfo = new Map<string, { ageGroups: Set<string>, minDate: string }>()
+
+    for (const entry of entries) {
+      const ageGroups = entry.ageGroups.filter(ag => ag !== 'all')
+      if (ageGroups.length === 0) continue
+
+      const existing = sourceInfo.get(entry.source)
+      if (existing) {
+        ageGroups.forEach(ag => existing.ageGroups.add(ag))
+        // Keep the earliest minDate
+        if (entry.minDate < existing.minDate) {
+          existing.minDate = entry.minDate
+        }
+      } else {
+        sourceInfo.set(entry.source, {
+          ageGroups: new Set(ageGroups),
+          minDate: entry.minDate
+        })
+      }
+    }
+
+    if (sourceInfo.size === 0) return null
+
+    // Find the source with the earliest minDate (longest history)
+    let bestSource: string | null = null
+    let bestMinDate = '9999-99-99'
+    let bestAgeGroups: string[] = []
+
+    for (const [source, info] of sourceInfo) {
+      // Filter to mutually exclusive age groups
+      const filteredAgeGroups = selectMutuallyExclusiveAgeGroups(Array.from(info.ageGroups))
+      if (filteredAgeGroups.length < 2) continue // Need at least 2 age groups for ASD
+
+      if (info.minDate < bestMinDate) {
+        bestMinDate = info.minDate
+        bestSource = source
+        bestAgeGroups = filteredAgeGroups
+      }
+    }
+
+    if (!bestSource) return null
+
+    return {
+      source: bestSource,
+      ageGroups: bestAgeGroups,
+      minDate: bestMinDate
+    }
+  }
+
+  /**
    * Convert chart type to data type (1/2/3)
    */
   private chartTypeToDataType(chartType: string): '1' | '2' | '3' {

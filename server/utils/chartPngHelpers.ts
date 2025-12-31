@@ -281,38 +281,34 @@ async function fetchASDDataForSSR(
 
 /**
  * Inject ASD data into allChartData for SSR
+ *
+ * Uses per-country source selection - each country uses its best available source
+ * (with longest history), allowing USA to use CDC (from 1999) while Sweden uses
+ * eurostat (from 2000).
  */
 async function injectASDDataForSSR(
   state: ChartRenderState,
   allChartData: AllChartData,
   rawData: Awaited<ReturnType<typeof dataLoader.loadMortalityData>>,
-  ageGroups: string[]
+  countryInfo: Map<string, { source: string, ageGroups: string[] }>
 ): Promise<void> {
   if (state.type !== 'asd') return
 
-  // Ensure metadata is loaded
-  await metadataService.load()
-
   const chartType = state.chartType as ChartType
-
-  // Get the source for these age groups
-  const sourcesMap = metadataService.getCommonSourcesWithAgeGroups(state.countries, chartType)
-  if (sourcesMap.size === 0) {
-    console.warn('[SSR ASD] No sources with age groups available')
-    return
-  }
-
-  // Get the source name
-  const [source] = Array.from(sourcesMap.entries())[0]!
-
   const chartLabels = allChartData.labels
 
   for (const country of state.countries) {
+    const info = countryInfo.get(country)
+    if (!info) {
+      console.warn(`[SSR ASD] No source info for ${country}`)
+      continue
+    }
+
     const asdResult = await fetchASDDataForSSR(
       country,
       chartType,
-      source,
-      ageGroups,
+      info.source,
+      info.ageGroups,
       state.baselineMethod,
       state.baselineDateFrom,
       state.baselineDateTo,
@@ -365,20 +361,30 @@ export async function fetchChartData(state: ChartRenderState) {
 
   // 2. For ASD, we need to load age-stratified data for the ASD calculation
   // Plus 'all' for the chart display
+  // Each country uses its best available source (longest history)
   let ageGroupsToLoad = state.ageGroups
-  let asdAgeGroups: string[] = []
+  const asdCountryInfo = new Map<string, { source: string, ageGroups: string[] }>()
   if (state.type === 'asd') {
     await metadataService.load()
     const chartType = state.chartType as ChartType
-    const sourcesMap = metadataService.getCommonSourcesWithAgeGroups(state.countries, chartType)
-    if (sourcesMap.size > 0) {
-      const [, ageGroups] = Array.from(sourcesMap.entries())[0]!
-      if (ageGroups && ageGroups.length > 0) {
-        asdAgeGroups = ageGroups
-        // Include both 'all' (for chart display) and age-stratified (for ASD calculation)
-        ageGroupsToLoad = [...new Set(['all', ...ageGroups])]
-        console.log('[SSR ASD] Loading age groups:', ageGroupsToLoad)
+
+    // Collect all age groups needed across all countries
+    const allAgeGroups = new Set<string>()
+
+    for (const country of state.countries) {
+      const sourceInfo = metadataService.getBestSourceForCountry(country, chartType)
+      if (sourceInfo) {
+        asdCountryInfo.set(country, {
+          source: sourceInfo.source,
+          ageGroups: sourceInfo.ageGroups
+        })
+        sourceInfo.ageGroups.forEach(ag => allAgeGroups.add(ag))
       }
+    }
+
+    if (allAgeGroups.size > 0) {
+      // Include both 'all' (for chart display) and age-stratified (for ASD calculation)
+      ageGroupsToLoad = [...new Set(['all', ...allAgeGroups])]
     }
   }
 
@@ -445,8 +451,8 @@ export async function fetchChartData(state: ChartRenderState) {
   })
 
   // Inject ASD data if type is 'asd'
-  if (state.type === 'asd' && asdAgeGroups.length > 0) {
-    await injectASDDataForSSR(state, allChartData, rawData, asdAgeGroups)
+  if (state.type === 'asd' && asdCountryInfo.size > 0) {
+    await injectASDDataForSSR(state, allChartData, rawData, asdCountryInfo)
   }
 
   return { allCountries, allLabels, allChartData, isAsmrType }
