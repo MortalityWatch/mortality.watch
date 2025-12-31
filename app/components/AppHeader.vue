@@ -74,6 +74,10 @@ const items = computed(() => {
     label: 'Ranking',
     icon: 'i-lucide-chart-bar-decreasing',
     to: '/ranking'
+  }, {
+    label: 'Discover',
+    icon: 'i-lucide-compass',
+    to: '/discover'
   }]
 
   // Add "My Charts" if user is authenticated
