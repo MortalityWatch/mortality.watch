@@ -26,6 +26,7 @@ import {
   getStartIndex
 } from '@/lib/data'
 import { useChartDataFetcher } from '@/composables/useChartDataFetcher'
+import { useASDData } from '@/composables/useASDData'
 import { getFilteredChartDataFromConfig } from '@/lib/chart'
 import type { MortalityChartData } from '@/lib/chart/chartTypes'
 import type { ChartStateSnapshot } from '@/lib/chart/types'
@@ -48,6 +49,16 @@ export function useExplorerDataOrchestration(
 ) {
   // Shared data fetching logic
   const dataFetcher = useChartDataFetcher()
+
+  // ASD data fetching (Age-Standardized Deaths)
+  // Lazy initialized to avoid useRuntimeConfig issues in tests
+  let asdDataInstance: ReturnType<typeof useASDData> | null = null
+  const getASDData = () => {
+    if (!asdDataInstance) {
+      asdDataInstance = useASDData()
+    }
+    return asdDataInstance
+  }
 
   // Short URL handling for QR codes
   // Store original query params to ensure consistent hashing with SSR
@@ -185,6 +196,91 @@ export function useExplorerDataOrchestration(
   const ageGroupsForFetch = computed(() => {
     return helpers.isAsmrType() ? ['all'] : state.ageGroups.value
   })
+
+  /**
+   * Fetch and inject ASD data into allChartData when view is 'asd'.
+   *
+   * ASD (Age-Standardized Deaths) uses the Levitt method which:
+   * 1. Fetches all age groups for the selected source
+   * 2. Calls the stats API /asd endpoint with age-stratified data
+   * 3. Injects the returned asd/asd_bl values into the dataset
+   *
+   * The DataTransformationPipeline then uses data['asd'] and data['asd_bl']
+   * to display the age-standardized values.
+   */
+  const fetchAndInjectASDData = async () => {
+    // Only fetch ASD data when in ASD view
+    if (state.view.value !== 'asd') return
+
+    const countries = state.countries.value
+    const chartType = state.chartType.value as ChartType
+
+    // Get available sources with age groups for the selected countries
+    const asdDataComposable = getASDData()
+    const sourcesMap = asdDataComposable.getAvailableSources(countries, chartType)
+
+    if (sourcesMap.size === 0) {
+      console.warn('[ASD] No sources with age groups available for selected countries')
+      return
+    }
+
+    // Pick the first available source
+    // TODO: Could add a source selector to the UI for user control
+    const [source, ageGroups] = Array.from(sourcesMap.entries())[0]!
+
+    if (!ageGroups || ageGroups.length === 0) {
+      console.warn('[ASD] No age groups available for source:', source)
+      return
+    }
+
+    // Calculate baseline indices from labels
+    const baselineFrom = state.baselineDateFrom.value ?? baselineRange.value?.from
+    const baselineTo = state.baselineDateTo.value ?? baselineRange.value?.to
+
+    let baselineStartIdx = 1
+    let baselineEndIdx = 5
+
+    if (baselineFrom && baselineTo && allChartLabels.value.length > 0) {
+      const period = new ChartPeriod(allChartLabels.value, chartType)
+      const fromIdx = period.indexOf(baselineFrom)
+      const toIdx = period.indexOf(baselineTo)
+      if (fromIdx >= 0) baselineStartIdx = fromIdx + 1 // 1-indexed for R API
+      if (toIdx >= 0) baselineEndIdx = toIdx + 1
+    }
+
+    try {
+      const results = await asdDataComposable.fetchASD({
+        countries,
+        chartType,
+        source,
+        baselineMethod: state.baselineMethod.value,
+        baselineStartIdx,
+        baselineEndIdx,
+        useTrend: state.baselineMethod.value === 'lin_reg'
+      })
+
+      // Inject ASD data into allChartData for each country
+      // The data structure is: allChartData.data[ageGroup][iso3c]
+      for (const [iso3c, asdResult] of results) {
+        // Find the age group key (usually 'all' for the combined view)
+        for (const ag of Object.keys(allChartData.data)) {
+          const countryData = allChartData.data[ag]?.[iso3c]
+          if (countryData) {
+            // Inject ASD arrays - these will be accessed by DataTransformationPipeline
+            // using data['asd'] and data['asd_bl']
+            const record = countryData as Record<string, unknown>
+            record['asd'] = asdResult.asd
+            record['asd_bl'] = asdResult.asd_bl
+            record['asd_lower'] = asdResult.lower
+            record['asd_upper'] = asdResult.upper
+            record['asd_zscore'] = asdResult.zscore
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[ASD] Failed to fetch ASD data:', error)
+    }
+  }
 
   // Configure chart options based on current state
   const configureOptions = () => {
@@ -436,6 +532,9 @@ export function useExplorerDataOrchestration(
       }
 
       Object.assign(allChartData, result.chartData)
+
+      // Fetch and inject ASD data if in ASD view
+      await fetchAndInjectASDData()
       // Note: Date validation now handled by reactive watcher
     } else if (shouldUpdateDataset) {
       // Update chart data only (reuse existing dataset)
@@ -477,6 +576,9 @@ export function useExplorerDataOrchestration(
       }
 
       Object.assign(allChartData, result.chartData)
+
+      // Fetch and inject ASD data if in ASD view
+      await fetchAndInjectASDData()
       // Note: Date validation now handled by reactive watcher
     }
 

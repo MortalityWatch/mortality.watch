@@ -147,6 +147,11 @@ export function useExplorerState() {
    */
   const isZScore = computed(() => view.value === 'zscore')
 
+  /**
+   * Check if current view is ASD (Age-Standardized Deaths)
+   */
+  const isASD = computed(() => view.value === 'asd')
+
   // ============================================================================
   // VALIDATION - Gather complete state and validate
   // ============================================================================
@@ -305,6 +310,7 @@ export function useExplorerState() {
       standardPopulation: standardPopulation.value,
       isExcess: isExcess.value,
       isZScore: isZScore.value,
+      isASD: isASD.value,
       showBaseline: showBaseline.value,
       showPredictionInterval: showPredictionInterval.value,
       cumulative: cumulative.value,
@@ -449,6 +455,7 @@ export function useExplorerState() {
     view,
     isExcess, // Backward compat: computed from view === 'excess'
     isZScore, // Computed from view === 'zscore'
+    isASD, // Computed from view === 'asd'
 
     // Core settings
     countries,
