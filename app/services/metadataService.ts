@@ -252,6 +252,98 @@ export class MetadataService {
   }
 
   /**
+   * Get sources with their age groups for ASD calculation
+   *
+   * Returns a map of source -> age groups (excluding "all")
+   * For ASD, we need all age groups from ONE source to properly sum to 100%
+   */
+  getSourcesWithAgeGroups(
+    country: string,
+    chartType: string
+  ): Map<string, string[]> {
+    if (!this.metadata) throw new Error('Metadata not loaded')
+
+    const dataType = this.chartTypeToDataType(chartType)
+    const result = new Map<string, string[]>()
+
+    // Find entries for this country and type
+    const entries = this.metadata.filter(
+      e => e.iso3c === country && e.type === dataType
+    )
+
+    // Group age groups by source
+    for (const entry of entries) {
+      // Exclude "all" - we only want individual age groups for ASD
+      const ageGroups = entry.ageGroups.filter(ag => ag !== 'all')
+      if (ageGroups.length > 0) {
+        result.set(entry.source, ageGroups)
+      }
+    }
+
+    return result
+  }
+
+  /**
+   * Get sources with age groups that are available across ALL selected countries
+   *
+   * For multi-country ASD, we need sources that exist for all countries
+   * with consistent age group availability
+   */
+  getCommonSourcesWithAgeGroups(
+    countries: string[],
+    chartType: string
+  ): Map<string, string[]> {
+    if (!this.metadata) throw new Error('Metadata not loaded')
+    if (countries.length === 0) return new Map()
+
+    const dataType = this.chartTypeToDataType(chartType)
+
+    // Get source -> age groups for each country
+    const byCountry = countries.map((country) => {
+      const countryMap = new Map<string, Set<string>>()
+      const entries = this.metadata!.filter(
+        e => e.iso3c === country && e.type === dataType
+      )
+      for (const entry of entries) {
+        const ageGroups = entry.ageGroups.filter(ag => ag !== 'all')
+        if (ageGroups.length > 0) {
+          countryMap.set(entry.source, new Set(ageGroups))
+        }
+      }
+      return countryMap
+    })
+
+    // Find common sources
+    const firstCountrySources = byCountry[0]
+    if (!firstCountrySources) return new Map()
+
+    const commonSources = new Map<string, string[]>()
+
+    for (const [source, ageGroups] of firstCountrySources) {
+      // Check if this source exists for all countries
+      const existsInAll = byCountry.every(countryMap => countryMap.has(source))
+      if (!existsInAll) continue
+
+      // Get intersection of age groups across all countries
+      let commonAgeGroups = new Set(ageGroups)
+      for (const countryMap of byCountry) {
+        const countryAgeGroups = countryMap.get(source)
+        if (countryAgeGroups) {
+          commonAgeGroups = new Set(
+            [...commonAgeGroups].filter(ag => countryAgeGroups.has(ag))
+          )
+        }
+      }
+
+      if (commonAgeGroups.size > 0) {
+        commonSources.set(source, Array.from(commonAgeGroups))
+      }
+    }
+
+    return commonSources
+  }
+
+  /**
    * Convert chart type to data type (1/2/3)
    */
   private chartTypeToDataType(chartType: string): '1' | '2' | '3' {
