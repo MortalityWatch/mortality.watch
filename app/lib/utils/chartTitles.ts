@@ -71,8 +71,9 @@ function formatDateRange(dateFrom: string | undefined, dateTo: string | undefine
 
 /**
  * Get readable metric name from type value with view mode
+ * Note: ASD is a metric type, not a view. Handle it specially.
  */
-function getMetricName(type: string, view?: 'mortality' | 'excess' | 'zscore' | 'asd'): string {
+function getMetricName(type: string, view?: 'mortality' | 'excess' | 'zscore'): string {
   const typeConfig = types.find(t => t.value === type)
   if (!typeConfig) return type
 
@@ -81,11 +82,6 @@ function getMetricName(type: string, view?: 'mortality' | 'excess' | 'zscore' | 
   // Z-Score view: prefix with "Z-Score "
   if (view === 'zscore') {
     return `Z-Score ${baseName}`
-  }
-
-  // ASD view: prefix with "Age-Standardized "
-  if (view === 'asd') {
-    return `Age-Standardized ${baseName}`
   }
 
   // Excess view: prefix with "Excess " (except for LE and population)
@@ -185,7 +181,7 @@ export function generateExplorerTitle(params: {
   ageGroups?: string[]
   dateFrom?: string
   dateTo?: string
-  view?: 'mortality' | 'excess' | 'zscore' | 'asd'
+  view?: 'mortality' | 'excess' | 'zscore'
 }): string {
   const {
     countries,
@@ -201,7 +197,7 @@ export function generateExplorerTitle(params: {
   const parts: string[] = []
 
   // Determine view mode if not explicitly provided
-  const effectiveView = view || (isExcess ? 'excess' : 'mortality')
+  const effectiveView = view || (isExcess ? 'excess' : 'mortality') as 'mortality' | 'excess' | 'zscore'
 
   // Metric name
   parts.push(getMetricName(type, effectiveView))
@@ -256,14 +252,12 @@ function formatFullDate(date: string | undefined): string {
 /**
  * Get view mode description
  */
-function getViewDescription(view: 'mortality' | 'excess' | 'zscore' | 'asd'): string {
+function getViewDescription(view: 'mortality' | 'excess' | 'zscore'): string {
   switch (view) {
     case 'zscore':
       return 'Z-Score view shows how many standard deviations the current value is from the baseline mean.'
     case 'excess':
       return 'Excess view shows the difference between observed and expected (baseline) values.'
-    case 'asd':
-      return 'Age-Standardized Deaths (ASD) view uses the Levitt method to calculate age-standardized deaths based on baseline mortality rates.'
     default:
       return ''
   }
@@ -298,7 +292,7 @@ export function generateExplorerDescription(params: {
   ageGroups?: string[]
   dateFrom?: string
   dateTo?: string
-  view?: 'mortality' | 'excess' | 'zscore' | 'asd'
+  view?: 'mortality' | 'excess' | 'zscore'
   chartType?: string
   showBaseline?: boolean
   baselineMethod?: string
@@ -330,7 +324,7 @@ export function generateExplorerDescription(params: {
   const parts: string[] = []
 
   // Determine effective view
-  const effectiveView = view || (isExcess ? 'excess' : 'mortality')
+  const effectiveView = view || (isExcess ? 'excess' : 'mortality') as 'mortality' | 'excess' | 'zscore'
 
   // Get metric info
   const typeConfig = types.find(t => t.value === type)

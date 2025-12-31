@@ -72,6 +72,65 @@
         </p>
       </div>
 
+      <!-- ASD -->
+      <div class="text-left space-y-2">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
+          ASD (Age-Standardized Deaths)
+        </h3>
+        <p class="text-gray-700 dark:text-gray-300">
+          Age-Standardized Deaths (ASD) is an alternative approach to account
+          for population aging when calculating excess mortality. Unlike ASMR
+          which standardizes rates, ASD works directly with death counts by
+          applying baseline mortality rates to current population age structures.
+        </p>
+        <p class="text-gray-700 dark:text-gray-300">
+          The ASD method (based on
+          <ULink
+            to="https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0253175"
+            target="_blank"
+            active-class="text-primary"
+            inactive-class="text-primary hover:text-primary-600 dark:hover:text-primary-400"
+          >Levitt et al.</ULink>)
+          calculates expected deaths by:
+        </p>
+        <ol class="list-decimal pl-6 space-y-1 text-gray-700 dark:text-gray-300">
+          <li>Calculate baseline mortality rates per age group during the reference period</li>
+          <li>Apply these baseline rates to the current population age structure</li>
+          <li>Sum across all age groups to get total expected deaths</li>
+        </ol>
+        <div class="bg-gray-100 dark:bg-gray-800 p-3 rounded font-mono text-sm space-y-1">
+          <div>For each age group a:</div>
+          <div class="ml-4">
+            baseline_rate<sub>a</sub> = mean(deaths<sub>a</sub> / population<sub>a</sub>) during baseline period
+          </div>
+          <div class="mt-2">
+            Expected Deaths = Σ(baseline_rate<sub>a</sub> × current_population<sub>a</sub>)
+          </div>
+          <div class="mt-2">
+            Excess ASD = Observed Deaths - Expected Deaths
+          </div>
+        </div>
+        <div class="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg mt-3">
+          <h4 class="font-semibold text-gray-800 dark:text-gray-200 mb-2">
+            When to use ASD vs ASMR
+          </h4>
+          <ul class="list-disc pl-6 space-y-1 text-gray-700 dark:text-gray-300">
+            <li>
+              <strong>ASMR</strong> answers: "If this population had the same age structure
+              as the standard, what would the mortality rate be?"
+            </li>
+            <li>
+              <strong>ASD</strong> answers: "Given how this population has aged, how many
+              deaths would we expect if mortality rates stayed at baseline levels?"
+            </li>
+          </ul>
+          <p class="mt-2 text-sm text-gray-600 dark:text-gray-400 italic">
+            ASD is particularly useful for understanding excess deaths in aging populations,
+            as it separates the effect of population aging from changes in mortality rates.
+          </p>
+        </div>
+      </div>
+
       <!-- Life Expectancy -->
       <div class="text-left space-y-2">
         <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">

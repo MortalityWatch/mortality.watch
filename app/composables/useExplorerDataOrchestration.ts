@@ -198,7 +198,7 @@ export function useExplorerDataOrchestration(
   })
 
   /**
-   * Fetch and inject ASD data into allChartData when view is 'asd'.
+   * Fetch and inject ASD data into allChartData when type is 'asd'.
    *
    * ASD (Age-Standardized Deaths) uses the Levitt method which:
    * 1. Fetches all age groups for the selected source
@@ -233,20 +233,9 @@ export function useExplorerDataOrchestration(
       return
     }
 
-    // Calculate baseline indices from labels
-    const baselineFrom = state.baselineDateFrom.value ?? baselineRange.value?.from
-    const baselineTo = state.baselineDateTo.value ?? baselineRange.value?.to
-
-    let baselineStartIdx = 1
-    let baselineEndIdx = 5
-
-    if (baselineFrom && baselineTo && allChartLabels.value.length > 0) {
-      const period = new ChartPeriod(allChartLabels.value, chartType)
-      const fromIdx = period.indexOf(baselineFrom)
-      const toIdx = period.indexOf(baselineTo)
-      if (fromIdx >= 0) baselineStartIdx = fromIdx + 1 // 1-indexed for R API
-      if (toIdx >= 0) baselineEndIdx = toIdx + 1
-    }
+    // Get baseline date range
+    const baselineDateFrom = state.baselineDateFrom.value ?? baselineRange.value?.from
+    const baselineDateTo = state.baselineDateTo.value ?? baselineRange.value?.to
 
     try {
       const results = await asdDataComposable.fetchASD({
@@ -254,26 +243,48 @@ export function useExplorerDataOrchestration(
         chartType,
         source,
         baselineMethod: state.baselineMethod.value,
-        baselineStartIdx,
-        baselineEndIdx,
+        baselineDateFrom,
+        baselineDateTo,
         useTrend: state.baselineMethod.value === 'lin_reg'
       })
 
       // Inject ASD data into allChartData for each country
       // The data structure is: allChartData.data[ageGroup][iso3c]
+      // ASD data must be aligned to allChartData.labels (NOT allChartLabels.value!)
+      // allChartData.labels may be a subset (e.g., 2005-2025) while allChartLabels.value is the full range (1950-2025)
+      const chartLabels = allChartData.labels
+
       for (const [iso3c, asdResult] of results) {
+        // Create a mapping from ASD labels to their indices
+        const asdLabelToIndex = new Map<string, number>()
+        asdResult.labels.forEach((label, idx) => asdLabelToIndex.set(label, idx))
+
+        // Align ASD data to chart labels
+        const alignArray = (arr: (number | null)[]): (number | null)[] => {
+          return chartLabels.map((label) => {
+            const idx = asdLabelToIndex.get(label)
+            return idx !== undefined ? (arr[idx] ?? null) : null
+          })
+        }
+
+        const alignedAsd = alignArray(asdResult.asd)
+        const alignedAsdBl = alignArray(asdResult.asd_bl)
+        const alignedLower = alignArray(asdResult.lower)
+        const alignedUpper = alignArray(asdResult.upper)
+        const alignedZscore = alignArray(asdResult.zscore)
+
         // Find the age group key (usually 'all' for the combined view)
         for (const ag of Object.keys(allChartData.data)) {
           const countryData = allChartData.data[ag]?.[iso3c]
           if (countryData) {
-            // Inject ASD arrays - these will be accessed by DataTransformationPipeline
-            // using data['asd'] and data['asd_bl']
+            // Inject aligned ASD arrays using the standard naming convention
+            // expected by getKeyForType (asd_baseline, not asd_bl)
             const record = countryData as Record<string, unknown>
-            record['asd'] = asdResult.asd
-            record['asd_bl'] = asdResult.asd_bl
-            record['asd_lower'] = asdResult.lower
-            record['asd_upper'] = asdResult.upper
-            record['asd_zscore'] = asdResult.zscore
+            record['asd'] = alignedAsd
+            record['asd_baseline'] = alignedAsdBl
+            record['asd_baseline_lower'] = alignedLower
+            record['asd_baseline_upper'] = alignedUpper
+            record['asd_zscore'] = alignedZscore
           }
         }
       }

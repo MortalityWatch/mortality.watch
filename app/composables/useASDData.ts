@@ -39,8 +39,8 @@ export interface ASDConfig {
   chartType: ChartType
   source: string
   baselineMethod: string
-  baselineStartIdx?: number
-  baselineEndIdx?: number
+  baselineDateFrom?: string
+  baselineDateTo?: string
   useTrend?: boolean
 }
 
@@ -57,7 +57,7 @@ interface AgeGroupData {
  */
 export function useASDData() {
   const config = useRuntimeConfig()
-  const statsUrl = config.public.statsUrl as string || 'https://stats.mortality.watch'
+  const statsUrl = (config.public.statsUrl as string || 'https://stats.mortality.watch').replace(/\/+$/, '')
 
   const isLoading = ref(false)
   const error = ref<Error | null>(null)
@@ -81,8 +81,8 @@ export function useASDData() {
     source: string,
     ageGroups: string[],
     baselineMethod: string,
-    baselineStartIdx?: number,
-    baselineEndIdx?: number,
+    baselineDateFrom?: string,
+    baselineDateTo?: string,
     useTrend: boolean = false
   ): Promise<ASDResult | null> {
     // Fetch data for all age groups
@@ -118,8 +118,11 @@ export function useASDData() {
     // Sort dates
     const sortedDates = Array.from(allDates).sort()
 
-    // Build age_groups array for the API
+    // Build age_groups array for the API, filtering out groups with insufficient data
     const ageGroupsPayload: AgeGroupData[] = []
+    const validAgeGroups: string[] = []
+    const skippedAgeGroups: string[] = []
+    const MIN_VALID_DATA_POINTS = 3
 
     for (const ageGroup of ageGroups) {
       const dateMap = ageGroupDataMap.get(ageGroup)
@@ -139,12 +142,41 @@ export function useASDData() {
         }
       }
 
-      ageGroupsPayload.push({ deaths, population })
+      // Count valid data points (non-null deaths AND population)
+      const validCount = deaths.filter((d, i) => d !== null && population[i] !== null).length
+
+      if (validCount >= MIN_VALID_DATA_POINTS) {
+        ageGroupsPayload.push({ deaths, population })
+        validAgeGroups.push(ageGroup)
+      } else {
+        skippedAgeGroups.push(ageGroup)
+      }
     }
 
-    // Determine baseline indices
-    const bs = baselineStartIdx ?? 1
-    const be = baselineEndIdx ?? Math.min(sortedDates.length, 5)
+    if (skippedAgeGroups.length > 0) {
+      console.warn(`[ASD] Skipped age groups with insufficient data: ${skippedAgeGroups.join(', ')}`)
+    }
+
+    if (ageGroupsPayload.length < 2) {
+      throw new Error(`Insufficient age-stratified data for ASD calculation. Need at least 2 age groups with valid data.`)
+    }
+
+    // Determine baseline indices relative to sortedDates
+    let bs = 1
+    let be = Math.min(sortedDates.length, 5)
+
+    if (baselineDateFrom) {
+      const idx = sortedDates.indexOf(baselineDateFrom)
+      if (idx >= 0) bs = idx + 1 // 1-indexed for R API
+    }
+    if (baselineDateTo) {
+      const idx = sortedDates.indexOf(baselineDateTo)
+      if (idx >= 0) be = idx + 1
+    }
+
+    // Clamp to valid range
+    bs = Math.max(1, Math.min(bs, sortedDates.length))
+    be = Math.max(bs, Math.min(be, sortedDates.length))
 
     // Call the stats API
     const endpoint = `${statsUrl}/asd`
@@ -200,8 +232,8 @@ export function useASDData() {
           config.source,
           ageGroups,
           config.baselineMethod,
-          config.baselineStartIdx,
-          config.baselineEndIdx,
+          config.baselineDateFrom,
+          config.baselineDateTo,
           config.useTrend
         )
 

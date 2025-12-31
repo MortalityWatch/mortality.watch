@@ -103,15 +103,45 @@ export class DataTransformationPipeline {
       const asdKey = this.asdStrategy.getASDKey()
       const asdData = data[asdKey] ?? []
 
-      // If showing excess (difference from baseline), calculate it
+      const asdBlKey = this.asdStrategy.getASDBaselineKey()
+      const asdBlData = data[asdBlKey] ?? []
+
+      // Calculate base data (excess or raw)
+      let baseData: number[]
       if (key.includes('excess')) {
-        const asdBlKey = this.asdStrategy.getASDBaselineKey()
-        const asdBlData = data[asdBlKey] ?? []
-        return this.asdStrategy.calculateExcess(asdData, asdBlData)
+        baseData = this.asdStrategy.calculateExcess(asdData, asdBlData)
+      } else {
+        baseData = asdData
       }
 
-      // Otherwise return the actual ASD data
-      return asdData
+      // Apply transformations based on config
+      if (config.showPercentage) {
+        // Percentage mode: divide by baseline
+        if (!config.cumulative) {
+          return this.percentageStrategy.transform(baseData, asdBlData)
+        }
+        if (!config.showTotal) {
+          return this.percentageStrategy.transform(
+            this.cumulativeStrategy.transform(baseData),
+            this.cumulativeStrategy.transform(asdBlData)
+          )
+        }
+        // Cumulative total percentage
+        return this.percentageStrategy.transform(
+          this.totalStrategy.transform(baseData),
+          this.totalStrategy.transform(asdBlData)
+        )
+      }
+
+      // Non-percentage mode
+      if (config.cumulative) {
+        if (config.showTotal) {
+          return this.totalStrategy.transform(baseData)
+        }
+        return this.cumulativeStrategy.transform(baseData)
+      }
+
+      return baseData
     }
 
     if (config.showPercentage) {

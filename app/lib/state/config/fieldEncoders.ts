@@ -32,9 +32,9 @@ export const stateFieldEncoders = {
   type: { key: 't' },
   chartType: { key: 'ct' },
   // View indicators - detected by viewDetector.ts, must be encoded when saving charts
+  // Note: ASD is a metric type (t=asd), not a view indicator
   isExcess: { key: 'e', encode: encodeBool, decode: decodeBool },
   isZScore: { key: 'zs', encode: encodeBool, decode: decodeBool },
-  isASD: { key: 'asd', encode: encodeBool, decode: decodeBool },
   chartStyle: { key: 'cs' },
   dateFrom: { key: 'df' },
   dateTo: { key: 'dt' },

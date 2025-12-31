@@ -10,22 +10,18 @@ import type { ViewType } from './viewTypes'
  * Detect view from URL parameters
  *
  * Priority order (highest to lowest):
- * 1. asd=1 → 'asd'
- * 2. zs=1 → 'zscore'
- * 3. e=1 → 'excess'
- * 4. view=xxx → if valid view name
- * 5. Default → 'mortality'
+ * 1. zs=1 → 'zscore'
+ * 2. e=1 → 'excess'
+ * 3. view=xxx → if valid view name
+ * 4. Default → 'mortality'
+ *
+ * Note: ASD is a metric type (t=asd), not a view
  *
  * @param params - URL query parameters
  * @returns The detected view type
  */
 export function detectView(params: Record<string, unknown>): ViewType {
-  // Priority 1: ASD (most specific)
-  if (params.asd === '1') {
-    return 'asd'
-  }
-
-  // Priority 2: Z-score
+  // Priority 1: Z-score
   if (params.zs === '1') {
     return 'zscore'
   }
@@ -53,5 +49,5 @@ export function detectView(params: Record<string, unknown>): ViewType {
  * Check if a string is a valid view type
  */
 function isValidView(view: string): boolean {
-  return ['mortality', 'excess', 'zscore', 'asd'].includes(view)
+  return ['mortality', 'excess', 'zscore'].includes(view)
 }

@@ -25,10 +25,10 @@ export class ASDTransformStrategy {
 
   /**
    * Get the ASD baseline key for expected age-standardized deaths
-   * @returns The ASD baseline key (always 'asd_bl' for baseline/expected)
+   * @returns The ASD baseline key (always 'asd_baseline' for baseline/expected)
    */
   getASDBaselineKey(): string {
-    return 'asd_bl'
+    return 'asd_baseline'
   }
 
   /**

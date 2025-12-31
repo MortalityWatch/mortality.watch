@@ -299,15 +299,42 @@ export class MetadataService {
     const dataType = this.chartTypeToDataType(chartType)
 
     // Get source -> age groups for each country
+    // Use data derivation: higher frequency data can be aggregated
     const byCountry = countries.map((country) => {
       const countryMap = new Map<string, Set<string>>()
-      const entries = this.metadata!.filter(
+
+      // First check the requested data type
+      let entries = this.metadata!.filter(
         e => e.iso3c === country && e.type === dataType
       )
+
+      // Data derivation: For yearly, also check monthly and weekly data
+      if (dataType === '1') {
+        const monthlyEntries = this.metadata!.filter(
+          e => e.iso3c === country && e.type === '2'
+        )
+        const weeklyEntries = this.metadata!.filter(
+          e => e.iso3c === country && e.type === '3'
+        )
+        entries = [...entries, ...monthlyEntries, ...weeklyEntries]
+      } else if (dataType === '2') {
+        // For monthly, also check weekly data
+        const weeklyEntries = this.metadata!.filter(
+          e => e.iso3c === country && e.type === '3'
+        )
+        entries = [...entries, ...weeklyEntries]
+      }
+
       for (const entry of entries) {
         const ageGroups = entry.ageGroups.filter(ag => ag !== 'all')
         if (ageGroups.length > 0) {
-          countryMap.set(entry.source, new Set(ageGroups))
+          // Merge age groups if source already exists
+          const existing = countryMap.get(entry.source)
+          if (existing) {
+            ageGroups.forEach(ag => existing.add(ag))
+          } else {
+            countryMap.set(entry.source, new Set(ageGroups))
+          }
         }
       }
       return countryMap
@@ -336,7 +363,11 @@ export class MetadataService {
       }
 
       if (commonAgeGroups.size > 0) {
-        commonSources.set(source, Array.from(commonAgeGroups))
+        // Filter to mutually exclusive age groups (avoid double-counting)
+        const filteredAgeGroups = selectMutuallyExclusiveAgeGroups(Array.from(commonAgeGroups))
+        if (filteredAgeGroups.length > 0) {
+          commonSources.set(source, filteredAgeGroups)
+        }
       }
     }
 
@@ -351,6 +382,145 @@ export class MetadataService {
     if (['monthly', 'quarterly'].includes(chartType)) return '2'
     return '3' // weekly variants
   }
+}
+
+/**
+ * Parse age range from age group string.
+ * Handles formats like "0-9", "80+", "85+"
+ */
+function parseAgeRange(ageGroup: string): { min: number, max: number } | null {
+  // Handle open-ended ranges like "80+", "85+"
+  const openMatch = ageGroup.match(/^(\d+)\+$/)
+  if (openMatch) {
+    return { min: parseInt(openMatch[1]!, 10), max: 999 }
+  }
+
+  // Handle ranges like "0-9", "10-19"
+  const rangeMatch = ageGroup.match(/^(\d+)-(\d+)$/)
+  if (rangeMatch) {
+    return { min: parseInt(rangeMatch[1]!, 10), max: parseInt(rangeMatch[2]!, 10) }
+  }
+
+  return null
+}
+
+/**
+ * Check if two age ranges overlap.
+ */
+function rangesOverlap(
+  a: { min: number, max: number },
+  b: { min: number, max: number }
+): boolean {
+  return a.min <= b.max && b.min <= a.max
+}
+
+/**
+ * Filter age groups to select a mutually exclusive set with complete coverage.
+ *
+ * When multiple overlapping age group sets exist (e.g., 10-year bands vs 25-year bands),
+ * select a complete set that covers from age 0 to the maximum age without gaps.
+ */
+function selectMutuallyExclusiveAgeGroups(ageGroups: string[]): string[] {
+  // Parse all age groups
+  const parsed: Array<{ name: string, range: { min: number, max: number } }> = []
+  for (const ag of ageGroups) {
+    const range = parseAgeRange(ag)
+    if (range) {
+      parsed.push({ name: ag, range })
+    }
+  }
+
+  if (parsed.length === 0) return ageGroups
+
+  // Find all possible complete coverage sets
+  // A complete set starts at 0 and has no gaps between consecutive ranges
+
+  // Sort by min age, then by max age (prefer ranges ending earlier for same start)
+  const sorted = [...parsed].sort((a, b) => {
+    if (a.range.min !== b.range.min) return a.range.min - b.range.min
+    return a.range.max - b.range.max
+  })
+
+  // Build complete sets using dynamic programming approach
+  // For each starting point (must be 0), find all valid paths to max age
+  const findCompleteSets = (): string[][] => {
+    const sets: string[][] = []
+
+    // Recursive helper to build sets
+    const buildSet = (currentMax: number, currentSet: string[], usedRanges: Set<string>): void => {
+      // Find ranges that can extend from currentMax
+      const candidates = sorted.filter(item =>
+        !usedRanges.has(item.name)
+        && item.range.min === currentMax + 1 // Must start exactly where previous ended
+      )
+
+      if (candidates.length === 0) {
+        // No more candidates - check if we have an open-ended range (999 = infinity)
+        const hasOpenEnd = currentSet.some((name) => {
+          const p = parsed.find(x => x.name === name)
+          return p && p.range.max === 999
+        })
+        if (hasOpenEnd && currentSet.length >= 2) {
+          sets.push([...currentSet])
+        }
+        return
+      }
+
+      for (const candidate of candidates) {
+        const newSet = [...currentSet, candidate.name]
+        const newUsed = new Set(usedRanges)
+        newUsed.add(candidate.name)
+
+        if (candidate.range.max === 999) {
+          // This is an open-ended range - we've completed a set
+          sets.push(newSet)
+        } else {
+          // Continue building
+          buildSet(candidate.range.max, newSet, newUsed)
+        }
+      }
+    }
+
+    // Start with ranges beginning at 0
+    const startersAt0 = sorted.filter(item => item.range.min === 0)
+    for (const starter of startersAt0) {
+      const usedRanges = new Set([starter.name])
+      if (starter.range.max === 999) {
+        // Single range covering everything (unlikely but possible)
+        sets.push([starter.name])
+      } else {
+        buildSet(starter.range.max, [starter.name], usedRanges)
+      }
+    }
+
+    return sets
+  }
+
+  const completeSets = findCompleteSets()
+
+  if (completeSets.length === 0) {
+    // Fallback: no complete sets found, use greedy approach
+    console.warn('[MetadataService] No complete age group coverage found, using greedy selection')
+    const result: string[] = []
+    const sortedByMin = [...parsed].sort((a, b) => a.range.min - b.range.min)
+    for (const item of sortedByMin) {
+      const overlapsSelected = result.some((selected) => {
+        const selectedParsed = parsed.find(p => p.name === selected)
+        return selectedParsed && rangesOverlap(item.range, selectedParsed.range)
+      })
+      if (!overlapsSelected) {
+        result.push(item.name)
+      }
+    }
+    return result
+  }
+
+  // Choose the set with the most groups (finest granularity)
+  completeSets.sort((a, b) => b.length - a.length)
+  const best = completeSets[0]!
+
+  console.log('[MetadataService] Selected complete age group set:', best, 'from', completeSets.length, 'candidates')
+  return best
 }
 
 // Singleton instance

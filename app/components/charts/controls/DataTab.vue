@@ -87,9 +87,10 @@ const viewModel = computed({
       />
       <template #help>
         <div class="text-xs text-gray-700 dark:text-gray-300">
-          <strong>CMR:</strong> Crude Mortality Rate per 100k<br>
-          <strong>ASMR:</strong> Age-Standardized Mortality Rate per 100k<br>
           <strong>Life Expectancy:</strong> Expected years of life at birth<br>
+          <strong>ASD:</strong> Age-Standardized Deaths (Levitt method)<br>
+          <strong>ASMR:</strong> Age-Standardized Mortality Rate per 100k<br>
+          <strong>CMR:</strong> Crude Mortality Rate per 100k<br>
           <strong>Deaths:</strong> Total death counts<br>
           <strong>Population:</strong> Total population size
         </div>

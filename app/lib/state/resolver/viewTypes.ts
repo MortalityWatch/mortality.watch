@@ -20,7 +20,7 @@ export type ChartStyle = 'line' | 'bar' | 'matrix'
 /**
  * Metric types
  */
-export type MetricType = 'cmr' | 'asmr' | 'le' | 'deaths' | 'population'
+export type MetricType = 'cmr' | 'asmr' | 'asd' | 'le' | 'deaths' | 'population'
 
 /**
  * Conditions for conditional visibility
@@ -93,7 +93,6 @@ export interface ExplorerStateValues {
   // View indicators
   isExcess: boolean
   isZScore: boolean
-  isASD: boolean
   showPredictionInterval: boolean
   showBaseline: boolean
   baselineMethod: string

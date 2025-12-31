@@ -286,6 +286,7 @@ export const getFilteredChartData = async (
     isMatrixChartStyle,
     isErrorBarType,
     isAsmrType,
+    isASD: type === 'asd',
     isPopulationType,
     isDeathsType,
     dateFrom,

@@ -6,7 +6,7 @@ import { eq, and } from 'drizzle-orm'
  * GET /api/charts/mine/:hash
  *
  * Check if the authenticated user has a saved chart with the given hash (chartId).
- * Returns the saved chart if found, or 404 if not.
+ * Returns the saved chart if found, or null if not.
  *
  * Used by explorer to detect if current state is already saved (show "Update" vs "Save").
  */
@@ -39,12 +39,6 @@ export default defineEventHandler(async (event) => {
     )
     .limit(1)
 
-  if (result.length === 0) {
-    throw createError({
-      statusCode: 404,
-      message: 'No saved chart found with this configuration'
-    })
-  }
-
-  return result[0]
+  // Return null if not found (this is expected behavior, not an error)
+  return result[0] || null
 })

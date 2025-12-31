@@ -310,7 +310,6 @@ export function useExplorerState() {
       standardPopulation: standardPopulation.value,
       isExcess: isExcess.value,
       isZScore: isZScore.value,
-      isASD: isASD.value,
       showBaseline: showBaseline.value,
       showPredictionInterval: showPredictionInterval.value,
       cumulative: cumulative.value,

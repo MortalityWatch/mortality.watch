@@ -14,6 +14,7 @@ import {
   type ChartRenderState
 } from '../../app/lib/state/resolution'
 import { shouldShowLabels } from '../../app/lib/chart/labelVisibility'
+import { metadataService } from '../../app/services/metadataService'
 
 /**
  * Chart PNG generation helper functions
@@ -142,6 +143,221 @@ export function getDataKey(type: string): string {
   return typeMap[type] || 'population'
 }
 
+interface ASDResult {
+  asd: (number | null)[]
+  asd_bl: (number | null)[]
+  lower: (number | null)[]
+  upper: (number | null)[]
+  zscore: (number | null)[]
+  labels: string[]
+}
+
+/**
+ * Fetch ASD data from the stats API for SSR
+ * This mirrors the client-side useASDData logic
+ */
+async function fetchASDDataForSSR(
+  country: string,
+  chartType: ChartType,
+  source: string,
+  ageGroups: string[],
+  baselineMethod: string,
+  baselineDateFrom: string | undefined,
+  baselineDateTo: string | undefined,
+  rawData: Awaited<ReturnType<typeof dataLoader.loadMortalityData>>
+): Promise<ASDResult | null> {
+  const config = useRuntimeConfig()
+  const statsUrl = ((config.public?.statsUrl as string) || 'https://stats.mortality.watch').replace(/\/+$/, '')
+
+  // Get all unique dates across age groups and filter by source
+  const allDates = new Set<string>()
+  const ageGroupDataMap = new Map<string, Map<string, { deaths: number | null, population: number | null }>>()
+
+  for (const ageGroup of ageGroups) {
+    const ageData = rawData[ageGroup]?.[country]
+    if (!ageData) continue
+
+    const dateMap = new Map<string, { deaths: number | null, population: number | null }>()
+    for (const row of ageData) {
+      if (row.source === source) {
+        allDates.add(row.date)
+        dateMap.set(row.date, { deaths: row.deaths ?? null, population: row.population ?? null })
+      }
+    }
+    ageGroupDataMap.set(ageGroup, dateMap)
+  }
+
+  if (allDates.size === 0) {
+    console.warn(`[SSR ASD] No data found for source "${source}"`)
+    return null
+  }
+
+  // Sort dates
+  const sortedDates = Array.from(allDates).sort()
+
+  // Build age_groups array for the API
+  const ageGroupsPayload: Array<{ deaths: (number | null)[], population: (number | null)[] }> = []
+  const validAgeGroups: string[] = []
+  const MIN_VALID_DATA_POINTS = 3
+
+  for (const ageGroup of ageGroups) {
+    const dateMap = ageGroupDataMap.get(ageGroup)
+    if (!dateMap) continue
+
+    const deaths: (number | null)[] = []
+    const population: (number | null)[] = []
+
+    for (const date of sortedDates) {
+      const row = dateMap.get(date)
+      if (row) {
+        deaths.push(row.deaths)
+        population.push(row.population)
+      } else {
+        deaths.push(null)
+        population.push(null)
+      }
+    }
+
+    // Count valid data points
+    const validCount = deaths.filter((d, i) => d !== null && population[i] !== null).length
+    if (validCount >= MIN_VALID_DATA_POINTS) {
+      ageGroupsPayload.push({ deaths, population })
+      validAgeGroups.push(ageGroup)
+    }
+  }
+
+  if (ageGroupsPayload.length < 2) {
+    console.warn('[SSR ASD] Insufficient age-stratified data for ASD calculation')
+    return null
+  }
+
+  // Determine baseline indices
+  let bs = 1
+  let be = Math.min(sortedDates.length, 5)
+
+  if (baselineDateFrom) {
+    const idx = sortedDates.indexOf(baselineDateFrom)
+    if (idx >= 0) bs = idx + 1
+  }
+  if (baselineDateTo) {
+    const idx = sortedDates.indexOf(baselineDateTo)
+    if (idx >= 0) be = idx + 1
+  }
+
+  bs = Math.max(1, Math.min(bs, sortedDates.length))
+  be = Math.max(bs, Math.min(be, sortedDates.length))
+
+  // Call the stats API
+  const endpoint = `${statsUrl}/asd`
+  const body = {
+    age_groups: ageGroupsPayload,
+    h: 0,
+    m: baselineMethod,
+    t: baselineMethod === 'lin_reg' ? 1 : 0,
+    bs,
+    be
+  }
+
+  try {
+    const response = await $fetch<ASDResult>(endpoint, {
+      method: 'POST',
+      body
+    })
+
+    return {
+      asd: response.asd,
+      asd_bl: response.asd_bl,
+      lower: response.lower,
+      upper: response.upper,
+      zscore: response.zscore,
+      labels: sortedDates
+    }
+  } catch (error) {
+    console.error('[SSR ASD] Failed to fetch from stats API:', error)
+    return null
+  }
+}
+
+/**
+ * Inject ASD data into allChartData for SSR
+ */
+async function injectASDDataForSSR(
+  state: ChartRenderState,
+  allChartData: AllChartData,
+  rawData: Awaited<ReturnType<typeof dataLoader.loadMortalityData>>
+): Promise<void> {
+  if (state.type !== 'asd') return
+
+  // Ensure metadata is loaded
+  await metadataService.load()
+
+  const chartType = state.chartType as ChartType
+
+  // Get available sources with age groups
+  const sourcesMap = metadataService.getCommonSourcesWithAgeGroups(state.countries, chartType)
+  if (sourcesMap.size === 0) {
+    console.warn('[SSR ASD] No sources with age groups available')
+    return
+  }
+
+  // Pick the first available source
+  const [source, ageGroups] = Array.from(sourcesMap.entries())[0]!
+  if (!ageGroups || ageGroups.length === 0) {
+    console.warn('[SSR ASD] No age groups available for source:', source)
+    return
+  }
+
+  console.log('[SSR ASD] Selected source:', source, 'Age groups:', ageGroups)
+
+  const chartLabels = allChartData.labels
+
+  for (const country of state.countries) {
+    const asdResult = await fetchASDDataForSSR(
+      country,
+      chartType,
+      source,
+      ageGroups,
+      state.baselineMethod,
+      state.baselineDateFrom,
+      state.baselineDateTo,
+      rawData
+    )
+
+    if (!asdResult) continue
+
+    // Create alignment map
+    const asdLabelToIndex = new Map<string, number>()
+    asdResult.labels.forEach((label, idx) => asdLabelToIndex.set(label, idx))
+
+    // Align ASD data to chart labels
+    const alignArray = (arr: (number | null)[]): (number | null)[] => {
+      return chartLabels.map((label) => {
+        const idx = asdLabelToIndex.get(label)
+        return idx !== undefined ? (arr[idx] ?? null) : null
+      })
+    }
+
+    const alignedAsd = alignArray(asdResult.asd)
+    const alignedAsdBl = alignArray(asdResult.asd_bl)
+    const alignedLower = alignArray(asdResult.lower)
+    const alignedUpper = alignArray(asdResult.upper)
+    const alignedZscore = alignArray(asdResult.zscore)
+
+    // Inject into allChartData
+    for (const ag of Object.keys(allChartData.data)) {
+      const countryData = allChartData.data[ag]?.[country]
+      if (countryData) {
+        const record = countryData as unknown as Record<string, unknown>
+        record['asd'] = alignedAsd
+        record['asd_baseline'] = alignedAsdBl
+        record['asd_baseline_lower'] = alignedLower
+        record['asd_baseline_upper'] = alignedUpper
+        record['asd_zscore'] = alignedZscore
+      }
+    }
+  }
+}
+
 /**
  * Fetch and process all chart data required for rendering using DataLoaderService
  * @param state - Resolved chart state
@@ -212,6 +428,11 @@ export async function fetchChartData(state: ChartRenderState) {
     baselineDateTo: state.baselineDateTo,
     keys: baseKeys
   })
+
+  // Inject ASD data if type is 'asd'
+  if (state.type === 'asd') {
+    await injectASDDataForSSR(state, allChartData, rawData)
+  }
 
   return { allCountries, allLabels, allChartData, isAsmrType }
 }
