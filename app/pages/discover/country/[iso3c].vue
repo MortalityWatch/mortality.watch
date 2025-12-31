@@ -52,20 +52,39 @@
     <UCard v-else>
       <UTabs
         v-model="activeTab"
-        :items="metricTabs"
+        :items="availableTabs"
       >
         <!-- LE Tab -->
         <template #le>
-          <MetricPresetsGrid
+          <DiscoverMetricPresetsGrid
             metric="le"
             :country="iso3c"
             :country-name="countryName"
           />
         </template>
 
-        <!-- ASD Tab -->
+        <!-- ASD Tab (Pro feature) -->
         <template #asd>
-          <MetricPresetsGrid
+          <div
+            v-if="!can('AGE_STANDARDIZED')"
+            class="py-12 text-center"
+          >
+            <UIcon
+              name="i-heroicons-lock-closed"
+              class="text-gray-400 size-12 mx-auto mb-4"
+            />
+            <p class="text-gray-600 dark:text-gray-400 mb-4">
+              Age-Standardized Deaths is a Pro feature
+            </p>
+            <UButton
+              :to="getFeatureUpgradeUrl('AGE_STANDARDIZED')"
+              color="primary"
+            >
+              Upgrade to Pro
+            </UButton>
+          </div>
+          <DiscoverMetricPresetsGrid
+            v-else
             metric="asd"
             :country="iso3c"
             :country-name="countryName"
@@ -74,7 +93,7 @@
 
         <!-- ASMR Tab -->
         <template #asmr>
-          <MetricPresetsGrid
+          <DiscoverMetricPresetsGrid
             metric="asmr"
             :country="iso3c"
             :country-name="countryName"
@@ -83,7 +102,7 @@
 
         <!-- CMR Tab -->
         <template #cmr>
-          <MetricPresetsGrid
+          <DiscoverMetricPresetsGrid
             metric="cmr"
             :country="iso3c"
             :country-name="countryName"
@@ -92,7 +111,7 @@
 
         <!-- Deaths Tab -->
         <template #deaths>
-          <MetricPresetsGrid
+          <DiscoverMetricPresetsGrid
             metric="deaths"
             :country="iso3c"
             :country-name="countryName"
@@ -101,7 +120,7 @@
 
         <!-- Population Tab -->
         <template #population>
-          <MetricPresetsGrid
+          <DiscoverMetricPresetsGrid
             metric="population"
             :country="iso3c"
             :country-name="countryName"
@@ -115,11 +134,12 @@
 <script setup lang="ts">
 import type { Country } from '@/model'
 import { loadCountryMetadata } from '@/lib/data/queries'
-import { getMetricTabs } from '@/lib/discover/constants'
+import { getMetricTabs, metricInfo } from '@/lib/discover/constants'
 import { getFlagEmoji } from '@/lib/discover/countryUtils'
 
 const route = useRoute()
 const router = useRouter()
+const { can, getFeatureUpgradeUrl } = useFeatureAccess()
 
 // Get ISO3 code from route
 const iso3c = computed(() => route.params.iso3c as string)
@@ -143,6 +163,32 @@ onMounted(async () => {
   }
 })
 
+// Check if country has age-stratified data
+const hasAgeData = computed(() => {
+  return countryData.value?.has_asmr() ?? false
+})
+
+// Get available tabs based on country data
+const availableTabs = computed(() => {
+  const allTabs = getMetricTabs()
+
+  // Filter out ASMR and ASD if country doesn't have age-stratified data
+  if (!hasAgeData.value) {
+    return allTabs.filter(tab => tab.value !== 'asmr' && tab.value !== 'asd')
+  }
+
+  // Add Pro badge to ASD tab if user doesn't have access
+  return allTabs.map((tab) => {
+    if (tab.value === 'asd' && !can('AGE_STANDARDIZED')) {
+      return {
+        ...tab,
+        label: `${metricInfo.asd.label} (Pro)`
+      }
+    }
+    return tab
+  })
+})
+
 // Watch tab changes to update URL
 watch(activeTab, (newTab) => {
   if (newTab === 'le') {
@@ -161,9 +207,6 @@ const countryName = computed(() => {
 
 // Flag emoji
 const flagEmoji = computed(() => getFlagEmoji(iso3c.value))
-
-// Metric tabs
-const metricTabs = getMetricTabs()
 
 // SEO
 useSeoMeta({

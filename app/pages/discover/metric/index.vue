@@ -29,48 +29,123 @@
 
     <!-- Metric Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <NuxtLink
+      <template
         v-for="metric in metrics"
         :key="metric"
-        :to="`/discover/metric/${metric}`"
-        class="block"
       >
-        <UCard class="h-full hover:shadow-lg transition-shadow cursor-pointer hover:border-primary-500 dark:hover:border-primary-400">
-          <div class="flex items-start gap-4">
-            <div class="flex-shrink-0">
-              <div class="w-12 h-12 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+        <!-- Pro-gated metric (ASD) -->
+        <NuxtLink
+          v-if="isProMetric(metric)"
+          :to="can('AGE_STANDARDIZED') ? `/discover/metric/${metric}` : getFeatureUpgradeUrl('AGE_STANDARDIZED')"
+          class="block"
+        >
+          <UCard
+            class="h-full transition-shadow cursor-pointer"
+            :class="can('AGE_STANDARDIZED') ? 'hover:shadow-lg hover:border-primary-500 dark:hover:border-primary-400' : 'opacity-70'"
+          >
+            <div class="flex items-start gap-4">
+              <div class="flex-shrink-0">
+                <div
+                  class="w-12 h-12 rounded-lg flex items-center justify-center relative"
+                  :class="can('AGE_STANDARDIZED') ? 'bg-primary-100 dark:bg-primary-900/30' : 'bg-gray-100 dark:bg-gray-800'"
+                >
+                  <Icon
+                    :name="metricInfo[metric].icon"
+                    class="w-6 h-6"
+                    :class="can('AGE_STANDARDIZED') ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'"
+                  />
+                  <!-- Lock overlay -->
+                  <div
+                    v-if="!can('AGE_STANDARDIZED')"
+                    class="absolute inset-0 flex items-center justify-center bg-gray-900/10 dark:bg-gray-900/20 rounded-lg"
+                  >
+                    <UIcon
+                      name="i-heroicons-lock-closed"
+                      class="text-gray-500 size-4"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    {{ metricInfo[metric].label }}
+                  </h3>
+                  <UBadge
+                    v-if="!can('AGE_STANDARDIZED')"
+                    color="primary"
+                    variant="soft"
+                    size="xs"
+                  >
+                    Pro
+                  </UBadge>
+                </div>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  {{ metricInfo[metric].description }}
+                </p>
+                <div class="flex items-center gap-2">
+                  <UBadge
+                    color="primary"
+                    variant="subtle"
+                    size="xs"
+                  >
+                    {{ getPresetCountByMetric(metric) }} charts
+                  </UBadge>
+                </div>
+              </div>
+              <div class="flex-shrink-0">
                 <Icon
-                  :name="metricInfo[metric].icon"
-                  class="w-6 h-6 text-primary-600 dark:text-primary-400"
+                  name="i-lucide-chevron-right"
+                  class="w-5 h-5 text-gray-400"
                 />
               </div>
             </div>
-            <div class="flex-1 min-w-0">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
-                {{ metricInfo[metric].label }}
-              </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                {{ metricInfo[metric].description }}
-              </p>
-              <div class="flex items-center gap-2">
-                <UBadge
-                  color="primary"
-                  variant="subtle"
-                  size="xs"
-                >
-                  {{ getPresetCountByMetric(metric) }} charts
-                </UBadge>
+          </UCard>
+        </NuxtLink>
+
+        <!-- Regular metric -->
+        <NuxtLink
+          v-else
+          :to="`/discover/metric/${metric}`"
+          class="block"
+        >
+          <UCard class="h-full hover:shadow-lg transition-shadow cursor-pointer hover:border-primary-500 dark:hover:border-primary-400">
+            <div class="flex items-start gap-4">
+              <div class="flex-shrink-0">
+                <div class="w-12 h-12 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                  <Icon
+                    :name="metricInfo[metric].icon"
+                    class="w-6 h-6 text-primary-600 dark:text-primary-400"
+                  />
+                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                  {{ metricInfo[metric].label }}
+                </h3>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  {{ metricInfo[metric].description }}
+                </p>
+                <div class="flex items-center gap-2">
+                  <UBadge
+                    color="primary"
+                    variant="subtle"
+                    size="xs"
+                  >
+                    {{ getPresetCountByMetric(metric) }} charts
+                  </UBadge>
+                </div>
+              </div>
+              <div class="flex-shrink-0">
+                <Icon
+                  name="i-lucide-chevron-right"
+                  class="w-5 h-5 text-gray-400"
+                />
               </div>
             </div>
-            <div class="flex-shrink-0">
-              <Icon
-                name="i-lucide-chevron-right"
-                class="w-5 h-5 text-gray-400"
-              />
-            </div>
-          </div>
-        </UCard>
-      </NuxtLink>
+          </UCard>
+        </NuxtLink>
+      </template>
     </div>
 
     <!-- Total count -->
@@ -81,8 +156,15 @@
 </template>
 
 <script setup lang="ts">
-import { metrics, getPresetCountByMetric } from '@/lib/discover/presets'
+import { type Metric, metrics, getPresetCountByMetric } from '@/lib/discover/presets'
 import { metricInfo } from '@/lib/discover/constants'
+
+const { can, getFeatureUpgradeUrl } = useFeatureAccess()
+
+// Check if metric is Pro-gated
+function isProMetric(metric: Metric): boolean {
+  return metric === 'asd'
+}
 
 useSeoMeta({
   title: 'Explore by Metric - Mortality Watch',

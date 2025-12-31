@@ -178,13 +178,25 @@ onMounted(async () => {
   }
 })
 
-// Filtered countries based on region
+// Check if metric requires age-stratified data (ASMR or ASD)
+const requiresAgeData = computed(() => {
+  return metric.value === 'asmr' || metric.value === 'asd'
+})
+
+// Filtered countries based on region and data availability
 const filteredCountries = computed(() => {
+  let result = allCountries.value
+
+  // Filter by age-stratified data availability for ASMR/ASD
+  if (requiresAgeData.value) {
+    result = result.filter(c => c.has_asmr())
+  }
+
   if (selectedRegion.value === 'all') {
     // Show all countries but exclude sub-national regions by default
-    return allCountries.value.filter(c => !isSubNationalRegion(c.iso3c))
+    return result.filter(c => !isSubNationalRegion(c.iso3c))
   }
-  return allCountries.value.filter(c =>
+  return result.filter(c =>
     shouldShowCountry(c.iso3c, selectedRegion.value)
   )
 })
