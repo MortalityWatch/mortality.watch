@@ -84,6 +84,13 @@ export function useExplorerHelpers(
   const isDeathsType = () => type.value.includes('deaths')
 
   /**
+   * Checks if the current data type is age-standardized deaths (ASD).
+   *
+   * @returns True if the type is 'asd'
+   */
+  const isASDType = () => type.value === 'asd'
+
+  /**
    * Checks if error bars should be displayed.
    *
    * Error bars are shown on bar charts when in excess mortality mode.
@@ -215,6 +222,7 @@ export function useExplorerHelpers(
 
   return {
     isAsmrType,
+    isASDType,
     isPopulationType,
     isLifeExpectancyType,
     isDeathsType,

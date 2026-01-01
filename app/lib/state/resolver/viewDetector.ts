@@ -15,31 +15,33 @@ import type { ViewType } from './viewTypes'
  * 3. view=xxx → if valid view name
  * 4. Default → 'mortality'
  *
+ * Note: ASD is a metric type (t=asd), not a view
+ *
  * @param params - URL query parameters
  * @returns The detected view type
  */
 export function detectView(params: Record<string, unknown>): ViewType {
-  // Priority 1: Z-score (most specific)
+  // Priority 1: Z-score
   if (params.zs === '1') {
     return 'zscore'
   }
 
-  // Priority 2: Excess (backward compat with e=1)
+  // Priority 3: Excess (backward compat with e=1)
   if (params.e === '1') {
     return 'excess'
   }
 
-  // Priority 2.5: Backward compat with old isExcess param
+  // Priority 3.5: Backward compat with old isExcess param
   if (params.isExcess === 'true') {
     return 'excess'
   }
 
-  // Priority 3: Explicit view parameter (future-proof)
+  // Priority 4: Explicit view parameter (future-proof)
   if (params.view && typeof params.view === 'string' && isValidView(params.view)) {
     return params.view as ViewType
   }
 
-  // Priority 4: Default
+  // Priority 5: Default
   return 'mortality'
 }
 

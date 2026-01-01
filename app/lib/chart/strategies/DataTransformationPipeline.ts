@@ -8,6 +8,7 @@ import { PercentageTransformStrategy } from './PercentageTransformStrategy'
 import { CumulativeTransformStrategy } from './CumulativeTransformStrategy'
 import { TotalTransformStrategy } from './TotalTransformStrategy'
 import { ZScoreTransformStrategy } from './ZScoreTransformStrategy'
+import { ASDTransformStrategy } from './ASDTransformStrategy'
 
 interface TransformConfig {
   showPercentage: boolean
@@ -15,6 +16,7 @@ interface TransformConfig {
   showTotal: boolean
   showCumPi: boolean
   isAsmrType: boolean
+  isASD?: boolean
   view?: string
 }
 
@@ -72,6 +74,7 @@ export class DataTransformationPipeline {
   private cumulativeStrategy = new CumulativeTransformStrategy()
   private totalStrategy = new TotalTransformStrategy()
   private zscoreStrategy = new ZScoreTransformStrategy()
+  private asdStrategy = new ASDTransformStrategy()
 
   /**
    * Transform simple data (non-error-bar data)
@@ -90,6 +93,55 @@ export class DataTransformationPipeline {
       const zscoreKey = this.zscoreStrategy.getZScoreKey(config.isAsmrType, key)
       const zscoreData = data[zscoreKey] ?? []
       return zscoreData
+    }
+
+    // ASD metric: Use pre-calculated ASD data from R stats API
+    // ASD data shows age-standardized deaths using the Levitt method
+    if (config.isASD && !key.includes('baseline') && !key.includes('_lower') && !key.includes('_upper')) {
+      // For ASD metric, we use the 'asd' field which contains actual age-standardized deaths
+      // The baseline 'asd_bl' contains expected deaths based on baseline mortality rate
+      const asdKey = this.asdStrategy.getASDKey()
+      const asdData = data[asdKey] ?? []
+
+      const asdBlKey = this.asdStrategy.getASDBaselineKey()
+      const asdBlData = data[asdBlKey] ?? []
+
+      // Calculate base data (excess or raw)
+      let baseData: number[]
+      if (key.includes('excess')) {
+        baseData = this.asdStrategy.calculateExcess(asdData, asdBlData)
+      } else {
+        baseData = asdData
+      }
+
+      // Apply transformations based on config
+      if (config.showPercentage) {
+        // Percentage mode: divide by baseline
+        if (!config.cumulative) {
+          return this.percentageStrategy.transform(baseData, asdBlData)
+        }
+        if (!config.showTotal) {
+          return this.percentageStrategy.transform(
+            this.cumulativeStrategy.transform(baseData),
+            this.cumulativeStrategy.transform(asdBlData)
+          )
+        }
+        // Cumulative total percentage
+        return this.percentageStrategy.transform(
+          this.totalStrategy.transform(baseData),
+          this.totalStrategy.transform(asdBlData)
+        )
+      }
+
+      // Non-percentage mode
+      if (config.cumulative) {
+        if (config.showTotal) {
+          return this.totalStrategy.transform(baseData)
+        }
+        return this.cumulativeStrategy.transform(baseData)
+      }
+
+      return baseData
     }
 
     if (config.showPercentage) {

@@ -71,6 +71,7 @@ function formatDateRange(dateFrom: string | undefined, dateTo: string | undefine
 
 /**
  * Get readable metric name from type value with view mode
+ * Note: ASD is a metric type, not a view. Handle it specially.
  */
 function getMetricName(type: string, view?: 'mortality' | 'excess' | 'zscore'): string {
   const typeConfig = types.find(t => t.value === type)
@@ -196,7 +197,7 @@ export function generateExplorerTitle(params: {
   const parts: string[] = []
 
   // Determine view mode if not explicitly provided
-  const effectiveView = view || (isExcess ? 'excess' : 'mortality')
+  const effectiveView = view || (isExcess ? 'excess' : 'mortality') as 'mortality' | 'excess' | 'zscore'
 
   // Metric name
   parts.push(getMetricName(type, effectiveView))
@@ -323,7 +324,7 @@ export function generateExplorerDescription(params: {
   const parts: string[] = []
 
   // Determine effective view
-  const effectiveView = view || (isExcess ? 'excess' : 'mortality')
+  const effectiveView = view || (isExcess ? 'excess' : 'mortality') as 'mortality' | 'excess' | 'zscore'
 
   // Get metric info
   const typeConfig = types.find(t => t.value === type)

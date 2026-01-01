@@ -28,6 +28,7 @@ export interface DataTransformationConfig {
     chartType: string
     isExcess: boolean
     isAsmrType: boolean
+    isASD: boolean
     isBarChartStyle: boolean
     isMatrixChartStyle: boolean
     isErrorBarType: boolean
@@ -120,6 +121,7 @@ export interface ChartFilterConfig {
   isMatrixChartStyle: boolean
   isErrorBarType: boolean
   isAsmrType: boolean
+  isASD: boolean
   isPopulationType: boolean
   isDeathsType: boolean
 

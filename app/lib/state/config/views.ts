@@ -104,7 +104,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       }
     ],
 
-    compatibleMetrics: ['cmr', 'asmr', 'le', 'deaths']
+    compatibleMetrics: ['cmr', 'asmr', 'asd', 'le', 'deaths']
   },
 
   /**
@@ -171,7 +171,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       }
     ],
 
-    compatibleMetrics: ['cmr', 'asmr', 'deaths'] // no LE, no population
+    compatibleMetrics: ['cmr', 'asmr', 'asd', 'deaths'] // no LE, no population
   },
 
   /**
@@ -242,7 +242,10 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       }
     ],
 
-    compatibleMetrics: ['cmr', 'asmr', 'deaths'], // All metrics that support baselines
+    compatibleMetrics: ['cmr', 'asmr', 'asd', 'deaths'], // All metrics that support baselines
     compatibleChartStyles: ['line', 'bar'] // No matrix for z-scores
   }
+
+  // Note: ASD is a metric type (not a view), so it doesn't have a view config here.
+  // ASD can be used with any of the views above (mortality, excess, zscore).
 }

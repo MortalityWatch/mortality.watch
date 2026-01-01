@@ -252,6 +252,222 @@ export class MetadataService {
   }
 
   /**
+   * Get sources with their age groups for ASD calculation
+   *
+   * Returns a map of source -> age groups (excluding "all")
+   * For ASD, we need all age groups from ONE source to properly sum to 100%
+   */
+  getSourcesWithAgeGroups(
+    country: string,
+    chartType: string
+  ): Map<string, string[]> {
+    if (!this.metadata) throw new Error('Metadata not loaded')
+
+    const dataType = this.chartTypeToDataType(chartType)
+    const result = new Map<string, string[]>()
+
+    // Find entries for this country and type
+    const entries = this.metadata.filter(
+      e => e.iso3c === country && e.type === dataType
+    )
+
+    // Group age groups by source
+    for (const entry of entries) {
+      // Exclude "all" - we only want individual age groups for ASD
+      const ageGroups = entry.ageGroups.filter(ag => ag !== 'all')
+      if (ageGroups.length > 0) {
+        result.set(entry.source, ageGroups)
+      }
+    }
+
+    return result
+  }
+
+  /**
+   * Get sources with age groups that are available across ALL selected countries
+   *
+   * For multi-country ASD, we need sources that exist for all countries
+   * with consistent age group availability
+   */
+  getCommonSourcesWithAgeGroups(
+    countries: string[],
+    chartType: string
+  ): Map<string, string[]> {
+    if (!this.metadata) throw new Error('Metadata not loaded')
+    if (countries.length === 0) return new Map()
+
+    const dataType = this.chartTypeToDataType(chartType)
+
+    // Get source -> age groups for each country
+    // Use data derivation: higher frequency data can be aggregated
+    const byCountry = countries.map((country) => {
+      const countryMap = new Map<string, Set<string>>()
+
+      // First check the requested data type
+      let entries = this.metadata!.filter(
+        e => e.iso3c === country && e.type === dataType
+      )
+
+      // Data derivation: For yearly, also check monthly and weekly data
+      if (dataType === '1') {
+        const monthlyEntries = this.metadata!.filter(
+          e => e.iso3c === country && e.type === '2'
+        )
+        const weeklyEntries = this.metadata!.filter(
+          e => e.iso3c === country && e.type === '3'
+        )
+        entries = [...entries, ...monthlyEntries, ...weeklyEntries]
+      } else if (dataType === '2') {
+        // For monthly, also check weekly data
+        const weeklyEntries = this.metadata!.filter(
+          e => e.iso3c === country && e.type === '3'
+        )
+        entries = [...entries, ...weeklyEntries]
+      }
+
+      for (const entry of entries) {
+        const ageGroups = entry.ageGroups.filter(ag => ag !== 'all')
+        if (ageGroups.length > 0) {
+          // Merge age groups if source already exists
+          const existing = countryMap.get(entry.source)
+          if (existing) {
+            ageGroups.forEach(ag => existing.add(ag))
+          } else {
+            countryMap.set(entry.source, new Set(ageGroups))
+          }
+        }
+      }
+      return countryMap
+    })
+
+    // Find common sources
+    const firstCountrySources = byCountry[0]
+    if (!firstCountrySources) return new Map()
+
+    const commonSources = new Map<string, string[]>()
+
+    for (const [source, ageGroups] of firstCountrySources) {
+      // Check if this source exists for all countries
+      const existsInAll = byCountry.every(countryMap => countryMap.has(source))
+      if (!existsInAll) continue
+
+      // Get intersection of age groups across all countries
+      let commonAgeGroups = new Set(ageGroups)
+      for (const countryMap of byCountry) {
+        const countryAgeGroups = countryMap.get(source)
+        if (countryAgeGroups) {
+          commonAgeGroups = new Set(
+            [...commonAgeGroups].filter(ag => countryAgeGroups.has(ag))
+          )
+        }
+      }
+
+      if (commonAgeGroups.size > 0) {
+        // Filter to mutually exclusive age groups (avoid double-counting)
+        const filteredAgeGroups = selectMutuallyExclusiveAgeGroups(
+          Array.from(commonAgeGroups),
+          `common source "${source}"`
+        )
+        if (filteredAgeGroups.length > 0) {
+          commonSources.set(source, filteredAgeGroups)
+        }
+      }
+    }
+
+    return commonSources
+  }
+
+  /**
+   * Get the best source for a single country for ASD calculation.
+   *
+   * "Best" means: has age-stratified data and longest history (earliest minDate).
+   * This allows each country to use its optimal source independently.
+   *
+   * @returns { source: string, ageGroups: string[], minDate: string } or null if none available
+   */
+  getBestSourceForCountry(
+    country: string,
+    chartType: string
+  ): { source: string, ageGroups: string[], minDate: string } | null {
+    if (!this.metadata) throw new Error('Metadata not loaded')
+
+    const dataType = this.chartTypeToDataType(chartType)
+
+    // Collect all entries for this country, including derived types
+    let entries = this.metadata.filter(
+      e => e.iso3c === country && e.type === dataType
+    )
+
+    // Data derivation: For yearly, also check monthly and weekly data
+    if (dataType === '1') {
+      const monthlyEntries = this.metadata.filter(
+        e => e.iso3c === country && e.type === '2'
+      )
+      const weeklyEntries = this.metadata.filter(
+        e => e.iso3c === country && e.type === '3'
+      )
+      entries = [...entries, ...monthlyEntries, ...weeklyEntries]
+    } else if (dataType === '2') {
+      const weeklyEntries = this.metadata.filter(
+        e => e.iso3c === country && e.type === '3'
+      )
+      entries = [...entries, ...weeklyEntries]
+    }
+
+    // Build source info with age groups and earliest date
+    const sourceInfo = new Map<string, { ageGroups: Set<string>, minDate: string }>()
+
+    for (const entry of entries) {
+      const ageGroups = entry.ageGroups.filter(ag => ag !== 'all')
+      if (ageGroups.length === 0) continue
+
+      const existing = sourceInfo.get(entry.source)
+      if (existing) {
+        ageGroups.forEach(ag => existing.ageGroups.add(ag))
+        // Keep the earliest minDate
+        if (entry.minDate < existing.minDate) {
+          existing.minDate = entry.minDate
+        }
+      } else {
+        sourceInfo.set(entry.source, {
+          ageGroups: new Set(ageGroups),
+          minDate: entry.minDate
+        })
+      }
+    }
+
+    if (sourceInfo.size === 0) return null
+
+    // Find the source with the earliest minDate (longest history)
+    let bestSource: string | null = null
+    let bestMinDate = '9999-99-99'
+    let bestAgeGroups: string[] = []
+
+    for (const [source, info] of sourceInfo) {
+      // Filter to mutually exclusive age groups
+      const filteredAgeGroups = selectMutuallyExclusiveAgeGroups(
+        Array.from(info.ageGroups),
+        `${country} ASD source "${source}"`
+      )
+      if (filteredAgeGroups.length < 2) continue // Need at least 2 age groups for ASD
+
+      if (info.minDate < bestMinDate) {
+        bestMinDate = info.minDate
+        bestSource = source
+        bestAgeGroups = filteredAgeGroups
+      }
+    }
+
+    if (!bestSource) return null
+
+    return {
+      source: bestSource,
+      ageGroups: bestAgeGroups,
+      minDate: bestMinDate
+    }
+  }
+
+  /**
    * Convert chart type to data type (1/2/3)
    */
   private chartTypeToDataType(chartType: string): '1' | '2' | '3' {
@@ -259,6 +475,149 @@ export class MetadataService {
     if (['monthly', 'quarterly'].includes(chartType)) return '2'
     return '3' // weekly variants
   }
+}
+
+/**
+ * Parse age range from age group string.
+ * Handles formats like "0-9", "80+", "85+"
+ */
+function parseAgeRange(ageGroup: string): { min: number, max: number } | null {
+  // Handle open-ended ranges like "80+", "85+"
+  const openMatch = ageGroup.match(/^(\d+)\+$/)
+  if (openMatch) {
+    return { min: parseInt(openMatch[1]!, 10), max: 999 }
+  }
+
+  // Handle ranges like "0-9", "10-19"
+  const rangeMatch = ageGroup.match(/^(\d+)-(\d+)$/)
+  if (rangeMatch) {
+    return { min: parseInt(rangeMatch[1]!, 10), max: parseInt(rangeMatch[2]!, 10) }
+  }
+
+  return null
+}
+
+/**
+ * Check if two age ranges overlap.
+ */
+function rangesOverlap(
+  a: { min: number, max: number },
+  b: { min: number, max: number }
+): boolean {
+  return a.min <= b.max && b.min <= a.max
+}
+
+/**
+ * Filter age groups to select a mutually exclusive set with complete coverage.
+ *
+ * When multiple overlapping age group sets exist (e.g., 10-year bands vs 25-year bands),
+ * select a complete set that covers from age 0 to the maximum age without gaps.
+ *
+ * @param ageGroups - Array of age group strings (e.g., "0-9", "10-19", "80+")
+ * @param context - Optional context for logging (e.g., "USA", "multi-country common")
+ */
+function selectMutuallyExclusiveAgeGroups(ageGroups: string[], context?: string): string[] {
+  // Parse all age groups
+  const parsed: Array<{ name: string, range: { min: number, max: number } }> = []
+  for (const ag of ageGroups) {
+    const range = parseAgeRange(ag)
+    if (range) {
+      parsed.push({ name: ag, range })
+    }
+  }
+
+  if (parsed.length === 0) return ageGroups
+
+  // Find all possible complete coverage sets
+  // A complete set starts at 0 and has no gaps between consecutive ranges
+
+  // Sort by min age, then by max age (prefer ranges ending earlier for same start)
+  const sorted = [...parsed].sort((a, b) => {
+    if (a.range.min !== b.range.min) return a.range.min - b.range.min
+    return a.range.max - b.range.max
+  })
+
+  // Build complete sets using dynamic programming approach
+  // For each starting point (must be 0), find all valid paths to max age
+  const findCompleteSets = (): string[][] => {
+    const sets: string[][] = []
+
+    // Recursive helper to build sets
+    const buildSet = (currentMax: number, currentSet: string[], usedRanges: Set<string>): void => {
+      // Find ranges that can extend from currentMax
+      const candidates = sorted.filter(item =>
+        !usedRanges.has(item.name)
+        && item.range.min === currentMax + 1 // Must start exactly where previous ended
+      )
+
+      if (candidates.length === 0) {
+        // No more candidates - check if we have an open-ended range (999 = infinity)
+        const hasOpenEnd = currentSet.some((name) => {
+          const p = parsed.find(x => x.name === name)
+          return p && p.range.max === 999
+        })
+        if (hasOpenEnd && currentSet.length >= 2) {
+          sets.push([...currentSet])
+        }
+        return
+      }
+
+      for (const candidate of candidates) {
+        const newSet = [...currentSet, candidate.name]
+        const newUsed = new Set(usedRanges)
+        newUsed.add(candidate.name)
+
+        if (candidate.range.max === 999) {
+          // This is an open-ended range - we've completed a set
+          sets.push(newSet)
+        } else {
+          // Continue building
+          buildSet(candidate.range.max, newSet, newUsed)
+        }
+      }
+    }
+
+    // Start with ranges beginning at 0
+    const startersAt0 = sorted.filter(item => item.range.min === 0)
+    for (const starter of startersAt0) {
+      const usedRanges = new Set([starter.name])
+      if (starter.range.max === 999) {
+        // Single range covering everything (unlikely but possible)
+        sets.push([starter.name])
+      } else {
+        buildSet(starter.range.max, [starter.name], usedRanges)
+      }
+    }
+
+    return sets
+  }
+
+  const completeSets = findCompleteSets()
+
+  if (completeSets.length === 0) {
+    // Fallback: no complete sets found, use greedy approach
+    console.warn('[MetadataService] No complete age group coverage found, using greedy selection')
+    const result: string[] = []
+    const sortedByMin = [...parsed].sort((a, b) => a.range.min - b.range.min)
+    for (const item of sortedByMin) {
+      const overlapsSelected = result.some((selected) => {
+        const selectedParsed = parsed.find(p => p.name === selected)
+        return selectedParsed && rangesOverlap(item.range, selectedParsed.range)
+      })
+      if (!overlapsSelected) {
+        result.push(item.name)
+      }
+    }
+    return result
+  }
+
+  // Choose the set with the most groups (finest granularity)
+  completeSets.sort((a, b) => b.length - a.length)
+  const best = completeSets[0]!
+
+  const contextStr = context ? ` for ${context}` : ''
+  console.log(`[MetadataService] Selected${contextStr}:`, best, `(${best.length} groups, ${completeSets.length} candidate sets)`)
+  return best
 }
 
 // Singleton instance

@@ -142,6 +142,7 @@ export const getDatasets = (
     showTotal: config.display.showTotal,
     showCumPi: config.display.showCumPi,
     isAsmrType: config.chart.isAsmrType,
+    isASD: config.chart.isASD,
     view: config.display.view ?? 'mortality'
   }
 

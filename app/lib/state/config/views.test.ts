@@ -69,7 +69,7 @@ describe('View Configurations', () => {
     })
 
     it('supports all metrics', () => {
-      expect(config.compatibleMetrics).toEqual(['cmr', 'asmr', 'le', 'deaths'])
+      expect(config.compatibleMetrics).toEqual(['cmr', 'asmr', 'asd', 'le', 'deaths'])
     })
   })
 
@@ -118,7 +118,7 @@ describe('View Configurations', () => {
     })
 
     it('excludes incompatible metrics', () => {
-      expect(config.compatibleMetrics).toEqual(['cmr', 'asmr', 'deaths'])
+      expect(config.compatibleMetrics).toEqual(['cmr', 'asmr', 'asd', 'deaths'])
       expect(config.compatibleMetrics).not.toContain('le')
       expect(config.compatibleMetrics).not.toContain('population')
     })
@@ -178,7 +178,7 @@ describe('View Configurations', () => {
     })
 
     it('restricts to compatible metrics', () => {
-      expect(config.compatibleMetrics).toEqual(['cmr', 'asmr', 'deaths'])
+      expect(config.compatibleMetrics).toEqual(['cmr', 'asmr', 'asd', 'deaths'])
     })
 
     it('supports line and bar chart styles', () => {

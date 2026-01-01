@@ -77,6 +77,13 @@ const METRIC_CONFIGS: Record<string, MetricConfig> = {
     },
     supportsBaseline: true,
     supportsExcess: true
+  },
+  asd: {
+    // ASD (Age-Standardized Deaths) uses pre-calculated values from stats API
+    // The 'asd' and 'asd_bl' fields are injected by useExplorerDataOrchestration
+    baseFieldName: () => 'asd',
+    supportsBaseline: true,
+    supportsExcess: true
   }
 }
 

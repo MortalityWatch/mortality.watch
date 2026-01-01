@@ -34,6 +34,9 @@ export const EXCESS_VIEW: ChartViewConfig = {
       case 'asmr':
         parts.push('Age-Standardized', 'Excess Mortality')
         break
+      case 'asd':
+        parts.push('Age-Standardized', 'Excess Deaths')
+        break
       case 'le':
         parts.push('Change in', 'Life Expectancy')
         break
@@ -74,6 +77,8 @@ export const EXCESS_VIEW: ChartViewConfig = {
       case 'cmr':
       case 'asmr':
         return 'Excess Deaths per 100k'
+      case 'asd':
+        return ctx.cumulative ? 'Cum. Excess Deaths' : 'Excess Deaths'
       case 'le':
         return 'Years'
       default:

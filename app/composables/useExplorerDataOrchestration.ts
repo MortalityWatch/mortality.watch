@@ -26,6 +26,8 @@ import {
   getStartIndex
 } from '@/lib/data'
 import { useChartDataFetcher } from '@/composables/useChartDataFetcher'
+import { useASDData } from '@/composables/useASDData'
+import { metadataService } from '@/services/metadataService'
 import { getFilteredChartDataFromConfig } from '@/lib/chart'
 import type { MortalityChartData } from '@/lib/chart/chartTypes'
 import type { ChartStateSnapshot } from '@/lib/chart/types'
@@ -48,6 +50,16 @@ export function useExplorerDataOrchestration(
 ) {
   // Shared data fetching logic
   const dataFetcher = useChartDataFetcher()
+
+  // ASD data fetching (Age-Standardized Deaths)
+  // Lazy initialized to avoid useRuntimeConfig issues in tests
+  let asdDataInstance: ReturnType<typeof useASDData> | null = null
+  const getASDData = () => {
+    if (!asdDataInstance) {
+      asdDataInstance = useASDData()
+    }
+    return asdDataInstance
+  }
 
   // Short URL handling for QR codes
   // Store original query params to ensure consistent hashing with SSR
@@ -185,6 +197,109 @@ export function useExplorerDataOrchestration(
   const ageGroupsForFetch = computed(() => {
     return helpers.isAsmrType() ? ['all'] : state.ageGroups.value
   })
+
+  /**
+   * Fetch and inject ASD data into allChartData when type is 'asd'.
+   *
+   * ASD (Age-Standardized Deaths) uses the Levitt method which:
+   * 1. Fetches all age groups for the selected source
+   * 2. Calls the stats API /asd endpoint with age-stratified data
+   * 3. Injects the returned asd/asd_bl values into the dataset
+   *
+   * The DataTransformationPipeline then uses data['asd'] and data['asd_bl']
+   * to display the age-standardized values.
+   */
+  const fetchAndInjectASDData = async () => {
+    // Only fetch ASD data when ASD metric is selected
+    if (state.type.value !== 'asd') return
+
+    const countries = state.countries.value
+    const chartType = state.chartType.value as ChartType
+
+    // Get baseline date range
+    const baselineDateFrom = state.baselineDateFrom.value ?? baselineRange.value?.from
+    const baselineDateTo = state.baselineDateTo.value ?? baselineRange.value?.to
+
+    const asdDataComposable = getASDData()
+
+    // Fetch ASD data for each country using its best available source
+    // This allows each country to use its optimal source independently
+    // (e.g., USA uses CDC from 1999, Sweden uses eurostat from 2000)
+    type ASDResultNonNull = NonNullable<Awaited<ReturnType<typeof asdDataComposable.fetchASDForCountry>>>
+    const results = new Map<string, ASDResultNonNull>()
+
+    try {
+      for (const country of countries) {
+        // Get the best source for this country (longest history)
+        const sourceInfo = metadataService.getBestSourceForCountry(country, chartType)
+
+        if (!sourceInfo) {
+          console.warn(`[ASD] No source with age groups available for ${country}`)
+          continue
+        }
+
+        const { source, ageGroups } = sourceInfo
+
+        const result = await asdDataComposable.fetchASDForCountry(
+          country,
+          chartType,
+          source,
+          ageGroups,
+          state.baselineMethod.value,
+          baselineDateFrom,
+          baselineDateTo,
+          state.baselineMethod.value === 'lin_reg'
+        )
+
+        if (result) {
+          results.set(country, result)
+        }
+      }
+
+      // Inject ASD data into allChartData for each country
+      // The data structure is: allChartData.data[ageGroup][iso3c]
+      // ASD data must be aligned to allChartData.labels (NOT allChartLabels.value!)
+      // allChartData.labels may be a subset (e.g., 2005-2025) while allChartLabels.value is the full range (1950-2025)
+      const chartLabels = allChartData.labels
+
+      for (const [iso3c, asdResult] of results) {
+        // Create a mapping from ASD labels to their indices
+        const asdLabelToIndex = new Map<string, number>()
+        asdResult.labels.forEach((label, idx) => asdLabelToIndex.set(label, idx))
+
+        // Align ASD data to chart labels
+        const alignArray = (arr: (number | null)[]): (number | null)[] => {
+          return chartLabels.map((label) => {
+            const idx = asdLabelToIndex.get(label)
+            return idx !== undefined ? (arr[idx] ?? null) : null
+          })
+        }
+
+        const alignedAsd = alignArray(asdResult.asd)
+        const alignedAsdBl = alignArray(asdResult.asd_bl)
+        const alignedLower = alignArray(asdResult.lower)
+        const alignedUpper = alignArray(asdResult.upper)
+        const alignedZscore = alignArray(asdResult.zscore)
+
+        // Find the age group key (usually 'all' for the combined view)
+        for (const ag of Object.keys(allChartData.data)) {
+          const countryData = allChartData.data[ag]?.[iso3c]
+          if (countryData) {
+            // Inject aligned ASD arrays using the standard naming convention
+            // expected by getKeyForType (asd_baseline, not asd_bl)
+            const record = countryData as Record<string, unknown>
+            record['asd'] = alignedAsd
+            record['asd_baseline'] = alignedAsdBl
+            record['asd_baseline_lower'] = alignedLower
+            record['asd_baseline_upper'] = alignedUpper
+            record['asd_zscore'] = alignedZscore
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[ASD] Failed to fetch ASD data:', error)
+    }
+  }
 
   // Configure chart options based on current state
   const configureOptions = () => {
@@ -436,6 +551,9 @@ export function useExplorerDataOrchestration(
       }
 
       Object.assign(allChartData, result.chartData)
+
+      // Fetch and inject ASD data if in ASD view
+      await fetchAndInjectASDData()
       // Note: Date validation now handled by reactive watcher
     } else if (shouldUpdateDataset) {
       // Update chart data only (reuse existing dataset)
@@ -477,6 +595,9 @@ export function useExplorerDataOrchestration(
       }
 
       Object.assign(allChartData, result.chartData)
+
+      // Fetch and inject ASD data if in ASD view
+      await fetchAndInjectASDData()
       // Note: Date validation now handled by reactive watcher
     }
 

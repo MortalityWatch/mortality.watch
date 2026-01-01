@@ -39,6 +39,9 @@ export const BASE_VIEW: CompleteChartViewConfig = {
       case 'asmr':
         parts.push('Age-Standardized', 'Mortality Rate')
         break
+      case 'asd':
+        parts.push('Age-Standardized', 'Deaths')
+        break
       case 'le':
         parts.push('Life Expectancy')
         break
@@ -94,6 +97,8 @@ export const BASE_VIEW: CompleteChartViewConfig = {
       case 'cmr':
       case 'asmr':
         return 'Deaths per 100k'
+      case 'asd':
+        return ctx.cumulative ? 'Cumulative Deaths' : 'Deaths'
       case 'le':
         return 'Years'
       default:

@@ -71,6 +71,7 @@ useSeoMeta({
 // Type predicates and computed helpers based on state
 const {
   isAsmrType,
+  isASDType,
   isPopulationType,
   isLifeExpectancyType,
   isDeathsType,
@@ -142,6 +143,7 @@ const dataOrchestration = useExplorerDataOrchestration(
   state,
   {
     isAsmrType,
+    isASDType,
     isPopulationType,
     isLifeExpectancyType,
     isDeathsType,
@@ -541,12 +543,12 @@ onMounted(async () => {
   if (isAuthenticated.value) {
     const params = extractUrlParams(route.query as Record<string, string | string[] | undefined>)
     computeConfigHash(params).then((hash) => {
-      $fetch<{ id: number, slug: string | null, name: string }>(`/api/charts/mine/${hash}`).then((saved) => {
+      $fetch<{ id: number, slug: string | null, name: string } | null>(`/api/charts/mine/${hash}`).then((saved) => {
         if (saved) {
           setDetectedChart(saved)
         }
       }).catch(() => {
-        // Not saved - ignore
+        // Request failed - ignore
       })
     }).catch(() => {
       // Hash computation failed - ignore
@@ -706,6 +708,7 @@ watch(
         :age-groups="state.ageGroups.value"
         :is-asmr-type="isAsmrType()"
         :is-life-expectancy-type="isLifeExpectancyType()"
+        :is-asd-type="isASDType()"
         :is-updating="false"
         :max-countries-allowed="getMaxCountriesAllowed()"
         :slider-value="sliderValue"

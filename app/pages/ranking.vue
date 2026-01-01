@@ -354,12 +354,12 @@ onMounted(() => {
   if (isAuthenticated.value) {
     const params = extractUrlParams(route.query as Record<string, string | string[] | undefined>)
     computeConfigHash(params).then((hash) => {
-      $fetch<{ id: number, slug: string | null, name: string }>(`/api/charts/mine/${hash}`).then((saved) => {
+      $fetch<{ id: number, slug: string | null, name: string } | null>(`/api/charts/mine/${hash}`).then((saved) => {
         if (saved) {
           setDetectedChart(saved)
         }
       }).catch(() => {
-        // Not saved - ignore
+        // Request failed - ignore
       })
     }).catch(() => {
       // Hash computation failed - ignore

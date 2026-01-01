@@ -25,8 +25,16 @@ const emit = defineEmits<{
   'update:view': [value: ViewType]
 }>()
 
+// Gate ASD metric for Pro users
+const hasASDAccess = can('AGE_STANDARDIZED')
+
 // Add 'label' property for USelect compatibility
-const typesWithLabels = types.map(t => ({ ...t, label: t.name }))
+// Also mark ASD as disabled if user doesn't have Pro access
+const typesWithLabels = computed(() => types.map(t => ({
+  ...t,
+  label: t.value === 'asd' && !hasASDAccess ? `${t.name} (Pro)` : t.name,
+  disabled: t.value === 'asd' && !hasASDAccess
+})))
 const standardPopulationsWithLabels = standardPopulations.map(t => ({ ...t, label: t.name }))
 
 // View options for radio group - gate Z-Score for Pro users
@@ -87,9 +95,10 @@ const viewModel = computed({
       />
       <template #help>
         <div class="text-xs text-gray-700 dark:text-gray-300">
-          <strong>CMR:</strong> Crude Mortality Rate per 100k<br>
-          <strong>ASMR:</strong> Age-Standardized Mortality Rate per 100k<br>
           <strong>Life Expectancy:</strong> Expected years of life at birth<br>
+          <strong>ASD:</strong> Age-Standardized Deaths (Levitt method)<br>
+          <strong>ASMR:</strong> Age-Standardized Mortality Rate per 100k<br>
+          <strong>CMR:</strong> Crude Mortality Rate per 100k<br>
           <strong>Deaths:</strong> Total death counts<br>
           <strong>Population:</strong> Total population size
         </div>

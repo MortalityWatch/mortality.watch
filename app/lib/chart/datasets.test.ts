@@ -46,6 +46,7 @@ describe('datasets', () => {
       chartType: 'weekly',
       isExcess: false,
       isAsmrType: false,
+      isASD: false,
       isBarChartStyle: false,
       isMatrixChartStyle: false,
       isErrorBarType: false,
