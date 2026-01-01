@@ -41,7 +41,6 @@
 import type { DiscoveryPreset } from '@/lib/discover/presets'
 import { presetToExplorerUrl, presetToThumbnailUrl } from '@/lib/discover/presets'
 import { getFlagEmoji } from '@/lib/discover/countryUtils'
-import type { FeatureKey } from '@/lib/featureFlags'
 
 interface Props {
   preset: DiscoveryPreset
@@ -54,26 +53,15 @@ const props = defineProps<Props>()
 const colorMode = useColorMode()
 const { can, getFeatureUpgradeUrl } = useFeatureAccess()
 
-// Check if this preset is a pro feature
-function isProFeature(): boolean {
-  return props.preset.view === 'zscore'
-}
-
-// Get the feature key for the preset (only called for pro features)
-function getFeatureKey(): FeatureKey {
-  // zscore is the only pro feature view
-  return 'Z_SCORES'
-}
-
-// Check if the feature is locked for current user
+// Z-Score is the only Pro feature view in discover presets
 const isLocked = computed(() => {
-  return isProFeature() && !can(getFeatureKey())
+  return props.preset.view === 'zscore' && !can('Z_SCORES')
 })
 
 // Generate explorer URL or upgrade URL based on access
 const linkUrl = computed(() => {
   if (isLocked.value) {
-    return getFeatureUpgradeUrl(getFeatureKey())
+    return getFeatureUpgradeUrl('Z_SCORES')
   }
   return presetToExplorerUrl(props.preset, props.country)
 })

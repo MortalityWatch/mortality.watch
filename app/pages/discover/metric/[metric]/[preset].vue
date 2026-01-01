@@ -150,6 +150,7 @@ import {
 } from '@/lib/discover/constants'
 import { isSubNationalRegion } from '@/lib/discover/countryUtils'
 import { useJurisdictionFilter } from '@/composables/useJurisdictionFilter'
+import { UI_CONFIG } from '@/lib/config/constants'
 
 const route = useRoute()
 const router = useRouter()
@@ -191,7 +192,7 @@ const loadError = ref<string | null>(null)
 const allCountries = ref<Country[]>([])
 const selectedRegion = ref('all')
 const currentPage = ref(1)
-const itemsPerPage = 24
+const itemsPerPage = UI_CONFIG.DISCOVER_ITEMS_PER_PAGE
 
 // Load countries
 const { shouldShowCountry } = useJurisdictionFilter()

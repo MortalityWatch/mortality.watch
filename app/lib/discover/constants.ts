@@ -26,7 +26,7 @@ export const metricInfo: Record<Metric, {
   asd: {
     label: 'Age-Standardized Deaths',
     shortLabel: 'ASD',
-    description: 'Age-standardized death counts (Levitt method)',
+    description: 'Death counts adjusted for population age structure',
     icon: 'i-lucide-scale'
   },
   asmr: {
@@ -67,10 +67,10 @@ export const chartTypeLabels: Record<ChartType, string> = {
 }
 
 /**
- * View labels
+ * View labels (matches explorer terminology)
  */
 export const viewLabels: Record<View, string> = {
-  normal: 'Normal',
+  normal: 'Raw Values',
   excess: 'Excess',
   zscore: 'Z-Score'
 }
@@ -79,9 +79,9 @@ export const viewLabels: Record<View, string> = {
  * View descriptions
  */
 export const viewDescriptions: Record<View, string> = {
-  normal: 'Actual values over time',
-  excess: 'Difference from baseline (2017-2019 mean)',
-  zscore: 'Standard deviations from baseline'
+  normal: 'Observed values without adjustments or transformations',
+  excess: 'Difference from expected baseline (observed - expected)',
+  zscore: 'How many standard deviations from baseline (±2 = significant)'
 }
 
 /**

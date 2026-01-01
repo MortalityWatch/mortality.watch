@@ -54,7 +54,7 @@ describe('constants', () => {
   describe('viewLabels', () => {
     it('should have labels for all 3 views', () => {
       expect(Object.keys(viewLabels)).toHaveLength(3)
-      expect(viewLabels.normal).toBe('Normal')
+      expect(viewLabels.normal).toBe('Raw Values')
       expect(viewLabels.excess).toBe('Excess')
       expect(viewLabels.zscore).toBe('Z-Score')
     })
@@ -63,9 +63,9 @@ describe('constants', () => {
   describe('viewDescriptions', () => {
     it('should have descriptions for all 3 views', () => {
       expect(Object.keys(viewDescriptions)).toHaveLength(3)
-      expect(viewDescriptions.normal).toContain('Actual values')
+      expect(viewDescriptions.normal).toContain('Observed values')
       expect(viewDescriptions.excess).toContain('baseline')
-      expect(viewDescriptions.zscore).toContain('Standard deviations')
+      expect(viewDescriptions.zscore).toContain('standard deviations')
     })
   })
 
@@ -140,7 +140,7 @@ describe('constants', () => {
 
   describe('formatPresetLabel', () => {
     it('should format chart type and view correctly', () => {
-      expect(formatPresetLabel('weekly', 'normal')).toBe('Weekly Normal')
+      expect(formatPresetLabel('weekly', 'normal')).toBe('Weekly Raw Values')
       expect(formatPresetLabel('monthly', 'excess')).toBe('Monthly Excess')
       expect(formatPresetLabel('fluseason', 'zscore')).toBe('Flu Season Z-Score')
     })

@@ -74,7 +74,7 @@ test.describe('Discover Feature', () => {
       await expect(page.getByRole('heading', { name: 'Flu Season' })).toBeVisible()
 
       // Check for view options
-      await expect(page.getByText('Normal').first()).toBeVisible()
+      await expect(page.getByText('Raw Values').first()).toBeVisible()
       await expect(page.getByText('Excess').first()).toBeVisible()
       await expect(page.getByText('Z-Score').first()).toBeVisible()
     })

@@ -65,8 +65,17 @@ const handleHelpClick = (): void => {
 }
 
 // Main navigation items
+// Order: Gallery (quick glance) → Discover (structured) → Explorer (pro) → Ranking → My Charts
 const items = computed(() => {
   const navItems = [{
+    label: 'Gallery',
+    icon: 'i-lucide-gallery-horizontal-end',
+    to: '/charts'
+  }, {
+    label: 'Discover',
+    icon: 'i-lucide-compass',
+    to: '/discover'
+  }, {
     label: 'Explorer',
     icon: 'i-lucide-line-chart',
     to: '/explorer'
@@ -74,10 +83,6 @@ const items = computed(() => {
     label: 'Ranking',
     icon: 'i-lucide-chart-bar-decreasing',
     to: '/ranking'
-  }, {
-    label: 'Discover',
-    icon: 'i-lucide-compass',
-    to: '/discover'
   }]
 
   // Add "My Charts" if user is authenticated
@@ -88,13 +93,6 @@ const items = computed(() => {
       to: '/my-charts'
     })
   }
-
-  // Add Chart Gallery
-  navItems.push({
-    label: 'Chart Gallery',
-    icon: 'i-lucide-gallery-horizontal-end',
-    to: '/charts'
-  })
 
   // Add "Features" for non-pro users (PUBLIC and REGISTERED)
   if (!isPro.value) {

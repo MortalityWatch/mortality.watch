@@ -24,6 +24,18 @@ export interface DiscoveryPreset {
 }
 
 /**
+ * Default baseline period for discovery presets.
+ * Uses 2017-2019 as the pre-pandemic baseline period, which is the standard
+ * reference period for excess mortality analysis. This is intentionally
+ * hardcoded to provide consistent, comparable charts across all presets.
+ */
+const DEFAULT_BASELINE = {
+  method: 'mean' as const,
+  dateFrom: '2017',
+  dateTo: '2019'
+}
+
+/**
  * Generate all valid presets (80 total)
  */
 function createAllPresets(): DiscoveryPreset[] {
@@ -40,9 +52,9 @@ function createAllPresets(): DiscoveryPreset[] {
           metric,
           chartType,
           view,
-          baselineMethod: 'mean',
-          baselineDateFrom: '2017',
-          baselineDateTo: '2019'
+          baselineMethod: DEFAULT_BASELINE.method,
+          baselineDateFrom: DEFAULT_BASELINE.dateFrom,
+          baselineDateTo: DEFAULT_BASELINE.dateTo
         })
       }
     }
