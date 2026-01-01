@@ -14,6 +14,7 @@ const props = defineProps<{
   ageGroups: string[]
   isAsmrType: boolean
   isLifeExpectancyType: boolean
+  isAsdType: boolean
   isUpdating: boolean
   maxCountriesAllowed: number | undefined
 }>()
@@ -260,7 +261,7 @@ const options = computed(() => {
     </UiControlRow>
 
     <UiControlRow
-      v-if="!props.isAsmrType && (!props.isLifeExpectancyType || canAdvancedLE)"
+      v-if="!props.isAsmrType && !props.isAsdType && (!props.isLifeExpectancyType || canAdvancedLE)"
       label="Age Groups"
     >
       <UInputMenu

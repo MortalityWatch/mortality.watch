@@ -708,6 +708,7 @@ watch(
         :age-groups="state.ageGroups.value"
         :is-asmr-type="isAsmrType()"
         :is-life-expectancy-type="isLifeExpectancyType()"
+        :is-asd-type="isASDType()"
         :is-updating="false"
         :max-countries-allowed="getMaxCountriesAllowed()"
         :slider-value="sliderValue"

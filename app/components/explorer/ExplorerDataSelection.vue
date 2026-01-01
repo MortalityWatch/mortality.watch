@@ -11,6 +11,7 @@ const props = defineProps<{
   ageGroups: string[]
   isAsmrType: boolean
   isLifeExpectancyType: boolean
+  isAsdType: boolean
   isUpdating: boolean
   maxCountriesAllowed?: number
   sliderValue: string[]
@@ -49,6 +50,7 @@ const emit = defineEmits<{
           :age-groups="props.ageGroups"
           :is-asmr-type="props.isAsmrType"
           :is-life-expectancy-type="props.isLifeExpectancyType"
+          :is-asd-type="props.isAsdType"
           :is-updating="false"
           :max-countries-allowed="props.maxCountriesAllowed"
           @countries-changed="emit('countriesChanged', $event)"

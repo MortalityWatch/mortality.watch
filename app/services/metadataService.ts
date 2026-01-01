@@ -364,7 +364,10 @@ export class MetadataService {
 
       if (commonAgeGroups.size > 0) {
         // Filter to mutually exclusive age groups (avoid double-counting)
-        const filteredAgeGroups = selectMutuallyExclusiveAgeGroups(Array.from(commonAgeGroups))
+        const filteredAgeGroups = selectMutuallyExclusiveAgeGroups(
+          Array.from(commonAgeGroups),
+          `common source "${source}"`
+        )
         if (filteredAgeGroups.length > 0) {
           commonSources.set(source, filteredAgeGroups)
         }
@@ -442,7 +445,10 @@ export class MetadataService {
 
     for (const [source, info] of sourceInfo) {
       // Filter to mutually exclusive age groups
-      const filteredAgeGroups = selectMutuallyExclusiveAgeGroups(Array.from(info.ageGroups))
+      const filteredAgeGroups = selectMutuallyExclusiveAgeGroups(
+        Array.from(info.ageGroups),
+        `${country} ASD source "${source}"`
+      )
       if (filteredAgeGroups.length < 2) continue // Need at least 2 age groups for ASD
 
       if (info.minDate < bestMinDate) {
@@ -506,8 +512,11 @@ function rangesOverlap(
  *
  * When multiple overlapping age group sets exist (e.g., 10-year bands vs 25-year bands),
  * select a complete set that covers from age 0 to the maximum age without gaps.
+ *
+ * @param ageGroups - Array of age group strings (e.g., "0-9", "10-19", "80+")
+ * @param context - Optional context for logging (e.g., "USA", "multi-country common")
  */
-function selectMutuallyExclusiveAgeGroups(ageGroups: string[]): string[] {
+function selectMutuallyExclusiveAgeGroups(ageGroups: string[], context?: string): string[] {
   // Parse all age groups
   const parsed: Array<{ name: string, range: { min: number, max: number } }> = []
   for (const ag of ageGroups) {
@@ -606,7 +615,8 @@ function selectMutuallyExclusiveAgeGroups(ageGroups: string[]): string[] {
   completeSets.sort((a, b) => b.length - a.length)
   const best = completeSets[0]!
 
-  console.log('[MetadataService] Selected complete age group set:', best, 'from', completeSets.length, 'candidates')
+  const contextStr = context ? ` for ${context}` : ''
+  console.log(`[MetadataService] Selected${contextStr}:`, best, `(${best.length} groups, ${completeSets.length} candidate sets)`)
   return best
 }
 
