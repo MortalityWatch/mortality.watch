@@ -7,7 +7,7 @@
       </h1>
       <p class="text-xl text-gray-700 dark:text-gray-300 leading-relaxed max-w-4xl mx-auto">
         The world's most comprehensive open mortality database with 300+ regions and historical data from 1950 onwards.
-        Explore excess deaths, life expectancy trends, compare regions, analyze by age groups, and understand the true impact of global health events.
+        Explore excess deaths, life expectancy trends, age-standardized rates, compare regions, and understand the true impact of global health events.
       </p>
       <p class="text-lg text-gray-600 dark:text-gray-400 max-w-4xl mx-auto">
         Free, open-source, and transparent. All data from official government sources.
@@ -206,6 +206,19 @@
             <p class="text-gray-600 dark:text-gray-400 text-sm">
               Last value, average, median, linear regression, and ETS for
               accurate excess mortality calculations
+            </p>
+          </div>
+          <div class="text-center">
+            <UIcon
+              name="i-lucide-trending-up"
+              class="text-5xl mb-4 text-primary-600 dark:text-primary-400"
+            />
+            <h3 class="text-lg font-semibold mb-2">
+              Age-Standardized Rates
+            </h3>
+            <p class="text-gray-600 dark:text-gray-400 text-sm">
+              Compare mortality across countries with different age structures
+              using the Levitt standardization method
             </p>
           </div>
           <div class="text-center">

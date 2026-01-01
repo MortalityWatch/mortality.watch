@@ -457,7 +457,12 @@ export const UI_CONFIG = {
   /**
    * Number of charts to display per page in gallery/my-charts
    */
-  CHARTS_PER_PAGE: 12
+  CHARTS_PER_PAGE: 12,
+
+  /**
+   * Number of items per page in discover country grids
+   */
+  DISCOVER_ITEMS_PER_PAGE: 24
 } as const
 
 // =============================================================================
