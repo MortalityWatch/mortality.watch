@@ -84,7 +84,8 @@ export default defineNuxtConfig({
       '/**': {
         headers: {
           'X-Content-Type-Options': 'nosniff',
-          'X-Frame-Options': 'DENY',
+          // Allow iframe embedding in development for preview tools like Vibe Kanban
+          ...(process.env.NODE_ENV !== 'development' && { 'X-Frame-Options': 'DENY' }),
           'X-XSS-Protection': '1; mode=block',
           'Referrer-Policy': 'strict-origin-when-cross-origin',
           'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',

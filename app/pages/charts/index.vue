@@ -56,9 +56,11 @@
         :is-admin="isAdmin"
         :is-toggling-featured="togglingFeatured === chart.id"
         :is-toggling-public="togglingPublic === chart.id"
+        :is-clearing-cache="clearingCache === chart.id"
         @delete="deleteChart"
         @toggle-featured="handleToggleFeatured"
         @toggle-public="handleTogglePublic"
+        @clear-cache="handleClearCache"
       />
     </div>
 
@@ -163,7 +165,14 @@ function isOwner(chart: Chart) {
 }
 
 // Use shared admin composable
-const { togglingFeatured, togglingPublic, toggleFeatured: toggleFeaturedStatus, togglePublic: togglePublicStatus } = useChartAdmin()
+const {
+  togglingFeatured,
+  togglingPublic,
+  clearingCache,
+  toggleFeatured: toggleFeaturedStatus,
+  togglePublic: togglePublicStatus,
+  clearCache: clearCacheStatus
+} = useChartAdmin()
 
 async function handleToggleFeatured(chartId: number, newValue: boolean) {
   await toggleFeaturedStatus(chartId, newValue)
@@ -173,6 +182,10 @@ async function handleToggleFeatured(chartId: number, newValue: boolean) {
 async function handleTogglePublic(chartId: number, newValue: boolean) {
   await togglePublicStatus(chartId, newValue)
   await refresh()
+}
+
+async function handleClearCache(chartId: number) {
+  await clearCacheStatus(chartId)
 }
 
 // Delete chart (admin only in gallery)
