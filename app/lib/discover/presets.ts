@@ -153,6 +153,14 @@ export function presetToExplorerUrl(preset: DiscoveryPreset, country: string): s
     params.set('bdt', preset.baselineDateTo)
   }
 
+  // Normal view: show baseline (except for population)
+  if (preset.view === 'normal' && preset.metric !== 'population') {
+    params.set('sb', '1') // show baseline
+    params.set('bm', preset.baselineMethod)
+    params.set('bdf', preset.baselineDateFrom)
+    params.set('bdt', preset.baselineDateTo)
+  }
+
   return `/explorer?${params.toString()}`
 }
 
