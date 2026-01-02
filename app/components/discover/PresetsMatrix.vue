@@ -59,7 +59,10 @@
         {{ chartTypeLabels[chartType] }}
       </h3>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
+      <div
+        class="grid gap-6"
+        :class="gridColsClass"
+      >
         <template
           v-for="metric in filteredMetrics"
           :key="`${chartType}-${metric}`"
@@ -154,6 +157,21 @@ const visibleMetrics = ref<Metric[]>(metrics.filter(m => m !== 'population'))
 // Filtered metrics (intersection of available and visible)
 const filteredMetrics = computed<Metric[]>(() => {
   return availableMetrics.value.filter(m => visibleMetrics.value.includes(m))
+})
+
+// Dynamic grid columns based on number of visible metrics
+const gridColsClass = computed(() => {
+  const count = filteredMetrics.value.length
+  // Adapt grid to show all metrics in one row on larger screens
+  if (count <= 3) {
+    return 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3'
+  } else if (count <= 4) {
+    return 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+  } else if (count <= 5) {
+    return 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
+  } else {
+    return 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6'
+  }
 })
 
 // Check if a view is a Pro feature
