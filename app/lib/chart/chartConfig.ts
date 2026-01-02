@@ -31,6 +31,40 @@ import {
 import { getIsDark } from '@/composables/useTheme'
 
 /**
+ * Count the number of visible legend entries in the chart data.
+ *
+ * Legend entries are only shown for datasets with non-empty labels.
+ * This is used to determine if the legend should be auto-hidden
+ * when there's only a single visible series.
+ *
+ * @param data - Chart data containing datasets
+ * @returns Number of datasets with non-empty labels
+ */
+function countVisibleLegendEntries(data: MortalityChartData): number {
+  return data.datasets.filter(ds => ds.label && ds.label.length > 0).length
+}
+
+/**
+ * Determine if legend should be shown based on auto-hide logic.
+ *
+ * Auto-hides the legend when there's only a single visible series
+ * (single country with single age group). This reduces visual clutter
+ * for simple charts and thumbnails.
+ *
+ * @param showLegend - User preference for showing legend
+ * @param data - Chart data containing datasets
+ * @returns Whether to display the legend
+ */
+function shouldShowLegend(showLegend: boolean, data: MortalityChartData): boolean {
+  // If user explicitly wants to hide legend, respect that
+  if (!showLegend) return false
+
+  // Auto-hide legend when there's only one visible series
+  const visibleEntries = countVisibleLegendEntries(data)
+  return visibleEntries > 1
+}
+
+/**
  * Creates a chart configuration based on the specified style and data type.
  *
  * This is the main entry point for generating Chart.js configurations.
@@ -192,6 +226,9 @@ export const makeBarLineChartConfig = (
   const isCountType = isDeathsType || isPopulationType
   const showDecimals = !isCountType
 
+  // Auto-hide legend when there's only one visible series
+  const effectiveShowLegend = shouldShowLegend(showLegend, data)
+
   // Logo and QR code plugins overlay the chart, so no padding needed for them
   // They draw at absolute positions in corners without affecting chart layout
 
@@ -224,7 +261,7 @@ export const makeBarLineChartConfig = (
         showLogo,
         showCaption,
         showTitle,
-        showLegend,
+        effectiveShowLegend,
         data.ytitle.includes('Z-Score') ? 'zscore' : 'mortality', // Detect view from ytitle
         isDark,
         isSSR,
