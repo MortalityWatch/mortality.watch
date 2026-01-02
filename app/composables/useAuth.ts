@@ -11,6 +11,8 @@ interface UseAuthReturn {
   signIn: (email: string, password: string, remember?: boolean) => Promise<void>
   signUp: (email: string, password: string, firstName: string, lastName: string, tosAccepted: boolean, inviteCode?: string) => Promise<void>
   signOut: () => Promise<void>
+  signInWithGoogle: () => void
+  signInWithTwitter: () => void
   updateProfile: (data: {
     firstName?: string
     lastName?: string
@@ -88,6 +90,22 @@ export function useAuth(): UseAuthReturn {
     } finally {
       loading.value = false
     }
+  }
+
+  /**
+   * Sign in with Google OAuth
+   * Redirects to Google OAuth flow - callback will handle session creation
+   */
+  function signInWithGoogle() {
+    navigateTo('/auth/google', { external: true })
+  }
+
+  /**
+   * Sign in with Twitter/X OAuth
+   * Redirects to Twitter OAuth flow - callback will handle session creation
+   */
+  function signInWithTwitter() {
+    navigateTo('/auth/twitter', { external: true })
   }
 
   /**
@@ -178,6 +196,8 @@ export function useAuth(): UseAuthReturn {
     signIn,
     signUp,
     signOut,
+    signInWithGoogle,
+    signInWithTwitter,
     updateProfile,
     forgotPassword,
     resetPassword,

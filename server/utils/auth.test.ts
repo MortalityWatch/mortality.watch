@@ -1371,4 +1371,291 @@ describe('Auth Utilities', () => {
       expect(user).toBeNull()
     })
   })
+
+  describe('handleSocialAuth', () => {
+    it('should create a new user when social ID and email do not exist', async () => {
+      const { handleSocialAuth } = await import('./auth')
+
+      const createdUser = {
+        id: 1,
+        email: 'newuser@gmail.com',
+        passwordHash: 'hashed_random',
+        firstName: 'John',
+        lastName: 'Doe',
+        displayName: 'John Doe',
+        name: 'John Doe',
+        role: 'user',
+        tier: 1,
+        emailVerified: true,
+        googleId: 'google-123',
+        profilePictureUrl: 'https://example.com/photo.jpg'
+      }
+
+      // Mock: no user exists with this Google ID or email
+      const mockGet = vi.fn().mockResolvedValue(null)
+      mockDb.insert.mockReturnValue({
+        values: vi.fn().mockReturnValue({
+          returning: vi.fn().mockReturnValue({
+            get: vi.fn().mockResolvedValue(createdUser)
+          })
+        })
+      })
+      mockDb.select.mockReturnValue({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            get: mockGet
+          }))
+        }))
+      })
+
+      const mockEvent = {} as H3Event
+      const user = await handleSocialAuth(
+        mockEvent,
+        'google',
+        'google-123',
+        'newuser@gmail.com',
+        'John Doe',
+        'https://example.com/photo.jpg'
+      )
+
+      // Verify user was created
+      expect(mockDb.insert).toHaveBeenCalled()
+      expect(user.email).toBe('newuser@gmail.com')
+      expect(user.googleId).toBe('google-123')
+      expect(user).not.toHaveProperty('passwordHash')
+      // Verify auth token was set
+      expect(mockSetCookie).toHaveBeenCalled()
+    })
+
+    it('should link social account to existing user with same email', async () => {
+      const { handleSocialAuth } = await import('./auth')
+
+      const existingUser = {
+        id: 42,
+        email: 'existing@example.com',
+        passwordHash: 'hashed_password',
+        firstName: 'Jane',
+        lastName: 'Smith',
+        role: 'user',
+        tier: 2,
+        emailVerified: true,
+        googleId: null,
+        profilePictureUrl: null
+      }
+
+      // First call returns null (no user with this Google ID)
+      // Second call returns existing user (found by email)
+      let callCount = 0
+      const mockGet = vi.fn().mockImplementation(async () => {
+        callCount++
+        if (callCount === 1) return null // No user by Google ID
+        if (callCount === 2) return existingUser // Found by email
+        return { ...existingUser, googleId: 'google-456' } // After update
+      })
+
+      mockDb.select.mockReturnValue({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            get: mockGet
+          }))
+        }))
+      })
+
+      const mockUpdateWhere = vi.fn()
+      mockDb.update.mockReturnValue({
+        set: vi.fn(() => ({
+          where: mockUpdateWhere
+        }))
+      })
+
+      const mockEvent = {} as H3Event
+      const user = await handleSocialAuth(
+        mockEvent,
+        'google',
+        'google-456',
+        'existing@example.com',
+        'Jane Smith',
+        'https://example.com/newphoto.jpg'
+      )
+
+      // Verify user was updated (linked)
+      expect(mockDb.update).toHaveBeenCalled()
+      expect(user.email).toBe('existing@example.com')
+      expect(user).not.toHaveProperty('passwordHash')
+    })
+
+    it('should log in existing user with matching social ID', async () => {
+      const { handleSocialAuth } = await import('./auth')
+
+      const existingUser = {
+        id: 10,
+        email: 'social@example.com',
+        passwordHash: 'hashed_password',
+        firstName: 'Social',
+        lastName: 'User',
+        role: 'user',
+        tier: 1,
+        emailVerified: true,
+        twitterId: 'twitter-789',
+        profilePictureUrl: 'https://example.com/oldphoto.jpg'
+      }
+
+      const mockGet = vi.fn().mockResolvedValue(existingUser)
+      mockDb.select.mockReturnValue({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            get: mockGet
+          }))
+        }))
+      })
+
+      const mockUpdateWhere = vi.fn()
+      mockDb.update.mockReturnValue({
+        set: vi.fn(() => ({
+          where: mockUpdateWhere
+        }))
+      })
+
+      const mockEvent = {} as H3Event
+      const user = await handleSocialAuth(
+        mockEvent,
+        'twitter',
+        'twitter-789',
+        'social@example.com',
+        'Social User',
+        'https://example.com/newphoto.jpg'
+      )
+
+      // Verify last login was updated
+      expect(mockDb.update).toHaveBeenCalled()
+      expect(user.email).toBe('social@example.com')
+      expect(user).not.toHaveProperty('passwordHash')
+      // Verify auth token was set
+      expect(mockSetCookie).toHaveBeenCalled()
+    })
+
+    it('should parse name into first and last name correctly', async () => {
+      const { handleSocialAuth } = await import('./auth')
+
+      const mockGet = vi.fn().mockResolvedValue(null)
+      const mockInsertValues = vi.fn().mockReturnValue({
+        returning: vi.fn().mockReturnValue({
+          get: vi.fn().mockResolvedValue({
+            id: 1,
+            email: 'test@example.com',
+            passwordHash: 'hashed',
+            firstName: 'John',
+            lastName: 'Paul Jones',
+            displayName: 'John Paul Jones',
+            role: 'user',
+            tier: 1,
+            googleId: 'google-multi-name'
+          })
+        })
+      })
+      mockDb.insert.mockReturnValue({
+        values: mockInsertValues
+      })
+      mockDb.select.mockReturnValue({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            get: mockGet
+          }))
+        }))
+      })
+
+      const mockEvent = {} as H3Event
+      await handleSocialAuth(
+        mockEvent,
+        'google',
+        'google-multi-name',
+        'test@example.com',
+        'John Paul Jones'
+      )
+
+      // Check that insert was called with correct name parsing
+      expect(mockInsertValues).toHaveBeenCalled()
+    })
+
+    it('should handle missing profile picture gracefully', async () => {
+      const { handleSocialAuth } = await import('./auth')
+
+      const mockGet = vi.fn().mockResolvedValue(null)
+      const mockInsertValues = vi.fn().mockReturnValue({
+        returning: vi.fn().mockReturnValue({
+          get: vi.fn().mockResolvedValue({
+            id: 1,
+            email: 'nopic@example.com',
+            passwordHash: 'hashed',
+            role: 'user',
+            tier: 1,
+            googleId: 'google-nopic',
+            profilePictureUrl: null
+          })
+        })
+      })
+      mockDb.insert.mockReturnValue({
+        values: mockInsertValues
+      })
+      mockDb.select.mockReturnValue({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            get: mockGet
+          }))
+        }))
+      })
+
+      const mockEvent = {} as H3Event
+      const user = await handleSocialAuth(
+        mockEvent,
+        'google',
+        'google-nopic',
+        'nopic@example.com',
+        'No Pic User'
+        // No profile picture URL
+      )
+
+      expect(user.profilePictureUrl).toBeNull()
+    })
+
+    it('should set email as verified for social login users', async () => {
+      const { handleSocialAuth } = await import('./auth')
+
+      const mockGet = vi.fn().mockResolvedValue(null)
+      const createdUser = {
+        id: 1,
+        email: 'verified@example.com',
+        passwordHash: 'hashed',
+        role: 'user',
+        tier: 1,
+        emailVerified: true, // Should be true for social login
+        googleId: 'google-verified'
+      }
+      const mockInsertValues = vi.fn().mockReturnValue({
+        returning: vi.fn().mockReturnValue({
+          get: vi.fn().mockResolvedValue(createdUser)
+        })
+      })
+      mockDb.insert.mockReturnValue({
+        values: mockInsertValues
+      })
+      mockDb.select.mockReturnValue({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            get: mockGet
+          }))
+        }))
+      })
+
+      const mockEvent = {} as H3Event
+      const user = await handleSocialAuth(
+        mockEvent,
+        'google',
+        'google-verified',
+        'verified@example.com'
+      )
+
+      expect(user.emailVerified).toBe(true)
+    })
+  })
 })

@@ -8,7 +8,8 @@ export default defineNuxtConfig({
     '@nuxt/ui',
     '@vueuse/nuxt',
     'nuxt-og-image',
-    'nuxt-umami'
+    'nuxt-umami',
+    'nuxt-auth-utils'
   ],
 
   // Enable SSR globally
@@ -35,6 +36,10 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     // Server-side only config (not exposed to client)
+    // Reuse JWT_SECRET for nuxt-auth-utils session encryption
+    session: {
+      password: process.env.JWT_SECRET || ''
+    },
     mortalityDataS3Base: process.env.MORTALITY_DATA_S3_BASE || 'https://s3.mortality.watch/data/mortality',
     mortalityDataCacheDir: process.env.MORTALITY_DATA_CACHE_DIR || '.data/cache/mortality',
     mortalityDataFetchTimeout: parseInt(process.env.MORTALITY_DATA_FETCH_TIMEOUT || '30000', 10),

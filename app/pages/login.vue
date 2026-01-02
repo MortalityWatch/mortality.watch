@@ -93,20 +93,25 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
       @close="clearError"
     />
 
-    <UAuthForm
-      :fields="fields"
-      :schema="schema"
-      title="Welcome back"
-      icon="i-lucide-lock"
-      @submit="(onSubmit as (event: FormSubmitEvent<Schema>) => Promise<void>)"
-    >
-      <template #description>
+    <div class="text-center mb-6">
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+        Welcome back
+      </h1>
+      <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
         Don't have an account? <ULink
           to="/signup"
           class="text-primary font-medium"
         >Sign up</ULink>.
-      </template>
+      </p>
+    </div>
 
+    <SocialLoginButtons />
+
+    <UAuthForm
+      :fields="fields"
+      :schema="schema"
+      @submit="(onSubmit as (event: FormSubmitEvent<Schema>) => Promise<void>)"
+    >
       <template #password-hint>
         <ULink
           to="/forgot-password"
