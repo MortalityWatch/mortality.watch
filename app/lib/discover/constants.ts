@@ -85,6 +85,15 @@ export const viewDescriptions: Record<View, string> = {
 }
 
 /**
+ * View icons
+ */
+export const viewIcons: Record<View, string> = {
+  normal: 'i-lucide-eye',
+  excess: 'i-lucide-diff',
+  zscore: 'i-lucide-sigma'
+}
+
+/**
  * Generate metric tabs for country view
  */
 export function getMetricTabs(): TabsItem[] {
