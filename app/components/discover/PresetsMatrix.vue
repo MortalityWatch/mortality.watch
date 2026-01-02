@@ -67,37 +67,30 @@
           <NuxtLink
             v-if="getViewForMetric(metric) && isMetricValidForChartType(metric, chartType)"
             :to="getCardUrl(metric, chartType, getViewForMetric(metric)!)"
-            class="block group"
+            class="block group relative rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden hover:shadow-lg transition-shadow"
           >
-            <UCard
-              class="hover:shadow-lg transition-shadow"
-              :ui="{ body: 'p-0' }"
+            <!-- Header with title -->
+            <div class="px-3 py-2 text-center border-b border-gray-200 dark:border-gray-800">
+              <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                {{ metricInfo[metric].label }}
+              </h4>
+            </div>
+
+            <!-- Thumbnail -->
+            <div
+              class="overflow-hidden bg-gray-100 dark:bg-gray-800"
+              style="aspect-ratio: 16/9"
             >
-              <!-- Header with title -->
-              <template #header>
-                <div class="text-center">
-                  <h4 class="text-sm font-semibold">
-                    {{ metricInfo[metric].label }}
-                  </h4>
-                </div>
-              </template>
-
-              <!-- Thumbnail -->
-              <div
-                class="overflow-hidden bg-gray-100 dark:bg-gray-800"
-                style="aspect-ratio: 16/9"
+              <img
+                :src="getThumbnailUrl(metric, chartType, getViewForMetric(metric)!)"
+                :alt="`${metricInfo[metric].label} ${chartTypeLabels[chartType]} ${viewLabels[getViewForMetric(metric)!]}`"
+                class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform"
+                loading="lazy"
               >
-                <img
-                  :src="getThumbnailUrl(metric, chartType, getViewForMetric(metric)!)"
-                  :alt="`${metricInfo[metric].label} ${chartTypeLabels[chartType]} ${viewLabels[getViewForMetric(metric)!]}`"
-                  class="w-full h-full object-cover object-top hover:scale-105 transition-transform"
-                  loading="lazy"
-                >
-              </div>
+            </div>
 
-              <!-- Locked overlay -->
-              <UiLockedOverlay v-if="isLocked(getViewForMetric(metric)!)" />
-            </UCard>
+            <!-- Locked overlay -->
+            <UiLockedOverlay v-if="isLocked(getViewForMetric(metric)!)" />
           </NuxtLink>
         </template>
       </div>
