@@ -2,16 +2,16 @@ import { test, expect } from '@playwright/test'
 
 test.describe('Global Chart History Page (Pro Feature)', () => {
   // Note: This page requires Pro access. Without authentication,
-  // users are redirected to /features for upgrade prompt.
+  // users are redirected to /signup (for public users) or /subscribe (for registered users).
 
-  test('should redirect unauthenticated users to features page', async ({ page }) => {
+  test('should redirect unauthenticated users to signup page', async ({ page }) => {
     await page.goto('/charts/browse')
 
-    // Non-pro users should be redirected to features page
-    await expect(page).toHaveURL(/\/features/)
+    // Public (unauthenticated) users should be redirected to signup page
+    await expect(page).toHaveURL(/\/signup/)
   })
 
-  test('should have link from discover page', async ({ page }) => {
+  test('should have Global Chart History card on discover page', async ({ page }) => {
     await page.goto('/discover')
     await page.waitForLoadState('domcontentloaded')
 
@@ -20,16 +20,14 @@ test.describe('Global Chart History Page (Pro Feature)', () => {
     await expect(chartHistoryHeading).toBeVisible()
   })
 
-  test('should show upgrade badge for non-pro users on discover page', async ({ page }) => {
+  test('should show Sign Up badge for unauthenticated users on discover page', async ({ page }) => {
     await page.goto('/discover')
     await page.waitForLoadState('domcontentloaded')
 
-    // The Global Chart History card should show an upgrade badge for non-pro users
-    // Look for the "Sign Up" or "Upgrade" badge near the heading
-    const chartHistoryCard = page.locator('a[href*="charts/browse"], a[href*="features"]').filter({
-      has: page.getByRole('heading', { name: 'Global Chart History' })
-    })
-    await expect(chartHistoryCard).toBeVisible()
+    // The Global Chart History card should show a "Sign Up" badge for public users
+    // (FeatureBadge shows "Sign Up" for public users, "Upgrade" for registered users)
+    const signUpBadge = page.locator('text=Sign Up').first()
+    await expect(signUpBadge).toBeVisible()
   })
 
   // Note: Tests for authenticated Pro users would require test authentication setup
