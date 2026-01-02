@@ -6,7 +6,7 @@
  */
 
 export const metrics = ['le', 'asd', 'asmr', 'cmr', 'deaths', 'population'] as const
-export const chartTypes = ['weekly', 'monthly', 'quarterly', 'yearly', 'fluseason'] as const
+export const chartTypes = ['weekly', 'monthly', 'quarterly', 'yearly', 'midyear', 'fluseason'] as const
 export const views = ['normal', 'excess', 'zscore'] as const
 
 export type Metric = typeof metrics[number]

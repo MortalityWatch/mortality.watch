@@ -2,7 +2,7 @@
   <div class="space-y-6">
     <!-- Filters -->
     <div class="space-y-4">
-      <!-- Chart type filters -->
+      <!-- Period filters -->
       <div class="flex flex-wrap gap-3 items-center">
         <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Period:</span>
         <label
@@ -17,6 +17,24 @@
             class="rounded border-gray-300 dark:border-gray-600 text-primary-500 focus:ring-primary-500"
           >
           <span class="text-sm text-gray-700 dark:text-gray-300">{{ chartTypeLabels[chartType] }}</span>
+        </label>
+      </div>
+
+      <!-- Metric filters -->
+      <div class="flex flex-wrap gap-3 items-center">
+        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Metric:</span>
+        <label
+          v-for="metric in availableMetrics"
+          :key="metric"
+          class="inline-flex items-center gap-1.5 cursor-pointer"
+        >
+          <input
+            v-model="visibleMetrics"
+            type="checkbox"
+            :value="metric"
+            class="rounded border-gray-300 dark:border-gray-600 text-primary-500 focus:ring-primary-500"
+          >
+          <span class="text-sm text-gray-700 dark:text-gray-300">{{ metricInfo[metric].label }}</span>
         </label>
       </div>
 
@@ -43,7 +61,7 @@
 
       <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
         <template
-          v-for="metric in availableMetrics"
+          v-for="metric in filteredMetrics"
           :key="`${chartType}-${metric}`"
         >
           <NuxtLink
@@ -67,7 +85,7 @@
               <!-- Label -->
               <div class="text-center">
                 <div class="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
-                  {{ metricInfo[metric].shortLabel }}
+                  {{ metricInfo[metric].label }}
                 </div>
                 <div
                   v-if="isLocked(getViewForMetric(metric)!)"
@@ -90,10 +108,10 @@
 
     <!-- Empty state -->
     <div
-      v-if="visibleChartTypes.length === 0"
+      v-if="visibleChartTypes.length === 0 || filteredMetrics.length === 0"
       class="text-center py-12 text-gray-500 dark:text-gray-400"
     >
-      Select at least one period to see charts
+      Select at least one period and one metric to see charts
     </div>
   </div>
 </template>
@@ -109,7 +127,7 @@ import {
   presetToExplorerUrl,
   presetToThumbnailUrl
 } from '@/lib/discover/presets'
-import { chartTypeLabels, viewLabels, metricInfo } from '@/lib/discover/constants'
+import { chartTypeLabels, viewLabels, metricInfo, metrics } from '@/lib/discover/constants'
 import type { FeatureKey } from '@/lib/featureFlags'
 
 interface Props {
@@ -123,7 +141,7 @@ const colorMode = useColorMode()
 const { can, getFeatureUpgradeUrl } = useFeatureAccess()
 
 // Visible chart types (hide monthly by default)
-const visibleChartTypes = ref<ChartType[]>(['weekly', 'quarterly', 'yearly', 'fluseason'])
+const visibleChartTypes = ref<ChartType[]>(['weekly', 'quarterly', 'yearly', 'midyear', 'fluseason'])
 
 // Selected view (single selection, default to raw)
 const selectedView = ref<View>('normal')
@@ -141,6 +159,14 @@ const availableMetrics = computed<Metric[]>(() => {
     return allMetrics.filter(m => m !== 'asmr' && m !== 'asd')
   }
   return allMetrics
+})
+
+// Visible metrics (all enabled by default)
+const visibleMetrics = ref<Metric[]>([...metrics])
+
+// Filtered metrics (intersection of available and visible)
+const filteredMetrics = computed<Metric[]>(() => {
+  return availableMetrics.value.filter(m => visibleMetrics.value.includes(m))
 })
 
 // Check if a view is a Pro feature
