@@ -1,5 +1,6 @@
 import { computed, type Ref } from 'vue'
-import { getChartColors, getColorScale } from '@/lib/chart/chartColors'
+import { computeDisplayColors } from '@/lib/chart/chartColors'
+import { getIsDark } from '@/composables/useTheme'
 
 /**
  * Explorer Colors Composable
@@ -26,26 +27,9 @@ export function useExplorerColors(
     const numAgeGroups = ageGroups?.value?.length ?? 1
     // Need one color per country * ageGroup combination
     const numSeries = numCountries * numAgeGroups
-    if (numSeries === 0) return []
 
-    // If user has custom colors, use them (extending if needed)
-    if (userColors.value) {
-      if (userColors.value.length >= numSeries) {
-        return userColors.value.slice(0, numSeries)
-      }
-      // If user colors are fewer than series, extend using color scale
-      return getColorScale(userColors.value, numSeries)
-    }
-
-    // Use default colors (theme-aware)
-    const themeColors = getChartColors()
-    if (themeColors.length >= numSeries) {
-      // We have enough colors, just slice
-      return themeColors.slice(0, numSeries)
-    }
-
-    // Need more colors than we have, use chroma to generate
-    return getColorScale(themeColors, numSeries)
+    // Use shared computeDisplayColors - same logic as SSR
+    return computeDisplayColors(numSeries, userColors.value, getIsDark())
   })
 
   return {
