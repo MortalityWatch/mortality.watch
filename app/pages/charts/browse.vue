@@ -85,11 +85,11 @@
           <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
             <div class="flex items-center gap-3">
               <UBadge
-                :color="chart.page === 'explorer' ? 'primary' : 'info'"
+                :color="chart.page === 'explorer' ? 'info' : 'warning'"
                 variant="subtle"
                 size="xs"
               >
-                {{ chart.page }}
+                {{ chart.page === 'explorer' ? 'Explorer' : 'Ranking' }}
               </UBadge>
               <span>
                 <Icon
@@ -268,6 +268,7 @@ function getThumbnailUrl(chart: Chart): string {
   params.set('qr', '0') // Hide QR code
   params.set('l', '0') // Hide logo
   params.set('cap', '0') // Hide caption
+  params.set('sle', '1') // Always show legend (even for single series)
   params.set('dp', '2') // 2x device pixel ratio
   params.set('z', '1.5') // Zoom level
   params.set('width', '352')
