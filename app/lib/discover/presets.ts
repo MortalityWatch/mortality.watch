@@ -167,13 +167,15 @@ export function presetToThumbnailUrl(
     width?: number
     height?: number
     zoom?: number
+    hideSteepDrop?: boolean
   } = {}
 ): string {
   const {
     darkMode = false,
     width = 352,
     height = 198,
-    zoom = 1.33
+    zoom = 1.33,
+    hideSteepDrop = true // Default to true for thumbnails
   } = options
 
   const params = new URLSearchParams()
@@ -212,6 +214,11 @@ export function presetToThumbnailUrl(
 
   if (darkMode) {
     params.set('dm', '1')
+  }
+
+  // Hide steep drop by default for thumbnails to avoid misleading charts
+  if (hideSteepDrop) {
+    params.set('hsd', '1')
   }
 
   return `/chart.png?${params.toString()}`

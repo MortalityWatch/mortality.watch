@@ -69,6 +69,7 @@ export interface ChartRenderState {
   showXAxisTitle: boolean
   showYAxisTitle: boolean
   darkMode: boolean
+  hideSteepDrop: boolean
 }
 
 /**
@@ -238,7 +239,8 @@ export function resolveChartStateForRendering(
     showLegend: (constrainedState.showLegend as boolean) ?? true,
     showXAxisTitle: (constrainedState.showXAxisTitle as boolean) ?? true,
     showYAxisTitle: (constrainedState.showYAxisTitle as boolean) ?? true,
-    darkMode: (constrainedState.darkMode as boolean) ?? false
+    darkMode: (constrainedState.darkMode as boolean) ?? false,
+    hideSteepDrop: (constrainedState.hideSteepDrop as boolean) ?? false
   }
 }
 
@@ -329,7 +331,8 @@ export function resolveChartStateFromSnapshot(
     showLegend: true,
     showXAxisTitle: true,
     showYAxisTitle: true,
-    darkMode: false
+    darkMode: false,
+    hideSteepDrop: false
   }
 }
 

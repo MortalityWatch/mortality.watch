@@ -119,6 +119,7 @@ export interface ExplorerStateValues {
   userColors: string[]
   chartPreset: string
   darkMode: boolean
+  hideSteepDrop: boolean
   zScoreThreshold?: number
   significanceLevel?: number
 }
