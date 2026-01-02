@@ -2,6 +2,14 @@
 const { signInWithGoogle, signInWithTwitter } = useAuth()
 const route = useRoute()
 
+// Fetch which OAuth providers are enabled
+const { data: providers } = await useFetch('/api/auth/oauth-providers')
+
+// Check if any provider is enabled
+const hasAnyProvider = computed(() =>
+  providers.value?.google || providers.value?.twitter
+)
+
 // Check for OAuth errors in query params
 const oauthError = computed(() => {
   const error = route.query.error as string | undefined
@@ -16,7 +24,10 @@ const oauthError = computed(() => {
 </script>
 
 <template>
-  <div class="space-y-4">
+  <div
+    v-if="hasAnyProvider"
+    class="space-y-4"
+  >
     <UAlert
       v-if="oauthError"
       color="error"
@@ -28,17 +39,7 @@ const oauthError = computed(() => {
 
     <div class="flex flex-col gap-3">
       <UButton
-        color="neutral"
-        variant="outline"
-        block
-        size="lg"
-        icon="i-simple-icons-google"
-        @click="signInWithGoogle"
-      >
-        Continue with Google
-      </UButton>
-
-      <UButton
+        v-if="providers?.twitter"
         color="neutral"
         variant="outline"
         block
@@ -47,6 +48,18 @@ const oauthError = computed(() => {
         @click="signInWithTwitter"
       >
         Continue with X
+      </UButton>
+
+      <UButton
+        v-if="providers?.google"
+        color="neutral"
+        variant="outline"
+        block
+        size="lg"
+        icon="i-simple-icons-google"
+        @click="signInWithGoogle"
+      >
+        Continue with Google
       </UButton>
     </div>
 
