@@ -151,8 +151,8 @@ const availableMetrics = computed<Metric[]>(() => {
   return getValidMetricsForCountry(props.hasAgeData)
 })
 
-// Visible metrics (hide Population by default - less commonly used)
-const visibleMetrics = ref<Metric[]>(metrics.filter(m => m !== 'population'))
+// Visible metrics (hide Population and Deaths by default - less commonly used)
+const visibleMetrics = ref<Metric[]>(metrics.filter(m => m !== 'population' && m !== 'deaths'))
 
 // Filtered metrics (intersection of available and visible)
 const filteredMetrics = computed<Metric[]>(() => {
