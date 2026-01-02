@@ -234,7 +234,7 @@ const emit = defineEmits<{
 const showFooter = computed(() => props.variant !== 'homepage')
 
 // Cache busting timestamp - changes when cache is cleared to bypass browser cache
-const cacheBustTimestamp = ref<number | null>(null)
+const cacheBustTimestamp = ref(0)
 
 // Local loading state for the 1s delay after cache clear
 const isWaitingForReload = ref(false)
@@ -313,7 +313,7 @@ const getThumbnailUrl = computed(() => {
 // Get thumbnail URL with cache busting parameters (only added after cache clear)
 const getThumbnailUrlWithCacheBust = computed(() => {
   const baseUrl = getThumbnailUrl.value
-  if (cacheBustTimestamp.value) {
+  if (cacheBustTimestamp.value > 0) {
     const separator = baseUrl.includes('?') ? '&' : '?'
     // nocache=1 bypasses server cache, _cb bypasses browser cache
     return `${baseUrl}${separator}nocache=1&_cb=${cacheBustTimestamp.value}`
