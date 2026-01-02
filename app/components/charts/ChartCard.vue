@@ -242,17 +242,17 @@ const isWaitingForReload = ref(false)
 // Combined loading state: either clearing cache or waiting for reload
 const showImagePlaceholder = computed(() => props.isClearingCache || isWaitingForReload.value)
 
-// Watch for cache clearing to complete, then wait 2s before showing image
+// Watch for cache clearing to complete, then wait 1s before showing image
 watch(() => props.isClearingCache, (clearing, wasClearing) => {
   if (wasClearing && !clearing) {
     // Cache clearing just finished, start reload wait
     isWaitingForReload.value = true
     cacheBustTimestamp.value = Date.now()
 
-    // Wait 2s for server to regenerate the image
+    // Wait 1s for server to regenerate the image
     setTimeout(() => {
       isWaitingForReload.value = false
-    }, 2000)
+    }, 1000)
   }
 })
 
@@ -309,12 +309,13 @@ const getThumbnailUrl = computed(() => {
   return `${endpoint}?${params.toString()}`
 })
 
-// Get thumbnail URL with cache busting parameter (only added after cache clear)
+// Get thumbnail URL with cache busting parameters (only added after cache clear)
 const getThumbnailUrlWithCacheBust = computed(() => {
   const baseUrl = getThumbnailUrl.value
   if (cacheBustTimestamp.value) {
     const separator = baseUrl.includes('?') ? '&' : '?'
-    return `${baseUrl}${separator}_cb=${cacheBustTimestamp.value}`
+    // nocache=1 bypasses server cache, _cb bypasses browser cache
+    return `${baseUrl}${separator}nocache=1&_cb=${cacheBustTimestamp.value}`
   }
   return baseUrl
 })
