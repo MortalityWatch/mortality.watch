@@ -76,6 +76,11 @@
 
     <!-- Tabs -->
     <UCard v-else>
+      <!-- Mobile: show current tab name as title -->
+      <h2 class="sm:hidden text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+        {{ activeTabLabel }}
+      </h2>
+
       <UTabs
         v-model="activeTab"
         :items="availableTabs"
@@ -161,7 +166,8 @@
 <script setup lang="ts">
 import type { Country } from '@/model'
 import { loadCountryMetadata } from '@/lib/data/queries'
-import { getMetricTabs } from '@/lib/discover/constants'
+import { getMetricTabs, metricInfo } from '@/lib/discover/constants'
+import type { Metric } from '@/lib/discover/presets'
 import { getFlagEmoji } from '@/lib/discover/countryUtils'
 
 const route = useRoute()
@@ -251,6 +257,9 @@ const countryName = computed(() => {
 
 // Flag emoji
 const flagEmoji = computed(() => getFlagEmoji(iso3c.value))
+
+// Active tab label (for mobile display)
+const activeTabLabel = computed(() => metricInfo[activeTab.value as Metric]?.label ?? '')
 
 // SEO
 useSeoMeta({
