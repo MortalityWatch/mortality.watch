@@ -1,40 +1,14 @@
 <template>
-  <NuxtLink
+  <ChartsThumbnailCard
     :to="linkUrl"
-    class="block"
-  >
-    <UCard
-      class="h-full transition-shadow cursor-pointer"
-      :class="isLocked ? 'opacity-60' : 'hover:shadow-lg'"
-    >
-      <!-- Thumbnail -->
-      <DiscoverThumbnail
-        :src="thumbnailUrl"
-        :locked-src="lockedThumbnailUrl"
-        :alt="`${countryName} chart`"
-        :locked="isLocked"
-        class="mb-3"
-      />
-
-      <!-- Country info -->
-      <div class="flex items-center gap-2">
-        <span class="text-lg">
-          {{ getFlagEmoji(country) }}
-        </span>
-        <span class="font-medium text-gray-900 dark:text-gray-100 truncate">
-          {{ countryName }}
-        </span>
-        <UBadge
-          v-if="isLocked"
-          color="primary"
-          variant="soft"
-          size="xs"
-        >
-          Pro
-        </UBadge>
-      </div>
-    </UCard>
-  </NuxtLink>
+    :thumbnail-url="thumbnailUrl"
+    :locked-thumbnail-url="lockedThumbnailUrl"
+    :alt="`${countryName} chart`"
+    :label="countryName"
+    :emoji="getFlagEmoji(country)"
+    :locked="isLocked"
+    :feature="isLocked ? 'Z_SCORES' : undefined"
+  />
 </template>
 
 <script setup lang="ts">

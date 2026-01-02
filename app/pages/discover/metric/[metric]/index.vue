@@ -64,24 +64,41 @@
           <NuxtLink
             v-for="view in getViewsForMetric(metric)"
             :key="`${chartType}-${view}`"
-            :to="`/discover/metric/${metric}/${chartType}-${view}`"
-            class="block"
+            :to="isLocked(view) ? getFeatureUpgradeUrl('Z_SCORES') : `/discover/metric/${metric}/${chartType}-${view}`"
+            class="block group"
           >
-            <UCard class="h-full hover:shadow-md transition-shadow cursor-pointer hover:border-primary-500 dark:hover:border-primary-400">
-              <div class="text-center py-2">
+            <UCard
+              class="h-full transition-shadow cursor-pointer relative"
+              :class="isLocked(view)
+                ? ''
+                : 'hover:shadow-md hover:border-primary-500 dark:hover:border-primary-400'"
+            >
+              <!-- Content (grayed out when locked) -->
+              <div
+                class="text-center py-2"
+                :class="isLocked(view) ? 'opacity-50' : ''"
+              >
                 <div class="flex items-center justify-center gap-2">
                   <Icon
                     :name="viewIcons[view]"
-                    class="w-4 h-4 text-primary-600 dark:text-primary-400"
+                    class="w-4 h-4"
+                    :class="isLocked(view) ? 'text-gray-400' : 'text-primary-600 dark:text-primary-400'"
                   />
                   <span class="font-medium text-gray-900 dark:text-gray-100">
                     {{ viewLabels[view] }}
                   </span>
+                  <FeatureBadge
+                    v-if="isLocked(view)"
+                    feature="Z_SCORES"
+                  />
                 </div>
                 <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   {{ viewDescriptions[view] }}
                 </div>
               </div>
+
+              <!-- Hover overlay for locked state -->
+              <UiLockedOverlay v-if="isLocked(view)" />
             </UCard>
           </NuxtLink>
         </div>
@@ -114,6 +131,12 @@ import {
 
 const route = useRoute()
 const router = useRouter()
+const { can, getFeatureUpgradeUrl } = useFeatureAccess()
+
+// Check if view is locked for current user
+function isLocked(view: View): boolean {
+  return view === 'zscore' && !can('Z_SCORES')
+}
 
 // Get and validate metric param
 const metric = computed(() => route.params.metric as string)

@@ -230,6 +230,13 @@ export const FEATURES = {
     category: 'analysis'
   },
 
+  BROWSE_ALL_CHARTS: {
+    tier: TIERS.PRO,
+    name: 'Global Chart History',
+    description: 'Browse all chart variants ever created on the platform',
+    category: 'core'
+  },
+
   PRIORITY_SUPPORT: {
     tier: TIERS.PRO,
     name: 'Priority Support',
