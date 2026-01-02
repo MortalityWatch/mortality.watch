@@ -77,24 +77,17 @@
             : 'opacity-60 cursor-pointer'"
         >
           <div class="text-center py-8">
-            <div class="mb-4">
-              <div class="w-16 h-16 mx-auto rounded-lg flex items-center justify-center relative bg-primary-100 dark:bg-primary-900/30">
-                <Icon
-                  name="i-lucide-library"
-                  class="w-10 h-10"
-                  :class="can('BROWSE_ALL_CHARTS') ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'"
-                />
-                <!-- Lock overlay -->
-                <div
-                  v-if="!can('BROWSE_ALL_CHARTS')"
-                  class="absolute inset-0 flex items-center justify-center bg-gray-900/10 dark:bg-gray-900/20 rounded-lg"
-                >
-                  <UIcon
-                    name="i-heroicons-lock-closed"
-                    class="text-gray-500 size-5"
-                  />
-                </div>
-              </div>
+            <div class="mb-4 relative w-fit mx-auto">
+              <Icon
+                name="i-lucide-library"
+                class="w-16 h-16 mx-auto"
+                :class="can('BROWSE_ALL_CHARTS') ? 'text-primary-500' : 'text-gray-400'"
+              />
+              <UIcon
+                v-if="!can('BROWSE_ALL_CHARTS')"
+                name="i-heroicons-lock-closed"
+                class="absolute -top-1 -right-1 text-gray-500 size-5"
+              />
             </div>
             <div class="flex items-center justify-center gap-2 mb-2">
               <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
