@@ -59,5 +59,8 @@ export const stateFieldEncoders = {
   showQrCode: { key: 'qr', encode: encodeBool, decode: decodeBool },
   showCaption: { key: 'cap', encode: encodeBool, decode: decodeBool },
   showTitle: { key: 'ti', encode: encodeBool, decode: decodeBool },
+  showLegend: { key: 'sle', encode: encodeBool, decode: decodeBool },
+  showXAxisTitle: { key: 'sxa', encode: encodeBool, decode: decodeBool },
+  showYAxisTitle: { key: 'sya', encode: encodeBool, decode: decodeBool },
   darkMode: { key: 'dm', encode: encodeBool, decode: decodeBool }
 }
