@@ -253,10 +253,34 @@ export function groupPresetsByChartType(presets: DiscoveryPreset[]): Record<Char
 export const metricsRequiringAgeData: readonly Metric[] = ['le', 'asmr', 'asd'] as const
 
 /**
+ * Yearly chart types (not sub-year resolution)
+ */
+export const yearlyChartTypes: readonly ChartType[] = ['yearly', 'midyear', 'fluseason'] as const
+
+/**
  * Check if a metric requires age-stratified data
  */
 export function metricRequiresAgeData(metric: Metric): boolean {
   return metricsRequiringAgeData.includes(metric)
+}
+
+/**
+ * Check if a chart type is yearly (not sub-year resolution)
+ */
+export function isYearlyChartType(chartType: ChartType): boolean {
+  return yearlyChartTypes.includes(chartType)
+}
+
+/**
+ * Check if a metric is valid for a given chart type.
+ * Some metrics only work with yearly resolution.
+ */
+export function isMetricValidForChartType(metric: Metric, chartType: ChartType): boolean {
+  // ASD only available for yearly chart types (not weekly/monthly/quarterly)
+  if (metric === 'asd' && !isYearlyChartType(chartType)) {
+    return false
+  }
+  return true
 }
 
 /**
@@ -285,6 +309,14 @@ export function isPresetValidForCountry(
     return {
       valid: false,
       reason: `${metric.toUpperCase()} requires age-stratified data`
+    }
+  }
+
+  // Check if metric is valid for chart type (e.g., ASD only for yearly)
+  if (!isMetricValidForChartType(metric, chartType)) {
+    return {
+      valid: false,
+      reason: `${metric.toUpperCase()} only available for yearly chart types`
     }
   }
 

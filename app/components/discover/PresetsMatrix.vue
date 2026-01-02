@@ -65,7 +65,7 @@
           :key="`${chartType}-${metric}`"
         >
           <NuxtLink
-            v-if="getViewForMetric(metric)"
+            v-if="getViewForMetric(metric) && isMetricValidForChartType(metric, chartType)"
             :to="getCardUrl(metric, chartType, getViewForMetric(metric)!)"
             class="block"
           >
@@ -126,7 +126,8 @@ import {
   getPresetById,
   presetToExplorerUrl,
   presetToThumbnailUrl,
-  getValidMetricsForCountry
+  getValidMetricsForCountry,
+  isMetricValidForChartType
 } from '@/lib/discover/presets'
 import { chartTypeLabels, viewLabels, metricInfo, metrics } from '@/lib/discover/constants'
 import type { FeatureKey } from '@/lib/featureFlags'
