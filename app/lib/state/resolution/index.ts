@@ -21,5 +21,7 @@ export {
   resolveChartStateFromSnapshot,
   toChartFilterConfig,
   generateUrlFromState,
+  isYearlyChartType,
+  computeShowCumPi,
   type ChartRenderState
 } from './resolveChartState'

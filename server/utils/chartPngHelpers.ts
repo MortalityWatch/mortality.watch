@@ -11,6 +11,7 @@ import {
   resolveChartStateForRendering,
   toChartFilterConfig,
   generateUrlFromState,
+  computeShowCumPi,
   type ChartRenderState
 } from '../../app/lib/state/resolution'
 import { shouldShowLabels } from '../../app/lib/chart/labelVisibility'
@@ -438,16 +439,9 @@ export async function fetchChartData(state: ChartRenderState) {
   const period = new ChartPeriod(allLabels, state.chartType as ChartType)
   const startDateIndex = state.sliderStart ? period.indexOf(state.sliderStart) : 0
 
-  // Compute showCumPi to match client-side useExplorerHelpers.showCumPi()
-  // Cumulative PIs are only valid for yearly chart types with supported baseline methods
-  // CRITICAL: The client passes this computed value (not raw state.cumulative) to data fetching
+  // Use shared computeShowCumPi - same logic as client-side useExplorerHelpers.showCumPi()
   // This determines whether the /cum endpoint is used for cumulative baseline calculations
-  const isYearlyChartType = state.chartType.includes('year')
-    || state.chartType.includes('fluseason')
-    || state.chartType.includes('midyear')
-  const showCumPi = state.cumulative
-    && isYearlyChartType
-    && ['lin_reg', 'mean'].includes(state.baselineMethod)
+  const showCumPi = computeShowCumPi(state.cumulative, state.chartType, state.baselineMethod)
 
   const allChartData: AllChartData = await dataLoader.getAllChartData({
     dataKey: dataKey as keyof CountryData,
@@ -455,7 +449,7 @@ export async function fetchChartData(state: ChartRenderState) {
     rawData,
     allLabels,
     startDateIndex,
-    cumulative: showCumPi, // Use computed showCumPi, not raw state.cumulative
+    cumulative: showCumPi,
     ageGroupFilter: state.ageGroups,
     countryCodeFilter: state.countries,
     // Always pass baselineMethod - excess mode needs baselines to calculate excess values

@@ -421,16 +421,8 @@ export function toChartFilterConfig(
   // Error bars shown on bar charts in excess mode (matches useExplorerHelpers.isErrorBarType)
   const isErrorBarType = isBarChartStyle && state.isExcess
 
-  // Helper to check if chart type is yearly (matches useExplorerHelpers.isYearlyChartType)
-  const isYearlyChartType = state.chartType.includes('year')
-    || state.chartType.includes('fluseason')
-    || state.chartType.includes('midyear')
-
-  // Compute showCumPi from state (matches useExplorerHelpers.showCumPi)
-  // Cumulative PIs are only valid for yearly chart types with supported baseline methods
-  const showCumPi = state.cumulative
-    && isYearlyChartType
-    && ['lin_reg', 'mean'].includes(state.baselineMethod)
+  // Use shared computeShowCumPi - same logic as useExplorerHelpers.showCumPi()
+  const showCumPi = computeShowCumPi(state.cumulative, state.chartType, state.baselineMethod)
 
   return {
     // Data selection
@@ -482,4 +474,36 @@ export function toChartFilterConfig(
     allCountries,
     url
   }
+}
+
+/**
+ * Check if chart type is yearly (fluseason, yearly, midyear).
+ * Pure function - can be used in both client and SSR.
+ */
+export function isYearlyChartType(chartType: string): boolean {
+  return chartType.includes('year')
+    || chartType.includes('fluseason')
+    || chartType.includes('midyear')
+}
+
+/**
+ * Compute whether cumulative prediction intervals should be used.
+ * This determines if the /cum endpoint is used for baseline calculations.
+ *
+ * Cumulative PIs are only valid when:
+ * - Cumulative mode is enabled
+ * - Chart type is yearly (fluseason, yearly, midyear)
+ * - Baseline method supports PIs (lin_reg or mean)
+ *
+ * Pure function - matches useExplorerHelpers.showCumPi() logic.
+ * Used by both SSR data fetching and client-side data orchestration.
+ */
+export function computeShowCumPi(
+  cumulative: boolean,
+  chartType: string,
+  baselineMethod: string
+): boolean {
+  return cumulative
+    && isYearlyChartType(chartType)
+    && ['lin_reg', 'mean'].includes(baselineMethod)
 }
