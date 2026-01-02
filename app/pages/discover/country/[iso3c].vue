@@ -79,6 +79,7 @@
       <UTabs
         v-model="activeTab"
         :items="availableTabs"
+        :ui="{ trigger: 'flex-1 sm:flex-initial', label: 'hidden sm:inline' }"
       >
         <!-- LE Tab -->
         <template #le>
@@ -160,7 +161,7 @@
 <script setup lang="ts">
 import type { Country } from '@/model'
 import { loadCountryMetadata } from '@/lib/data/queries'
-import { getMetricTabs, metricInfo } from '@/lib/discover/constants'
+import { getMetricTabs } from '@/lib/discover/constants'
 import { getFlagEmoji } from '@/lib/discover/countryUtils'
 
 const route = useRoute()
@@ -225,7 +226,7 @@ const availableTabs = computed(() => {
     if (tab.value === 'asd' && !can('AGE_STANDARDIZED')) {
       return {
         ...tab,
-        label: `${metricInfo.asd.label} (Pro)`
+        badge: 'Pro'
       }
     }
     return tab
