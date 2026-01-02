@@ -43,16 +43,19 @@
         <NuxtLink
           v-if="isProMetric(metric)"
           :to="can('AGE_STANDARDIZED') ? `/discover/metric/${metric}` : getFeatureUpgradeUrl('AGE_STANDARDIZED')"
-          class="block"
+          class="block group"
         >
           <UCard
-            class="h-full transition-shadow cursor-pointer"
-            :class="can('AGE_STANDARDIZED') ? 'hover:shadow-lg hover:border-primary-500 dark:hover:border-primary-400' : 'opacity-70'"
+            class="h-full transition-shadow cursor-pointer relative"
+            :class="can('AGE_STANDARDIZED') ? 'hover:shadow-lg hover:border-primary-500 dark:hover:border-primary-400' : ''"
           >
-            <div class="flex items-start gap-4">
+            <div
+              class="flex items-start gap-4"
+              :class="can('AGE_STANDARDIZED') ? '' : 'opacity-50'"
+            >
               <div class="flex-shrink-0">
                 <div
-                  class="w-12 h-12 rounded-lg flex items-center justify-center relative"
+                  class="w-12 h-12 rounded-lg flex items-center justify-center"
                   :class="can('AGE_STANDARDIZED') ? 'bg-primary-100 dark:bg-primary-900/30' : 'bg-gray-100 dark:bg-gray-800'"
                 >
                   <Icon
@@ -60,16 +63,6 @@
                     class="w-6 h-6"
                     :class="can('AGE_STANDARDIZED') ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'"
                   />
-                  <!-- Lock overlay -->
-                  <div
-                    v-if="!can('AGE_STANDARDIZED')"
-                    class="absolute inset-0 flex items-center justify-center bg-gray-900/10 dark:bg-gray-900/20 rounded-lg"
-                  >
-                    <UIcon
-                      name="i-heroicons-lock-closed"
-                      class="text-gray-500 size-4"
-                    />
-                  </div>
                 </div>
               </div>
               <div class="flex-1 min-w-0">
@@ -77,14 +70,10 @@
                   <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     {{ metricInfo[metric].label }}
                   </h3>
-                  <UBadge
+                  <FeatureBadge
                     v-if="!can('AGE_STANDARDIZED')"
-                    color="primary"
-                    variant="soft"
-                    size="xs"
-                  >
-                    Pro
-                  </UBadge>
+                    feature="AGE_STANDARDIZED"
+                  />
                 </div>
                 <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
                   {{ metricInfo[metric].description }}
@@ -106,6 +95,9 @@
                 />
               </div>
             </div>
+
+            <!-- Hover overlay for locked state -->
+            <UiLockedOverlay v-if="!can('AGE_STANDARDIZED')" />
           </UCard>
         </NuxtLink>
 
