@@ -60,64 +60,31 @@
       v-else-if="charts && charts.length > 0"
       class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
     >
-      <UCard
+      <ChartsThumbnailCard
         v-for="chart in charts"
         :key="chart.id"
-        class="hover:shadow-lg transition-shadow"
+        :to="getChartUrl(chart)"
+        :thumbnail-url="getThumbnailUrl(chart)"
+        :alt="`Chart ${chart.id}`"
+        label=""
+        :chart-type="chart.page"
+        :meta="{ views: chart.accessCount, date: formatDate(chart.createdAt) }"
       >
-        <!-- Thumbnail -->
-        <NuxtLink
-          :to="getChartUrl(chart)"
-          class="block overflow-hidden rounded-md bg-gray-100 dark:bg-gray-800 mb-3"
-          style="aspect-ratio: 16/9"
+        <!-- Admin: Saved By -->
+        <div
+          v-if="isAdmin && chart.savedBy"
+          class="text-xs text-gray-500 dark:text-gray-400 mt-1"
         >
-          <img
-            :src="getThumbnailUrl(chart)"
-            :alt="`Chart ${chart.id}`"
-            class="w-full h-full object-cover object-top hover:scale-105 transition-transform"
-            loading="lazy"
-          >
-        </NuxtLink>
-
-        <!-- Meta info -->
-        <div class="space-y-2">
-          <!-- Stats row -->
-          <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-            <div class="flex items-center gap-3">
-              <UBadge
-                :color="chart.page === 'explorer' ? 'info' : 'warning'"
-                variant="subtle"
-                size="xs"
-              >
-                {{ chart.page === 'explorer' ? 'Explorer' : 'Ranking' }}
-              </UBadge>
-              <span>
-                <Icon
-                  name="i-lucide-eye"
-                  class="w-3 h-3 inline"
-                />
-                {{ chart.accessCount }}
-              </span>
-            </div>
-            <span>{{ formatDate(chart.createdAt) }}</span>
-          </div>
-
-          <!-- Admin: Saved By -->
-          <div
-            v-if="isAdmin && chart.savedBy"
-            class="text-xs text-gray-500 dark:text-gray-400"
-          >
-            <Icon
-              name="i-lucide-bookmark"
-              class="w-3 h-3 inline"
-            />
-            Saved by {{ chart.savedBy.name }}
-            <span v-if="chart.savedBy.count > 1">
-              (+{{ chart.savedBy.count - 1 }})
-            </span>
-          </div>
+          <Icon
+            name="i-lucide-bookmark"
+            class="w-3 h-3 inline"
+          />
+          Saved by {{ chart.savedBy.name }}
+          <span v-if="chart.savedBy.count > 1">
+            (+{{ chart.savedBy.count - 1 }})
+          </span>
         </div>
-      </UCard>
+      </ChartsThumbnailCard>
     </div>
 
     <!-- Empty State -->

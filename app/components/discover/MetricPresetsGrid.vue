@@ -8,48 +8,17 @@
         {{ chartTypeLabels[chartType] }}
       </h3>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <template
+        <ChartsThumbnailCard
           v-for="view in getViewsForMetric(metric)"
           :key="`${chartType}-${view}`"
-        >
-          <NuxtLink
-            :to="getCardUrl(chartType, view)"
-            class="block"
-          >
-            <UCard
-              class="h-full transition-shadow cursor-pointer"
-              :class="isLocked(view) ? 'opacity-60' : 'hover:shadow-lg'"
-            >
-              <!-- Thumbnail -->
-              <DiscoverThumbnail
-                :src="getThumbnailUrl(chartType, view)"
-                :locked-src="getThumbnailUrl(chartType, 'normal')"
-                :alt="`${countryName} ${chartTypeLabels[chartType]} ${viewLabels[view]}`"
-                :locked="isLocked(view)"
-                class="mb-3"
-              />
-
-              <!-- Label -->
-              <div class="text-center flex items-center justify-center gap-2">
-                <Icon
-                  :name="viewIcons[view]"
-                  class="w-4 h-4 text-primary-600 dark:text-primary-400"
-                />
-                <span class="font-medium text-gray-900 dark:text-gray-100">
-                  {{ viewLabels[view] }}
-                </span>
-                <UBadge
-                  v-if="isLocked(view)"
-                  color="primary"
-                  variant="soft"
-                  size="xs"
-                >
-                  Pro
-                </UBadge>
-              </div>
-            </UCard>
-          </NuxtLink>
-        </template>
+          :to="getCardUrl(chartType, view)"
+          :thumbnail-url="getThumbnailUrl(chartType, view)"
+          :locked-thumbnail-url="getThumbnailUrl(chartType, 'normal')"
+          :alt="`${countryName} ${chartTypeLabels[chartType]} ${viewLabels[view]}`"
+          :label="viewLabels[view]"
+          :icon="viewIcons[view]"
+          :locked="isLocked(view)"
+        />
       </div>
     </div>
   </div>
