@@ -34,8 +34,22 @@
         style="aspect-ratio: 16/9"
       >
         <ClientOnly>
-          <NuxtLink :to="getChartLink()">
+          <!-- Show loading placeholder while clearing cache -->
+          <div
+            v-if="isClearingCache"
+            class="w-full h-full animate-pulse bg-gray-200 dark:bg-gray-700 flex items-center justify-center"
+          >
+            <Icon
+              name="i-lucide-loader-2"
+              class="w-8 h-8 text-gray-400 animate-spin"
+            />
+          </div>
+          <NuxtLink
+            v-else
+            :to="getChartLink()"
+          >
             <img
+              :key="imageKey"
               :src="getThumbnailUrl"
               :alt="chart.name"
               class="w-full h-full object-cover object-top hover:scale-105 transition-transform"
@@ -218,6 +232,17 @@ const emit = defineEmits<{
 
 // Show footer if not homepage variant
 const showFooter = computed(() => props.variant !== 'homepage')
+
+// Image key for cache busting - increments when cache clearing completes
+const imageKey = ref(0)
+
+// Watch for cache clearing to complete, then increment key to force image reload
+watch(() => props.isClearingCache, (clearing, wasCleaning) => {
+  if (wasCleaning && !clearing) {
+    // Cache clearing just finished, increment key to force reload
+    imageKey.value++
+  }
+})
 
 // Handle delete button click
 function handleDelete() {
