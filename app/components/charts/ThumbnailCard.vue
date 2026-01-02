@@ -31,8 +31,11 @@
             {{ emoji }}
           </span>
 
-          <!-- Label -->
-          <span class="font-medium text-gray-900 dark:text-gray-100 truncate">
+          <!-- Label (optional - browse page shows charts without titles) -->
+          <span
+            v-if="label"
+            class="font-medium text-gray-900 dark:text-gray-100 truncate"
+          >
             {{ label }}
           </span>
 
@@ -61,10 +64,10 @@
         <!-- Meta row (badges, views, date) -->
         <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
           <div class="flex items-center gap-2 min-w-0">
-            <!-- Chart type badge -->
+            <!-- Chart type badge (colors match ChartCard: primary for explorer, info for ranking) -->
             <UBadge
               v-if="chartType"
-              :color="chartType === 'explorer' ? 'info' : 'warning'"
+              :color="chartType === 'explorer' ? 'primary' : 'info'"
               variant="subtle"
               size="xs"
               class="flex-shrink-0"
@@ -106,21 +109,8 @@
         <slot />
       </div>
 
-      <!-- Hover overlay for locked state (shows on hover) -->
-      <div
-        v-if="locked"
-        class="absolute inset-0 bg-gray-900/5 dark:bg-gray-100/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg"
-      >
-        <div class="flex flex-col items-center gap-1">
-          <UIcon
-            name="i-heroicons-lock-closed"
-            class="text-gray-500 dark:text-gray-400 size-5"
-          />
-          <span class="text-xs font-medium text-gray-600 dark:text-gray-400">
-            Click to upgrade
-          </span>
-        </div>
-      </div>
+      <!-- Hover overlay for locked state -->
+      <UiLockedOverlay v-if="locked" />
     </UCard>
   </NuxtLink>
 </template>
@@ -133,7 +123,7 @@ interface Props {
   thumbnailUrl: string
   lockedThumbnailUrl?: string
   alt: string
-  label: string
+  label?: string
   locked?: boolean
   feature?: FeatureKey
   icon?: string
@@ -146,8 +136,9 @@ interface Props {
   }
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   locked: false,
+  label: undefined,
   lockedThumbnailUrl: undefined,
   feature: undefined,
   icon: undefined,
@@ -156,4 +147,9 @@ withDefaults(defineProps<Props>(), {
   description: undefined,
   meta: undefined
 })
+
+// Dev-mode warning for locked without feature (won't show FeatureBadge)
+if (import.meta.dev && props.locked && !props.feature) {
+  console.warn('[ThumbnailCard] locked=true but no feature prop provided - FeatureBadge will not render')
+}
 </script>

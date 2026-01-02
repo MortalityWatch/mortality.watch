@@ -98,20 +98,7 @@
               </div>
 
               <!-- Hover overlay for locked state -->
-              <div
-                v-if="isLocked(view)"
-                class="absolute inset-0 bg-gray-900/5 dark:bg-gray-100/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg"
-              >
-                <div class="flex flex-col items-center gap-1">
-                  <UIcon
-                    name="i-heroicons-lock-closed"
-                    class="text-gray-500 dark:text-gray-400 size-5"
-                  />
-                  <span class="text-xs font-medium text-gray-600 dark:text-gray-400">
-                    Click to upgrade
-                  </span>
-                </div>
-              </div>
+              <UiLockedOverlay v-if="isLocked(view)" />
             </UCard>
           </NuxtLink>
         </div>

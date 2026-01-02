@@ -66,7 +66,6 @@
         :to="getChartUrl(chart)"
         :thumbnail-url="getThumbnailUrl(chart)"
         :alt="`Chart ${chart.id}`"
-        label=""
         :chart-type="chart.page"
         :meta="{ views: chart.accessCount, date: formatDate(chart.createdAt) }"
       >
@@ -134,14 +133,9 @@ interface Chart {
 }
 
 const { user } = useAuth()
-const { can, getFeatureUpgradeUrl } = useFeatureAccess()
+const { can } = useFeatureAccess()
 const isAdmin = computed(() => user.value?.role === 'admin')
 const colorMode = useColorMode()
-
-// Redirect non-pro users to upgrade page
-if (!can('BROWSE_ALL_CHARTS')) {
-  await navigateTo(getFeatureUpgradeUrl('BROWSE_ALL_CHARTS'))
-}
 
 interface Pagination {
   total: number
@@ -150,9 +144,10 @@ interface Pagination {
   hasMore: boolean
 }
 
-// Page meta
+// Page meta - redirect non-pro users via middleware (SSR-safe)
 definePageMeta({
-  title: 'Global Chart History'
+  title: 'Global Chart History',
+  middleware: ['feature-gate-browse-charts']
 })
 
 useSeoMeta({
