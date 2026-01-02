@@ -214,9 +214,19 @@ const requiresAgeData = computed(() => {
   return metric.value === 'asmr' || metric.value === 'asd'
 })
 
+// Get current chart type from preset
+const currentChartType = computed(() => {
+  return currentPreset.value?.chartType
+})
+
 // Filtered countries based on region and data availability
 const filteredCountries = computed(() => {
   let result = allCountries.value
+
+  // Filter by chart type availability (e.g., weekly data only for weekly charts)
+  if (currentChartType.value) {
+    result = result.filter(c => c.hasChartType(currentChartType.value!))
+  }
 
   // Filter by age-stratified data availability for ASMR/ASD
   if (requiresAgeData.value) {

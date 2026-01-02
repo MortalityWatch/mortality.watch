@@ -67,6 +67,30 @@ export class Country {
       ds.age_groups.forEach(ag => result.add(ag))
     return result
   }
+
+  /**
+   * Check if country has data available for a specific chart type
+   * - weekly/fluseason: requires weekly data
+   * - monthly: requires at least monthly data
+   * - quarterly: requires at least monthly data (aggregates monthly to quarterly)
+   * - yearly: all countries have yearly data
+   */
+  hasChartType(chartType: string): boolean {
+    const types = this.data_source.map(ds => ds.type)
+
+    switch (chartType) {
+      case 'weekly':
+      case 'fluseason':
+        return types.includes('weekly')
+      case 'monthly':
+      case 'quarterly':
+        return types.includes('weekly') || types.includes('monthly')
+      case 'yearly':
+        return true // All countries have at least yearly data
+      default:
+        return false
+    }
+  }
 }
 
 export class CountryData {
