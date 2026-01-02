@@ -76,3 +76,63 @@ export function formatChartDate(
 
   return date.toLocaleDateString(locale, options)
 }
+
+/**
+ * Get ISO week number from a date
+ * Uses ISO 8601 definition: Week 1 is the week containing the first Thursday of the year
+ *
+ * @param date - The date to get the week number from
+ * @returns Object with year and week number
+ */
+export function getISOWeek(date: Date): { year: number, week: number } {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+  // Set to nearest Thursday: current date + 4 - current day number (makes Sunday=7)
+  const dayNum = d.getUTCDay() || 7
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum)
+  // Get first day of year
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
+  // Calculate full weeks to nearest Thursday
+  const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
+  return { year: d.getUTCFullYear(), week: weekNo }
+}
+
+/**
+ * Convert an ISO date string (YYYY-MM-DD) to a period format string
+ * based on the chart type
+ *
+ * @param isoDate - ISO date string like "2025-10-15"
+ * @param chartType - The chart type to format for
+ * @returns Formatted period string like "2025 W42" for weekly
+ */
+export function isoDateToPeriod(isoDate: string, chartType: string): string {
+  const year = parseInt(isoDate.substring(0, 4))
+
+  switch (chartType) {
+    case 'weekly':
+    case 'weekly_104w_sma':
+    case 'weekly_52w_sma':
+    case 'weekly_26w_sma':
+    case 'weekly_13w_sma': {
+      const date = new Date(isoDate)
+      const { year: isoYear, week } = getISOWeek(date)
+      return `${isoYear} W${week.toString().padStart(2, '0')}`
+    }
+    case 'monthly': {
+      const month = parseInt(isoDate.substring(5, 7))
+      return `${year} ${months[month - 1]}`
+    }
+    case 'quarterly': {
+      const month = parseInt(isoDate.substring(5, 7))
+      const quarter = Math.ceil(month / 3)
+      return `${year} Q${quarter}`
+    }
+    case 'midyear':
+    case 'fluseason': {
+      // For flu season, return the season that ends in this year
+      const shortYear = (year % 100).toString().padStart(2, '0')
+      return `${year - 1}/${shortYear}`
+    }
+    default:
+      return `${year}`
+  }
+}

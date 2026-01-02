@@ -27,7 +27,9 @@ import {
   fromYearMonthString,
   prefillUndefined,
   left,
-  right
+  right,
+  getISOWeek,
+  isoDateToPeriod
 } from './utils'
 import type { CountryData } from './model'
 
@@ -703,6 +705,66 @@ describe('utils', () => {
       expect(result[0]).toBeUndefined()
       expect(result[1]).toBe('a')
       expect(result[2]).toBe('b')
+    })
+  })
+
+  describe('getISOWeek', () => {
+    it('should return correct ISO week for dates', () => {
+      // Week 1 of 2025 starts on Dec 30, 2024 and ends on Jan 5, 2025
+      expect(getISOWeek(new Date('2025-01-01'))).toEqual({ year: 2025, week: 1 })
+      expect(getISOWeek(new Date('2025-01-07'))).toEqual({ year: 2025, week: 2 })
+    })
+
+    it('should handle year boundary correctly', () => {
+      // Dec 31, 2024 is in week 1 of 2025
+      expect(getISOWeek(new Date('2024-12-31'))).toEqual({ year: 2025, week: 1 })
+    })
+
+    it('should handle mid-year dates', () => {
+      // Week 42 of 2025 (mid-October)
+      expect(getISOWeek(new Date('2025-10-15'))).toEqual({ year: 2025, week: 42 })
+    })
+
+    it('should handle end of year', () => {
+      // Week 52 of 2025
+      expect(getISOWeek(new Date('2025-12-25'))).toEqual({ year: 2025, week: 52 })
+    })
+  })
+
+  describe('isoDateToPeriod', () => {
+    it('should convert ISO date to weekly format', () => {
+      expect(isoDateToPeriod('2025-01-01', 'weekly')).toBe('2025 W01')
+      expect(isoDateToPeriod('2025-10-15', 'weekly')).toBe('2025 W42')
+    })
+
+    it('should handle weekly SMA variants', () => {
+      expect(isoDateToPeriod('2025-10-15', 'weekly_52w_sma')).toBe('2025 W42')
+      expect(isoDateToPeriod('2025-10-15', 'weekly_13w_sma')).toBe('2025 W42')
+    })
+
+    it('should convert ISO date to monthly format', () => {
+      expect(isoDateToPeriod('2025-01-15', 'monthly')).toBe('2025 Jan')
+      expect(isoDateToPeriod('2025-12-01', 'monthly')).toBe('2025 Dec')
+    })
+
+    it('should convert ISO date to quarterly format', () => {
+      expect(isoDateToPeriod('2025-01-15', 'quarterly')).toBe('2025 Q1')
+      expect(isoDateToPeriod('2025-04-15', 'quarterly')).toBe('2025 Q2')
+      expect(isoDateToPeriod('2025-07-15', 'quarterly')).toBe('2025 Q3')
+      expect(isoDateToPeriod('2025-10-15', 'quarterly')).toBe('2025 Q4')
+    })
+
+    it('should convert ISO date to fluseason format', () => {
+      expect(isoDateToPeriod('2025-10-15', 'fluseason')).toBe('2024/25')
+      expect(isoDateToPeriod('2021-03-15', 'fluseason')).toBe('2020/21')
+    })
+
+    it('should convert ISO date to midyear format', () => {
+      expect(isoDateToPeriod('2025-06-15', 'midyear')).toBe('2024/25')
+    })
+
+    it('should convert ISO date to yearly format', () => {
+      expect(isoDateToPeriod('2025-06-15', 'yearly')).toBe('2025')
     })
   })
 })

@@ -9,6 +9,7 @@
 import Papa from 'papaparse'
 import { dataLoader } from '@/lib/dataLoader'
 import { getSeasonString } from '@/model/baseline'
+import { isoDateToPeriod } from '@/lib/utils/dates'
 import { logger } from '@/lib/logger'
 
 export interface MetadataEntry {
@@ -213,20 +214,28 @@ export class MetadataService {
     )
 
     // Convert ISO dates to period format based on chart type
-    // For flu season/midyear, the ISO date represents the END of the period
-    // So we need to add 1 to get the season that ends in that year
-    const minYear = parseInt(minDate.substring(0, 4))
-    const maxYear = parseInt(maxDate.substring(0, 4))
-
+    // For weekly/monthly/quarterly, use isoDateToPeriod to get the actual week/month/quarter
+    // For yearly/fluseason/midyear, use getSeasonString (only needs year)
     const isFluSeason = chartType === 'fluseason' || chartType === 'midyear'
-    const formattedMinDate = getSeasonString(chartType, isFluSeason ? minYear + 1 : minYear)
-    const formattedMaxDate = getSeasonString(chartType, isFluSeason ? maxYear + 1 : maxYear)
+
+    let formattedMinDate: string
+    let formattedMaxDate: string
+
+    if (chartType === 'yearly' || isFluSeason) {
+      // Yearly types only need the year
+      const minYear = parseInt(minDate.substring(0, 4))
+      const maxYear = parseInt(maxDate.substring(0, 4))
+      formattedMinDate = getSeasonString(chartType, isFluSeason ? minYear + 1 : minYear)
+      formattedMaxDate = getSeasonString(chartType, isFluSeason ? maxYear + 1 : maxYear)
+    } else {
+      // Weekly, monthly, quarterly need full date conversion
+      formattedMinDate = isoDateToPeriod(minDate, chartType)
+      formattedMaxDate = isoDateToPeriod(maxDate, chartType)
+    }
 
     logger.debug('[MetadataService] Date range', {
       rawMin: minDate,
       rawMax: maxDate,
-      minYear,
-      maxYear,
       formattedMin: formattedMinDate,
       formattedMax: formattedMaxDate,
       chartType,
