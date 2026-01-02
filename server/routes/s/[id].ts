@@ -1,6 +1,6 @@
 import { eq, sql } from 'drizzle-orm'
 import { db } from '../../utils/db'
-import { charts } from '../../../db/schema'
+import { charts, savedCharts } from '../../../db/schema'
 
 /**
  * GET /s/:id
@@ -40,6 +40,12 @@ export default defineEventHandler(async (event) => {
       lastAccessedAt: new Date()
     })
     .where(eq(charts.id, id))
+    .run()
+
+  // Also increment viewCount on any saved charts with this config (non-blocking)
+  db.update(savedCharts)
+    .set({ viewCount: sql`${savedCharts.viewCount} + 1` })
+    .where(eq(savedCharts.chartId, id))
     .run()
 
   // Redirect to the stored page + config
