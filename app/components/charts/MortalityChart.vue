@@ -58,6 +58,9 @@ const props = defineProps<{
   showQrCode: boolean
   showCaption: boolean
   showTitle: boolean
+  showLegend: boolean
+  showXAxisTitle: boolean
+  showYAxisTitle: boolean
   decimals?: string
 }>()
 
@@ -129,7 +132,10 @@ const lineConfig = computed(() => {
     props.showCaption,
     props.showTitle,
     false, // isSSR
-    'line'
+    'line',
+    props.showLegend,
+    props.showXAxisTitle,
+    props.showYAxisTitle
   ) as unknown as ChartJSConfig<'line', (number | null)[]>
 })
 
@@ -152,7 +158,10 @@ const barConfig = computed(() => {
     props.showCaption,
     props.showTitle,
     false, // isSSR
-    'bar'
+    'bar',
+    props.showLegend,
+    props.showXAxisTitle,
+    props.showYAxisTitle
   ) as unknown as ChartJSConfig<'bar', (number | null)[]>
 })
 
@@ -175,7 +184,11 @@ const matrixConfig = computed(() => {
     props.decimals,
     tier.value, // userTier: enforce logo/QR visibility based on viewer's tier
     props.showCaption,
-    props.showTitle
+    props.showTitle,
+    false, // isSSR
+    props.showLegend,
+    props.showXAxisTitle,
+    props.showYAxisTitle
   ) as unknown as ChartJSConfig<'matrix', MatrixDataPoint[]>
 })
 

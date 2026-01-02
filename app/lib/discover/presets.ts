@@ -203,6 +203,8 @@ export function presetToThumbnailUrl(
   params.set('qr', '0') // hide QR code
   params.set('l', '0') // hide logo
   params.set('cap', '0') // hide caption
+  params.set('sle', '0') // hide legend
+  params.set('sxa', '0') // hide x-axis title
   params.set('dp', '2') // 2x device pixel ratio
   params.set('z', zoom.toString())
   params.set('width', width.toString())

@@ -426,6 +426,18 @@ describe('chartConfigHelpers', () => {
       expect(config.subtitle.display).toBe(true)
     })
 
+    it('should hide legend when showLegend is false', () => {
+      const config = createPluginsConfig(mockData, false, false, false, true, 'auto', false, false, true, true, false)
+
+      expect(config.legend.display).toBe(false)
+    })
+
+    it('should show legend when showLegend is true', () => {
+      const config = createPluginsConfig(mockData, false, false, false, true, 'auto', false, false, true, true, true)
+
+      expect(config.legend.display).toBe(true)
+    })
+
     it('should configure legend with filter', () => {
       const config = createPluginsConfig(mockData, false, false, false, true, 'auto', false, false)
 
@@ -455,7 +467,7 @@ describe('chartConfigHelpers', () => {
     })
 
     it('should use dark theme colors when isDark is true', () => {
-      const config = createPluginsConfig(mockData, false, false, false, true, 'auto', false, false, true, true, 'zscore', true)
+      const config = createPluginsConfig(mockData, false, false, false, true, 'auto', false, false, true, true, true, 'zscore', true)
 
       expect(config.title.color).toBeDefined()
       expect(config.subtitle.color).toBeDefined()
@@ -561,6 +573,30 @@ describe('chartConfigHelpers', () => {
 
       expect(config.x.title.color).toBeDefined()
       expect(config.y.title.color).toBeDefined()
+    })
+
+    it('should hide x-axis title when showXAxisTitle is false', () => {
+      const config = createScalesConfig(mockData, false, false, true, 'auto', false, false, false, false)
+
+      expect(config.x.title.display).toBe(false)
+    })
+
+    it('should show x-axis title when showXAxisTitle is true', () => {
+      const config = createScalesConfig(mockData, false, false, true, 'auto', false, false, false, true)
+
+      expect(config.x.title.display).toBe(true)
+    })
+
+    it('should hide y-axis title when showYAxisTitle is false', () => {
+      const config = createScalesConfig(mockData, false, false, true, 'auto', false, false, false, true, false)
+
+      expect(config.y.title.display).toBe(false)
+    })
+
+    it('should show y-axis title when showYAxisTitle is true', () => {
+      const config = createScalesConfig(mockData, false, false, true, 'auto', false, false, false, true, true)
+
+      expect(config.y.title.display).toBe(true)
     })
   })
 })

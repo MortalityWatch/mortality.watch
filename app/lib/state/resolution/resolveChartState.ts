@@ -65,6 +65,9 @@ export interface ChartRenderState {
   showQrCode: boolean
   showCaption: boolean
   showTitle: boolean
+  showLegend: boolean
+  showXAxisTitle: boolean
+  showYAxisTitle: boolean
   darkMode: boolean
 }
 
@@ -232,6 +235,9 @@ export function resolveChartStateForRendering(
     showQrCode: (constrainedState.showQrCode as boolean) ?? true,
     showCaption: (constrainedState.showCaption as boolean) ?? true,
     showTitle: (constrainedState.showTitle as boolean) ?? true,
+    showLegend: (constrainedState.showLegend as boolean) ?? true,
+    showXAxisTitle: (constrainedState.showXAxisTitle as boolean) ?? true,
+    showYAxisTitle: (constrainedState.showYAxisTitle as boolean) ?? true,
     darkMode: (constrainedState.darkMode as boolean) ?? false
   }
 }
@@ -320,6 +326,9 @@ export function resolveChartStateFromSnapshot(
     showQrCode: true,
     showCaption: true,
     showTitle: true,
+    showLegend: true,
+    showXAxisTitle: true,
+    showYAxisTitle: true,
     darkMode: false
   }
 }

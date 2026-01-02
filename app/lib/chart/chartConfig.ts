@@ -138,6 +138,10 @@ export const makeChartConfig = (
  * @param isDark - Whether to use dark mode styling
  * @param userTier - User subscription tier for feature gating (tier 2+ can hide watermarks)
  * @param showCaption - Whether to display chart caption (default: true)
+ * @param showTitle - Whether to display chart title (default: true)
+ * @param showLegend - Whether to display chart legend (default: true)
+ * @param showXAxisTitle - Whether to display x-axis title (default: true)
+ * @param showYAxisTitle - Whether to display y-axis title (default: true)
  * @returns Complete Chart.js configuration object with plugins, scales, and data
  *
  * @example
@@ -174,7 +178,10 @@ export const makeBarLineChartConfig = (
   showCaption: boolean = true,
   showTitle: boolean = true,
   isSSR: boolean = false,
-  chartStyle: 'bar' | 'line' = 'line'
+  chartStyle: 'bar' | 'line' = 'line',
+  showLegend: boolean = true,
+  showXAxisTitle: boolean = true,
+  showYAxisTitle: boolean = true
 ) => {
   // Feature gating: Only Pro users (tier 2) can hide the watermark/QR code
   if (userTier !== undefined && userTier < 2) {
@@ -217,6 +224,7 @@ export const makeBarLineChartConfig = (
         showLogo,
         showCaption,
         showTitle,
+        showLegend,
         data.ytitle.includes('Z-Score') ? 'zscore' : 'mortality', // Detect view from ytitle
         isDark,
         isSSR,
@@ -231,7 +239,9 @@ export const makeBarLineChartConfig = (
         decimals,
         isDark,
         isSSR,
-        isCountType
+        isCountType,
+        showXAxisTitle,
+        showYAxisTitle
       )
     },
     data: {
@@ -305,7 +315,10 @@ export const makeMatrixChartConfig = (
   userTier?: number,
   showCaption: boolean = true,
   showTitle: boolean = true,
-  isSSR: boolean = false
+  isSSR: boolean = false,
+  showLegend: boolean = true,
+  showXAxisTitle: boolean = true,
+  showYAxisTitle: boolean = true
 ) => {
   const config = makeBarLineChartConfig(
     data,
@@ -322,7 +335,10 @@ export const makeMatrixChartConfig = (
     showCaption,
     showTitle,
     isSSR,
-    'line' // Will be overridden - matrix uses its own data handling
+    'line', // Will be overridden - matrix uses its own data handling
+    showLegend,
+    showXAxisTitle,
+    showYAxisTitle
   ) as unknown as ChartJSConfig<'matrix', MortalityMatrixDataPoint[]>
 
   // Update plugin config with matrix chart style
@@ -335,7 +351,7 @@ export const makeMatrixChartConfig = (
   config.options!.scales = {
     x: {
       title: {
-        display: true,
+        display: showXAxisTitle,
         text: data.xtitle,
         color: textStrongColor(isDark),
         font: getScaleTitleFont()
@@ -350,7 +366,7 @@ export const makeMatrixChartConfig = (
     },
     y: {
       title: {
-        display: true,
+        display: showYAxisTitle,
         text: 'Jurisdiction',
         color: textStrongColor(isDark),
         font: getScaleTitleFont()

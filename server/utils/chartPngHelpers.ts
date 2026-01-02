@@ -567,7 +567,10 @@ export function generateChartConfig(
       userTier,
       state.showCaption,
       state.showTitle,
-      true // isSSR
+      true, // isSSR
+      state.showLegend,
+      state.showXAxisTitle,
+      state.showYAxisTitle
     )
 
     // Add the chart URL for QR code (only if showQrCode is true)
@@ -594,7 +597,10 @@ export function generateChartConfig(
       state.showCaption,
       state.showTitle,
       true, // isSSR
-      state.chartStyle as 'bar' | 'line'
+      state.chartStyle as 'bar' | 'line',
+      state.showLegend,
+      state.showXAxisTitle,
+      state.showYAxisTitle
     )
 
     // Add the chart URL for QR code (only if showQrCode is true)
