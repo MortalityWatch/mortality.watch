@@ -1,12 +1,13 @@
 <template>
   <div
+    ref="containerRef"
     class="overflow-hidden rounded-md bg-gray-100 dark:bg-gray-800 relative"
     style="aspect-ratio: 16/9"
   >
     <ClientOnly>
       <template v-if="!locked">
         <img
-          :src="src"
+          :src="optimizedSrc"
           :alt="alt"
           class="w-full h-full object-cover object-top hover:scale-105 transition-transform"
           loading="lazy"
@@ -15,7 +16,7 @@
       <template v-else>
         <!-- Load fallback thumbnail and blur it for locked features -->
         <img
-          :src="lockedSrc"
+          :src="optimizedLockedSrc"
           :alt="`${alt} - Pro feature`"
           class="w-full h-full object-cover object-top blur-lg grayscale"
           loading="lazy"
@@ -39,6 +40,8 @@
 </template>
 
 <script setup lang="ts">
+import { useElementSize } from '@vueuse/core'
+
 interface Props {
   src: string
   lockedSrc: string
@@ -46,5 +49,38 @@ interface Props {
   locked: boolean
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
+
+// Measure container size
+const containerRef = ref<HTMLElement | null>(null)
+const { width } = useElementSize(containerRef)
+
+// Calculate height from width (16:9 aspect ratio)
+const height = computed(() => Math.round(width.value * 9 / 16))
+
+// Generate optimized src with size parameters
+const optimizedSrc = computed(() => {
+  if (!width.value || width.value < 50) return props.src
+  return appendSizeParams(props.src, width.value, height.value)
+})
+
+const optimizedLockedSrc = computed(() => {
+  if (!width.value || width.value < 50) return props.lockedSrc
+  return appendSizeParams(props.lockedSrc, width.value, height.value)
+})
+
+// Append or replace width/height params in URL
+function appendSizeParams(url: string, w: number, h: number): string {
+  try {
+    const urlObj = new URL(url, window.location.origin)
+    // Round to nearest 50px to allow some caching benefit
+    const roundedWidth = Math.ceil(w / 50) * 50
+    const roundedHeight = Math.ceil(h / 50) * 50
+    urlObj.searchParams.set('width', roundedWidth.toString())
+    urlObj.searchParams.set('height', roundedHeight.toString())
+    return urlObj.pathname + urlObj.search
+  } catch {
+    return url
+  }
+}
 </script>

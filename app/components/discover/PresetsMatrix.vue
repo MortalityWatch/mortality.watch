@@ -125,7 +125,8 @@ import {
   views,
   getPresetById,
   presetToExplorerUrl,
-  presetToThumbnailUrl
+  presetToThumbnailUrl,
+  getValidMetricsForCountry
 } from '@/lib/discover/presets'
 import { chartTypeLabels, viewLabels, metricInfo, metrics } from '@/lib/discover/constants'
 import type { FeatureKey } from '@/lib/featureFlags'
@@ -152,17 +153,13 @@ const viewTabs = computed(() => views.map(view => ({
   value: view
 })))
 
-// Available metrics based on country data
+// Available metrics based on country data (uses validity checker)
 const availableMetrics = computed<Metric[]>(() => {
-  const allMetrics: Metric[] = ['le', 'asd', 'asmr', 'cmr', 'deaths', 'population']
-  if (!props.hasAgeData) {
-    return allMetrics.filter(m => m !== 'asmr' && m !== 'asd')
-  }
-  return allMetrics
+  return getValidMetricsForCountry(props.hasAgeData)
 })
 
-// Visible metrics (all enabled by default)
-const visibleMetrics = ref<Metric[]>([...metrics])
+// Visible metrics (hide Population by default - less commonly used)
+const visibleMetrics = ref<Metric[]>(metrics.filter(m => m !== 'population'))
 
 // Filtered metrics (intersection of available and visible)
 const filteredMetrics = computed<Metric[]>(() => {

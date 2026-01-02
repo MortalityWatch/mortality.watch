@@ -233,6 +233,7 @@ export function groupPresetsByChartType(presets: DiscoveryPreset[]): Record<Char
     monthly: [],
     quarterly: [],
     yearly: [],
+    midyear: [],
     fluseason: []
   }
 
@@ -241,4 +242,78 @@ export function groupPresetsByChartType(presets: DiscoveryPreset[]): Record<Char
   }
 
   return grouped
+}
+
+/**
+ * Metrics that require age-stratified data.
+ * - LE (Life Expectancy): calculated from age-specific mortality rates
+ * - ASMR (Age-Standardized Mortality Rate): requires age breakdown
+ * - ASD (Age-Standardized Deaths): requires age breakdown
+ */
+export const metricsRequiringAgeData: readonly Metric[] = ['le', 'asmr', 'asd'] as const
+
+/**
+ * Check if a metric requires age-stratified data
+ */
+export function metricRequiresAgeData(metric: Metric): boolean {
+  return metricsRequiringAgeData.includes(metric)
+}
+
+/**
+ * Check if a preset is valid for a given country's data availability.
+ * Returns an object with validity status and reason if invalid.
+ */
+export function isPresetValidForCountry(
+  metric: Metric,
+  chartType: ChartType,
+  view: View,
+  countryCapabilities: {
+    hasAgeData: boolean
+    hasChartType: (ct: ChartType) => boolean
+  }
+): { valid: boolean; reason?: string } {
+  // Check if country has the required chart type data
+  if (!countryCapabilities.hasChartType(chartType)) {
+    return {
+      valid: false,
+      reason: `${chartType} data not available for this country`
+    }
+  }
+
+  // Check if metric requires age data and country has it
+  if (metricRequiresAgeData(metric) && !countryCapabilities.hasAgeData) {
+    return {
+      valid: false,
+      reason: `${metric.toUpperCase()} requires age-stratified data`
+    }
+  }
+
+  // Population doesn't have excess/zscore views
+  if (metric === 'population' && view !== 'normal') {
+    return {
+      valid: false,
+      reason: 'Population only supports Raw Values view'
+    }
+  }
+
+  return { valid: true }
+}
+
+/**
+ * Get all valid metrics for a country based on its data availability
+ */
+export function getValidMetricsForCountry(hasAgeData: boolean): Metric[] {
+  if (hasAgeData) {
+    return [...metrics]
+  }
+  return metrics.filter(m => !metricRequiresAgeData(m))
+}
+
+/**
+ * Get all valid chart types for a country
+ */
+export function getValidChartTypesForCountry(
+  hasChartType: (ct: ChartType) => boolean
+): ChartType[] {
+  return chartTypes.filter(ct => hasChartType(ct))
 }
