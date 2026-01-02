@@ -94,9 +94,9 @@ export const viewIcons: Record<View, string> = {
 }
 
 /**
- * All metrics in display order
+ * Re-export metrics from presets (single source of truth)
  */
-export const metrics: Metric[] = ['le', 'asd', 'asmr', 'cmr', 'deaths', 'population']
+export { metrics } from './presets'
 
 /**
  * Generate metric tabs for country view
