@@ -62,6 +62,15 @@ export class Country {
     return false
   }
 
+  /**
+   * Check if country has life expectancy data available.
+   * LE data requires age-stratified data (same as ASMR) because LE is calculated
+   * from age-specific mortality rates.
+   */
+  has_le(): boolean {
+    return this.has_asmr()
+  }
+
   age_groups(): Set<string> {
     const result = new Set<string>()
     for (const ds of this.data_source)

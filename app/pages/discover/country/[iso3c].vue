@@ -187,12 +187,13 @@ onMounted(async () => {
       return
     }
 
-    // Validate activeTab - reset to 'le' if current tab is not available
-    // This handles edge case where URL has ?tab=asmr but country lacks age data
+    // Validate activeTab - reset to first available tab if current tab is not available
+    // This handles edge case where URL has ?tab=le but country lacks age data
     nextTick(() => {
-      const tabValues = availableTabs.value.map(t => t.value)
+      const tabValues = availableTabs.value.map(t => t.value as string)
       if (!tabValues.includes(activeTab.value)) {
-        activeTab.value = 'le'
+        // Default to first available tab (cmr if no age data, le otherwise)
+        activeTab.value = tabValues[0] || 'cmr'
       }
     })
   } catch (error) {
@@ -212,9 +213,11 @@ const hasAgeData = computed(() => {
 const availableTabs = computed(() => {
   const allTabs = getMetricTabs()
 
-  // Filter out ASMR and ASD if country doesn't have age-stratified data
+  // Filter out LE, ASMR and ASD if country doesn't have age-stratified data
+  // LE requires age-stratified data because life expectancy is calculated from
+  // age-specific mortality rates
   if (!hasAgeData.value) {
-    return allTabs.filter(tab => tab.value !== 'asmr' && tab.value !== 'asd')
+    return allTabs.filter(tab => tab.value !== 'le' && tab.value !== 'asmr' && tab.value !== 'asd')
   }
 
   // Add Pro badge to ASD tab if user doesn't have access
