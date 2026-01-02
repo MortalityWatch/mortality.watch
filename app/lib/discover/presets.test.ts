@@ -215,8 +215,8 @@ describe('presets', () => {
       expect(url).toContain('e=1')
       expect(url).toContain('sb=1')
       expect(url).toContain('bm=mean')
-      expect(url).toContain('bdf=2017')
-      expect(url).toContain('bdt=2019')
+      expect(url).toContain('bf=2017')
+      expect(url).toContain('bt=2019')
     })
 
     it('should generate correct URL for zscore view', () => {
@@ -271,8 +271,28 @@ describe('presets', () => {
       expect(url).toContain('e=1')
       expect(url).toContain('sb=1')
       expect(url).toContain('bm=mean')
-      expect(url).toContain('bdf=2017')
-      expect(url).toContain('bdt=2019')
+      expect(url).toContain('bf=2017')
+      expect(url).toContain('bt=2019')
+    })
+
+    it('should include baseline params for normal view (non-population)', () => {
+      const preset = getPresetById('le-weekly-normal')!
+      const url = presetToThumbnailUrl(preset, 'SWE')
+
+      expect(url).toContain('sb=1')
+      expect(url).toContain('bm=mean')
+      expect(url).toContain('bf=2017')
+      expect(url).toContain('bt=2019')
+    })
+
+    it('should not include baseline params for population', () => {
+      const preset = getPresetById('population-weekly-normal')!
+      const url = presetToThumbnailUrl(preset, 'SWE')
+
+      expect(url).not.toContain('sb=1')
+      expect(url).not.toContain('bm=')
+      expect(url).not.toContain('bf=')
+      expect(url).not.toContain('bt=')
     })
   })
 
