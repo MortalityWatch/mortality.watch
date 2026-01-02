@@ -64,44 +64,17 @@
           v-for="metric in filteredMetrics"
           :key="`${chartType}-${metric}`"
         >
-          <NuxtLink
+          <ChartsThumbnailCard
             v-if="getViewForMetric(metric) && isMetricValidForChartType(metric, chartType)"
             :to="getCardUrl(metric, chartType, getViewForMetric(metric)!)"
-            class="block"
-          >
-            <UCard
-              class="h-full transition-shadow cursor-pointer"
-              :class="isLocked(getViewForMetric(metric)!) ? 'opacity-60' : 'hover:shadow-lg'"
-            >
-              <!-- Thumbnail -->
-              <DiscoverThumbnail
-                :src="getThumbnailUrl(metric, chartType, getViewForMetric(metric)!)"
-                :locked-src="getThumbnailUrl(metric, chartType, 'normal')"
-                :alt="`${metricInfo[metric].label} ${chartTypeLabels[chartType]} ${viewLabels[getViewForMetric(metric)!]}`"
-                :locked="isLocked(getViewForMetric(metric)!)"
-                class="mb-2"
-              />
-
-              <!-- Label -->
-              <div class="text-center">
-                <div class="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
-                  {{ metricInfo[metric].label }}
-                </div>
-                <div
-                  v-if="isLocked(getViewForMetric(metric)!)"
-                  class="flex items-center justify-center gap-1 text-xs text-gray-500 dark:text-gray-400"
-                >
-                  <UBadge
-                    color="primary"
-                    variant="soft"
-                    size="xs"
-                  >
-                    Pro
-                  </UBadge>
-                </div>
-              </div>
-            </UCard>
-          </NuxtLink>
+            :thumbnail-url="getThumbnailUrl(metric, chartType, getViewForMetric(metric)!)"
+            :locked-thumbnail-url="getThumbnailUrl(metric, chartType, 'normal')"
+            :alt="`${metricInfo[metric].label} ${chartTypeLabels[chartType]} ${viewLabels[getViewForMetric(metric)!]}`"
+            :label="metricInfo[metric].label"
+            :icon="metricInfo[metric].icon"
+            :locked="isLocked(getViewForMetric(metric)!)"
+            :feature="isLocked(getViewForMetric(metric)!) ? 'Z_SCORES' : undefined"
+          />
         </template>
       </div>
     </div>
