@@ -126,9 +126,9 @@
         of {{ totalCountries }} countries
       </span>
       <UPagination
-        v-model="currentPage"
+        v-model:page="currentPage"
         :total="totalCountries"
-        :page-count="itemsPerPage"
+        :items-per-page="itemsPerPage"
       />
     </div>
   </div>
