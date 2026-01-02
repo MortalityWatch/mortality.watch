@@ -150,7 +150,8 @@ export default defineEventHandler(async (event) => {
 
         // Step 4.5: Apply steep drop adjustment if enabled
         // This modifies state.dateTo to hide recent incomplete data
-        const adjustedState = applySteepDropAdjustment(state, allChartData)
+        // Only applies when user hasn't explicitly set dateTo
+        const adjustedState = applySteepDropAdjustment(state, allChartData, queryParams)
 
         // Step 5: Transform data into chart-ready format
         // Use allChartData.labels (sliced from sliderStart) to match baseline data alignment

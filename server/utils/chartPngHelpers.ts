@@ -644,16 +644,27 @@ export function generateChartUrlFromState(state: ChartRenderState): string {
  * in recent data (caused by reporting delays) and adjusts dateTo to
  * exclude the affected periods.
  *
+ * IMPORTANT: This only applies when the user hasn't explicitly set dateTo.
+ * If the user specifies a date range, we respect their choice.
+ *
  * @param state - Resolved chart state
  * @param allChartData - Fetched chart data containing labels and data series
+ * @param queryParams - Original URL query params to check if dateTo was explicitly set
  * @returns Adjusted state with modified dateTo if steep drop detected
  */
 export function applySteepDropAdjustment(
   state: ChartRenderState,
-  allChartData: AllChartData
+  allChartData: AllChartData,
+  queryParams: Record<string, string | string[]>
 ): ChartRenderState {
   // Only apply if hideSteepDrop is enabled
   if (!state.hideSteepDrop) {
+    return state
+  }
+
+  // Don't adjust if user explicitly set dateTo in URL
+  // (dt is the URL key for dateTo)
+  if (queryParams.dt) {
     return state
   }
 
