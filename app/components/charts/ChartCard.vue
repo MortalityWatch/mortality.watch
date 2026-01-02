@@ -34,9 +34,9 @@
         style="aspect-ratio: 16/9"
       >
         <ClientOnly>
-          <!-- Show loading placeholder while clearing cache -->
+          <!-- Show loading placeholder while clearing cache or waiting for reload -->
           <div
-            v-if="isClearingCache"
+            v-if="showImagePlaceholder"
             class="w-full h-full animate-pulse bg-gray-200 dark:bg-gray-700 flex items-center justify-center"
           >
             <Icon
@@ -49,8 +49,8 @@
             :to="getChartLink()"
           >
             <img
-              :key="imageKey"
-              :src="getThumbnailUrl"
+              :key="cacheBustTimestamp"
+              :src="getThumbnailUrlWithCacheBust"
               :alt="chart.name"
               class="w-full h-full object-cover object-top hover:scale-105 transition-transform"
               loading="lazy"
@@ -233,14 +233,26 @@ const emit = defineEmits<{
 // Show footer if not homepage variant
 const showFooter = computed(() => props.variant !== 'homepage')
 
-// Image key for cache busting - increments when cache clearing completes
-const imageKey = ref(0)
+// Cache busting timestamp - changes when cache is cleared to bypass browser cache
+const cacheBustTimestamp = ref<number | null>(null)
 
-// Watch for cache clearing to complete, then increment key to force image reload
-watch(() => props.isClearingCache, (clearing, wasCleaning) => {
-  if (wasCleaning && !clearing) {
-    // Cache clearing just finished, increment key to force reload
-    imageKey.value++
+// Local loading state for the 2s delay after cache clear
+const isWaitingForReload = ref(false)
+
+// Combined loading state: either clearing cache or waiting for reload
+const showImagePlaceholder = computed(() => props.isClearingCache || isWaitingForReload.value)
+
+// Watch for cache clearing to complete, then wait 2s before showing image
+watch(() => props.isClearingCache, (clearing, wasClearing) => {
+  if (wasClearing && !clearing) {
+    // Cache clearing just finished, start reload wait
+    isWaitingForReload.value = true
+    cacheBustTimestamp.value = Date.now()
+
+    // Wait 2s for server to regenerate the image
+    setTimeout(() => {
+      isWaitingForReload.value = false
+    }, 2000)
   }
 })
 
@@ -295,6 +307,16 @@ const getThumbnailUrl = computed(() => {
   params.set('height', '198')
 
   return `${endpoint}?${params.toString()}`
+})
+
+// Get thumbnail URL with cache busting parameter (only added after cache clear)
+const getThumbnailUrlWithCacheBust = computed(() => {
+  const baseUrl = getThumbnailUrl.value
+  if (cacheBustTimestamp.value) {
+    const separator = baseUrl.includes('?') ? '&' : '?'
+    return `${baseUrl}${separator}_cb=${cacheBustTimestamp.value}`
+  }
+  return baseUrl
 })
 
 // Format date for my-charts
