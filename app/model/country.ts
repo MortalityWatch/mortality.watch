@@ -3,6 +3,7 @@
  */
 
 import { maybeTransformFluSeason } from '@/utils'
+import type { ChartType } from '@/lib/discover/presets'
 
 export interface CountryRaw {
   iso3c: string
@@ -75,7 +76,7 @@ export class Country {
    * - quarterly: requires at least monthly data (aggregates monthly to quarterly)
    * - yearly/fluseason: all countries have yearly data
    */
-  hasChartType(chartType: string): boolean {
+  hasChartType(chartType: ChartType): boolean {
     const types = this.data_source.map(ds => ds.type)
 
     switch (chartType) {
