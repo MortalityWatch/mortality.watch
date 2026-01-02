@@ -209,9 +209,11 @@ onMounted(async () => {
   }
 })
 
-// Check if metric requires age-stratified data (ASMR or ASD)
+// Check if metric requires age-stratified data (ASMR, ASD, or LE)
+// LE requires age-stratified data because life expectancy is calculated from
+// age-specific mortality rates
 const requiresAgeData = computed(() => {
-  return metric.value === 'asmr' || metric.value === 'asd'
+  return metric.value === 'asmr' || metric.value === 'asd' || metric.value === 'le'
 })
 
 // Get current chart type from preset

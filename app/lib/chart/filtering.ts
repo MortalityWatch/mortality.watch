@@ -141,10 +141,16 @@ export const getFilteredChartDataFromConfig = (
 
   // Determine the metric field to check for data completeness
   // For ASMR: asmr_{standardPopulation} (e.g., asmr_who)
+  // For LE: le or le_adj depending on leAdjusted setting
   // For deaths: deaths
-  const metricField = config.isAsmrType
-    ? `asmr_${config.standardPopulation}` as keyof DatasetEntry
-    : 'deaths' as keyof DatasetEntry
+  let metricField: keyof DatasetEntry
+  if (config.isAsmrType) {
+    metricField = `asmr_${config.standardPopulation}` as keyof DatasetEntry
+  } else if (config.isLifeExpectancyType) {
+    metricField = config.leAdjusted ? 'le_adj' : 'le'
+  } else {
+    metricField = 'deaths'
+  }
 
   // Detect countries with partial data (missing values in the metric field)
   const partialDataForRange: string[] = []
@@ -287,6 +293,7 @@ export const getFilteredChartData = async (
     isErrorBarType,
     isAsmrType,
     isASD: type === 'asd',
+    isLifeExpectancyType: type === 'le',
     isPopulationType,
     isDeathsType,
     dateFrom,
