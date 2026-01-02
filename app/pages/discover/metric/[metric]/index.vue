@@ -69,8 +69,14 @@
           >
             <UCard class="h-full hover:shadow-md transition-shadow cursor-pointer hover:border-primary-500 dark:hover:border-primary-400">
               <div class="text-center py-2">
-                <div class="font-medium text-gray-900 dark:text-gray-100">
-                  {{ viewLabels[view] }}
+                <div class="flex items-center justify-center gap-2">
+                  <Icon
+                    :name="viewIcons[view]"
+                    class="w-4 h-4 text-primary-600 dark:text-primary-400"
+                  />
+                  <span class="font-medium text-gray-900 dark:text-gray-100">
+                    {{ viewLabels[view] }}
+                  </span>
                 </div>
                 <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   {{ viewDescriptions[view] }}
@@ -102,7 +108,8 @@ import {
   metricInfo,
   chartTypeLabels,
   viewLabels,
-  viewDescriptions
+  viewDescriptions,
+  viewIcons
 } from '@/lib/discover/constants'
 
 const route = useRoute()

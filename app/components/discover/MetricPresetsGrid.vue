@@ -31,6 +31,10 @@
 
               <!-- Label -->
               <div class="text-center flex items-center justify-center gap-2">
+                <Icon
+                  :name="viewIcons[view]"
+                  class="w-4 h-4 text-primary-600 dark:text-primary-400"
+                />
                 <span class="font-medium text-gray-900 dark:text-gray-100">
                   {{ viewLabels[view] }}
                 </span>
@@ -62,7 +66,7 @@ import {
   presetToExplorerUrl,
   presetToThumbnailUrl
 } from '@/lib/discover/presets'
-import { chartTypeLabels, viewLabels } from '@/lib/discover/constants'
+import { chartTypeLabels, viewLabels, viewIcons } from '@/lib/discover/constants'
 import type { FeatureKey } from '@/lib/featureFlags'
 
 interface Props {
