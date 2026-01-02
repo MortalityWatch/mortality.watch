@@ -232,7 +232,7 @@ export const FEATURES = {
 
   BROWSE_ALL_CHARTS: {
     tier: TIERS.PRO,
-    name: 'Chart History',
+    name: 'Global Chart History',
     description: 'Browse all chart variants ever created on the platform',
     category: 'core'
   },

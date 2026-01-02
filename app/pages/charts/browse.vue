@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="mb-8">
       <h1 class="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-        Chart History
+        Global Chart History
       </h1>
       <p class="text-lg text-gray-600 dark:text-gray-400">
         All chart variants ever created on the platform
@@ -185,13 +185,13 @@ interface Pagination {
 
 // Page meta
 definePageMeta({
-  title: 'Chart History'
+  title: 'Global Chart History'
 })
 
 useSeoMeta({
-  title: 'Chart History',
+  title: 'Global Chart History',
   description: 'Browse all chart variants ever created on Mortality Watch',
-  ogTitle: 'Chart History - Mortality Watch',
+  ogTitle: 'Global Chart History - Mortality Watch',
   ogDescription: 'Browse all chart variants ever created on Mortality Watch'
 })
 

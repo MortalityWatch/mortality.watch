@@ -91,7 +91,7 @@
             </div>
             <div class="flex items-center justify-center gap-2 mb-2">
               <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                Chart History
+                Global Chart History
               </h2>
               <UBadge
                 v-if="!can('BROWSE_ALL_CHARTS')"

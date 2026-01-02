@@ -62,7 +62,7 @@
           { title: 'All Free features, plus:' },
           { title: 'No watermarks', icon: 'i-lucide-image-off' },
           { title: 'No QR codes', icon: 'i-lucide-scan-line' },
-          { title: 'Chart history', icon: 'i-lucide-library' },
+          { title: 'Global chart history', icon: 'i-lucide-library' },
           { title: 'Single age group LE', icon: 'i-lucide-activity' },
           { title: 'Age standardized deaths', icon: 'i-lucide-trending-up' },
           { title: 'Z-score calculations', icon: 'i-lucide-calculator' },
