@@ -1,4 +1,9 @@
 <script setup lang="ts">
+// Props for invite code (optional, used on signup page)
+const props = defineProps<{
+  inviteCode?: string
+}>()
+
 const { signInWithGoogle, signInWithTwitter } = useAuth()
 const route = useRoute()
 
@@ -21,6 +26,15 @@ const oauthError = computed(() => {
   }
   return null
 })
+
+// Handlers that pass the invite code
+function handleGoogleLogin() {
+  signInWithGoogle(props.inviteCode)
+}
+
+function handleTwitterLogin() {
+  signInWithTwitter(props.inviteCode)
+}
 </script>
 
 <template>
@@ -45,7 +59,7 @@ const oauthError = computed(() => {
         block
         size="lg"
         icon="i-simple-icons-x"
-        @click="signInWithTwitter"
+        @click="handleTwitterLogin"
       >
         Continue with X
       </UButton>
@@ -57,7 +71,7 @@ const oauthError = computed(() => {
         block
         size="lg"
         icon="i-simple-icons-google"
-        @click="signInWithGoogle"
+        @click="handleGoogleLogin"
       >
         Continue with Google
       </UButton>

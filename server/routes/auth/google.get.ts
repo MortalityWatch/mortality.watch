@@ -19,6 +19,13 @@ export default defineOAuthGoogleEventHandler({
       })
     }
 
+    // Get invite code from cookie (set by frontend before OAuth redirect)
+    const inviteCode = getCookie(event, 'oauth_invite_code')
+    // Clear the invite code cookie after reading
+    if (inviteCode) {
+      deleteCookie(event, 'oauth_invite_code')
+    }
+
     // Handle the social auth (creates or updates user, sets auth cookie)
     await handleSocialAuth(
       event,
@@ -26,7 +33,8 @@ export default defineOAuthGoogleEventHandler({
       user.sub,
       user.email,
       user.name,
-      user.picture
+      user.picture,
+      inviteCode || undefined
     )
 
     // Redirect to home page after successful login
@@ -34,6 +42,8 @@ export default defineOAuthGoogleEventHandler({
   },
   onError(event, error) {
     console.error('Google OAuth error:', error)
+    // Clear invite code cookie on error
+    deleteCookie(event, 'oauth_invite_code')
     // Redirect to login page with error
     return sendRedirect(event, '/login?error=google_oauth_failed')
   }

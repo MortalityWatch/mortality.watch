@@ -16,6 +16,13 @@ export default defineOAuthXEventHandler({
     // Twitter OAuth 2.0 may not return email without special permissions
     const email = user.email || `${user.id}@twitter.placeholder.local`
 
+    // Get invite code from cookie (set by frontend before OAuth redirect)
+    const inviteCode = getCookie(event, 'oauth_invite_code')
+    // Clear the invite code cookie after reading
+    if (inviteCode) {
+      deleteCookie(event, 'oauth_invite_code')
+    }
+
     // Handle the social auth (creates or updates user, sets auth cookie)
     await handleSocialAuth(
       event,
@@ -23,7 +30,8 @@ export default defineOAuthXEventHandler({
       user.id,
       email,
       user.name,
-      user.profile_image_url
+      user.profile_image_url,
+      inviteCode || undefined
     )
 
     // Redirect to home page after successful login
@@ -31,6 +39,8 @@ export default defineOAuthXEventHandler({
   },
   onError(event, error) {
     console.error('Twitter OAuth error:', error)
+    // Clear invite code cookie on error
+    deleteCookie(event, 'oauth_invite_code')
     // Redirect to login page with error
     return sendRedirect(event, '/login?error=twitter_oauth_failed')
   }

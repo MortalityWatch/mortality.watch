@@ -29,6 +29,12 @@ vi.mock('jsonwebtoken', () => ({
   }
 }))
 
+// Mock invite code utilities
+vi.mock('./inviteCode', () => ({
+  validateAndConsumeInviteCode: vi.fn().mockResolvedValue(null),
+  createTrialSubscription: vi.fn().mockResolvedValue(undefined)
+}))
+
 // Mock h3 functions
 const mockGetCookie = vi.fn()
 const mockGetHeader = vi.fn()

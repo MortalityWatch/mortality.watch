@@ -4,6 +4,10 @@ import { randomBytes, createHash } from 'node:crypto'
 import type { H3Event } from 'h3'
 import { db, users } from '#db'
 import { eq } from 'drizzle-orm'
+import {
+  validateAndConsumeInviteCode,
+  createTrialSubscription
+} from './inviteCode'
 
 /**
  * JWT payload interface
@@ -668,6 +672,7 @@ export function clearAuthToken(event: H3Event) {
  * 2. Creating new user if not found
  * 3. Updating social provider ID and profile picture if found
  * 4. Generating JWT token and setting auth cookie
+ * 5. Applying invite code if provided (for new users only)
  *
  * @param event - H3 request event object
  * @param provider - Social provider name ('google' | 'twitter')
@@ -675,6 +680,7 @@ export function clearAuthToken(event: H3Event) {
  * @param email - User's email from the social provider
  * @param name - User's name from the social provider (optional)
  * @param profilePictureUrl - User's profile picture URL (optional)
+ * @param inviteCode - Invite code to apply for new users (optional)
  * @returns The user object without password hash
  */
 export async function handleSocialAuth(
@@ -683,7 +689,8 @@ export async function handleSocialAuth(
   socialId: string,
   email: string,
   name?: string,
-  profilePictureUrl?: string
+  profilePictureUrl?: string,
+  inviteCode?: string
 ) {
   const providerIdColumn = provider === 'google' ? 'googleId' : 'twitterId'
 
@@ -722,7 +729,24 @@ export async function handleSocialAuth(
         .where(eq(users.id, user.id))
         .get()
     } else {
-      // Create new user
+      // This is a new user - validate invite code if provided
+      let userTier: 0 | 1 | 2 = 1 // Default tier
+      let inviteCodeId: number | null = null
+      let proExpiryDate: Date | null = null
+
+      if (inviteCode) {
+        const validatedCode = await validateAndConsumeInviteCode(inviteCode)
+        if (validatedCode) {
+          userTier = 2 // All invite codes grant Pro access
+          inviteCodeId = validatedCode.id
+          if (validatedCode.grantsProUntil) {
+            proExpiryDate = validatedCode.grantsProUntil
+          }
+        }
+        // If code is invalid, we just ignore it and create user with default tier
+        // This is better UX than blocking social login
+      }
+
       // Parse name into first and last name
       const nameParts = (name || '').split(' ')
       const firstName = nameParts[0] || ''
@@ -743,7 +767,8 @@ export async function handleSocialAuth(
           displayName: name || null,
           name: name || null,
           role: 'user',
-          tier: 1, // Default to free tier
+          tier: userTier,
+          invitedByCodeId: inviteCodeId,
           emailVerified: true, // Social providers verify email
           [providerIdColumn]: socialId,
           profilePictureUrl: profilePictureUrl || null,
@@ -752,6 +777,11 @@ export async function handleSocialAuth(
         })
         .returning()
         .get()
+
+      // Create trial subscription if invite code grants time-limited Pro
+      if (user && proExpiryDate) {
+        await createTrialSubscription(user.id, proExpiryDate)
+      }
     }
   } else {
     // User exists with this social ID - update last login and profile picture

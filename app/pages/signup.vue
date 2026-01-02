@@ -163,7 +163,7 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
       </p>
     </div>
 
-    <SocialLoginButtons />
+    <SocialLoginButtons :invite-code="inviteCode || undefined" />
 
     <UAuthForm
       :fields="fields"
