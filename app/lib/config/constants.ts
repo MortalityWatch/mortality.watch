@@ -462,7 +462,7 @@ export const UI_CONFIG = {
   /**
    * Number of items per page in discover country grids
    */
-  DISCOVER_ITEMS_PER_PAGE: 24
+  DISCOVER_ITEMS_PER_PAGE: 12
 } as const
 
 // =============================================================================

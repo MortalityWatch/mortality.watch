@@ -89,7 +89,7 @@
     <!-- Country Grid -->
     <div
       v-else-if="currentPreset && paginatedCountries.length > 0"
-      class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
     >
       <DiscoverCountryChartCard
         v-for="country in paginatedCountries"
