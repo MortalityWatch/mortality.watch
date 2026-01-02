@@ -77,14 +77,14 @@
     <!-- Tabs -->
     <UCard v-else>
       <!-- Mobile: show current tab name as title -->
-      <h2 class="sm:hidden text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+      <h2 class="md:hidden text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
         {{ activeTabLabel }}
       </h2>
 
       <UTabs
         v-model="activeTab"
         :items="availableTabs"
-        :ui="{ trigger: 'flex-1 sm:flex-initial', label: 'hidden sm:inline' }"
+        :ui="{ trigger: 'flex-1 md:flex-initial', label: 'hidden md:inline' }"
       >
         <!-- LE Tab -->
         <template #le>
