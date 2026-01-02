@@ -65,48 +65,59 @@
         </UCard>
       </NuxtLink>
 
-      <!-- Browse All Charts (Pro Feature) -->
+      <!-- Global Chart History (Pro Feature) -->
       <NuxtLink
         :to="can('BROWSE_ALL_CHARTS') ? '/charts/browse' : getFeatureUpgradeUrl('BROWSE_ALL_CHARTS')"
-        class="block"
+        class="block group"
       >
         <UCard
-          class="h-full transition-shadow"
+          class="h-full transition-shadow cursor-pointer relative"
           :class="can('BROWSE_ALL_CHARTS')
-            ? 'hover:shadow-lg cursor-pointer hover:border-primary-500 dark:hover:border-primary-400'
-            : 'opacity-60 cursor-pointer'"
+            ? 'hover:shadow-lg hover:border-primary-500 dark:hover:border-primary-400'
+            : ''"
         >
-          <div class="text-center py-8">
-            <div class="mb-4 relative w-fit mx-auto">
+          <!-- Content (grayed out when locked) -->
+          <div
+            class="text-center py-8"
+            :class="can('BROWSE_ALL_CHARTS') ? '' : 'opacity-50'"
+          >
+            <div class="mb-4">
               <Icon
                 name="i-lucide-library"
                 class="w-16 h-16 mx-auto"
                 :class="can('BROWSE_ALL_CHARTS') ? 'text-primary-500' : 'text-gray-400'"
-              />
-              <UIcon
-                v-if="!can('BROWSE_ALL_CHARTS')"
-                name="i-heroicons-lock-closed"
-                class="absolute -top-1 -right-1 text-gray-500 size-5"
               />
             </div>
             <div class="flex items-center justify-center gap-2 mb-2">
               <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
                 Global Chart History
               </h2>
-              <UBadge
+              <FeatureBadge
                 v-if="!can('BROWSE_ALL_CHARTS')"
-                color="primary"
-                variant="soft"
-                size="xs"
-              >
-                Pro
-              </UBadge>
+                feature="BROWSE_ALL_CHARTS"
+              />
             </div>
             <p class="text-gray-600 dark:text-gray-400 mb-4">
               Browse all chart variants ever created on the platform, sorted by popularity or date.
             </p>
             <div class="text-sm text-gray-500 dark:text-gray-400">
               Every chart ever generated
+            </div>
+          </div>
+
+          <!-- Hover overlay for locked state -->
+          <div
+            v-if="!can('BROWSE_ALL_CHARTS')"
+            class="absolute inset-0 bg-gray-900/5 dark:bg-gray-100/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg"
+          >
+            <div class="flex flex-col items-center gap-1">
+              <UIcon
+                name="i-heroicons-lock-closed"
+                class="text-gray-500 dark:text-gray-400 size-5"
+              />
+              <span class="text-xs font-medium text-gray-600 dark:text-gray-400">
+                Click to upgrade
+              </span>
             </div>
           </div>
         </UCard>

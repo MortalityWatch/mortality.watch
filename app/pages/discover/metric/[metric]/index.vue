@@ -65,15 +65,19 @@
             v-for="view in getViewsForMetric(metric)"
             :key="`${chartType}-${view}`"
             :to="isLocked(view) ? getFeatureUpgradeUrl('Z_SCORES') : `/discover/metric/${metric}/${chartType}-${view}`"
-            class="block"
+            class="block group"
           >
             <UCard
-              class="h-full transition-shadow"
+              class="h-full transition-shadow cursor-pointer relative"
               :class="isLocked(view)
-                ? 'opacity-60 cursor-pointer'
-                : 'hover:shadow-md cursor-pointer hover:border-primary-500 dark:hover:border-primary-400'"
+                ? ''
+                : 'hover:shadow-md hover:border-primary-500 dark:hover:border-primary-400'"
             >
-              <div class="text-center py-2">
+              <!-- Content (grayed out when locked) -->
+              <div
+                class="text-center py-2"
+                :class="isLocked(view) ? 'opacity-50' : ''"
+              >
                 <div class="flex items-center justify-center gap-2">
                   <Icon
                     :name="viewIcons[view]"
@@ -83,17 +87,29 @@
                   <span class="font-medium text-gray-900 dark:text-gray-100">
                     {{ viewLabels[view] }}
                   </span>
-                  <UBadge
+                  <FeatureBadge
                     v-if="isLocked(view)"
-                    color="primary"
-                    variant="soft"
-                    size="xs"
-                  >
-                    Pro
-                  </UBadge>
+                    feature="Z_SCORES"
+                  />
                 </div>
                 <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   {{ viewDescriptions[view] }}
+                </div>
+              </div>
+
+              <!-- Hover overlay for locked state -->
+              <div
+                v-if="isLocked(view)"
+                class="absolute inset-0 bg-gray-900/5 dark:bg-gray-100/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg"
+              >
+                <div class="flex flex-col items-center gap-1">
+                  <UIcon
+                    name="i-heroicons-lock-closed"
+                    class="text-gray-500 dark:text-gray-400 size-5"
+                  />
+                  <span class="text-xs font-medium text-gray-600 dark:text-gray-400">
+                    Click to upgrade
+                  </span>
                 </div>
               </div>
             </UCard>

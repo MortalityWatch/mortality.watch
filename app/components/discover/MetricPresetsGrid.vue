@@ -18,6 +18,7 @@
           :label="viewLabels[view]"
           :icon="viewIcons[view]"
           :locked="isLocked(view)"
+          :feature="isLocked(view) ? 'Z_SCORES' : undefined"
         />
       </div>
     </div>

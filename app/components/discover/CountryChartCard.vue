@@ -7,6 +7,7 @@
     :label="countryName"
     :emoji="getFlagEmoji(country)"
     :locked="isLocked"
+    :feature="isLocked ? 'Z_SCORES' : undefined"
   />
 </template>
 
