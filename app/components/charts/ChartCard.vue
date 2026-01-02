@@ -236,8 +236,13 @@ const showFooter = computed(() => props.variant !== 'homepage')
 // Cache busting timestamp - changes when cache is cleared to bypass browser cache
 const cacheBustTimestamp = ref<number | null>(null)
 
-// Local loading state for the 2s delay after cache clear
+// Local loading state for the 1s delay after cache clear
 const isWaitingForReload = ref(false)
+
+// Timeout with automatic cleanup on component unmount
+const { start: startReloadWait } = useTimeoutFn(() => {
+  isWaitingForReload.value = false
+}, 1000, { immediate: false })
 
 // Combined loading state: either clearing cache or waiting for reload
 const showImagePlaceholder = computed(() => props.isClearingCache || isWaitingForReload.value)
@@ -248,11 +253,7 @@ watch(() => props.isClearingCache, (clearing, wasClearing) => {
     // Cache clearing just finished, start reload wait
     isWaitingForReload.value = true
     cacheBustTimestamp.value = Date.now()
-
-    // Wait 1s for server to regenerate the image
-    setTimeout(() => {
-      isWaitingForReload.value = false
-    }, 1000)
+    startReloadWait()
   }
 })
 
