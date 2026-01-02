@@ -153,7 +153,7 @@ export function useDataAvailability(
       case 'weekly_26w_sma':
       case 'weekly_52w_sma':
       case 'weekly_104w_sma':
-        return '2000-W01'
+        return '2000 W01'
       default:
         return '2000'
     }
