@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6">
     <!-- Filters -->
-    <div class="flex flex-wrap gap-x-8 gap-y-4 items-start">
+    <div class="space-y-4">
       <!-- Chart type filters -->
       <div class="flex flex-wrap gap-3 items-center">
         <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Period:</span>
@@ -22,12 +22,11 @@
 
       <!-- View selector (single selection) -->
       <div class="flex items-center gap-3">
-        <span class="text-sm font-medium text-gray-700 dark:text-gray-300 leading-none">View:</span>
+        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">View:</span>
         <UTabs
           v-model="selectedView"
           :items="viewTabs"
           size="sm"
-          :ui="{ list: 'h-8' }"
         />
       </div>
     </div>
