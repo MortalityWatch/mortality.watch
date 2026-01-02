@@ -614,7 +614,13 @@ describe('chartConfigHelpers', () => {
       subtitle: 'Test Subtitle',
       xtitle: 'Year',
       ytitle: 'Value',
-      showLabels: false
+      showLabels: false,
+      isMaximized: false,
+      showLogarithmic: false,
+      url: 'https://example.com',
+      showPercentage: false,
+      showXOffset: false,
+      sources: ['test']
     })
 
     it('should auto-hide legend when there is only one visible series', () => {
