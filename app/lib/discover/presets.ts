@@ -295,7 +295,7 @@ export function isPresetValidForCountry(
     hasAgeData: boolean
     hasChartType: (ct: ChartType) => boolean
   }
-): { valid: boolean; reason?: string } {
+): { valid: boolean, reason?: string } {
   // Check if country has the required chart type data
   if (!countryCapabilities.hasChartType(chartType)) {
     return {
