@@ -12,7 +12,6 @@
  */
 
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
 import { metadataService } from '@/services/metadataService'
 import { showToast } from '@/toast'
 import type { useExplorerState } from './useExplorerState'
@@ -21,7 +20,6 @@ import type { ChartType } from '@/model/period'
 export function useDataAvailability(
   state: ReturnType<typeof useExplorerState>
 ) {
-  const route = useRoute()
   const isLoading = ref(true)
   const error = ref<Error | null>(null)
 
@@ -111,25 +109,18 @@ export function useDataAvailability(
   // Auto-correct: Dates outside available range
   // Note: For yearly/fluseason/midyear, metadata includes both type 1 (yearly) and type 3 (weekly)
   // data ranges, since we can calculate yearly aggregates from weekly data
-  // IMPORTANT: Don't auto-correct if user explicitly set dates via URL parameters
   watch(
     [availableDateRange, () => state.dateFrom.value, () => state.dateTo.value],
     ([range, from, to]) => {
       if (isLoading.value) return
       if (!range) return
 
-      // Check if dates were explicitly set via URL (df = dateFrom, dt = dateTo)
-      const dateFromInUrl = !!route.query.df
-      const dateToInUrl = !!route.query.dt
-
       let changed = false
-      // Only auto-correct dateFrom if it wasn't explicitly set in URL
-      if (!dateFromInUrl && from && from < range.minDate) {
+      if (from && from < range.minDate) {
         state.dateFrom.value = range.minDate
         changed = true
       }
-      // Only auto-correct dateTo if it wasn't explicitly set in URL
-      if (!dateToInUrl && to && to > range.maxDate) {
+      if (to && to > range.maxDate) {
         state.dateTo.value = range.maxDate
         changed = true
       }
