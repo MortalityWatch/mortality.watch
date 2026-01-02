@@ -93,7 +93,8 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       showXAxisTitle: true,
       showYAxisTitle: true,
       userColors: undefined as string[] | undefined,
-      darkMode: false
+      darkMode: false,
+      hideSteepDrop: false // When true, auto-hides recent incomplete data with steep drops
     },
 
     constraints: [

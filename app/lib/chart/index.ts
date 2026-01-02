@@ -32,3 +32,12 @@ export * from './chartStyling'
 export * from './backgroundPlugin'
 export * from './logoPlugin'
 export * from './qrCodePlugin'
+
+// Steep drop detection
+export {
+  detectSteepDrop,
+  findAdjustedEndLabel,
+  findCommonAdjustedEndLabel,
+  STEEP_DROP_CONFIGS
+} from './steepDropDetection'
+export type { SteepDropConfig, SteepDropResult } from './steepDropDetection'
