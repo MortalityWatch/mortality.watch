@@ -97,6 +97,27 @@ export function getISOWeek(date: Date): { year: number, week: number } {
 }
 
 /**
+ * Get ISO week number from a UTC date
+ * Same as getISOWeek but expects the input date to already be in UTC
+ * (created via Date.UTC or similar)
+ *
+ * @param date - A Date object representing a UTC date
+ * @returns Object with year and week number
+ */
+export function getISOWeekFromUTC(date: Date): { year: number, week: number } {
+  // Clone the date to avoid mutation
+  const d = new Date(date.getTime())
+  // Set to nearest Thursday: current date + 4 - current day number (makes Sunday=7)
+  const dayNum = d.getUTCDay() || 7
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum)
+  // Get first day of year
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
+  // Calculate full weeks to nearest Thursday
+  const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7)
+  return { year: d.getUTCFullYear(), week: weekNo }
+}
+
+/**
  * Convert an ISO date string (YYYY-MM-DD) to a period format string
  * based on the chart type
  *
@@ -113,8 +134,13 @@ export function isoDateToPeriod(isoDate: string, chartType: string): string {
     case 'weekly_52w_sma':
     case 'weekly_26w_sma':
     case 'weekly_13w_sma': {
-      const date = new Date(isoDate)
-      const { year: isoYear, week } = getISOWeek(date)
+      // Parse ISO date components directly to avoid timezone issues
+      // new Date('2025-12-15') is parsed as UTC midnight, but getFullYear/Month/Date
+      // return local time values, causing off-by-one day errors in some timezones
+      const month = parseInt(isoDate.substring(5, 7)) - 1 // 0-indexed
+      const day = parseInt(isoDate.substring(8, 10))
+      const date = new Date(Date.UTC(year, month, day))
+      const { year: isoYear, week } = getISOWeekFromUTC(date)
       return `${isoYear} W${week.toString().padStart(2, '0')}`
     }
     case 'monthly': {
