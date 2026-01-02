@@ -1,21 +1,42 @@
 <template>
   <div class="space-y-6">
     <!-- Filters -->
-    <div class="flex flex-wrap gap-4 items-center">
-      <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Show:</span>
-      <label
-        v-for="chartType in chartTypes"
-        :key="chartType"
-        class="inline-flex items-center gap-2 cursor-pointer"
-      >
-        <input
-          v-model="visibleChartTypes"
-          type="checkbox"
-          :value="chartType"
-          class="rounded border-gray-300 dark:border-gray-600 text-primary-500 focus:ring-primary-500"
+    <div class="flex flex-wrap gap-x-8 gap-y-3">
+      <!-- Chart type filters -->
+      <div class="flex flex-wrap gap-3 items-center">
+        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Period:</span>
+        <label
+          v-for="chartType in chartTypes"
+          :key="chartType"
+          class="inline-flex items-center gap-1.5 cursor-pointer"
         >
-        <span class="text-sm text-gray-700 dark:text-gray-300">{{ chartTypeLabels[chartType] }}</span>
-      </label>
+          <input
+            v-model="visibleChartTypes"
+            type="checkbox"
+            :value="chartType"
+            class="rounded border-gray-300 dark:border-gray-600 text-primary-500 focus:ring-primary-500"
+          >
+          <span class="text-sm text-gray-700 dark:text-gray-300">{{ chartTypeLabels[chartType] }}</span>
+        </label>
+      </div>
+
+      <!-- View filters -->
+      <div class="flex flex-wrap gap-3 items-center">
+        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">View:</span>
+        <label
+          v-for="view in views"
+          :key="view"
+          class="inline-flex items-center gap-1.5 cursor-pointer"
+        >
+          <input
+            v-model="visibleViews"
+            type="checkbox"
+            :value="view"
+            class="rounded border-gray-300 dark:border-gray-600 text-primary-500 focus:ring-primary-500"
+          >
+          <span class="text-sm text-gray-700 dark:text-gray-300">{{ viewLabels[view] }}</span>
+        </label>
+      </div>
     </div>
 
     <!-- Matrix grid -->
@@ -80,10 +101,10 @@
 
     <!-- Empty state -->
     <div
-      v-if="visibleChartTypes.length === 0"
+      v-if="visibleChartTypes.length === 0 || visibleViews.length === 0"
       class="text-center py-12 text-gray-500 dark:text-gray-400"
     >
-      Select at least one chart type to view presets
+      Select at least one period and one view to see charts
     </div>
   </div>
 </template>
@@ -115,6 +136,9 @@ const { can, getFeatureUpgradeUrl } = useFeatureAccess()
 // Visible chart types (hide monthly by default)
 const visibleChartTypes = ref<ChartType[]>(['weekly', 'quarterly', 'yearly', 'fluseason'])
 
+// Visible views (only raw by default)
+const visibleViews = ref<View[]>(['normal'])
+
 // Available metrics based on country data
 const availableMetrics = computed<Metric[]>(() => {
   const allMetrics: Metric[] = ['le', 'asd', 'asmr', 'cmr', 'deaths', 'population']
@@ -139,12 +163,13 @@ function isLocked(view: View): boolean {
   return isProFeature(view) && !can(getFeatureKey())
 }
 
-// Get available views for a metric (Population only has 'normal')
+// Get available views for a metric, filtered by visibility
 function getViewsForMetric(metric: Metric): View[] {
+  // Population only has 'normal' view
   if (metric === 'population') {
-    return ['normal']
+    return visibleViews.value.includes('normal') ? ['normal'] : []
   }
-  return [...views]
+  return views.filter(v => visibleViews.value.includes(v))
 }
 
 // Get card URL - explorer if unlocked, upgrade if locked
