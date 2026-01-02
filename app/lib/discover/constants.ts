@@ -6,6 +6,7 @@
 
 import type { TabsItem } from '@nuxt/ui'
 import type { Metric, ChartType, View } from './presets'
+import { metrics } from './presets'
 
 /**
  * Metric metadata for display
