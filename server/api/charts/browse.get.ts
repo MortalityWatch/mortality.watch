@@ -78,8 +78,13 @@ export default defineEventHandler(async (event) => {
         break
     }
 
-    // Query all charts - we fetch more than limit to account for filtering
-    // Then filter and paginate in memory
+    // Query charts with a reasonable upper bound to prevent unbounded memory usage.
+    // We fetch up to 5000 charts, filter in memory, then paginate.
+    // This approach is acceptable because:
+    // 1. Empty charts (LE/ASMR/ASD for countries without age data) are a small minority
+    // 2. The charts table grows slowly (user-created charts)
+    // 3. SQL-level filtering would require denormalizing config or adding computed columns
+    const MAX_FETCH_LIMIT = 5000
     const allResults = await db
       .select({
         id: charts.id,
@@ -92,6 +97,7 @@ export default defineEventHandler(async (event) => {
       })
       .from(charts)
       .orderBy(...orderBy)
+      .limit(MAX_FETCH_LIMIT)
 
     // Filter out empty charts (metrics requiring age data for countries without it)
     const filteredResults = allResults.filter(
