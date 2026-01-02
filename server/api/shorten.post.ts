@@ -41,10 +41,10 @@ export default defineEventHandler(async (event) => {
     .limit(1)
 
   if (existing.length > 0) {
-    // Already exists - increment createCount to track generation frequency
+    // Already exists - increment accessCount to track views from Explorer/Ranking pages
     await db
       .update(charts)
-      .set({ createCount: sql`${charts.createCount} + 1` })
+      .set({ accessCount: sql`${charts.accessCount} + 1` })
       .where(eq(charts.id, hash))
     return { success: true }
   }

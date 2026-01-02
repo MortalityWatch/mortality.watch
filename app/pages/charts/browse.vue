@@ -96,7 +96,7 @@
                   name="i-lucide-eye"
                   class="w-3 h-3 inline"
                 />
-                {{ chart.createCount + chart.accessCount }}
+                {{ chart.accessCount }}
               </span>
             </div>
             <span>{{ formatDate(chart.createdAt) }}</span>
