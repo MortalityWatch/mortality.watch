@@ -358,7 +358,7 @@ onMounted(() => {
       .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
       .join('&')
 
-    // Fire-and-forget POST to store in DB (tracks view via createCount)
+    // Fire-and-forget POST to store in DB and track view on any saved charts
     $fetch('/api/shorten', {
       method: 'POST',
       body: { hash, query: queryParts, page: 'ranking' }
