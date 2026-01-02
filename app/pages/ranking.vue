@@ -349,11 +349,25 @@ onMounted(() => {
     autoStartTutorial('ranking')
   }
 
-  // Check if current state matches a saved chart (fire-and-forget)
-  // Only check if user is authenticated
-  if (isAuthenticated.value) {
-    const params = extractUrlParams(route.query as Record<string, string | string[] | undefined>)
-    computeConfigHash(params).then((hash) => {
+  // Track this ranking config view (fire-and-forget)
+  // This ensures ranking configs show up in "all charts" and track views
+  const params = extractUrlParams(route.query as Record<string, string | string[] | undefined>)
+  computeConfigHash(params).then((hash) => {
+    // Build query string from params
+    const queryParts = Object.entries(params)
+      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+      .join('&')
+
+    // Fire-and-forget POST to store in DB and track view on any saved charts
+    $fetch('/api/shorten', {
+      method: 'POST',
+      body: { hash, query: queryParts, page: 'ranking' }
+    }).catch(() => {
+      // Silently ignore errors
+    })
+
+    // Check if current state matches a saved chart (only if authenticated)
+    if (isAuthenticated.value) {
       $fetch<{ id: number, slug: string | null, name: string } | null>(`/api/charts/mine/${hash}`).then((saved) => {
         if (saved) {
           setDetectedChart(saved)
@@ -361,10 +375,10 @@ onMounted(() => {
       }).catch(() => {
         // Request failed - ignore
       })
-    }).catch(() => {
-      // Hash computation failed - ignore
-    })
-  }
+    }
+  }).catch(() => {
+    // Hash computation failed - ignore
+  })
 })
 
 // Handle browser back/forward navigation

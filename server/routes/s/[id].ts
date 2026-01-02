@@ -34,6 +34,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Increment access count and update last accessed time (non-blocking)
+  // Note: savedCharts.viewCount is incremented by /api/shorten when Explorer/Ranking loads
   db.update(charts)
     .set({
       accessCount: sql`${charts.accessCount} + 1`,
