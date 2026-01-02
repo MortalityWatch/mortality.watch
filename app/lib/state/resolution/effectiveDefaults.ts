@@ -10,7 +10,6 @@
  */
 
 import { ChartPeriod, type ChartType } from '@/model/period'
-import { findCommonAdjustedEndLabel } from '@/lib/chart/steepDropDetection'
 
 /**
  * Calculate default periods count based on chart type
@@ -140,38 +139,3 @@ export function computeEffectiveBaselineRange(
   }
 }
 
-/**
- * Adjust dateTo to hide steep drops in recent data
- *
- * When hideSteepDrop is enabled, this function detects artificial drops
- * in recent data (caused by reporting delays) and adjusts dateTo to
- * exclude the affected periods.
- *
- * @param chartType - Chart type for detection configuration
- * @param labels - All available date labels
- * @param dataArrays - Array of data series to check for drops
- * @param currentDateTo - Current effective dateTo value
- * @returns Adjusted dateTo that hides the steep drop, or original dateTo if no drop detected
- */
-export function adjustDateToForSteepDrop(
-  chartType: string,
-  labels: string[],
-  dataArrays: (number | null)[][],
-  currentDateTo: string
-): string {
-  if (labels.length === 0 || dataArrays.length === 0) {
-    return currentDateTo
-  }
-
-  const adjustedEndLabel = findCommonAdjustedEndLabel(
-    dataArrays,
-    labels,
-    chartType
-  )
-
-  if (adjustedEndLabel) {
-    return adjustedEndLabel
-  }
-
-  return currentDateTo
-}
