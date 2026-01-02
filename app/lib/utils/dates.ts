@@ -126,12 +126,9 @@ export function isoDateToPeriod(isoDate: string, chartType: string): string {
       const quarter = Math.ceil(month / 3)
       return `${year} Q${quarter}`
     }
-    case 'midyear':
-    case 'fluseason': {
-      // For flu season, return the season that ends in this year
-      const shortYear = (year % 100).toString().padStart(2, '0')
-      return `${year - 1}/${shortYear}`
-    }
+    // Note: fluseason/midyear are not handled here because they require special
+    // semantic handling (the ISO date represents the END of the season, not start).
+    // Use getSeasonString() from baseline.ts for those chart types.
     default:
       return `${year}`
   }

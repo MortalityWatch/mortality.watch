@@ -754,16 +754,11 @@ describe('utils', () => {
       expect(isoDateToPeriod('2025-10-15', 'quarterly')).toBe('2025 Q4')
     })
 
-    it('should convert ISO date to fluseason format', () => {
-      expect(isoDateToPeriod('2025-10-15', 'fluseason')).toBe('2024/25')
-      expect(isoDateToPeriod('2021-03-15', 'fluseason')).toBe('2020/21')
-    })
-
-    it('should convert ISO date to midyear format', () => {
-      expect(isoDateToPeriod('2025-06-15', 'midyear')).toBe('2024/25')
-    })
-
-    it('should convert ISO date to yearly format', () => {
+    it('should fall back to yearly format for fluseason/midyear/yearly', () => {
+      // fluseason/midyear require special semantic handling via getSeasonString()
+      // isoDateToPeriod just returns the year for these types
+      expect(isoDateToPeriod('2025-10-15', 'fluseason')).toBe('2025')
+      expect(isoDateToPeriod('2025-06-15', 'midyear')).toBe('2025')
       expect(isoDateToPeriod('2025-06-15', 'yearly')).toBe('2025')
     })
   })
