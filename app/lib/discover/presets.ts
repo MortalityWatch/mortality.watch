@@ -200,6 +200,14 @@ export function presetToThumbnailUrl(
     params.set('bdt', preset.baselineDateTo)
   }
 
+  // Normal view: show baseline (except for population)
+  if (preset.view === 'normal' && preset.metric !== 'population') {
+    params.set('sb', '1')
+    params.set('bm', preset.baselineMethod)
+    params.set('bdf', preset.baselineDateFrom)
+    params.set('bdt', preset.baselineDateTo)
+  }
+
   // Thumbnail display options
   params.set('ti', '0') // hide title
   params.set('qr', '0') // hide QR code
