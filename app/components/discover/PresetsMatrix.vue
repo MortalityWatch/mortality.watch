@@ -142,8 +142,8 @@ const props = defineProps<Props>()
 const colorMode = useColorMode()
 const { can, getFeatureUpgradeUrl } = useFeatureAccess()
 
-// Visible chart types (hide monthly by default)
-const visibleChartTypes = ref<ChartType[]>(['weekly', 'quarterly', 'yearly', 'midyear', 'fluseason'])
+// Visible chart types (all enabled by default)
+const visibleChartTypes = ref<ChartType[]>([...chartTypes])
 
 // Selected view (single selection, default to raw)
 const selectedView = ref<View>('normal')
