@@ -41,12 +41,13 @@ describe('constants', () => {
   })
 
   describe('chartTypeLabels', () => {
-    it('should have labels for all 5 chart types', () => {
-      expect(Object.keys(chartTypeLabels)).toHaveLength(5)
+    it('should have labels for all 6 chart types', () => {
+      expect(Object.keys(chartTypeLabels)).toHaveLength(6)
       expect(chartTypeLabels.weekly).toBe('Weekly')
       expect(chartTypeLabels.monthly).toBe('Monthly')
       expect(chartTypeLabels.quarterly).toBe('Quarterly')
       expect(chartTypeLabels.yearly).toBe('Yearly')
+      expect(chartTypeLabels.midyear).toBe('Mid-Year')
       expect(chartTypeLabels.fluseason).toBe('Flu Season')
     })
   })
@@ -86,16 +87,14 @@ describe('constants', () => {
       }
     })
 
-    it('should include preset count in labels', () => {
+    it('should use full metric names as labels', () => {
       const tabs = getMetricTabs()
 
-      // Non-population metrics should show (15)
       const leTab = tabs.find(t => t.value === 'le')
-      expect(leTab?.label).toContain('(15)')
+      expect(leTab?.label).toBe('Life Expectancy')
 
-      // Population should show (5)
       const popTab = tabs.find(t => t.value === 'population')
-      expect(popTab?.label).toContain('(5)')
+      expect(popTab?.label).toBe('Population')
     })
   })
 

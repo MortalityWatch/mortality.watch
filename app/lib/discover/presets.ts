@@ -1,8 +1,8 @@
 /**
  * Discovery Preset Generation
  *
- * Generates all 80 valid preset combinations for the discovery feature.
- * 6 metrics × 5 chart types × 3 views = 90, minus 10 for Population (no excess/zscore)
+ * Generates all 96 valid preset combinations for the discovery feature.
+ * 5 metrics × 6 chart types × 3 views = 90, plus 6 for Population (normal view only)
  */
 
 export const metrics = ['le', 'asd', 'asmr', 'cmr', 'deaths', 'population'] as const
@@ -36,7 +36,7 @@ const DEFAULT_BASELINE = {
 }
 
 /**
- * Generate all valid presets (80 total)
+ * Generate all valid presets (96 total)
  */
 function createAllPresets(): DiscoveryPreset[] {
   const presets: DiscoveryPreset[] = []
@@ -84,7 +84,9 @@ export function getPresetsByMetric(metric: Metric): DiscoveryPreset[] {
  * Get preset count for a metric
  */
 export function getPresetCountByMetric(metric: Metric): number {
-  return metric === 'population' ? 5 : 15
+  // Population: only normal view (1 view × 6 chart types)
+  // Others: all views (3 views × 6 chart types)
+  return metric === 'population' ? chartTypes.length : chartTypes.length * views.length
 }
 
 /**
