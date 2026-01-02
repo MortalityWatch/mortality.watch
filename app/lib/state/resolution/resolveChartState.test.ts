@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { resolveChartStateForRendering } from './resolveChartState'
+import { resolveChartStateForRendering, isYearlyChartType, computeShowCumPi } from './resolveChartState'
 import { computeEffectiveDateRange, getDefaultPeriods, getVisibleLabels } from './effectiveDefaults'
 import { getDefaultSliderStart } from '@/lib/config/constants'
 
@@ -328,5 +328,46 @@ describe('SSR vs Explorer parity', () => {
 
     expect(ssrState.dateFrom).toBe('2015')
     expect(ssrState.dateTo).toBe('2024')
+  })
+})
+
+describe('isYearlyChartType', () => {
+  it('should return true for yearly chart types', () => {
+    expect(isYearlyChartType('yearly')).toBe(true)
+    expect(isYearlyChartType('fluseason')).toBe(true)
+    expect(isYearlyChartType('midyear')).toBe(true)
+  })
+
+  it('should return false for non-yearly chart types', () => {
+    expect(isYearlyChartType('monthly')).toBe(false)
+    expect(isYearlyChartType('weekly')).toBe(false)
+    expect(isYearlyChartType('weekly_13w_sma')).toBe(false)
+    expect(isYearlyChartType('quarterly')).toBe(false)
+  })
+})
+
+describe('computeShowCumPi', () => {
+  it('should return true when all conditions are met', () => {
+    expect(computeShowCumPi(true, 'yearly', 'lin_reg')).toBe(true)
+    expect(computeShowCumPi(true, 'yearly', 'mean')).toBe(true)
+    expect(computeShowCumPi(true, 'fluseason', 'lin_reg')).toBe(true)
+    expect(computeShowCumPi(true, 'midyear', 'mean')).toBe(true)
+  })
+
+  it('should return false when cumulative is false', () => {
+    expect(computeShowCumPi(false, 'yearly', 'lin_reg')).toBe(false)
+    expect(computeShowCumPi(false, 'fluseason', 'mean')).toBe(false)
+  })
+
+  it('should return false for non-yearly chart types', () => {
+    expect(computeShowCumPi(true, 'monthly', 'lin_reg')).toBe(false)
+    expect(computeShowCumPi(true, 'weekly', 'mean')).toBe(false)
+    expect(computeShowCumPi(true, 'quarterly', 'lin_reg')).toBe(false)
+  })
+
+  it('should return false for baseline methods that do not support cumulative PIs', () => {
+    expect(computeShowCumPi(true, 'yearly', 'none')).toBe(false)
+    expect(computeShowCumPi(true, 'yearly', 'median')).toBe(false)
+    expect(computeShowCumPi(true, 'fluseason', 'quantile')).toBe(false)
   })
 })
