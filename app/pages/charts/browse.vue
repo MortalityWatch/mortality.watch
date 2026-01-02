@@ -133,7 +133,6 @@ interface Chart {
 }
 
 const { user } = useAuth()
-const { can } = useFeatureAccess()
 const isAdmin = computed(() => user.value?.role === 'admin')
 const colorMode = useColorMode()
 
