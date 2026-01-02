@@ -11,8 +11,8 @@
       </p>
     </div>
 
-    <!-- Two main options -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+    <!-- Three main options -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
       <!-- By Metric -->
       <NuxtLink
         to="/discover/metric"
@@ -64,6 +64,60 @@
           </div>
         </UCard>
       </NuxtLink>
+
+      <!-- Browse All Charts (Pro Feature) -->
+      <NuxtLink
+        :to="can('BROWSE_ALL_CHARTS') ? '/charts/browse' : getFeatureUpgradeUrl('BROWSE_ALL_CHARTS')"
+        class="block"
+      >
+        <UCard
+          class="h-full transition-shadow"
+          :class="can('BROWSE_ALL_CHARTS')
+            ? 'hover:shadow-lg cursor-pointer hover:border-primary-500 dark:hover:border-primary-400'
+            : 'opacity-60 cursor-pointer'"
+        >
+          <div class="text-center py-8">
+            <div class="mb-4">
+              <div class="w-16 h-16 mx-auto rounded-lg flex items-center justify-center relative bg-primary-100 dark:bg-primary-900/30">
+                <Icon
+                  name="i-lucide-library"
+                  class="w-10 h-10"
+                  :class="can('BROWSE_ALL_CHARTS') ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'"
+                />
+                <!-- Lock overlay -->
+                <div
+                  v-if="!can('BROWSE_ALL_CHARTS')"
+                  class="absolute inset-0 flex items-center justify-center bg-gray-900/10 dark:bg-gray-900/20 rounded-lg"
+                >
+                  <UIcon
+                    name="i-heroicons-lock-closed"
+                    class="text-gray-500 size-5"
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center justify-center gap-2 mb-2">
+              <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                Browse All Charts
+              </h2>
+              <UBadge
+                v-if="!can('BROWSE_ALL_CHARTS')"
+                color="primary"
+                variant="soft"
+                size="xs"
+              >
+                Pro
+              </UBadge>
+            </div>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">
+              Explore the complete library of charts created by the community, sorted by popularity or date.
+            </p>
+            <div class="text-sm text-gray-500 dark:text-gray-400">
+              All community charts
+            </div>
+          </div>
+        </UCard>
+      </NuxtLink>
     </div>
 
     <!-- Quick stats -->
@@ -96,6 +150,8 @@
 </template>
 
 <script setup lang="ts">
+const { can, getFeatureUpgradeUrl } = useFeatureAccess()
+
 useSeoMeta({
   title: 'Discover - Mortality Watch',
   description: 'Explore mortality data by metric or country with pre-configured chart settings',

@@ -167,8 +167,14 @@ interface Chart {
 }
 
 const { user } = useAuth()
+const { can, getFeatureUpgradeUrl } = useFeatureAccess()
 const isAdmin = computed(() => user.value?.role === 'admin')
 const colorMode = useColorMode()
+
+// Redirect non-pro users to upgrade page
+if (!can('BROWSE_ALL_CHARTS')) {
+  await navigateTo(getFeatureUpgradeUrl('BROWSE_ALL_CHARTS'))
+}
 
 interface Pagination {
   total: number
