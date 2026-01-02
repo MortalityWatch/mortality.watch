@@ -9,48 +9,58 @@
         ? ''
         : 'hover:shadow-lg hover:border-primary-500 dark:hover:border-primary-400'"
     >
+      <!-- Header with title (like ChartCard) -->
+      <template #header>
+        <div
+          class="flex items-center gap-2"
+          :class="locked ? 'opacity-50' : ''"
+        >
+          <!-- Optional icon prefix -->
+          <Icon
+            v-if="icon"
+            :name="icon"
+            class="w-4 h-4 flex-shrink-0"
+            :class="locked ? 'text-gray-400' : 'text-primary-600 dark:text-primary-400'"
+          />
+
+          <!-- Optional emoji prefix -->
+          <span
+            v-if="emoji"
+            class="text-lg flex-shrink-0"
+          >
+            {{ emoji }}
+          </span>
+
+          <!-- Label -->
+          <span class="font-medium text-gray-900 dark:text-gray-100 truncate">
+            {{ label }}
+          </span>
+
+          <!-- Feature badge when locked (shows "Sign Up" or "Upgrade" based on tier) -->
+          <FeatureBadge
+            v-if="locked && feature"
+            :feature="feature"
+            class="flex-shrink-0"
+          />
+        </div>
+      </template>
+
       <!-- Content wrapper (grayed out when locked) -->
-      <div :class="locked ? 'opacity-50' : ''">
+      <div
+        class="space-y-3"
+        :class="locked ? 'opacity-50' : ''"
+      >
         <!-- Thumbnail -->
         <DiscoverThumbnail
           :src="thumbnailUrl"
           :locked-src="lockedThumbnailUrl || thumbnailUrl"
           :alt="alt"
           :locked="locked"
-          class="mb-3"
         />
 
-        <!-- Label row -->
+        <!-- Meta row (badges, views, date) -->
         <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
           <div class="flex items-center gap-2 min-w-0">
-            <!-- Optional icon prefix -->
-            <Icon
-              v-if="icon"
-              :name="icon"
-              class="w-4 h-4 flex-shrink-0"
-              :class="locked ? 'text-gray-400' : 'text-primary-600 dark:text-primary-400'"
-            />
-
-            <!-- Optional emoji prefix -->
-            <span
-              v-if="emoji"
-              class="text-lg flex-shrink-0"
-            >
-              {{ emoji }}
-            </span>
-
-            <!-- Label -->
-            <span class="font-medium text-gray-900 dark:text-gray-100 truncate">
-              {{ label }}
-            </span>
-
-            <!-- Feature badge when locked (shows "Sign Up" or "Upgrade" based on tier) -->
-            <FeatureBadge
-              v-if="locked && feature"
-              :feature="feature"
-              class="flex-shrink-0"
-            />
-
             <!-- Chart type badge -->
             <UBadge
               v-if="chartType"
@@ -87,7 +97,7 @@
         <!-- Optional description/secondary info -->
         <div
           v-if="description"
-          class="text-xs text-gray-500 dark:text-gray-400 mt-1"
+          class="text-xs text-gray-500 dark:text-gray-400"
         >
           {{ description }}
         </div>
