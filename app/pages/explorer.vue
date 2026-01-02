@@ -159,8 +159,7 @@ const dataOrchestration = useExplorerDataOrchestration(
     getBaseKeysForFetch,
     showPredictionIntervalDisabled
   },
-  allCountries,
-  displayColors
+  allCountries
 )
 
 // Destructure data orchestration (some values accessed via dataOrchestration.*)

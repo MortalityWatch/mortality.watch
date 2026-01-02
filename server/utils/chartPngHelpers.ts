@@ -4,13 +4,13 @@ import type { AllChartData, CountryData, DatasetEntry } from '../../app/model'
 import { ChartPeriod, type ChartType } from '../../app/model/period'
 import { getKeyForType } from '../../app/model/utils'
 import { getFilteredChartDataFromConfig } from '../../app/lib/chart/filtering'
-import { getChartColors } from '../../app/lib/chart/chartColors'
 import { makeBarLineChartConfig, makeMatrixChartConfig } from '../../app/lib/chart/chartConfig'
 import type { MortalityChartData } from '../../app/lib/chart/chartTypes'
 import {
   resolveChartStateForRendering,
   toChartFilterConfig,
   generateUrlFromState,
+  computeShowCumPi,
   type ChartRenderState
 } from '../../app/lib/state/resolution'
 import { shouldShowLabels } from '../../app/lib/chart/labelVisibility'
@@ -438,13 +438,17 @@ export async function fetchChartData(state: ChartRenderState) {
   const period = new ChartPeriod(allLabels, state.chartType as ChartType)
   const startDateIndex = state.sliderStart ? period.indexOf(state.sliderStart) : 0
 
+  // Use shared computeShowCumPi - same logic as client-side useExplorerHelpers.showCumPi()
+  // This determines whether the /cum endpoint is used for cumulative baseline calculations
+  const showCumPi = computeShowCumPi(state.cumulative, state.chartType, state.baselineMethod)
+
   const allChartData: AllChartData = await dataLoader.getAllChartData({
     dataKey: dataKey as keyof CountryData,
     chartType: state.chartType,
     rawData,
     allLabels,
     startDateIndex,
-    cumulative: state.cumulative,
+    cumulative: showCumPi,
     ageGroupFilter: state.ageGroups,
     countryCodeFilter: state.countries,
     // Always pass baselineMethod - excess mode needs baselines to calculate excess values
@@ -485,14 +489,8 @@ export async function transformChartData(
   chartUrl: string,
   _isAsmrType: boolean
 ) {
-  // Use user-defined colors if provided, otherwise fall back to default theme colors
-  const defaultColors = getChartColors(state.darkMode)
-  const colors = state.userColors && state.userColors.length > 0
-    ? [...state.userColors, ...defaultColors.slice(state.userColors.length)]
-    : defaultColors
-
-  // Use the unified toChartFilterConfig - same function as client
-  const config = toChartFilterConfig(state, allCountries, colors, chartUrl)
+  // Use the unified toChartFilterConfig - colors computed internally
+  const config = toChartFilterConfig(state, allCountries, chartUrl)
 
   // Use getFilteredChartDataFromConfig - same function as client
   const chartData = getFilteredChartDataFromConfig(config, allLabels, allChartData.data)
