@@ -69,7 +69,10 @@
             :to="getCardUrl(metric, chartType, getViewForMetric(metric)!)"
             class="block group"
           >
-            <UCard class="hover:shadow-lg transition-shadow">
+            <UCard
+              class="hover:shadow-lg transition-shadow"
+              :ui="{ body: 'p-0' }"
+            >
               <!-- Header with title -->
               <template #header>
                 <div class="text-center">
@@ -81,7 +84,7 @@
 
               <!-- Thumbnail -->
               <div
-                class="overflow-hidden rounded-md bg-gray-100 dark:bg-gray-800"
+                class="overflow-hidden bg-gray-100 dark:bg-gray-800"
                 style="aspect-ratio: 16/9"
               >
                 <img
