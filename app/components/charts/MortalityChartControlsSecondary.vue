@@ -54,6 +54,9 @@ const props = defineProps<{
   showQrCode: boolean
   showCaption: boolean
   showTitle: boolean
+  showLegend: boolean
+  showXAxisTitle: boolean
+  showYAxisTitle: boolean
   decimals: string
   leAdjusted: boolean
   showLeAdjustedOption: boolean
@@ -84,6 +87,9 @@ const emit = defineEmits<{
   showQrCodeChanged: [value: boolean]
   showCaptionChanged: [value: boolean]
   showTitleChanged: [value: boolean]
+  showLegendChanged: [value: boolean]
+  showXAxisTitleChanged: [value: boolean]
+  showYAxisTitleChanged: [value: boolean]
   decimalsChanged: [value: string]
 }>()
 
@@ -229,6 +235,21 @@ const showCaption = computed({
 const showTitle = computed({
   get: () => props.showTitle,
   set: (v: boolean) => emit('showTitleChanged', v)
+})
+
+const showLegend = computed({
+  get: () => props.showLegend,
+  set: (v: boolean) => emit('showLegendChanged', v)
+})
+
+const showXAxisTitle = computed({
+  get: () => props.showXAxisTitle,
+  set: (v: boolean) => emit('showXAxisTitleChanged', v)
+})
+
+const showYAxisTitle = computed({
+  get: () => props.showYAxisTitle,
+  set: (v: boolean) => emit('showYAxisTitleChanged', v)
 })
 
 const selectedDecimals = computed({
@@ -396,6 +417,9 @@ const activeTab = ref('data')
         :show-caption="showCaption"
         :show-logo="showLogo"
         :show-qr-code="showQrCode"
+        :show-legend="showLegend"
+        :show-x-axis-title="showXAxisTitle"
+        :show-y-axis-title="showYAxisTitle"
         @update:selected-chart-style="selectedChartStyle = $event"
         @update:selected-decimals="selectedDecimals = $event"
         @colors-changed="(val) => emit('userColorsChanged', val)"
@@ -404,6 +428,9 @@ const activeTab = ref('data')
         @update:show-caption="showCaption = $event"
         @update:show-logo="showLogo = $event"
         @update:show-qr-code="showQrCode = $event"
+        @update:show-legend="showLegend = $event"
+        @update:show-x-axis-title="showXAxisTitle = $event"
+        @update:show-y-axis-title="showYAxisTitle = $event"
       />
     </div>
   </div>

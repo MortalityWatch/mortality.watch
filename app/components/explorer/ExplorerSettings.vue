@@ -40,6 +40,9 @@ const emit = defineEmits<{
   showQrCodeChanged: [value: boolean]
   showCaptionChanged: [value: boolean]
   showTitleChanged: [value: boolean]
+  showLegendChanged: [value: boolean]
+  showXAxisTitleChanged: [value: boolean]
+  showYAxisTitleChanged: [value: boolean]
   decimalsChanged: [value: string]
 }>()
 
@@ -140,6 +143,9 @@ const baselineSliderValue = computed(() => {
       :show-qr-code="props.state.showQrCode.value"
       :show-caption="props.state.showCaption.value"
       :show-title="props.state.showTitle.value"
+      :show-legend="props.state.showLegend.value"
+      :show-x-axis-title="props.state.showXAxisTitle.value"
+      :show-y-axis-title="props.state.showYAxisTitle.value"
       :decimals="props.state.decimals.value"
       @type-changed="emit('typeChanged', $event)"
       @chart-type-changed="emit('chartTypeChanged', $event)"
@@ -164,6 +170,9 @@ const baselineSliderValue = computed(() => {
       @show-qr-code-changed="emit('showQrCodeChanged', $event)"
       @show-caption-changed="emit('showCaptionChanged', $event)"
       @show-title-changed="emit('showTitleChanged', $event)"
+      @show-legend-changed="emit('showLegendChanged', $event)"
+      @show-x-axis-title-changed="emit('showXAxisTitleChanged', $event)"
+      @show-y-axis-title-changed="emit('showYAxisTitleChanged', $event)"
       @decimals-changed="emit('decimalsChanged', $event)"
     />
   </UCard>

@@ -89,6 +89,9 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       showQrCode: true,
       showCaption: true,
       showTitle: true,
+      showLegend: true,
+      showXAxisTitle: true,
+      showYAxisTitle: true,
       userColors: undefined as string[] | undefined,
       darkMode: false
     },

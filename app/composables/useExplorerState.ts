@@ -122,6 +122,9 @@ export function useExplorerState() {
   const showQrCode = ref<boolean>(getDefault('showQrCode', true))
   const showCaption = ref<boolean>(getDefault('showCaption', true))
   const showTitle = ref<boolean>(getDefault('showTitle', true))
+  const showLegend = ref<boolean>(getDefault('showLegend', true))
+  const showXAxisTitle = ref<boolean>(getDefault('showXAxisTitle', true))
+  const showYAxisTitle = ref<boolean>(getDefault('showYAxisTitle', true))
   const decimals = ref<string>(getDefault('decimals', 'auto'))
 
   // Local State - Chart Size (not synced to URL)
@@ -331,6 +334,9 @@ export function useExplorerState() {
       showQrCode: showQrCode.value,
       showCaption: showCaption.value,
       showTitle: showTitle.value,
+      showLegend: showLegend.value,
+      showXAxisTitle: showXAxisTitle.value,
+      showYAxisTitle: showYAxisTitle.value,
       chartPreset: chartPreset.value
     }
   }
@@ -444,6 +450,15 @@ export function useExplorerState() {
     if (state.showTitle !== undefined && state.showTitle !== showTitle.value) {
       showTitle.value = state.showTitle as boolean
     }
+    if (state.showLegend !== undefined && state.showLegend !== showLegend.value) {
+      showLegend.value = state.showLegend as boolean
+    }
+    if (state.showXAxisTitle !== undefined && state.showXAxisTitle !== showXAxisTitle.value) {
+      showXAxisTitle.value = state.showXAxisTitle as boolean
+    }
+    if (state.showYAxisTitle !== undefined && state.showYAxisTitle !== showYAxisTitle.value) {
+      showYAxisTitle.value = state.showYAxisTitle as boolean
+    }
     if ('userColors' in state && !arraysEqual(state.userColors as string[] | undefined, userColors.value)) {
       userColors.value = state.userColors as string[] | undefined
     }
@@ -491,6 +506,9 @@ export function useExplorerState() {
     showQrCode,
     showCaption,
     showTitle,
+    showLegend,
+    showXAxisTitle,
+    showYAxisTitle,
     decimals,
 
     // Local state
