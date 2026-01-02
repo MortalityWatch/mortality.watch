@@ -89,7 +89,7 @@ export const viewDescriptions: Record<View, string> = {
  */
 export const viewIcons: Record<View, string> = {
   normal: 'i-lucide-eye',
-  excess: 'i-lucide-plus-minus',
+  excess: 'i-lucide-diff',
   zscore: 'i-lucide-sigma'
 }
 
