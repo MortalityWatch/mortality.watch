@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6">
     <!-- Filters -->
-    <div class="flex flex-wrap gap-x-8 gap-y-3">
+    <div class="flex flex-wrap gap-x-8 gap-y-4 items-start">
       <!-- Chart type filters -->
       <div class="flex flex-wrap gap-3 items-center">
         <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Period:</span>
@@ -20,22 +20,14 @@
         </label>
       </div>
 
-      <!-- View filters -->
-      <div class="flex flex-wrap gap-3 items-center">
+      <!-- View selector (single selection) -->
+      <div class="flex items-center gap-3">
         <span class="text-sm font-medium text-gray-700 dark:text-gray-300">View:</span>
-        <label
-          v-for="view in views"
-          :key="view"
-          class="inline-flex items-center gap-1.5 cursor-pointer"
-        >
-          <input
-            v-model="visibleViews"
-            type="checkbox"
-            :value="view"
-            class="rounded border-gray-300 dark:border-gray-600 text-primary-500 focus:ring-primary-500"
-          >
-          <span class="text-sm text-gray-700 dark:text-gray-300">{{ viewLabels[view] }}</span>
-        </label>
+        <UTabs
+          v-model="selectedView"
+          :items="viewTabs"
+          size="sm"
+        />
       </div>
     </div>
 
@@ -54,57 +46,54 @@
           v-for="metric in availableMetrics"
           :key="`${chartType}-${metric}`"
         >
-          <template
-            v-for="view in getViewsForMetric(metric)"
-            :key="`${chartType}-${metric}-${view}`"
+          <NuxtLink
+            v-if="getViewForMetric(metric)"
+            :to="getCardUrl(metric, chartType, getViewForMetric(metric)!)"
+            class="block"
           >
-            <NuxtLink
-              :to="getCardUrl(metric, chartType, view)"
-              class="block"
+            <UCard
+              class="h-full transition-shadow cursor-pointer"
+              :class="isLocked(getViewForMetric(metric)!) ? 'opacity-60' : 'hover:shadow-lg'"
             >
-              <UCard
-                class="h-full transition-shadow cursor-pointer"
-                :class="isLocked(view) ? 'opacity-60' : 'hover:shadow-lg'"
-              >
-                <!-- Thumbnail -->
-                <DiscoverThumbnail
-                  :src="getThumbnailUrl(metric, chartType, view)"
-                  :locked-src="getThumbnailUrl(metric, chartType, 'normal')"
-                  :alt="`${metricInfo[metric].label} ${chartTypeLabels[chartType]} ${viewLabels[view]}`"
-                  :locked="isLocked(view)"
-                  class="mb-2"
-                />
+              <!-- Thumbnail -->
+              <DiscoverThumbnail
+                :src="getThumbnailUrl(metric, chartType, getViewForMetric(metric)!)"
+                :locked-src="getThumbnailUrl(metric, chartType, 'normal')"
+                :alt="`${metricInfo[metric].label} ${chartTypeLabels[chartType]} ${viewLabels[getViewForMetric(metric)!]}`"
+                :locked="isLocked(getViewForMetric(metric)!)"
+                class="mb-2"
+              />
 
-                <!-- Label -->
-                <div class="text-center">
-                  <div class="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
-                    {{ metricInfo[metric].shortLabel }}
-                  </div>
-                  <div class="flex items-center justify-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-                    <span>{{ viewLabels[view] }}</span>
-                    <UBadge
-                      v-if="isLocked(view)"
-                      color="primary"
-                      variant="soft"
-                      size="xs"
-                    >
-                      Pro
-                    </UBadge>
-                  </div>
+              <!-- Label -->
+              <div class="text-center">
+                <div class="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
+                  {{ metricInfo[metric].shortLabel }}
                 </div>
-              </UCard>
-            </NuxtLink>
-          </template>
+                <div
+                  v-if="isLocked(getViewForMetric(metric)!)"
+                  class="flex items-center justify-center gap-1 text-xs text-gray-500 dark:text-gray-400"
+                >
+                  <UBadge
+                    color="primary"
+                    variant="soft"
+                    size="xs"
+                  >
+                    Pro
+                  </UBadge>
+                </div>
+              </div>
+            </UCard>
+          </NuxtLink>
         </template>
       </div>
     </div>
 
     <!-- Empty state -->
     <div
-      v-if="visibleChartTypes.length === 0 || visibleViews.length === 0"
+      v-if="visibleChartTypes.length === 0"
       class="text-center py-12 text-gray-500 dark:text-gray-400"
     >
-      Select at least one period and one view to see charts
+      Select at least one period to see charts
     </div>
   </div>
 </template>
@@ -136,8 +125,14 @@ const { can, getFeatureUpgradeUrl } = useFeatureAccess()
 // Visible chart types (hide monthly by default)
 const visibleChartTypes = ref<ChartType[]>(['weekly', 'quarterly', 'yearly', 'fluseason'])
 
-// Visible views (only raw by default)
-const visibleViews = ref<View[]>(['normal'])
+// Selected view (single selection, default to raw)
+const selectedView = ref<View>('normal')
+
+// View tabs for UTabs
+const viewTabs = computed(() => views.map(view => ({
+  label: viewLabels[view],
+  value: view
+})))
 
 // Available metrics based on country data
 const availableMetrics = computed<Metric[]>(() => {
@@ -163,13 +158,13 @@ function isLocked(view: View): boolean {
   return isProFeature(view) && !can(getFeatureKey())
 }
 
-// Get available views for a metric, filtered by visibility
-function getViewsForMetric(metric: Metric): View[] {
+// Get the view to show for a metric
+function getViewForMetric(metric: Metric): View | null {
   // Population only has 'normal' view
   if (metric === 'population') {
-    return visibleViews.value.includes('normal') ? ['normal'] : []
+    return selectedView.value === 'normal' ? 'normal' : null
   }
-  return views.filter(v => visibleViews.value.includes(v))
+  return selectedView.value
 }
 
 // Get card URL - explorer if unlocked, upgrade if locked
