@@ -4,7 +4,6 @@ import type { AllChartData, CountryData, DatasetEntry } from '../../app/model'
 import { ChartPeriod, type ChartType } from '../../app/model/period'
 import { getKeyForType } from '../../app/model/utils'
 import { getFilteredChartDataFromConfig } from '../../app/lib/chart/filtering'
-import { computeDisplayColors } from '../../app/lib/chart/chartColors'
 import { makeBarLineChartConfig, makeMatrixChartConfig } from '../../app/lib/chart/chartConfig'
 import type { MortalityChartData } from '../../app/lib/chart/chartTypes'
 import {
@@ -490,12 +489,8 @@ export async function transformChartData(
   chartUrl: string,
   _isAsmrType: boolean
 ) {
-  // Compute colors using shared function - same logic as client useExplorerColors
-  const numSeries = state.countries.length * state.ageGroups.length
-  const colors = computeDisplayColors(numSeries, state.userColors, state.darkMode)
-
-  // Use the unified toChartFilterConfig - same function as client
-  const config = toChartFilterConfig(state, allCountries, colors, chartUrl)
+  // Use the unified toChartFilterConfig - colors computed internally
+  const config = toChartFilterConfig(state, allCountries, chartUrl)
 
   // Use getFilteredChartDataFromConfig - same function as client
   const chartData = getFilteredChartDataFromConfig(config, allLabels, allChartData.data)

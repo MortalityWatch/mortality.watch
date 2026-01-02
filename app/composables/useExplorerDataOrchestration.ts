@@ -16,7 +16,7 @@
  */
 
 import { computed, reactive, ref, watch } from 'vue'
-import type { Ref, ComputedRef } from 'vue'
+import type { Ref } from 'vue'
 import type { useExplorerState } from '@/composables/useExplorerState'
 import type { useExplorerHelpers } from '@/composables/useExplorerHelpers'
 import type { AllChartData, DatasetRaw, Country, CountryData } from '@/model'
@@ -45,8 +45,7 @@ import {
 export function useExplorerDataOrchestration(
   state: ReturnType<typeof useExplorerState>,
   helpers: ReturnType<typeof useExplorerHelpers>,
-  allCountries: Ref<Record<string, Country>>,
-  displayColors: ComputedRef<string[]>
+  allCountries: Ref<Record<string, Country>>
 ) {
   // Shared data fetching logic
   const dataFetcher = useChartDataFetcher()
@@ -439,10 +438,10 @@ export function useExplorerDataOrchestration(
     const url = currentShortUrl.value || fullUrl
 
     // Convert to ChartFilterConfig using the unified converter
+    // Colors are computed internally by toChartFilterConfig
     return toChartFilterConfig(
       resolvedState,
       allCountries.value,
-      displayColors.value,
       url
     )
   }

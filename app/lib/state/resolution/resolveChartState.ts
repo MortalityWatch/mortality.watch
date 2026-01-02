@@ -19,6 +19,7 @@ import { calculateBaselineRange } from '@/lib/baseline/calculateBaselineRange'
 import type { ChartFilterConfig, ChartStateSnapshot } from '@/lib/chart/types'
 import type { Country } from '@/model'
 import { getDefaultSliderStart } from '@/lib/config/constants'
+import { computeDisplayColors } from '@/lib/chart/chartColors'
 
 /**
  * Complete resolved state ready for chart rendering
@@ -398,16 +399,17 @@ export function generateUrlFromState(
  * filtering/rendering pipeline. Both SSR and client use this to ensure
  * identical chart output.
  *
+ * Colors are computed internally using computeDisplayColors to ensure
+ * SSR and client always use the exact same color generation logic.
+ *
  * @param state - Resolved chart state
  * @param allCountries - Country metadata for chart generation
- * @param colors - Chart colors
  * @param url - URL for QR code
  * @returns ChartFilterConfig ready for getFilteredChartDataFromConfig
  */
 export function toChartFilterConfig(
   state: ChartRenderState,
   allCountries: Record<string, Country>,
-  colors: string[],
   url: string
 ): ChartFilterConfig {
   // Compute derived flags from resolved state
@@ -424,10 +426,15 @@ export function toChartFilterConfig(
   // Use shared computeShowCumPi - same logic as useExplorerHelpers.showCumPi()
   const showCumPi = computeShowCumPi(state.cumulative, state.chartType, state.baselineMethod)
 
+  // Compute colors internally - ensures SSR and client use identical logic
+  const ageGroups = isAsmrType ? ['all'] : state.ageGroups
+  const numSeries = state.countries.length * ageGroups.length
+  const colors = computeDisplayColors(numSeries, state.userColors, state.darkMode)
+
   return {
     // Data selection
     countries: state.countries,
-    ageGroups: isAsmrType ? ['all'] : state.ageGroups,
+    ageGroups,
 
     // Chart type settings
     type: state.type,
