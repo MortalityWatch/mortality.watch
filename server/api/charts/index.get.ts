@@ -87,7 +87,9 @@ export default defineEventHandler(async (event) => {
         },
         chart: {
           config: charts.config,
-          page: charts.page
+          page: charts.page,
+          createCount: charts.createCount,
+          accessCount: charts.accessCount
         }
       })
       .from(savedCharts)
@@ -119,7 +121,8 @@ export default defineEventHandler(async (event) => {
         thumbnailUrl: savedChart.thumbnailUrl,
         isFeatured: savedChart.isFeatured,
         isPublic: savedChart.isPublic,
-        viewCount: savedChart.viewCount,
+        // Combine slug views + explorer/ranking page views for total view count
+        viewCount: savedChart.viewCount + (savedChart.chart?.createCount || 0) + (savedChart.chart?.accessCount || 0),
         createdAt: savedChart.createdAt,
         updatedAt: savedChart.updatedAt,
         userId: savedChart.userId,
