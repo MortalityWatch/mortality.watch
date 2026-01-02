@@ -59,22 +59,43 @@
         {{ chartTypeLabels[chartType] }}
       </h3>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6">
         <template
           v-for="metric in filteredMetrics"
           :key="`${chartType}-${metric}`"
         >
-          <ChartsThumbnailCard
+          <NuxtLink
             v-if="getViewForMetric(metric) && isMetricValidForChartType(metric, chartType)"
             :to="getCardUrl(metric, chartType, getViewForMetric(metric)!)"
-            :thumbnail-url="getThumbnailUrl(metric, chartType, getViewForMetric(metric)!)"
-            :locked-thumbnail-url="getThumbnailUrl(metric, chartType, 'normal')"
-            :alt="`${metricInfo[metric].label} ${chartTypeLabels[chartType]} ${viewLabels[getViewForMetric(metric)!]}`"
-            :label="metricInfo[metric].label"
-            :icon="metricInfo[metric].icon"
-            :locked="isLocked(getViewForMetric(metric)!)"
-            :feature="isLocked(getViewForMetric(metric)!) ? 'Z_SCORES' : undefined"
-          />
+            class="block group"
+          >
+            <UCard class="hover:shadow-lg transition-shadow">
+              <!-- Header with title -->
+              <template #header>
+                <div class="text-center">
+                  <h4 class="text-sm font-semibold">
+                    {{ metricInfo[metric].label }}
+                  </h4>
+                </div>
+              </template>
+
+              <!-- Thumbnail -->
+              <div
+                class="overflow-hidden rounded-md bg-gray-100 dark:bg-gray-800"
+                style="aspect-ratio: 16/9"
+              >
+                <img
+                  :src="getThumbnailUrl(metric, chartType, getViewForMetric(metric)!)"
+                  :alt="`${metricInfo[metric].label} ${chartTypeLabels[chartType]} ${viewLabels[getViewForMetric(metric)!]}`"
+                  class="w-full h-full object-cover object-top hover:scale-105 transition-transform"
+                  loading="lazy"
+                >
+              </div>
+
+              <!-- Locked overlay -->
+              <UiLockedOverlay v-if="isLocked(getViewForMetric(metric)!)" />
+            </UCard>
+          </NuxtLink>
         </template>
       </div>
     </div>
@@ -103,7 +124,6 @@ import {
   isMetricValidForChartType
 } from '@/lib/discover/presets'
 import { chartTypeLabels, viewLabels, metricInfo, metrics } from '@/lib/discover/constants'
-import type { FeatureKey } from '@/lib/featureFlags'
 
 interface Props {
   country: string
@@ -146,8 +166,8 @@ function isProFeature(view: View): boolean {
 }
 
 // Get the feature key for a Pro feature
-function getFeatureKey(): FeatureKey {
-  return 'Z_SCORES'
+function getFeatureKey() {
+  return 'Z_SCORES' as const
 }
 
 // Check if view is locked for current user
