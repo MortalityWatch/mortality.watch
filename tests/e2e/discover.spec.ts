@@ -15,12 +15,13 @@ test.describe('Discover Feature', () => {
       await expect(heading).toBeVisible()
     })
 
-    test('should have two main navigation cards', async ({ page }) => {
+    test('should have three main navigation cards', async ({ page }) => {
       await page.goto('/discover')
       await page.waitForLoadState('domcontentloaded')
 
       await expect(page.getByRole('heading', { name: 'Explore by Metric' })).toBeVisible()
       await expect(page.getByRole('heading', { name: 'Explore by Country' })).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Global Chart History' })).toBeVisible()
     })
 
     test('should navigate to metric page when clicking Explore by Metric', async ({ page }) => {
