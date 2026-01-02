@@ -64,19 +64,33 @@
           <NuxtLink
             v-for="view in getViewsForMetric(metric)"
             :key="`${chartType}-${view}`"
-            :to="`/discover/metric/${metric}/${chartType}-${view}`"
+            :to="isLocked(view) ? getFeatureUpgradeUrl('Z_SCORES') : `/discover/metric/${metric}/${chartType}-${view}`"
             class="block"
           >
-            <UCard class="h-full hover:shadow-md transition-shadow cursor-pointer hover:border-primary-500 dark:hover:border-primary-400">
+            <UCard
+              class="h-full transition-shadow"
+              :class="isLocked(view)
+                ? 'opacity-60 cursor-pointer'
+                : 'hover:shadow-md cursor-pointer hover:border-primary-500 dark:hover:border-primary-400'"
+            >
               <div class="text-center py-2">
                 <div class="flex items-center justify-center gap-2">
                   <Icon
                     :name="viewIcons[view]"
-                    class="w-4 h-4 text-primary-600 dark:text-primary-400"
+                    class="w-4 h-4"
+                    :class="isLocked(view) ? 'text-gray-400' : 'text-primary-600 dark:text-primary-400'"
                   />
                   <span class="font-medium text-gray-900 dark:text-gray-100">
                     {{ viewLabels[view] }}
                   </span>
+                  <UBadge
+                    v-if="isLocked(view)"
+                    color="primary"
+                    variant="soft"
+                    size="xs"
+                  >
+                    Pro
+                  </UBadge>
                 </div>
                 <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   {{ viewDescriptions[view] }}
@@ -114,6 +128,12 @@ import {
 
 const route = useRoute()
 const router = useRouter()
+const { can, getFeatureUpgradeUrl } = useFeatureAccess()
+
+// Check if view is locked for current user
+function isLocked(view: View): boolean {
+  return view === 'zscore' && !can('Z_SCORES')
+}
 
 // Get and validate metric param
 const metric = computed(() => route.params.metric as string)

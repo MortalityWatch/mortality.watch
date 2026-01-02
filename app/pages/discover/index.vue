@@ -91,7 +91,7 @@
             </div>
             <div class="flex items-center justify-center gap-2 mb-2">
               <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                Browse All Charts
+                Chart History
               </h2>
               <UBadge
                 v-if="!can('BROWSE_ALL_CHARTS')"
@@ -103,10 +103,10 @@
               </UBadge>
             </div>
             <p class="text-gray-600 dark:text-gray-400 mb-4">
-              Explore the complete library of charts created by the community, sorted by popularity or date.
+              Browse all chart variants ever created on the platform, sorted by popularity or date.
             </p>
             <div class="text-sm text-gray-500 dark:text-gray-400">
-              All community charts
+              Every chart ever generated
             </div>
           </div>
         </UCard>

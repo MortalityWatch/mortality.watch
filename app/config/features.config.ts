@@ -232,8 +232,8 @@ export const FEATURES = {
 
   BROWSE_ALL_CHARTS: {
     tier: TIERS.PRO,
-    name: 'Browse All Charts',
-    description: 'Browse the complete library of all charts created on the platform',
+    name: 'Chart History',
+    description: 'Browse all chart variants ever created on the platform',
     category: 'core'
   },
 
