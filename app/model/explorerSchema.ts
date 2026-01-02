@@ -140,7 +140,7 @@ export const explorerStateSchema = explorerStateBaseSchema.superRefine(
     // Rule 2: Date format must match chart type (data validation)
     const yearlyPattern = /^\d{4}$/
     const monthlyPattern = /^\d{4}-\d{2}$/
-    const weeklyPattern = /^\d{4}-W\d{2}$/
+    const weeklyPattern = /^\d{4}[ -]W\d{2}$/
     const fluseasonPattern = /^\d{4}\/\d{2}$/
 
     if (data.dateFrom && data.chartType === 'yearly' && !yearlyPattern.test(data.dateFrom)) {
@@ -182,7 +182,7 @@ export const explorerStateSchema = explorerStateBaseSchema.superRefine(
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `Date format must be YYYY-WNN for weekly charts (got: ${data.dateFrom})`,
+        message: `Date format must be YYYY WNN for weekly charts (got: ${data.dateFrom})`,
         path: ['dateFrom']
       })
     }
@@ -194,7 +194,7 @@ export const explorerStateSchema = explorerStateBaseSchema.superRefine(
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `Date format must be YYYY-WNN for weekly charts (got: ${data.dateTo})`,
+        message: `Date format must be YYYY WNN for weekly charts (got: ${data.dateTo})`,
         path: ['dateTo']
       })
     }
