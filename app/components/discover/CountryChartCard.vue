@@ -1,46 +1,21 @@
 <template>
-  <NuxtLink
+  <ChartsThumbnailCard
     :to="linkUrl"
-    class="block"
-  >
-    <UCard
-      class="h-full transition-shadow cursor-pointer"
-      :class="isLocked ? 'opacity-60' : 'hover:shadow-lg'"
-    >
-      <!-- Thumbnail -->
-      <DiscoverThumbnail
-        :src="thumbnailUrl"
-        :locked-src="lockedThumbnailUrl"
-        :alt="`${countryName} chart`"
-        :locked="isLocked"
-        class="mb-3"
-      />
-
-      <!-- Country info -->
-      <div class="flex items-center gap-2">
-        <span class="text-lg">
-          {{ getFlagEmoji(country) }}
-        </span>
-        <span class="font-medium text-gray-900 dark:text-gray-100 truncate">
-          {{ countryName }}
-        </span>
-        <UBadge
-          v-if="isLocked"
-          color="primary"
-          variant="soft"
-          size="xs"
-        >
-          Pro
-        </UBadge>
-      </div>
-    </UCard>
-  </NuxtLink>
+    :thumbnail-url="thumbnailUrl"
+    :locked-thumbnail-url="lockedThumbnailUrl"
+    :alt="chartAlt"
+    :label="countryName"
+    :emoji="getFlagEmoji(country)"
+    :locked="isLocked"
+    :feature="isLocked ? 'Z_SCORES' : undefined"
+  />
 </template>
 
 <script setup lang="ts">
 import type { DiscoveryPreset } from '@/lib/discover/presets'
 import { presetToExplorerUrl, presetToThumbnailUrl } from '@/lib/discover/presets'
 import { getFlagEmoji } from '@/lib/discover/countryUtils'
+import { metricInfo, chartTypeLabels, viewLabels } from '@/lib/discover/constants'
 
 interface Props {
   preset: DiscoveryPreset
@@ -82,5 +57,13 @@ const lockedThumbnailUrl = computed(() => {
   return presetToThumbnailUrl(normalPreset, props.country, {
     darkMode: colorMode.value === 'dark'
   })
+})
+
+// Generate descriptive alt text for the chart image
+const chartAlt = computed(() => {
+  const metric = metricInfo[props.preset.metric].label
+  const chartType = chartTypeLabels[props.preset.chartType]
+  const view = viewLabels[props.preset.view]
+  return `${props.countryName} ${metric} ${chartType} ${view} chart`
 })
 </script>

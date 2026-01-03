@@ -67,6 +67,11 @@ export const users = sqliteTable(
     passwordResetTokenExpires: integer('password_reset_token_expires', {
       mode: 'timestamp'
     }),
+    // Social login provider IDs
+    googleId: text('google_id').unique(),
+    twitterId: text('twitter_id').unique(),
+    // Profile picture from social provider
+    profilePictureUrl: text('profile_picture_url'),
     tosAcceptedAt: integer('tos_accepted_at', { mode: 'timestamp' }),
     lastLogin: integer('last_login', { mode: 'timestamp' }),
     invitedByCodeId: integer('invited_by_code_id').references(() => inviteCodes.id),
@@ -86,7 +91,9 @@ export const users = sqliteTable(
     ),
     passwordResetTokenIdx: index('idx_password_reset_token').on(
       table.passwordResetToken
-    )
+    ),
+    googleIdIdx: index('idx_users_google_id').on(table.googleId),
+    twitterIdIdx: index('idx_users_twitter_id').on(table.twitterId)
   })
 )
 

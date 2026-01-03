@@ -226,6 +226,8 @@ export function createAnnotationsFromReferenceLines(
  * @param showQrCode - Whether to show QR code
  * @param showLogo - Whether to show logo
  * @param showCaption - Whether to show caption
+ * @param showTitle - Whether to show title
+ * @param showLegend - Whether to show legend
  * @param view - Chart view type
  * @param isDark - Dark mode flag
  * @param isSSR - Server-side rendering flag (applies font metric adjustments)
@@ -243,6 +245,7 @@ export function createPluginsConfig(
   showLogo: boolean,
   showCaption: boolean = true,
   showTitle: boolean = true,
+  showLegend: boolean = true,
   view: string = 'mortality',
   isDark?: boolean,
   isSSR?: boolean,
@@ -264,6 +267,7 @@ export function createPluginsConfig(
       position: 'bottom' as const
     },
     legend: {
+      display: showLegend,
       labels: {
         color: textColor(isDark),
         filter: (item: { text: string }): boolean => item.text.length > 0,

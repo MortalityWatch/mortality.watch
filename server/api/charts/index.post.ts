@@ -217,7 +217,7 @@ export default defineEventHandler(async (event) => {
       isPublic: isPublic === true,
       isFeatured: false,
       slug,
-      viewCount: 0
+      viewCount: 1 // User has already viewed the chart when saving it
     }).returning()
 
     const response = {

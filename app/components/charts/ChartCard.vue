@@ -34,9 +34,23 @@
         style="aspect-ratio: 16/9"
       >
         <ClientOnly>
-          <NuxtLink :to="getChartLink()">
+          <!-- Show loading placeholder while clearing cache or waiting for reload -->
+          <div
+            v-if="showImagePlaceholder"
+            class="w-full h-full animate-pulse bg-gray-200 dark:bg-gray-700 flex items-center justify-center"
+          >
+            <Icon
+              name="i-lucide-loader-2"
+              class="w-8 h-8 text-gray-400 animate-spin"
+            />
+          </div>
+          <NuxtLink
+            v-else
+            :to="getChartLink()"
+          >
             <img
-              :src="getThumbnailUrl"
+              :key="cacheBustTimestamp"
+              :src="getThumbnailUrlWithCacheBust"
               :alt="chart.name"
               class="w-full h-full object-cover object-top hover:scale-105 transition-transform"
               loading="lazy"
@@ -219,6 +233,30 @@ const emit = defineEmits<{
 // Show footer if not homepage variant
 const showFooter = computed(() => props.variant !== 'homepage')
 
+// Cache busting timestamp - changes when cache is cleared to bypass browser cache
+const cacheBustTimestamp = ref(0)
+
+// Local loading state for the 1s delay after cache clear
+const isWaitingForReload = ref(false)
+
+// Timeout with automatic cleanup on component unmount
+const { start: startReloadWait } = useTimeoutFn(() => {
+  isWaitingForReload.value = false
+}, 1000, { immediate: false })
+
+// Combined loading state: either clearing cache or waiting for reload
+const showImagePlaceholder = computed(() => props.isClearingCache || isWaitingForReload.value)
+
+// Watch for cache clearing to complete, then wait 1s before showing image
+watch(() => props.isClearingCache, (clearing, wasClearing) => {
+  if (wasClearing && !clearing) {
+    // Cache clearing just finished, start reload wait
+    isWaitingForReload.value = true
+    cacheBustTimestamp.value = Date.now()
+    startReloadWait()
+  }
+})
+
 // Handle delete button click
 function handleDelete() {
   emit('delete', props.chart.id)
@@ -270,6 +308,17 @@ const getThumbnailUrl = computed(() => {
   params.set('height', '198')
 
   return `${endpoint}?${params.toString()}`
+})
+
+// Get thumbnail URL with cache busting parameters (only added after cache clear)
+const getThumbnailUrlWithCacheBust = computed(() => {
+  const baseUrl = getThumbnailUrl.value
+  if (cacheBustTimestamp.value > 0) {
+    const separator = baseUrl.includes('?') ? '&' : '?'
+    // nocache=1 bypasses server cache, _cb bypasses browser cache
+    return `${baseUrl}${separator}nocache=1&_cb=${cacheBustTimestamp.value}`
+  }
+  return baseUrl
 })
 
 // Format date for my-charts

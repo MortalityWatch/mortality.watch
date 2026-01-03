@@ -122,6 +122,7 @@ export interface ChartFilterConfig {
   isErrorBarType: boolean
   isAsmrType: boolean
   isASD: boolean
+  isLifeExpectancyType: boolean
   isPopulationType: boolean
   isDeathsType: boolean
 

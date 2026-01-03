@@ -181,6 +181,27 @@ export const FEATURES = {
     category: 'branding'
   },
 
+  HIDE_LEGEND: {
+    tier: TIERS.PRO,
+    name: 'Hide Legend',
+    description: 'Hide chart legend',
+    category: 'branding'
+  },
+
+  HIDE_X_AXIS_TITLE: {
+    tier: TIERS.PRO,
+    name: 'Hide X-Axis Title',
+    description: 'Hide x-axis title label',
+    category: 'branding'
+  },
+
+  HIDE_Y_AXIS_TITLE: {
+    tier: TIERS.PRO,
+    name: 'Hide Y-Axis Title',
+    description: 'Hide y-axis title label',
+    category: 'branding'
+  },
+
   ADVANCED_LE: {
     tier: TIERS.PRO,
     name: 'Advanced Life Expectancy',
@@ -207,6 +228,13 @@ export const FEATURES = {
     name: 'Age Standardized Deaths',
     description: 'Age-standardized death rates (Levitt method)',
     category: 'analysis'
+  },
+
+  BROWSE_ALL_CHARTS: {
+    tier: TIERS.PRO,
+    name: 'Global Chart History',
+    description: 'Browse all chart variants ever created on the platform',
+    category: 'core'
   },
 
   PRIORITY_SUPPORT: {

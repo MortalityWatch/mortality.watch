@@ -89,8 +89,12 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       showQrCode: true,
       showCaption: true,
       showTitle: true,
+      showLegend: true,
+      showXAxisTitle: true,
+      showYAxisTitle: true,
       userColors: undefined as string[] | undefined,
-      darkMode: false
+      darkMode: false,
+      hideSteepDrop: false // When true, auto-hides recent incomplete data with steep drops
     },
 
     constraints: [

@@ -15,6 +15,9 @@ const props = defineProps<{
   showCaption: boolean
   showLogo: boolean
   showQrCode: boolean
+  showLegend: boolean
+  showXAxisTitle: boolean
+  showYAxisTitle: boolean
 }>()
 
 const emit = defineEmits<{
@@ -26,6 +29,9 @@ const emit = defineEmits<{
   'update:showCaption': [value: boolean]
   'update:showLogo': [value: boolean]
   'update:showQrCode': [value: boolean]
+  'update:showLegend': [value: boolean]
+  'update:showXAxisTitle': [value: boolean]
+  'update:showYAxisTitle': [value: boolean]
 }>()
 
 // Computed v-models
@@ -62,6 +68,21 @@ const selectedChartStyleModel = computed({
 const selectedDecimalsModel = computed({
   get: () => props.selectedDecimals,
   set: v => emit('update:selectedDecimals', v)
+})
+
+const showLegendModel = computed({
+  get: () => props.showLegend,
+  set: v => emit('update:showLegend', v)
+})
+
+const showXAxisTitleModel = computed({
+  get: () => props.showXAxisTitle,
+  set: v => emit('update:showXAxisTitle', v)
+})
+
+const showYAxisTitleModel = computed({
+  get: () => props.showYAxisTitle,
+  set: v => emit('update:showYAxisTitle', v)
 })
 </script>
 
@@ -152,6 +173,54 @@ const selectedDecimalsModel = computed({
           v-model="showLabelsModel"
           label="Show Labels"
         />
+
+        <!-- Feature gate: Only Pro users can hide legend -->
+        <FeatureGate feature="HIDE_LEGEND">
+          <UiControlRow>
+            <template #default>
+              <label class="text-sm font-medium whitespace-nowrap">
+                Show Legend
+                <FeatureBadge
+                  feature="HIDE_LEGEND"
+                  class="ml-2"
+                />
+              </label>
+              <USwitch v-model="showLegendModel" />
+            </template>
+          </UiControlRow>
+        </FeatureGate>
+
+        <!-- Feature gate: Only Pro users can hide x-axis title -->
+        <FeatureGate feature="HIDE_X_AXIS_TITLE">
+          <UiControlRow>
+            <template #default>
+              <label class="text-sm font-medium whitespace-nowrap">
+                Show X-Axis Title
+                <FeatureBadge
+                  feature="HIDE_X_AXIS_TITLE"
+                  class="ml-2"
+                />
+              </label>
+              <USwitch v-model="showXAxisTitleModel" />
+            </template>
+          </UiControlRow>
+        </FeatureGate>
+
+        <!-- Feature gate: Only Pro users can hide y-axis title -->
+        <FeatureGate feature="HIDE_Y_AXIS_TITLE">
+          <UiControlRow>
+            <template #default>
+              <label class="text-sm font-medium whitespace-nowrap">
+                Show Y-Axis Title
+                <FeatureBadge
+                  feature="HIDE_Y_AXIS_TITLE"
+                  class="ml-2"
+                />
+              </label>
+              <USwitch v-model="showYAxisTitleModel" />
+            </template>
+          </UiControlRow>
+        </FeatureGate>
       </div>
 
       <!-- Feature gate: Only Pro users can customize number precision -->

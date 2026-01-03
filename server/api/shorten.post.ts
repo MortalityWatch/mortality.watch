@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { eq, sql } from 'drizzle-orm'
 import { db } from '../utils/db'
-import { charts } from '../../db/schema'
+import { charts, savedCharts } from '../../db/schema'
 
 const requestSchema = z.object({
   hash: z.string().length(12, 'Hash must be exactly 12 characters'),
@@ -41,11 +41,12 @@ export default defineEventHandler(async (event) => {
     .limit(1)
 
   if (existing.length > 0) {
-    // Already exists - increment createCount to track generation frequency
-    await db
-      .update(charts)
-      .set({ createCount: sql`${charts.createCount} + 1` })
-      .where(eq(charts.id, hash))
+    // Already exists - increment viewCount on any saved charts with this config
+    // This tracks views from Explorer/Ranking pages for saved charts
+    db.update(savedCharts)
+      .set({ viewCount: sql`${savedCharts.viewCount} + 1` })
+      .where(eq(savedCharts.chartId, hash))
+      .run()
     return { success: true }
   }
 

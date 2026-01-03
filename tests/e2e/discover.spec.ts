@@ -15,12 +15,13 @@ test.describe('Discover Feature', () => {
       await expect(heading).toBeVisible()
     })
 
-    test('should have two main navigation cards', async ({ page }) => {
+    test('should have three main navigation cards', async ({ page }) => {
       await page.goto('/discover')
       await page.waitForLoadState('domcontentloaded')
 
       await expect(page.getByRole('heading', { name: 'Explore by Metric' })).toBeVisible()
       await expect(page.getByRole('heading', { name: 'Explore by Country' })).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Global Chart History' })).toBeVisible()
     })
 
     test('should navigate to metric page when clicking Explore by Metric', async ({ page }) => {
@@ -150,27 +151,30 @@ test.describe('Discover Feature', () => {
       await expect(page).toHaveURL(/\/discover\/country\/USA/)
     })
 
-    test('should display metric tabs on country page', async ({ page }) => {
+    test('should display presets matrix on country page', async ({ page }) => {
       await page.goto('/discover/country/DEU')
       await page.waitForLoadState('domcontentloaded')
 
-      // Check for metric tabs
-      await expect(page.getByRole('tab', { name: /LE/ })).toBeVisible()
-      await expect(page.getByRole('tab', { name: /ASMR/ })).toBeVisible()
-      await expect(page.getByRole('tab', { name: /CMR/ })).toBeVisible()
-      await expect(page.getByRole('tab', { name: /^Deaths/ })).toBeVisible()
-      await expect(page.getByRole('tab', { name: /Population/ })).toBeVisible()
+      // Check for filter checkboxes (Period filters)
+      await expect(page.getByLabel('Weekly')).toBeVisible()
+      await expect(page.getByLabel('Monthly')).toBeVisible()
+      await expect(page.getByLabel('Yearly')).toBeVisible()
+
+      // Check for view tabs
+      await expect(page.getByRole('tab', { name: /Raw/ })).toBeVisible()
+      await expect(page.getByRole('tab', { name: /Excess/ })).toBeVisible()
+      await expect(page.getByRole('tab', { name: /Z-Score/ })).toBeVisible()
     })
 
-    test('should switch tabs on country page', async ({ page }) => {
+    test('should filter chart types on country page', async ({ page }) => {
       await page.goto('/discover/country/DEU')
       await page.waitForLoadState('domcontentloaded')
 
-      // Click ASMR tab
-      await page.getByRole('tab', { name: /ASMR/ }).click()
+      // Toggle Weekly off
+      await page.getByLabel('Weekly').click()
 
-      // URL should update with tab parameter
-      await expect(page).toHaveURL(/tab=asmr/)
+      // Weekly section should be hidden
+      await expect(page.getByRole('heading', { name: 'Weekly', level: 3 })).not.toBeVisible()
     })
 
     test('should redirect invalid country to country list', async ({ page }) => {

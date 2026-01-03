@@ -136,7 +136,6 @@ describe('useExplorerDataOrchestration', () => {
   let mockState: ReturnType<typeof useExplorerState>
   let mockHelpers: ReturnType<typeof useExplorerHelpers>
   let mockAllCountries: Ref<Record<string, Country>>
-  let mockDisplayColors: ComputedRef<string[]>
   let mockDataFetcher: any
 
   beforeEach(() => {
@@ -203,9 +202,6 @@ describe('useExplorerDataOrchestration', () => {
       USA: { iso3c: 'USA', jurisdiction: 'United States' } as any
     })
 
-    // Create mock colors (cast to any to bypass WritableComputedRefSymbol check in tests)
-    mockDisplayColors = computed(() => ['#FF0000', '#00FF00', '#0000FF']) as any
-
     // Setup data fetcher mock
     mockDataFetcher = {
       fetchChartData: vi.fn().mockResolvedValue({
@@ -251,8 +247,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       expect(orchestration.allChartLabels.value).toEqual([])
@@ -265,8 +260,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       expect(orchestration.isUpdating.value).toBe(false)
@@ -277,8 +271,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       expect(orchestration.chartOptions.showMaximizeOption).toBe(true)
@@ -302,8 +295,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       orchestration.configureOptions()
@@ -315,8 +307,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       mockState.cumulative.value = false
@@ -331,8 +322,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       mockHelpers.isMatrixChartStyle = vi.fn(() => true)
@@ -346,8 +336,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       mockState.showLogarithmic.value = true
@@ -361,8 +350,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       mockHelpers.hasBaseline = vi.fn(() => true)
@@ -377,8 +365,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       mockHelpers.hasBaseline = vi.fn(() => true)
@@ -393,8 +380,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       mockHelpers.hasBaseline = vi.fn(() => true)
@@ -408,8 +394,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       mockState.showBaseline.value = false
@@ -423,8 +408,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       mockHelpers.isMatrixChartStyle = vi.fn(() => true)
@@ -464,8 +448,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       orchestration.allChartLabels.value = ['2015', '2016', '2017', '2018', '2019', '2020']
@@ -482,8 +465,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       orchestration.allChartLabels.value = []
@@ -503,8 +485,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       await orchestration.updateData(true, false)
@@ -516,8 +497,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       const promise = orchestration.updateData(true, false)
@@ -535,8 +515,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       mockDataFetcher.fetchChartData.mockImplementation(
@@ -569,8 +548,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       await orchestration.updateData(true, false)
@@ -583,8 +561,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       mockState.chartType.value = 'yearly'
@@ -598,8 +575,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       mockState.chartType.value = 'monthly'
@@ -620,8 +596,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       // Note: We can't spy on internal method calls due to closure scope
@@ -636,8 +611,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       await orchestration.updateData(true, false)
@@ -650,8 +624,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       // Note: We can't spy on internal method calls due to closure scope
@@ -666,8 +639,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       vi.mocked(getKeyForType).mockReturnValue([])
@@ -681,8 +653,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       mockDataFetcher.fetchChartData.mockResolvedValue(null)
@@ -703,8 +674,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       // Should not throw an error
@@ -719,8 +689,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       // Note: We can't spy on internal method calls due to closure scope
@@ -735,8 +704,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       vi.mocked(getKeyForType).mockReturnValue([])
@@ -756,8 +724,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       await orchestration.updateData(false, false)
@@ -770,8 +737,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       // Note: We can't spy on internal method calls due to closure scope
@@ -791,8 +757,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       // Set data to undefined to trigger early return
@@ -807,8 +772,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       orchestration.allChartData.labels = ['2020', '2021']
@@ -840,8 +804,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       const dataset = { USA: {} } as any
@@ -854,8 +817,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       const newDataset = { GBR: {} } as any
@@ -874,8 +836,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       mockHelpers.isAsmrType = vi.fn(() => true)
@@ -891,8 +852,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       mockState.countries.value = ['USA', 'GBR', 'DEU']
@@ -908,8 +868,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       mockHelpers.isBarChartStyle = vi.fn(() => true)
@@ -929,8 +888,7 @@ describe('useExplorerDataOrchestration', () => {
       const orchestration = useExplorerDataOrchestration(
         mockState,
         mockHelpers,
-        mockAllCountries,
-        mockDisplayColors
+        mockAllCountries
       )
 
       mockHelpers.isMatrixChartStyle = vi.fn(() => true)

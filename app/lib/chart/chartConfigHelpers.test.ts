@@ -13,6 +13,7 @@ import {
   createPluginsConfig,
   createScalesConfig
 } from './config'
+import { makeBarLineChartConfig } from './chartConfig'
 import type { ChartErrorDataPoint, MortalityChartData } from './chartTypes'
 
 describe('chartConfigHelpers', () => {
@@ -426,6 +427,18 @@ describe('chartConfigHelpers', () => {
       expect(config.subtitle.display).toBe(true)
     })
 
+    it('should hide legend when showLegend is false', () => {
+      const config = createPluginsConfig(mockData, false, false, false, true, 'auto', false, false, true, true, false)
+
+      expect(config.legend.display).toBe(false)
+    })
+
+    it('should show legend when showLegend is true', () => {
+      const config = createPluginsConfig(mockData, false, false, false, true, 'auto', false, false, true, true, true)
+
+      expect(config.legend.display).toBe(true)
+    })
+
     it('should configure legend with filter', () => {
       const config = createPluginsConfig(mockData, false, false, false, true, 'auto', false, false)
 
@@ -455,7 +468,7 @@ describe('chartConfigHelpers', () => {
     })
 
     it('should use dark theme colors when isDark is true', () => {
-      const config = createPluginsConfig(mockData, false, false, false, true, 'auto', false, false, true, true, 'zscore', true)
+      const config = createPluginsConfig(mockData, false, false, false, true, 'auto', false, false, true, true, true, 'zscore', true)
 
       expect(config.title.color).toBeDefined()
       expect(config.subtitle.color).toBeDefined()
@@ -561,6 +574,163 @@ describe('chartConfigHelpers', () => {
 
       expect(config.x.title.color).toBeDefined()
       expect(config.y.title.color).toBeDefined()
+    })
+
+    it('should hide x-axis title when showXAxisTitle is false', () => {
+      const config = createScalesConfig(mockData, false, false, true, 'auto', false, false, false, false)
+
+      expect(config.x.title.display).toBe(false)
+    })
+
+    it('should show x-axis title when showXAxisTitle is true', () => {
+      const config = createScalesConfig(mockData, false, false, true, 'auto', false, false, false, true)
+
+      expect(config.x.title.display).toBe(true)
+    })
+
+    it('should hide y-axis title when showYAxisTitle is false', () => {
+      const config = createScalesConfig(mockData, false, false, true, 'auto', false, false, false, true, false)
+
+      expect(config.y.title.display).toBe(false)
+    })
+
+    it('should show y-axis title when showYAxisTitle is true', () => {
+      const config = createScalesConfig(mockData, false, false, true, 'auto', false, false, false, true, true)
+
+      expect(config.y.title.display).toBe(true)
+    })
+  })
+
+  describe('makeBarLineChartConfig legend auto-hide', () => {
+    const createMockDataWithDatasets = (labels: string[]): MortalityChartData => ({
+      datasets: labels.map(label => ({
+        label,
+        data: [1, 2, 3],
+        borderColor: '#000',
+        backgroundColor: '#000'
+      })),
+      labels: ['2020', '2021', '2022'],
+      title: 'Test Chart',
+      subtitle: 'Test Subtitle',
+      xtitle: 'Year',
+      ytitle: 'Value',
+      showLabels: false,
+      isMaximized: false,
+      showLogarithmic: false,
+      url: 'https://example.com',
+      showPercentage: false,
+      showXOffset: false,
+      sources: ['test']
+    })
+
+    it('should auto-hide legend when there is only one visible series', () => {
+      const data = createMockDataWithDatasets(['USA'])
+      const config = makeBarLineChartConfig(
+        data,
+        false, // isExcess
+        false, // showPi
+        false, // showPercentage
+        false, // isDeathsType
+        false, // isPopulationType
+        false, // showQrCode
+        false, // showLogo
+        'auto', // decimals
+        false, // isDark
+        undefined, // userTier
+        true, // showCaption
+        true, // showTitle
+        false, // isSSR
+        'line', // chartStyle
+        true, // showLegend - user wants to show, but auto-hide should apply
+        true, // showXAxisTitle
+        true // showYAxisTitle
+      )
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((config.options as any).plugins.legend.display).toBe(false)
+    })
+
+    it('should show legend when there are multiple visible series', () => {
+      const data = createMockDataWithDatasets(['USA', 'Germany'])
+      const config = makeBarLineChartConfig(
+        data,
+        false, // isExcess
+        false, // showPi
+        false, // showPercentage
+        false, // isDeathsType
+        false, // isPopulationType
+        false, // showQrCode
+        false, // showLogo
+        'auto', // decimals
+        false, // isDark
+        undefined, // userTier
+        true, // showCaption
+        true, // showTitle
+        false, // isSSR
+        'line', // chartStyle
+        true, // showLegend
+        true, // showXAxisTitle
+        true // showYAxisTitle
+      )
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((config.options as any).plugins.legend.display).toBe(true)
+    })
+
+    it('should hide legend when user explicitly sets showLegend to false', () => {
+      const data = createMockDataWithDatasets(['USA', 'Germany'])
+      const config = makeBarLineChartConfig(
+        data,
+        false, // isExcess
+        false, // showPi
+        false, // showPercentage
+        false, // isDeathsType
+        false, // isPopulationType
+        false, // showQrCode
+        false, // showLogo
+        'auto', // decimals
+        false, // isDark
+        undefined, // userTier
+        true, // showCaption
+        true, // showTitle
+        false, // isSSR
+        'line', // chartStyle
+        false, // showLegend - user explicitly hides
+        true, // showXAxisTitle
+        true // showYAxisTitle
+      )
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((config.options as any).plugins.legend.display).toBe(false)
+    })
+
+    it('should not count empty labels as visible series', () => {
+      // Baseline and PI datasets have empty labels
+      const data = createMockDataWithDatasets(['USA', '', ''])
+      const config = makeBarLineChartConfig(
+        data,
+        false, // isExcess
+        false, // showPi
+        false, // showPercentage
+        false, // isDeathsType
+        false, // isPopulationType
+        false, // showQrCode
+        false, // showLogo
+        'auto', // decimals
+        false, // isDark
+        undefined, // userTier
+        true, // showCaption
+        true, // showTitle
+        false, // isSSR
+        'line', // chartStyle
+        true, // showLegend
+        true, // showXAxisTitle
+        true // showYAxisTitle
+      )
+
+      // Only 'USA' is a visible series, so legend should be hidden
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((config.options as any).plugins.legend.display).toBe(false)
     })
   })
 })

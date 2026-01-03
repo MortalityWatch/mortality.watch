@@ -3,10 +3,10 @@
     <!-- Header -->
     <div class="mb-8">
       <h1 class="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-        Browse All Charts
+        Global Chart History
       </h1>
       <p class="text-lg text-gray-600 dark:text-gray-400">
-        All charts ever created on the platform
+        All chart variants ever created on the platform
       </p>
     </div>
 
@@ -60,64 +60,30 @@
       v-else-if="charts && charts.length > 0"
       class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
     >
-      <UCard
+      <ChartsThumbnailCard
         v-for="chart in charts"
         :key="chart.id"
-        class="hover:shadow-lg transition-shadow"
+        :to="getChartUrl(chart)"
+        :thumbnail-url="getThumbnailUrl(chart)"
+        :alt="`Chart ${chart.id}`"
+        :chart-type="chart.page"
+        :meta="{ views: chart.accessCount, date: formatDate(chart.createdAt) }"
       >
-        <!-- Thumbnail -->
-        <NuxtLink
-          :to="getChartUrl(chart)"
-          class="block overflow-hidden rounded-md bg-gray-100 dark:bg-gray-800 mb-3"
-          style="aspect-ratio: 16/9"
+        <!-- Admin: Saved By -->
+        <div
+          v-if="isAdmin && chart.savedBy"
+          class="text-xs text-gray-500 dark:text-gray-400 mt-1"
         >
-          <img
-            :src="getThumbnailUrl(chart)"
-            :alt="`Chart ${chart.id}`"
-            class="w-full h-full object-cover object-top hover:scale-105 transition-transform"
-            loading="lazy"
-          >
-        </NuxtLink>
-
-        <!-- Meta info -->
-        <div class="space-y-2">
-          <!-- Stats row -->
-          <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-            <div class="flex items-center gap-3">
-              <UBadge
-                :color="chart.page === 'explorer' ? 'primary' : 'info'"
-                variant="subtle"
-                size="xs"
-              >
-                {{ chart.page }}
-              </UBadge>
-              <span>
-                <Icon
-                  name="i-lucide-eye"
-                  class="w-3 h-3 inline"
-                />
-                {{ chart.accessCount }}
-              </span>
-            </div>
-            <span>{{ formatDate(chart.createdAt) }}</span>
-          </div>
-
-          <!-- Admin: Saved By -->
-          <div
-            v-if="isAdmin && chart.savedBy"
-            class="text-xs text-gray-500 dark:text-gray-400"
-          >
-            <Icon
-              name="i-lucide-bookmark"
-              class="w-3 h-3 inline"
-            />
-            Saved by {{ chart.savedBy.name }}
-            <span v-if="chart.savedBy.count > 1">
-              (+{{ chart.savedBy.count - 1 }})
-            </span>
-          </div>
+          <Icon
+            name="i-lucide-bookmark"
+            class="w-3 h-3 inline"
+          />
+          Saved by {{ chart.savedBy.name }}
+          <span v-if="chart.savedBy.count > 1">
+            (+{{ chart.savedBy.count - 1 }})
+          </span>
         </div>
-      </UCard>
+      </ChartsThumbnailCard>
     </div>
 
     <!-- Empty State -->
@@ -177,16 +143,17 @@ interface Pagination {
   hasMore: boolean
 }
 
-// Page meta
+// Page meta - redirect non-pro users via middleware (SSR-safe)
 definePageMeta({
-  title: 'Browse All Charts'
+  title: 'Global Chart History',
+  middleware: ['feature-gate-browse-charts']
 })
 
 useSeoMeta({
-  title: 'Browse All Charts',
-  description: 'Browse all charts ever created on Mortality Watch',
-  ogTitle: 'Browse All Charts - Mortality Watch',
-  ogDescription: 'Browse all charts ever created on Mortality Watch'
+  title: 'Global Chart History',
+  description: 'Browse all chart variants ever created on Mortality Watch',
+  ogTitle: 'Global Chart History - Mortality Watch',
+  ogDescription: 'Browse all chart variants ever created on Mortality Watch'
 })
 
 // State
@@ -262,6 +229,7 @@ function getThumbnailUrl(chart: Chart): string {
   params.set('qr', '0') // Hide QR code
   params.set('l', '0') // Hide logo
   params.set('cap', '0') // Hide caption
+  params.set('sle', '1') // Always show legend (even for single series)
   params.set('dp', '2') // 2x device pixel ratio
   params.set('z', '1.5') // Zoom level
   params.set('width', '352')

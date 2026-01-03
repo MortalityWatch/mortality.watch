@@ -89,7 +89,7 @@
     <!-- Country Grid -->
     <div
       v-else-if="currentPreset && paginatedCountries.length > 0"
-      class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
     >
       <DiscoverCountryChartCard
         v-for="country in paginatedCountries"
@@ -126,9 +126,9 @@
         of {{ totalCountries }} countries
       </span>
       <UPagination
-        v-model="currentPage"
+        v-model:page="currentPage"
         :total="totalCountries"
-        :page-count="itemsPerPage"
+        :items-per-page="itemsPerPage"
       />
     </div>
   </div>
@@ -209,14 +209,26 @@ onMounted(async () => {
   }
 })
 
-// Check if metric requires age-stratified data (ASMR or ASD)
+// Check if metric requires age-stratified data (ASMR, ASD, or LE)
+// LE requires age-stratified data because life expectancy is calculated from
+// age-specific mortality rates
 const requiresAgeData = computed(() => {
-  return metric.value === 'asmr' || metric.value === 'asd'
+  return metric.value === 'asmr' || metric.value === 'asd' || metric.value === 'le'
+})
+
+// Get current chart type from preset
+const currentChartType = computed(() => {
+  return currentPreset.value?.chartType
 })
 
 // Filtered countries based on region and data availability
 const filteredCountries = computed(() => {
   let result = allCountries.value
+
+  // Filter by chart type availability (e.g., weekly data only for weekly charts)
+  if (currentChartType.value) {
+    result = result.filter(c => c.hasChartType(currentChartType.value!))
+  }
 
   // Filter by age-stratified data availability for ASMR/ASD
   if (requiresAgeData.value) {

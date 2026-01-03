@@ -2,15 +2,17 @@
 import { fileURLToPath } from 'node:url'
 
 export default defineNuxtConfig({
-  // Enable SSR globally
-
   modules: [
     '@nuxt/eslint',
     '@nuxt/image',
     '@nuxt/ui',
     '@vueuse/nuxt',
-    'nuxt-og-image'
+    'nuxt-og-image',
+    'nuxt-umami',
+    'nuxt-auth-utils'
   ],
+
+  // Enable SSR globally
   ssr: true,
 
   devtools: {
@@ -34,6 +36,10 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     // Server-side only config (not exposed to client)
+    // Reuse JWT_SECRET for nuxt-auth-utils session encryption
+    session: {
+      password: process.env.JWT_SECRET || ''
+    },
     mortalityDataS3Base: process.env.MORTALITY_DATA_S3_BASE || 'https://s3.mortality.watch/data/mortality',
     mortalityDataCacheDir: process.env.MORTALITY_DATA_CACHE_DIR || '.data/cache/mortality',
     mortalityDataFetchTimeout: parseInt(process.env.MORTALITY_DATA_FETCH_TIMEOUT || '30000', 10),
@@ -84,18 +90,19 @@ export default defineNuxtConfig({
       '/**': {
         headers: {
           'X-Content-Type-Options': 'nosniff',
-          'X-Frame-Options': 'DENY',
+          // Allow iframe embedding in development for preview tools like Vibe Kanban
+          ...(process.env.NODE_ENV !== 'development' && { 'X-Frame-Options': 'DENY' }),
           'X-XSS-Protection': '1; mode=block',
           'Referrer-Policy': 'strict-origin-when-cross-origin',
           'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
           'Content-Security-Policy': [
             'default-src \'self\'',
-            'script-src \'self\' \'unsafe-inline\' \'unsafe-eval\' https://s3.mortality.watch https://stats.mortality.watch https://js.stripe.com',
+            'script-src \'self\' \'unsafe-inline\' \'unsafe-eval\' https://s3.mortality.watch https://stats.mortality.watch https://ua.mortality.watch https://js.stripe.com',
             'style-src \'self\' \'unsafe-inline\'',
             'img-src \'self\' data: https:',
             'font-src \'self\' data:',
-            // Allow localhost for local stats API development
-            'connect-src \'self\' https://s3.mortality.watch https://stats.mortality.watch https://api.stripe.com http://localhost:*',
+            // Allow localhost for local stats API development and Umami analytics
+            'connect-src \'self\' https://s3.mortality.watch https://stats.mortality.watch https://ua.mortality.watch https://api.stripe.com http://localhost:*',
             'frame-src https://js.stripe.com',
             'child-src https://js.stripe.com'
           ].join('; ')
@@ -111,5 +118,14 @@ export default defineNuxtConfig({
         braceStyle: '1tbs'
       }
     }
+  },
+
+  // Umami Analytics configuration
+  umami: {
+    id: process.env.NUXT_UMAMI_ID || '',
+    host: process.env.NUXT_UMAMI_HOST || 'https://ua.mortality.watch',
+    autoTrack: true,
+    ignoreLocalhost: true,
+    enabled: !!process.env.NUXT_UMAMI_ID
   }
 })

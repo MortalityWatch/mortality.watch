@@ -141,6 +141,43 @@ export const getChartColorPalette = (count: number, isDarkOverride?: boolean) =>
     .mode('rgb')
     .colors(count)
 
+/**
+ * Compute display colors for chart series.
+ * Pure function - same logic as useExplorerColors.displayColors.
+ * Used by both SSR and client to ensure identical color assignment.
+ *
+ * @param numSeries - Number of series (countries * ageGroups)
+ * @param userColors - Optional user-defined colors
+ * @param isDark - Dark mode flag
+ * @returns Array of colors for each series
+ */
+export function computeDisplayColors(
+  numSeries: number,
+  userColors: string[] | undefined,
+  isDark: boolean
+): string[] {
+  if (numSeries === 0) return []
+
+  // If user has custom colors, use them (extending if needed)
+  if (userColors && userColors.length > 0) {
+    if (userColors.length >= numSeries) {
+      return userColors.slice(0, numSeries)
+    }
+    // If user colors are fewer than series, extend using color scale
+    return getColorScale(userColors, numSeries)
+  }
+
+  // Use default colors (theme-aware)
+  const themeColors = getChartColors(isDark)
+  if (themeColors.length >= numSeries) {
+    // We have enough colors, just slice
+    return themeColors.slice(0, numSeries)
+  }
+
+  // Need more colors than we have, use chroma to generate
+  return getColorScale(themeColors, numSeries)
+}
+
 // ============================================================================
 // UI Colors (from colors.ts)
 // ============================================================================

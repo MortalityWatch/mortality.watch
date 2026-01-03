@@ -20,6 +20,9 @@ CREATE TABLE IF NOT EXISTS users (
   tos_accepted_at INTEGER,
   last_login INTEGER,
   invited_by_code_id INTEGER,
+  google_id TEXT,
+  twitter_id TEXT,
+  profile_picture_url TEXT,
   created_at INTEGER DEFAULT (unixepoch()) NOT NULL,
   updated_at INTEGER DEFAULT (unixepoch()) NOT NULL
 );
@@ -29,6 +32,7 @@ CREATE INDEX IF NOT EXISTS idx_users_tier ON users (tier);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users (role);
 CREATE INDEX IF NOT EXISTS idx_verification_token ON users (verification_token);
 CREATE INDEX IF NOT EXISTS idx_password_reset_token ON users (password_reset_token);
+-- OAuth indexes created via db-init.ts migrations
 
 -- Invite codes table
 CREATE TABLE IF NOT EXISTS invite_codes (

@@ -27,12 +27,13 @@ describe('presets', () => {
       expect(metrics).toContain('population')
     })
 
-    it('should have 5 chart types', () => {
-      expect(chartTypes).toHaveLength(5)
+    it('should have 6 chart types', () => {
+      expect(chartTypes).toHaveLength(6)
       expect(chartTypes).toContain('weekly')
       expect(chartTypes).toContain('monthly')
       expect(chartTypes).toContain('quarterly')
       expect(chartTypes).toContain('yearly')
+      expect(chartTypes).toContain('midyear')
       expect(chartTypes).toContain('fluseason')
     })
 
@@ -45,27 +46,27 @@ describe('presets', () => {
   })
 
   describe('generateAllPresets', () => {
-    it('should generate exactly 80 presets', () => {
+    it('should generate exactly 96 presets', () => {
       const presets = generateAllPresets()
-      expect(presets).toHaveLength(80)
+      expect(presets).toHaveLength(96)
     })
 
-    it('should generate 15 presets for non-population metrics', () => {
+    it('should generate 18 presets for non-population metrics', () => {
       const presets = generateAllPresets()
       const lePresets = presets.filter(p => p.metric === 'le')
       const asmrPresets = presets.filter(p => p.metric === 'asmr')
       const deathsPresets = presets.filter(p => p.metric === 'deaths')
 
-      expect(lePresets).toHaveLength(15)
-      expect(asmrPresets).toHaveLength(15)
-      expect(deathsPresets).toHaveLength(15)
+      expect(lePresets).toHaveLength(18)
+      expect(asmrPresets).toHaveLength(18)
+      expect(deathsPresets).toHaveLength(18)
     })
 
-    it('should generate only 5 presets for population (normal view only)', () => {
+    it('should generate only 6 presets for population (normal view only)', () => {
       const presets = generateAllPresets()
       const popPresets = presets.filter(p => p.metric === 'population')
 
-      expect(popPresets).toHaveLength(5)
+      expect(popPresets).toHaveLength(6)
       expect(popPresets.every(p => p.view === 'normal')).toBe(true)
     })
 
@@ -89,30 +90,30 @@ describe('presets', () => {
   })
 
   describe('getPresetsByMetric', () => {
-    it('should return 15 presets for asmr', () => {
+    it('should return 18 presets for asmr', () => {
       const presets = getPresetsByMetric('asmr')
-      expect(presets).toHaveLength(15)
+      expect(presets).toHaveLength(18)
       expect(presets.every(p => p.metric === 'asmr')).toBe(true)
     })
 
-    it('should return 5 presets for population', () => {
+    it('should return 6 presets for population', () => {
       const presets = getPresetsByMetric('population')
-      expect(presets).toHaveLength(5)
+      expect(presets).toHaveLength(6)
       expect(presets.every(p => p.metric === 'population')).toBe(true)
     })
   })
 
   describe('getPresetCountByMetric', () => {
-    it('should return 15 for non-population metrics', () => {
-      expect(getPresetCountByMetric('le')).toBe(15)
-      expect(getPresetCountByMetric('asd')).toBe(15)
-      expect(getPresetCountByMetric('asmr')).toBe(15)
-      expect(getPresetCountByMetric('cmr')).toBe(15)
-      expect(getPresetCountByMetric('deaths')).toBe(15)
+    it('should return 18 for non-population metrics', () => {
+      expect(getPresetCountByMetric('le')).toBe(18)
+      expect(getPresetCountByMetric('asd')).toBe(18)
+      expect(getPresetCountByMetric('asmr')).toBe(18)
+      expect(getPresetCountByMetric('cmr')).toBe(18)
+      expect(getPresetCountByMetric('deaths')).toBe(18)
     })
 
-    it('should return 5 for population', () => {
-      expect(getPresetCountByMetric('population')).toBe(5)
+    it('should return 6 for population', () => {
+      expect(getPresetCountByMetric('population')).toBe(6)
     })
   })
 
@@ -215,8 +216,8 @@ describe('presets', () => {
       expect(url).toContain('e=1')
       expect(url).toContain('sb=1')
       expect(url).toContain('bm=mean')
-      expect(url).toContain('bdf=2017')
-      expect(url).toContain('bdt=2019')
+      expect(url).toContain('bf=2017')
+      expect(url).toContain('bt=2019')
     })
 
     it('should generate correct URL for zscore view', () => {
@@ -271,8 +272,28 @@ describe('presets', () => {
       expect(url).toContain('e=1')
       expect(url).toContain('sb=1')
       expect(url).toContain('bm=mean')
-      expect(url).toContain('bdf=2017')
-      expect(url).toContain('bdt=2019')
+      expect(url).toContain('bf=2017')
+      expect(url).toContain('bt=2019')
+    })
+
+    it('should include baseline params for normal view (non-population)', () => {
+      const preset = getPresetById('le-weekly-normal')!
+      const url = presetToThumbnailUrl(preset, 'SWE')
+
+      expect(url).toContain('sb=1')
+      expect(url).toContain('bm=mean')
+      expect(url).toContain('bf=2017')
+      expect(url).toContain('bt=2019')
+    })
+
+    it('should not include baseline params for population', () => {
+      const preset = getPresetById('population-weekly-normal')!
+      const url = presetToThumbnailUrl(preset, 'SWE')
+
+      expect(url).not.toContain('sb=1')
+      expect(url).not.toContain('bm=')
+      expect(url).not.toContain('bf=')
+      expect(url).not.toContain('bt=')
     })
   })
 
@@ -281,11 +302,12 @@ describe('presets', () => {
       const presets = getPresetsByMetric('asmr')
       const grouped = groupPresetsByChartType(presets)
 
-      expect(Object.keys(grouped)).toHaveLength(5)
+      expect(Object.keys(grouped)).toHaveLength(6)
       expect(grouped.weekly).toHaveLength(3)
       expect(grouped.monthly).toHaveLength(3)
       expect(grouped.quarterly).toHaveLength(3)
       expect(grouped.yearly).toHaveLength(3)
+      expect(grouped.midyear).toHaveLength(3)
       expect(grouped.fluseason).toHaveLength(3)
     })
 

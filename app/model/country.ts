@@ -3,6 +3,7 @@
  */
 
 import { maybeTransformFluSeason } from '@/utils'
+import type { ChartType } from '@/lib/discover/presets'
 
 export interface CountryRaw {
   iso3c: string
@@ -61,11 +62,44 @@ export class Country {
     return false
   }
 
+  /**
+   * Check if country has life expectancy data available.
+   * LE data requires age-stratified data (same as ASMR) because LE is calculated
+   * from age-specific mortality rates.
+   */
+  has_le(): boolean {
+    return this.has_asmr()
+  }
+
   age_groups(): Set<string> {
     const result = new Set<string>()
     for (const ds of this.data_source)
       ds.age_groups.forEach(ag => result.add(ag))
     return result
+  }
+
+  /**
+   * Check if country has data available for a specific chart type
+   * - weekly: requires weekly data
+   * - monthly: requires at least monthly data
+   * - quarterly: requires at least monthly data (aggregates monthly to quarterly)
+   * - yearly/fluseason: all countries have yearly data
+   */
+  hasChartType(chartType: ChartType): boolean {
+    const types = this.data_source.map(ds => ds.type)
+
+    switch (chartType) {
+      case 'weekly':
+        return types.includes('weekly')
+      case 'monthly':
+      case 'quarterly':
+        return types.includes('weekly') || types.includes('monthly')
+      case 'yearly':
+      case 'fluseason':
+        return true // All countries have at least yearly data
+      default:
+        return false
+    }
   }
 }
 

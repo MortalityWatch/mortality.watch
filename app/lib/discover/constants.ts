@@ -6,7 +6,7 @@
 
 import type { TabsItem } from '@nuxt/ui'
 import type { Metric, ChartType, View } from './presets'
-import { getPresetCountByMetric } from './presets'
+import { metrics } from './presets'
 
 /**
  * Metric metadata for display
@@ -63,6 +63,7 @@ export const chartTypeLabels: Record<ChartType, string> = {
   monthly: 'Monthly',
   quarterly: 'Quarterly',
   yearly: 'Yearly',
+  midyear: 'Mid-Year',
   fluseason: 'Flu Season'
 }
 
@@ -85,41 +86,29 @@ export const viewDescriptions: Record<View, string> = {
 }
 
 /**
+ * View icons
+ */
+export const viewIcons: Record<View, string> = {
+  normal: 'i-lucide-eye',
+  excess: 'i-lucide-diff',
+  zscore: 'i-lucide-sigma'
+}
+
+/**
+ * Re-export metrics from presets (single source of truth)
+ */
+export { metrics } from './presets'
+
+/**
  * Generate metric tabs for country view
  */
 export function getMetricTabs(): TabsItem[] {
-  return [
-    {
-      label: `LE (${getPresetCountByMetric('le')})`,
-      value: 'le' as const,
-      slot: 'le' as const
-    },
-    {
-      label: `ASD (${getPresetCountByMetric('asd')})`,
-      value: 'asd' as const,
-      slot: 'asd' as const
-    },
-    {
-      label: `ASMR (${getPresetCountByMetric('asmr')})`,
-      value: 'asmr' as const,
-      slot: 'asmr' as const
-    },
-    {
-      label: `CMR (${getPresetCountByMetric('cmr')})`,
-      value: 'cmr' as const,
-      slot: 'cmr' as const
-    },
-    {
-      label: `Deaths (${getPresetCountByMetric('deaths')})`,
-      value: 'deaths' as const,
-      slot: 'deaths' as const
-    },
-    {
-      label: `Population (${getPresetCountByMetric('population')})`,
-      value: 'population' as const,
-      slot: 'population' as const
-    }
-  ] satisfies TabsItem[]
+  return metrics.map(metric => ({
+    label: metricInfo[metric].label,
+    value: metric,
+    slot: metric,
+    icon: metricInfo[metric].icon
+  })) satisfies TabsItem[]
 }
 
 /**

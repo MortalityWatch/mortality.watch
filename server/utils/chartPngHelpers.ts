@@ -1,20 +1,21 @@
 import { type H3Event, getRequestHeader } from 'h3'
 import { dataLoader } from '../services/dataLoader'
-import type { AllChartData, CountryData } from '../../app/model'
+import type { AllChartData, CountryData, DatasetEntry } from '../../app/model'
 import { ChartPeriod, type ChartType } from '../../app/model/period'
 import { getKeyForType } from '../../app/model/utils'
 import { getFilteredChartDataFromConfig } from '../../app/lib/chart/filtering'
-import { getChartColors } from '../../app/lib/chart/chartColors'
 import { makeBarLineChartConfig, makeMatrixChartConfig } from '../../app/lib/chart/chartConfig'
 import type { MortalityChartData } from '../../app/lib/chart/chartTypes'
 import {
   resolveChartStateForRendering,
   toChartFilterConfig,
   generateUrlFromState,
+  computeShowCumPi,
   type ChartRenderState
 } from '../../app/lib/state/resolution'
 import { shouldShowLabels } from '../../app/lib/chart/labelVisibility'
 import { metadataService } from '../../app/services/metadataService'
+import { findCommonAdjustedEndLabel } from '../../app/lib/chart/steepDropDetection'
 
 /**
  * Chart PNG generation helper functions
@@ -429,7 +430,7 @@ export async function fetchChartData(state: ChartRenderState) {
   // This matches the client's getBaseKeysForFetch which passes !isPopulationType(), not showBaseline.
   const isPopulationType = state.type === 'population'
   const baseKeys = !isPopulationType
-    ? getKeyForType(state.type, !isPopulationType, state.standardPopulation, false, state.showPredictionInterval)
+    ? getKeyForType(state.type, !isPopulationType, state.standardPopulation, false, state.showPredictionInterval, { leAdjusted: state.leAdjusted, chartType: state.chartType })
     : undefined
 
   // Calculate startDateIndex from sliderStart to match client behavior
@@ -437,13 +438,17 @@ export async function fetchChartData(state: ChartRenderState) {
   const period = new ChartPeriod(allLabels, state.chartType as ChartType)
   const startDateIndex = state.sliderStart ? period.indexOf(state.sliderStart) : 0
 
+  // Use shared computeShowCumPi - same logic as client-side useExplorerHelpers.showCumPi()
+  // This determines whether the /cum endpoint is used for cumulative baseline calculations
+  const showCumPi = computeShowCumPi(state.cumulative, state.chartType, state.baselineMethod)
+
   const allChartData: AllChartData = await dataLoader.getAllChartData({
     dataKey: dataKey as keyof CountryData,
     chartType: state.chartType,
     rawData,
     allLabels,
     startDateIndex,
-    cumulative: state.cumulative,
+    cumulative: showCumPi,
     ageGroupFilter: state.ageGroups,
     countryCodeFilter: state.countries,
     // Always pass baselineMethod - excess mode needs baselines to calculate excess values
@@ -484,14 +489,8 @@ export async function transformChartData(
   chartUrl: string,
   _isAsmrType: boolean
 ) {
-  // Use user-defined colors if provided, otherwise fall back to default theme colors
-  const defaultColors = getChartColors(state.darkMode)
-  const colors = state.userColors && state.userColors.length > 0
-    ? [...state.userColors, ...defaultColors.slice(state.userColors.length)]
-    : defaultColors
-
-  // Use the unified toChartFilterConfig - same function as client
-  const config = toChartFilterConfig(state, allCountries, colors, chartUrl)
+  // Use the unified toChartFilterConfig - colors computed internally
+  const config = toChartFilterConfig(state, allCountries, chartUrl)
 
   // Use getFilteredChartDataFromConfig - same function as client
   const chartData = getFilteredChartDataFromConfig(config, allLabels, allChartData.data)
@@ -567,7 +566,10 @@ export function generateChartConfig(
       userTier,
       state.showCaption,
       state.showTitle,
-      true // isSSR
+      true, // isSSR
+      state.showLegend,
+      state.showXAxisTitle,
+      state.showYAxisTitle
     )
 
     // Add the chart URL for QR code (only if showQrCode is true)
@@ -594,7 +596,10 @@ export function generateChartConfig(
       state.showCaption,
       state.showTitle,
       true, // isSSR
-      state.chartStyle as 'bar' | 'line'
+      state.chartStyle as 'bar' | 'line',
+      state.showLegend,
+      state.showXAxisTitle,
+      state.showYAxisTitle
     )
 
     // Add the chart URL for QR code (only if showQrCode is true)
@@ -628,6 +633,87 @@ export function generateChartUrl(query: Record<string, unknown>): string {
 export function generateChartUrlFromState(state: ChartRenderState): string {
   const siteUrl = process.env.NUXT_PUBLIC_SITE_URL || 'https://www.mortality.watch'
   return generateUrlFromState(state, siteUrl)
+}
+
+/**
+ * Apply steep drop adjustment to chart state
+ *
+ * When hideSteepDrop is enabled, this function detects artificial drops
+ * in recent data (caused by reporting delays) and adjusts dateTo to
+ * exclude the affected periods.
+ *
+ * IMPORTANT: This only applies when the user hasn't explicitly set dateTo.
+ * If the user specifies a date range, we respect their choice.
+ *
+ * @param state - Resolved chart state
+ * @param allChartData - Fetched chart data containing labels and data series
+ * @param queryParams - Original URL query params to check if dateTo was explicitly set
+ * @returns Adjusted state with modified dateTo if steep drop detected
+ */
+export function applySteepDropAdjustment(
+  state: ChartRenderState,
+  allChartData: AllChartData,
+  queryParams: Record<string, string | string[]>
+): ChartRenderState {
+  // Only apply if hideSteepDrop is enabled
+  if (!state.hideSteepDrop) {
+    return state
+  }
+
+  // Don't adjust if user explicitly set dateTo in URL
+  // (dt is the URL key for dateTo)
+  if (queryParams.dt) {
+    return state
+  }
+
+  const labels = allChartData.labels
+  if (labels.length === 0) {
+    return state
+  }
+
+  // Extract data arrays for all countries and age groups
+  // We use the primary metric field (deaths or asmr) for detection
+  const dataArrays: (number | null)[][] = []
+  const isAsmrType = state.type.startsWith('asmr')
+  const metricField = isAsmrType
+    ? `asmr_${state.standardPopulation}` as keyof DatasetEntry
+    : 'deaths' as keyof DatasetEntry
+
+  for (const ageGroup of state.ageGroups) {
+    const ageData = allChartData.data[ageGroup]
+    if (!ageData) continue
+
+    for (const country of state.countries) {
+      const countryData = ageData[country]
+      if (!countryData) continue
+
+      const metricData = countryData[metricField] as (number | null)[] | undefined
+      if (metricData && Array.isArray(metricData)) {
+        dataArrays.push(metricData)
+      }
+    }
+  }
+
+  if (dataArrays.length === 0) {
+    return state
+  }
+
+  // Detect steep drop and get adjusted end label
+  const adjustedEndLabel = findCommonAdjustedEndLabel(
+    dataArrays,
+    labels,
+    state.chartType
+  )
+
+  if (!adjustedEndLabel) {
+    return state
+  }
+
+  // Return new state with adjusted dateTo
+  return {
+    ...state,
+    dateTo: adjustedEndLabel
+  }
 }
 
 // Re-export the unified state resolution function for use in chart.png route

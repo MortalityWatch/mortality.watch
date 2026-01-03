@@ -4,6 +4,7 @@ const { can } = useFeatureAccess()
 const canExportData = computed(() => can('EXPORT_DATA'))
 const canSortByValue = computed(() => can('SORT_BY_VALUE'))
 const { goToSignup } = useAuthRedirect()
+const { trackChartShare, trackChartExport, trackChartSortByValue, trackFeatureGate } = useAnalytics()
 
 const props = withDefaults(defineProps<{
   showSaveButton?: boolean
@@ -28,6 +29,52 @@ const emit = defineEmits<{
   exportJSON: []
   sortByLatest: []
 }>()
+
+// Tracked action handlers
+function handleCopyLink() {
+  trackChartShare('link')
+  emit('copyLink')
+}
+
+function handleDownloadChart() {
+  trackChartShare('download')
+  emit('downloadChart')
+}
+
+function handleScreenshot() {
+  trackChartShare('screenshot')
+  emit('screenshot')
+}
+
+function handleExportCSV() {
+  if (canExportData.value) {
+    trackChartExport('csv')
+    emit('exportCSV')
+  } else {
+    trackFeatureGate('EXPORT_DATA', 'upgrade_click')
+    goToSignup()
+  }
+}
+
+function handleExportJSON() {
+  if (canExportData.value) {
+    trackChartExport('json')
+    emit('exportJSON')
+  } else {
+    trackFeatureGate('EXPORT_DATA', 'upgrade_click')
+    goToSignup()
+  }
+}
+
+function handleSortByLatest() {
+  if (canSortByValue.value) {
+    trackChartSortByValue()
+    emit('sortByLatest')
+  } else {
+    trackFeatureGate('SORT_BY_VALUE', 'upgrade_click')
+    goToSignup()
+  }
+}
 </script>
 
 <template>
@@ -79,7 +126,7 @@ const emit = defineEmits<{
 
         <button
           class="chart-option-button"
-          @click="emit('copyLink')"
+          @click="handleCopyLink"
         >
           <UIcon
             name="i-lucide-link"
@@ -104,7 +151,7 @@ const emit = defineEmits<{
 
           <button
             class="chart-option-button"
-            @click="emit('downloadChart')"
+            @click="handleDownloadChart"
           >
             <UIcon
               name="i-lucide-image-down"
@@ -130,7 +177,7 @@ const emit = defineEmits<{
 
           <button
             class="chart-option-button"
-            @click="emit('screenshot')"
+            @click="handleScreenshot"
           >
             <UIcon
               name="i-lucide-camera"
@@ -157,7 +204,7 @@ const emit = defineEmits<{
 
           <button
             :class="canSortByValue ? 'chart-option-button' : 'chart-option-button opacity-60'"
-            @click="canSortByValue ? emit('sortByLatest') : goToSignup()"
+            @click="handleSortByLatest"
           >
             <UIcon
               name="i-lucide-arrow-up-down"
@@ -189,7 +236,7 @@ const emit = defineEmits<{
           <!-- CSV Export -->
           <button
             :class="canExportData ? 'chart-option-button' : 'chart-option-button opacity-60'"
-            @click="canExportData ? emit('exportCSV') : goToSignup()"
+            @click="handleExportCSV"
           >
             <UIcon
               name="i-lucide-file-spreadsheet"
@@ -218,7 +265,7 @@ const emit = defineEmits<{
           <!-- JSON Export -->
           <button
             :class="canExportData ? 'chart-option-button' : 'chart-option-button opacity-60'"
-            @click="canExportData ? emit('exportJSON') : goToSignup()"
+            @click="handleExportJSON"
           >
             <UIcon
               name="i-lucide-braces"

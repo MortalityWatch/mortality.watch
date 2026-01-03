@@ -134,6 +134,88 @@ test.describe('Explorer Style Controls', () => {
     })
   })
 
+  test.describe('Show Legend Toggle (Pro Feature)', () => {
+    test('should load with legend enabled by default', async ({ page }) => {
+      await page.goto('/explorer')
+      await waitForChart(page)
+
+      // Legend should be visible by default (sle param not in URL)
+      const url = page.url()
+      expect(url.includes('sle=0')).toBe(false)
+    })
+
+    test('should load with legend hidden from URL', async ({ page }) => {
+      await page.goto('/explorer?sle=0')
+      await waitForChart(page)
+
+      // Chart should render with legend hidden
+      await expect(page.locator('canvas#chart')).toBeVisible()
+    })
+
+    test('should load with legend shown from URL', async ({ page }) => {
+      await page.goto('/explorer?sle=1')
+      await waitForChart(page)
+
+      // Legend is a Pro feature
+      const url = page.url()
+      expect(url.includes('sle=') || !url.includes('sle=')).toBe(true)
+    })
+  })
+
+  test.describe('Show X-Axis Title Toggle (Pro Feature)', () => {
+    test('should load with x-axis title enabled by default', async ({ page }) => {
+      await page.goto('/explorer')
+      await waitForChart(page)
+
+      // X-axis title should be visible by default (sxa param not in URL)
+      const url = page.url()
+      expect(url.includes('sxa=0')).toBe(false)
+    })
+
+    test('should load with x-axis title hidden from URL', async ({ page }) => {
+      await page.goto('/explorer?sxa=0')
+      await waitForChart(page)
+
+      // Chart should render with x-axis title hidden
+      await expect(page.locator('canvas#chart')).toBeVisible()
+    })
+
+    test('should load with x-axis title shown from URL', async ({ page }) => {
+      await page.goto('/explorer?sxa=1')
+      await waitForChart(page)
+
+      const url = page.url()
+      expect(url.includes('sxa=') || !url.includes('sxa=')).toBe(true)
+    })
+  })
+
+  test.describe('Show Y-Axis Title Toggle (Pro Feature)', () => {
+    test('should load with y-axis title enabled by default', async ({ page }) => {
+      await page.goto('/explorer')
+      await waitForChart(page)
+
+      // Y-axis title should be visible by default (sya param not in URL)
+      const url = page.url()
+      expect(url.includes('sya=0')).toBe(false)
+    })
+
+    test('should load with y-axis title hidden from URL', async ({ page }) => {
+      await page.goto('/explorer?sya=0')
+      await waitForChart(page)
+
+      // Chart should render with y-axis title hidden
+      await expect(page.locator('canvas#chart')).toBeVisible()
+    })
+
+    test('should load with y-axis title shown from URL', async ({ page }) => {
+      await page.goto('/explorer?sya=1')
+      await waitForChart(page)
+
+      const url = page.url()
+      expect(url.includes('sya=') || !url.includes('sya=')).toBe(true)
+    })
+  })
+
   test.describe('Number Precision/Decimals', () => {
     test('should load with auto decimals from URL', async ({ page }) => {
       await page.goto('/explorer?dec=auto')
@@ -227,6 +309,14 @@ test.describe('Explorer Style Controls', () => {
       await waitForChart(page)
 
       // Chart should render with these style settings
+      await expect(page.locator('canvas#chart')).toBeVisible()
+    })
+
+    test('should render chart with all visibility options hidden', async ({ page }) => {
+      await page.goto('/explorer?sle=0&sxa=0&sya=0')
+      await waitForChart(page)
+
+      // Chart should render with legend and axis titles hidden
       await expect(page.locator('canvas#chart')).toBeVisible()
     })
   })

@@ -11,6 +11,8 @@ interface UseAuthReturn {
   signIn: (email: string, password: string, remember?: boolean) => Promise<void>
   signUp: (email: string, password: string, firstName: string, lastName: string, tosAccepted: boolean, inviteCode?: string) => Promise<void>
   signOut: () => Promise<void>
+  signInWithGoogle: (inviteCode?: string) => void
+  signInWithTwitter: (inviteCode?: string) => void
   updateProfile: (data: {
     firstName?: string
     lastName?: string
@@ -88,6 +90,42 @@ export function useAuth(): UseAuthReturn {
     } finally {
       loading.value = false
     }
+  }
+
+  /**
+   * Sign in with Google OAuth
+   * Redirects to Google OAuth flow - callback will handle session creation
+   * @param inviteCode - Optional invite code to apply during registration
+   */
+  function signInWithGoogle(inviteCode?: string) {
+    // Store invite code in cookie for the OAuth callback to use
+    if (inviteCode) {
+      const cookie = useCookie('oauth_invite_code', {
+        maxAge: 60 * 10, // 10 minutes - enough time for OAuth flow
+        path: '/',
+        sameSite: 'lax'
+      })
+      cookie.value = inviteCode
+    }
+    navigateTo('/auth/google', { external: true })
+  }
+
+  /**
+   * Sign in with Twitter/X OAuth
+   * Redirects to Twitter OAuth flow - callback will handle session creation
+   * @param inviteCode - Optional invite code to apply during registration
+   */
+  function signInWithTwitter(inviteCode?: string) {
+    // Store invite code in cookie for the OAuth callback to use
+    if (inviteCode) {
+      const cookie = useCookie('oauth_invite_code', {
+        maxAge: 60 * 10, // 10 minutes - enough time for OAuth flow
+        path: '/',
+        sameSite: 'lax'
+      })
+      cookie.value = inviteCode
+    }
+    navigateTo('/auth/twitter', { external: true })
   }
 
   /**
@@ -178,6 +216,8 @@ export function useAuth(): UseAuthReturn {
     signIn,
     signUp,
     signOut,
+    signInWithGoogle,
+    signInWithTwitter,
     updateProfile,
     forgotPassword,
     resetPassword,

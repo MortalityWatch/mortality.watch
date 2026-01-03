@@ -50,6 +50,35 @@ export default defineNitroPlugin(async () => {
     sqlite.exec(initSql)
     logger.info('Database tables created/verified')
 
+    // Run migrations for columns that may not exist in older databases
+    const columnMigrations = [
+      { column: 'google_id', sql: 'ALTER TABLE users ADD COLUMN google_id TEXT' },
+      { column: 'twitter_id', sql: 'ALTER TABLE users ADD COLUMN twitter_id TEXT' },
+      { column: 'profile_picture_url', sql: 'ALTER TABLE users ADD COLUMN profile_picture_url TEXT' }
+    ]
+
+    for (const migration of columnMigrations) {
+      try {
+        // Check if column exists
+        const columns = sqlite.pragma('table_info(users)') as { name: string }[]
+        const columnExists = columns.some(col => col.name === migration.column)
+        if (!columnExists) {
+          sqlite.exec(migration.sql)
+          logger.info(`Added column ${migration.column} to users table`)
+        }
+      } catch {
+        // Column might already exist or migration failed - ignore
+      }
+    }
+
+    // Create indexes for OAuth columns (safe to run multiple times with IF NOT EXISTS)
+    try {
+      sqlite.exec('CREATE INDEX IF NOT EXISTS idx_users_google_id ON users (google_id)')
+      sqlite.exec('CREATE INDEX IF NOT EXISTS idx_users_twitter_id ON users (twitter_id)')
+    } catch {
+      // Indexes might already exist or columns don't exist yet - ignore
+    }
+
     // Force WAL checkpoint to ensure changes are written to main database file
     try {
       sqlite.pragma('wal_checkpoint(FULL)')

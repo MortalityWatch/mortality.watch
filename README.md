@@ -36,6 +36,7 @@ Visit http://localhost:3000
   - [Available Scripts](#available-scripts)
 - [Testing](#-testing)
 - [Stripe Subscription Setup](#-stripe-subscription-setup)
+- [Social Login Setup (OAuth)](#-social-login-setup-oauth)
 - [Deployment](#-deployment)
 - [Project Structure](#-project-structure)
 - [Documentation](#-documentation)
@@ -175,6 +176,10 @@ EMAIL_FROM=Mortality Watch <noreply@mortality.watch>
 
 # Error tracking (optional)
 SENTRY_DSN=your_sentry_dsn
+
+# Umami Analytics (optional)
+NUXT_UMAMI_ID=your_website_id          # Get from Umami dashboard
+NUXT_UMAMI_HOST=https://ua.mortality.watch  # Your Umami instance URL
 
 # Stripe (for subscriptions)
 STRIPE_PUBLISHABLE_KEY=pk_test_... # or pk_live_... for production
@@ -516,6 +521,66 @@ The following Stripe endpoints are available:
 
 ---
 
+## 🔐 Social Login Setup (OAuth)
+
+Mortality Watch supports social login with **X (Twitter)** and **Google**. Social login buttons only appear when the corresponding OAuth credentials are configured.
+
+### X (Twitter) OAuth Setup
+
+1. Go to [Twitter Developer Portal](https://developer.twitter.com/en/portal/dashboard)
+2. Create a new app or use an existing one
+3. Go to **User authentication settings** and enable **OAuth 2.0**
+4. Set the following:
+   - **Type of App**: Web App
+   - **Callback URL**: `https://your-domain.com/auth/twitter`
+   - **Website URL**: `https://your-domain.com`
+5. Copy your **Client ID** and **Client Secret**
+
+Add to `.env`:
+
+```bash
+NUXT_OAUTH_X_CLIENT_ID=your_client_id
+NUXT_OAUTH_X_CLIENT_SECRET=your_client_secret
+```
+
+### Google OAuth Setup
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+2. Create a new project or select an existing one
+3. Go to **APIs & Services → Credentials**
+4. Click **Create Credentials → OAuth client ID**
+5. Select **Web application**
+6. Add to **Authorized redirect URIs**: `https://your-domain.com/auth/google`
+7. Copy your **Client ID** and **Client Secret**
+
+Add to `.env`:
+
+```bash
+NUXT_OAUTH_GOOGLE_CLIENT_ID=your_client_id
+NUXT_OAUTH_GOOGLE_CLIENT_SECRET=your_client_secret
+```
+
+### Session Encryption
+
+Social login session encryption automatically reuses your existing `JWT_SECRET` - no additional configuration needed.
+
+### Local Development
+
+For local development, use `http://localhost:3000` as your redirect URI:
+
+- **X callback**: `http://localhost:3000/auth/twitter`
+- **Google callback**: `http://localhost:3000/auth/google`
+
+### Behavior
+
+- If OAuth credentials are not set, the social login buttons are **automatically hidden**
+- Users can sign up/login with social providers, which:
+  - Creates a new account if the email doesn't exist
+  - Links to an existing account if the email matches
+  - Automatically marks email as verified (social providers verify emails)
+
+---
+
 ## 🚢 Deployment
 
 ### Docker (Recommended)
@@ -765,24 +830,24 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 ### Planned Features
 
 - [ ] Additional chart types (scatter, radar)
-- [ ] Export data as CSV/JSON
+- [x] Export data as CSV/JSON
 - [ ] Comparison mode (multiple countries side-by-side)
 - [ ] Embed charts on external sites
 - [ ] Mobile app (Progressive Web App)
 - [ ] API for programmatic access
-- [ ] User accounts and saved configurations
+- [x] User accounts and saved configurations
 
 ### Infrastructure
 
 - [ ] Redis caching for chart images
-- [ ] CDN integration for global distribution
+- [x] CDN integration for global distribution (S3)
 - [ ] Automated data updates from sources
 - [x] CI/CD pipeline (GitHub Actions)
 - [ ] Error tracking (Sentry)
-- [ ] Analytics (privacy-first)
+- [x] Analytics (Umami - privacy-first)
 
 ---
 
 **Built with ❤️ by the Mortality Watch team**
 
-_Last updated: 2025-10-05_
+_Last updated: 2026-01-02_

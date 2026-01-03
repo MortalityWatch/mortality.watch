@@ -51,6 +51,8 @@ function computeAxisPrecision(data: MortalityChartData, isPercentage: boolean, i
  * @param isDark - Dark mode flag
  * @param isSSR - Server-side rendering flag (applies font metric adjustments)
  * @param isCountType - Whether the data is a count type (deaths/population) that should use 0 decimals
+ * @param showXAxisTitle - Whether to show x-axis title
+ * @param showYAxisTitle - Whether to show y-axis title
  */
 export function createScalesConfig(
   data: MortalityChartData,
@@ -60,7 +62,9 @@ export function createScalesConfig(
   decimals: string,
   isDark?: boolean,
   isSSR?: boolean,
-  isCountType: boolean = false
+  isCountType: boolean = false,
+  showXAxisTitle: boolean = true,
+  showYAxisTitle: boolean = true
 ) {
   // Compute axis-specific precision (less than data labels)
   const axisPrecision = decimals === 'auto'
@@ -75,7 +79,7 @@ export function createScalesConfig(
     x: {
       offset: data.showXOffset,
       title: {
-        display: true,
+        display: showXAxisTitle,
         text: data.xtitle,
         color: textStrongColor(isDark),
         font: getScaleTitleFont()
@@ -93,7 +97,7 @@ export function createScalesConfig(
       type: data.showLogarithmic ? 'logarithmic' as const : 'linear' as const,
       beginAtZero: data.isMaximized,
       title: {
-        display: true,
+        display: showYAxisTitle,
         text: data.ytitle,
         color: textStrongColor(isDark),
         font: getScaleTitleFont()

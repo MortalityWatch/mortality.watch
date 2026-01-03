@@ -1,61 +1,38 @@
 import { test, expect } from '@playwright/test'
 
-test.describe('Browse All Charts Page', () => {
-  test('should load browse page successfully', async ({ page }) => {
+test.describe('Global Chart History Page (Pro Feature)', () => {
+  // Note: This page requires Pro access. Without authentication,
+  // users are redirected to /signup (for public users) or /subscribe (for registered users).
+
+  test('should redirect unauthenticated users to signup page', async ({ page }) => {
     await page.goto('/charts/browse')
 
-    // Verify page loaded
-    await expect(page).toHaveURL(/\/charts\/browse/)
+    // Public (unauthenticated) users should be redirected to signup page
+    await expect(page).toHaveURL(/\/signup/)
   })
 
-  test('should display page heading and description', async ({ page }) => {
-    await page.goto('/charts/browse')
+  test('should have Global Chart History card on discover page', async ({ page }) => {
+    await page.goto('/discover')
     await page.waitForLoadState('domcontentloaded')
 
-    // Check heading
-    const heading = page.getByRole('heading', { name: 'Browse All Charts' })
-    await expect(heading).toBeVisible()
-
-    // Check description
-    const description = page.getByText('All charts ever created on the platform')
-    await expect(description).toBeVisible()
+    // Check the "Global Chart History" heading exists (it's a Pro feature card)
+    const chartHistoryHeading = page.getByRole('heading', { name: 'Global Chart History' })
+    await expect(chartHistoryHeading).toBeVisible()
   })
 
-  test('should display sort controls', async ({ page }) => {
-    await page.goto('/charts/browse')
+  test('should show Sign Up badge for unauthenticated users on discover page', async ({ page }) => {
+    await page.goto('/discover')
     await page.waitForLoadState('domcontentloaded')
 
-    // Check sort buttons
-    await expect(page.getByRole('button', { name: 'Newest' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Most Viewed' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Recently Accessed' })).toBeVisible()
+    // The Global Chart History card should show a "Sign Up" badge for public users
+    // (FeatureBadge shows "Sign Up" for public users, "Upgrade" for registered users)
+    const signUpBadge = page.locator('text=Sign Up').first()
+    await expect(signUpBadge).toBeVisible()
   })
 
-  test('should have link from gallery page', async ({ page }) => {
-    await page.goto('/charts')
-    await page.waitForLoadState('domcontentloaded')
-
-    // Check the "Browse All Charts" button exists
-    const browseLink = page.getByRole('link', { name: 'Browse All Charts' })
-    await expect(browseLink).toBeVisible()
-
-    // Click and verify navigation
-    await browseLink.click()
-    await expect(page).toHaveURL(/\/charts\/browse/)
-  })
-
-  test('should handle empty state gracefully', async ({ page }) => {
-    await page.goto('/charts/browse')
-    await page.waitForLoadState('domcontentloaded')
-
-    // Either charts grid or empty state should be visible
-    const chartsGrid = page.locator('.grid')
-    const emptyState = page.getByText('No charts found')
-
-    // One of these should be visible (depending on whether there are charts)
-    const gridVisible = await chartsGrid.isVisible().catch(() => false)
-    const emptyVisible = await emptyState.isVisible().catch(() => false)
-
-    expect(gridVisible || emptyVisible).toBe(true)
-  })
+  // Note: Tests for authenticated Pro users would require test authentication setup
+  // The following tests document expected behavior for Pro users:
+  // - Pro users should see /charts/browse page with "Global Chart History" heading
+  // - Pro users should see sort controls (Newest, Most Viewed, Recently Accessed)
+  // - Pro users should see chart grid or empty state
 })

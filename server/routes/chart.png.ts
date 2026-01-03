@@ -10,7 +10,8 @@ import {
   fetchChartData,
   transformChartData,
   generateChartConfig,
-  resolveChartStateForRendering
+  resolveChartStateForRendering,
+  applySteepDropAdjustment
 } from '../utils/chartPngHelpers'
 import { dataLoader } from '../services/dataLoader'
 import { renderChart } from '../utils/chartRenderer'
@@ -147,10 +148,15 @@ export default defineEventHandler(async (event) => {
         // Step 4: Fetch all required chart data with resolved state
         const { allCountries, allChartData } = await fetchChartData(state)
 
+        // Step 4.5: Apply steep drop adjustment if enabled
+        // This modifies state.dateTo to hide recent incomplete data
+        // Only applies when user hasn't explicitly set dateTo
+        const adjustedState = applySteepDropAdjustment(state, allChartData, queryParams)
+
         // Step 5: Transform data into chart-ready format
         // Use allChartData.labels (sliced from sliderStart) to match baseline data alignment
         const { chartData, isDeathsType, isLE, isPopulationType } = await transformChartData(
-          state,
+          adjustedState,
           allCountries,
           allChartData.labels,
           allChartData,
@@ -170,7 +176,7 @@ export default defineEventHandler(async (event) => {
         setServerDarkMode(darkMode)
         try {
           const chartConfig = generateChartConfig(
-            state,
+            adjustedState,
             chartData,
             isDeathsType,
             isLE,
@@ -187,9 +193,9 @@ export default defineEventHandler(async (event) => {
           })
 
           // Determine chart type for renderer
-          const chartType = state.chartStyle === 'bar'
+          const chartType = adjustedState.chartStyle === 'bar'
             ? 'bar'
-            : state.chartStyle === 'matrix'
+            : adjustedState.chartStyle === 'matrix'
               ? 'matrix'
               : 'line'
 

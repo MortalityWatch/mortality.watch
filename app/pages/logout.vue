@@ -38,12 +38,14 @@
 
 <script setup lang="ts">
 const { signOut } = useAuth()
+const { trackLogout } = useAnalytics()
 const loading = ref(true)
 const error = ref<string | null>(null)
 
 // Perform signout on mount
 onMounted(async () => {
   try {
+    trackLogout()
     await signOut()
     // signOut already handles redirect to home
   } catch (e) {

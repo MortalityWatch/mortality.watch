@@ -5,6 +5,7 @@ import { formatChartDate } from '@/lib/utils/dates'
 const { getSubscriptionStatus, manageSubscription, subscribe } = useStripe()
 const { isAdmin } = useAuth()
 const { isPro } = useFeatureAccess()
+const { trackSubscriptionStart, trackSubscriptionView } = useAnalytics()
 
 interface SubscriptionStatus {
   hasSubscription: boolean
@@ -121,6 +122,7 @@ async function handleManageSubscription() {
 
 async function handleSubscribe(plan: 'monthly' | 'yearly') {
   subscribing.value = true
+  trackSubscriptionStart(plan)
   try {
     await subscribe(plan)
   } catch (error) {
@@ -130,6 +132,7 @@ async function handleSubscribe(plan: 'monthly' | 'yearly') {
 }
 
 onMounted(() => {
+  trackSubscriptionView()
   loadSubscriptionStatus()
 })
 

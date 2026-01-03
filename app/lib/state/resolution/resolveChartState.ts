@@ -19,6 +19,7 @@ import { calculateBaselineRange } from '@/lib/baseline/calculateBaselineRange'
 import type { ChartFilterConfig, ChartStateSnapshot } from '@/lib/chart/types'
 import type { Country } from '@/model'
 import { getDefaultSliderStart } from '@/lib/config/constants'
+import { computeDisplayColors } from '@/lib/chart/chartColors'
 
 /**
  * Complete resolved state ready for chart rendering
@@ -65,7 +66,11 @@ export interface ChartRenderState {
   showQrCode: boolean
   showCaption: boolean
   showTitle: boolean
+  showLegend: boolean
+  showXAxisTitle: boolean
+  showYAxisTitle: boolean
   darkMode: boolean
+  hideSteepDrop: boolean
 }
 
 /**
@@ -232,7 +237,11 @@ export function resolveChartStateForRendering(
     showQrCode: (constrainedState.showQrCode as boolean) ?? true,
     showCaption: (constrainedState.showCaption as boolean) ?? true,
     showTitle: (constrainedState.showTitle as boolean) ?? true,
-    darkMode: (constrainedState.darkMode as boolean) ?? false
+    showLegend: (constrainedState.showLegend as boolean) ?? true,
+    showXAxisTitle: (constrainedState.showXAxisTitle as boolean) ?? true,
+    showYAxisTitle: (constrainedState.showYAxisTitle as boolean) ?? true,
+    darkMode: (constrainedState.darkMode as boolean) ?? false,
+    hideSteepDrop: (constrainedState.hideSteepDrop as boolean) ?? false
   }
 }
 
@@ -320,7 +329,11 @@ export function resolveChartStateFromSnapshot(
     showQrCode: true,
     showCaption: true,
     showTitle: true,
-    darkMode: false
+    showLegend: true,
+    showXAxisTitle: true,
+    showYAxisTitle: true,
+    darkMode: false,
+    hideSteepDrop: false
   }
 }
 
@@ -386,16 +399,17 @@ export function generateUrlFromState(
  * filtering/rendering pipeline. Both SSR and client use this to ensure
  * identical chart output.
  *
+ * Colors are computed internally using computeDisplayColors to ensure
+ * SSR and client always use the exact same color generation logic.
+ *
  * @param state - Resolved chart state
  * @param allCountries - Country metadata for chart generation
- * @param colors - Chart colors
  * @param url - URL for QR code
  * @returns ChartFilterConfig ready for getFilteredChartDataFromConfig
  */
 export function toChartFilterConfig(
   state: ChartRenderState,
   allCountries: Record<string, Country>,
-  colors: string[],
   url: string
 ): ChartFilterConfig {
   // Compute derived flags from resolved state
@@ -403,27 +417,25 @@ export function toChartFilterConfig(
   const isMatrixChartStyle = state.chartStyle === 'matrix'
   const isAsmrType = state.type === 'asmr' || state.type.startsWith('asmr_')
   const isASD = state.type === 'asd'
+  const isLifeExpectancyType = state.type === 'le'
   const isPopulationType = state.type === 'population'
   const isDeathsType = state.type === 'deaths'
 
   // Error bars shown on bar charts in excess mode (matches useExplorerHelpers.isErrorBarType)
   const isErrorBarType = isBarChartStyle && state.isExcess
 
-  // Helper to check if chart type is yearly (matches useExplorerHelpers.isYearlyChartType)
-  const isYearlyChartType = state.chartType.includes('year')
-    || state.chartType.includes('fluseason')
-    || state.chartType.includes('midyear')
+  // Use shared computeShowCumPi - same logic as useExplorerHelpers.showCumPi()
+  const showCumPi = computeShowCumPi(state.cumulative, state.chartType, state.baselineMethod)
 
-  // Compute showCumPi from state (matches useExplorerHelpers.showCumPi)
-  // Cumulative PIs are only valid for yearly chart types with supported baseline methods
-  const showCumPi = state.cumulative
-    && isYearlyChartType
-    && ['lin_reg', 'mean'].includes(state.baselineMethod)
+  // Compute colors internally - ensures SSR and client use identical logic
+  const ageGroups = isAsmrType ? ['all'] : state.ageGroups
+  const numSeries = state.countries.length * ageGroups.length
+  const colors = computeDisplayColors(numSeries, state.userColors, state.darkMode)
 
   return {
     // Data selection
     countries: state.countries,
-    ageGroups: isAsmrType ? ['all'] : state.ageGroups,
+    ageGroups,
 
     // Chart type settings
     type: state.type,
@@ -439,6 +451,7 @@ export function toChartFilterConfig(
     isErrorBarType,
     isAsmrType,
     isASD,
+    isLifeExpectancyType,
     isPopulationType,
     isDeathsType,
 
@@ -470,4 +483,36 @@ export function toChartFilterConfig(
     allCountries,
     url
   }
+}
+
+/**
+ * Check if chart type is yearly (fluseason, yearly, midyear).
+ * Pure function - can be used in both client and SSR.
+ */
+export function isYearlyChartType(chartType: string): boolean {
+  return chartType.includes('year')
+    || chartType.includes('fluseason')
+    || chartType.includes('midyear')
+}
+
+/**
+ * Compute whether cumulative prediction intervals should be used.
+ * This determines if the /cum endpoint is used for baseline calculations.
+ *
+ * Cumulative PIs are only valid when:
+ * - Cumulative mode is enabled
+ * - Chart type is yearly (fluseason, yearly, midyear)
+ * - Baseline method supports PIs (lin_reg or mean)
+ *
+ * Pure function - matches useExplorerHelpers.showCumPi() logic.
+ * Used by both SSR data fetching and client-side data orchestration.
+ */
+export function computeShowCumPi(
+  cumulative: boolean,
+  chartType: string,
+  baselineMethod: string
+): boolean {
+  return cumulative
+    && isYearlyChartType(chartType)
+    && ['lin_reg', 'mean'].includes(baselineMethod)
 }

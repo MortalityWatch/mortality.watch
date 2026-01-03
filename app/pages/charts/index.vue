@@ -2,17 +2,9 @@
   <div class="container mx-auto px-4 py-8">
     <!-- Header -->
     <div class="mb-8">
-      <div class="flex items-center justify-between mb-4">
-        <h1 class="text-4xl font-bold text-gray-900 dark:text-gray-100">
-          Chart Gallery
-        </h1>
-        <UButton
-          to="/charts/browse"
-          variant="outline"
-          icon="i-lucide-list"
-          label="Browse All Charts"
-        />
-      </div>
+      <h1 class="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+        Chart Gallery
+      </h1>
       <p class="text-lg text-gray-600 dark:text-gray-400">
         Explore published mortality visualizations from our community
       </p>
@@ -56,9 +48,11 @@
         :is-admin="isAdmin"
         :is-toggling-featured="togglingFeatured === chart.id"
         :is-toggling-public="togglingPublic === chart.id"
+        :is-clearing-cache="clearingCache === chart.id"
         @delete="deleteChart"
         @toggle-featured="handleToggleFeatured"
         @toggle-public="handleTogglePublic"
+        @clear-cache="handleClearCache"
       />
     </div>
 
@@ -163,7 +157,14 @@ function isOwner(chart: Chart) {
 }
 
 // Use shared admin composable
-const { togglingFeatured, togglingPublic, toggleFeatured: toggleFeaturedStatus, togglePublic: togglePublicStatus } = useChartAdmin()
+const {
+  togglingFeatured,
+  togglingPublic,
+  clearingCache,
+  toggleFeatured: toggleFeaturedStatus,
+  togglePublic: togglePublicStatus,
+  clearCache: clearCacheStatus
+} = useChartAdmin()
 
 async function handleToggleFeatured(chartId: number, newValue: boolean) {
   await toggleFeaturedStatus(chartId, newValue)
@@ -173,6 +174,10 @@ async function handleToggleFeatured(chartId: number, newValue: boolean) {
 async function handleTogglePublic(chartId: number, newValue: boolean) {
   await togglePublicStatus(chartId, newValue)
   await refresh()
+}
+
+async function handleClearCache(chartId: number) {
+  await clearCacheStatus(chartId)
 }
 
 // Delete chart (admin only in gallery)

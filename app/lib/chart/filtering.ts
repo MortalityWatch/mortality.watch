@@ -4,6 +4,7 @@
 
 import {
   getChartTypeOrdinal,
+  getKeyForType,
   type Country,
   type Dataset,
   type DatasetEntry,
@@ -140,11 +141,15 @@ export const getFilteredChartDataFromConfig = (
   )
 
   // Determine the metric field to check for data completeness
-  // For ASMR: asmr_{standardPopulation} (e.g., asmr_who)
-  // For deaths: deaths
-  const metricField = config.isAsmrType
-    ? `asmr_${config.standardPopulation}` as keyof DatasetEntry
-    : 'deaths' as keyof DatasetEntry
+  // Uses getKeyForType which already handles all metric types correctly
+  const metricField = getKeyForType(
+    config.type,
+    false, // showBaseline - we just need the base field
+    config.standardPopulation,
+    false, // isExcess
+    false, // includePi
+    { leAdjusted: config.leAdjusted, chartType: config.chartType }
+  )[0] as keyof DatasetEntry
 
   // Detect countries with partial data (missing values in the metric field)
   const partialDataForRange: string[] = []
@@ -287,6 +292,7 @@ export const getFilteredChartData = async (
     isErrorBarType,
     isAsmrType,
     isASD: type === 'asd',
+    isLifeExpectancyType: type === 'le',
     isPopulationType,
     isDeathsType,
     dateFrom,

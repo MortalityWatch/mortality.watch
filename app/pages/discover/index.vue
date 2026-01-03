@@ -11,8 +11,8 @@
       </p>
     </div>
 
-    <!-- Two main options -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+    <!-- Three main options -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
       <!-- By Metric -->
       <NuxtLink
         to="/discover/metric"
@@ -64,6 +64,51 @@
           </div>
         </UCard>
       </NuxtLink>
+
+      <!-- Global Chart History (Pro Feature) -->
+      <NuxtLink
+        :to="can('BROWSE_ALL_CHARTS') ? '/charts/browse' : getFeatureUpgradeUrl('BROWSE_ALL_CHARTS')"
+        class="block group"
+      >
+        <UCard
+          class="h-full transition-shadow cursor-pointer relative"
+          :class="can('BROWSE_ALL_CHARTS')
+            ? 'hover:shadow-lg hover:border-primary-500 dark:hover:border-primary-400'
+            : ''"
+        >
+          <!-- Content (grayed out when locked) -->
+          <div
+            class="text-center py-8"
+            :class="can('BROWSE_ALL_CHARTS') ? '' : 'opacity-50'"
+          >
+            <div class="mb-4">
+              <Icon
+                name="i-lucide-library"
+                class="w-16 h-16 mx-auto"
+                :class="can('BROWSE_ALL_CHARTS') ? 'text-primary-500' : 'text-gray-400'"
+              />
+            </div>
+            <div class="flex items-center justify-center gap-2 mb-2">
+              <h2 class="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                Global Chart History
+              </h2>
+              <FeatureBadge
+                v-if="!can('BROWSE_ALL_CHARTS')"
+                feature="BROWSE_ALL_CHARTS"
+              />
+            </div>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">
+              Browse all chart variants ever created on the platform, sorted by popularity or date.
+            </p>
+            <div class="text-sm text-gray-500 dark:text-gray-400">
+              Every chart ever generated
+            </div>
+          </div>
+
+          <!-- Hover overlay for locked state -->
+          <UiLockedOverlay v-if="!can('BROWSE_ALL_CHARTS')" />
+        </UCard>
+      </NuxtLink>
     </div>
 
     <!-- Quick stats -->
@@ -96,6 +141,8 @@
 </template>
 
 <script setup lang="ts">
+const { can, getFeatureUpgradeUrl } = useFeatureAccess()
+
 useSeoMeta({
   title: 'Discover - Mortality Watch',
   description: 'Explore mortality data by metric or country with pre-configured chart settings',

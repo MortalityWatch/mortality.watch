@@ -159,8 +159,7 @@ const dataOrchestration = useExplorerDataOrchestration(
     getBaseKeysForFetch,
     showPredictionIntervalDisabled
   },
-  allCountries,
-  displayColors
+  allCountries
 )
 
 // Destructure data orchestration (some values accessed via dataOrchestration.*)
@@ -453,6 +452,9 @@ const handleShowLogoChanged = (v: boolean) => handleUIStateChange({ field: 'show
 const handleShowQrCodeChanged = (v: boolean) => handleUIStateChange({ field: 'showQrCode', value: v })
 const handleShowCaptionChanged = (v: boolean) => handleUIStateChange({ field: 'showCaption', value: v })
 const handleShowTitleChanged = (v: boolean) => handleUIStateChange({ field: 'showTitle', value: v })
+const handleShowLegendChanged = (v: boolean) => handleUIStateChange({ field: 'showLegend', value: v })
+const handleShowXAxisTitleChanged = (v: boolean) => handleUIStateChange({ field: 'showXAxisTitle', value: v })
+const handleShowYAxisTitleChanged = (v: boolean) => handleUIStateChange({ field: 'showYAxisTitle', value: v })
 const handleDecimalsChanged = (v: string) => handleUIStateChange({ field: 'decimals', value: v })
 
 // Handle browser back/forward navigation
@@ -743,6 +745,9 @@ watch(
             :show-qr-code="state.showQrCode.value"
             :show-caption="state.showCaption.value"
             :show-title="state.showTitle.value"
+            :show-legend="state.showLegend.value"
+            :show-x-axis-title="state.showXAxisTitle.value"
+            :show-y-axis-title="state.showYAxisTitle.value"
             :decimals="state.decimals.value"
             :show-loading-overlay="dataOrchestration.showLoadingOverlay.value"
             :show-size-label="showSizeLabel"
@@ -796,6 +801,9 @@ watch(
             @show-qr-code-changed="handleShowQrCodeChanged"
             @show-caption-changed="handleShowCaptionChanged"
             @show-title-changed="handleShowTitleChanged"
+            @show-legend-changed="handleShowLegendChanged"
+            @show-x-axis-title-changed="handleShowXAxisTitleChanged"
+            @show-y-axis-title-changed="handleShowYAxisTitleChanged"
             @decimals-changed="handleDecimalsChanged"
           />
 

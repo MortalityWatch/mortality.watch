@@ -109,6 +109,9 @@ export interface ExplorerStateValues {
   showQrCode: boolean
   showCaption: boolean
   showTitle: boolean
+  showLegend: boolean
+  showXAxisTitle: boolean
+  showYAxisTitle: boolean
   decimals: string
   dateFrom: string
   dateTo: string
@@ -116,6 +119,7 @@ export interface ExplorerStateValues {
   userColors: string[]
   chartPreset: string
   darkMode: boolean
+  hideSteepDrop: boolean
   zScoreThreshold?: number
   significanceLevel?: number
 }

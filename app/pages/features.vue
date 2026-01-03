@@ -62,6 +62,7 @@
           { title: 'All Free features, plus:' },
           { title: 'No watermarks', icon: 'i-lucide-image-off' },
           { title: 'No QR codes', icon: 'i-lucide-scan-line' },
+          { title: 'Global chart history', icon: 'i-lucide-library' },
           { title: 'Single age group LE', icon: 'i-lucide-activity' },
           { title: 'Age standardized deaths', icon: 'i-lucide-trending-up' },
           { title: 'Z-score calculations', icon: 'i-lucide-calculator' },
@@ -163,6 +164,12 @@
 <script setup lang="ts">
 // Auth composable for user tier detection
 const { tier } = useAuth()
+const { trackSubscriptionView } = useAnalytics()
+
+// Track features page view as subscription view
+onMounted(() => {
+  trackSubscriptionView()
+})
 
 // Page meta
 definePageMeta({
