@@ -123,12 +123,41 @@ export async function fetchASDFromStatsApi(
   let bs = 1
   let be = Math.min(sortedDates.length, 5)
 
+  // Find baseline index by matching label
+  // For non-yearly charts (midyear/fluseason), labels are like '2017/18'
+  // but URL params are just '2017', so we need to match by year prefix
+  //
+  // For "from" date: find first label starting with that year (e.g., '2017' → '2017/18')
+  // For "to" date: find last label containing that year (e.g., '2019' → '2018/19')
+  const findLabelIndex = (dateOrYear: string, findLast: boolean = false): number => {
+    // First try exact match
+    const exactIdx = sortedDates.indexOf(dateOrYear)
+    if (exactIdx >= 0) return exactIdx
+
+    // For short years (4 chars), find label containing that year
+    if (dateOrYear.length === 4) {
+      if (findLast) {
+        // Find last label that contains the year (anywhere in label)
+        // For midyear '2018/19', year 2019 appears at the end
+        for (let i = sortedDates.length - 1; i >= 0; i--) {
+          const label = sortedDates[i]
+          if (label && label.includes(dateOrYear)) return i
+        }
+      } else {
+        // Find first label that starts with the year
+        return sortedDates.findIndex(label => label.startsWith(dateOrYear))
+      }
+    }
+
+    return -1
+  }
+
   if (config.baselineDateFrom) {
-    const idx = sortedDates.indexOf(config.baselineDateFrom)
+    const idx = findLabelIndex(config.baselineDateFrom, false)
     if (idx >= 0) bs = idx + 1
   }
   if (config.baselineDateTo) {
-    const idx = sortedDates.indexOf(config.baselineDateTo)
+    const idx = findLabelIndex(config.baselineDateTo, true)
     if (idx >= 0) be = idx + 1
   }
 
