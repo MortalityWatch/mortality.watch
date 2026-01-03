@@ -2,8 +2,13 @@
 import { computed } from 'vue'
 import { types, standardPopulations } from '@/model'
 import PeriodOfTimePicker from '@/components/shared/PeriodOfTimePicker.vue'
-import type { RadioGroupItem } from '@nuxt/ui'
 import type { ViewType } from '@/lib/state'
+
+interface ViewOption {
+  label: string
+  value: string
+  description: string
+}
 
 // Feature access for Z-Score
 const { can } = useFeatureAccess()
@@ -37,28 +42,25 @@ const typesWithLabels = computed(() => types.map(t => ({
 })))
 const standardPopulationsWithLabels = standardPopulations.map(t => ({ ...t, label: t.name }))
 
-// View options for radio group - gate Z-Score for Pro users
-const viewOptions = computed<RadioGroupItem[]>(() => {
-  const hasZScoreAccess = can('Z_SCORES')
-  return [
-    {
-      label: 'Raw Values',
-      value: 'mortality',
-      description: 'Observed values without adjustments or transformations'
-    },
-    {
-      label: 'Excess',
-      value: 'excess',
-      description: 'Difference from expected baseline (observed - expected)'
-    },
-    {
-      label: 'Z-Score',
-      value: 'zscore',
-      description: 'How many standard deviations from baseline (±2 = significant)',
-      disabled: !hasZScoreAccess
-    }
-  ]
-})
+// View options for radio group - Z-Score handled separately with FeatureGate
+const baseViewOptions: ViewOption[] = [
+  {
+    label: 'Raw Values',
+    value: 'mortality',
+    description: 'Observed values without adjustments or transformations'
+  },
+  {
+    label: 'Excess',
+    value: 'excess',
+    description: 'Difference from expected baseline (observed - expected)'
+  }
+]
+
+const zscoreOption: ViewOption = {
+  label: 'Z-Score',
+  value: 'zscore',
+  description: 'How many standard deviations from baseline (±2 = significant)'
+}
 
 const selectedTypeModel = computed({
   get: () => props.selectedType,
@@ -110,24 +112,64 @@ const viewModel = computed({
       <h4 class="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-3">
         Analysis Mode
       </h4>
-      <URadioGroup
-        v-model="viewModel"
-        color="primary"
-        variant="table"
-        :items="viewOptions"
-        :disabled="props.isPopulationType"
+      <div
+        class="divide-y divide-gray-200 dark:divide-gray-800 rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden"
         data-testid="view-selector"
       >
-        <template #label="{ item }">
-          <div class="flex items-center gap-2">
-            <span>{{ item.label }}</span>
-            <FeatureBadge
-              v-if="item.value === 'zscore'"
-              feature="Z_SCORES"
+        <!-- Raw Values and Excess options -->
+        <template
+          v-for="option in baseViewOptions"
+          :key="option.value"
+        >
+          <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events, vuejs-accessibility/no-static-element-interactions -->
+          <div
+            class="flex items-start gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+            :class="{ 'bg-primary-50 dark:bg-primary-900/20': viewModel === option.value, 'opacity-50 pointer-events-none': props.isPopulationType }"
+            @click="!props.isPopulationType && (viewModel = option.value as ViewType)"
+          >
+            <URadio
+              v-model="viewModel"
+              :value="option.value"
+              :disabled="props.isPopulationType"
+              color="primary"
             />
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-medium text-gray-900 dark:text-white">
+                {{ option.label }}
+              </div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">
+                {{ option.description }}
+              </div>
+            </div>
           </div>
         </template>
-      </URadioGroup>
+
+        <!-- Z-Score option with FeatureGate -->
+        <FeatureGate feature="Z_SCORES">
+          <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events, vuejs-accessibility/no-static-element-interactions -->
+          <div
+            class="flex items-start gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+            :class="{ 'bg-primary-50 dark:bg-primary-900/20': viewModel === 'zscore', 'opacity-50 pointer-events-none': props.isPopulationType }"
+            @click="!props.isPopulationType && (viewModel = 'zscore')"
+          >
+            <URadio
+              v-model="viewModel"
+              value="zscore"
+              :disabled="props.isPopulationType"
+              color="primary"
+            />
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-white">
+                {{ zscoreOption.label }}
+                <FeatureBadge feature="Z_SCORES" />
+              </div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">
+                {{ zscoreOption.description }}
+              </div>
+            </div>
+          </div>
+        </FeatureGate>
+      </div>
     </div>
 
     <PeriodOfTimePicker

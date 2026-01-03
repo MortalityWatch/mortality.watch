@@ -1,10 +1,5 @@
 <script setup lang="ts">
-// Feature access for gated features
-const { can } = useFeatureAccess()
-const canExportData = computed(() => can('EXPORT_DATA'))
-const canSortByValue = computed(() => can('SORT_BY_VALUE'))
-const { goToSignup } = useAuthRedirect()
-const { trackChartShare, trackChartExport, trackChartSortByValue, trackFeatureGate } = useAnalytics()
+const { trackChartShare, trackChartExport, trackChartSortByValue } = useAnalytics()
 
 const props = withDefaults(defineProps<{
   showSaveButton?: boolean
@@ -47,33 +42,18 @@ function handleScreenshot() {
 }
 
 function handleExportCSV() {
-  if (canExportData.value) {
-    trackChartExport('csv')
-    emit('exportCSV')
-  } else {
-    trackFeatureGate('EXPORT_DATA', 'upgrade_click')
-    goToSignup()
-  }
+  trackChartExport('csv')
+  emit('exportCSV')
 }
 
 function handleExportJSON() {
-  if (canExportData.value) {
-    trackChartExport('json')
-    emit('exportJSON')
-  } else {
-    trackFeatureGate('EXPORT_DATA', 'upgrade_click')
-    goToSignup()
-  }
+  trackChartExport('json')
+  emit('exportJSON')
 }
 
 function handleSortByLatest() {
-  if (canSortByValue.value) {
-    trackChartSortByValue()
-    emit('sortByLatest')
-  } else {
-    trackFeatureGate('SORT_BY_VALUE', 'upgrade_click')
-    goToSignup()
-  }
+  trackChartSortByValue()
+  emit('sortByLatest')
 }
 </script>
 
@@ -92,33 +72,37 @@ function handleSortByLatest() {
         <!-- Save Chart - Primary Action (moved to top) -->
         <template v-if="$slots['save-button'] || props.showSaveButton">
           <slot name="save-button">
-            <button
+            <FeatureGate
               v-if="props.showSaveButton"
-              class="chart-option-button opacity-60"
-              data-tour="save-button"
-              @click="emit('saveChart')"
+              feature="SAVE_CHART"
             >
-              <UIcon
-                name="i-lucide-book-heart"
-                class="w-4 h-4 shrink-0"
-              />
-              <div class="flex-1 text-left">
-                <div class="text-sm font-medium">
-                  Save Chart
-                  <FeatureBadge
-                    feature="SAVE_CHART"
-                    class="ml-2"
-                  />
+              <button
+                class="chart-option-button"
+                data-tour="save-button"
+                @click="emit('saveChart')"
+              >
+                <UIcon
+                  name="i-lucide-book-heart"
+                  class="w-4 h-4 shrink-0"
+                />
+                <div class="flex-1 text-left">
+                  <div class="text-sm font-medium">
+                    Save Chart
+                    <FeatureBadge
+                      feature="SAVE_CHART"
+                      class="ml-2"
+                    />
+                  </div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400">
+                    Sign up free to save charts
+                  </div>
                 </div>
-                <div class="text-xs text-gray-500 dark:text-gray-400">
-                  Sign up free to save charts
-                </div>
-              </div>
-              <UIcon
-                name="i-lucide-chevron-right"
-                class="w-3 h-3 text-gray-400"
-              />
-            </button>
+                <UIcon
+                  name="i-lucide-chevron-right"
+                  class="w-3 h-3 text-gray-400"
+                />
+              </button>
+            </FeatureGate>
           </slot>
 
           <div class="border-t border-gray-200 dark:border-gray-700" />
@@ -202,31 +186,33 @@ function handleSortByLatest() {
         <template v-if="props.showSortByLatest">
           <div class="border-t border-gray-200 dark:border-gray-700" />
 
-          <button
-            :class="canSortByValue ? 'chart-option-button' : 'chart-option-button opacity-60'"
-            @click="handleSortByLatest"
-          >
-            <UIcon
-              name="i-lucide-arrow-up-down"
-              class="w-4 h-4 shrink-0"
-            />
-            <div class="flex-1 text-left">
-              <div class="text-sm font-medium">
-                Sort by Latest Value
-                <FeatureBadge
-                  feature="SORT_BY_VALUE"
-                  class="ml-2"
-                />
+          <FeatureGate feature="SORT_BY_VALUE">
+            <button
+              class="chart-option-button"
+              @click="handleSortByLatest"
+            >
+              <UIcon
+                name="i-lucide-arrow-up-down"
+                class="w-4 h-4 shrink-0"
+              />
+              <div class="flex-1 text-left">
+                <div class="text-sm font-medium">
+                  Sort by Latest Value
+                  <FeatureBadge
+                    feature="SORT_BY_VALUE"
+                    class="ml-2"
+                  />
+                </div>
+                <div class="text-xs text-gray-500 dark:text-gray-400">
+                  Reorder series by last data point
+                </div>
               </div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">
-                Reorder series by last data point
-              </div>
-            </div>
-            <UIcon
-              name="i-lucide-chevron-right"
-              class="w-3 h-3 text-gray-400"
-            />
-          </button>
+              <UIcon
+                name="i-lucide-chevron-right"
+                class="w-3 h-3 text-gray-400"
+              />
+            </button>
+          </FeatureGate>
         </template>
 
         <!-- Export Data Section -->
@@ -234,60 +220,64 @@ function handleSortByLatest() {
           <div class="border-t border-gray-200 dark:border-gray-700" />
 
           <!-- CSV Export -->
-          <button
-            :class="canExportData ? 'chart-option-button' : 'chart-option-button opacity-60'"
-            @click="handleExportCSV"
-          >
-            <UIcon
-              name="i-lucide-file-spreadsheet"
-              class="w-4 h-4 shrink-0"
-            />
-            <div class="flex-1 text-left">
-              <div class="text-sm font-medium">
-                Export as CSV
-                <FeatureBadge
-                  feature="EXPORT_DATA"
-                  class="ml-2"
-                />
+          <FeatureGate feature="EXPORT_DATA">
+            <button
+              class="chart-option-button"
+              @click="handleExportCSV"
+            >
+              <UIcon
+                name="i-lucide-file-spreadsheet"
+                class="w-4 h-4 shrink-0"
+              />
+              <div class="flex-1 text-left">
+                <div class="text-sm font-medium">
+                  Export as CSV
+                  <FeatureBadge
+                    feature="EXPORT_DATA"
+                    class="ml-2"
+                  />
+                </div>
+                <div class="text-xs text-gray-500 dark:text-gray-400">
+                  Download data as spreadsheet
+                </div>
               </div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">
-                Download data as spreadsheet
-              </div>
-            </div>
-            <UIcon
-              name="i-lucide-chevron-right"
-              class="w-3 h-3 text-gray-400"
-            />
-          </button>
+              <UIcon
+                name="i-lucide-chevron-right"
+                class="w-3 h-3 text-gray-400"
+              />
+            </button>
+          </FeatureGate>
 
           <div class="border-t border-gray-200 dark:border-gray-700" />
 
           <!-- JSON Export -->
-          <button
-            :class="canExportData ? 'chart-option-button' : 'chart-option-button opacity-60'"
-            @click="handleExportJSON"
-          >
-            <UIcon
-              name="i-lucide-braces"
-              class="w-4 h-4 shrink-0"
-            />
-            <div class="flex-1 text-left">
-              <div class="text-sm font-medium">
-                Export as JSON
-                <FeatureBadge
-                  feature="EXPORT_DATA"
-                  class="ml-2"
-                />
+          <FeatureGate feature="EXPORT_DATA">
+            <button
+              class="chart-option-button"
+              @click="handleExportJSON"
+            >
+              <UIcon
+                name="i-lucide-braces"
+                class="w-4 h-4 shrink-0"
+              />
+              <div class="flex-1 text-left">
+                <div class="text-sm font-medium">
+                  Export as JSON
+                  <FeatureBadge
+                    feature="EXPORT_DATA"
+                    class="ml-2"
+                  />
+                </div>
+                <div class="text-xs text-gray-500 dark:text-gray-400">
+                  Download data as structured file
+                </div>
               </div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">
-                Download data as structured file
-              </div>
-            </div>
-            <UIcon
-              name="i-lucide-chevron-right"
-              class="w-3 h-3 text-gray-400"
-            />
-          </button>
+              <UIcon
+                name="i-lucide-chevron-right"
+                class="w-3 h-3 text-gray-400"
+              />
+            </button>
+          </FeatureGate>
         </template>
 
         <template v-if="props.explorerLink">
