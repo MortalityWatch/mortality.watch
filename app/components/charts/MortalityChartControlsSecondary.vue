@@ -55,7 +55,6 @@ const props = defineProps<{
   showCaption: boolean
   showTitle: boolean
   showLegend: boolean
-  autoHideLegend: boolean
   showXAxisTitle: boolean
   showYAxisTitle: boolean
   decimals: string
@@ -89,7 +88,6 @@ const emit = defineEmits<{
   showCaptionChanged: [value: boolean]
   showTitleChanged: [value: boolean]
   showLegendChanged: [value: boolean]
-  autoHideLegendChanged: [value: boolean]
   showXAxisTitleChanged: [value: boolean]
   showYAxisTitleChanged: [value: boolean]
   decimalsChanged: [value: string]
@@ -242,11 +240,6 @@ const showTitle = computed({
 const showLegend = computed({
   get: () => props.showLegend,
   set: (v: boolean) => emit('showLegendChanged', v)
-})
-
-const autoHideLegend = computed({
-  get: () => props.autoHideLegend,
-  set: (v: boolean) => emit('autoHideLegendChanged', v)
 })
 
 const showXAxisTitle = computed({
@@ -425,7 +418,6 @@ const activeTab = ref('data')
         :show-logo="showLogo"
         :show-qr-code="showQrCode"
         :show-legend="showLegend"
-        :auto-hide-legend="autoHideLegend"
         :show-x-axis-title="showXAxisTitle"
         :show-y-axis-title="showYAxisTitle"
         @update:selected-chart-style="selectedChartStyle = $event"
@@ -437,7 +429,6 @@ const activeTab = ref('data')
         @update:show-logo="showLogo = $event"
         @update:show-qr-code="showQrCode = $event"
         @update:show-legend="showLegend = $event"
-        @update:auto-hide-legend="autoHideLegend = $event"
         @update:show-x-axis-title="showXAxisTitle = $event"
         @update:show-y-axis-title="showYAxisTitle = $event"
       />

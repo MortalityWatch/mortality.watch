@@ -188,13 +188,6 @@ export const FEATURES = {
     category: 'branding'
   },
 
-  AUTO_HIDE_LEGEND: {
-    tier: TIERS.PRO,
-    name: 'Auto-hide Legend',
-    description: 'Automatically hide legend for single-series charts',
-    category: 'branding'
-  },
-
   HIDE_X_AXIS_TITLE: {
     tier: TIERS.PRO,
     name: 'Hide X-Axis Title',

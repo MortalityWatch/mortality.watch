@@ -453,7 +453,6 @@ const handleShowQrCodeChanged = (v: boolean) => handleUIStateChange({ field: 'sh
 const handleShowCaptionChanged = (v: boolean) => handleUIStateChange({ field: 'showCaption', value: v })
 const handleShowTitleChanged = (v: boolean) => handleUIStateChange({ field: 'showTitle', value: v })
 const handleShowLegendChanged = (v: boolean) => handleUIStateChange({ field: 'showLegend', value: v })
-const handleAutoHideLegendChanged = (v: boolean) => handleUIStateChange({ field: 'autoHideLegend', value: v })
 const handleShowXAxisTitleChanged = (v: boolean) => handleUIStateChange({ field: 'showXAxisTitle', value: v })
 const handleShowYAxisTitleChanged = (v: boolean) => handleUIStateChange({ field: 'showYAxisTitle', value: v })
 const handleDecimalsChanged = (v: string) => handleUIStateChange({ field: 'decimals', value: v })
@@ -747,7 +746,6 @@ watch(
             :show-caption="state.showCaption.value"
             :show-title="state.showTitle.value"
             :show-legend="state.showLegend.value"
-            :auto-hide-legend="state.autoHideLegend.value"
             :show-x-axis-title="state.showXAxisTitle.value"
             :show-y-axis-title="state.showYAxisTitle.value"
             :decimals="state.decimals.value"
@@ -804,7 +802,6 @@ watch(
             @show-caption-changed="handleShowCaptionChanged"
             @show-title-changed="handleShowTitleChanged"
             @show-legend-changed="handleShowLegendChanged"
-            @auto-hide-legend-changed="handleAutoHideLegendChanged"
             @show-x-axis-title-changed="handleShowXAxisTitleChanged"
             @show-y-axis-title-changed="handleShowYAxisTitleChanged"
             @decimals-changed="handleDecimalsChanged"

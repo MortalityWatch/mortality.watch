@@ -570,7 +570,7 @@ export function generateChartConfig(
       state.showLegend,
       state.showXAxisTitle,
       state.showYAxisTitle,
-      state.autoHideLegend
+      false // autoHideLegend - disabled for SSR, only used for explicit thumbnail requests
     )
 
     // Add the chart URL for QR code (only if showQrCode is true)
@@ -601,7 +601,7 @@ export function generateChartConfig(
       state.showLegend,
       state.showXAxisTitle,
       state.showYAxisTitle,
-      state.autoHideLegend
+      false // autoHideLegend - disabled for SSR, only used for explicit thumbnail requests
     )
 
     // Add the chart URL for QR code (only if showQrCode is true)

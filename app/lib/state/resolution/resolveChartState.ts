@@ -67,7 +67,6 @@ export interface ChartRenderState {
   showCaption: boolean
   showTitle: boolean
   showLegend: boolean
-  autoHideLegend: boolean
   showXAxisTitle: boolean
   showYAxisTitle: boolean
   darkMode: boolean
@@ -239,7 +238,6 @@ export function resolveChartStateForRendering(
     showCaption: (constrainedState.showCaption as boolean) ?? true,
     showTitle: (constrainedState.showTitle as boolean) ?? true,
     showLegend: (constrainedState.showLegend as boolean) ?? true,
-    autoHideLegend: (constrainedState.autoHideLegend as boolean) ?? false,
     showXAxisTitle: (constrainedState.showXAxisTitle as boolean) ?? true,
     showYAxisTitle: (constrainedState.showYAxisTitle as boolean) ?? true,
     darkMode: (constrainedState.darkMode as boolean) ?? false,
@@ -332,7 +330,6 @@ export function resolveChartStateFromSnapshot(
     showCaption: true,
     showTitle: true,
     showLegend: true,
-    autoHideLegend: false,
     showXAxisTitle: true,
     showYAxisTitle: true,
     darkMode: false,

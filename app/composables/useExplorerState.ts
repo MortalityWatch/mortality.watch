@@ -123,7 +123,6 @@ export function useExplorerState() {
   const showCaption = ref<boolean>(getDefault('showCaption', true))
   const showTitle = ref<boolean>(getDefault('showTitle', true))
   const showLegend = ref<boolean>(getDefault('showLegend', true))
-  const autoHideLegend = ref<boolean>(getDefault('autoHideLegend', false))
   const showXAxisTitle = ref<boolean>(getDefault('showXAxisTitle', true))
   const showYAxisTitle = ref<boolean>(getDefault('showYAxisTitle', true))
   const decimals = ref<string>(getDefault('decimals', 'auto'))
@@ -336,7 +335,6 @@ export function useExplorerState() {
       showCaption: showCaption.value,
       showTitle: showTitle.value,
       showLegend: showLegend.value,
-      autoHideLegend: autoHideLegend.value,
       showXAxisTitle: showXAxisTitle.value,
       showYAxisTitle: showYAxisTitle.value,
       chartPreset: chartPreset.value
@@ -455,9 +453,6 @@ export function useExplorerState() {
     if (state.showLegend !== undefined && state.showLegend !== showLegend.value) {
       showLegend.value = state.showLegend as boolean
     }
-    if (state.autoHideLegend !== undefined && state.autoHideLegend !== autoHideLegend.value) {
-      autoHideLegend.value = state.autoHideLegend as boolean
-    }
     if (state.showXAxisTitle !== undefined && state.showXAxisTitle !== showXAxisTitle.value) {
       showXAxisTitle.value = state.showXAxisTitle as boolean
     }
@@ -512,7 +507,6 @@ export function useExplorerState() {
     showCaption,
     showTitle,
     showLegend,
-    autoHideLegend,
     showXAxisTitle,
     showYAxisTitle,
     decimals,

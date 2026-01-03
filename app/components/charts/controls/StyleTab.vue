@@ -16,7 +16,6 @@ const props = defineProps<{
   showLogo: boolean
   showQrCode: boolean
   showLegend: boolean
-  autoHideLegend: boolean
   showXAxisTitle: boolean
   showYAxisTitle: boolean
 }>()
@@ -31,7 +30,6 @@ const emit = defineEmits<{
   'update:showLogo': [value: boolean]
   'update:showQrCode': [value: boolean]
   'update:showLegend': [value: boolean]
-  'update:autoHideLegend': [value: boolean]
   'update:showXAxisTitle': [value: boolean]
   'update:showYAxisTitle': [value: boolean]
 }>()
@@ -75,11 +73,6 @@ const selectedDecimalsModel = computed({
 const showLegendModel = computed({
   get: () => props.showLegend,
   set: v => emit('update:showLegend', v)
-})
-
-const autoHideLegendModel = computed({
-  get: () => props.autoHideLegend,
-  set: v => emit('update:autoHideLegend', v)
 })
 
 const showXAxisTitleModel = computed({
@@ -193,22 +186,6 @@ const showYAxisTitleModel = computed({
                 />
               </label>
               <USwitch v-model="showLegendModel" />
-            </template>
-          </UiControlRow>
-        </FeatureGate>
-
-        <!-- Feature gate: Only Pro users can auto-hide legend for single-series -->
-        <FeatureGate feature="AUTO_HIDE_LEGEND">
-          <UiControlRow>
-            <template #default>
-              <label class="text-sm font-medium whitespace-nowrap">
-                Auto-hide Legend
-                <FeatureBadge
-                  feature="AUTO_HIDE_LEGEND"
-                  class="ml-2"
-                />
-              </label>
-              <USwitch v-model="autoHideLegendModel" />
             </template>
           </UiControlRow>
         </FeatureGate>
