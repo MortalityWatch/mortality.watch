@@ -19,6 +19,8 @@ interface DetectedChart {
   name: string
 }
 
+const { trackChartSave } = useAnalytics()
+
 const props = withDefaults(defineProps<{
   modelValue: boolean
   saving: boolean
@@ -92,6 +94,22 @@ const handleOpenModal = (): void => {
   emit('update:description', defaultDescription)
   emit('update:isPublic', false)
   localShow.value = true
+}
+
+// Tracked save handlers
+function handleSave() {
+  trackChartSave(localPublic.value)
+  emit('save')
+}
+
+function handleSaveAsNew() {
+  trackChartSave(localPublic.value)
+  emit('saveAsNew')
+}
+
+function handleUpdateExisting() {
+  trackChartSave(localPublic.value)
+  emit('updateExisting')
 }
 </script>
 
@@ -294,14 +312,14 @@ const handleOpenModal = (): void => {
               :label="`Save as New ${typeLabel}`"
               :loading="saving"
               :disabled="!name.trim()"
-              @click="emit('saveAsNew')"
+              @click="handleSaveAsNew"
             />
             <UButton
               color="primary"
               :label="isModified ? `Update Original` : `Update Existing`"
               :loading="saving"
               :disabled="!name.trim()"
-              @click="emit('updateExisting')"
+              @click="handleUpdateExisting"
             />
           </template>
           <!-- Default single save button -->
@@ -311,7 +329,7 @@ const handleOpenModal = (): void => {
             :label="`Save ${typeLabel}`"
             :loading="saving"
             :disabled="!name.trim()"
-            @click="emit('save')"
+            @click="handleSave"
           />
         </div>
       </template>

@@ -13,6 +13,7 @@ const { isPro } = useFeatureAccess()
 const { startTutorial } = useTutorial()
 const { loginUrl, signupUrl } = useAuthRedirect()
 const colorMode = useColorMode()
+const { trackColorModeChange, trackTutorialStart } = useAnalytics()
 
 // Color mode toggle - cycles through light -> dark -> system
 const colorModeIcon = computed(() => {
@@ -40,13 +41,16 @@ const colorModeLabel = computed(() => {
 function toggleColorMode(): void {
   // Cycle: light -> dark -> system -> light
   const current = colorMode.preference
+  let newMode: 'light' | 'dark' | 'system'
   if (current === 'light') {
-    colorMode.preference = 'dark'
+    newMode = 'dark'
   } else if (current === 'dark') {
-    colorMode.preference = 'system'
+    newMode = 'system'
   } else {
-    colorMode.preference = 'light'
+    newMode = 'light'
   }
+  colorMode.preference = newMode
+  trackColorModeChange(newMode)
 }
 
 // Check if we're on pages with tutorials to show help button
@@ -58,8 +62,10 @@ const showHelpButton = computed(() => isExplorerPage.value || isRankingPage.valu
 // Determine which tutorial to start based on current page
 const handleHelpClick = (): void => {
   if (isRankingPage.value) {
+    trackTutorialStart('ranking')
     startTutorial('ranking')
   } else {
+    trackTutorialStart('explorer')
     startTutorial('explorer')
   }
 }

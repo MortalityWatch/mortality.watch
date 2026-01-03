@@ -16,6 +16,7 @@ const router = useRouter()
 const route = useRoute()
 const toast = useToast()
 const { formError, handleAuthError, clearError } = useAuthError()
+const { trackLogin } = useAnalytics()
 
 const fields = [{
   name: 'email',
@@ -54,6 +55,7 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
 
   try {
     await signIn(event.data.email, event.data.password, event.data.remember || false)
+    trackLogin()
     toast.add({
       title: 'Welcome back!',
       description: 'Signed in successfully',

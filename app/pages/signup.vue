@@ -16,6 +16,7 @@ const router = useRouter()
 const route = useRoute()
 const { formError, handleAuthError, clearError } = useAuthError()
 const { withRetry } = useErrorRecovery()
+const { trackSignup } = useAnalytics()
 const tosAccepted = ref(false)
 
 // Preserve redirect URL through signup flow
@@ -97,6 +98,9 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
       exponentialBackoff: true,
       context: 'signup'
     })
+
+    // Track successful signup
+    trackSignup(inviteCode.value ? 'invite' : 'email')
 
     // Redirect to verification page with email (preserve redirect URL)
     const checkEmailQuery: Record<string, string> = { email: event.data.email }
