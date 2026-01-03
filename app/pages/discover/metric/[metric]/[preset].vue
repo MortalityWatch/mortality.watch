@@ -230,9 +230,10 @@ const filteredCountries = computed(() => {
     result = result.filter(c => c.hasChartType(currentChartType.value!))
   }
 
-  // Filter by age-stratified data availability for ASMR/ASD
-  if (requiresAgeData.value) {
-    result = result.filter(c => c.has_asmr())
+  // Filter by age-stratified data availability for ASMR/ASD/LE
+  // Important: check age data at the SPECIFIC resolution, not just any age data
+  if (requiresAgeData.value && currentChartType.value) {
+    result = result.filter(c => c.hasAgeDataForChartType(currentChartType.value!))
   }
 
   if (selectedRegion.value === 'all') {

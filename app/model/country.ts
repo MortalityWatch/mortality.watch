@@ -83,7 +83,7 @@ export class Country {
    * - weekly: requires weekly data
    * - monthly: requires at least monthly data
    * - quarterly: requires at least monthly data (aggregates monthly to quarterly)
-   * - yearly/fluseason: all countries have yearly data
+   * - yearly/fluseason/midyear: all countries have yearly data
    */
   hasChartType(chartType: ChartType): boolean {
     const types = this.data_source.map(ds => ds.type)
@@ -96,10 +96,45 @@ export class Country {
         return types.includes('weekly') || types.includes('monthly')
       case 'yearly':
       case 'fluseason':
+      case 'midyear':
         return true // All countries have at least yearly data
       default:
         return false
     }
+  }
+
+  /**
+   * Check if country has age-stratified data at the specified resolution.
+   * This is required for metrics like LE, ASMR, ASD.
+   *
+   * The key insight: a country might have weekly death data (no age breakdown)
+   * AND yearly age-stratified data. For weekly LE charts, we need weekly
+   * age-stratified data specifically.
+   */
+  hasAgeDataForChartType(chartType: ChartType): boolean {
+    for (const ds of this.data_source) {
+      // Check if this data source has age groups (more than just "all")
+      if (ds.age_groups.size <= 1) continue
+
+      // Check if this data source's resolution supports the chart type
+      switch (chartType) {
+        case 'weekly':
+          // Weekly charts require weekly age-stratified data
+          if (ds.type === 'weekly') return true
+          break
+        case 'monthly':
+        case 'quarterly':
+          // Monthly/quarterly can use weekly or monthly age-stratified data
+          if (ds.type === 'weekly' || ds.type === 'monthly') return true
+          break
+        case 'yearly':
+        case 'fluseason':
+        case 'midyear':
+          // Yearly aggregations can use any resolution's age data
+          return true
+      }
+    }
+    return false
   }
 }
 

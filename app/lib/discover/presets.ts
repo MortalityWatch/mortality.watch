@@ -304,13 +304,17 @@ export function isMetricValidForChartType(metric: Metric, chartType: ChartType):
 /**
  * Check if a preset is valid for a given country's data availability.
  * Returns an object with validity status and reason if invalid.
+ *
+ * Note: hasAgeDataForChartType checks age data at the SPECIFIC resolution.
+ * A country might have weekly deaths but only yearly age-stratified data,
+ * which means weekly LE/ASMR charts won't work for that country.
  */
 export function isPresetValidForCountry(
   metric: Metric,
   chartType: ChartType,
   view: View,
   countryCapabilities: {
-    hasAgeData: boolean
+    hasAgeDataForChartType: (ct: ChartType) => boolean
     hasChartType: (ct: ChartType) => boolean
   }
 ): { valid: boolean, reason?: string } {
@@ -322,11 +326,11 @@ export function isPresetValidForCountry(
     }
   }
 
-  // Check if metric requires age data and country has it
-  if (metricRequiresAgeData(metric) && !countryCapabilities.hasAgeData) {
+  // Check if metric requires age data at the specific resolution
+  if (metricRequiresAgeData(metric) && !countryCapabilities.hasAgeDataForChartType(chartType)) {
     return {
       valid: false,
-      reason: `${metric.toUpperCase()} requires age-stratified data`
+      reason: `${metric.toUpperCase()} requires age-stratified data at ${chartType} resolution`
     }
   }
 
