@@ -605,7 +605,7 @@ function selectMutuallyExclusiveAgeGroups(ageGroups: string[], context?: string)
 
   if (completeSets.length === 0) {
     // Fallback: no complete sets found, use greedy approach
-    console.warn('[MetadataService] No complete age group coverage found, using greedy selection')
+    logger.warn('[MetadataService] No complete age group coverage found, using greedy selection')
     const result: string[] = []
     const sortedByMin = [...parsed].sort((a, b) => a.range.min - b.range.min)
     for (const item of sortedByMin) {
@@ -625,7 +625,7 @@ function selectMutuallyExclusiveAgeGroups(ageGroups: string[], context?: string)
   const best = completeSets[0]!
 
   const contextStr = context ? ` for ${context}` : ''
-  console.log(`[MetadataService] Selected${contextStr}:`, best, `(${best.length} groups, ${completeSets.length} candidate sets)`)
+  logger.debug(`[MetadataService] Selected${contextStr}: ${JSON.stringify(best)} (${best.length} groups, ${completeSets.length} candidate sets)`)
   return best
 }
 

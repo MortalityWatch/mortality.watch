@@ -5,36 +5,12 @@
  * This eliminates the need for components to manually compute visibility with isVisible().
  */
 
-import type { ViewConfig, UIElement, UICondition } from './viewTypes'
+import type { ViewConfig, UIElement } from './viewTypes'
+import { evaluateCondition } from '../utils/evaluateCondition'
 
 export interface UIFieldState {
   visible: boolean
   disabled: boolean
-}
-
-/**
- * Evaluate a UI condition against current state
- */
-function evaluateCondition(
-  condition: UICondition,
-  state: Record<string, unknown>
-): boolean {
-  // Handle AND conditions
-  if ('and' in condition && condition.and) {
-    return condition.and.every(c => evaluateCondition(c, state))
-  }
-
-  // Handle OR conditions
-  if ('or' in condition && condition.or) {
-    return condition.or.some(c => evaluateCondition(c, state))
-  }
-
-  // Handle simple field comparison
-  if ('field' in condition && 'is' in condition) {
-    return state[condition.field] === condition.is
-  }
-
-  return false
 }
 
 /**
@@ -52,7 +28,7 @@ function isVisible(element: UIElement, state: Record<string, unknown>): boolean 
 
     case 'conditional':
       if (!visibility.when) return true
-      return evaluateCondition(visibility.when, state)
+      return evaluateCondition(visibility.when as Parameters<typeof evaluateCondition>[0], state)
 
     default:
       return true

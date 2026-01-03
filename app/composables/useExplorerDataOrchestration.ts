@@ -41,6 +41,9 @@ import {
   toChartFilterConfig,
   generateUrlFromState
 } from '@/lib/state/resolution'
+import { logger } from '@/lib/logger'
+
+const log = logger.withPrefix('ExplorerDataOrchestration')
 
 export function useExplorerDataOrchestration(
   state: ReturnType<typeof useExplorerState>,
@@ -233,7 +236,7 @@ export function useExplorerDataOrchestration(
         const sourceInfo = metadataService.getBestSourceForCountry(country, chartType)
 
         if (!sourceInfo) {
-          console.warn(`[ASD] No source with age groups available for ${country}`)
+          log.warn(`No source with age groups available for ${country}`)
           continue
         }
 
@@ -296,7 +299,7 @@ export function useExplorerDataOrchestration(
         }
       }
     } catch (error) {
-      console.error('[ASD] Failed to fetch ASD data:', error)
+      log.error('Failed to fetch ASD data', error)
     }
   }
 

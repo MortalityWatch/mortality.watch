@@ -1,4 +1,7 @@
 import { loadStripe, type Stripe } from '@stripe/stripe-js'
+import { logger } from '@/lib/logger'
+
+const stripeLogger = logger.withPrefix('useStripe')
 
 /**
  * Composable for Stripe integration
@@ -49,7 +52,7 @@ export function useStripe() {
         throw new Error('No checkout URL returned')
       }
     } catch (error) {
-      console.error('Error creating checkout session:', error)
+      stripeLogger.error('Error creating checkout session', error)
       throw error
     }
   }
@@ -72,7 +75,7 @@ export function useStripe() {
       // Redirect to Stripe Customer Portal
       window.location.href = response.url
     } catch (error) {
-      console.error('Error creating portal session:', error)
+      stripeLogger.error('Error creating portal session', error)
       throw error
     }
   }
@@ -85,7 +88,7 @@ export function useStripe() {
       const response = await $fetch('/api/stripe/subscription-status')
       return response
     } catch (error) {
-      console.error('Error fetching subscription status:', error)
+      stripeLogger.error('Error fetching subscription status', error)
       throw error
     }
   }

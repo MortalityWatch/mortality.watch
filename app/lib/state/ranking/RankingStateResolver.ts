@@ -19,7 +19,6 @@ import type {
   ResolvedRankingState,
   RankingResolutionLog,
   UIFieldState,
-  RankingUICondition,
   RankingUIConfig,
   UIElement
 } from './types'
@@ -27,35 +26,14 @@ import type { RankingViewConfig } from './views'
 import { getRankingViewConfig } from './views'
 import { RANKING_CONSTRAINTS } from './constraints'
 import { rankingFieldEncoders, RANKING_DEFAULTS, LEGACY_ASMR_KEY, decodeMetricType } from './fieldEncoders'
+import { evaluateCondition } from '../utils/evaluateCondition'
+import { logger, formatError } from '@/lib/logger'
+
+const moduleLogger = logger.withPrefix('RankingStateResolver')
 
 // ============================================================================
 // PRIVATE HELPER FUNCTIONS
 // ============================================================================
-
-/**
- * Evaluate a UI condition against current state
- */
-function evaluateCondition(
-  condition: RankingUICondition,
-  state: Record<string, unknown>
-): boolean {
-  // Handle AND conditions
-  if ('and' in condition && condition.and) {
-    return condition.and.every(c => evaluateCondition(c, state))
-  }
-
-  // Handle OR conditions
-  if ('or' in condition && condition.or) {
-    return condition.or.some(c => evaluateCondition(c, state))
-  }
-
-  // Handle simple field comparison
-  if ('field' in condition && 'is' in condition) {
-    return state[condition.field] === condition.is
-  }
-
-  return false
-}
 
 /**
  * Compute UI state for all fields from view config and current state
@@ -88,7 +66,7 @@ function computeUIState(
         break
 
       case 'conditional':
-        visible = visibility.when ? evaluateCondition(visibility.when, state) : true
+        visible = visibility.when ? evaluateCondition(visibility.when as Parameters<typeof evaluateCondition>[0], state) : true
         disabled = !visible
         break
     }
@@ -312,7 +290,8 @@ export function resolveInitial(route: RouteLocationNormalizedLoaded): ResolvedRa
 
         state[field] = decoded
       } catch (error) {
-        console.warn(`[RankingStateResolver] Skipping malformed URL param: ${urlKey}=${urlValue}`, error)
+        // Log malformed URL params using the module-level logger (not RankingResolutionLog)
+        moduleLogger.warn(`Skipping malformed URL param: ${urlKey}=${urlValue}`, formatError(error))
       }
     }
   }

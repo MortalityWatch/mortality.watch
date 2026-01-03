@@ -1,4 +1,5 @@
 import { ErrorHandler } from '@/lib/errors/errorHandler'
+import { logger } from '@/lib/logger'
 
 /**
  * Composable for handling authentication form errors
@@ -47,14 +48,14 @@ export function useAuthError() {
       // This is likely a validation or other non-API error
       // Don't show in our custom alert - let the form handle it
       if (import.meta.dev) {
-        console.warn(`[${context}] Non-API error detected, not displaying in alert`)
+        logger.warn(`[${context}] Non-API error detected, not displaying in alert`)
       }
       return false
     }
 
     // Log error in development only
     if (import.meta.dev) {
-      console.error(`[${context}] Error caught:`, error)
+      logger.error(`[${context}] Error caught`, error)
     }
 
     // Use ErrorHandler to extract the message

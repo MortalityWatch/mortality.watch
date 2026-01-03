@@ -13,6 +13,7 @@ import type {
   ChartStyle
 } from './viewTypes'
 import { VIEWS } from '../config/views'
+import { evaluateCondition as evaluateConditionBase } from '../utils/evaluateCondition'
 
 /**
  * Check if a UI element is visible given current state
@@ -82,26 +83,16 @@ export function getDisabledReason(element: UIElement): string | null {
 
 /**
  * Evaluate a UI condition against current state
+ * Re-exports the shared utility with proper typing for explorer state
  */
 export function evaluateCondition(
   condition: UICondition,
   state: ExplorerStateValues
 ): boolean {
-  if ('field' in condition) {
-    const value = state[condition.field]
-    if ('is' in condition) return value === condition.is
-    if ('isNot' in condition) return value !== condition.isNot
-  }
-
-  if ('and' in condition) {
-    return condition.and.every(c => evaluateCondition(c, state))
-  }
-
-  if ('or' in condition) {
-    return condition.or.some(c => evaluateCondition(c, state))
-  }
-
-  return false
+  return evaluateConditionBase(
+    condition as Parameters<typeof evaluateConditionBase>[0],
+    state as unknown as Record<string, unknown>
+  )
 }
 
 /**
