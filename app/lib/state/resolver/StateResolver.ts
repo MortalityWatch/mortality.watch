@@ -22,6 +22,7 @@ import type { ChartStateSnapshot } from '@/lib/chart/types'
 import type { ChartType } from '@/model/period'
 import { getDefaultSliderStart } from '@/lib/config/constants'
 import { logger, formatError } from '@/lib/logger'
+import { valuesEqual } from '@/lib/utils/array'
 
 /**
  * Get defaults for a view, with view-specific fields added
@@ -94,7 +95,7 @@ export class StateResolver {
 
       // Only mark as user override if value differs from default
       // This prevents "sticky" URL params that match defaults from blocking soft constraints
-      const isDifferentFromDefault = !this.valuesEqual(value, defaultValue)
+      const isDifferentFromDefault = !valuesEqual(value, defaultValue)
       if (isDifferentFromDefault) {
         userOverrides.add(field)
         log.userOverridesFromUrl.push(field)
@@ -592,7 +593,7 @@ export class StateResolver {
       const value = state[field]
       const defaultValue = viewDefaults[field]
 
-      if (this.valuesEqual(value, defaultValue)) continue
+      if (valuesEqual(value, defaultValue)) continue
       if (value === undefined) continue
 
       const urlKey = encoder.key
@@ -652,21 +653,6 @@ export class StateResolver {
   }
 
   /**
-   * Check if two values are equal (with deep comparison for arrays)
-   *
-   * @private
-   */
-  private static valuesEqual(a: unknown, b: unknown): boolean {
-    // Handle arrays
-    if (Array.isArray(a) && Array.isArray(b)) {
-      if (a.length !== b.length) return false
-      return a.every((val, idx) => val === b[idx])
-    }
-    // Handle primitives
-    return a === b
-  }
-
-  /**
    * Apply resolved state changes to URL
    *
    * Builds a minimal query object containing only non-default values.
@@ -706,7 +692,7 @@ export class StateResolver {
       const defaultValue = viewDefaults[field]
 
       // Skip if value matches view default
-      if (this.valuesEqual(newValue, defaultValue)) {
+      if (valuesEqual(newValue, defaultValue)) {
         continue
       }
 

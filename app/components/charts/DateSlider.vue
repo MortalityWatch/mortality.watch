@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, computed, nextTick } from 'vue'
 import { ChartPeriod, type ChartType } from '@/model/period'
+import { getUniqueYears } from '@/lib/utils/dates'
 
 const props = defineProps<{
   sliderValue: string[]
@@ -154,7 +155,7 @@ const calculatePeriodIndices = (years: number): number => {
   if (years === 0 || !props.labels.length) return 0
 
   // Count unique years in labels
-  const uniqueYears = Array.from(new Set(props.labels.filter(l => l).map(l => l.substring(0, 4))))
+  const uniqueYears = getUniqueYears(props.labels)
   const labelsPerYear = Math.round(props.labels.length / uniqueYears.length)
 
   const result = years * labelsPerYear

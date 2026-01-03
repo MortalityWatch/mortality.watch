@@ -26,6 +26,7 @@ import { useDateRangeCalculations } from '@/composables/useDateRangeCalculations
 import { useDateRangeValidation } from '@/composables/useDateRangeValidation'
 import { calculateBaselineRange } from '@/lib/baseline/calculateBaselineRange'
 import { DATA_CONFIG, UI_CONFIG } from '@/lib/config/constants'
+import { getUniqueYears } from '@/lib/utils/dates'
 
 const RANKING_START_YEAR = DATA_CONFIG.RANKING_START_YEAR
 const RANKING_END_YEAR = DATA_CONFIG.RANKING_END_YEAR
@@ -156,10 +157,7 @@ export function useRankingData(
   // This ensures the "From" dropdown shows all available years, not just those after sliderStart
   const allYearlyChartLabelsUnique = computed(() => {
     const availableLabels = dateRangeCalc.availableLabels.value
-    const allYearlyChartLabels = Array.from(
-      availableLabels.filter(v => v).map(v => v.substring(0, 4))
-    )
-    return Array.from(new Set(allYearlyChartLabels))
+    return getUniqueYears(availableLabels)
   })
 
   /**

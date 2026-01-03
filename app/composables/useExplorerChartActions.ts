@@ -10,6 +10,12 @@ import Papa from 'papaparse'
 import type { Ref } from 'vue'
 import type { MortalityChartData } from '@/lib/chart/chartTypes'
 import type { Country } from '@/model'
+import type { useExplorerState } from '@/composables/useExplorerState'
+
+/**
+ * Type for the explorer state returned by useExplorerState
+ */
+type ExplorerStateType = ReturnType<typeof useExplorerState>
 
 /**
  * Explorer Chart Actions Composable
@@ -23,17 +29,10 @@ import type { Country } from '@/model'
  * - Export chart data as CSV
  * - Export chart data as JSON
  *
- * Note: The state parameter uses `any` type to avoid TypeScript's excessive
- * type recursion with the complex Vue ref-based state object. The actual
- * state comes from useExplorerState() and contains refs for: countries,
- * type, chartType, ageGroups, chartStyle, isExcess, showBaseline,
- * baselineMethod, baselineDates, cumulative, showPercentage,
- * showPredictionInterval, showTotal, dates, standardPopulation,
- * showLogarithmic, maximize, showLabels, view.
+ * The state parameter uses the return type of useExplorerState() for type safety.
  */
 export function useExplorerChartActions(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  state: any,
+  state: ExplorerStateType,
   chartData?: Ref<MortalityChartData | undefined> | { value: MortalityChartData | undefined },
   allCountries?: Ref<Record<string, Country>> | { value: Record<string, Country> },
   options?: {

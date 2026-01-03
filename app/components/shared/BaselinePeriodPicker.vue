@@ -8,6 +8,7 @@ import {
   clampBaselinePeriod
 } from '@/lib/baseline/calculateBaselineRange'
 import { getMaxBaselineYears } from '@/lib/config/constants'
+import { getUniqueYears } from '@/lib/utils/dates'
 
 const props = defineProps<{
   baselineMethod: string
@@ -70,7 +71,7 @@ const calculatePeriodLength = (sliderValue: string[]): number | null => {
   const labelSpan = endIdx - startIdx + 1
 
   // Calculate expected label spans for each preset based on labels per year
-  const uniqueYears = Array.from(new Set(props.labels.filter(l => l).map(l => l.substring(0, 4))))
+  const uniqueYears = getUniqueYears(props.labels)
 
   // Guard against empty labels (prevent divide-by-zero)
   if (uniqueYears.length === 0) {
@@ -158,7 +159,7 @@ watch(() => selectedPeriodLength.value, (newLength, oldLength) => {
     // Calculate new start index based on period length
     // For yearly charts: 3 years = 3 labels (2017, 2018, 2019)
     // For weekly charts: 3 years = ~156 labels
-    const uniqueYears = Array.from(new Set(props.labels.filter(l => l).map(l => l.substring(0, 4))))
+    const uniqueYears = getUniqueYears(props.labels)
 
     // Guard against empty labels (prevent divide-by-zero)
     if (uniqueYears.length === 0) return
