@@ -1,6 +1,6 @@
 import { db, users, subscriptions } from '#db'
 import { eq } from 'drizzle-orm'
-import { requireAuth, verifyPassword } from '../../utils/auth'
+import { requireAuth, verifyUserPassword } from '../../utils/auth'
 import { z } from 'zod'
 
 /**
@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Verify password before deletion (security measure)
-  const isPasswordValid = await verifyPassword(password, user.passwordHash)
+  const isPasswordValid = await verifyUserPassword(password, user.passwordHash)
   if (!isPasswordValid) {
     throw createError({
       statusCode: 401,

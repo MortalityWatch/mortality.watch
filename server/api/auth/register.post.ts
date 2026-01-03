@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { db, users } from '#db'
 import { eq } from 'drizzle-orm'
 import {
-  hashPassword,
+  hashUserPassword,
   generateRandomToken,
   hashToken
 } from '../../utils/auth'
@@ -109,7 +109,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Hash password
-  const passwordHash = await hashPassword(password)
+  const passwordHash = await hashUserPassword(password)
 
   // Generate verification token
   const verificationToken = generateRandomToken()

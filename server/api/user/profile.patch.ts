@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { db, users } from '#db'
 import { eq } from 'drizzle-orm'
-import { requireAuth, hashPassword } from '../../utils/auth'
+import { requireAuth, hashUserPassword } from '../../utils/auth'
 import { ProfileUpdateResponseSchema } from '../../schemas'
 
 const updateProfileSchema = z.object({
@@ -123,7 +123,7 @@ export default defineEventHandler(async (event) => {
     }
 
     // Hash new password
-    updates.passwordHash = await hashPassword(newPassword)
+    updates.passwordHash = await hashUserPassword(newPassword)
   }
 
   // Update user

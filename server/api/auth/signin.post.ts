@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { db, users } from '#db'
 import { eq } from 'drizzle-orm'
 import {
-  verifyPassword,
+  verifyUserPassword,
   generateToken,
   setAuthToken
 } from '../../utils/auth'
@@ -70,7 +70,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Verify password
-  const isValidPassword = await verifyPassword(password, user.passwordHash)
+  const isValidPassword = await verifyUserPassword(password, user.passwordHash)
 
   if (!isValidPassword) {
     throw createError({

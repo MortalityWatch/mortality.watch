@@ -106,81 +106,81 @@ describe('Auth Utilities', () => {
     process.env = originalEnv
   })
 
-  describe('hashPassword', () => {
+  describe('hashUserPassword', () => {
     it('should hash a password using bcrypt', async () => {
-      const { hashPassword } = await import('./auth')
+      const { hashUserPassword } = await import('./auth')
       const bcrypt = await import('bcryptjs')
 
       const password = 'MySecurePassword123!'
-      const hash = await hashPassword(password)
+      const hash = await hashUserPassword(password)
 
       expect(bcrypt.default.hash).toHaveBeenCalledWith(password, 12)
       expect(hash).toBe(`hashed_${password}`)
     })
 
     it('should use bcrypt with cost factor 12', async () => {
-      const { hashPassword } = await import('./auth')
+      const { hashUserPassword } = await import('./auth')
       const bcrypt = await import('bcryptjs')
 
-      await hashPassword('test')
+      await hashUserPassword('test')
 
       expect(bcrypt.default.hash).toHaveBeenCalledWith('test', 12)
     })
 
     it('should handle empty password', async () => {
-      const { hashPassword } = await import('./auth')
-      const hash = await hashPassword('')
+      const { hashUserPassword } = await import('./auth')
+      const hash = await hashUserPassword('')
 
       expect(hash).toBe('hashed_')
     })
 
     it('should handle special characters in password', async () => {
-      const { hashPassword } = await import('./auth')
+      const { hashUserPassword } = await import('./auth')
       const password = 'P@$$w0rd!#$%^&*()'
-      const hash = await hashPassword(password)
+      const hash = await hashUserPassword(password)
 
       expect(hash).toBe(`hashed_${password}`)
     })
   })
 
-  describe('verifyPassword', () => {
+  describe('verifyUserPassword', () => {
     it('should verify a correct password', async () => {
-      const { verifyPassword } = await import('./auth')
+      const { verifyUserPassword } = await import('./auth')
 
       const password = 'MySecurePassword123!'
       const hash = `hashed_${password}`
-      const result = await verifyPassword(password, hash)
+      const result = await verifyUserPassword(password, hash)
 
       expect(result).toBe(true)
     })
 
     it('should reject an incorrect password', async () => {
-      const { verifyPassword } = await import('./auth')
+      const { verifyUserPassword } = await import('./auth')
 
-      const result = await verifyPassword('wrong', 'hashed_correct')
+      const result = await verifyUserPassword('wrong', 'hashed_correct')
 
       expect(result).toBe(false)
     })
 
     it('should handle empty password verification', async () => {
-      const { verifyPassword } = await import('./auth')
+      const { verifyUserPassword } = await import('./auth')
 
-      const result = await verifyPassword('', 'hashed_password')
+      const result = await verifyUserPassword('', 'hashed_password')
 
       expect(result).toBe(false)
     })
 
     it('should be timing-safe against timing attacks', async () => {
-      const { verifyPassword } = await import('./auth')
+      const { verifyUserPassword } = await import('./auth')
       const bcrypt = await import('bcryptjs')
 
       // Verify that bcrypt.compare is always called (timing-safe)
-      await verifyPassword('test', 'hashed_test')
+      await verifyUserPassword('test', 'hashed_test')
       expect(bcrypt.default.compare).toHaveBeenCalled()
 
       vi.clearAllMocks()
 
-      await verifyPassword('wrong', 'hashed_test')
+      await verifyUserPassword('wrong', 'hashed_test')
       expect(bcrypt.default.compare).toHaveBeenCalled()
     })
   })
@@ -1218,20 +1218,20 @@ describe('Auth Utilities', () => {
     })
 
     it('should handle unicode characters in passwords', async () => {
-      const { hashPassword, verifyPassword } = await import('./auth')
+      const { hashUserPassword, verifyUserPassword } = await import('./auth')
 
       const unicodePassword = 'パスワード123!🔒'
-      const hash = await hashPassword(unicodePassword)
-      const isValid = await verifyPassword(unicodePassword, hash)
+      const hash = await hashUserPassword(unicodePassword)
+      const isValid = await verifyUserPassword(unicodePassword, hash)
 
       expect(isValid).toBe(true)
     })
 
     it('should handle null bytes in password', async () => {
-      const { hashPassword } = await import('./auth')
+      const { hashUserPassword } = await import('./auth')
 
       const passwordWithNull = 'password\x00malicious'
-      const hash = await hashPassword(passwordWithNull)
+      const hash = await hashUserPassword(passwordWithNull)
 
       expect(hash).toBeDefined()
     })
@@ -1277,15 +1277,15 @@ describe('Auth Utilities', () => {
 
   describe('Integration Scenarios', () => {
     it('should handle full authentication flow: hash -> generate token -> verify -> get user', async () => {
-      const { hashPassword, verifyPassword, generateToken, verifyToken, getCurrentUser } = await import('./auth')
+      const { hashUserPassword, verifyUserPassword, generateToken, verifyToken, getCurrentUser } = await import('./auth')
 
       // 1. Hash password
       const password = 'SecurePassword123!'
-      const hash = await hashPassword(password)
+      const hash = await hashUserPassword(password)
       expect(hash).toBe(`hashed_${password}`)
 
       // 2. Verify password
-      const isValid = await verifyPassword(password, hash)
+      const isValid = await verifyUserPassword(password, hash)
       expect(isValid).toBe(true)
 
       // 3. Generate token
