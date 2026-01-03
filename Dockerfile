@@ -42,9 +42,15 @@ RUN bun install --frozen-lockfile
 # Copy application code
 COPY . .
 
+# Build arguments for build-time env vars
+ARG NUXT_UMAMI_ID
+ARG NUXT_UMAMI_HOST
+
 # Build Nuxt application
 # Set CI=true to skip prerendering during build (pages will be SSR'd at runtime)
 ENV NODE_ENV=production
+ENV NUXT_UMAMI_ID=$NUXT_UMAMI_ID
+ENV NUXT_UMAMI_HOST=$NUXT_UMAMI_HOST
 RUN CI=true bun run build
 
 # Set environment to production
