@@ -176,6 +176,10 @@ EMAIL_FROM=Mortality Watch <noreply@mortality.watch>
 # Error tracking (optional)
 SENTRY_DSN=your_sentry_dsn
 
+# Umami Analytics (optional)
+NUXT_UMAMI_ID=your_website_id          # Get from Umami dashboard
+NUXT_UMAMI_HOST=https://ua.mortality.watch  # Your Umami instance URL
+
 # Stripe (for subscriptions)
 STRIPE_PUBLISHABLE_KEY=pk_test_... # or pk_live_... for production
 STRIPE_SECRET_KEY=sk_test_...      # or sk_live_... for production
@@ -779,7 +783,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 - [ ] Automated data updates from sources
 - [x] CI/CD pipeline (GitHub Actions)
 - [ ] Error tracking (Sentry)
-- [ ] Analytics (privacy-first)
+- [x] Analytics (Umami - privacy-first)
 
 ---
 
