@@ -80,7 +80,7 @@
       </p>
       <UButton
         color="primary"
-        @click="$router.go(0)"
+        @click="router.go(0)"
       >
         Retry
       </UButton>

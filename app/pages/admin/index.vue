@@ -9,6 +9,7 @@ useSeoMeta({
 })
 
 const { user } = useAuth()
+const config = useRuntimeConfig()
 
 // Fetch real stats from API
 const { data: statsData } = await useFetch<{
@@ -44,6 +45,10 @@ const stats = computed(() => [
     color: 'info' as const
   }
 ])
+
+function goTo(path: string) {
+  navigateTo(path)
+}
 
 const quickActions = [
   {
@@ -117,7 +122,7 @@ const quickActions = [
           v-for="action in quickActions"
           :key="action.label"
           class="cursor-pointer hover:shadow-md transition-shadow"
-          @click="navigateTo(action.to)"
+          @click="goTo(action.to)"
         >
           <div class="flex items-start gap-3">
             <UIcon
@@ -156,7 +161,7 @@ const quickActions = [
         </div>
         <div class="flex justify-between py-2 border-b border-gray-200 dark:border-gray-700">
           <span class="text-gray-600 dark:text-gray-400">Environment</span>
-          <span class="font-medium">{{ $config.public.nodeEnv || 'development' }}</span>
+          <span class="font-medium">{{ config.public.nodeEnv || 'development' }}</span>
         </div>
       </div>
     </UCard>
