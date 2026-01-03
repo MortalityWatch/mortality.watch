@@ -13,7 +13,9 @@ export function useAnalytics() {
    */
   function trackEvent(name: string, data?: Record<string, string | number | boolean>) {
     if (import.meta.server) return
-    umTrackEvent(name, data)
+    if (typeof umTrackEvent === 'function') {
+      umTrackEvent(name, data)
+    }
   }
 
   // ============================================
