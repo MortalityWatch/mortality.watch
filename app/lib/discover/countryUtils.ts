@@ -75,12 +75,14 @@ export function getParentCountry(iso3c: string): string | null {
 /**
  * Format jurisdiction name by removing country code prefix
  * e.g., "CAN - Ontario" -> "Ontario", "DEU - Bavaria" -> "Bavaria"
+ * Only removes prefix if it matches known country code patterns (3 uppercase letters)
  * Non-prefixed names are returned as-is
  */
 export function formatJurisdictionName(jurisdiction: string): string {
-  const separatorIndex = jurisdiction.indexOf(' - ')
-  if (separatorIndex > -1) {
-    return jurisdiction.substring(separatorIndex + 3)
+  // Match 3 uppercase letters followed by " - " at the start
+  const prefixMatch = jurisdiction.match(/^[A-Z]{3} - (.+)$/)
+  if (prefixMatch?.[1]) {
+    return prefixMatch[1]
   }
   return jurisdiction
 }
