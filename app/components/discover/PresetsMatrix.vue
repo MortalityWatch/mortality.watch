@@ -67,10 +67,9 @@
           v-for="metric in filteredMetrics"
           :key="`${chartType}-${metric}`"
         >
-          <!-- Chart card when metric is valid for this chart type -->
+          <!-- Chart card when metric is valid for this chart type AND hasn't failed -->
           <NuxtLink
-            v-if="getViewForMetric(metric) && isMetricAvailableForChartType(metric, chartType)"
-            v-show="!isChartFailed(metric, chartType)"
+            v-if="getViewForMetric(metric) && isMetricAvailableForChartType(metric, chartType) && !isChartFailed(metric, chartType)"
             :to="getCardUrl(metric, chartType, getViewForMetric(metric)!)"
             class="block group relative rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden hover:shadow-lg transition-shadow"
           >
@@ -99,7 +98,7 @@
             <UiLockedOverlay v-if="isLocked(getViewForMetric(metric)!)" />
           </NuxtLink>
 
-          <!-- Placeholder for unavailable metric/chartType combinations to maintain grid position -->
+          <!-- Placeholder for unavailable/failed metric/chartType combinations -->
           <div
             v-else
             class="rounded-lg border border-dashed border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 overflow-hidden"
@@ -300,6 +299,17 @@ function getUnavailableReason(metric: Metric, chartType: ChartType): string {
       return 'Only available for yearly periods'
     }
     return 'Not available for this period'
+  }
+
+  // Check if it's a resolution-aware age data issue
+  const requiresAgeData = metric === 'le' || metric === 'asmr' || metric === 'asd'
+  if (requiresAgeData && !props.countryData.hasAgeDataForChartType(chartType)) {
+    return `No age-stratified ${chartType} data`
+  }
+
+  // Check if chart failed to load (runtime detection)
+  if (isChartFailed(metric, chartType)) {
+    return 'Chart data unavailable'
   }
 
   return 'Not available'
