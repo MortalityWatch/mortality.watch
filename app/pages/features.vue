@@ -125,7 +125,7 @@
             </h3>
           </template>
           <p class="text-sm text-gray-600 dark:text-gray-400">
-            Yes! Please contact us at mortalitywatch@proton.me with proof of your academic
+            Yes! Please contact us at {{ supportEmail }} with proof of your academic
             affiliation for special pricing.
           </p>
         </UCard>
@@ -165,6 +165,8 @@
 // Auth composable for user tier detection
 const { tier } = useAuth()
 const { trackSubscriptionView } = useAnalytics()
+const config = useRuntimeConfig()
+const supportEmail = config.public.supportEmail
 
 // Track features page view as subscription view
 onMounted(() => {

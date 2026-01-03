@@ -373,10 +373,10 @@
             <p class="font-semibold">
               Email:
               <ULink
-                to="mailto:mortalitywatch@proton.me"
+                :to="`mailto:${supportEmail}`"
                 class="text-primary hover:underline"
               >
-                mortalitywatch@proton.me
+                {{ supportEmail }}
               </ULink>
             </p>
           </div>
@@ -390,6 +390,7 @@
 const config = useRuntimeConfig()
 const siteUrl = config.public.siteUrl || 'https://www.mortality.watch'
 const siteDomain = siteUrl.replace(/^https?:\/\//, '')
+const supportEmail = config.public.supportEmail
 
 // Page metadata
 definePageMeta({

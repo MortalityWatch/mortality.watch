@@ -2,6 +2,7 @@
 const config = useRuntimeConfig()
 const siteUrl = config.public.siteUrl || 'https://www.mortality.watch'
 const siteDomain = siteUrl.replace(/^https?:\/\//, '')
+const supportEmail = config.public.supportEmail
 </script>
 
 <template>
@@ -248,10 +249,10 @@ const siteDomain = siteUrl.replace(/^https?:\/\//, '')
         <p>
           To exercise any of these rights, please contact us at
           <ULink
-            to="mailto:mortalitywatch@proton.me"
+            :to="`mailto:${supportEmail}`"
             class="text-primary hover:underline"
           >
-            mortalitywatch@proton.me
+            {{ supportEmail }}
           </ULink>. We will respond to your request within 30 days (or as required by applicable law).
         </p>
         <p>
@@ -366,10 +367,10 @@ const siteDomain = siteUrl.replace(/^https?:\/\//, '')
           not knowingly collect personal information from children. If you believe we have collected
           information from a child, please contact us at
           <ULink
-            to="mailto:mortalitywatch@proton.me"
+            :to="`mailto:${supportEmail}`"
             class="text-primary hover:underline"
           >
-            mortalitywatch@proton.me
+            {{ supportEmail }}
           </ULink>, and we will promptly delete such information.
         </p>
       </div>
@@ -412,10 +413,10 @@ const siteDomain = siteUrl.replace(/^https?:\/\//, '')
         <p class="font-semibold">
           Email:
           <ULink
-            to="mailto:mortalitywatch@proton.me"
+            :to="`mailto:${supportEmail}`"
             class="text-primary hover:underline"
           >
-            mortalitywatch@proton.me
+            {{ supportEmail }}
           </ULink>
         </p>
         <p class="mt-4">

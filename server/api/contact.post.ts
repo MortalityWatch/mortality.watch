@@ -52,8 +52,9 @@ export default defineEventHandler(async (event) => {
 
   const { name, email, subject, message, chartUrl } = result.data
 
-  // Get support email from environment or use default
-  const supportEmail = process.env.SUPPORT_EMAIL || 'mortalitywatch@proton.me'
+  // Get support email from runtime config
+  const config = useRuntimeConfig()
+  const supportEmail = config.public.supportEmail
 
   // Build email body
   const emailBody = `
