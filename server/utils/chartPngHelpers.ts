@@ -430,7 +430,7 @@ export async function fetchChartData(state: ChartRenderState) {
   // This matches the client's getBaseKeysForFetch which passes !isPopulationType(), not showBaseline.
   const isPopulationType = state.type === 'population'
   const baseKeys = !isPopulationType
-    ? getKeyForType(state.type, !isPopulationType, state.standardPopulation, false, state.showPredictionInterval)
+    ? getKeyForType(state.type, !isPopulationType, state.standardPopulation, false, state.showPredictionInterval, { leAdjusted: state.leAdjusted, chartType: state.chartType })
     : undefined
 
   // Calculate startDateIndex from sliderStart to match client behavior

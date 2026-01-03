@@ -141,16 +141,24 @@ export function presetToExplorerUrl(preset: DiscoveryPreset, country: string): s
     params.set('e', '1')
     params.set('sb', '1') // show baseline
     params.set('bm', preset.baselineMethod)
-    params.set('bdf', preset.baselineDateFrom)
-    params.set('bdt', preset.baselineDateTo)
+    params.set('bf', preset.baselineDateFrom)
+    params.set('bt', preset.baselineDateTo)
   }
 
   if (preset.view === 'zscore') {
     params.set('zs', '1')
     params.set('sb', '1') // show baseline
     params.set('bm', preset.baselineMethod)
-    params.set('bdf', preset.baselineDateFrom)
-    params.set('bdt', preset.baselineDateTo)
+    params.set('bf', preset.baselineDateFrom)
+    params.set('bt', preset.baselineDateTo)
+  }
+
+  // Normal view: show baseline (except for population)
+  if (preset.view === 'normal' && preset.metric !== 'population') {
+    params.set('sb', '1') // show baseline
+    params.set('bm', preset.baselineMethod)
+    params.set('bf', preset.baselineDateFrom)
+    params.set('bt', preset.baselineDateTo)
   }
 
   return `/explorer?${params.toString()}`
@@ -188,16 +196,24 @@ export function presetToThumbnailUrl(
     params.set('e', '1')
     params.set('sb', '1')
     params.set('bm', preset.baselineMethod)
-    params.set('bdf', preset.baselineDateFrom)
-    params.set('bdt', preset.baselineDateTo)
+    params.set('bf', preset.baselineDateFrom)
+    params.set('bt', preset.baselineDateTo)
   }
 
   if (preset.view === 'zscore') {
     params.set('zs', '1')
     params.set('sb', '1')
     params.set('bm', preset.baselineMethod)
-    params.set('bdf', preset.baselineDateFrom)
-    params.set('bdt', preset.baselineDateTo)
+    params.set('bf', preset.baselineDateFrom)
+    params.set('bt', preset.baselineDateTo)
+  }
+
+  // Normal view: show baseline (except for population)
+  if (preset.view === 'normal' && preset.metric !== 'population') {
+    params.set('sb', '1')
+    params.set('bm', preset.baselineMethod)
+    params.set('bf', preset.baselineDateFrom)
+    params.set('bt', preset.baselineDateTo)
   }
 
   // Thumbnail display options
