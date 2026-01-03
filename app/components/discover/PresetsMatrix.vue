@@ -67,6 +67,7 @@
           v-for="metric in filteredMetrics"
           :key="`${chartType}-${metric}`"
         >
+          <!-- Chart card when metric is valid for this chart type -->
           <NuxtLink
             v-if="getViewForMetric(metric) && isMetricValidForChartType(metric, chartType)"
             :to="getCardUrl(metric, chartType, getViewForMetric(metric)!)"
@@ -95,6 +96,29 @@
             <!-- Locked overlay -->
             <UiLockedOverlay v-if="isLocked(getViewForMetric(metric)!)" />
           </NuxtLink>
+
+          <!-- Placeholder for unavailable metric/chartType combinations to maintain grid position -->
+          <div
+            v-else
+            class="rounded-lg border border-dashed border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 overflow-hidden"
+          >
+            <!-- Header with title -->
+            <div class="px-3 py-2 text-center border-b border-dashed border-gray-200 dark:border-gray-800">
+              <h4 class="text-sm font-semibold text-gray-400 dark:text-gray-600">
+                {{ metricInfo[metric].label }}
+              </h4>
+            </div>
+
+            <!-- Placeholder content -->
+            <div
+              class="flex items-center justify-center bg-gray-100/50 dark:bg-gray-800/50"
+              style="aspect-ratio: 16/9"
+            >
+              <span class="text-xs text-gray-400 dark:text-gray-600 text-center px-4">
+                {{ getUnavailableReason(metric, chartType) }}
+              </span>
+            </div>
+          </div>
         </template>
       </div>
     </div>
@@ -220,5 +244,26 @@ function getThumbnailUrl(metric: Metric, chartType: ChartType, view: View): stri
   return presetToThumbnailUrl(preset, props.country, {
     darkMode: colorMode.value === 'dark'
   })
+}
+
+// Get reason why a metric is unavailable for a chart type
+function getUnavailableReason(metric: Metric, chartType: ChartType): string {
+  // Check if it's a view incompatibility (e.g., Population with excess/zscore)
+  if (!getViewForMetric(metric)) {
+    if (metric === 'population') {
+      return 'Population only available in Raw Values view'
+    }
+    return 'Not available for this view'
+  }
+
+  // Check if it's a chart type incompatibility (e.g., ASD with weekly)
+  if (!isMetricValidForChartType(metric, chartType)) {
+    if (metric === 'asd') {
+      return 'Only available for yearly periods'
+    }
+    return 'Not available for this period'
+  }
+
+  return 'Not available'
 }
 </script>
