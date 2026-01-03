@@ -87,7 +87,7 @@
 <script setup lang="ts">
 import type { Country } from '@/model'
 import { loadCountryMetadata } from '@/lib/data/queries'
-import { getFlagEmoji } from '@/lib/discover/countryUtils'
+import { getFlagEmoji, formatJurisdictionName } from '@/lib/discover/countryUtils'
 
 const route = useRoute()
 const router = useRouter()
@@ -124,7 +124,8 @@ const hasAgeData = computed(() => {
 
 // Country name
 const countryName = computed(() => {
-  return countryData.value?.jurisdiction || iso3c.value
+  if (!countryData.value?.jurisdiction) return iso3c.value
+  return formatJurisdictionName(countryData.value.jurisdiction)
 })
 
 // Flag emoji
