@@ -569,7 +569,8 @@ export function generateChartConfig(
       true, // isSSR
       state.showLegend,
       state.showXAxisTitle,
-      state.showYAxisTitle
+      state.showYAxisTitle,
+      state.autoHideLegend
     )
 
     // Add the chart URL for QR code (only if showQrCode is true)
@@ -599,7 +600,8 @@ export function generateChartConfig(
       state.chartStyle as 'bar' | 'line',
       state.showLegend,
       state.showXAxisTitle,
-      state.showYAxisTitle
+      state.showYAxisTitle,
+      state.autoHideLegend
     )
 
     // Add the chart URL for QR code (only if showQrCode is true)

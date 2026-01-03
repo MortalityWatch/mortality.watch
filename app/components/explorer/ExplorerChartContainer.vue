@@ -21,6 +21,7 @@ const props = defineProps<{
   showCaption: boolean
   showTitle: boolean
   showLegend: boolean
+  autoHideLegend: boolean
   showXAxisTitle: boolean
   showYAxisTitle: boolean
   decimals: string
@@ -86,6 +87,7 @@ defineExpose({
         :show-caption="props.showCaption"
         :show-title="props.showTitle"
         :show-legend="props.showLegend"
+        :auto-hide-legend="props.autoHideLegend"
         :show-x-axis-title="props.showXAxisTitle"
         :show-y-axis-title="props.showYAxisTitle"
         :decimals="props.decimals"

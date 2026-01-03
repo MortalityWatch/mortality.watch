@@ -110,6 +110,7 @@ export interface ExplorerStateValues {
   showCaption: boolean
   showTitle: boolean
   showLegend: boolean
+  autoHideLegend: boolean
   showXAxisTitle: boolean
   showYAxisTitle: boolean
   decimals: string

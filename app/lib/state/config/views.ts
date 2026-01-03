@@ -90,6 +90,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       showCaption: true,
       showTitle: true,
       showLegend: true,
+      autoHideLegend: false, // When true, auto-hides legend for single-series charts
       showXAxisTitle: true,
       showYAxisTitle: true,
       userColors: undefined as string[] | undefined,

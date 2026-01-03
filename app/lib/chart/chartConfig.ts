@@ -45,23 +45,32 @@ function countVisibleLegendEntries(data: MortalityChartData): number {
 }
 
 /**
- * Determine if legend should be shown based on auto-hide logic.
+ * Determine if legend should be shown based on user preference and auto-hide logic.
  *
- * Auto-hides the legend when there's only a single visible series
- * (single country with single age group). This reduces visual clutter
- * for simple charts and thumbnails.
+ * When autoHideLegend is enabled (opt-in), auto-hides the legend when there's
+ * only a single visible series (single country with single age group).
+ * This is primarily used for thumbnails to reduce visual clutter.
  *
  * @param showLegend - User preference for showing legend
  * @param data - Chart data containing datasets
+ * @param autoHideLegend - Whether to auto-hide legend for single-series charts (default: false)
  * @returns Whether to display the legend
  */
-function shouldShowLegend(showLegend: boolean, data: MortalityChartData): boolean {
+function shouldShowLegend(
+  showLegend: boolean,
+  data: MortalityChartData,
+  autoHideLegend: boolean = false
+): boolean {
   // If user explicitly wants to hide legend, respect that
   if (!showLegend) return false
 
-  // Auto-hide legend when there's only one visible series
-  const visibleEntries = countVisibleLegendEntries(data)
-  return visibleEntries > 1
+  // Only auto-hide when explicitly enabled (e.g., for thumbnails)
+  if (autoHideLegend) {
+    const visibleEntries = countVisibleLegendEntries(data)
+    return visibleEntries > 1
+  }
+
+  return true
 }
 
 /**
@@ -176,6 +185,7 @@ export const makeChartConfig = (
  * @param showLegend - Whether to display chart legend (default: true)
  * @param showXAxisTitle - Whether to display x-axis title (default: true)
  * @param showYAxisTitle - Whether to display y-axis title (default: true)
+ * @param autoHideLegend - Auto-hide legend for single-series charts (default: false, used for thumbnails)
  * @returns Complete Chart.js configuration object with plugins, scales, and data
  *
  * @example
@@ -215,7 +225,8 @@ export const makeBarLineChartConfig = (
   chartStyle: 'bar' | 'line' = 'line',
   showLegend: boolean = true,
   showXAxisTitle: boolean = true,
-  showYAxisTitle: boolean = true
+  showYAxisTitle: boolean = true,
+  autoHideLegend: boolean = false
 ) => {
   // Feature gating: Only Pro users (tier 2) can hide the watermark/QR code
   if (userTier !== undefined && userTier < 2) {
@@ -226,8 +237,8 @@ export const makeBarLineChartConfig = (
   const isCountType = isDeathsType || isPopulationType
   const showDecimals = !isCountType
 
-  // Auto-hide legend when there's only one visible series
-  const effectiveShowLegend = shouldShowLegend(showLegend, data)
+  // Determine effective legend visibility (respects autoHideLegend for single-series charts)
+  const effectiveShowLegend = shouldShowLegend(showLegend, data, autoHideLegend)
 
   // Logo and QR code plugins overlay the chart, so no padding needed for them
   // They draw at absolute positions in corners without affecting chart layout
@@ -355,7 +366,8 @@ export const makeMatrixChartConfig = (
   isSSR: boolean = false,
   showLegend: boolean = true,
   showXAxisTitle: boolean = true,
-  showYAxisTitle: boolean = true
+  showYAxisTitle: boolean = true,
+  autoHideLegend: boolean = false
 ) => {
   const config = makeBarLineChartConfig(
     data,
@@ -375,7 +387,8 @@ export const makeMatrixChartConfig = (
     'line', // Will be overridden - matrix uses its own data handling
     showLegend,
     showXAxisTitle,
-    showYAxisTitle
+    showYAxisTitle,
+    autoHideLegend
   ) as unknown as ChartJSConfig<'matrix', MortalityMatrixDataPoint[]>
 
   // Update plugin config with matrix chart style

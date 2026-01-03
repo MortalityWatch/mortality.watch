@@ -41,6 +41,7 @@ const emit = defineEmits<{
   showCaptionChanged: [value: boolean]
   showTitleChanged: [value: boolean]
   showLegendChanged: [value: boolean]
+  autoHideLegendChanged: [value: boolean]
   showXAxisTitleChanged: [value: boolean]
   showYAxisTitleChanged: [value: boolean]
   decimalsChanged: [value: string]
@@ -144,6 +145,7 @@ const baselineSliderValue = computed(() => {
       :show-caption="props.state.showCaption.value"
       :show-title="props.state.showTitle.value"
       :show-legend="props.state.showLegend.value"
+      :auto-hide-legend="props.state.autoHideLegend.value"
       :show-x-axis-title="props.state.showXAxisTitle.value"
       :show-y-axis-title="props.state.showYAxisTitle.value"
       :decimals="props.state.decimals.value"
@@ -171,6 +173,7 @@ const baselineSliderValue = computed(() => {
       @show-caption-changed="emit('showCaptionChanged', $event)"
       @show-title-changed="emit('showTitleChanged', $event)"
       @show-legend-changed="emit('showLegendChanged', $event)"
+      @auto-hide-legend-changed="emit('autoHideLegendChanged', $event)"
       @show-x-axis-title-changed="emit('showXAxisTitleChanged', $event)"
       @show-y-axis-title-changed="emit('showYAxisTitleChanged', $event)"
       @decimals-changed="emit('decimalsChanged', $event)"
