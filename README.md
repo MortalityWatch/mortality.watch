@@ -562,18 +562,7 @@ NUXT_OAUTH_GOOGLE_CLIENT_SECRET=your_client_secret
 
 ### Session Encryption
 
-Social login requires a session encryption key:
-
-```bash
-# Generate a secure random key
-openssl rand -base64 32
-```
-
-Add to `.env`:
-
-```bash
-NUXT_SESSION_PASSWORD=your_generated_key
-```
+Social login session encryption automatically reuses your existing `JWT_SECRET` - no additional configuration needed.
 
 ### Local Development
 
