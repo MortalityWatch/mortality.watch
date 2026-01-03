@@ -98,12 +98,12 @@ export default defineNuxtConfig({
           'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
           'Content-Security-Policy': [
             'default-src \'self\'',
-            'script-src \'self\' \'unsafe-inline\' \'unsafe-eval\' https://s3.mortality.watch https://stats.mortality.watch https://ua.mortality.watch https://js.stripe.com https://static.cloudflareinsights.com',
+            'script-src \'self\' \'unsafe-inline\' \'unsafe-eval\' https://s3.mortality.watch https://stats.mortality.watch https://ua.e7ad.cc https://js.stripe.com https://static.cloudflareinsights.com',
             'style-src \'self\' \'unsafe-inline\'',
             'img-src \'self\' data: https:',
             'font-src \'self\' data:',
             // Allow localhost for local stats API development and Umami analytics
-            'connect-src \'self\' https://s3.mortality.watch https://stats.mortality.watch https://ua.mortality.watch https://api.stripe.com http://localhost:*',
+            'connect-src \'self\' https://s3.mortality.watch https://stats.mortality.watch https://ua.e7ad.cc https://api.stripe.com http://localhost:*',
             'frame-src https://js.stripe.com',
             'child-src https://js.stripe.com'
           ].join('; ')
@@ -124,7 +124,7 @@ export default defineNuxtConfig({
   // Umami Analytics configuration
   umami: {
     id: process.env.NUXT_UMAMI_ID || '',
-    host: process.env.NUXT_UMAMI_HOST || 'https://ua.mortality.watch',
+    host: process.env.NUXT_UMAMI_HOST || 'https://ua.e7ad.cc',
     autoTrack: true,
     ignoreLocalhost: true,
     enabled: !!process.env.NUXT_UMAMI_ID
