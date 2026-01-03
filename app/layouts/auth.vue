@@ -1,13 +1,21 @@
+<script setup lang="ts">
+const router = useRouter()
+
+function goBack() {
+  router.back()
+}
+</script>
+
 <template>
   <div class="min-h-screen flex flex-col">
     <!-- Back Button -->
     <UButton
       icon="i-lucide-chevron-left"
-      to="/"
       size="xl"
       color="neutral"
       variant="subtle"
       class="absolute left-8 top-8 rounded-full z-10"
+      @click="goBack"
     />
 
     <!-- Logo -->
