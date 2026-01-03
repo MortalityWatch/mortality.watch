@@ -59,11 +59,14 @@ export function arraysEqual<T>(a: T[] | undefined, b: T[] | undefined): boolean 
 }
 
 /**
- * Compare two values for equality (with deep comparison for arrays)
+ * Compare two values for equality (with shallow comparison for arrays)
+ *
+ * Note: Array comparison is shallow - nested objects/arrays are compared by reference.
+ * This is intentional for performance and matches the comparison needs of state fields.
  *
  * @param a - First value
  * @param b - Second value
- * @returns true if values are equal (arrays compared element-wise, primitives with ===)
+ * @returns true if values are equal (arrays compared element-wise with ===, primitives with ===)
  */
 export function valuesEqual(a: unknown, b: unknown): boolean {
   if (Array.isArray(a) && Array.isArray(b)) {

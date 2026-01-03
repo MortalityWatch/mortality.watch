@@ -33,7 +33,7 @@ export function getUniqueYears(labels: string[]): string[] {
     new Set(
       labels
         .filter((l): l is string => Boolean(l) && typeof l === 'string')
-        .map(l => l.substring(0, 4))
+        .map(extractYear)
     )
   )
 }
