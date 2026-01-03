@@ -29,6 +29,7 @@
         "jsonwebtoken": "^9.0.3",
         "nuxt": "^4.2.2",
         "nuxt-og-image": "^5.1.13",
+        "nuxt-umami": "^3.2.1",
         "papaparse": "^5.5.3",
         "qrcode": "^1.5.4",
         "resend": "^6.6.0",
@@ -1858,6 +1859,8 @@
 
     "nuxt-site-config-kit": ["nuxt-site-config-kit@3.2.11", "", { "dependencies": { "@nuxt/kit": "^4.1.3", "pkg-types": "^2.3.0", "site-config-stack": "3.2.11", "std-env": "^3.10.0", "ufo": "^1.6.1" } }, ""],
 
+    "nuxt-umami": ["nuxt-umami@3.2.1", "", { "dependencies": { "@nuxt/kit": "^3.15.4", "request-ip": "^3.3.0" } }, "sha512-82cf3kcrMn4Iq0rJ2Blfl48AqLWqRubEpxOinOoxqW7taZAd5SgZcCdCj7y4qXSt0W5DhBYgaq4IboyGFHoVUQ=="],
+
     "nypm": ["nypm@0.6.2", "", { "dependencies": { "citty": "^0.1.6", "consola": "^3.4.2", "pathe": "^2.0.3", "pkg-types": "^2.3.0", "tinyexec": "^1.0.1" }, "bin": "dist/cli.mjs" }, ""],
 
     "object-deep-merge": ["object-deep-merge@2.0.0", "", {}, ""],
@@ -2091,6 +2094,8 @@
     "regjsparser": ["regjsparser@0.13.0", "", { "dependencies": { "jsesc": "~3.1.0" }, "bin": "bin/parser" }, ""],
 
     "reka-ui": ["reka-ui@2.6.0", "", { "dependencies": { "@floating-ui/dom": "^1.6.13", "@floating-ui/vue": "^1.1.6", "@internationalized/date": "^3.5.0", "@internationalized/number": "^3.5.0", "@tanstack/vue-virtual": "^3.12.0", "@vueuse/core": "^12.5.0", "@vueuse/shared": "^12.5.0", "aria-hidden": "^1.2.4", "defu": "^6.1.4", "ohash": "^2.0.11" }, "peerDependencies": { "vue": ">= 3.2.0" } }, ""],
+
+    "request-ip": ["request-ip@3.3.0", "", {}, "sha512-cA6Xh6e0fDBBBwH77SLJaJPBmD3nWVAcF9/XAcsrIHdjhFzFiB5aNQFytdjCGPezU3ROwrR11IddKAM08vohxA=="],
 
     "require-directory": ["require-directory@2.1.1", "", {}, ""],
 
@@ -2744,21 +2749,11 @@
 
     "nuxt-site-config-kit/@nuxt/kit": ["@nuxt/kit@4.2.1", "", { "dependencies": { "c12": "^3.3.1", "consola": "^3.4.2", "defu": "^6.1.4", "destr": "^2.0.5", "errx": "^0.1.0", "exsolve": "^1.0.7", "ignore": "^7.0.5", "jiti": "^2.6.1", "klona": "^2.0.6", "mlly": "^1.8.0", "ohash": "^2.0.11", "pathe": "^2.0.3", "pkg-types": "^2.3.0", "rc9": "^2.1.2", "scule": "^1.3.0", "semver": "^7.7.3", "tinyglobby": "^0.2.15", "ufo": "^1.6.1", "unctx": "^2.4.1", "untyped": "^2.0.0" } }, ""],
 
-    "nypm/tinyexec": ["tinyexec@1.0.2", "", {}, ""],
+    "nuxt-umami/@nuxt/kit": ["@nuxt/kit@3.20.1", "", { "dependencies": { "c12": "^3.3.1", "consola": "^3.4.2", "defu": "^6.1.4", "destr": "^2.0.5", "errx": "^0.1.0", "exsolve": "^1.0.7", "ignore": "^7.0.5", "jiti": "^2.6.1", "klona": "^2.0.6", "knitwork": "^1.2.0", "mlly": "^1.8.0", "ohash": "^2.0.11", "pathe": "^2.0.3", "pkg-types": "^2.3.0", "rc9": "^2.1.2", "scule": "^1.3.0", "semver": "^7.7.3", "tinyglobby": "^0.2.15", "ufo": "^1.6.1", "unctx": "^2.4.1", "untyped": "^2.0.0" } }, ""],
 
     "path-scurry/lru-cache": ["lru-cache@10.4.3", "", {}, ""],
 
     "playwright/fsevents": ["fsevents@2.3.2", "", { "os": "darwin" }, ""],
-
-    "postcss-calc/postcss-selector-parser": ["postcss-selector-parser@7.1.0", "", { "dependencies": { "cssesc": "^3.0.0", "util-deprecate": "^1.0.2" } }, ""],
-
-    "postcss-discard-comments/postcss-selector-parser": ["postcss-selector-parser@7.1.0", "", { "dependencies": { "cssesc": "^3.0.0", "util-deprecate": "^1.0.2" } }, ""],
-
-    "postcss-merge-rules/postcss-selector-parser": ["postcss-selector-parser@7.1.0", "", { "dependencies": { "cssesc": "^3.0.0", "util-deprecate": "^1.0.2" } }, ""],
-
-    "postcss-minify-selectors/postcss-selector-parser": ["postcss-selector-parser@7.1.0", "", { "dependencies": { "cssesc": "^3.0.0", "util-deprecate": "^1.0.2" } }, ""],
-
-    "postcss-unique-selectors/postcss-selector-parser": ["postcss-selector-parser@7.1.0", "", { "dependencies": { "cssesc": "^3.0.0", "util-deprecate": "^1.0.2" } }, ""],
 
     "prompts/kleur": ["kleur@3.0.3", "", {}, ""],
 
@@ -2793,8 +2788,6 @@
     "string-width-cjs/strip-ansi": ["strip-ansi@6.0.1", "", { "dependencies": { "ansi-regex": "^5.0.1" } }, ""],
 
     "strip-ansi-cjs/ansi-regex": ["ansi-regex@5.0.1", "", {}, ""],
-
-    "stylehacks/postcss-selector-parser": ["postcss-selector-parser@7.1.0", "", { "dependencies": { "cssesc": "^3.0.0", "util-deprecate": "^1.0.2" } }, ""],
 
     "svgo/commander": ["commander@11.1.0", "", {}, ""],
 
@@ -3168,8 +3161,6 @@
 
     "nitropack/chokidar/readdirp": ["readdirp@4.1.2", "", {}, ""],
 
-    "nitropack/unstorage/chokidar": ["chokidar@4.0.3", "", { "dependencies": { "readdirp": "^4.0.1" } }, ""],
-
     "nitropack/unstorage/lru-cache": ["lru-cache@10.4.3", "", {}, ""],
 
     "node-fetch/whatwg-url/tr46": ["tr46@0.0.3", "", {}, ""],
@@ -3179,6 +3170,8 @@
     "nuxt-site-config-kit/@nuxt/kit/ignore": ["ignore@7.0.5", "", {}, ""],
 
     "nuxt-site-config/@nuxt/kit/ignore": ["ignore@7.0.5", "", {}, ""],
+
+    "nuxt-umami/@nuxt/kit/ignore": ["ignore@7.0.5", "", {}, ""],
 
     "readdir-glob/minimatch/brace-expansion": ["brace-expansion@2.0.2", "", { "dependencies": { "balanced-match": "^1.0.0" } }, ""],
 
@@ -3258,8 +3251,6 @@
 
     "unimport/pkg-types/confbox": ["confbox@0.1.8", "", {}, ""],
 
-    "unimport/pkg-types/pathe": ["pathe@2.0.3", "", {}, ""],
-
     "unplugin-vue-components/chokidar/readdirp": ["readdirp@4.1.2", "", {}, ""],
 
     "unstorage/chokidar/readdirp": ["readdirp@4.1.2", "", {}, ""],
@@ -3320,11 +3311,7 @@
 
     "@vue-macros/common/@vue/compiler-sfc/@vue/compiler-core/entities": ["entities@4.5.0", "", {}, ""],
 
-    "@vue-macros/common/@vue/compiler-sfc/@vue/compiler-core/estree-walker": ["estree-walker@2.0.2", "", {}, ""],
-
     "@vue/babel-plugin-resolve-type/@vue/compiler-sfc/@vue/compiler-core/entities": ["entities@4.5.0", "", {}, ""],
-
-    "@vue/babel-plugin-resolve-type/@vue/compiler-sfc/@vue/compiler-core/estree-walker": ["estree-walker@2.0.2", "", {}, ""],
 
     "@vue/language-core/@vue/compiler-dom/@vue/compiler-core/entities": ["entities@4.5.0", "", {}, ""],
 
@@ -3345,8 +3332,6 @@
     "fontless/unstorage/chokidar/readdirp": ["readdirp@4.1.2", "", {}, ""],
 
     "ipx/unstorage/chokidar/readdirp": ["readdirp@4.1.2", "", {}, ""],
-
-    "nitropack/unstorage/chokidar/readdirp": ["readdirp@4.1.2", "", {}, ""],
 
     "reka-ui/@vueuse/core/vue/@vue/compiler-dom": ["@vue/compiler-dom@3.5.24", "", { "dependencies": { "@vue/compiler-core": "3.5.24", "@vue/shared": "3.5.24" } }, ""],
 
@@ -3432,8 +3417,6 @@
 
     "vaul-vue/vue/@vue/compiler-sfc/@vue/compiler-core/entities": ["entities@4.5.0", "", {}, ""],
 
-    "vaul-vue/vue/@vue/compiler-sfc/@vue/compiler-core/estree-walker": ["estree-walker@2.0.2", "", {}, ""],
-
     "yargs/find-up/locate-path/p-locate/p-limit": ["p-limit@2.3.0", "", { "dependencies": { "p-try": "^2.0.0" } }, ""],
 
     "eslint/find-up/locate-path/p-locate/p-limit/yocto-queue": ["yocto-queue@0.1.0", "", {}, ""],
@@ -3444,14 +3427,10 @@
 
     "reka-ui/@vueuse/core/vue/@vue/compiler-sfc/@vue/compiler-core/entities": ["entities@4.5.0", "", {}, ""],
 
-    "reka-ui/@vueuse/core/vue/@vue/compiler-sfc/@vue/compiler-core/estree-walker": ["estree-walker@2.0.2", "", {}, ""],
-
     "reka-ui/@vueuse/shared/vue/@vue/compiler-dom/@vue/compiler-core/entities": ["entities@4.5.0", "", {}, ""],
 
     "reka-ui/@vueuse/shared/vue/@vue/compiler-dom/@vue/compiler-core/estree-walker": ["estree-walker@2.0.2", "", {}, ""],
 
     "reka-ui/@vueuse/shared/vue/@vue/compiler-sfc/@vue/compiler-core/entities": ["entities@4.5.0", "", {}, ""],
-
-    "reka-ui/@vueuse/shared/vue/@vue/compiler-sfc/@vue/compiler-core/estree-walker": ["estree-walker@2.0.2", "", {}, ""],
   }
 }

@@ -164,6 +164,12 @@
 <script setup lang="ts">
 // Auth composable for user tier detection
 const { tier } = useAuth()
+const { trackSubscriptionView } = useAnalytics()
+
+// Track features page view as subscription view
+onMounted(() => {
+  trackSubscriptionView()
+})
 
 // Page meta
 definePageMeta({

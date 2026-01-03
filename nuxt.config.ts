@@ -2,15 +2,16 @@
 import { fileURLToPath } from 'node:url'
 
 export default defineNuxtConfig({
-  // Enable SSR globally
-
   modules: [
     '@nuxt/eslint',
     '@nuxt/image',
     '@nuxt/ui',
     '@vueuse/nuxt',
-    'nuxt-og-image'
+    'nuxt-og-image',
+    'nuxt-umami'
   ],
+
+  // Enable SSR globally
   ssr: true,
 
   devtools: {
@@ -91,12 +92,12 @@ export default defineNuxtConfig({
           'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
           'Content-Security-Policy': [
             'default-src \'self\'',
-            'script-src \'self\' \'unsafe-inline\' \'unsafe-eval\' https://s3.mortality.watch https://stats.mortality.watch https://js.stripe.com',
+            'script-src \'self\' \'unsafe-inline\' \'unsafe-eval\' https://s3.mortality.watch https://stats.mortality.watch https://ua.mortality.watch https://js.stripe.com',
             'style-src \'self\' \'unsafe-inline\'',
             'img-src \'self\' data: https:',
             'font-src \'self\' data:',
-            // Allow localhost for local stats API development
-            'connect-src \'self\' https://s3.mortality.watch https://stats.mortality.watch https://api.stripe.com http://localhost:*',
+            // Allow localhost for local stats API development and Umami analytics
+            'connect-src \'self\' https://s3.mortality.watch https://stats.mortality.watch https://ua.mortality.watch https://api.stripe.com http://localhost:*',
             'frame-src https://js.stripe.com',
             'child-src https://js.stripe.com'
           ].join('; ')
@@ -112,5 +113,14 @@ export default defineNuxtConfig({
         braceStyle: '1tbs'
       }
     }
+  },
+
+  // Umami Analytics configuration
+  umami: {
+    id: process.env.NUXT_UMAMI_ID || '',
+    host: process.env.NUXT_UMAMI_HOST || 'https://ua.mortality.watch',
+    autoTrack: true,
+    ignoreLocalhost: true,
+    enabled: !!process.env.NUXT_UMAMI_ID
   }
 })
