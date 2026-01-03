@@ -179,7 +179,7 @@ SENTRY_DSN=your_sentry_dsn
 
 # Umami Analytics (optional)
 NUXT_UMAMI_ID=your_website_id          # Get from Umami dashboard
-NUXT_UMAMI_HOST=https://ua.mortality.watch  # Your Umami instance URL
+NUXT_UMAMI_HOST=https://ua.e7ad.cc  # Your Umami instance URL
 
 # Stripe (for subscriptions)
 STRIPE_PUBLISHABLE_KEY=pk_test_... # or pk_live_... for production
