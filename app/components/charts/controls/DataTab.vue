@@ -2,8 +2,13 @@
 import { computed } from 'vue'
 import { types, standardPopulations } from '@/model'
 import PeriodOfTimePicker from '@/components/shared/PeriodOfTimePicker.vue'
-import type { RadioGroupItem } from '@nuxt/ui'
 import type { ViewType } from '@/lib/state'
+
+interface ViewOption {
+  label: string
+  value: string
+  description: string
+}
 
 // Feature access for Z-Score
 const { can } = useFeatureAccess()
@@ -38,7 +43,7 @@ const typesWithLabels = computed(() => types.map(t => ({
 const standardPopulationsWithLabels = standardPopulations.map(t => ({ ...t, label: t.name }))
 
 // View options for radio group - Z-Score handled separately with FeatureGate
-const baseViewOptions: RadioGroupItem[] = [
+const baseViewOptions: ViewOption[] = [
   {
     label: 'Raw Values',
     value: 'mortality',
@@ -51,7 +56,7 @@ const baseViewOptions: RadioGroupItem[] = [
   }
 ]
 
-const zscoreOption: RadioGroupItem = {
+const zscoreOption: ViewOption = {
   label: 'Z-Score',
   value: 'zscore',
   description: 'How many standard deviations from baseline (±2 = significant)'
@@ -112,7 +117,10 @@ const viewModel = computed({
         data-testid="view-selector"
       >
         <!-- Raw Values and Excess options -->
-        <template v-for="option in baseViewOptions" :key="option.value">
+        <template
+          v-for="option in baseViewOptions"
+          :key="option.value"
+        >
           <label
             class="flex items-start gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
             :class="{ 'bg-primary-50 dark:bg-primary-900/20': viewModel === option.value, 'opacity-50 pointer-events-none': props.isPopulationType }"
