@@ -124,27 +124,6 @@ export function getChartResponseHeaders(
   }
 }
 
-/**
- * Determine the data key based on chart type
- * @param type - Chart type (cmr, asmr, le, deaths, population)
- * @returns Data key for chart data fetching
- */
-export function getDataKey(type: string): string {
-  if (type.startsWith('asmr')) {
-    const standardPopulation = type.split('_')[1] || 'esp2013'
-    return `asmr_${standardPopulation}`
-  }
-
-  const typeMap: Record<string, string> = {
-    cmr: 'cmr',
-    le: 'le',
-    deaths: 'deaths',
-    asd: 'deaths' // ASD uses deaths as the base data key
-  }
-
-  return typeMap[type] || 'population'
-}
-
 interface ASDResult {
   asd: (number | null)[]
   asd_bl: (number | null)[]
@@ -418,7 +397,16 @@ export async function fetchChartData(state: ChartRenderState) {
   }
 
   // 4. Fetch raw chart data using DataLoaderService
-  const dataKey = getDataKey(state.type)
+  // Use getKeyForType to compute dataKey - matches client's dataKey computed property
+  // in useExplorerDataOrchestration.ts which uses getKeyForType(...)[0]
+  const dataKey = getKeyForType(
+    state.type,
+    state.showBaseline,
+    state.standardPopulation,
+    false, // isExcess
+    false, // includePi
+    { leAdjusted: state.leAdjusted, chartType: state.chartType }
+  )[0]
 
   // Get baseline keys for fetching (similar to useExplorerHelpers.getBaseKeysForFetch)
   // Population type doesn't need baseline
