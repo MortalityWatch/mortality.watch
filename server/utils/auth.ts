@@ -97,12 +97,12 @@ function getJwtSecret(): string {
  *
  * @example
  * ```typescript
- * const hash = await hashPassword('user-password-123')
+ * const hash = await hashUserPassword('user-password-123')
  * // Returns: '$2a$12$...' (60 characters)
  * // Store this hash in database, never the plain password
  * ```
  */
-export async function hashPassword(password: string): Promise<string> {
+export async function hashUserPassword(password: string): Promise<string> {
   return await bcrypt.hash(password, 12)
 }
 
@@ -132,7 +132,7 @@ export async function hashPassword(password: string): Promise<string> {
  *
  * @example
  * ```typescript
- * const isValid = await verifyPassword('user-password-123', storedHash)
+ * const isValid = await verifyUserPassword('user-password-123', storedHash)
  * if (isValid) {
  *   // Password correct, proceed with login
  * } else {
@@ -140,7 +140,7 @@ export async function hashPassword(password: string): Promise<string> {
  * }
  * ```
  */
-export async function verifyPassword(
+export async function verifyUserPassword(
   password: string,
   hash: string
 ): Promise<boolean> {
@@ -528,7 +528,7 @@ export async function requireTier(event: H3Event, requiredTier: 0 | 1 | 2) {
  * // Returns: '3a7c9f2b1e4d8a6c...' (64 characters)
  *
  * // Store hashed version in database
- * const hashedToken = await hashPassword(resetToken)
+ * const hashedToken = await hashUserPassword(resetToken)
  * await db.update(users)
  *   .set({
  *     resetToken: hashedToken,
@@ -755,7 +755,7 @@ export async function handleSocialAuth(
       // Generate a random password hash for social users
       // They won't use it but the field is required
       const randomPassword = randomBytes(32).toString('hex')
-      const passwordHash = await hashPassword(randomPassword)
+      const passwordHash = await hashUserPassword(randomPassword)
 
       user = await db
         .insert(users)

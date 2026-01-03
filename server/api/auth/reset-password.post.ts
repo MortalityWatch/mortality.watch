@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { db, users } from '#db'
 import { eq } from 'drizzle-orm'
-import { hashPassword, hashToken, generateToken, setAuthToken } from '../../utils/auth'
+import { hashUserPassword, hashToken, generateToken, setAuthToken } from '../../utils/auth'
 
 const resetPasswordSchema = z.object({
   token: z.string().min(1, 'Reset token is required'),
@@ -54,7 +54,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Hash new password
-  const passwordHash = await hashPassword(password)
+  const passwordHash = await hashUserPassword(password)
 
   // Update user password, clear reset token, and verify email
   // If they can reset password via email, they control the email address
