@@ -1,5 +1,5 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
+  <div class="w-full px-4 py-8">
     <!-- Breadcrumb -->
     <div class="mb-6">
       <nav
@@ -74,98 +74,23 @@
       </UButton>
     </UCard>
 
-    <!-- Tabs -->
-    <UCard v-else>
-      <UTabs
-        v-model="activeTab"
-        :items="availableTabs"
-      >
-        <!-- LE Tab -->
-        <template #le>
-          <DiscoverMetricPresetsGrid
-            metric="le"
-            :country="iso3c"
-            :country-name="countryName"
-          />
-        </template>
-
-        <!-- ASD Tab (Pro feature) -->
-        <template #asd>
-          <div
-            v-if="!can('AGE_STANDARDIZED')"
-            class="py-12 text-center"
-          >
-            <UIcon
-              name="i-heroicons-lock-closed"
-              class="text-gray-400 size-12 mx-auto mb-4"
-            />
-            <p class="text-gray-600 dark:text-gray-400 mb-4">
-              Age-Standardized Deaths is a Pro feature
-            </p>
-            <UButton
-              :to="getFeatureUpgradeUrl('AGE_STANDARDIZED')"
-              color="primary"
-            >
-              Upgrade to Pro
-            </UButton>
-          </div>
-          <DiscoverMetricPresetsGrid
-            v-else
-            metric="asd"
-            :country="iso3c"
-            :country-name="countryName"
-          />
-        </template>
-
-        <!-- ASMR Tab -->
-        <template #asmr>
-          <DiscoverMetricPresetsGrid
-            metric="asmr"
-            :country="iso3c"
-            :country-name="countryName"
-          />
-        </template>
-
-        <!-- CMR Tab -->
-        <template #cmr>
-          <DiscoverMetricPresetsGrid
-            metric="cmr"
-            :country="iso3c"
-            :country-name="countryName"
-          />
-        </template>
-
-        <!-- Deaths Tab -->
-        <template #deaths>
-          <DiscoverMetricPresetsGrid
-            metric="deaths"
-            :country="iso3c"
-            :country-name="countryName"
-          />
-        </template>
-
-        <!-- Population Tab -->
-        <template #population>
-          <DiscoverMetricPresetsGrid
-            metric="population"
-            :country="iso3c"
-            :country-name="countryName"
-          />
-        </template>
-      </UTabs>
-    </UCard>
+    <!-- Presets Matrix -->
+    <DiscoverPresetsMatrix
+      v-else
+      :country="iso3c"
+      :country-name="countryName"
+      :has-age-data="hasAgeData"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import type { Country } from '@/model'
 import { loadCountryMetadata } from '@/lib/data/queries'
-import { getMetricTabs, metricInfo } from '@/lib/discover/constants'
 import { getFlagEmoji } from '@/lib/discover/countryUtils'
 
 const route = useRoute()
 const router = useRouter()
-const { can, getFeatureUpgradeUrl } = useFeatureAccess()
 
 // Get ISO3 code from route
 const iso3c = computed(() => route.params.iso3c as string)
@@ -174,7 +99,6 @@ const iso3c = computed(() => route.params.iso3c as string)
 const isLoading = ref(true)
 const loadError = ref<string | null>(null)
 const countryData = ref<Country | null>(null)
-const activeTab = ref<string>((route.query.tab as string) || 'le')
 
 // Load country data
 onMounted(async () => {
@@ -184,18 +108,7 @@ onMounted(async () => {
 
     if (!countryData.value) {
       router.replace('/discover/country')
-      return
     }
-
-    // Validate activeTab - reset to first available tab if current tab is not available
-    // This handles edge case where URL has ?tab=le but country lacks age data
-    nextTick(() => {
-      const tabValues = availableTabs.value.map(t => t.value as string)
-      if (!tabValues.includes(activeTab.value)) {
-        // Default to first available tab (cmr if no age data, le otherwise)
-        activeTab.value = tabValues[0] || 'cmr'
-      }
-    })
   } catch (error) {
     loadError.value = 'Failed to load country data. Please try again.'
     console.error('Failed to load country metadata:', error)
@@ -207,40 +120,6 @@ onMounted(async () => {
 // Check if country has age-stratified data
 const hasAgeData = computed(() => {
   return countryData.value?.has_asmr() ?? false
-})
-
-// Get available tabs based on country data
-const availableTabs = computed(() => {
-  const allTabs = getMetricTabs()
-
-  // Filter out LE, ASMR and ASD if country doesn't have age-stratified data
-  // LE requires age-stratified data because life expectancy is calculated from
-  // age-specific mortality rates
-  if (!hasAgeData.value) {
-    return allTabs.filter(tab => tab.value !== 'le' && tab.value !== 'asmr' && tab.value !== 'asd')
-  }
-
-  // Add Pro badge to ASD tab if user doesn't have access
-  return allTabs.map((tab) => {
-    if (tab.value === 'asd' && !can('AGE_STANDARDIZED')) {
-      return {
-        ...tab,
-        label: `${metricInfo.asd.label} (Pro)`
-      }
-    }
-    return tab
-  })
-})
-
-// Watch tab changes to update URL
-watch(activeTab, (newTab) => {
-  if (newTab === 'le') {
-    // Remove tab param for default
-    const { tab, ...rest } = route.query
-    router.replace({ query: Object.keys(rest).length ? rest : undefined })
-  } else {
-    router.replace({ query: { ...route.query, tab: newTab } })
-  }
 })
 
 // Country name
