@@ -18,17 +18,14 @@ import type {
   CountryDataRaw,
   DatasetRaw,
   AllChartData,
-  Dataset,
-  NumberEntryFields,
-  NumberArray,
-  StringArray,
-  DatasetEntry
+  NumberEntryFields
 } from '../../app/model'
-import { Country, CountryData, stringKeys, numberKeys } from '../../app/model'
-import { ChartPeriod, type ChartType } from '../../app/model/period'
-import { getObjectOfArrays, prefillUndefined, fromYearMonthString, left, right } from '../../app/utils'
+import { Country, CountryData } from '../../app/model'
 import { calculateBaselines } from '../utils/baselines'
 import { CACHE_CONFIG } from '../../app/lib/config/constants'
+// Import shared data processing functions - ensures identical behavior with client
+import { getAllChartLabels as sharedGetAllChartLabels } from '../../app/lib/data/labels'
+import { getAllChartData as sharedGetAllChartData } from '../../app/lib/data/aggregations'
 
 // Default configuration constants
 const DEFAULT_S3_BASE = 'https://s3.mortality.watch/data/mortality'
@@ -282,6 +279,9 @@ export class DataLoaderService {
   /**
    * Get all unique chart labels from raw data
    *
+   * Uses the shared getAllChartLabels function from app/lib/data/labels.ts
+   * to ensure identical behavior with client-side code.
+   *
    * @param rawData - Raw dataset
    * @param isAsmrType - Whether using ASMR data type
    * @param ageGroupFilter - Optional age group filter
@@ -296,32 +296,17 @@ export class DataLoaderService {
     countryCodeFilter?: string[],
     chartType?: string
   ): string[] {
-    const allLabels = new Set<string>()
-    const ageGroups = ageGroupFilter ?? Object.keys(rawData || {})
-    const countryCodes = countryCodeFilter ?? Object.keys(rawData.all ?? {})
-    const type = isAsmrType ? 'asmr_who' : 'cmr'
-
-    for (const ag of ageGroups) {
-      for (const iso3c of countryCodes) {
-        if (!rawData[ag] || !rawData[ag][iso3c]) continue
-        rawData[ag][iso3c].forEach((el: CountryData) => {
-          if (el[type as keyof CountryData] !== undefined) {
-            allLabels.add(el.date)
-          }
-        })
-      }
-    }
-
-    const result = Array.from(allLabels)
-    return this.sortLabels(result, chartType)
+    // Use shared function to ensure identical behavior with client
+    return sharedGetAllChartLabels(rawData, isAsmrType, ageGroupFilter, countryCodeFilter, chartType)
   }
 
   /**
    * Get all chart data with optional baseline calculations
    *
-   * Supports baseline calculations via external stats API. When baselineMethod,
-   * baselineDateFrom, and baselineDateTo are provided, this method will call
-   * the stats API to calculate baseline values, excess mortality, and z-scores.
+   * Uses the shared getAllChartData function from app/lib/data/aggregations.ts
+   * to ensure identical behavior with client-side code. The server-side
+   * baseline calculator is injected to handle server-specific concerns
+   * (circuit breaker, server-side queuing, etc.).
    *
    * @param params - Chart data parameters
    * @returns All chart data with labels and metadata
@@ -342,119 +327,24 @@ export class DataLoaderService {
       keys
     } = params
 
-    const data: Dataset = {}
-    const ageGroups = ageGroupFilter ?? Object.keys(rawData || {})
-    const countryCodes = countryCodeFilter ?? Object.keys(rawData?.all || {})
-    const noData: Record<string, Set<string>> = {}
-    const noAsmr: Set<string> = new Set<string>()
-
-    // Get Country data and labels
-    for (const ag of ageGroups) {
-      for (const iso3c of countryCodes) {
-        if (!rawData[ag] || !rawData[ag][iso3c]) {
-          if (!noData[iso3c]) noData[iso3c] = new Set<string>()
-          noData[iso3c].add(ag)
-          continue
-        }
-
-        const cd = this.getDataForCountry(
-          rawData[ag][iso3c],
-          iso3c,
-          allLabels[startDateIndex] || ''
-        )
-
-        if (!data[ag]) data[ag] = {}
-
-        const dataKeyStr = dataKey as string
-        const dataValues = cd ? (cd[dataKeyStr as keyof CountryData] as number[] | undefined) : undefined
-
-        if (
-          !cd
-          || (!baselineMethod && dataValues && dataValues.filter((x: number) => x).length === 0)
-        ) {
-          if (dataKeyStr.startsWith('asmr')) {
-            noAsmr.add(iso3c)
-          } else {
-            if (!noData[iso3c]) noData[iso3c] = new Set<string>()
-            noData[iso3c].add(ag)
-          }
-          continue
-        }
-
-        // Type assertion: getDataForCountry() returns Record<string, unknown> which contains
-        // the parsed CSV data transformed by getObjectOfArrays(). This data has the shape
-        // of DatasetEntry (StringEntryFields & NumberEntryFields) at runtime, with all fields
-        // from the CountryData model converted to arrays. The type system cannot infer this
-        // transformation statically, so we cast through 'any' after runtime validation:
-        // - Data is validated by CountryData constructor during CSV parsing
-        // - getObjectOfArrays() transforms validated objects into array format
-        // - Structure matches Dataset requirements (verified by extensive test suite)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        data[ag][iso3c] = cd as any
-      }
-    }
-
-    const labels = this.getLabels(
+    // Use shared function with server-side baseline calculator injected
+    return sharedGetAllChartData(
+      dataKey,
       chartType,
-      startDateIndex > 0 ? allLabels.slice(startDateIndex) : allLabels
+      rawData,
+      allLabels,
+      startDateIndex,
+      cumulative,
+      ageGroupFilter,
+      countryCodeFilter,
+      baselineMethod,
+      baselineDateFrom,
+      baselineDateTo,
+      keys,
+      undefined, // progressCb - not used on server
+      undefined, // statsUrl - uses default
+      calculateBaselines // Server-side baseline calculator
     )
-
-    // Align time series for all countries
-    for (const ag of ageGroups) {
-      if (!data[ag]) continue
-      for (const iso3c of countryCodes) {
-        if (!data[ag][iso3c]) continue
-
-        let n = 0
-        for (const label of labels) {
-          if (data[ag][iso3c].date.includes(label)) break
-          else n++
-        }
-
-        if (n > 0) {
-          for (const key of stringKeys) {
-            data[ag][iso3c][key] = prefillUndefined(
-              data[ag][iso3c][key],
-              n
-            ) as StringArray
-          }
-
-          for (const key of numberKeys) {
-            const currentValue = data[ag][iso3c][key]
-            if (currentValue !== undefined) {
-              data[ag][iso3c][key] = prefillUndefined(
-                currentValue,
-                n
-              ) as NumberArray
-            }
-          }
-        }
-      }
-    }
-
-    // Calculate baselines if requested
-    if (
-      baselineDateFrom
-      && baselineDateTo
-      && keys
-      && baselineMethod
-      && dataKey !== 'population'
-    ) {
-      // Use ChartPeriod for smart date index lookup
-      const period = new ChartPeriod(labels, chartType as ChartType)
-      await calculateBaselines(
-        data,
-        labels,
-        period.indexOf(baselineDateFrom),
-        period.indexOf(baselineDateTo),
-        keys as (keyof DatasetEntry)[],
-        baselineMethod,
-        chartType,
-        cumulative
-      )
-    }
-
-    return { data, labels, notes: { noData, noAsmr } }
   }
 
   // Private helper methods
@@ -626,80 +516,9 @@ export class DataLoaderService {
     return data
   }
 
-  /**
-   * Get data for a specific country from raw data array
-   */
-  private getDataForCountry(
-    rawData: CountryData[],
-    iso3c: string,
-    startDate: string
-  ): Record<string, unknown> | undefined {
-    const data = rawData.filter((v: CountryData) => v.iso3c === iso3c)
-    if (!data || !data.length) return undefined
-
-    // Find skipIndex to skip entries until startDate
-    let skipIndex = 0
-    for (let i = 0; i < data.length; i++) {
-      if (data[i]?.date === startDate) {
-        skipIndex = i
-        break
-      }
-    }
-
-    const result = getObjectOfArrays(data.slice(skipIndex))
-
-    // Hide CDC suppressed data for USA
-    if (iso3c.startsWith('USA')) {
-      this.hideCdcSuppressed(result)
-    }
-
-    return result
-  }
-
-  /**
-   * Remove CDC deaths < 10 and their derivatives
-   */
-  private hideCdcSuppressed(result: Record<string, unknown[]>) {
-    for (let i = 0; i < (result.deaths?.length || 0); i++) {
-      const val = result.deaths?.[i] as number
-      if (val >= 10) continue
-      for (const [k, v] of Object.entries(result)) {
-        if (!k.startsWith('deaths') && !k.startsWith('cmr')) continue
-        v[i] = NaN
-      }
-    }
-  }
-
-  /**
-   * Sort labels based on chart type
-   */
-  private sortLabels(labels: string[], chartType?: string): string[] {
-    if (chartType === 'monthly') {
-      const months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-      ]
-      const customSort = (a: string, b: string) => {
-        const x = parseInt(left(a, 4), 10) + months.indexOf(right(a, 3)) / 12
-        const y = parseInt(left(b, 4), 10) + months.indexOf(right(b, 3)) / 12
-        return x - y
-      }
-      return labels.sort(customSort)
-    }
-    return labels.sort()
-  }
-
-  /**
-   * Get labels with optional sorting
-   */
-  private getLabels(chartType: string, labels: string[]): string[] {
-    if (chartType === 'monthly') {
-      return labels.sort((a: string, b: string) => {
-        return fromYearMonthString(a) - fromYearMonthString(b)
-      })
-    }
-    return labels.sort()
-  }
+  // Note: Data transformation methods (getDataForCountry, hideCdcSuppressed, etc.)
+  // have been removed and replaced with shared functions from app/lib/data/
+  // to ensure identical behavior between client and server.
 }
 
 /**

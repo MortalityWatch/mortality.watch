@@ -17,10 +17,10 @@ import { shouldShowLabels } from '../../app/lib/chart/labelVisibility'
 import { metadataService } from '../../app/services/metadataService'
 import { findCommonAdjustedEndLabel } from '../../app/lib/chart/steepDropDetection'
 import {
-  fetchASDFromStatsApi,
-  buildAgeGroupInputs,
+  fetchASDForCountry as sharedFetchASDForCountry,
   alignASDToChartLabels,
-  type ASDResult
+  type ASDResult,
+  type ASDDataLoader
 } from '../../app/lib/asd'
 
 /**
@@ -131,14 +131,30 @@ export function getChartResponseHeaders(
 }
 
 /**
+ * Server-side data loader adapter for ASD
+ *
+ * Creates a data loader function that uses pre-loaded raw data.
+ * This is more efficient for SSR since we already loaded the data
+ * during the initial fetchChartData call.
+ */
+function createServerDataLoaderFromRawData(
+  rawData: Awaited<ReturnType<typeof dataLoader.loadMortalityData>>
+): ASDDataLoader {
+  return async (_chartType, _countries, _ageGroups) => {
+    // Return the pre-loaded data - it already contains all age groups we need
+    return rawData as unknown as Record<string, Record<string, Array<{ date: string, source: string, deaths?: number | null, population?: number | null }>>>
+  }
+}
+
+/**
  * Fetch ASD data from the stats API for SSR
  *
- * Uses the shared ASD module for the core calculation logic,
- * ensuring identical behavior with the client-side useASDData.
+ * Uses the shared fetchASDForCountry function with a server-side data loader,
+ * ensuring identical calculation logic with the client-side useASDData.
  */
 async function fetchASDDataForSSR(
   country: string,
-  _chartType: ChartType,
+  chartType: ChartType,
   source: string,
   ageGroups: string[],
   baselineMethod: string,
@@ -149,27 +165,25 @@ async function fetchASDDataForSSR(
   const config = useRuntimeConfig()
   const statsUrl = ((config.public?.statsUrl as string) || 'https://stats.mortality.watch').replace(/\/+$/, '')
 
-  // Build age group inputs using shared helper
-  const ageGroupInputs = buildAgeGroupInputs(
-    ageGroups,
-    source,
-    ageGroup => rawData[ageGroup]?.[country]
-  )
-
-  if (!ageGroupInputs) {
-    console.warn(`[SSR ASD] No data found for source "${source}"`)
-    return null
-  }
-
   try {
-    // Call shared ASD fetch function
-    const result = await fetchASDFromStatsApi(ageGroupInputs, {
-      statsUrl,
-      baselineMethod,
-      baselineDateFrom,
-      baselineDateTo,
-      useTrend: baselineMethod === 'lin_reg'
-    })
+    // Create server-side data loader from pre-loaded data
+    const serverDataLoader = createServerDataLoaderFromRawData(rawData)
+
+    // Use shared function with server-side data loader
+    const result = await sharedFetchASDForCountry(
+      serverDataLoader,
+      country,
+      chartType,
+      source,
+      ageGroups,
+      {
+        statsUrl,
+        baselineMethod,
+        baselineDateFrom,
+        baselineDateTo,
+        useTrend: baselineMethod === 'lin_reg'
+      }
+    )
 
     if (!result) {
       console.warn('[SSR ASD] Insufficient age-stratified data for ASD calculation')

@@ -32,7 +32,8 @@ export {
 
 // Aggregations - Chart data aggregation
 export {
-  getAllChartData
+  getAllChartData,
+  type BaselineCalculatorFn
 } from './aggregations'
 
 // Utils - Utility functions

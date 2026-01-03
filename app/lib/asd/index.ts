@@ -6,9 +6,11 @@
 
 export {
   fetchASDFromStatsApi,
+  fetchASDForCountry,
   buildAgeGroupInputs,
   alignASDToChartLabels,
   type ASDResult,
   type ASDFetchConfig,
-  type AgeGroupInput
+  type AgeGroupInput,
+  type ASDDataLoader
 } from './fetchASD'
