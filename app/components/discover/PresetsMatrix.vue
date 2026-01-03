@@ -69,7 +69,8 @@
         >
           <!-- Chart card when metric is valid for this chart type -->
           <NuxtLink
-            v-if="getViewForMetric(metric) && isMetricValidForChartType(metric, chartType)"
+            v-if="getViewForMetric(metric) && isMetricAvailableForChartType(metric, chartType)"
+            v-show="!isChartFailed(metric, chartType)"
             :to="getCardUrl(metric, chartType, getViewForMetric(metric)!)"
             class="block group relative rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden hover:shadow-lg transition-shadow"
           >
@@ -90,6 +91,7 @@
                 :alt="`${metricInfo[metric].label} ${chartTypeLabels[chartType]} ${viewLabels[getViewForMetric(metric)!]}`"
                 class="w-full h-full object-cover object-top group-hover:scale-105 transition-transform"
                 loading="lazy"
+                @error="handleChartError(metric, chartType)"
               >
             </div>
 
@@ -148,15 +150,33 @@ import {
 } from '@/lib/discover/presets'
 import { chartTypeLabels, viewLabels, metricInfo, metrics } from '@/lib/discover/constants'
 
+import type { Country } from '@/model'
+
 interface Props {
   country: string
   countryName: string
-  hasAgeData: boolean
+  countryData: Country
 }
 
 const props = defineProps<Props>()
 const colorMode = useColorMode()
 const { can, getFeatureUpgradeUrl } = useFeatureAccess()
+
+// Track failed chart thumbnails (empty charts, etc.)
+const failedCharts = ref(new Set<string>())
+
+function handleChartError(metric: Metric, chartType: ChartType) {
+  const key = `${metric}-${chartType}`
+  failedCharts.value.add(key)
+  failedCharts.value = new Set(failedCharts.value) // Force reactivity
+  if (import.meta.dev) {
+    console.warn(`[PresetsMatrix] Chart failed for ${props.country} ${key}, hiding`)
+  }
+}
+
+function isChartFailed(metric: Metric, chartType: ChartType): boolean {
+  return failedCharts.value.has(`${metric}-${chartType}`)
+}
 
 // Visible chart types (all enabled by default)
 const visibleChartTypes = ref<ChartType[]>([...chartTypes])
@@ -171,9 +191,27 @@ const viewTabs = computed(() => views.map(view => ({
 })))
 
 // Available metrics based on country data (uses validity checker)
+// Note: This is a base filter - we also filter per chartType below
 const availableMetrics = computed<Metric[]>(() => {
-  return getValidMetricsForCountry(props.hasAgeData)
+  return getValidMetricsForCountry(props.countryData.has_asmr())
 })
+
+// Check if a metric is valid for a specific chart type for this country
+// This considers resolution-aware age data availability
+function isMetricAvailableForChartType(metric: Metric, chartType: ChartType): boolean {
+  // First check general validity (e.g., ASD only for yearly)
+  if (!isMetricValidForChartType(metric, chartType)) {
+    return false
+  }
+
+  // Check if metric requires age data at this resolution
+  const requiresAgeData = metric === 'le' || metric === 'asmr' || metric === 'asd'
+  if (requiresAgeData && !props.countryData.hasAgeDataForChartType(chartType)) {
+    return false
+  }
+
+  return true
+}
 
 // Visible metrics (hide Population and Deaths by default - less commonly used)
 const visibleMetrics = ref<Metric[]>(metrics.filter(m => m !== 'population' && m !== 'deaths'))
