@@ -28,6 +28,7 @@
 
 import { showToast } from '@/toast'
 import { ErrorHandler } from '@/lib/errors/errorHandler'
+import { logger } from '@/lib/logger'
 import { UI_CONFIG } from '@/lib/config/constants'
 
 /**
@@ -216,10 +217,10 @@ export function useErrorRecovery() {
           onError(lastError, attempt)
         }
 
-        // Log the error
+        // Log the error (only in development)
         const contextStr = context || 'withRetry'
         if (import.meta.dev) {
-          console.warn(`[${contextStr}] Attempt ${attempt + 1}/${maxRetries + 1} failed:`, lastError.message)
+          logger.warn(`[${contextStr}] Attempt ${attempt + 1}/${maxRetries + 1} failed: ${lastError.message}`)
         }
 
         // Check if we should retry
@@ -238,7 +239,7 @@ export function useErrorRecovery() {
         // Calculate and wait for retry delay
         const waitTime = calculateRetryDelay(retryDelay, attempt, exponentialBackoff)
         if (import.meta.dev) {
-          console.log(`[${contextStr}] Retrying in ${waitTime}ms...`)
+          logger.debug(`[${contextStr}] Retrying in ${waitTime}ms...`)
         }
         await delay(waitTime)
       }

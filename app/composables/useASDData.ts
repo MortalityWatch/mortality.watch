@@ -18,6 +18,9 @@ import type { ChartType } from '@/model/period'
 import { metadataService } from '@/services/metadataService'
 import { updateDataset } from '@/lib/data'
 import { dataLoader } from '@/lib/dataLoader'
+import { logger } from '@/lib/logger'
+
+const asdLogger = logger.withPrefix('ASD')
 
 export interface ASDResult {
   /** Age-standardized observed deaths per period */
@@ -154,7 +157,7 @@ export function useASDData() {
     }
 
     if (skippedAgeGroups.length > 0) {
-      console.warn(`[ASD] Skipped age groups with insufficient data: ${skippedAgeGroups.join(', ')}`)
+      asdLogger.warn(`Skipped age groups with insufficient data: ${skippedAgeGroups.join(', ')}`)
     }
 
     if (ageGroupsPayload.length < 2) {

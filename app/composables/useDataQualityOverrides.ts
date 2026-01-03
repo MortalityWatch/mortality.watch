@@ -15,6 +15,7 @@
 
 import type { ComputedRef } from 'vue'
 import type { CountryQuality } from './useDataQualityFilters'
+import { logger } from '@/lib/logger'
 
 export type OverrideStatus = 'monitor' | 'muted' | 'hidden'
 
@@ -52,7 +53,7 @@ export function useDataQualityOverrides(
         color: 'success'
       })
     } catch (err) {
-      console.error('Failed to update override:', err)
+      logger.error('Failed to update override', err)
       useToast().add({
         title: 'Error',
         description: 'Failed to update override status',

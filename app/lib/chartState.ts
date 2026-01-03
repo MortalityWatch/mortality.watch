@@ -7,6 +7,7 @@
 
 import { Defaults, stateFieldEncoders, detectView, getViewDefaults, applyConstraints, isChartTypeCompatible } from './state'
 import type { ViewType } from './state'
+import { logger } from '@/lib/logger'
 
 export interface ChartState {
   countries: string[]
@@ -88,7 +89,7 @@ export function decodeChartState(query: Record<string, string | string[]>): Char
   // This mirrors the logic in StateResolver.resolveInitial()
   const chartType = (state.chartType as string | undefined) ?? Defaults.chartType
   if (view === 'zscore' && !isChartTypeCompatible(chartType as string, view)) {
-    console.warn(`Z-score view not compatible with chart type ${chartType}, falling back to mortality view (SSR)`)
+    logger.warn(`Z-score view not compatible with chart type ${chartType}, falling back to mortality view (SSR)`)
     view = 'mortality'
   }
 

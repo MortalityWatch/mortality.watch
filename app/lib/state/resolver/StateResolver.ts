@@ -21,6 +21,7 @@ import { computeUIState, type UIFieldState } from './uiStateComputer'
 import type { ChartStateSnapshot } from '@/lib/chart/types'
 import type { ChartType } from '@/model/period'
 import { getDefaultSliderStart } from '@/lib/config/constants'
+import { logger, formatError } from '@/lib/logger'
 
 /**
  * Get defaults for a view, with view-specific fields added
@@ -130,7 +131,7 @@ export class StateResolver {
       const isCompatible = compatibleTypes.length === 0 || compatibleTypes.includes(chartType)
 
       if (!isCompatible) {
-        console.warn(`Z-score view not compatible with chart type ${chartType}, falling back to mortality view`)
+        logger.warn(`Z-score view not compatible with chart type ${chartType}, falling back to mortality view`)
         const oldView = state.view
         state.view = 'mortality'
         view = 'mortality'
@@ -305,7 +306,7 @@ export class StateResolver {
     let actualView = newView
     if (!isCompatible) {
       actualView = 'mortality'
-      console.warn(`View ${newView} not compatible with chart type ${currentChartType}, falling back to mortality view`)
+      logger.warn(`View ${newView} not compatible with chart type ${currentChartType}, falling back to mortality view`)
     }
 
     // 1. Update view
@@ -500,10 +501,7 @@ export class StateResolver {
           }
         } catch (error) {
           // Malformed param - skip it and use default
-          console.warn(
-            `[StateResolver] Skipping malformed URL param: ${urlKey}=${urlValue}`,
-            error
-          )
+          logger.warn(`[StateResolver] Skipping malformed URL param: ${urlKey}=${urlValue}`, formatError(error))
         }
       }
     }
