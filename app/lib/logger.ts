@@ -110,4 +110,12 @@ class PrefixedLogger {
 // Singleton instance
 export const logger = new Logger()
 
+/**
+ * Format an error for logging context
+ * Extracts the error message whether it's an Error instance or unknown type
+ */
+export function formatError(error: unknown): { error: string } {
+  return { error: error instanceof Error ? error.message : String(error) }
+}
+
 export default logger

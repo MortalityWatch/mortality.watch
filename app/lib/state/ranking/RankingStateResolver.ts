@@ -27,7 +27,7 @@ import { getRankingViewConfig } from './views'
 import { RANKING_CONSTRAINTS } from './constraints'
 import { rankingFieldEncoders, RANKING_DEFAULTS, LEGACY_ASMR_KEY, decodeMetricType } from './fieldEncoders'
 import { evaluateCondition } from '../utils/evaluateCondition'
-import { logger } from '@/lib/logger'
+import { logger, formatError } from '@/lib/logger'
 
 const moduleLogger = logger.withPrefix('RankingStateResolver')
 
@@ -291,9 +291,7 @@ export function resolveInitial(route: RouteLocationNormalizedLoaded): ResolvedRa
         state[field] = decoded
       } catch (error) {
         // Log malformed URL params using the module-level logger (not RankingResolutionLog)
-        moduleLogger.warn(`Skipping malformed URL param: ${urlKey}=${urlValue}`, {
-          error: error instanceof Error ? error.message : String(error)
-        })
+        moduleLogger.warn(`Skipping malformed URL param: ${urlKey}=${urlValue}`, formatError(error))
       }
     }
   }
