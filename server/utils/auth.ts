@@ -4,6 +4,10 @@ import { randomBytes, createHash } from 'node:crypto'
 import type { H3Event } from 'h3'
 import { db, users } from '#db'
 import { eq } from 'drizzle-orm'
+import {
+  validateAndConsumeInviteCode,
+  createTrialSubscription
+} from './inviteCode'
 
 /**
  * JWT payload interface
@@ -658,4 +662,165 @@ export function setAuthToken(event: H3Event, token: string, maxAge: number = 60 
  */
 export function clearAuthToken(event: H3Event) {
   deleteCookie(event, 'auth_token')
+}
+
+/**
+ * Create or update a user from social login and set auth token
+ *
+ * This function handles the OAuth callback flow by:
+ * 1. Finding existing user by social provider ID or email
+ * 2. Creating new user if not found
+ * 3. Updating social provider ID and profile picture if found
+ * 4. Generating JWT token and setting auth cookie
+ * 5. Applying invite code if provided (for new users only)
+ *
+ * @param event - H3 request event object
+ * @param provider - Social provider name ('google' | 'twitter')
+ * @param socialId - User's ID from the social provider
+ * @param email - User's email from the social provider
+ * @param name - User's name from the social provider (optional)
+ * @param profilePictureUrl - User's profile picture URL (optional)
+ * @param inviteCode - Invite code to apply for new users (optional)
+ * @returns The user object without password hash
+ */
+export async function handleSocialAuth(
+  event: H3Event,
+  provider: 'google' | 'twitter',
+  socialId: string,
+  email: string,
+  name?: string,
+  profilePictureUrl?: string,
+  inviteCode?: string
+) {
+  const providerIdColumn = provider === 'google' ? 'googleId' : 'twitterId'
+
+  // Check if user exists by social provider ID
+  let user = await db
+    .select()
+    .from(users)
+    .where(eq(users[providerIdColumn], socialId))
+    .get()
+
+  if (!user) {
+    // Check if user exists by email (maybe registered via email/password)
+    user = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email.toLowerCase()))
+      .get()
+
+    if (user) {
+      // Link social account to existing user
+      await db
+        .update(users)
+        .set({
+          [providerIdColumn]: socialId,
+          profilePictureUrl: profilePictureUrl || user.profilePictureUrl,
+          emailVerified: true, // Social providers verify email
+          lastLogin: new Date(),
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, user.id))
+
+      // Refresh user data
+      user = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, user.id))
+        .get()
+    } else {
+      // This is a new user - validate invite code if provided
+      let userTier: 0 | 1 | 2 = 1 // Default tier
+      let inviteCodeId: number | null = null
+      let proExpiryDate: Date | null = null
+
+      if (inviteCode) {
+        const validatedCode = await validateAndConsumeInviteCode(inviteCode)
+        if (validatedCode) {
+          userTier = 2 // All invite codes grant Pro access
+          inviteCodeId = validatedCode.id
+          if (validatedCode.grantsProUntil) {
+            proExpiryDate = validatedCode.grantsProUntil
+          }
+        }
+        // If code is invalid, we just ignore it and create user with default tier
+        // This is better UX than blocking social login
+      }
+
+      // Parse name into first and last name
+      const nameParts = (name || '').split(' ')
+      const firstName = nameParts[0] || ''
+      const lastName = nameParts.slice(1).join(' ') || ''
+
+      // Generate a random password hash for social users
+      // They won't use it but the field is required
+      const randomPassword = randomBytes(32).toString('hex')
+      const passwordHash = await hashPassword(randomPassword)
+
+      user = await db
+        .insert(users)
+        .values({
+          email: email.toLowerCase(),
+          passwordHash,
+          firstName,
+          lastName,
+          displayName: name || null,
+          name: name || null,
+          role: 'user',
+          tier: userTier,
+          invitedByCodeId: inviteCodeId,
+          emailVerified: true, // Social providers verify email
+          [providerIdColumn]: socialId,
+          profilePictureUrl: profilePictureUrl || null,
+          tosAcceptedAt: new Date(), // Accept TOS via social login
+          lastLogin: new Date()
+        })
+        .returning()
+        .get()
+
+      // Create trial subscription if invite code grants time-limited Pro
+      if (user && proExpiryDate) {
+        await createTrialSubscription(user.id, proExpiryDate)
+      }
+    }
+  } else {
+    // User exists with this social ID - update last login and profile picture
+    await db
+      .update(users)
+      .set({
+        profilePictureUrl: profilePictureUrl || user.profilePictureUrl,
+        lastLogin: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, user.id))
+
+    // Refresh user data
+    user = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, user.id))
+      .get()
+  }
+
+  if (!user) {
+    throw createError({
+      statusCode: 500,
+      message: 'Failed to create or update user'
+    })
+  }
+
+  // Generate JWT token with 7 days expiry (default, not remember me)
+  const token = generateToken({
+    userId: user.id,
+    email: user.email,
+    tier: user.tier,
+    role: user.role
+  }, '7d')
+
+  // Set auth cookie
+  setAuthToken(event, token)
+
+  // Return user without password hash
+  const { passwordHash: _passwordHash, ...userWithoutPassword } = user
+  return userWithoutPassword
 }

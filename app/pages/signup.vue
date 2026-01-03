@@ -151,20 +151,26 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
       @close="clearError"
     />
 
-    <UAuthForm
-      :fields="fields"
-      :schema="schema"
-      title="Create an account"
-      :submit="{ label: 'Create account' }"
-      @submit="(onSubmit as (event: FormSubmitEvent<Schema>) => Promise<void>)"
-    >
-      <template #description>
+    <div class="text-center mb-6">
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+        Create an account
+      </h1>
+      <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
         Already have an account? <ULink
           :to="loginUrlWithRedirect"
           class="text-primary font-medium"
         >Login</ULink>.
-      </template>
+      </p>
+    </div>
 
+    <SocialLoginButtons :invite-code="inviteCode || undefined" />
+
+    <UAuthForm
+      :fields="fields"
+      :schema="schema"
+      :submit="{ label: 'Create account' }"
+      @submit="(onSubmit as (event: FormSubmitEvent<Schema>) => Promise<void>)"
+    >
       <template #validation>
         <UFormField
           name="tosAccepted"
@@ -193,5 +199,18 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
         </UFormField>
       </template>
     </UAuthForm>
+
+    <p class="mt-4 text-xs text-center text-gray-500 dark:text-gray-400">
+      By signing up with a social provider, you agree to our
+      <ULink
+        to="/legal/terms"
+        class="text-primary hover:underline"
+      >Terms of Service</ULink>
+      and
+      <ULink
+        to="/legal/privacy"
+        class="text-primary hover:underline"
+      >Privacy Policy</ULink>.
+    </p>
   </div>
 </template>
