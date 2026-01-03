@@ -153,7 +153,7 @@ async function fetchASDDataForSSR(
   const ageGroupInputs = buildAgeGroupInputs(
     ageGroups,
     source,
-    (ageGroup) => rawData[ageGroup]?.[country]
+    ageGroup => rawData[ageGroup]?.[country]
   )
 
   if (!ageGroupInputs) {

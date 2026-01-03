@@ -55,7 +55,7 @@ export interface ASDFetchConfig {
  */
 export interface AgeGroupInput {
   /** Date string -> { deaths, population } */
-  dataByDate: Map<string, { deaths: number | null; population: number | null }>
+  dataByDate: Map<string, { deaths: number | null, population: number | null }>
 }
 
 /**
@@ -88,7 +88,7 @@ export async function fetchASDFromStatsApi(
 
   // Build age_groups payload, filtering out groups with insufficient data
   const MIN_VALID_DATA_POINTS = 3
-  const ageGroupsPayload: Array<{ deaths: (number | null)[]; population: (number | null)[] }> = []
+  const ageGroupsPayload: Array<{ deaths: (number | null)[], population: (number | null)[] }> = []
   const validAgeGroups: string[] = []
 
   for (const [ageGroup, input] of ageGroupInputs.entries()) {
@@ -200,7 +200,7 @@ export async function fetchASDFromStatsApi(
  * @param getAgeGroupData - Function to get data rows for an age group
  * @returns Map of age group to input data, or null if no data found
  */
-export function buildAgeGroupInputs<T extends { date: string; source: string; deaths?: number | null; population?: number | null }>(
+export function buildAgeGroupInputs<T extends { date: string, source: string, deaths?: number | null, population?: number | null }>(
   ageGroups: string[],
   source: string,
   getAgeGroupData: (ageGroup: string) => T[] | undefined
@@ -212,7 +212,7 @@ export function buildAgeGroupInputs<T extends { date: string; source: string; de
     const data = getAgeGroupData(ageGroup)
     if (!data) continue
 
-    const dataByDate = new Map<string, { deaths: number | null; population: number | null }>()
+    const dataByDate = new Map<string, { deaths: number | null, population: number | null }>()
 
     for (const row of data) {
       if (row.source === source) {

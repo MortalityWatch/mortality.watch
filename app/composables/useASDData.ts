@@ -89,7 +89,7 @@ export function useASDData() {
     const ageGroupInputs = buildAgeGroupInputs(
       ageGroups,
       source,
-      (ageGroup) => dataset[ageGroup]?.[country]
+      ageGroup => dataset[ageGroup]?.[country]
     )
 
     if (!ageGroupInputs) {
