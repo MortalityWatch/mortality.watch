@@ -11,7 +11,8 @@ import {
   transformChartData,
   generateChartConfig,
   resolveChartStateForRendering,
-  applySteepDropAdjustment
+  applySteepDropAdjustment,
+  isChartDataEmpty
 } from '../utils/chartPngHelpers'
 import { dataLoader } from '../services/dataLoader'
 import { renderChart } from '../utils/chartRenderer'
@@ -163,6 +164,15 @@ export default defineEventHandler(async (event) => {
           chartUrl,
           isAsmrType
         )
+
+        // Step 5.5: Check if chart data is empty (e.g., LE for countries with incompatible age groups)
+        if (isChartDataEmpty(chartData)) {
+          const countriesStr = preliminaryState.countries.join(', ')
+          throw new Error(
+            `No chart data available for ${countriesStr} (${preliminaryState.type}, ${preliminaryState.chartType}). `
+            + 'The data may exist but cannot be calculated for this configuration.'
+          )
+        }
 
         // Debug: Log chart data
         logger.info('SSR Chart Data:', {
