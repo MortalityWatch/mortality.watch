@@ -121,9 +121,11 @@ const viewModel = computed({
           v-for="option in baseViewOptions"
           :key="option.value"
         >
-          <label
+          <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events, vuejs-accessibility/no-static-element-interactions -->
+          <div
             class="flex items-start gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
             :class="{ 'bg-primary-50 dark:bg-primary-900/20': viewModel === option.value, 'opacity-50 pointer-events-none': props.isPopulationType }"
+            @click="!props.isPopulationType && (viewModel = option.value as ViewType)"
           >
             <URadio
               v-model="viewModel"
@@ -139,14 +141,16 @@ const viewModel = computed({
                 {{ option.description }}
               </div>
             </div>
-          </label>
+          </div>
         </template>
 
         <!-- Z-Score option with FeatureGate -->
         <FeatureGate feature="Z_SCORES">
-          <label
+          <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events, vuejs-accessibility/no-static-element-interactions -->
+          <div
             class="flex items-start gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
             :class="{ 'bg-primary-50 dark:bg-primary-900/20': viewModel === 'zscore', 'opacity-50 pointer-events-none': props.isPopulationType }"
+            @click="!props.isPopulationType && (viewModel = 'zscore')"
           >
             <URadio
               v-model="viewModel"
@@ -163,7 +167,7 @@ const viewModel = computed({
                 {{ zscoreOption.description }}
               </div>
             </div>
-          </label>
+          </div>
         </FeatureGate>
       </div>
     </div>
