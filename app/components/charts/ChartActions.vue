@@ -72,33 +72,37 @@ function handleSortByLatest() {
         <!-- Save Chart - Primary Action (moved to top) -->
         <template v-if="$slots['save-button'] || props.showSaveButton">
           <slot name="save-button">
-            <button
+            <FeatureGate
               v-if="props.showSaveButton"
-              class="chart-option-button opacity-60"
-              data-tour="save-button"
-              @click="emit('saveChart')"
+              feature="SAVE_CHART"
             >
-              <UIcon
-                name="i-lucide-book-heart"
-                class="w-4 h-4 shrink-0"
-              />
-              <div class="flex-1 text-left">
-                <div class="text-sm font-medium">
-                  Save Chart
-                  <FeatureBadge
-                    feature="SAVE_CHART"
-                    class="ml-2"
-                  />
+              <button
+                class="chart-option-button"
+                data-tour="save-button"
+                @click="emit('saveChart')"
+              >
+                <UIcon
+                  name="i-lucide-book-heart"
+                  class="w-4 h-4 shrink-0"
+                />
+                <div class="flex-1 text-left">
+                  <div class="text-sm font-medium">
+                    Save Chart
+                    <FeatureBadge
+                      feature="SAVE_CHART"
+                      class="ml-2"
+                    />
+                  </div>
+                  <div class="text-xs text-gray-500 dark:text-gray-400">
+                    Sign up free to save charts
+                  </div>
                 </div>
-                <div class="text-xs text-gray-500 dark:text-gray-400">
-                  Sign up free to save charts
-                </div>
-              </div>
-              <UIcon
-                name="i-lucide-chevron-right"
-                class="w-3 h-3 text-gray-400"
-              />
-            </button>
+                <UIcon
+                  name="i-lucide-chevron-right"
+                  class="w-3 h-3 text-gray-400"
+                />
+              </button>
+            </FeatureGate>
           </slot>
 
           <div class="border-t border-gray-200 dark:border-gray-700" />
