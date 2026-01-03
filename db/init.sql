@@ -20,6 +20,9 @@ CREATE TABLE IF NOT EXISTS users (
   tos_accepted_at INTEGER,
   last_login INTEGER,
   invited_by_code_id INTEGER,
+  google_id TEXT,
+  twitter_id TEXT,
+  profile_picture_url TEXT,
   created_at INTEGER DEFAULT (unixepoch()) NOT NULL,
   updated_at INTEGER DEFAULT (unixepoch()) NOT NULL
 );
@@ -29,6 +32,8 @@ CREATE INDEX IF NOT EXISTS idx_users_tier ON users (tier);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users (role);
 CREATE INDEX IF NOT EXISTS idx_verification_token ON users (verification_token);
 CREATE INDEX IF NOT EXISTS idx_password_reset_token ON users (password_reset_token);
+CREATE INDEX IF NOT EXISTS idx_users_google_id ON users (google_id);
+CREATE INDEX IF NOT EXISTS idx_users_twitter_id ON users (twitter_id);
 
 -- Invite codes table
 CREATE TABLE IF NOT EXISTS invite_codes (
