@@ -19,10 +19,9 @@ import { metadataService } from '@/services/metadataService'
 import { updateDataset } from '@/lib/data'
 import { logger } from '@/lib/logger'
 import {
-  fetchASDFromStatsApi,
-  buildAgeGroupInputs,
+  fetchASDForCountry as sharedFetchASDForCountry,
   type ASDResult,
-  type ASDFetchConfig
+  type ASDDataLoader
 } from '@/lib/asd'
 
 const asdLogger = logger.withPrefix('ASD')
@@ -38,6 +37,16 @@ export interface ASDConfig {
   baselineDateFrom?: string
   baselineDateTo?: string
   useTrend?: boolean
+}
+
+/**
+ * Client-side data loader adapter
+ * Wraps updateDataset to match the ASDDataLoader interface
+ */
+const clientDataLoader: ASDDataLoader = async (chartType, countries, ageGroups) => {
+  const dataset = await updateDataset(chartType, countries, ageGroups)
+  // Cast to the expected interface - the actual data structure is compatible
+  return dataset as unknown as Record<string, Record<string, Array<{ date: string, source: string, deaths?: number | null, population?: number | null }>>>
 }
 
 /**
@@ -66,7 +75,7 @@ export function useASDData() {
   /**
    * Fetch ASD data for a single country
    *
-   * Uses the shared ASD module for the core calculation logic.
+   * Uses the shared fetchASDForCountry function with the client-side data loader.
    */
   async function fetchASDForCountry(
     country: string,
@@ -78,45 +87,24 @@ export function useASDData() {
     baselineDateTo?: string,
     useTrend: boolean = false
   ): Promise<ASDResult | null> {
-    // Fetch data for all age groups
-    const dataset = await updateDataset(chartType, [country], ageGroups)
-
-    if (!dataset || Object.keys(dataset).length === 0) {
-      throw new Error(`No data found for ${country} with age groups: ${ageGroups.join(', ')}`)
-    }
-
-    // Build age group inputs using shared helper
-    const ageGroupInputs = buildAgeGroupInputs(
-      ageGroups,
+    // Use shared function with client-side data loader
+    const result = await sharedFetchASDForCountry(
+      clientDataLoader,
+      country,
+      chartType,
       source,
-      ageGroup => dataset[ageGroup]?.[country]
+      ageGroups,
+      {
+        statsUrl,
+        baselineMethod,
+        baselineDateFrom,
+        baselineDateTo,
+        useTrend
+      }
     )
 
-    if (!ageGroupInputs) {
-      throw new Error(`No data found for source "${source}"`)
-    }
-
-    // Log skipped age groups (those that were requested but not in the result)
-    const validAgeGroups = Array.from(ageGroupInputs.keys())
-    const skippedAgeGroups = ageGroups.filter(ag => !validAgeGroups.includes(ag))
-    if (skippedAgeGroups.length > 0) {
-      asdLogger.warn(`Skipped age groups with insufficient data: ${skippedAgeGroups.join(', ')}`)
-    }
-
-    // Build config for the shared fetch function
-    const config: ASDFetchConfig = {
-      statsUrl,
-      baselineMethod,
-      baselineDateFrom,
-      baselineDateTo,
-      useTrend
-    }
-
-    // Call shared ASD fetch function
-    const result = await fetchASDFromStatsApi(ageGroupInputs, config)
-
     if (!result) {
-      throw new Error(`Insufficient age-stratified data for ASD calculation. Need at least 2 age groups with valid data.`)
+      asdLogger.warn(`Insufficient age-stratified data for ASD calculation for ${country}`)
     }
 
     return result

@@ -233,6 +233,60 @@ export function buildAgeGroupInputs<T extends { date: string, source: string, de
 }
 
 /**
+ * Type for data loader function (dependency injection)
+ * Both client and server implement this interface differently.
+ */
+export type ASDDataLoader = (
+  chartType: string,
+  countries: string[],
+  ageGroups: string[]
+) => Promise<Record<string, Record<string, Array<{ date: string, source: string, deaths?: number | null, population?: number | null }>>>>
+
+/**
+ * Unified fetch ASD for a single country
+ *
+ * This function can be used by both client and server by injecting
+ * the appropriate data loader function.
+ *
+ * @param dataLoader - Function to load mortality data (client: updateDataset, server: dataLoader.loadMortalityData)
+ * @param country - Country ISO3C code
+ * @param chartType - Chart type (yearly, monthly, fluseason, midyear)
+ * @param source - Data source to use
+ * @param ageGroups - Age groups to load
+ * @param config - ASD fetch configuration
+ * @returns ASD result or null if insufficient data
+ */
+export async function fetchASDForCountry(
+  dataLoader: ASDDataLoader,
+  country: string,
+  chartType: string,
+  source: string,
+  ageGroups: string[],
+  config: ASDFetchConfig
+): Promise<ASDResult | null> {
+  // Load data for all age groups
+  const dataset = await dataLoader(chartType, [country], ageGroups)
+
+  if (!dataset || Object.keys(dataset).length === 0) {
+    return null
+  }
+
+  // Build age group inputs using shared helper
+  const ageGroupInputs = buildAgeGroupInputs(
+    ageGroups,
+    source,
+    ageGroup => dataset[ageGroup]?.[country]
+  )
+
+  if (!ageGroupInputs) {
+    return null
+  }
+
+  // Call shared ASD fetch function
+  return fetchASDFromStatsApi(ageGroupInputs, config)
+}
+
+/**
  * Align ASD result to chart labels
  *
  * Maps ASD data arrays to match the chart's label array,

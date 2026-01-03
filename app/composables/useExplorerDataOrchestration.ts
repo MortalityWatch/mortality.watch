@@ -27,6 +27,7 @@ import {
 } from '@/lib/data'
 import { useChartDataFetcher } from '@/composables/useChartDataFetcher'
 import { useASDData } from '@/composables/useASDData'
+import { alignASDToChartLabels } from '@/lib/asd'
 import { metadataService } from '@/services/metadataService'
 import { getFilteredChartDataFromConfig } from '@/lib/chart'
 import type { MortalityChartData } from '@/lib/chart/chartTypes'
@@ -265,23 +266,9 @@ export function useExplorerDataOrchestration(
       const chartLabels = allChartData.labels
 
       for (const [iso3c, asdResult] of results) {
-        // Create a mapping from ASD labels to their indices
-        const asdLabelToIndex = new Map<string, number>()
-        asdResult.labels.forEach((label, idx) => asdLabelToIndex.set(label, idx))
-
-        // Align ASD data to chart labels
-        const alignArray = (arr: (number | null)[]): (number | null)[] => {
-          return chartLabels.map((label) => {
-            const idx = asdLabelToIndex.get(label)
-            return idx !== undefined ? (arr[idx] ?? null) : null
-          })
-        }
-
-        const alignedAsd = alignArray(asdResult.asd)
-        const alignedAsdBl = alignArray(asdResult.asd_bl)
-        const alignedLower = alignArray(asdResult.lower)
-        const alignedUpper = alignArray(asdResult.upper)
-        const alignedZscore = alignArray(asdResult.zscore)
+        // Align ASD data to chart labels using shared helper
+        // This ensures identical alignment logic with SSR
+        const aligned = alignASDToChartLabels(asdResult, chartLabels)
 
         // Find the age group key (usually 'all' for the combined view)
         for (const ag of Object.keys(allChartData.data)) {
@@ -290,11 +277,11 @@ export function useExplorerDataOrchestration(
             // Inject aligned ASD arrays using the standard naming convention
             // expected by getKeyForType (asd_baseline, not asd_bl)
             const record = countryData as Record<string, unknown>
-            record['asd'] = alignedAsd
-            record['asd_baseline'] = alignedAsdBl
-            record['asd_baseline_lower'] = alignedLower
-            record['asd_baseline_upper'] = alignedUpper
-            record['asd_zscore'] = alignedZscore
+            record['asd'] = aligned.asd
+            record['asd_baseline'] = aligned.asd_bl
+            record['asd_baseline_lower'] = aligned.lower
+            record['asd_baseline_upper'] = aligned.upper
+            record['asd_zscore'] = aligned.zscore
           }
         }
       }

@@ -2,6 +2,7 @@ import type {
   CountryData,
   Dataset,
   DatasetRaw,
+  DatasetEntry,
   NumberEntryFields,
   AllChartData,
   NumberArray,
@@ -12,11 +13,34 @@ import { ChartPeriod, type ChartType } from '@/model/period'
 import { prefillUndefined } from '@/utils'
 import { getDataForCountry } from './transformations'
 import { getLabels } from './labels'
-import { calculateBaselines } from './baselines'
+import { calculateBaselines as clientCalculateBaselines } from './baselines'
+
+/**
+ * Type for the baseline calculator function.
+ * Both client and server implement this interface.
+ */
+export type BaselineCalculatorFn = (
+  data: Dataset,
+  labels: string[],
+  startIdx: number,
+  endIdx: number,
+  keys: (keyof DatasetEntry)[],
+  method: string,
+  chartType: string,
+  cumulative: boolean,
+  progressCb?: (progress: number, total: number) => void,
+  statsUrl?: string
+) => Promise<void>
 
 /**
  * Get all chart data with optional baseline calculations
  *
+ * This function is shared between client and server. The baseline calculation
+ * is environment-specific, so callers can inject their own implementation.
+ *
+ * @param calculateBaselines - Optional baseline calculator function. If not provided,
+ *                            uses the client-side implementation. Server-side callers
+ *                            should pass their own implementation.
  * @param statsUrl - Optional stats API URL for baseline calculations
  */
 export const getAllChartData = async (
@@ -33,7 +57,8 @@ export const getAllChartData = async (
   baselineDateTo?: string,
   keys?: (keyof NumberEntryFields)[],
   progressCb?: (progress: number, total: number) => void,
-  statsUrl?: string
+  statsUrl?: string,
+  calculateBaselines: BaselineCalculatorFn = clientCalculateBaselines
 ): Promise<AllChartData> => {
   const data: Dataset = {}
   const ageGroups = ageGroupFilter ?? Object.keys(rawData || {})
