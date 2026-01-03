@@ -76,10 +76,10 @@
 
     <!-- Presets Matrix -->
     <DiscoverPresetsMatrix
-      v-else
+      v-else-if="countryData"
       :country="iso3c"
       :country-name="countryName"
-      :has-age-data="hasAgeData"
+      :country-data="countryData"
     />
   </div>
 </template>
@@ -115,11 +115,6 @@ onMounted(async () => {
   } finally {
     isLoading.value = false
   }
-})
-
-// Check if country has age-stratified data
-const hasAgeData = computed(() => {
-  return countryData.value?.has_asmr() ?? false
 })
 
 // Country name

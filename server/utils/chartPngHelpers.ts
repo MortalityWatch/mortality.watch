@@ -504,6 +504,36 @@ export async function transformChartData(
 }
 
 /**
+ * Check if chart data is empty (no valid data points in any dataset)
+ * This catches cases like LE for countries with incompatible age group data
+ */
+export function isChartDataEmpty(chartData: MortalityChartData): boolean {
+  // No datasets at all
+  if (!chartData.datasets || chartData.datasets.length === 0) {
+    return true
+  }
+
+  // Check if all datasets are empty or have only null/undefined values
+  for (const dataset of chartData.datasets) {
+    const data = dataset.data as (number | null | undefined | { y?: number | null })[]
+    if (!data || data.length === 0) continue
+
+    // Check if dataset has at least one valid data point
+    for (const point of data) {
+      if (point === null || point === undefined) continue
+      // Handle object data points (e.g., { x, y } format)
+      if (typeof point === 'object' && 'y' in point) {
+        if (point.y !== null && point.y !== undefined) return false
+      } else if (typeof point === 'number') {
+        return false
+      }
+    }
+  }
+
+  return true
+}
+
+/**
  * Generate chart configuration object
  * @param state - Resolved chart state
  * @param chartData - Transformed chart data

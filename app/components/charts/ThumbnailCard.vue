@@ -59,6 +59,7 @@
           :locked-src="lockedThumbnailUrl || thumbnailUrl"
           :alt="alt"
           :locked="locked"
+          @error="emit('error')"
         />
 
         <!-- Meta row (badges, views, date) -->
@@ -147,6 +148,10 @@ const props = withDefaults(defineProps<Props>(), {
   description: undefined,
   meta: undefined
 })
+
+const emit = defineEmits<{
+  error: []
+}>()
 
 // Dev-mode warning for locked without feature (won't show FeatureBadge)
 if (import.meta.dev && props.locked && !props.feature) {
