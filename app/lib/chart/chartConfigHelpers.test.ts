@@ -623,7 +623,7 @@ describe('chartConfigHelpers', () => {
       sources: ['test']
     })
 
-    it('should auto-hide legend when there is only one visible series', () => {
+    it('should auto-hide legend when there is only one visible series and autoHideLegend is enabled', () => {
       const data = createMockDataWithDatasets(['USA'])
       const config = makeBarLineChartConfig(
         data,
@@ -643,11 +643,40 @@ describe('chartConfigHelpers', () => {
         'line', // chartStyle
         true, // showLegend - user wants to show, but auto-hide should apply
         true, // showXAxisTitle
-        true // showYAxisTitle
+        true, // showYAxisTitle
+        true // autoHideLegend - enables auto-hide for single series
       )
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((config.options as any).plugins.legend.display).toBe(false)
+    })
+
+    it('should NOT auto-hide legend when autoHideLegend is disabled (default)', () => {
+      const data = createMockDataWithDatasets(['USA'])
+      const config = makeBarLineChartConfig(
+        data,
+        false, // isExcess
+        false, // showPi
+        false, // showPercentage
+        false, // isDeathsType
+        false, // isPopulationType
+        false, // showQrCode
+        false, // showLogo
+        'auto', // decimals
+        false, // isDark
+        undefined, // userTier
+        true, // showCaption
+        true, // showTitle
+        false, // isSSR
+        'line', // chartStyle
+        true, // showLegend
+        true, // showXAxisTitle
+        true, // showYAxisTitle
+        false // autoHideLegend - disabled, so legend should show even for single series
+      )
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((config.options as any).plugins.legend.display).toBe(true)
     })
 
     it('should show legend when there are multiple visible series', () => {
@@ -704,7 +733,7 @@ describe('chartConfigHelpers', () => {
       expect((config.options as any).plugins.legend.display).toBe(false)
     })
 
-    it('should not count empty labels as visible series', () => {
+    it('should not count empty labels as visible series when autoHideLegend is enabled', () => {
       // Baseline and PI datasets have empty labels
       const data = createMockDataWithDatasets(['USA', '', ''])
       const config = makeBarLineChartConfig(
@@ -725,7 +754,8 @@ describe('chartConfigHelpers', () => {
         'line', // chartStyle
         true, // showLegend
         true, // showXAxisTitle
-        true // showYAxisTitle
+        true, // showYAxisTitle
+        true // autoHideLegend - enables auto-hide for single series
       )
 
       // Only 'USA' is a visible series, so legend should be hidden

@@ -59,6 +59,7 @@ const props = defineProps<{
   showCaption: boolean
   showTitle: boolean
   showLegend: boolean
+  autoHideLegend: boolean
   showXAxisTitle: boolean
   showYAxisTitle: boolean
   decimals?: string
@@ -135,7 +136,8 @@ const lineConfig = computed(() => {
     'line',
     props.showLegend,
     props.showXAxisTitle,
-    props.showYAxisTitle
+    props.showYAxisTitle,
+    props.autoHideLegend
   ) as unknown as ChartJSConfig<'line', (number | null)[]>
 })
 
@@ -161,7 +163,8 @@ const barConfig = computed(() => {
     'bar',
     props.showLegend,
     props.showXAxisTitle,
-    props.showYAxisTitle
+    props.showYAxisTitle,
+    props.autoHideLegend
   ) as unknown as ChartJSConfig<'bar', (number | null)[]>
 })
 
@@ -188,7 +191,8 @@ const matrixConfig = computed(() => {
     false, // isSSR
     props.showLegend,
     props.showXAxisTitle,
-    props.showYAxisTitle
+    props.showYAxisTitle,
+    props.autoHideLegend
   ) as unknown as ChartJSConfig<'matrix', MatrixDataPoint[]>
 })
 
