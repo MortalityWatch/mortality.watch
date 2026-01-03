@@ -27,7 +27,7 @@
             size="sm"
           >
             <span class="mr-1">{{ getFlagEmoji(country.iso3c) }}</span>
-            {{ country.jurisdiction }}
+            {{ formatJurisdictionName(country.jurisdiction) }}
           </UButton>
         </NuxtLink>
       </div>
@@ -84,7 +84,7 @@
             <div class="flex items-center gap-2">
               <span class="text-lg">{{ getFlagEmoji(country.iso3c) }}</span>
               <span class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                {{ country.jurisdiction }}
+                {{ formatJurisdictionName(country.jurisdiction) }}
               </span>
             </div>
           </UCard>
@@ -103,7 +103,7 @@
 <script setup lang="ts">
 import type { Country } from '@/model'
 import { popularCountries } from '@/lib/discover/constants'
-import { getFlagEmoji, isSubNationalRegion } from '@/lib/discover/countryUtils'
+import { getFlagEmoji, isSubNationalRegion, formatJurisdictionName } from '@/lib/discover/countryUtils'
 import { useJurisdictionFilter } from '@/composables/useJurisdictionFilter'
 
 interface Props {

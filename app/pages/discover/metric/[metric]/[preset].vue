@@ -96,7 +96,7 @@
         :key="country.iso3c"
         :preset="currentPreset"
         :country="country.iso3c"
-        :country-name="country.jurisdiction"
+        :country-name="formatJurisdictionName(country.jurisdiction)"
       />
     </div>
 
@@ -148,7 +148,7 @@ import {
   chartTypeLabels,
   viewLabels
 } from '@/lib/discover/constants'
-import { isSubNationalRegion } from '@/lib/discover/countryUtils'
+import { isSubNationalRegion, formatJurisdictionName } from '@/lib/discover/countryUtils'
 import { useJurisdictionFilter } from '@/composables/useJurisdictionFilter'
 import { UI_CONFIG } from '@/lib/config/constants'
 

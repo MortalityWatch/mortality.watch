@@ -71,3 +71,16 @@ export function getParentCountry(iso3c: string): string | null {
   if ((UK_REGIONS as readonly string[]).includes(iso3c)) return 'GBR'
   return null
 }
+
+/**
+ * Format jurisdiction name by removing country code prefix
+ * e.g., "CAN - Ontario" -> "Ontario", "DEU - Bavaria" -> "Bavaria"
+ * Non-prefixed names are returned as-is
+ */
+export function formatJurisdictionName(jurisdiction: string): string {
+  const separatorIndex = jurisdiction.indexOf(' - ')
+  if (separatorIndex > -1) {
+    return jurisdiction.substring(separatorIndex + 3)
+  }
+  return jurisdiction
+}
