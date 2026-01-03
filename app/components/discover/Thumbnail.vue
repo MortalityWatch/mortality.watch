@@ -11,6 +11,7 @@
           :alt="alt"
           class="w-full h-full object-cover object-top hover:scale-105 transition-transform"
           loading="lazy"
+          @error="handleImageError"
         >
       </template>
       <template v-else>
@@ -20,6 +21,7 @@
           :alt="`${alt} - Pro feature`"
           class="w-full h-full object-cover object-top blur-lg grayscale"
           loading="lazy"
+          @error="handleImageError"
         >
       </template>
       <template #fallback>
@@ -50,6 +52,18 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
+const emit = defineEmits<{
+  error: []
+}>()
+
+// Handle image load errors (e.g., chart.png returns 500 for empty charts)
+function handleImageError() {
+  if (import.meta.dev) {
+    console.warn(`[DiscoverThumbnail] Failed to load: ${props.src}`)
+  }
+  emit('error')
+}
 
 // Measure container size
 const containerRef = ref<HTMLElement | null>(null)

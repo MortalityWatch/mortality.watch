@@ -8,6 +8,7 @@
     :emoji="getFlagEmoji(country)"
     :locked="isLocked"
     :feature="isLocked ? 'Z_SCORES' : undefined"
+    @error="emit('error')"
   />
 </template>
 
@@ -24,6 +25,10 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
+const emit = defineEmits<{
+  error: []
+}>()
 
 const colorMode = useColorMode()
 const { can, getFeatureUpgradeUrl } = useFeatureAccess()

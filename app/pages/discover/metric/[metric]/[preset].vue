@@ -93,10 +93,12 @@
     >
       <DiscoverCountryChartCard
         v-for="country in paginatedCountries"
+        v-show="!failedCountries.has(country.iso3c)"
         :key="country.iso3c"
         :preset="currentPreset"
         :country="country.iso3c"
         :country-name="formatJurisdictionName(country.jurisdiction)"
+        @error="handleChartError(country.iso3c)"
       />
     </div>
 
@@ -194,6 +196,19 @@ const selectedRegion = ref('all')
 const currentPage = ref(1)
 const itemsPerPage = UI_CONFIG.DISCOVER_ITEMS_PER_PAGE
 
+// Track countries whose charts failed to load (empty data, etc.)
+const failedCountries = ref(new Set<string>())
+
+// Handle chart load errors - hide the card and log for debugging
+function handleChartError(iso3c: string) {
+  failedCountries.value.add(iso3c)
+  // Force reactivity update
+  failedCountries.value = new Set(failedCountries.value)
+  if (import.meta.dev) {
+    console.warn(`[Discover] Chart failed to load for ${iso3c}, hiding card`)
+  }
+}
+
 // Load countries
 const { shouldShowCountry } = useJurisdictionFilter()
 
@@ -263,6 +278,11 @@ const paginatedCountries = computed(() => {
 // Reset to page 1 when filter changes
 watch(selectedRegion, () => {
   currentPage.value = 1
+})
+
+// Reset failed countries when preset changes (different metric/chartType combo)
+watch(presetId, () => {
+  failedCountries.value = new Set()
 })
 
 // SEO
