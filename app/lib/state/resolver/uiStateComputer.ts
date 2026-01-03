@@ -5,7 +5,7 @@
  * This eliminates the need for components to manually compute visibility with isVisible().
  */
 
-import type { ViewConfig, UIElement, UICondition } from './viewTypes'
+import type { ViewConfig, UIElement } from './viewTypes'
 import { evaluateCondition } from '../utils/evaluateCondition'
 
 export interface UIFieldState {

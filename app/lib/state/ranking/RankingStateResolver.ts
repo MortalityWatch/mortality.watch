@@ -19,7 +19,6 @@ import type {
   ResolvedRankingState,
   RankingResolutionLog,
   UIFieldState,
-  RankingUICondition,
   RankingUIConfig,
   UIElement
 } from './types'
