@@ -42,6 +42,7 @@ import {
   generateUrlFromState
 } from '@/lib/state/resolution'
 import { logger } from '@/lib/logger'
+import { getUniqueYears } from '@/lib/utils/dates'
 
 const log = logger.withPrefix('ExplorerDataOrchestration')
 
@@ -138,10 +139,7 @@ export function useExplorerDataOrchestration(
     if (state.chartType.value === 'yearly') {
       return labels
     } else {
-      const yearLabels = Array.from(
-        labels.filter(v => v && typeof v === 'string').map(v => v.substring(0, 4))
-      )
-      return Array.from(new Set(yearLabels))
+      return getUniqueYears(labels)
     }
   })
 
@@ -466,8 +464,9 @@ export function useExplorerDataOrchestration(
     try {
       const shortUrl = await getShortUrl(originalQueryParams.value ?? undefined)
       currentShortUrl.value = shortUrl
-    } catch {
-      // Silently fail - full URL will be used
+    } catch (error) {
+      // Log but don't fail - full URL will be used as fallback
+      log.warn('Failed to generate short URL, using full URL', { error })
     }
 
     // Use provided snapshot or create one from current refs
@@ -538,9 +537,7 @@ export function useExplorerDataOrchestration(
       if (state.chartType.value === 'yearly') {
         allYearlyChartLabels.value = allChartLabels.value
       } else {
-        allYearlyChartLabels.value = Array.from(
-          allChartLabels.value.filter(v => v && typeof v === 'string').map(v => v.substring(0, 4))
-        )
+        allYearlyChartLabels.value = getUniqueYears(allChartLabels.value)
       }
 
       // Only update baseline dates in URL if user has explicitly set them

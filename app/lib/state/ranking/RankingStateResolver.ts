@@ -28,6 +28,7 @@ import { RANKING_CONSTRAINTS } from './constraints'
 import { rankingFieldEncoders, RANKING_DEFAULTS, LEGACY_ASMR_KEY, decodeMetricType } from './fieldEncoders'
 import { evaluateCondition } from '../utils/evaluateCondition'
 import { logger, formatError } from '@/lib/logger'
+import { valuesEqual } from '@/lib/utils/array'
 
 const moduleLogger = logger.withPrefix('RankingStateResolver')
 
@@ -75,17 +76,6 @@ function computeUIState(
   }
 
   return ui
-}
-
-/**
- * Check if two values are equal (with deep comparison for arrays)
- */
-function valuesEqual(a: unknown, b: unknown): boolean {
-  if (Array.isArray(a) && Array.isArray(b)) {
-    if (a.length !== b.length) return false
-    return a.every((val, idx) => val === b[idx])
-  }
-  return a === b
 }
 
 /**

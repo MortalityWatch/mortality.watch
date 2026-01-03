@@ -1,4 +1,4 @@
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch, type Ref } from 'vue'
 import { useRoute } from 'vue-router'
 import type { AllChartData, DatasetRaw } from '@/model'
 import type { MortalityChartData } from '@/lib/chart/chartTypes'
@@ -22,18 +22,9 @@ import {
 } from '@/lib/state'
 import { getDefaultSliderStart } from '@/lib/config/constants'
 import { logger } from '@/lib/logger'
+import { valuesEqual } from '@/lib/utils/array'
 
 const log = logger.withPrefix('useExplorerState')
-
-/**
- * Compare two arrays for equality (shallow)
- */
-function arraysEqual(a: unknown[] | undefined, b: unknown[] | undefined): boolean {
-  if (a === b) return true
-  if (a === undefined || b === undefined) return false
-  if (a.length !== b.length) return false
-  return a.every((val, idx) => val === b[idx])
-}
 
 /**
  * Explorer State Management Composable
@@ -373,97 +364,53 @@ export function useExplorerState() {
       view.value = state.view as ViewType
     }
 
+    // Field mappings for data-driven state application
+    // Each entry maps a state field to its corresponding ref
+    // Optional fields (that can be undefined) use 'in' check
+    const fieldMappings: Array<{
+      field: string
+      ref: Ref<unknown>
+      optional?: boolean
+    }> = [
+      { field: 'countries', ref: countries as Ref<unknown> },
+      { field: 'type', ref: type as Ref<unknown> },
+      { field: 'chartType', ref: chartType as Ref<unknown> },
+      { field: 'chartStyle', ref: chartStyle as Ref<unknown> },
+      { field: 'ageGroups', ref: ageGroups as Ref<unknown> },
+      { field: 'standardPopulation', ref: standardPopulation as Ref<unknown> },
+      { field: 'showBaseline', ref: showBaseline as Ref<unknown> },
+      { field: 'showPredictionInterval', ref: showPredictionInterval as Ref<unknown> },
+      { field: 'cumulative', ref: cumulative as Ref<unknown> },
+      { field: 'showPercentage', ref: showPercentage as Ref<unknown> },
+      { field: 'showTotal', ref: showTotal as Ref<unknown> },
+      { field: 'maximize', ref: maximize as Ref<unknown> },
+      { field: 'showLogarithmic', ref: showLogarithmic as Ref<unknown> },
+      { field: 'showLabels', ref: showLabels as Ref<unknown> },
+      { field: 'leAdjusted', ref: leAdjusted as Ref<unknown> },
+      { field: 'baselineMethod', ref: baselineMethod as Ref<unknown> },
+      { field: 'sliderStart', ref: sliderStart as Ref<unknown> },
+      { field: 'decimals', ref: decimals as Ref<unknown> },
+      { field: 'showLogo', ref: showLogo as Ref<unknown> },
+      { field: 'showQrCode', ref: showQrCode as Ref<unknown> },
+      { field: 'showCaption', ref: showCaption as Ref<unknown> },
+      { field: 'showTitle', ref: showTitle as Ref<unknown> },
+      { field: 'showLegend', ref: showLegend as Ref<unknown> },
+      { field: 'showXAxisTitle', ref: showXAxisTitle as Ref<unknown> },
+      { field: 'showYAxisTitle', ref: showYAxisTitle as Ref<unknown> },
+      // Optional fields (can be undefined)
+      { field: 'dateFrom', ref: dateFrom as Ref<unknown>, optional: true },
+      { field: 'dateTo', ref: dateTo as Ref<unknown>, optional: true },
+      { field: 'baselineDateFrom', ref: baselineDateFrom as Ref<unknown>, optional: true },
+      { field: 'baselineDateTo', ref: baselineDateTo as Ref<unknown>, optional: true },
+      { field: 'userColors', ref: userColors as Ref<unknown>, optional: true }
+    ]
+
     // Apply each field if value differs (avoids unnecessary reactivity)
-    if (state.countries !== undefined && !arraysEqual(state.countries as string[], countries.value)) {
-      countries.value = state.countries as string[]
-    }
-    if (state.type !== undefined && state.type !== type.value) {
-      type.value = state.type as MetricType
-    }
-    if (state.chartType !== undefined && state.chartType !== chartType.value) {
-      chartType.value = state.chartType as ChartTypeSchema
-    }
-    if (state.chartStyle !== undefined && state.chartStyle !== chartStyle.value) {
-      chartStyle.value = state.chartStyle as ChartStyle
-    }
-    if (state.ageGroups !== undefined && !arraysEqual(state.ageGroups as string[], ageGroups.value)) {
-      ageGroups.value = state.ageGroups as string[]
-    }
-    if (state.standardPopulation !== undefined && state.standardPopulation !== standardPopulation.value) {
-      standardPopulation.value = state.standardPopulation as string
-    }
-    if (state.showBaseline !== undefined && state.showBaseline !== showBaseline.value) {
-      showBaseline.value = state.showBaseline as boolean
-    }
-    if (state.showPredictionInterval !== undefined && state.showPredictionInterval !== showPredictionInterval.value) {
-      showPredictionInterval.value = state.showPredictionInterval as boolean
-    }
-    if (state.cumulative !== undefined && state.cumulative !== cumulative.value) {
-      cumulative.value = state.cumulative as boolean
-    }
-    if (state.showPercentage !== undefined && state.showPercentage !== showPercentage.value) {
-      showPercentage.value = state.showPercentage as boolean
-    }
-    if (state.showTotal !== undefined && state.showTotal !== showTotal.value) {
-      showTotal.value = state.showTotal as boolean
-    }
-    if (state.maximize !== undefined && state.maximize !== maximize.value) {
-      maximize.value = state.maximize as boolean
-    }
-    if (state.showLogarithmic !== undefined && state.showLogarithmic !== showLogarithmic.value) {
-      showLogarithmic.value = state.showLogarithmic as boolean
-    }
-    if (state.showLabels !== undefined && state.showLabels !== showLabels.value) {
-      showLabels.value = state.showLabels as boolean
-    }
-    if (state.leAdjusted !== undefined && state.leAdjusted !== leAdjusted.value) {
-      leAdjusted.value = state.leAdjusted as boolean
-    }
-    if (state.baselineMethod !== undefined && state.baselineMethod !== baselineMethod.value) {
-      baselineMethod.value = state.baselineMethod as string
-    }
-    // For optional fields (can be undefined), check if key exists in state object
-    if ('dateFrom' in state && state.dateFrom !== dateFrom.value) {
-      dateFrom.value = state.dateFrom as string | undefined
-    }
-    if ('dateTo' in state && state.dateTo !== dateTo.value) {
-      dateTo.value = state.dateTo as string | undefined
-    }
-    if (state.sliderStart !== undefined && state.sliderStart !== sliderStart.value) {
-      sliderStart.value = state.sliderStart as string
-    }
-    if ('baselineDateFrom' in state && state.baselineDateFrom !== baselineDateFrom.value) {
-      baselineDateFrom.value = state.baselineDateFrom as string | undefined
-    }
-    if ('baselineDateTo' in state && state.baselineDateTo !== baselineDateTo.value) {
-      baselineDateTo.value = state.baselineDateTo as string | undefined
-    }
-    if (state.decimals !== undefined && state.decimals !== decimals.value) {
-      decimals.value = state.decimals as string
-    }
-    if (state.showLogo !== undefined && state.showLogo !== showLogo.value) {
-      showLogo.value = state.showLogo as boolean
-    }
-    if (state.showQrCode !== undefined && state.showQrCode !== showQrCode.value) {
-      showQrCode.value = state.showQrCode as boolean
-    }
-    if (state.showCaption !== undefined && state.showCaption !== showCaption.value) {
-      showCaption.value = state.showCaption as boolean
-    }
-    if (state.showTitle !== undefined && state.showTitle !== showTitle.value) {
-      showTitle.value = state.showTitle as boolean
-    }
-    if (state.showLegend !== undefined && state.showLegend !== showLegend.value) {
-      showLegend.value = state.showLegend as boolean
-    }
-    if (state.showXAxisTitle !== undefined && state.showXAxisTitle !== showXAxisTitle.value) {
-      showXAxisTitle.value = state.showXAxisTitle as boolean
-    }
-    if (state.showYAxisTitle !== undefined && state.showYAxisTitle !== showYAxisTitle.value) {
-      showYAxisTitle.value = state.showYAxisTitle as boolean
-    }
-    if ('userColors' in state && !arraysEqual(state.userColors as string[] | undefined, userColors.value)) {
-      userColors.value = state.userColors as string[] | undefined
+    for (const { field, ref: targetRef, optional } of fieldMappings) {
+      const hasValue = optional ? field in state : state[field] !== undefined
+      if (hasValue && !valuesEqual(state[field], targetRef.value)) {
+        targetRef.value = state[field]
+      }
     }
   }
 

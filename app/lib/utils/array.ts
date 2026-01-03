@@ -43,3 +43,32 @@ export const repeat = <T>(x: T, times: number): T[] => {
  * Replacement for Array.prototype.last() to avoid prototype pollution
  */
 export const last = <T>(arr: T[]): T | undefined => arr[arr.length - 1]
+
+/**
+ * Compare two arrays for shallow equality
+ *
+ * @param a - First array (or undefined)
+ * @param b - Second array (or undefined)
+ * @returns true if arrays have same length and elements at each index are equal (===)
+ */
+export function arraysEqual<T>(a: T[] | undefined, b: T[] | undefined): boolean {
+  if (a === b) return true
+  if (a === undefined || b === undefined) return false
+  if (a.length !== b.length) return false
+  return a.every((val, idx) => val === b[idx])
+}
+
+/**
+ * Compare two values for equality (with deep comparison for arrays)
+ *
+ * @param a - First value
+ * @param b - Second value
+ * @returns true if values are equal (arrays compared element-wise, primitives with ===)
+ */
+export function valuesEqual(a: unknown, b: unknown): boolean {
+  if (Array.isArray(a) && Array.isArray(b)) {
+    if (a.length !== b.length) return false
+    return a.every((val, idx) => val === b[idx])
+  }
+  return a === b
+}

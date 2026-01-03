@@ -241,6 +241,9 @@
 import { showToast } from '@/toast'
 import { formatChartDate } from '@/lib/utils/dates'
 import { handleApiError } from '@/lib/errors/errorHandler'
+import { logger } from '@/lib/logger'
+
+const log = logger.withPrefix('charts/[slug]')
 
 const { user } = useAuth()
 const router = useRouter()
@@ -284,8 +287,9 @@ async function handleToggleFeatured(newValue: boolean) {
 
   try {
     await toggleFeaturedStatus(chart.value.id, newValue)
-  } catch {
-    // Revert on error
+  } catch (error) {
+    // Revert on error and log
+    log.error('Failed to toggle featured status', { error })
     chart.value.isFeatured = oldValue
   }
 }
@@ -299,8 +303,9 @@ async function handleTogglePublic(newValue: boolean) {
 
   try {
     await togglePublicStatus(chart.value.id, newValue)
-  } catch {
-    // Revert on error
+  } catch (error) {
+    // Revert on error and log
+    log.error('Failed to toggle public status', { error })
     if (chart.value.isPublic !== undefined) {
       chart.value.isPublic = oldValue
     }

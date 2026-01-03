@@ -2,6 +2,42 @@
  * Date parsing and transformation utilities
  */
 
+/**
+ * Extract the year from a chart label string
+ *
+ * Chart labels come in various formats:
+ * - Yearly: "2020"
+ * - Flu season: "2019/20"
+ * - Weekly: "2020 W15"
+ * - Monthly: "2020 Jan"
+ *
+ * This function extracts the first 4 characters as the year.
+ *
+ * @param label - Chart label string
+ * @returns The 4-character year string (e.g., "2020")
+ */
+export function extractYear(label: string): string {
+  return label.substring(0, 4)
+}
+
+/**
+ * Get unique years from an array of chart labels
+ *
+ * Filters out empty/null values, extracts years, and returns unique values.
+ *
+ * @param labels - Array of chart label strings
+ * @returns Array of unique year strings, in order of first occurrence
+ */
+export function getUniqueYears(labels: string[]): string[] {
+  return Array.from(
+    new Set(
+      labels
+        .filter((l): l is string => Boolean(l) && typeof l === 'string')
+        .map(l => l.substring(0, 4))
+    )
+  )
+}
+
 export const months = [
   'Jan',
   'Feb',
