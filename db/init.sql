@@ -32,8 +32,7 @@ CREATE INDEX IF NOT EXISTS idx_users_tier ON users (tier);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users (role);
 CREATE INDEX IF NOT EXISTS idx_verification_token ON users (verification_token);
 CREATE INDEX IF NOT EXISTS idx_password_reset_token ON users (password_reset_token);
-CREATE INDEX IF NOT EXISTS idx_users_google_id ON users (google_id);
-CREATE INDEX IF NOT EXISTS idx_users_twitter_id ON users (twitter_id);
+-- OAuth indexes created via db-init.ts migrations
 
 -- Invite codes table
 CREATE TABLE IF NOT EXISTS invite_codes (

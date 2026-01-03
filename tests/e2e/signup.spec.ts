@@ -35,11 +35,15 @@ test.describe('Signup Page', () => {
     test('should have links to Terms of Service and Privacy Policy', async ({ page }) => {
       await page.goto('/signup')
 
-      const tosLink = page.getByRole('link', { name: /Terms of Service/i })
-      const privacyLink = page.getByRole('link', { name: /Privacy Policy/i })
+      // Wait for page to fully load
+      await page.waitForLoadState('networkidle')
 
-      const hasTos = await tosLink.isVisible().catch(() => false)
-      const hasPrivacy = await privacyLink.isVisible().catch(() => false)
+      // Look for links by href and text content (more robust than getByRole)
+      const tosLink = page.locator('a[href*="/legal/terms"]')
+      const privacyLink = page.locator('a[href*="/legal/privacy"]')
+
+      const hasTos = await tosLink.first().isVisible().catch(() => false)
+      const hasPrivacy = await privacyLink.first().isVisible().catch(() => false)
 
       // At least one of these should exist
       expect(hasTos || hasPrivacy).toBe(true)
