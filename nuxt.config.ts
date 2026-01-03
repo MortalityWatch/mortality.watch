@@ -98,7 +98,7 @@ export default defineNuxtConfig({
           'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
           'Content-Security-Policy': [
             'default-src \'self\'',
-            'script-src \'self\' \'unsafe-inline\' \'unsafe-eval\' https://s3.mortality.watch https://stats.mortality.watch https://ua.mortality.watch https://js.stripe.com',
+            'script-src \'self\' \'unsafe-inline\' \'unsafe-eval\' https://s3.mortality.watch https://stats.mortality.watch https://ua.mortality.watch https://js.stripe.com https://static.cloudflareinsights.com',
             'style-src \'self\' \'unsafe-inline\'',
             'img-src \'self\' data: https:',
             'font-src \'self\' data:',
