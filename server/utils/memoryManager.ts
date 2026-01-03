@@ -40,6 +40,11 @@ export async function withTimeout<T>(
  * Canvas-like object with necessary properties for cleanup
  * Works with both browser Canvas and node-canvas Canvas elements
  * Uses flexible typing to accommodate both browser and node-canvas implementations
+ *
+ * Note: Uses `any` for getContext type parameter because browser Canvas and
+ * node-canvas have incompatible type signatures that cannot be unified.
+ * - Browser: getContext(contextId: "2d" | "bitmaprenderer" | "webgl" | "webgl2", ...)
+ * - node-canvas: getContext(contextId: "2d", ...)
  */
 interface CanvasLike {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

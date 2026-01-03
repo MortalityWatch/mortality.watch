@@ -8,6 +8,9 @@
 
 import { ref, computed } from 'vue'
 import { showToast } from '@/toast'
+import { logger } from '@/lib/logger'
+
+const log = logger.withPrefix('useSaveChart')
 
 interface SaveChartOptions {
   chartType: 'explorer' | 'ranking'
@@ -34,6 +37,23 @@ interface DetectedChart {
   id: number
   slug: string | null
   name: string
+}
+
+/**
+ * Type for Nuxt/ofetch FetchError responses
+ * Used for proper type-safe error handling
+ */
+interface FetchErrorResponse {
+  statusCode?: number
+  status?: number
+  data?: {
+    data?: {
+      duplicate?: boolean
+      existingChart?: ExistingChart
+    }
+    duplicate?: boolean
+    existingChart?: ExistingChart
+  }
 }
 
 /**
@@ -154,12 +174,11 @@ export function useSaveChart(options: SaveChartOptions) {
         'success'
       )
     } catch (err: unknown) {
-      console.error(`Failed to save ${entityName}:`, err)
+      log.error(`Failed to save ${entityName}`, err)
 
       // Check if this is a duplicate error (409 Conflict)
       // FetchError from ofetch/nuxt has shape: { status, statusCode, statusText, statusMessage, data, message }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const error = err as any
+      const error = err as FetchErrorResponse
 
       // Check both statusCode and status (FetchError uses both)
       const is409 = error?.statusCode === 409 || error?.status === 409
@@ -171,12 +190,12 @@ export function useSaveChart(options: SaveChartOptions) {
       if (is409 && hasDuplicateFlag) {
         // Chart already exists - show duplicate warning in modal
         isDuplicate.value = true
-        existingChart.value = errorData.existingChart || null
+        existingChart.value = errorData?.existingChart || null
         // Update saved state so button shows "Saved!" with view link when modal is dismissed
         isSaved.value = true
         isModified.value = false
-        savedChartSlug.value = errorData.existingChart?.slug || null
-        savedChartId.value = errorData.existingChart?.id?.toString() || null
+        savedChartSlug.value = errorData?.existingChart?.slug || null
+        savedChartId.value = errorData?.existingChart?.id?.toString() || null
         // Keep modal open so user can see the warning and use the links
       } else {
         saveError.value = err instanceof Error ? err.message : `Failed to save ${entityName}`
@@ -264,7 +283,7 @@ export function useSaveChart(options: SaveChartOptions) {
         'success'
       )
     } catch (err: unknown) {
-      console.error(`Failed to update ${entityName}:`, err)
+      log.error(`Failed to update ${entityName}`, err)
       saveError.value = err instanceof Error ? err.message : `Failed to update ${entityName}`
     } finally {
       savingChart.value = false
@@ -314,7 +333,7 @@ export function useSaveChart(options: SaveChartOptions) {
         'success'
       )
     } catch (err: unknown) {
-      console.error(`Failed to save ${entityName}:`, err)
+      log.error(`Failed to save ${entityName}`, err)
       saveError.value = err instanceof Error ? err.message : `Failed to save ${entityName}`
     } finally {
       savingChart.value = false

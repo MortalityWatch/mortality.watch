@@ -429,8 +429,9 @@ describe('useSaveChart', () => {
       saveChart.saveChartName.value = 'Test Chart'
       await saveChart.saveToDB({ test: 'data' })
 
+      // Logger formats as: "[useSaveChart] message" and includes error object
       expect(consoleSpy).toHaveBeenCalledWith(
-        'Failed to save chart:',
+        '[useSaveChart] Failed to save chart',
         expect.any(Error)
       )
 

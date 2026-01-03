@@ -21,6 +21,9 @@ import {
   type ChartStyle
 } from '@/lib/state'
 import { getDefaultSliderStart } from '@/lib/config/constants'
+import { logger } from '@/lib/logger'
+
+const log = logger.withPrefix('useExplorerState')
 
 /**
  * Compare two arrays for equality (shallow)
@@ -211,8 +214,8 @@ export function useExplorerState() {
       }
 
       // Log validation errors for debugging
-      console.warn('[useExplorerState] Validation errors detected:', newErrors)
-      console.warn('[useExplorerState] Current state:', {
+      log.warn('Validation errors detected', { errors: newErrors })
+      log.warn('Current state', {
         dateFrom: dateFrom.value,
         dateTo: dateTo.value,
         baselineDateFrom: baselineDateFrom.value,

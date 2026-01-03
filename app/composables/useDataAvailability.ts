@@ -14,8 +14,11 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { metadataService } from '@/services/metadataService'
 import { showToast } from '@/toast'
+import { logger } from '@/lib/logger'
 import type { useExplorerState } from './useExplorerState'
 import type { ChartType } from '@/model/period'
+
+const log = logger.withPrefix('useDataAvailability')
 
 export function useDataAvailability(
   state: ReturnType<typeof useExplorerState>
@@ -30,7 +33,7 @@ export function useDataAvailability(
     } catch (e) {
       error.value = e as Error
       showToast('Failed to load data availability metadata', 'error')
-      console.error('[useDataAvailability] Failed to load metadata:', e)
+      log.error('Failed to load metadata', e)
     } finally {
       isLoading.value = false
     }
@@ -42,7 +45,7 @@ export function useDataAvailability(
     try {
       return metadataService.getAvailableChartTypes(state.countries.value)
     } catch (e) {
-      console.error('[useDataAvailability] Error getting available chart types:', e)
+      log.error('Error getting available chart types', e)
       return []
     }
   })
@@ -56,7 +59,7 @@ export function useDataAvailability(
         state.chartType.value
       )
     } catch (e) {
-      console.error('[useDataAvailability] Error getting available age groups:', e)
+      log.error('Error getting available age groups', e)
       return []
     }
   })
@@ -71,7 +74,7 @@ export function useDataAvailability(
         state.ageGroups.value
       )
     } catch (e) {
-      console.error('[useDataAvailability] Error getting available date range:', e)
+      log.error('Error getting available date range', e)
       return null
     }
   })
