@@ -108,7 +108,7 @@
               v-if="showBitcoinAddress"
               class="text-xs font-mono text-gray-600 dark:text-gray-400 break-all"
             >
-              3DqLGmNvF8uME8wQmFcbwi9CfZPj2uGLVW
+              {{ config.public.bitcoinAddress }}
             </p>
           </div>
         </UCard>
@@ -125,6 +125,7 @@
 <script setup lang="ts">
 const showBitcoinAddress = ref(false)
 const toast = useToast()
+const config = useRuntimeConfig()
 
 // Load Stripe Buy Button script
 onMounted(() => {
@@ -137,7 +138,7 @@ onMounted(() => {
 
 // Copy Bitcoin address to clipboard
 async function copyBitcoinAddress() {
-  const address = '3DqLGmNvF8uME8wQmFcbwi9CfZPj2uGLVW'
+  const address = config.public.bitcoinAddress
   try {
     await navigator.clipboard.writeText(address)
     showBitcoinAddress.value = true
