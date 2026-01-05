@@ -64,7 +64,7 @@
     <div class="mb-12">
       <div class="text-center mb-8">
         <h2 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-          Featured Visualizations
+          Featured Charts
         </h2>
         <p class="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
           Click any chart below to explore interactive versions with your own
