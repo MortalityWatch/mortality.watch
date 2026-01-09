@@ -99,7 +99,6 @@
           </NuxtLink>
 
           <!-- Placeholder for unavailable metric/chartType combinations (gray tint) -->
-          <!-- Note: Failed charts are hidden entirely, not shown as placeholders -->
           <div
             v-else-if="!isChartFailed(metric, chartType)"
             class="rounded-lg border border-dashed border-gray-300 dark:border-gray-700 bg-gray-100/50 dark:bg-gray-800/30 overflow-hidden"
@@ -117,6 +116,29 @@
               style="aspect-ratio: 16/9"
             >
               <span class="text-xs text-gray-400 dark:text-gray-500 text-center px-4">
+                {{ getUnavailableReason(metric, chartType) }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Placeholder for failed/error charts (subtle red tint) -->
+          <div
+            v-else
+            class="rounded-lg border border-dashed border-red-300 dark:border-red-900/60 bg-red-50/30 dark:bg-red-950/20 overflow-hidden"
+          >
+            <!-- Header with title -->
+            <div class="px-3 py-2 text-center border-b border-dashed border-red-300 dark:border-red-900/60">
+              <h4 class="text-sm font-semibold text-red-400 dark:text-red-700">
+                {{ metricInfo[metric].label }}
+              </h4>
+            </div>
+
+            <!-- Placeholder content -->
+            <div
+              class="flex items-center justify-center bg-red-100/20 dark:bg-red-900/10"
+              style="aspect-ratio: 16/9"
+            >
+              <span class="text-xs text-red-400 dark:text-red-600 text-center px-4">
                 {{ getUnavailableReason(metric, chartType) }}
               </span>
             </div>
