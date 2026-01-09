@@ -98,24 +98,47 @@
             <UiLockedOverlay v-if="isLocked(getViewForMetric(metric)!)" />
           </NuxtLink>
 
-          <!-- Placeholder for unavailable/failed metric/chartType combinations -->
+          <!-- Placeholder for unavailable metric/chartType combinations (gray tint) -->
           <div
-            v-else
-            class="rounded-lg border border-dashed border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 overflow-hidden"
+            v-else-if="!isChartFailed(metric, chartType)"
+            class="rounded-lg border border-dashed border-gray-300 dark:border-gray-700 bg-gray-100/50 dark:bg-gray-800/30 overflow-hidden"
           >
             <!-- Header with title -->
-            <div class="px-3 py-2 text-center border-b border-dashed border-gray-200 dark:border-gray-800">
-              <h4 class="text-sm font-semibold text-gray-400 dark:text-gray-600">
+            <div class="px-3 py-2 text-center border-b border-dashed border-gray-300 dark:border-gray-700">
+              <h4 class="text-sm font-semibold text-gray-400 dark:text-gray-500">
                 {{ metricInfo[metric].label }}
               </h4>
             </div>
 
             <!-- Placeholder content -->
             <div
-              class="flex items-center justify-center bg-gray-100/50 dark:bg-gray-800/50"
+              class="flex items-center justify-center bg-gray-200/30 dark:bg-gray-700/20"
               style="aspect-ratio: 16/9"
             >
-              <span class="text-xs text-gray-400 dark:text-gray-600 text-center px-4">
+              <span class="text-xs text-gray-400 dark:text-gray-500 text-center px-4">
+                {{ getUnavailableReason(metric, chartType) }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Placeholder for failed/error charts (subtle red tint) -->
+          <div
+            v-else
+            class="rounded-lg border border-dashed border-red-200 dark:border-red-900/50 bg-red-50/50 dark:bg-red-950/20 overflow-hidden"
+          >
+            <!-- Header with title -->
+            <div class="px-3 py-2 text-center border-b border-dashed border-red-200 dark:border-red-900/50">
+              <h4 class="text-sm font-semibold text-red-300 dark:text-red-800">
+                {{ metricInfo[metric].label }}
+              </h4>
+            </div>
+
+            <!-- Placeholder content -->
+            <div
+              class="flex items-center justify-center bg-red-100/30 dark:bg-red-900/10"
+              style="aspect-ratio: 16/9"
+            >
+              <span class="text-xs text-red-400 dark:text-red-700 text-center px-4">
                 {{ getUnavailableReason(metric, chartType) }}
               </span>
             </div>
