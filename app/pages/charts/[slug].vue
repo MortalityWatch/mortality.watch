@@ -73,12 +73,40 @@
         class="mb-8"
         :ui="{ body: 'p-0' }"
       >
-        <img
+        <div
           v-if="chartImageUrl"
-          :src="chartImageUrl"
-          :alt="chart.name"
-          class="w-full h-auto block"
+          class="relative"
+          style="aspect-ratio: 2/1"
         >
+          <ClientOnly>
+            <!-- Loading placeholder -->
+            <div
+              v-if="!imageLoaded"
+              class="absolute inset-0 animate-pulse bg-gray-200 dark:bg-gray-700 flex items-center justify-center"
+            >
+              <Icon
+                name="i-lucide-loader-2"
+                class="w-12 h-12 text-gray-400 animate-spin"
+              />
+            </div>
+            <img
+              :src="chartImageUrl"
+              :alt="chart.name"
+              class="w-full h-full object-contain block"
+              :class="{ 'opacity-0': !imageLoaded }"
+              @load="imageLoaded = true"
+              @error="imageLoaded = true"
+            >
+            <template #fallback>
+              <div class="absolute inset-0 animate-pulse bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                <Icon
+                  name="i-lucide-loader-2"
+                  class="w-12 h-12 text-gray-400 animate-spin"
+                />
+              </div>
+            </template>
+          </ClientOnly>
+        </div>
         <div
           v-else
           class="aspect-video flex flex-col items-center justify-center text-gray-400 gap-4"
@@ -269,6 +297,9 @@ interface Chart {
 
 const route = useRoute()
 const slug = route.params.slug as string
+
+// Track image loading state
+const imageLoaded = ref(false)
 
 // Fetch chart data
 const { data: chart, pending, error } = await useFetch<Chart>(
