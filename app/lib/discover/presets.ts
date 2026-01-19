@@ -354,8 +354,14 @@ export function isPresetValidForCountry(
     }
   }
 
-  // Check if metric is valid for chart type (e.g., ASD only for yearly)
+  // Check if metric is valid for chart type (e.g., ASD only for yearly aggregations, LE only for yearly)
   if (!isMetricValidForChartType(metric, chartType)) {
+    if (metric === 'le') {
+      return {
+        valid: false,
+        reason: 'LE only available for yearly periods'
+      }
+    }
     return {
       valid: false,
       reason: `${metric.toUpperCase()} only available for yearly chart types`
