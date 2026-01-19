@@ -301,7 +301,6 @@ const slug = route.params.slug as string
 
 // Track image loading state - reset when URL changes (e.g., color mode toggle)
 const imageLoaded = ref(false)
-const currentImageUrl = ref<string | null>(null)
 
 // Fetch chart data
 const { data: chart, pending, error } = await useFetch<Chart>(
@@ -397,11 +396,8 @@ const chartImageUrl = computed(() => {
 })
 
 // Reset loading state when chart image URL changes (e.g., color mode toggle)
-watch(chartImageUrl, (newUrl) => {
-  if (newUrl !== currentImageUrl.value) {
-    imageLoaded.value = false
-    currentImageUrl.value = newUrl
-  }
+watch(chartImageUrl, () => {
+  imageLoaded.value = false
 })
 
 // Absolute URL version for OG meta tags
