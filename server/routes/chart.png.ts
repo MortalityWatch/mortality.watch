@@ -102,13 +102,28 @@ export default defineEventHandler(async (event) => {
         })
 
         const isAsmrType = preliminaryState.type.startsWith('asmr')
-        const allLabels = dataLoader.getAllChartLabels(
+        let allLabels = dataLoader.getAllChartLabels(
           rawData,
           isAsmrType,
           preliminaryState.ageGroups,
           preliminaryState.countries,
           preliminaryState.chartType
         )
+
+        // If ASMR type but no ASMR labels found, fall back to CMR labels
+        // This handles cases where the URL defaults to ASMR but the data only has CMR
+        let effectiveIsAsmrType = isAsmrType
+        if (allLabels.length === 0 && isAsmrType) {
+          logger.info('No ASMR labels found, falling back to CMR labels')
+          allLabels = dataLoader.getAllChartLabels(
+            rawData,
+            false, // Use CMR instead
+            preliminaryState.ageGroups,
+            preliminaryState.countries,
+            preliminaryState.chartType
+          )
+          effectiveIsAsmrType = false
+        }
 
         // Validate that we have data to render
         if (allLabels.length === 0) {
@@ -162,7 +177,7 @@ export default defineEventHandler(async (event) => {
           allChartData.labels,
           allChartData,
           chartUrl,
-          isAsmrType
+          effectiveIsAsmrType
         )
 
         // Step 5.5: Check if chart data is empty (e.g., LE for countries with incompatible age groups)
