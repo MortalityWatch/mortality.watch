@@ -91,15 +91,49 @@
       v-else-if="currentPreset && paginatedCountries.length > 0"
       class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
     >
-      <DiscoverCountryChartCard
+      <template
         v-for="country in paginatedCountries"
-        v-show="!failedCountries.has(country.iso3c)"
         :key="country.iso3c"
-        :preset="currentPreset"
-        :country="country.iso3c"
-        :country-name="formatJurisdictionName(country.jurisdiction)"
-        @error="handleChartError(country.iso3c)"
-      />
+      >
+        <!-- Normal chart card -->
+        <DiscoverCountryChartCard
+          v-if="!failedCountries.has(country.iso3c)"
+          :preset="currentPreset"
+          :country="country.iso3c"
+          :country-name="formatJurisdictionName(country.jurisdiction)"
+          @error="handleChartError(country.iso3c)"
+        />
+
+        <!-- Error state card (red tint) -->
+        <div
+          v-else
+          class="h-full rounded-lg border border-dashed border-red-300 dark:border-red-900/60 bg-red-50/30 dark:bg-red-950/20 overflow-hidden"
+        >
+          <!-- Header with country name -->
+          <div class="px-3 py-2 border-b border-dashed border-red-300 dark:border-red-900/60">
+            <div class="flex items-center gap-2">
+              <span class="text-lg flex-shrink-0">{{ getFlagEmoji(country.iso3c) }}</span>
+              <span class="font-medium text-red-400 dark:text-red-700 truncate">
+                {{ formatJurisdictionName(country.jurisdiction) }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Placeholder content -->
+          <div
+            class="flex flex-col items-center justify-center bg-red-100/20 dark:bg-red-900/10"
+            style="aspect-ratio: 16/9"
+          >
+            <Icon
+              name="i-lucide-alert-triangle"
+              class="w-8 h-8 text-red-400 dark:text-red-600 mb-2"
+            />
+            <span class="text-xs text-red-400 dark:text-red-600 text-center px-4">
+              Chart data unavailable
+            </span>
+          </div>
+        </div>
+      </template>
     </div>
 
     <!-- Empty State -->
@@ -150,7 +184,7 @@ import {
   chartTypeLabels,
   viewLabels
 } from '@/lib/discover/constants'
-import { isSubNationalRegion, formatJurisdictionName } from '@/lib/discover/countryUtils'
+import { isSubNationalRegion, formatJurisdictionName, getFlagEmoji } from '@/lib/discover/countryUtils'
 import { useJurisdictionFilter } from '@/composables/useJurisdictionFilter'
 import { UI_CONFIG } from '@/lib/config/constants'
 
@@ -199,7 +233,7 @@ const itemsPerPage = UI_CONFIG.DISCOVER_ITEMS_PER_PAGE
 // Track countries whose charts failed to load (empty data, etc.)
 const failedCountries = ref(new Set<string>())
 
-// Handle chart load errors - hide the card and log for debugging
+// Handle chart load errors - show error state and log for debugging
 function handleChartError(iso3c: string) {
   failedCountries.value.add(iso3c)
   // Force reactivity update
