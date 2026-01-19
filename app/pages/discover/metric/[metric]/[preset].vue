@@ -105,21 +105,23 @@
         />
 
         <!-- Error state card (red tint) -->
-        <UCard
+        <div
           v-else
-          class="h-full border-dashed border-red-300 dark:border-red-900/60 bg-red-50/30 dark:bg-red-950/20"
+          class="h-full rounded-lg border border-dashed border-red-300 dark:border-red-900/60 bg-red-50/30 dark:bg-red-950/20 overflow-hidden"
         >
-          <template #header>
+          <!-- Header with country name -->
+          <div class="px-3 py-2 border-b border-dashed border-red-300 dark:border-red-900/60">
             <div class="flex items-center gap-2">
               <span class="text-lg flex-shrink-0">{{ getFlagEmoji(country.iso3c) }}</span>
               <span class="font-medium text-red-400 dark:text-red-700 truncate">
                 {{ formatJurisdictionName(country.jurisdiction) }}
               </span>
             </div>
-          </template>
+          </div>
 
+          <!-- Placeholder content -->
           <div
-            class="flex flex-col items-center justify-center bg-red-100/20 dark:bg-red-900/10 rounded"
+            class="flex flex-col items-center justify-center bg-red-100/20 dark:bg-red-900/10"
             style="aspect-ratio: 16/9"
           >
             <Icon
@@ -130,7 +132,7 @@
               Chart data unavailable
             </span>
           </div>
-        </UCard>
+        </div>
       </template>
     </div>
 
@@ -231,7 +233,7 @@ const itemsPerPage = UI_CONFIG.DISCOVER_ITEMS_PER_PAGE
 // Track countries whose charts failed to load (empty data, etc.)
 const failedCountries = ref(new Set<string>())
 
-// Handle chart load errors - hide the card and log for debugging
+// Handle chart load errors - show error state and log for debugging
 function handleChartError(iso3c: string) {
   failedCountries.value.add(iso3c)
   // Force reactivity update
