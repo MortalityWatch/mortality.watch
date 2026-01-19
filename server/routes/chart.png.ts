@@ -110,11 +110,11 @@ export default defineEventHandler(async (event) => {
           preliminaryState.chartType
         )
 
-        // If ASMR type but no ASMR labels found, fall back to CMR labels
+        // If ASMR type but no ASMR labels found, fall back to CMR
         // This handles cases where the URL defaults to ASMR but the data only has CMR
-        let effectiveIsAsmrType = isAsmrType
+        let effectiveQueryParams = queryParams
         if (allLabels.length === 0 && isAsmrType) {
-          logger.info('No ASMR labels found, falling back to CMR labels')
+          logger.info('No ASMR labels found, falling back to CMR')
           allLabels = dataLoader.getAllChartLabels(
             rawData,
             false, // Use CMR instead
@@ -122,7 +122,8 @@ export default defineEventHandler(async (event) => {
             preliminaryState.countries,
             preliminaryState.chartType
           )
-          effectiveIsAsmrType = false
+          // Override the type to CMR so downstream functions use correct data keys
+          effectiveQueryParams = { ...queryParams, t: 'cmr' }
         }
 
         // Validate that we have data to render
@@ -136,7 +137,8 @@ export default defineEventHandler(async (event) => {
 
         // Step 3: Now resolve full state with allLabels
         // This applies constraints AND computes effective date ranges
-        const state = resolveChartStateForRendering(queryParams, allLabels)
+        // Use effectiveQueryParams which may have type overridden to 'cmr' if ASMR data unavailable
+        const state = resolveChartStateForRendering(effectiveQueryParams, allLabels)
 
         // Build explorer URL from request query params (same params, just /explorer instead of /chart.png)
         // Use request origin so short URL matches client (important for visual parity tests)
@@ -171,20 +173,43 @@ export default defineEventHandler(async (event) => {
 
         // Step 5: Transform data into chart-ready format
         // Use allChartData.labels (sliced from sliderStart) to match baseline data alignment
-        const { chartData, isDeathsType, isLE, isPopulationType } = await transformChartData(
-          adjustedState,
+        let currentState = adjustedState
+        let transformResult = await transformChartData(
+          currentState,
           allCountries,
           allChartData.labels,
           allChartData,
           chartUrl,
-          effectiveIsAsmrType
+          currentState.type.startsWith('asmr')
         )
+
+        // If ASMR produces empty chart data (due to incomplete data), fall back to CMR
+        // This handles saved charts where type defaulted to ASMR but data is only available as CMR
+        if (isChartDataEmpty(transformResult.chartData) && currentState.type.startsWith('asmr')) {
+          logger.info('ASMR data produced empty chart, falling back to CMR')
+          // Re-resolve state with CMR type
+          const cmrQueryParams = { ...effectiveQueryParams, t: 'cmr' }
+          const cmrState = resolveChartStateForRendering(cmrQueryParams, allLabels)
+          const cmrAdjustedState = applySteepDropAdjustment(cmrState, allChartData, queryParams)
+
+          transformResult = await transformChartData(
+            cmrAdjustedState,
+            allCountries,
+            allChartData.labels,
+            allChartData,
+            chartUrl,
+            false
+          )
+          currentState = cmrAdjustedState
+        }
+
+        const { chartData, isDeathsType, isLE, isPopulationType } = transformResult
 
         // Step 5.5: Check if chart data is empty (e.g., LE for countries with incompatible age groups)
         if (isChartDataEmpty(chartData)) {
-          const countriesStr = preliminaryState.countries.join(', ')
+          const countriesStr = currentState.countries.join(', ')
           throw new Error(
-            `No chart data available for ${countriesStr} (${preliminaryState.type}, ${preliminaryState.chartType}). `
+            `No chart data available for ${countriesStr} (${currentState.type}, ${currentState.chartType}). `
             + 'The data may exist but cannot be calculated for this configuration.'
           )
         }
@@ -201,7 +226,7 @@ export default defineEventHandler(async (event) => {
         setServerDarkMode(darkMode)
         try {
           const chartConfig = generateChartConfig(
-            adjustedState,
+            currentState,
             chartData,
             isDeathsType,
             isLE,
@@ -218,9 +243,9 @@ export default defineEventHandler(async (event) => {
           })
 
           // Determine chart type for renderer
-          const chartType = adjustedState.chartStyle === 'bar'
+          const chartType = currentState.chartStyle === 'bar'
             ? 'bar'
-            : adjustedState.chartStyle === 'matrix'
+            : currentState.chartStyle === 'matrix'
               ? 'matrix'
               : 'line'
 
