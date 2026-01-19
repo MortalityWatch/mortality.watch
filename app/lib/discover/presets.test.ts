@@ -12,7 +12,10 @@ import {
   isValidPresetId,
   presetToExplorerUrl,
   presetToThumbnailUrl,
-  groupPresetsByChartType
+  groupPresetsByChartType,
+  isMetricValidForChartType,
+  isYearlyChartType,
+  isLeAvailableForChartType
 } from './presets'
 
 describe('presets', () => {
@@ -320,6 +323,67 @@ describe('presets', () => {
       expect(grouped.quarterly).toHaveLength(1)
       expect(grouped.yearly).toHaveLength(1)
       expect(grouped.fluseason).toHaveLength(1)
+    })
+  })
+
+  describe('isYearlyChartType', () => {
+    it('should return true for yearly chart types', () => {
+      expect(isYearlyChartType('yearly')).toBe(true)
+      expect(isYearlyChartType('midyear')).toBe(true)
+      expect(isYearlyChartType('fluseason')).toBe(true)
+    })
+
+    it('should return false for sub-yearly chart types', () => {
+      expect(isYearlyChartType('weekly')).toBe(false)
+      expect(isYearlyChartType('monthly')).toBe(false)
+      expect(isYearlyChartType('quarterly')).toBe(false)
+    })
+  })
+
+  describe('isLeAvailableForChartType', () => {
+    it('should return true only for yearly chart type', () => {
+      expect(isLeAvailableForChartType('yearly')).toBe(true)
+    })
+
+    it('should return false for all other chart types', () => {
+      expect(isLeAvailableForChartType('weekly')).toBe(false)
+      expect(isLeAvailableForChartType('monthly')).toBe(false)
+      expect(isLeAvailableForChartType('quarterly')).toBe(false)
+      expect(isLeAvailableForChartType('midyear')).toBe(false)
+      expect(isLeAvailableForChartType('fluseason')).toBe(false)
+    })
+  })
+
+  describe('isMetricValidForChartType', () => {
+    it('should return true for most metric/chartType combinations', () => {
+      expect(isMetricValidForChartType('deaths', 'weekly')).toBe(true)
+      expect(isMetricValidForChartType('cmr', 'monthly')).toBe(true)
+      expect(isMetricValidForChartType('asmr', 'quarterly')).toBe(true)
+      expect(isMetricValidForChartType('population', 'yearly')).toBe(true)
+    })
+
+    it('should return false for ASD with sub-yearly chart types', () => {
+      expect(isMetricValidForChartType('asd', 'weekly')).toBe(false)
+      expect(isMetricValidForChartType('asd', 'monthly')).toBe(false)
+      expect(isMetricValidForChartType('asd', 'quarterly')).toBe(false)
+    })
+
+    it('should return true for ASD with yearly chart types', () => {
+      expect(isMetricValidForChartType('asd', 'yearly')).toBe(true)
+      expect(isMetricValidForChartType('asd', 'midyear')).toBe(true)
+      expect(isMetricValidForChartType('asd', 'fluseason')).toBe(true)
+    })
+
+    it('should return false for LE with all non-yearly chart types', () => {
+      expect(isMetricValidForChartType('le', 'weekly')).toBe(false)
+      expect(isMetricValidForChartType('le', 'monthly')).toBe(false)
+      expect(isMetricValidForChartType('le', 'quarterly')).toBe(false)
+      expect(isMetricValidForChartType('le', 'midyear')).toBe(false)
+      expect(isMetricValidForChartType('le', 'fluseason')).toBe(false)
+    })
+
+    it('should return true for LE only with yearly chart type', () => {
+      expect(isMetricValidForChartType('le', 'yearly')).toBe(true)
     })
   })
 })

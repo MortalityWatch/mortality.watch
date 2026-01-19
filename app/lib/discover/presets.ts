@@ -272,8 +272,16 @@ export const metricsRequiringAgeData: readonly Metric[] = ['le', 'asmr', 'asd'] 
 
 /**
  * Yearly chart types (not sub-year resolution)
+ * Used for metrics like ASD that work with yearly aggregations (yearly, midyear, fluseason)
  */
 export const yearlyChartTypes: readonly ChartType[] = ['yearly', 'midyear', 'fluseason'] as const
+
+/**
+ * Chart types where Life Expectancy data is available.
+ * LE is only available for yearly (calendar year) periods - not weekly, monthly,
+ * quarterly, mid-year, or flu season.
+ */
+export const leAvailableChartTypes: readonly ChartType[] = ['yearly'] as const
 
 /**
  * Check if a metric requires age-stratified data
@@ -290,12 +298,24 @@ export function isYearlyChartType(chartType: ChartType): boolean {
 }
 
 /**
+ * Check if Life Expectancy is available for a chart type.
+ * LE data is only available for yearly (calendar year) periods.
+ */
+export function isLeAvailableForChartType(chartType: ChartType): boolean {
+  return leAvailableChartTypes.includes(chartType)
+}
+
+/**
  * Check if a metric is valid for a given chart type.
- * Some metrics only work with yearly resolution.
+ * Some metrics only work with specific time periods.
  */
 export function isMetricValidForChartType(metric: Metric, chartType: ChartType): boolean {
-  // ASD only available for yearly chart types (not weekly/monthly/quarterly)
+  // ASD only available for yearly chart types (yearly, midyear, fluseason)
   if (metric === 'asd' && !isYearlyChartType(chartType)) {
+    return false
+  }
+  // LE only available for yearly (calendar year) periods
+  if (metric === 'le' && !isLeAvailableForChartType(chartType)) {
     return false
   }
   return true
@@ -334,8 +354,14 @@ export function isPresetValidForCountry(
     }
   }
 
-  // Check if metric is valid for chart type (e.g., ASD only for yearly)
+  // Check if metric is valid for chart type (e.g., ASD only for yearly aggregations, LE only for yearly)
   if (!isMetricValidForChartType(metric, chartType)) {
+    if (metric === 'le') {
+      return {
+        valid: false,
+        reason: 'LE only available for yearly periods'
+      }
+    }
     return {
       valid: false,
       reason: `${metric.toUpperCase()} only available for yearly chart types`

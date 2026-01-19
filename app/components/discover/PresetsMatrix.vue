@@ -316,9 +316,12 @@ function getUnavailableReason(metric: Metric, chartType: ChartType): string {
     return 'Not available for this view'
   }
 
-  // Check if it's a chart type incompatibility (e.g., ASD with weekly)
+  // Check if it's a chart type incompatibility (e.g., ASD with weekly, LE with non-yearly)
   if (!isMetricValidForChartType(metric, chartType)) {
     if (metric === 'asd') {
+      return 'Only available for yearly periods'
+    }
+    if (metric === 'le') {
       return 'Only available for yearly periods'
     }
     return 'Not available for this period'
