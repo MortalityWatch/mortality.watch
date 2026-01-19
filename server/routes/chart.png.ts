@@ -164,16 +164,15 @@ export default defineEventHandler(async (event) => {
         })
 
         // Step 4: Fetch all required chart data with resolved state
-        const { allCountries, allChartData } = await fetchChartData(state)
+        let { allCountries, allChartData } = await fetchChartData(state)
 
         // Step 4.5: Apply steep drop adjustment if enabled
         // This modifies state.dateTo to hide recent incomplete data
         // Only applies when user hasn't explicitly set dateTo
-        const adjustedState = applySteepDropAdjustment(state, allChartData, queryParams)
+        let currentState = applySteepDropAdjustment(state, allChartData, queryParams)
 
         // Step 5: Transform data into chart-ready format
         // Use allChartData.labels (sliced from sliderStart) to match baseline data alignment
-        let currentState = adjustedState
         let transformResult = await transformChartData(
           currentState,
           allCountries,
@@ -187,20 +186,25 @@ export default defineEventHandler(async (event) => {
         // This handles saved charts where type defaulted to ASMR but data is only available as CMR
         if (isChartDataEmpty(transformResult.chartData) && currentState.type.startsWith('asmr')) {
           logger.info('ASMR data produced empty chart, falling back to CMR')
-          // Re-resolve state with CMR type
+          // Re-resolve state with CMR type and re-fetch data with correct type
           const cmrQueryParams = { ...effectiveQueryParams, t: 'cmr' }
           const cmrState = resolveChartStateForRendering(cmrQueryParams, allLabels)
-          const cmrAdjustedState = applySteepDropAdjustment(cmrState, allChartData, queryParams)
+
+          // Re-fetch data with CMR state to get correct baseline calculations
+          const cmrFetchResult = await fetchChartData(cmrState)
+          allCountries = cmrFetchResult.allCountries
+          allChartData = cmrFetchResult.allChartData
+
+          currentState = applySteepDropAdjustment(cmrState, allChartData, queryParams)
 
           transformResult = await transformChartData(
-            cmrAdjustedState,
+            currentState,
             allCountries,
             allChartData.labels,
             allChartData,
             chartUrl,
             false
           )
-          currentState = cmrAdjustedState
         }
 
         const { chartData, isDeathsType, isLE, isPopulationType } = transformResult
