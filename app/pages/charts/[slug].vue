@@ -73,12 +73,41 @@
         class="mb-8"
         :ui="{ body: 'p-0' }"
       >
-        <img
+        <div
           v-if="chartImageUrl"
-          :src="chartImageUrl"
-          :alt="chart.name"
-          class="w-full h-auto block"
+          class="relative"
+          style="aspect-ratio: 2/1"
         >
+          <ClientOnly>
+            <!-- Loading placeholder -->
+            <div
+              v-if="!imageLoaded"
+              class="absolute inset-0 animate-pulse bg-gray-200 dark:bg-gray-700 flex items-center justify-center"
+            >
+              <Icon
+                name="i-lucide-loader-2"
+                class="w-12 h-12 text-gray-400 animate-spin"
+              />
+            </div>
+            <img
+              :key="chartImageUrl"
+              :src="chartImageUrl"
+              :alt="chart.name"
+              class="w-full h-full object-contain block"
+              :class="{ 'opacity-0': !imageLoaded }"
+              @load="imageLoaded = true"
+              @error="imageLoaded = true"
+            >
+            <template #fallback>
+              <div class="absolute inset-0 animate-pulse bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                <Icon
+                  name="i-lucide-loader-2"
+                  class="w-12 h-12 text-gray-400 animate-spin"
+                />
+              </div>
+            </template>
+          </ClientOnly>
+        </div>
         <div
           v-else
           class="aspect-video flex flex-col items-center justify-center text-gray-400 gap-4"
@@ -270,6 +299,9 @@ interface Chart {
 const route = useRoute()
 const slug = route.params.slug as string
 
+// Track image loading state - reset when URL changes (e.g., color mode toggle)
+const imageLoaded = ref(false)
+
 // Fetch chart data
 const { data: chart, pending, error } = await useFetch<Chart>(
   `/api/charts/slug/${slug}`
@@ -361,6 +393,11 @@ const chartImageUrl = computed(() => {
   const dmParam = isDarkMode ? '&dm=1' : ''
 
   return `${endpoint}?${chartConfig}${separator}width=1200&height=600${dmParam}`
+})
+
+// Reset loading state when chart image URL changes (e.g., color mode toggle)
+watch(chartImageUrl, () => {
+  imageLoaded.value = false
 })
 
 // Absolute URL version for OG meta tags
