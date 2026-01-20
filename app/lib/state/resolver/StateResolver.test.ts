@@ -291,4 +291,102 @@ describe('StateResolver', () => {
       expect(snapshot.userColors).toBeUndefined()
     })
   })
+
+  describe('resolveViewChange', () => {
+    it('should preserve user-set dates when switching to excess view', () => {
+      const currentState = {
+        view: 'mortality',
+        countries: ['USA'],
+        type: 'asmr',
+        chartType: 'fluseason',
+        chartStyle: 'line',
+        dateFrom: '2010/11',
+        dateTo: '2024/25',
+        showBaseline: true,
+        showPredictionInterval: true,
+        ageGroups: ['all']
+      }
+      const userOverrides = new Set(['dateFrom', 'dateTo'])
+
+      const resolved = StateResolver.resolveViewChange('excess', currentState, userOverrides)
+
+      // Dates should be preserved because user explicitly set them
+      expect(resolved.state.dateFrom).toBe('2010/11')
+      expect(resolved.state.dateTo).toBe('2024/25')
+      // View-specific settings should change
+      expect(resolved.state.view).toBe('excess')
+      expect(resolved.state.chartStyle).toBe('bar')
+      expect(resolved.state.isExcess).toBe(true)
+    })
+
+    it('should preserve user-set dates when switching to zscore view', () => {
+      const currentState = {
+        view: 'mortality',
+        countries: ['USA'],
+        type: 'asmr',
+        chartType: 'fluseason',
+        chartStyle: 'line',
+        dateFrom: '2010/11',
+        dateTo: '2024/25',
+        showBaseline: true,
+        showPredictionInterval: true,
+        ageGroups: ['all']
+      }
+      const userOverrides = new Set(['dateFrom', 'dateTo'])
+
+      const resolved = StateResolver.resolveViewChange('zscore', currentState, userOverrides)
+
+      // Dates should be preserved
+      expect(resolved.state.dateFrom).toBe('2010/11')
+      expect(resolved.state.dateTo).toBe('2024/25')
+      expect(resolved.state.view).toBe('zscore')
+      expect(resolved.state.isZScore).toBe(true)
+    })
+
+    it('should preserve dates when switching back to mortality view', () => {
+      const currentState = {
+        view: 'excess',
+        countries: ['USA'],
+        type: 'asmr',
+        chartType: 'fluseason',
+        chartStyle: 'bar',
+        dateFrom: '2016/17',
+        dateTo: '2024/25',
+        showBaseline: true,
+        isExcess: true,
+        ageGroups: ['all']
+      }
+      const userOverrides = new Set(['dateFrom', 'dateTo'])
+
+      const resolved = StateResolver.resolveViewChange('mortality', currentState, userOverrides)
+
+      // Dates should be preserved
+      expect(resolved.state.dateFrom).toBe('2016/17')
+      expect(resolved.state.dateTo).toBe('2024/25')
+      expect(resolved.state.view).toBe('mortality')
+      expect(resolved.state.isExcess).toBe(false)
+    })
+
+    it('should apply view defaults for non-user-overridden fields', () => {
+      const currentState = {
+        view: 'mortality',
+        countries: ['USA'],
+        type: 'asmr',
+        chartType: 'fluseason',
+        chartStyle: 'line',
+        showBaseline: true,
+        showPredictionInterval: true,
+        showPercentage: false,
+        ageGroups: ['all']
+      }
+      // chartStyle and showPercentage are NOT user overrides
+      const userOverrides = new Set<string>()
+
+      const resolved = StateResolver.resolveViewChange('excess', currentState, userOverrides)
+
+      // Non-overridden fields should get excess view defaults
+      expect(resolved.state.chartStyle).toBe('bar') // excess default
+      expect(resolved.state.showPercentage).toBe(true) // excess default
+    })
+  })
 })
