@@ -68,7 +68,16 @@ export const getQRCodePlugin = () => {
     beforeInit: (chart: Chart) => {
       activeChart = chart
     },
+    // Clear active chart when it's destroyed to prevent stale draws
+    destroy: (chart: Chart) => {
+      if (activeChart === chart) {
+        activeChart = null
+      }
+    },
     afterDraw: async (chart: Chart) => {
+      // Early exit if this chart is already stale
+      if (chart !== activeChart) return
+
       const plugins = chart.options.plugins as { qrCodeUrl?: string, isDarkMode?: boolean }
       const url = plugins?.qrCodeUrl
       const isDarkMode = plugins?.isDarkMode ?? false
