@@ -140,8 +140,8 @@ export function useChartDataFetcher() {
         fetchConfig.ageGroups
       )
 
-      // Step 2: Get all chart labels
-      // chartType is needed for proper chronological sorting (especially monthly dates)
+      // Step 2: Get all chart labels from the fetched dataset
+      // Pass chartType for proper chronological sorting (monthly dates need custom sort)
       const allLabels = fetchAllChartLabels(
         dataset,
         fetchConfig.isAsmr ?? false,
