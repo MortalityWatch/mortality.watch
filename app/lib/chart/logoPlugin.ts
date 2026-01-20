@@ -39,7 +39,7 @@ const drawLogo = async (chart: Chart, isDarkTheme: boolean, generation: number) 
   }
 
   // Check if this draw is still valid (chart hasn't been replaced)
-  if (generation !== drawGeneration || !chart.ctx) return
+  if (generation !== drawGeneration) return
 
   const w = 60
   const h = w // Square logo

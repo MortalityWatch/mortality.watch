@@ -48,7 +48,7 @@ const drawQRCode = async (chart: Chart, url: string, isDarkMode: boolean, genera
   }
 
   // Final check before drawing - ensure this generation is still current
-  if (generation !== drawGeneration || !chart.ctx) return
+  if (generation !== drawGeneration) return
 
   const s = 60
   ctx.drawImage(qrLogo, chart.width - s, 0, s, s)
