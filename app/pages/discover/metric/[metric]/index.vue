@@ -54,7 +54,7 @@
     <!-- Preset Grid grouped by Chart Type -->
     <div class="space-y-8">
       <div
-        v-for="chartType in chartTypes"
+        v-for="chartType in validChartTypes"
         :key="chartType"
       >
         <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
@@ -116,10 +116,12 @@
 import {
   type Metric,
   type View,
+  type ChartType,
   chartTypes,
   views,
   isValidMetric,
-  getPresetCountByMetric
+  getPresetCountByMetric,
+  isMetricValidForChartType
 } from '@/lib/discover/presets'
 import {
   metricInfo,
@@ -146,6 +148,12 @@ onMounted(() => {
   if (!isValidMetric(metric.value)) {
     router.replace('/discover/metric')
   }
+})
+
+// Filter chart types to only show those valid for this metric
+const validChartTypes = computed<ChartType[]>(() => {
+  if (!isValidMetric(metric.value)) return []
+  return chartTypes.filter(ct => isMetricValidForChartType(metric.value as Metric, ct))
 })
 
 // Computed properties

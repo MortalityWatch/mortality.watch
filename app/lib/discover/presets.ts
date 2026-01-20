@@ -81,12 +81,15 @@ export function getPresetsByMetric(metric: Metric): DiscoveryPreset[] {
 }
 
 /**
- * Get preset count for a metric
+ * Get preset count for a metric (accounts for metric-chartType validity)
  */
 export function getPresetCountByMetric(metric: Metric): number {
-  // Population: only normal view (1 view × 6 chart types)
-  // Others: all views (3 views × 6 chart types)
-  return metric === 'population' ? chartTypes.length : chartTypes.length * views.length
+  // Get valid chart types for this metric
+  const validChartTypeCount = chartTypes.filter(ct => isMetricValidForChartType(metric, ct)).length
+
+  // Population: only normal view (1 view × valid chart types)
+  // Others: all views (3 views × valid chart types)
+  return metric === 'population' ? validChartTypeCount : validChartTypeCount * views.length
 }
 
 /**
