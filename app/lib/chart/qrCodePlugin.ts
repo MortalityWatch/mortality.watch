@@ -17,12 +17,18 @@ export const clearQRCodeCache = () => {
   qrCodeCache.clear()
 }
 
+// Track the current active chart to prevent stale draws from old charts
+let activeChart: Chart | null = null
+
 const drawQRCode = async (chart: Chart, url: string, isDarkMode: boolean) => {
   const { ctx } = chart
   if (!ctx) return
 
   // Dynamic import - only loads when actually drawing QR code
   const { default: QRCode } = await import('qrcode')
+
+  // Check if this chart is still the active one
+  if (chart !== activeChart) return
 
   // QR code should be white in dark mode, black in light mode
   const qrColor = isDarkMode ? '#ffffff' : '#000000'
@@ -41,6 +47,9 @@ const drawQRCode = async (chart: Chart, url: string, isDarkMode: boolean) => {
     qrCodeCache.set(cacheKey, qrLogo)
   }
 
+  // Final check before drawing - ensure this chart is still active
+  if (chart !== activeChart) return
+
   const s = 60
   ctx.drawImage(qrLogo, chart.width - s, 0, s, s)
 }
@@ -55,7 +64,20 @@ const drawQRCode = async (chart: Chart, url: string, isDarkMode: boolean) => {
 export const getQRCodePlugin = () => {
   return {
     id: 'QRCodePlugin',
+    // Track this chart as the active one when it initializes
+    beforeInit: (chart: Chart) => {
+      activeChart = chart
+    },
+    // Clear active chart when it's destroyed to prevent stale draws
+    destroy: (chart: Chart) => {
+      if (activeChart === chart) {
+        activeChart = null
+      }
+    },
     afterDraw: async (chart: Chart) => {
+      // Early exit if this chart is already stale
+      if (chart !== activeChart) return
+
       const plugins = chart.options.plugins as { qrCodeUrl?: string, isDarkMode?: boolean }
       const url = plugins?.qrCodeUrl
       const isDarkMode = plugins?.isDarkMode ?? false

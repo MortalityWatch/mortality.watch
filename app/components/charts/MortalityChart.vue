@@ -262,25 +262,22 @@ onMounted(() => {
 
 <template>
   <Line
-    v-if="lineConfig?.data"
+    v-if="props.chartStyle === 'line' && lineConfig?.data"
     id="chart"
-    :key="`line-${props.chartStyle}`"
     ref="lineChart"
     :data="lineConfig.data"
     :options="lineConfig.options"
   />
   <Bar
-    v-if="barConfig?.data"
+    v-else-if="props.chartStyle === 'bar' && barConfig?.data"
     id="chart"
-    :key="`bar-${props.chartStyle}`"
     ref="barChart"
     :data="barConfig.data"
     :options="barConfig.options"
   />
   <Matrix
-    v-if="matrixConfig?.data"
+    v-else-if="props.chartStyle === 'matrix' && matrixConfig?.data"
     id="chart"
-    :key="`matrix-${props.chartStyle}-${colorMode.value}`"
     ref="matrixChart"
     :data="matrixConfig.data"
     :options="matrixConfig.options"
