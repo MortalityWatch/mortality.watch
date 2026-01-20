@@ -102,31 +102,71 @@ export const getAllChartData = async (
     startDateIndex > 0 ? allLabels.slice(startDateIndex) : allLabels
   )
 
-  // Align time series for all countries
+  // Align time series for all countries to match labels exactly
+  // This handles both:
+  // 1. Data starting after labels (prefill with undefined)
+  // 2. Data arrays being longer than labels (align by date matching)
   for (const ag of ageGroups) {
     if (!data[ag]) continue
     for (const iso3c of countryCodes) {
       if (!data[ag][iso3c]) continue
-      let n = 0
-      for (const label of labels) {
-        if (data[ag][iso3c].date.includes(label)) break
-        else n++
-      }
-      if (n > 0) {
+
+      const countryData = data[ag][iso3c]
+      const dataDateArray = countryData.date as string[]
+
+      // Check if data length matches labels - if not, we need to align by date
+      if (dataDateArray.length !== labels.length) {
+        // Create a map from date string to data index for efficient lookup
+        const dateToDataIndex = new Map<string, number>()
+        dataDateArray.forEach((date, idx) => {
+          dateToDataIndex.set(date, idx)
+        })
+
+        // Create new aligned arrays based on labels
+        const alignedData: DatasetEntry = {} as DatasetEntry
+
         for (const key of stringKeys) {
-          data[ag][iso3c][key] = prefillUndefined(
-            data[ag][iso3c][key],
-            n
-          ) as StringArray
+          const originalArray = countryData[key] as unknown[]
+          if (!originalArray) continue
+          alignedData[key] = labels.map((label) => {
+            const dataIdx = dateToDataIndex.get(label)
+            return dataIdx !== undefined ? originalArray[dataIdx] : undefined
+          }) as StringArray
         }
 
         for (const key of numberKeys) {
-          const currentValue = data[ag][iso3c][key]
-          if (currentValue !== undefined) {
-            data[ag][iso3c][key] = prefillUndefined(
-              currentValue,
+          const originalArray = countryData[key] as unknown[]
+          if (!originalArray) continue
+          alignedData[key] = labels.map((label) => {
+            const dataIdx = dateToDataIndex.get(label)
+            return dataIdx !== undefined ? originalArray[dataIdx] : null
+          }) as NumberArray
+        }
+
+        data[ag][iso3c] = alignedData
+      } else {
+        // Original logic: check if data starts after labels and prefill
+        let n = 0
+        for (const label of labels) {
+          if (dataDateArray.includes(label)) break
+          else n++
+        }
+        if (n > 0) {
+          for (const key of stringKeys) {
+            countryData[key] = prefillUndefined(
+              countryData[key],
               n
-            ) as NumberArray
+            ) as StringArray
+          }
+
+          for (const key of numberKeys) {
+            const currentValue = countryData[key]
+            if (currentValue !== undefined) {
+              countryData[key] = prefillUndefined(
+                currentValue,
+                n
+              ) as NumberArray
+            }
           }
         }
       }
