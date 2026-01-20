@@ -17,12 +17,18 @@ export const clearQRCodeCache = () => {
   qrCodeCache.clear()
 }
 
-const drawQRCode = async (chart: Chart, url: string, isDarkMode: boolean) => {
+// Track chart generation to prevent stale async draws from completing
+let drawGeneration = 0
+
+const drawQRCode = async (chart: Chart, url: string, isDarkMode: boolean, generation: number) => {
   const { ctx } = chart
   if (!ctx) return
 
   // Dynamic import - only loads when actually drawing QR code
   const { default: QRCode } = await import('qrcode')
+
+  // Check if this draw is still valid (chart hasn't been replaced)
+  if (generation !== drawGeneration) return
 
   // QR code should be white in dark mode, black in light mode
   const qrColor = isDarkMode ? '#ffffff' : '#000000'
@@ -41,6 +47,9 @@ const drawQRCode = async (chart: Chart, url: string, isDarkMode: boolean) => {
     qrCodeCache.set(cacheKey, qrLogo)
   }
 
+  // Final check before drawing - ensure this generation is still current
+  if (generation !== drawGeneration || !chart.ctx) return
+
   const s = 60
   ctx.drawImage(qrLogo, chart.width - s, 0, s, s)
 }
@@ -55,12 +64,18 @@ const drawQRCode = async (chart: Chart, url: string, isDarkMode: boolean) => {
 export const getQRCodePlugin = () => {
   return {
     id: 'QRCodePlugin',
+    // Increment generation when chart is created to invalidate pending draws
+    beforeInit: () => {
+      drawGeneration++
+    },
     afterDraw: async (chart: Chart) => {
       const plugins = chart.options.plugins as { qrCodeUrl?: string, isDarkMode?: boolean }
       const url = plugins?.qrCodeUrl
       const isDarkMode = plugins?.isDarkMode ?? false
       if (url) {
-        await drawQRCode(chart, url, isDarkMode)
+        // Capture current generation for this draw operation
+        const currentGeneration = drawGeneration
+        await drawQRCode(chart, url, isDarkMode, currentGeneration)
       }
     }
   }
