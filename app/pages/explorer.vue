@@ -357,18 +357,22 @@ const handleViewChanged = async (newView: ViewType) => {
     state.getUserOverrides()
   )
 
-  // 2. For excess/zscore views, adjust dateFrom to baseline start if needed
-  // The visible date range is restricted to baseline start in these views
+  // 2. For excess/zscore views, only adjust dateFrom if user hasn't explicitly set it
+  // If user explicitly set dateFrom (in userOverrides), respect their selection
+  // They may want to view data before baseline even if excess can't be calculated
   if (newView === 'excess' || newView === 'zscore') {
-    const baselineStart = dataOrchestration.baselineRange.value?.from
-    if (baselineStart) {
-      const currentFrom = resolved.state.dateFrom as string | undefined
-      const allLabels = dataOrchestration.allChartLabels.value
-      const baselineIdx = allLabels.indexOf(baselineStart)
-      const currentIdx = currentFrom ? allLabels.indexOf(currentFrom) : -1
-      // If dateFrom is before baseline start (or undefined/invalid), set it to baseline start
-      if (currentIdx < baselineIdx) {
-        resolved.state.dateFrom = baselineStart
+    const userExplicitlySetDateFrom = resolved.userOverrides.has('dateFrom')
+    if (!userExplicitlySetDateFrom) {
+      const baselineStart = dataOrchestration.baselineRange.value?.from
+      if (baselineStart) {
+        const currentFrom = resolved.state.dateFrom as string | undefined
+        const allLabels = dataOrchestration.allChartLabels.value
+        const baselineIdx = allLabels.indexOf(baselineStart)
+        const currentIdx = currentFrom ? allLabels.indexOf(currentFrom) : -1
+        // If dateFrom is before baseline start (or undefined/invalid), set it to baseline start
+        if (currentIdx < baselineIdx) {
+          resolved.state.dateFrom = baselineStart
+        }
       }
     }
   }
