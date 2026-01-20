@@ -107,9 +107,12 @@ describe('presets', () => {
   })
 
   describe('getPresetCountByMetric', () => {
-    it('should return 18 for non-population metrics', () => {
-      expect(getPresetCountByMetric('le')).toBe(18)
-      expect(getPresetCountByMetric('asd')).toBe(18)
+    it('should return correct count based on metric-chartType validity', () => {
+      // LE: only yearly (1 chartType × 3 views = 3)
+      expect(getPresetCountByMetric('le')).toBe(3)
+      // ASD: only yearly chart types (yearly, midyear, fluseason = 3 chartTypes × 3 views = 9)
+      expect(getPresetCountByMetric('asd')).toBe(9)
+      // ASMR, CMR, Deaths: all chart types (6 chartTypes × 3 views = 18)
       expect(getPresetCountByMetric('asmr')).toBe(18)
       expect(getPresetCountByMetric('cmr')).toBe(18)
       expect(getPresetCountByMetric('deaths')).toBe(18)
