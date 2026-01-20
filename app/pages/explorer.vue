@@ -405,7 +405,13 @@ const handleBaselineChanged = (v: boolean) => handleStateChange({ field: 'showBa
 const handlePredictionIntervalChanged = (v: boolean) => handleStateChange({ field: 'showPredictionInterval', value: v }, '_showPredictionInterval')
 const handleTypeChanged = (v: string) => handleStateChange({ field: 'type', value: v }, '_type')
 const handleChartTypeChanged = (v: string) => handleStateChange({ field: 'chartType', value: v }, '_chartType')
-const handleChartStyleChanged = (v: string) => handleStateChange({ field: 'chartStyle', value: v }, '_chartStyle')
+// Chart style changes need immediate UI update (switch chart component) plus data regeneration
+// Use handleUIStateChange for immediate update, then manually trigger filter update
+const handleChartStyleChanged = async (v: string) => {
+  await handleUIStateChange({ field: 'chartStyle', value: v })
+  // Trigger filter update to regenerate chart data with new style settings
+  await update('_chartStyle')
+}
 
 // Data selection
 const handleCountriesChanged = (v: string[]) => handleStateChange({ field: 'countries', value: v }, '_countries')
