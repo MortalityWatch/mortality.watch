@@ -319,14 +319,18 @@ export function useExplorerDataOrchestration(
    * 1. Data is first loaded (visibleLabels becomes available)
    * 2. Chart type changes (may invalidate current selection)
    * 3. sliderStart changes (visible range changes)
-   * 4. View changes (excess/zscore restrict visible range to baseline start)
+   *
+   * NOTE: View changes are NOT watched here - they are handled by the
+   * StateResolver system in handleViewChanged(). This prevents the watcher
+   * from interfering with view transitions and ensures dates are preserved
+   * when switching between mortality/excess/zscore views.
    *
    * Logic:
    * 1. If current dateFrom/dateTo are valid, keep them (preserve user selection)
    * 2. Otherwise, set to default range (first to last visible label)
    * 3. Try to preserve year when chart type changes (e.g., yearly → fluseason)
    */
-  watch([dateRangeCalc.visibleLabels, state.chartType, state.view], () => {
+  watch([dateRangeCalc.visibleLabels, state.chartType], () => {
     const labels = dateRangeCalc.visibleLabels.value
     if (labels.length === 0) return
 
