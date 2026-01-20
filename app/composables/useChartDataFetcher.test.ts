@@ -145,7 +145,10 @@ describe('useChartDataFetcher', () => {
 
       expect(fetchAllChartLabels).toHaveBeenCalledWith(
         mockDataset,
-        false
+        false,
+        ['all', '0-14'],
+        ['USA', 'GBR'],
+        'yearly'
       )
     })
   })
@@ -573,7 +576,13 @@ describe('useChartDataFetcher', () => {
         isAsmr: true
       })
 
-      expect(fetchAllChartLabels).toHaveBeenCalledWith(mockDataset, true)
+      expect(fetchAllChartLabels).toHaveBeenCalledWith(
+        mockDataset,
+        true,
+        ['all'],
+        ['USA'],
+        'yearly'
+      )
     })
 
     it('should handle cumulative mode', async () => {

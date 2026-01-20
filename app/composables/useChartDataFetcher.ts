@@ -141,10 +141,13 @@ export function useChartDataFetcher() {
       )
 
       // Step 2: Get all chart labels
-      // Dataset is already filtered, so only pass dataset and isAsmr flag
+      // chartType is needed for proper chronological sorting (especially monthly dates)
       const allLabels = fetchAllChartLabels(
         dataset,
-        fetchConfig.isAsmr ?? false
+        fetchConfig.isAsmr ?? false,
+        fetchConfig.ageGroups,
+        fetchConfig.countries,
+        fetchConfig.chartType
       )
 
       if (!allLabels.length) {
