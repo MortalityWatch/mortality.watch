@@ -45,11 +45,25 @@ export function getClientIp(event: H3Event): string {
 
 /**
  * Parse query parameters from request
+ * Handles URL encoding: converts + signs to spaces (form-encoded compatibility)
  * @param query - Raw query parameters
- * @returns Parsed query parameters
+ * @returns Parsed query parameters with + decoded as spaces
  */
 export function parseQueryParams(query: Record<string, unknown>): Record<string, string | string[]> {
-  return query as Record<string, string | string[]>
+  const result: Record<string, string | string[]> = {}
+
+  for (const [key, value] of Object.entries(query)) {
+    if (typeof value === 'string') {
+      // Decode + as space for form-encoded URL compatibility
+      result[key] = value.replace(/\+/g, ' ')
+    } else if (Array.isArray(value)) {
+      result[key] = value.map(v => typeof v === 'string' ? v.replace(/\+/g, ' ') : String(v))
+    } else if (value !== null && value !== undefined) {
+      result[key] = String(value)
+    }
+  }
+
+  return result
 }
 
 /**
