@@ -238,7 +238,7 @@
         <p class="text-gray-700 dark:text-gray-300">
           Discover more:
           <ULink
-            to="https://www.mortality.watch/charts/list.html"
+            to="https://old.mortality.watch/charts/list.html"
             target="_blank"
             title="More Charts"
             active-class="text-primary"
@@ -248,7 +248,7 @@
           </ULink>
           ·
           <ULink
-            to="https://www.mortality.watch/data/index.html"
+            to="https://old.mortality.watch/data/index.html"
             target="_blank"
             title="Chart Data"
             active-class="text-primary"
