@@ -4,7 +4,6 @@
 
 import {
   getChartTypeOrdinal,
-  getKeyForType,
   type Country,
   type Dataset,
   type DatasetEntry,
@@ -28,11 +27,6 @@ const isValidValue = (val: unknown): boolean =>
  * Check if an array has any valid (non-null, non-undefined, non-NaN, non-empty) values
  */
 const hasValidData = (arr: unknown[]): boolean => arr.some(isValidValue)
-
-/**
- * Check if an array has ALL valid values (no nulls/gaps in the data)
- */
-const hasCompleteData = (arr: unknown[]): boolean => arr.length > 0 && arr.every(isValidValue)
 
 export const getFilteredLabelAndData = (
   allLabels: string[],
@@ -74,9 +68,6 @@ export const getFilteredLabelAndData = (
         noDataForRange.push(iso3c)
         continue
       }
-
-      // Note: Partial data detection is done in getFilteredChartDataFromConfig
-      // because it needs to know which metric field to check (deaths vs ASMR)
 
       data[ag][iso3c] = tempEntry
       const types = new Set(
@@ -139,17 +130,6 @@ export const getFilteredChartDataFromConfig = (
     config.chartType as ChartType,
     allChartData
   )
-
-  // Determine the metric field to check for data completeness
-  // Uses getKeyForType which already handles all metric types correctly
-  const metricField = getKeyForType(
-    config.type,
-    false, // showBaseline - we just need the base field
-    config.standardPopulation,
-    false, // isExcess
-    false, // includePi
-    { leAdjusted: config.leAdjusted, chartType: config.chartType }
-  )[0] as keyof DatasetEntry
 
   // Include all countries with data - don't exclude based on partial/incomplete data
   // Users can see from the chart if data is incomplete
