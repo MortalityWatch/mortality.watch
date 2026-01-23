@@ -151,37 +151,9 @@ export const getFilteredChartDataFromConfig = (
     { leAdjusted: config.leAdjusted, chartType: config.chartType }
   )[0] as keyof DatasetEntry
 
-  // Detect countries with partial data (missing values in the metric field)
-  const partialDataForRange: string[] = []
-  for (const ag in filteredData.data) {
-    for (const iso3c in filteredData.data[ag]) {
-      const countryData = filteredData.data[ag][iso3c]
-      if (countryData) {
-        const metricData = countryData[metricField] ?? []
-        if (!hasCompleteData(metricData as unknown[])) {
-          partialDataForRange.push(iso3c)
-        }
-      }
-    }
-  }
-
-  // Exclude countries with partial data for the selected metric
-  // This prevents misleading 0% values for missing data points
-  // and ensures fair comparisons (especially for cumulative views)
-  let dataToTransform = filteredData.data
-  if (partialDataForRange.length) {
-    const partialCountries = new Set(partialDataForRange)
-    dataToTransform = {}
-    for (const ag in filteredData.data) {
-      dataToTransform[ag] = {}
-      for (const iso3c in filteredData.data[ag]) {
-        const countryData = filteredData.data[ag][iso3c]
-        if (!partialCountries.has(iso3c) && countryData) {
-          dataToTransform[ag][iso3c] = countryData
-        }
-      }
-    }
-  }
+  // Include all countries with data - don't exclude based on partial/incomplete data
+  // Users can see from the chart if data is incomplete
+  const dataToTransform = filteredData.data
 
   const labels
     = config.cumulative && config.showTotal && config.isBarChartStyle
@@ -234,8 +206,7 @@ export const getFilteredChartDataFromConfig = (
     showPercentage: config.showPercentage,
     showLogarithmic: config.showLogarithmic,
     showXOffset: config.isBarChartStyle || config.isPopulationType || config.isDeathsType,
-    sources: ds.sources,
-    excludedCountries: partialDataForRange.length > 0 ? partialDataForRange : undefined
+    sources: ds.sources
   }
 }
 
