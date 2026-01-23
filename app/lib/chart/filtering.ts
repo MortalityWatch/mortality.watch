@@ -4,7 +4,6 @@
 
 import {
   getChartTypeOrdinal,
-  getKeyForType,
   type Country,
   type Dataset,
   type DatasetEntry,
@@ -28,11 +27,6 @@ const isValidValue = (val: unknown): boolean =>
  * Check if an array has any valid (non-null, non-undefined, non-NaN, non-empty) values
  */
 const hasValidData = (arr: unknown[]): boolean => arr.some(isValidValue)
-
-/**
- * Check if an array has ALL valid values (no nulls/gaps in the data)
- */
-const hasCompleteData = (arr: unknown[]): boolean => arr.length > 0 && arr.every(isValidValue)
 
 export const getFilteredLabelAndData = (
   allLabels: string[],
@@ -74,9 +68,6 @@ export const getFilteredLabelAndData = (
         noDataForRange.push(iso3c)
         continue
       }
-
-      // Note: Partial data detection is done in getFilteredChartDataFromConfig
-      // because it needs to know which metric field to check (deaths vs ASMR)
 
       data[ag][iso3c] = tempEntry
       const types = new Set(
@@ -140,48 +131,9 @@ export const getFilteredChartDataFromConfig = (
     allChartData
   )
 
-  // Determine the metric field to check for data completeness
-  // Uses getKeyForType which already handles all metric types correctly
-  const metricField = getKeyForType(
-    config.type,
-    false, // showBaseline - we just need the base field
-    config.standardPopulation,
-    false, // isExcess
-    false, // includePi
-    { leAdjusted: config.leAdjusted, chartType: config.chartType }
-  )[0] as keyof DatasetEntry
-
-  // Detect countries with partial data (missing values in the metric field)
-  const partialDataForRange: string[] = []
-  for (const ag in filteredData.data) {
-    for (const iso3c in filteredData.data[ag]) {
-      const countryData = filteredData.data[ag][iso3c]
-      if (countryData) {
-        const metricData = countryData[metricField] ?? []
-        if (!hasCompleteData(metricData as unknown[])) {
-          partialDataForRange.push(iso3c)
-        }
-      }
-    }
-  }
-
-  // Exclude countries with partial data for the selected metric
-  // This prevents misleading 0% values for missing data points
-  // and ensures fair comparisons (especially for cumulative views)
-  let dataToTransform = filteredData.data
-  if (partialDataForRange.length) {
-    const partialCountries = new Set(partialDataForRange)
-    dataToTransform = {}
-    for (const ag in filteredData.data) {
-      dataToTransform[ag] = {}
-      for (const iso3c in filteredData.data[ag]) {
-        const countryData = filteredData.data[ag][iso3c]
-        if (!partialCountries.has(iso3c) && countryData) {
-          dataToTransform[ag][iso3c] = countryData
-        }
-      }
-    }
-  }
+  // Include all countries with data - don't exclude based on partial/incomplete data
+  // Users can see from the chart if data is incomplete
+  const dataToTransform = filteredData.data
 
   const labels
     = config.cumulative && config.showTotal && config.isBarChartStyle
@@ -234,8 +186,7 @@ export const getFilteredChartDataFromConfig = (
     showPercentage: config.showPercentage,
     showLogarithmic: config.showLogarithmic,
     showXOffset: config.isBarChartStyle || config.isPopulationType || config.isDeathsType,
-    sources: ds.sources,
-    excludedCountries: partialDataForRange.length > 0 ? partialDataForRange : undefined
+    sources: ds.sources
   }
 }
 

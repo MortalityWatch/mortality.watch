@@ -23,7 +23,6 @@ export type MortalityChartData = {
   showPercentage: boolean
   showXOffset: boolean
   sources: string[]
-  excludedCountries?: string[]
 }
 
 export type MortalityMatrixDataPoint = {

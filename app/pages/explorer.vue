@@ -192,18 +192,6 @@ const baselineSliderChanged = (val: string[]) => handleStateChange([
 // The sliderValue (dateFrom/dateTo) determines which portion is selected
 const labels = computed(() => dataOrchestration.visibleLabels.value || [])
 
-// Excluded countries note - shown when countries are filtered out due to incomplete data
-const excludedCountriesNote = computed(() => {
-  const excluded = dataOrchestration.chartData.value?.excludedCountries
-  if (!excluded || excluded.length === 0) return null
-
-  const names = excluded
-    .map(iso => allCountries.value[iso]?.jurisdiction || iso)
-    .join(', ')
-
-  return `${names} excluded due to incomplete data for the selected date range and metric.`
-})
-
 // Make Chart resizeable - use composable
 const {
   chartContainer,
@@ -758,16 +746,6 @@ watch(
             :container-size="containerSize"
             :has-been-resized="hasBeenResized"
             :is-custom-mode="isCustomMode"
-          />
-
-          <!-- Note when countries are excluded due to incomplete data -->
-          <UAlert
-            v-if="excludedCountriesNote"
-            color="warning"
-            variant="subtle"
-            icon="i-lucide-alert-triangle"
-            class="mt-3"
-            :description="excludedCountriesNote"
           />
         </div>
 
