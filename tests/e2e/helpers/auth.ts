@@ -63,9 +63,9 @@ export async function login(
  * @param page - Playwright page object
  */
 export async function logout(page: Page) {
-  // The user menu button shows displayName, firstName, or defaults to 'Account'
-  // Use a flexible regex to match any of these possibilities
-  await page.getByRole('button', { name: /account|test user|pro/i }).click()
+  // The user menu button contains displayName, firstName, or defaults to 'Account'
+  // The label is hidden on mobile but the text still exists in DOM
+  await page.locator('.user-menu-button').click()
   await page.getByRole('menuitem', { name: 'Sign Out' }).click()
 
   // Wait for redirect to home

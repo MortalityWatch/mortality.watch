@@ -150,6 +150,11 @@ const secondaryItems = computed<MenuItem[]>(() => {
   return navItems
 })
 
+// User display name for desktop header
+const userDisplayName = computed(() => {
+  return user.value?.displayName || user.value?.firstName || 'Account'
+})
+
 // User menu items (shown when authenticated)
 const userMenuItems = computed<MenuItem[]>(() => {
   const menu: MenuItem[] = [{
@@ -224,9 +229,12 @@ const userMenuItems = computed<MenuItem[]>(() => {
         <UButton
           variant="ghost"
           icon="i-lucide-user"
-          :label="user?.displayName || user?.firstName || 'Account'"
           trailing-icon="i-lucide-chevron-down"
-        />
+          class="user-menu-button"
+        >
+          <!-- Label hidden on mobile, shown on desktop -->
+          <span class="hidden sm:inline">{{ userDisplayName }}</span>
+        </UButton>
       </UDropdownMenu>
       <template v-else>
         <UButton
