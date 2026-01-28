@@ -45,6 +45,16 @@ import {
 import { logger } from '@/lib/logger'
 import { getUniqueYears } from '@/lib/utils/dates'
 
+/**
+ * Source information for a country's data
+ */
+export interface CountrySourceInfo {
+  /** Data source name (e.g., "eurostat", "cdc", "un") */
+  source: string
+  /** Age groups used for age-stratified calculations (ASD, ASMR, LE) */
+  ageGroups?: string[]
+}
+
 const log = logger.withPrefix('ExplorerDataOrchestration')
 
 export function useExplorerDataOrchestration(
@@ -159,6 +169,13 @@ export function useExplorerDataOrchestration(
   })
   const chartData = ref<MortalityChartData | undefined>(undefined)
 
+  /**
+   * Source information for currently displayed data.
+   * Maps country ISO3C code to source info (source name and age groups for ASD).
+   * Updated when data is fetched.
+   */
+  const dataSourceInfo = ref<Map<string, CountrySourceInfo>>(new Map())
+
   // Loading state
   const isUpdating = ref<boolean>(false)
   const showLoadingOverlay = ref<boolean>(false)
@@ -200,6 +217,88 @@ export function useExplorerDataOrchestration(
   })
 
   /**
+   * Extract source information from the loaded dataset.
+   * Uses the appropriate source column based on the metric type:
+   * - ASMR types: source_asmr
+   * - LE types: source (LE uses same data source as deaths)
+   * - Other types: source
+   * For ASD, source info is set separately in fetchAndInjectASDData.
+   *
+   * Also fetches age groups from metadata for age-stratified metrics (ASMR, LE).
+   */
+  const extractSourcesFromDataset = async (datasetToExtract: DatasetRaw, countries: string[]) => {
+    // Don't overwrite ASD source info
+    if (state.type.value === 'asd') return
+
+    const sources = new Map<string, CountrySourceInfo>()
+    const metricType = state.type.value
+    const isAsmrMetric = metricType === 'asmr'
+    const isLeMetric = metricType === 'le'
+    const chartType = state.chartType.value as ChartType
+
+    // For age-stratified metrics, get age groups from metadata
+    const needsAgeGroups = isAsmrMetric || isLeMetric
+
+    // Pre-fetch source -> age groups mapping for all countries if needed
+    const sourceAgeGroupsMap = new Map<string, Map<string, string[]>>()
+    if (needsAgeGroups) {
+      try {
+        // Ensure metadata is loaded before accessing
+        await metadataService.load()
+        for (const country of countries) {
+          sourceAgeGroupsMap.set(country, metadataService.getSourcesWithAgeGroups(country, chartType))
+        }
+      } catch {
+        log.warn('Could not load metadata for age groups')
+      }
+    }
+
+    for (const country of countries) {
+      // Look through age groups to find data for this country
+      for (const ageGroup of Object.keys(datasetToExtract)) {
+        const countryData = datasetToExtract[ageGroup]?.[country]
+        if (countryData && countryData.length > 0) {
+          // Get source from the most recent data row
+          // Use source_asmr for ASMR metrics, otherwise use source
+          for (let i = countryData.length - 1; i >= 0; i--) {
+            const row = countryData[i]
+            if (row) {
+              const sourceValue = isAsmrMetric ? (row.source_asmr || row.source) : row.source
+              if (sourceValue) {
+                const sourceInfo: CountrySourceInfo = { source: sourceValue }
+
+                // Get age groups for the specific source used
+                if (needsAgeGroups) {
+                  const countrySourcesMap = sourceAgeGroupsMap.get(country)
+                  let ageGroups = countrySourcesMap?.get(sourceValue)
+
+                  // Fallback: if source not found in map, try getBestSourceForCountry
+                  if (!ageGroups || ageGroups.length === 0) {
+                    const bestSource = metadataService.getBestSourceForCountry(country, chartType)
+                    if (bestSource?.ageGroups) {
+                      ageGroups = bestSource.ageGroups
+                    }
+                  }
+
+                  if (ageGroups && ageGroups.length > 0) {
+                    sourceInfo.ageGroups = ageGroups
+                  }
+                }
+
+                sources.set(country, sourceInfo)
+                break
+              }
+            }
+          }
+          if (sources.has(country)) break
+        }
+      }
+    }
+
+    dataSourceInfo.value = sources
+  }
+
+  /**
    * Fetch and inject ASD data into allChartData when type is 'asd'.
    *
    * ASD (Age-Standardized Deaths) uses the Levitt method which:
@@ -229,6 +328,9 @@ export function useExplorerDataOrchestration(
     type ASDResultNonNull = NonNullable<Awaited<ReturnType<typeof asdDataComposable.fetchASDForCountry>>>
     const results = new Map<string, ASDResultNonNull>()
 
+    // Track ASD source info for display
+    const asdSourceInfo = new Map<string, CountrySourceInfo>()
+
     try {
       for (const country of countries) {
         // Get the best source for this country (longest history)
@@ -240,6 +342,9 @@ export function useExplorerDataOrchestration(
         }
 
         const { source, ageGroups } = sourceInfo
+
+        // Track source info for display below chart
+        asdSourceInfo.set(country, { source, ageGroups })
 
         const result = await asdDataComposable.fetchASDForCountry(
           country,
@@ -256,6 +361,9 @@ export function useExplorerDataOrchestration(
           results.set(country, result)
         }
       }
+
+      // Update the dataSourceInfo with ASD-specific source info
+      dataSourceInfo.value = asdSourceInfo
 
       // Inject ASD data into allChartData for each country
       // The data structure is: allChartData.data[ageGroup][iso3c]
@@ -542,7 +650,10 @@ export function useExplorerDataOrchestration(
 
       Object.assign(allChartData, result.chartData)
 
-      // Fetch and inject ASD data if in ASD view
+      // Extract source info from dataset for display below chart
+      await extractSourcesFromDataset(dataset, state.countries.value)
+
+      // Fetch and inject ASD data if in ASD view (this also updates dataSourceInfo for ASD)
       await fetchAndInjectASDData()
       // Note: Date validation now handled by reactive watcher
     } else if (shouldUpdateDataset) {
@@ -586,7 +697,10 @@ export function useExplorerDataOrchestration(
 
       Object.assign(allChartData, result.chartData)
 
-      // Fetch and inject ASD data if in ASD view
+      // Extract source info from dataset for display below chart
+      await extractSourcesFromDataset(dataset, state.countries.value)
+
+      // Fetch and inject ASD data if in ASD view (this also updates dataSourceInfo for ASD)
       await fetchAndInjectASDData()
       // Note: Date validation now handled by reactive watcher
     }
@@ -643,6 +757,9 @@ export function useExplorerDataOrchestration(
     setDataset: (newDataset: DatasetRaw) => {
       dataset = newDataset
     },
+
+    // Source information for display below chart
+    dataSourceInfo,
 
     // Loading state
     isUpdating,

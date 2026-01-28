@@ -26,6 +26,7 @@ import {
 import ExplorerDataSelection from '@/components/explorer/ExplorerDataSelection.vue'
 import ExplorerChartContainer from '@/components/explorer/ExplorerChartContainer.vue'
 import ExplorerSettings from '@/components/explorer/ExplorerSettings.vue'
+import DataSourcesDisplay from '@/components/explorer/DataSourcesDisplay.vue'
 import ChartActions from '@/components/charts/ChartActions.vue'
 import SaveModal from '@/components/SaveModal.vue'
 import { generateExplorerTitle, generateExplorerDescription } from '@/lib/utils/chartTitles'
@@ -746,6 +747,12 @@ watch(
             :container-size="containerSize"
             :has-been-resized="hasBeenResized"
             :is-custom-mode="isCustomMode"
+          />
+          <!-- Data sources display below chart -->
+          <DataSourcesDisplay
+            :source-info="dataOrchestration.dataSourceInfo.value"
+            :all-countries="allCountries"
+            :show-age-groups="isASDType() || isAsmrType() || isLifeExpectancyType()"
           />
         </div>
 
