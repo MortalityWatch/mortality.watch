@@ -17,6 +17,8 @@ const route = useRoute()
 const { formError, handleAuthError, clearError } = useAuthError()
 const { withRetry } = useErrorRecovery()
 const { trackSignup } = useAnalytics()
+const config = useRuntimeConfig()
+const freeTrialDays = config.public.freeTrialDays
 const tosAccepted = ref(false)
 
 // Preserve redirect URL through signup flow
@@ -161,6 +163,19 @@ const onSubmit = async (event: FormSubmitEvent<Schema>) => {
           class="text-primary font-medium"
         >Login</ULink>.
       </p>
+    </div>
+
+    <!-- Free trial banner -->
+    <div class="mb-8 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+      <div class="flex items-center gap-2 justify-center">
+        <UIcon
+          name="i-lucide-sparkles"
+          class="w-5 h-5 text-purple-600 dark:text-purple-400"
+        />
+        <p class="text-sm font-medium text-purple-800 dark:text-purple-200">
+          Get {{ freeTrialDays }} days of Pro free with your account
+        </p>
+      </div>
     </div>
 
     <SocialLoginButtons :invite-code="inviteCode || undefined" />

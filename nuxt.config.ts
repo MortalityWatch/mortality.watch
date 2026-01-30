@@ -52,7 +52,8 @@ export default defineNuxtConfig({
       stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY || '',
       statsUrl: process.env.NUXT_PUBLIC_STATS_URL || 'https://stats.mortality.watch/',
       supportEmail: process.env.SUPPORT_EMAIL || 'mortalitywatch@proton.me',
-      bitcoinAddress: process.env.NUXT_PUBLIC_BITCOIN_ADDRESS || ''
+      bitcoinAddress: process.env.NUXT_PUBLIC_BITCOIN_ADDRESS || '',
+      freeTrialDays: parseInt(process.env.FREE_TRIAL_DAYS || '14', 10)
     }
   },
 

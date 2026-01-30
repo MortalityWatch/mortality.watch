@@ -29,10 +29,16 @@ const loading = ref(true)
 const subscribing = ref(false)
 const managingSubscription = ref(false)
 
-// Check if user has Pro access without an active Stripe subscription (admin or granted tier 2)
+// Check if user is on a free trial (trialing status without Stripe subscription)
+const isOnFreeTrial = computed(() => {
+  return subscriptionStatus.value?.subscription?.status === 'trialing'
+})
+
+// Check if user has Pro access without an active subscription (admin or permanent grant)
 const hasGrantedProAccess = computed(() => {
   const hasActiveSubscription = subscriptionStatus.value?.subscription?.isActive
-  return isPro.value && !hasActiveSubscription
+  // Exclude trial users - they have their own section
+  return isPro.value && !hasActiveSubscription && !isOnFreeTrial.value
 })
 
 const statusBadgeColor = computed(() => {
@@ -207,8 +213,103 @@ onActivated(() => {
         </div>
       </div>
 
-      <!-- Active Subscription (only show for active/trialing, not canceled) -->
-      <div v-else-if="subscriptionStatus.subscription?.isActive">
+      <!-- Free Trial -->
+      <div
+        v-else-if="isOnFreeTrial && subscriptionStatus.subscription"
+        class="space-y-4"
+      >
+        <div class="p-4 bg-purple-50 dark:bg-purple-900/10 rounded-lg border border-purple-200 dark:border-purple-800">
+          <div class="flex items-start gap-3">
+            <UIcon
+              name="i-lucide-sparkles"
+              class="w-5 h-5 text-purple-600 dark:text-purple-400 mt-0.5 shrink-0"
+            />
+            <div>
+              <p class="font-medium text-purple-800 dark:text-purple-200">
+                Free Trial Active
+              </p>
+              <p class="text-sm text-purple-700 dark:text-purple-300 mt-1">
+                You have full Pro access during your trial period.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="subscriptionStatus.subscription.currentPeriodEnd">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+            Trial Ends
+          </label>
+          <p class="text-base text-gray-900 dark:text-gray-100">
+            {{ formatChartDate(subscriptionStatus.subscription.currentPeriodEnd, 'en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}
+          </p>
+          <p
+            v-if="subscriptionStatus.subscription.daysRemaining !== null"
+            class="text-xs text-gray-500 dark:text-gray-400 mt-1"
+          >
+            {{ subscriptionStatus.subscription.daysRemaining }} days remaining
+          </p>
+        </div>
+
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+          Subscribe now to continue with Pro features after your trial ends.
+        </p>
+
+        <div class="grid gap-4 sm:grid-cols-2">
+          <!-- Monthly Plan -->
+          <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-primary-500 dark:hover:border-primary-400 transition-colors">
+            <div class="mb-3">
+              <h3 class="text-lg font-semibold mb-1">
+                Monthly
+              </h3>
+              <div class="flex items-baseline gap-1">
+                <span class="text-2xl font-bold">$9.99</span>
+                <span class="text-sm text-gray-500 dark:text-gray-400">/month</span>
+              </div>
+            </div>
+            <UButton
+              block
+              :loading="subscribing"
+              :disabled="subscribing"
+              @click="handleSubscribe('monthly')"
+            >
+              Subscribe Monthly
+            </UButton>
+          </div>
+
+          <!-- Annual Plan -->
+          <div class="p-4 border-2 border-primary-500 dark:border-primary-400 rounded-lg relative">
+            <UBadge
+              color="primary"
+              variant="solid"
+              size="xs"
+              class="absolute -top-2 right-4"
+            >
+              Save $20
+            </UBadge>
+            <div class="mb-3">
+              <h3 class="text-lg font-semibold mb-1">
+                Annual
+              </h3>
+              <div class="flex items-baseline gap-1">
+                <span class="text-2xl font-bold">$99</span>
+                <span class="text-sm text-gray-500 dark:text-gray-400">/year</span>
+              </div>
+            </div>
+            <UButton
+              block
+              color="primary"
+              :loading="subscribing"
+              :disabled="subscribing"
+              @click="handleSubscribe('yearly')"
+            >
+              Subscribe Annually
+            </UButton>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Subscription (only show for active, not trialing or canceled) -->
+      <div v-else-if="subscriptionStatus.subscription?.isActive && subscriptionStatus.subscription?.status !== 'trialing'">
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">

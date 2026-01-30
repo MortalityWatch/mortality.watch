@@ -89,7 +89,10 @@ vi.mock('#db', () => ({
 
 // Mock inviteCode module to prevent database access
 vi.mock('./inviteCode', () => ({
-  checkAndExpireTrialSubscription: vi.fn(async () => false)
+  checkAndExpireTrialSubscription: vi.fn(async () => false),
+  validateAndConsumeInviteCode: vi.fn().mockResolvedValue(null),
+  createTrialSubscription: vi.fn().mockResolvedValue(undefined),
+  FREE_TRIAL_DAYS: 14
 }))
 
 describe('Auth Utilities', () => {

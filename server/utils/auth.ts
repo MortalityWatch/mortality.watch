@@ -6,7 +6,8 @@ import { db, users } from '#db'
 import { eq } from 'drizzle-orm'
 import {
   validateAndConsumeInviteCode,
-  createTrialSubscription
+  createTrialSubscription,
+  FREE_TRIAL_DAYS
 } from './inviteCode'
 
 /**
@@ -729,21 +730,30 @@ export async function handleSocialAuth(
         .where(eq(users.id, user.id))
         .get()
     } else {
-      // This is a new user - validate invite code if provided
-      let userTier: 0 | 1 | 2 = 1 // Default tier
+      // This is a new user - all new users get free trial
+      const userTier: 0 | 1 | 2 = 2 // Pro tier for trial
       let inviteCodeId: number | null = null
-      let proExpiryDate: Date | null = null
 
+      // Default: 14-day free trial
+      let proExpiryDate: Date | null = new Date(Date.now() + FREE_TRIAL_DAYS * 24 * 60 * 60 * 1000)
+
+      // Validate invite code if provided (can override/extend trial)
       if (inviteCode) {
         const validatedCode = await validateAndConsumeInviteCode(inviteCode)
         if (validatedCode) {
-          userTier = 2 // All invite codes grant Pro access
           inviteCodeId = validatedCode.id
+          // Invite code can override trial expiry (e.g., longer trial or permanent Pro)
           if (validatedCode.grantsProUntil) {
-            proExpiryDate = validatedCode.grantsProUntil
+            // Use the later of the two dates (invite code may grant longer access)
+            if (validatedCode.grantsProUntil > proExpiryDate) {
+              proExpiryDate = validatedCode.grantsProUntil
+            }
+          } else {
+            // Invite code without expiry grants permanent Pro access
+            proExpiryDate = null
           }
         }
-        // If code is invalid, we just ignore it and create user with default tier
+        // If code is invalid, we just ignore it and user gets default trial
         // This is better UX than blocking social login
       }
 
@@ -778,7 +788,8 @@ export async function handleSocialAuth(
         .returning()
         .get()
 
-      // Create trial subscription if invite code grants time-limited Pro
+      // Create trial subscription for free trial (or invite code with expiry)
+      // Only skip if invite code grants permanent Pro access (proExpiryDate is null)
       if (user && proExpiryDate) {
         await createTrialSubscription(user.id, proExpiryDate)
       }

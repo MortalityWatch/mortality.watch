@@ -5,6 +5,12 @@ import { eq, and, sql } from 'drizzle-orm'
 import type { InviteCode } from '../../db/schema'
 
 /**
+ * Free trial duration for new registrations (in days)
+ * Configurable via FREE_TRIAL_DAYS environment variable
+ */
+export const FREE_TRIAL_DAYS = parseInt(process.env.FREE_TRIAL_DAYS || '14', 10)
+
+/**
  * Invite code utilities for validation, consumption, and generation
  */
 
