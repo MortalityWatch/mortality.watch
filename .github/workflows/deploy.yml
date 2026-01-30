@@ -1,0 +1,40 @@
+name: deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deploy target'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DOKKU_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H 207.244.252.203 >> ~/.ssh/known_hosts
+
+      - name: Deploy to Dokku
+        run: |
+          if [ "${{ inputs.environment }}" = "production" ]; then
+            APP="www-mortality-watch"
+          else
+            APP="staging-mortality-watch"
+          fi
+          git push dokku@207.244.252.203:$APP HEAD:master --force
