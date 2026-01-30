@@ -56,17 +56,17 @@ if (existingSubscription?.status === 'active' && existingSubscription.stripeSubs
 const trialEndDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000)
 
 // Update user tier and subscription in a transaction
-await db.transaction(async (tx) => {
+// Note: better-sqlite3 transactions are synchronous
+db.transaction((tx) => {
   // Update user tier to Pro
-  await tx
-    .update(users)
+  tx.update(users)
     .set({ tier: 2, updatedAt: new Date() })
     .where(eq(users.id, user.id))
+    .run()
 
   // Create or update trial subscription
   if (existingSubscription) {
-    await tx
-      .update(subscriptions)
+    tx.update(subscriptions)
       .set({
         status: 'trialing',
         currentPeriodEnd: trialEndDate,
@@ -74,15 +74,18 @@ await db.transaction(async (tx) => {
         updatedAt: new Date()
       })
       .where(eq(subscriptions.userId, user.id))
+      .run()
   } else {
-    await tx.insert(subscriptions).values({
-      userId: user.id,
-      status: 'trialing',
-      currentPeriodEnd: trialEndDate,
-      trialEnd: trialEndDate,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    })
+    tx.insert(subscriptions)
+      .values({
+        userId: user.id,
+        status: 'trialing',
+        currentPeriodEnd: trialEndDate,
+        trialEnd: trialEndDate,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      })
+      .run()
   }
 })
 
