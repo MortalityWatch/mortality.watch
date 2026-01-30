@@ -6,7 +6,7 @@
         Features & Plans
       </h1>
       <p class="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-        Powerful mortality data analysis for everyone. Sign up and get {{ freeTrialDays }} days of Pro free.
+        Powerful mortality data analysis for everyone. Sign up for {{ freeTrialDays }} days of Pro features free.
       </p>
     </div>
 
@@ -14,58 +14,41 @@
     <UPricingPlans class="mb-12">
       <!-- Public Tier -->
       <UPricingPlan
-        title="Public"
+        title="Guest"
         description="Explore without registration"
-        price="Free"
+        price="$0"
         :badge="tier === 0 ? { label: 'Current Plan', color: 'neutral' } : undefined"
         :features="[
           'View mortality charts',
           'Basic controls and filters',
           'Share URLs',
           'View ranking page',
-          'Conservative baseline only'
+          'Standard baseline only'
         ]"
         :button="{ label: 'Start Exploring', to: '/explorer', color: 'neutral' }"
         class="border-2 border-gray-900 dark:border-gray-100"
       />
 
       <!-- Free Tier -->
-      <div class="relative">
-        <!-- Trial banner overlay -->
-        <div
-          v-if="!isAuthenticated"
-          class="absolute -top-3 left-1/2 -translate-x-1/2 z-10 px-3 py-1 bg-purple-100 dark:bg-purple-900/40 rounded-full border border-purple-300 dark:border-purple-700"
-        >
-          <div class="flex items-center gap-1.5">
-            <UIcon
-              name="i-lucide-sparkles"
-              class="w-3.5 h-3.5 text-purple-600 dark:text-purple-400"
-            />
-            <span class="text-xs font-medium text-purple-700 dark:text-purple-300 whitespace-nowrap">
-              {{ freeTrialDays }}-day Pro trial included
-            </span>
-          </div>
-        </div>
-        <UPricingPlan
-          title="Free"
-          description="Full-featured, forever free"
-          price="Free"
-          :badge="tier === 1 ? { label: 'Current Plan', color: 'primary' } : tier >= 2 ? { label: 'Active', color: 'primary' } : undefined"
-          :features="[
-            { title: 'All Public features, plus:' },
-            { title: 'Save charts', icon: 'i-lucide-save' },
-            { title: 'Custom colors', icon: 'i-lucide-palette' },
-            { title: 'All baseline methods', icon: 'i-lucide-chart-line' },
-            { title: 'Export data', icon: 'i-lucide-file-spreadsheet' },
-            { title: 'Extended time periods', icon: 'i-lucide-calendar' },
-            { title: 'Share charts', icon: 'i-lucide-share-2' }
-          ]"
-          :button="tier >= 1
-            ? { label: 'Start Exploring', to: '/explorer', color: 'neutral' }
-            : { label: 'Start Free Trial', to: '/signup', color: 'primary' }"
-          class="border-2 border-blue-500 dark:border-blue-400"
-        />
-      </div>
+      <UPricingPlan
+        title="Free"
+        description="All essentials, forever free"
+        price="$0"
+        :badge="freeTierBadge"
+        :features="[
+          { title: 'All Guest features, plus:' },
+          { title: 'Save charts', icon: 'i-lucide-save' },
+          { title: 'Custom colors', icon: 'i-lucide-palette' },
+          { title: 'All baseline methods', icon: 'i-lucide-chart-line' },
+          { title: 'Export data', icon: 'i-lucide-file-spreadsheet' },
+          { title: 'Full date range', icon: 'i-lucide-calendar' },
+          { title: 'Share charts', icon: 'i-lucide-share-2' }
+        ]"
+        :button="tier >= 1
+          ? { label: 'Start Exploring', to: '/explorer', color: 'neutral' }
+          : { label: 'Sign Up Free', to: '/signup', color: 'primary' }"
+        class="border-2 border-blue-500 dark:border-blue-400"
+      />
 
       <!-- Pro Tier -->
       <UPricingPlan
@@ -80,7 +63,7 @@
           { title: 'No watermarks', icon: 'i-lucide-image-off' },
           { title: 'No QR codes', icon: 'i-lucide-scan-line' },
           { title: 'Global chart history', icon: 'i-lucide-library' },
-          { title: 'Single age group LE', icon: 'i-lucide-activity' },
+          { title: 'Life expectancy by age', icon: 'i-lucide-activity' },
           { title: 'Age standardized deaths', icon: 'i-lucide-trending-up' },
           { title: 'Z-score calculations', icon: 'i-lucide-calculator' },
           { title: 'Priority support', icon: 'i-lucide-headphones' }
@@ -185,6 +168,20 @@ const { trackSubscriptionView } = useAnalytics()
 const config = useRuntimeConfig()
 const supportEmail = config.public.supportEmail
 const freeTrialDays = config.public.freeTrialDays
+
+// Badge for free tier based on auth state
+const freeTierBadge = computed(() => {
+  if (!isAuthenticated.value) {
+    return { label: `${freeTrialDays}-day Pro trial included`, color: 'primary' as const, icon: 'i-lucide-sparkles' }
+  }
+  if (tier.value === 1) {
+    return { label: 'Current Plan', color: 'primary' as const }
+  }
+  if (tier.value >= 2) {
+    return { label: 'Active', color: 'primary' as const }
+  }
+  return undefined
+})
 
 // Track features page view as subscription view
 onMounted(() => {
