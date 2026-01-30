@@ -10,7 +10,8 @@ import { sendVerificationEmail } from '../../utils/email'
 import { RegisterResponseSchema } from '../../schemas'
 import {
   validateAndConsumeInviteCode,
-  createTrialSubscription
+  createTrialSubscription,
+  FREE_TRIAL_DAYS
 } from '../../utils/inviteCode'
 import { RequestThrottle } from '../../utils/requestQueue'
 
@@ -69,11 +70,14 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // Validate and consume invite code if provided
-  let userTier: 0 | 1 | 2 = 1 // Default tier
+  // All new users get a free trial with Pro access
+  const userTier: 0 | 1 | 2 = 2 // Pro tier for trial
   let inviteCodeId: number | null = null
-  let proExpiryDate: Date | null = null
 
+  // Default: 14-day free trial
+  let proExpiryDate: Date | null = new Date(Date.now() + FREE_TRIAL_DAYS * 24 * 60 * 60 * 1000)
+
+  // Validate and consume invite code if provided (can override/extend trial)
   if (inviteCode) {
     const validatedCode = await validateAndConsumeInviteCode(inviteCode)
 
@@ -84,13 +88,17 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    // All invite codes grant Pro access (tier 2)
-    userTier = 2
     inviteCodeId = validatedCode.id
 
-    // Track Pro expiry
+    // Invite code can override trial expiry (e.g., longer trial or permanent Pro)
     if (validatedCode.grantsProUntil) {
-      proExpiryDate = validatedCode.grantsProUntil
+      // Use the later of the two dates (invite code may grant longer access)
+      if (validatedCode.grantsProUntil > proExpiryDate) {
+        proExpiryDate = validatedCode.grantsProUntil
+      }
+    } else {
+      // Invite code without expiry grants permanent Pro access
+      proExpiryDate = null
     }
   }
 
@@ -141,7 +149,8 @@ export default defineEventHandler(async (event) => {
     .returning()
     .get()
 
-  // If invite code grants Pro access with expiry, create trial subscription
+  // Create trial subscription for free trial (or invite code with expiry)
+  // Only skip if invite code grants permanent Pro access (proExpiryDate is null)
   if (proExpiryDate) {
     await createTrialSubscription(newUser.id, proExpiryDate)
   }

@@ -6,7 +6,7 @@
         Features & Plans
       </h1>
       <p class="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-        Powerful mortality data analysis for everyone. Start free, upgrade anytime.
+        Powerful mortality data analysis for everyone. Sign up and get {{ freeTrialDays }} days of Pro free.
       </p>
     </div>
 
@@ -30,25 +30,42 @@
       />
 
       <!-- Free Tier -->
-      <UPricingPlan
-        title="Free"
-        description="Full-featured, forever free"
-        price="Free"
-        :badge="tier === 1 ? { label: 'Current Plan', color: 'primary' } : tier >= 2 ? { label: 'Active', color: 'primary' } : undefined"
-        :features="[
-          { title: 'All Public features, plus:' },
-          { title: 'Save charts', icon: 'i-lucide-save' },
-          { title: 'Custom colors', icon: 'i-lucide-palette' },
-          { title: 'All baseline methods', icon: 'i-lucide-chart-line' },
-          { title: 'Export data', icon: 'i-lucide-file-spreadsheet' },
-          { title: 'Extended time periods', icon: 'i-lucide-calendar' },
-          { title: 'Share charts', icon: 'i-lucide-share-2' }
-        ]"
-        :button="tier >= 1
-          ? { label: 'Start Exploring', to: '/explorer', color: 'neutral' }
-          : { label: 'Sign Up Free', to: '/signup', color: 'primary' }"
-        class="border-2 border-blue-500 dark:border-blue-400"
-      />
+      <div class="relative">
+        <!-- Trial banner overlay -->
+        <div
+          v-if="!isAuthenticated"
+          class="absolute -top-3 left-1/2 -translate-x-1/2 z-10 px-3 py-1 bg-purple-100 dark:bg-purple-900/40 rounded-full border border-purple-300 dark:border-purple-700"
+        >
+          <div class="flex items-center gap-1.5">
+            <UIcon
+              name="i-lucide-sparkles"
+              class="w-3.5 h-3.5 text-purple-600 dark:text-purple-400"
+            />
+            <span class="text-xs font-medium text-purple-700 dark:text-purple-300 whitespace-nowrap">
+              {{ freeTrialDays }}-day Pro trial included
+            </span>
+          </div>
+        </div>
+        <UPricingPlan
+          title="Free"
+          description="Full-featured, forever free"
+          price="Free"
+          :badge="tier === 1 ? { label: 'Current Plan', color: 'primary' } : tier >= 2 ? { label: 'Active', color: 'primary' } : undefined"
+          :features="[
+            { title: 'All Public features, plus:' },
+            { title: 'Save charts', icon: 'i-lucide-save' },
+            { title: 'Custom colors', icon: 'i-lucide-palette' },
+            { title: 'All baseline methods', icon: 'i-lucide-chart-line' },
+            { title: 'Export data', icon: 'i-lucide-file-spreadsheet' },
+            { title: 'Extended time periods', icon: 'i-lucide-calendar' },
+            { title: 'Share charts', icon: 'i-lucide-share-2' }
+          ]"
+          :button="tier >= 1
+            ? { label: 'Start Exploring', to: '/explorer', color: 'neutral' }
+            : { label: 'Start Free Trial', to: '/signup', color: 'primary' }"
+          class="border-2 border-blue-500 dark:border-blue-400"
+        />
+      </div>
 
       <!-- Pro Tier -->
       <UPricingPlan
@@ -163,10 +180,11 @@
 
 <script setup lang="ts">
 // Auth composable for user tier detection
-const { tier } = useAuth()
+const { tier, isAuthenticated } = useAuth()
 const { trackSubscriptionView } = useAnalytics()
 const config = useRuntimeConfig()
 const supportEmail = config.public.supportEmail
+const freeTrialDays = config.public.freeTrialDays
 
 // Track features page view as subscription view
 onMounted(() => {
