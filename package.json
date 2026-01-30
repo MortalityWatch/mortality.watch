@@ -39,6 +39,8 @@
     "admin:delete-user": "npx tsx scripts/delete-user.ts",
     "admin:check-subscription": "npx tsx scripts/check-subscription.ts",
     "admin:link-subscription": "npx tsx scripts/link-subscription.ts",
+    "admin:grant-trial": "npx tsx scripts/grant-trial.ts",
+    "admin:user-stats": "npx tsx scripts/user-stats.ts",
     "cache:clear": "rm -rf .data/cache/charts && echo 'Chart cache cleared'",
     "prepare": "node -e \"try{require('husky')}catch{}\""
   },
