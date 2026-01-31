@@ -6,7 +6,7 @@
         Track Global Mortality, Life Expectancy & Excess Deaths
       </h1>
       <p class="text-xl text-gray-700 dark:text-gray-300 leading-relaxed max-w-4xl mx-auto">
-        The world's most comprehensive open mortality database with 300+ regions and historical data from 1950 onwards.
+        A comprehensive open mortality database with 300+ regions and historical data going back to 1950 for some regions.
         Explore excess deaths, life expectancy trends, age-standardized rates, compare regions, and understand the true impact of global health events.
       </p>
       <p class="text-lg text-gray-600 dark:text-gray-400 max-w-4xl mx-auto">
@@ -108,7 +108,7 @@
           No featured charts yet
         </h3>
         <p class="text-gray-600 dark:text-gray-400 mb-6">
-          Check out the Explorer to create your first visualization!
+          Visit the Explorer to create your first visualization.
         </p>
         <UButton
           to="/explorer"
@@ -165,7 +165,7 @@
       <UCard class="max-w-5xl mx-auto">
         <template #header>
           <h2 class="text-2xl font-bold text-center">
-            Why Choose Mortality Watch?
+            Key Features
           </h2>
         </template>
         <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
@@ -175,7 +175,7 @@
               class="text-5xl mb-4 text-primary-600 dark:text-primary-400"
             />
             <h3 class="text-lg font-semibold mb-2">
-              300+ Countries & Regions
+              300+ Regions
             </h3>
             <p class="text-gray-600 dark:text-gray-400 text-sm">
               Weekly, monthly, and yearly mortality data with age stratification
@@ -191,8 +191,8 @@
               Life Expectancy Tracking
             </h3>
             <p class="text-gray-600 dark:text-gray-400 text-sm">
-              Period life expectancy at birth and by age, with STL seasonal
-              adjustment for weekly/monthly data
+              Period life expectancy at birth and by age, with seasonal
+              adjustments for accurate weekly and monthly trends
             </p>
           </div>
           <div class="text-center">
@@ -204,7 +204,7 @@
               Five Baseline Methods
             </h3>
             <p class="text-gray-600 dark:text-gray-400 text-sm">
-              Last value, average, median, linear regression, and ETS for
+              From simple averages to advanced forecasting models for
               accurate excess mortality calculations
             </p>
           </div>
@@ -218,7 +218,7 @@
             </h3>
             <p class="text-gray-600 dark:text-gray-400 text-sm">
               Compare mortality across countries with different age structures
-              using the Levitt standardization method
+              using standard epidemiological methods
             </p>
           </div>
           <div class="text-center">
@@ -230,7 +230,8 @@
               Export Charts & Data
             </h3>
             <p class="text-gray-600 dark:text-gray-400 text-sm">
-              Download visualizations as PNG and data as CSV/JSON (free account required for data export)
+              Download visualizations as PNG and data as CSV/JSON.
+              Free account required for data export.
             </p>
           </div>
           <div class="text-center">
@@ -331,7 +332,7 @@ definePageMeta({
 // SEO metadata
 useSeoMeta({
   title: 'Mortality Watch - Track Global Mortality, Life Expectancy & Excess Deaths',
-  description: 'The world\'s most comprehensive open mortality database with daily updates from 300+ countries and regions. Explore excess deaths, life expectancy trends, compare regions, and analyze with multiple baseline methods.',
+  description: 'A comprehensive open mortality database with daily updates from 300+ regions. Explore excess deaths, life expectancy trends, compare regions, and analyze with multiple baseline methods.',
   ogTitle: 'Mortality Watch - Track Global Mortality & Life Expectancy',
   ogDescription: 'Free, open-source platform with 300+ regions, life expectancy tracking, multiple baseline methods, and daily updates from official sources.',
   ogImage: '/og-image.png',
