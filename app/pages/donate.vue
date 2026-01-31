@@ -163,6 +163,8 @@ useSeoMeta({
   description: 'Mortality Watch is sustained by Pro subscriptions. Support our work with a one-time donation or upgrade to Pro for advanced features.',
   ogTitle: 'Support Mortality Watch',
   ogDescription: 'Support mortality data infrastructure and feature development.',
-  ogImage: '/og-image.png'
+  ogImage: '/og-image.png',
+  twitterImage: '/og-image.png',
+  twitterCard: 'summary_large_image'
 })
 </script>

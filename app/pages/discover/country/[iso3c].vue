@@ -128,9 +128,12 @@ const flagEmoji = computed(() => getFlagEmoji(iso3c.value))
 
 // SEO
 useSeoMeta({
-  title: () => `${countryName.value} - Discover - Mortality Watch`,
-  description: () => `Explore all mortality chart configurations for ${countryName.value}`,
-  ogTitle: () => `${countryName.value} - Discover - Mortality Watch`,
-  ogDescription: () => `Explore all mortality chart configurations for ${countryName.value}`
+  title: () => `${countryName.value} - Discover`,
+  description: () => `Explore all mortality chart configurations for ${countryName.value}. Browse deaths, rates, life expectancy, and more.`,
+  ogTitle: () => `${countryName.value} Mortality Data - Mortality Watch`,
+  ogDescription: () => `Explore all mortality chart configurations for ${countryName.value}`,
+  ogImage: '/og-image.png',
+  twitterImage: '/og-image.png',
+  twitterCard: 'summary_large_image'
 })
 </script>

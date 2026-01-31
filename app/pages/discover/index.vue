@@ -144,9 +144,12 @@
 const { can, getFeatureUpgradeUrl } = useFeatureAccess()
 
 useSeoMeta({
-  title: 'Discover - Mortality Watch',
-  description: 'Explore mortality data by metric or country with pre-configured chart settings',
+  title: 'Discover',
+  description: 'Explore mortality data by metric or country with pre-configured chart settings. Browse 80+ chart configurations across 180+ countries and regions.',
   ogTitle: 'Discover Mortality Data - Mortality Watch',
-  ogDescription: 'Explore mortality data by metric or country with pre-configured chart settings'
+  ogDescription: 'Explore mortality data by metric or country with pre-configured chart settings. 80+ configurations across 180+ regions.',
+  ogImage: '/og-image.png',
+  twitterImage: '/og-image.png',
+  twitterCard: 'summary_large_image'
 })
 </script>

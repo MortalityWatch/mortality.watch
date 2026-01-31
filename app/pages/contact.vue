@@ -257,6 +257,8 @@ useSeoMeta({
   description: 'Get in touch with the Mortality Watch team. We\'re here to help with questions, suggestions, and bug reports.',
   ogTitle: 'Contact Mortality Watch',
   ogDescription: 'Get in touch with the Mortality Watch team for support and inquiries.',
-  ogImage: '/og-image.png'
+  ogImage: '/og-image.png',
+  twitterImage: '/og-image.png',
+  twitterCard: 'summary_large_image'
 })
 </script>

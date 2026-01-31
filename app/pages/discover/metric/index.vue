@@ -165,9 +165,12 @@ function isProMetric(metric: Metric): boolean {
 }
 
 useSeoMeta({
-  title: 'Explore by Metric - Mortality Watch',
-  description: 'Choose a metric to explore mortality data across all countries',
+  title: 'Explore by Metric',
+  description: 'Choose a mortality metric (ASMR, CMR, Deaths, Life Expectancy, Population) to explore data across all countries with 80+ chart configurations.',
   ogTitle: 'Explore by Metric - Mortality Watch',
-  ogDescription: 'Choose a metric to explore mortality data across all countries'
+  ogDescription: 'Choose a mortality metric to explore data across all countries. 80+ pre-configured charts.',
+  ogImage: '/og-image.png',
+  twitterImage: '/og-image.png',
+  twitterCard: 'summary_large_image'
 })
 </script>

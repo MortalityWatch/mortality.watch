@@ -127,7 +127,9 @@ useSeoMeta({
   description: 'Explore published mortality visualizations from our community. Browse charts by type, popularity, or featured selections.',
   ogTitle: 'Chart Gallery - Mortality Watch',
   ogDescription: 'Explore published mortality visualizations from our community.',
-  ogImage: '/og-image.png'
+  ogImage: '/og-image.png',
+  twitterImage: '/og-image.png',
+  twitterCard: 'summary_large_image'
 })
 
 // Use shared filter composable

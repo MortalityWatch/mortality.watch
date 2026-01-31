@@ -66,9 +66,12 @@ onMounted(async () => {
 })
 
 useSeoMeta({
-  title: 'Explore by Country - Mortality Watch',
-  description: 'Select a country to explore all available mortality chart configurations',
+  title: 'Explore by Country',
+  description: 'Select from 180+ countries and regions to explore all available mortality chart configurations including deaths, rates, life expectancy, and more.',
   ogTitle: 'Explore by Country - Mortality Watch',
-  ogDescription: 'Select a country to explore all available mortality chart configurations'
+  ogDescription: 'Select from 180+ countries and regions to explore mortality data and charts.',
+  ogImage: '/og-image.png',
+  twitterImage: '/og-image.png',
+  twitterCard: 'summary_large_image'
 })
 </script>
