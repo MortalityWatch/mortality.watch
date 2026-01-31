@@ -321,9 +321,12 @@ watch(presetId, () => {
 
 // SEO
 useSeoMeta({
-  title: () => `${metricLabel.value} ${presetLabel.value} - Mortality Watch`,
-  description: () => `Explore ${metricLabel.value} ${presetLabel.value} charts for all countries`,
+  title: () => `${metricLabel.value} ${presetLabel.value}`,
+  description: () => `Explore ${metricLabel.value} ${presetLabel.value} charts for all countries and regions.`,
   ogTitle: () => `${metricLabel.value} ${presetLabel.value} - Mortality Watch`,
-  ogDescription: () => `Explore ${metricLabel.value} ${presetLabel.value} charts for all countries`
+  ogDescription: () => `Explore ${metricLabel.value} ${presetLabel.value} charts for all countries`,
+  ogImage: '/og-image.png',
+  twitterImage: '/og-image.png',
+  twitterCard: 'summary_large_image'
 })
 </script>

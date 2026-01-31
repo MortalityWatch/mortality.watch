@@ -151,9 +151,12 @@ definePageMeta({
 
 useSeoMeta({
   title: 'Global Chart History',
-  description: 'Browse all chart variants ever created on Mortality Watch',
+  description: 'Browse all chart variants ever created on Mortality Watch. Explore popular and recent mortality visualizations.',
   ogTitle: 'Global Chart History - Mortality Watch',
-  ogDescription: 'Browse all chart variants ever created on Mortality Watch'
+  ogDescription: 'Browse all chart variants ever created on Mortality Watch. Explore popular and recent mortality visualizations.',
+  ogImage: '/og-image.png',
+  twitterImage: '/og-image.png',
+  twitterCard: 'summary_large_image'
 })
 
 // State

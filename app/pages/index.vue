@@ -50,7 +50,7 @@
         />
         <UButton
           to="/about"
-          label="Learn More"
+          label="About Our Data"
           icon="i-lucide-info"
           trailing
           size="lg"

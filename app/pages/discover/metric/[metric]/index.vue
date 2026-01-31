@@ -182,9 +182,12 @@ function getViewsForMetric(m: string): View[] {
 
 // SEO
 useSeoMeta({
-  title: () => `${metricLabel.value} Charts - Mortality Watch`,
-  description: () => `Explore ${metricLabel.value} data with ${presetCount.value} chart configurations`,
+  title: () => `${metricLabel.value} Charts`,
+  description: () => `Explore ${metricLabel.value} data with ${presetCount.value} chart configurations across all countries and regions.`,
   ogTitle: () => `${metricLabel.value} Charts - Mortality Watch`,
-  ogDescription: () => `Explore ${metricLabel.value} data with ${presetCount.value} chart configurations`
+  ogDescription: () => `Explore ${metricLabel.value} data with ${presetCount.value} chart configurations`,
+  ogImage: '/og-image.png',
+  twitterImage: '/og-image.png',
+  twitterCard: 'summary_large_image'
 })
 </script>

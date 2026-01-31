@@ -198,6 +198,9 @@ useSeoMeta({
   title: 'Features & Pricing',
   description: 'Explore Mortality Watch features across all tiers. Free registration includes chart saving, custom colors, and data exports. Upgrade to Pro for advanced analytics at $9.99/month.',
   ogTitle: 'Mortality Watch Features & Pricing',
-  ogDescription: 'Free registration with powerful features. Upgrade to Pro for advanced mortality analysis tools.'
+  ogDescription: 'Free registration with powerful features. Upgrade to Pro for advanced mortality analysis tools.',
+  ogImage: '/og-image.png',
+  twitterImage: '/og-image.png',
+  twitterCard: 'summary_large_image'
 })
 </script>
