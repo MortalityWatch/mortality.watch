@@ -16,8 +16,19 @@ export default defineEventHandler(async (event) => {
 
   // Load font (cached after first fetch)
   if (!cachedFont) {
-    const fontResponse = await fetch('https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYAZ9hjp-Ek-_EeA.woff')
-    cachedFont = await fontResponse.arrayBuffer()
+    try {
+      const fontResponse = await fetch('https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuGKYAZ9hjp-Ek-_EeA.woff')
+      if (!fontResponse.ok) {
+        throw new Error(`Font fetch failed: ${fontResponse.status}`)
+      }
+      cachedFont = await fontResponse.arrayBuffer()
+    } catch (error) {
+      console.error('Failed to load font for OG image:', error)
+      throw createError({
+        statusCode: 503,
+        message: 'Failed to generate OG image - font unavailable'
+      })
+    }
   }
   const fontData = cachedFont
 

@@ -21,7 +21,7 @@ useHead({
   ],
   link: [
     { rel: 'icon', href: '/favicon.svg' },
-    { rel: 'canonical', href: canonicalUrl }
+    { rel: 'canonical', href: () => canonicalUrl.value }
   ],
   htmlAttrs: {
     lang: 'en'
