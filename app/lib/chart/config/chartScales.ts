@@ -19,8 +19,12 @@ import { extractYValues, getLabelText } from './chartLabels'
 
 /**
  * Compute axis tick precision based on data range.
- * Uses 0 decimals for large values, more for small ranges.
+ * Uses 0 decimals for large ranges, more for small ranges.
  * For count types (deaths/population), always use 0 decimals.
+ *
+ * Fix for #444: Consider data range to avoid duplicate tick labels.
+ * When range is small (< 10), Chart.js may generate fractional ticks
+ * that round to the same integer, causing duplicates like "85, 85, 86".
  */
 function computeAxisPrecision(data: MortalityChartData, isPercentage: boolean, isCountType: boolean = false): number {
   // Count types (deaths/population) should always use 0 decimals
@@ -31,10 +35,17 @@ function computeAxisPrecision(data: MortalityChartData, isPercentage: boolean, i
 
   // For percentages, multiply by 100 to get display values
   const displayValues = isPercentage ? values.map(v => v * 100) : values
-  const maxAbs = Math.max(...displayValues.map(v => Math.abs(v)))
+  const minVal = Math.min(...displayValues)
+  const maxVal = Math.max(...displayValues)
+  const range = maxVal - minVal
 
-  // Axis ticks need less precision than data labels
-  // Only show decimals if the max value is small
+  // For small data ranges, Chart.js generates fractional ticks (e.g., 84.5, 85, 85.5)
+  // We need at least 1 decimal to avoid duplicate labels when ticks round to same integer
+  // Example: Life expectancy 81-86 (range=5) needs decimals to show 85.0 vs 85.5
+  if (range < 10) return 1
+
+  // For larger ranges, 0 decimals is fine (ticks will be at integer intervals)
+  const maxAbs = Math.max(...displayValues.map(v => Math.abs(v)))
   if (maxAbs >= 10) return 0 // 10+ -> no decimals (10%, 20%, 100, 200)
   if (maxAbs >= 1) return 1 // 1-10 -> 1 decimal (1.5%, 5.0%)
   return 2 // <1 -> 2 decimals (0.50%)

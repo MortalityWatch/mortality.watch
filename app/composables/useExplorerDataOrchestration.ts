@@ -559,9 +559,10 @@ export function useExplorerDataOrchestration(
 
     // Compute short URL first (instant with local hash computation)
     // This also fires a non-blocking POST to store the mapping in DB
-    // Use original query params if saved (ensures consistency with SSR which uses original request params)
+    // Use current route.query to ensure QR code reflects current chart state
+    // Fix for #443: originalQueryParams was only saved on mount and became stale
     try {
-      const shortUrl = await getShortUrl(originalQueryParams.value ?? undefined)
+      const shortUrl = await getShortUrl()
       currentShortUrl.value = shortUrl
     } catch (error) {
       // Log but don't fail - full URL will be used as fallback

@@ -52,6 +52,7 @@ useSeoMeta({
 
       <!-- Methodology Sections -->
       <MethodsMortalityMetrics />
+      <MethodsLifeExpectancy />
       <MethodsTimeAggregations />
       <MethodsExcessMortality />
       <MethodsStandardPopulations />
