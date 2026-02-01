@@ -19,6 +19,12 @@
             → Mortality Metrics
           </a>
           <a
+            href="#life-expectancy"
+            class="text-primary hover:text-primary-600 dark:hover:text-primary-400 transition-colors block"
+          >
+            → Life Expectancy
+          </a>
+          <a
             href="#time-aggregations"
             class="text-primary hover:text-primary-600 dark:hover:text-primary-400 transition-colors block"
           >
