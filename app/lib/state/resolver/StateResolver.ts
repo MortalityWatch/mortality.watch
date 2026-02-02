@@ -23,6 +23,7 @@ import type { ChartType } from '@/model/period'
 import { getDefaultSliderStart } from '@/lib/config/constants'
 import { logger, formatError } from '@/lib/logger'
 import { valuesEqual } from '@/lib/utils/array'
+import { LEGACY_PARAM_MAPPINGS } from '@/lib/url/legacyParams'
 
 /**
  * Get defaults for a view, with view-specific fields added
@@ -454,9 +455,34 @@ export class StateResolver {
   }
 
   /**
+   * Build reverse mapping from current URL keys to legacy URL keys
+   * Used to find legacy values for parameters
+   */
+  private static buildLegacyKeyLookup(): Map<string, string[]> {
+    const lookup = new Map<string, string[]>()
+    for (const [legacyKey, currentKey] of Object.entries(LEGACY_PARAM_MAPPINGS)) {
+      const existing = lookup.get(currentKey) || []
+      existing.push(legacyKey)
+      lookup.set(currentKey, existing)
+    }
+    return lookup
+  }
+
+  // Cache the lookup to avoid rebuilding on each call
+  private static legacyKeyLookup: Map<string, string[]> | null = null
+
+  private static getLegacyKeyLookup(): Map<string, string[]> {
+    if (!this.legacyKeyLookup) {
+      this.legacyKeyLookup = this.buildLegacyKeyLookup()
+    }
+    return this.legacyKeyLookup
+  }
+
+  /**
    * Validate and sanitize URL parameters
    *
    * Handles malformed URLs and old bookmarked URLs gracefully.
+   * Supports legacy parameter names (bdf→bf, cum→ce, etc.) for backwards compatibility.
    * Skips invalid params instead of crashing.
    *
    * @private
@@ -465,6 +491,7 @@ export class StateResolver {
     route: RouteLocationNormalizedLoaded
   ): Record<string, unknown> {
     const validated: Record<string, unknown> = {}
+    const legacyLookup = this.getLegacyKeyLookup()
 
     for (const [field, encoder] of Object.entries(stateFieldEncoders)) {
       // Type guard for encoder
@@ -473,7 +500,23 @@ export class StateResolver {
       }
 
       const urlKey = encoder.key as string
-      const urlValue = route.query[urlKey]
+
+      // First try the current key, then fall back to legacy keys
+      let urlValue = route.query[urlKey]
+
+      // If current key not found, check for legacy keys
+      if (urlValue === undefined || urlValue === null) {
+        const legacyKeys = legacyLookup.get(urlKey)
+        if (legacyKeys) {
+          for (const legacyKey of legacyKeys) {
+            const legacyValue = route.query[legacyKey]
+            if (legacyValue !== undefined && legacyValue !== null) {
+              urlValue = legacyValue
+              break
+            }
+          }
+        }
+      }
 
       if (urlValue !== undefined && urlValue !== null) {
         try {

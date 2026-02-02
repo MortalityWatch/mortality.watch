@@ -371,3 +371,52 @@ describe('computeShowCumPi', () => {
     expect(computeShowCumPi(true, 'fluseason', 'quantile')).toBe(false)
   })
 })
+
+describe('legacy parameter migration', () => {
+  it('should handle legacy bdf parameter (baseline date from)', () => {
+    // bdf is the old name for bf
+    const state = resolveChartStateForRendering({ c: 'USA', bdf: '2015' }, [])
+    expect(state.baselineDateFrom).toBe('2015')
+  })
+
+  it('should handle legacy bdt parameter (baseline date to)', () => {
+    // bdt is the old name for bt
+    const state = resolveChartStateForRendering({ c: 'USA', bdt: '2019' }, [])
+    expect(state.baselineDateTo).toBe('2019')
+  })
+
+  it('should handle legacy cum parameter (cumulative)', () => {
+    // cum is the old name for ce
+    const state = resolveChartStateForRendering({ c: 'USA', e: '1', cum: '1' }, [])
+    // Note: cumulative is enforced false in mortality view, but the legacy param is parsed
+    expect(state.cumulative).toBe(true) // In excess mode, cumulative can be true
+  })
+
+  it('should handle legacy pct parameter (show percentage)', () => {
+    // pct is the old name for p
+    const state = resolveChartStateForRendering({ c: 'USA', e: '1', pct: '1' }, [])
+    expect(state.showPercentage).toBe(true)
+  })
+
+  it('should prefer current params over legacy params', () => {
+    // If both bf and bdf are present, bf should be used
+    const state = resolveChartStateForRendering({ c: 'USA', bf: '2020', bdf: '2015' }, [])
+    expect(state.baselineDateFrom).toBe('2020')
+  })
+
+  it('should handle multiple legacy params together', () => {
+    const state = resolveChartStateForRendering({
+      c: 'USA',
+      e: '1',
+      bdf: '2015',
+      bdt: '2019',
+      cum: '1',
+      pct: '1'
+    }, [])
+
+    expect(state.baselineDateFrom).toBe('2015')
+    expect(state.baselineDateTo).toBe('2019')
+    expect(state.cumulative).toBe(true)
+    expect(state.showPercentage).toBe(true)
+  })
+})

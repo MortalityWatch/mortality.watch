@@ -1,11 +1,15 @@
 import { eq, sql } from 'drizzle-orm'
 import { db } from '../../utils/db'
 import { charts } from '../../../db/schema'
+import { migrateLegacyParams } from '../../../app/lib/url/legacyParams'
 
 /**
  * GET /s/:id
  * Redirects to the stored chart config for the given ID (12-char hash)
  * Also increments the access count
+ *
+ * Handles legacy URL formats:
+ * - Migrates old parameter names (bdf→bf, cum→ce, etc.)
  */
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
@@ -43,7 +47,10 @@ export default defineEventHandler(async (event) => {
     .where(eq(charts.id, id))
     .run()
 
-  // Redirect to the stored page + config
-  const redirectPath = `/${entry.page}${entry.config ? `?${entry.config}` : ''}`
+  // Migrate legacy URL parameters to current format
+  const migratedConfig = entry.config ? migrateLegacyParams(entry.config) : ''
+
+  // Redirect to the stored page + migrated config
+  const redirectPath = `/${entry.page}${migratedConfig ? `?${migratedConfig}` : ''}`
   return sendRedirect(event, redirectPath, 302)
 })
