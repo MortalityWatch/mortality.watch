@@ -35,6 +35,29 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
+    // If featuring a chart, verify it's public first
+    if (isFeatured) {
+      const chart = await db
+        .select({ isPublic: savedCharts.isPublic })
+        .from(savedCharts)
+        .where(eq(savedCharts.id, id))
+        .limit(1)
+
+      if (!chart[0]) {
+        throw createError({
+          statusCode: 404,
+          message: 'Chart not found'
+        })
+      }
+
+      if (!chart[0].isPublic) {
+        throw createError({
+          statusCode: 400,
+          message: 'Cannot feature a private chart. Make it public first.'
+        })
+      }
+    }
+
     // Update the chart
     const result = await db
       .update(savedCharts)
