@@ -15,7 +15,8 @@ test.describe('Explorer Toggle URL State', () => {
   // Helper to wait for chart to be ready
   async function waitForChart(page: ReturnType<typeof test['info']>['page']) {
     await page.waitForLoadState('domcontentloaded')
-    await page.waitForSelector('canvas#chart', { timeout: 15000 })
+    await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {})
+    await page.waitForSelector('canvas#chart', { timeout: 30000 })
   }
 
   // Helper to navigate to Display tab

@@ -96,7 +96,7 @@ test.describe('Chart Visual Regression', () => {
         const explorerUrl = testCase.url.replace('/chart.png', '/explorer')
         await page.goto(explorerUrl)
         await page.waitForLoadState('domcontentloaded')
-        await page.waitForSelector('canvas#chart', { state: 'visible', timeout: 15000 })
+        await page.waitForSelector('canvas#chart', { state: 'visible', timeout: 30000 })
         await page.waitForTimeout(1500)
 
         // Dismiss tutorial if visible

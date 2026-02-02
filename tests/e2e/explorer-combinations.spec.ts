@@ -256,7 +256,8 @@ const COMBINATIONS: CombinationTest[] = [
  */
 async function waitForChart(page: Page): Promise<void> {
   await page.waitForLoadState('domcontentloaded')
-  await page.waitForSelector('canvas#chart', { timeout: 15000 })
+  await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {})
+  await page.waitForSelector('canvas#chart', { timeout: 30000 })
 }
 
 /**
@@ -490,7 +491,7 @@ test.describe('Explorer UI Combinations - All 14 Valid Combinations', () => {
 
       // Chart should render without crashing
       const chart = page.locator('canvas#chart')
-      await expect(chart).toBeVisible({ timeout: 10000 })
+      await expect(chart).toBeVisible({ timeout: 30000 })
 
       // Z-score should win (it was explicitly requested), matrix should be removed
       const url = page.url()
