@@ -8,6 +8,13 @@
       "when": 1767389856638,
       "tag": "0000_funny_silver_samurai",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1770004194417,
+      "tag": "0001_curious_triathlon",
+      "breakpoints": true
     }
   ]
 }
