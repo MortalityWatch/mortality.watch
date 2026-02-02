@@ -24,9 +24,23 @@
       <div class="mb-8">
         <div class="flex items-start justify-between mb-4">
           <div class="flex-1">
-            <h1 class="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-              {{ chart.name }}
-            </h1>
+            <div class="flex items-center gap-2 mb-2">
+              <h1 class="text-4xl font-bold text-gray-900 dark:text-gray-100">
+                {{ chart.name }}
+              </h1>
+              <UButton
+                v-if="isOwner"
+                color="neutral"
+                variant="ghost"
+                size="sm"
+                @click="openEditModal"
+              >
+                <Icon
+                  name="i-lucide-pencil"
+                  class="w-4 h-4"
+                />
+              </UButton>
+            </div>
             <div class="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
               <span>
                 <Icon
@@ -67,6 +81,23 @@
           {{ chart.description }}
         </p>
       </div>
+
+      <!-- Edit Chart Modal -->
+      <SaveModal
+        v-model="showEditModal"
+        :saving="isSaving"
+        :name="editName"
+        :description="editDescription"
+        :is-public="editIsPublic"
+        :error="editError"
+        :success="false"
+        hide-button
+        edit-mode
+        @update:name="editName = $event"
+        @update:description="editDescription = $event"
+        @update:is-public="editIsPublic = $event"
+        @update-existing="saveEdit"
+      />
 
       <!-- Chart Visualization -->
       <UCard
@@ -342,6 +373,36 @@ async function handleTogglePublic(newValue: boolean) {
       chart.value.isPublic = oldValue
     }
   }
+}
+
+// Edit chart modal - use shared composable
+const {
+  showEditModal,
+  editName,
+  editDescription,
+  editIsPublic,
+  editError,
+  isSaving,
+  openEditModal: openEdit,
+  saveEdit: saveEditComposable
+} = useChartEdit({
+  onSuccess: () => {
+    // Update local chart state after successful save
+    if (chart.value) {
+      chart.value.name = editName.value.trim()
+      chart.value.description = editDescription.value.trim() || null
+      chart.value.isPublic = editIsPublic.value
+    }
+  }
+})
+
+function openEditModal() {
+  if (!chart.value) return
+  openEdit(chart.value)
+}
+
+async function saveEdit() {
+  await saveEditComposable()
 }
 
 // Delete chart

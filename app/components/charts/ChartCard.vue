@@ -151,6 +151,20 @@
             Remix
           </UButton>
 
+          <!-- Edit button (owner only) -->
+          <UButton
+            v-if="isOwner"
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            @click="handleEdit"
+          >
+            <Icon
+              name="i-lucide-pencil"
+              class="w-4 h-4"
+            />
+          </UButton>
+
           <!-- Delete button (owner or admin) -->
           <UButton
             v-if="isOwner || isAdmin"
@@ -225,6 +239,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   'delete': [chartId: number]
+  'edit': [chart: Chart]
   'toggle-featured': [chartId: number, value: boolean]
   'toggle-public': [chartId: number, value: boolean]
   'clear-cache': [chartId: number]
@@ -260,6 +275,11 @@ watch(() => props.isClearingCache, (clearing, wasClearing) => {
 // Handle delete button click
 function handleDelete() {
   emit('delete', props.chart.id)
+}
+
+// Handle edit button click
+function handleEdit() {
+  emit('edit', props.chart)
 }
 
 // Get the public chart link (/charts/:slug)

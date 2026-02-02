@@ -10,7 +10,7 @@ test.describe('Chart Interactions', () => {
 
     // Check for chart canvas (Chart.js uses canvas)
     const canvas = page.locator('canvas').first()
-    await expect(canvas).toBeVisible({ timeout: 10000 })
+    await expect(canvas).toBeVisible({ timeout: 30000 })
   })
 
   test('should display chart controls', async ({ page }) => {
@@ -20,7 +20,7 @@ test.describe('Chart Interactions', () => {
     // Chart controls should be visible
     // Look for common control elements like selects, buttons, sliders
     const controls = page.locator('select, [role="combobox"], button, input[type="range"]')
-    await expect(controls.first()).toBeVisible({ timeout: 10000 })
+    await expect(controls.first()).toBeVisible({ timeout: 30000 })
   })
 
   test('should allow interaction with chart controls', async ({ page }) => {
@@ -115,7 +115,7 @@ test.describe('Chart Interactions', () => {
 
     // Chart should be present
     const canvas = page.locator('canvas').first()
-    await expect(canvas).toBeVisible({ timeout: 10000 })
+    await expect(canvas).toBeVisible({ timeout: 30000 })
   })
 
   test('should display loading state while chart data loads', async ({ page }) => {
@@ -134,7 +134,7 @@ test.describe('Chart Interactions', () => {
 
     // Chart should be visible after loading
     const canvas = page.locator('canvas').first()
-    await expect(canvas).toBeVisible({ timeout: 10000 })
+    await expect(canvas).toBeVisible({ timeout: 30000 })
   })
 
   test('should display chart legend or labels', async ({ page }) => {

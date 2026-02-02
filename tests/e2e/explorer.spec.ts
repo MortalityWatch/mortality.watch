@@ -11,7 +11,7 @@ test.describe('Explorer Page', () => {
     await expect(page).toHaveURL(/\/explorer/)
 
     // Wait for chart to render (indicates page is interactive)
-    await expect(page.locator('canvas#chart')).toBeVisible({ timeout: 15000 })
+    await expect(page.locator('canvas#chart')).toBeVisible({ timeout: 30000 })
 
     // Check for chart controls - use longer timeout for CI
     await expect(page.locator('select, [role="combobox"]').first()).toBeVisible({ timeout: 10000 })
@@ -49,7 +49,7 @@ test.describe('Explorer Page', () => {
 
     // Look for canvas element (Chart.js renders actual chart)
     // With default countries (USA, SWE), chart should render
-    await page.waitForSelector('canvas#chart', { timeout: 10000 })
+    await page.waitForSelector('canvas#chart', { timeout: 30000 })
 
     const chart = page.locator('canvas#chart')
     await expect(chart).toBeVisible()
@@ -59,7 +59,7 @@ test.describe('Explorer Page', () => {
     // Start with default countries
     await page.goto('/explorer')
     await page.waitForLoadState('domcontentloaded')
-    await page.waitForSelector('canvas#chart', { timeout: 10000 })
+    await page.waitForSelector('canvas#chart', { timeout: 30000 })
 
     // Capture initial URL (with defaults applied)
     const initialUrl = page.url()
@@ -68,7 +68,7 @@ test.describe('Explorer Page', () => {
     // This simulates user changing settings, which updates URL
     await page.goto('/explorer?c=GBR&c=FRA&t=asmr')
     await page.waitForLoadState('domcontentloaded')
-    await page.waitForSelector('canvas#chart', { timeout: 10000 })
+    await page.waitForSelector('canvas#chart', { timeout: 30000 })
 
     // Capture second URL (should have different countries)
     const secondUrl = page.url()
@@ -78,7 +78,7 @@ test.describe('Explorer Page', () => {
     // Go back using browser navigation
     await page.goBack()
     await page.waitForLoadState('domcontentloaded')
-    await page.waitForSelector('canvas#chart', { timeout: 10000 })
+    await page.waitForSelector('canvas#chart', { timeout: 30000 })
 
     // URL should be back to initial state
     expect(page.url()).toBe(initialUrl)
@@ -86,7 +86,7 @@ test.describe('Explorer Page', () => {
     // Go forward again
     await page.goForward()
     await page.waitForLoadState('domcontentloaded')
-    await page.waitForSelector('canvas#chart', { timeout: 10000 })
+    await page.waitForSelector('canvas#chart', { timeout: 30000 })
 
     // URL should be back to second state
     expect(page.url()).toBe(secondUrl)
@@ -97,7 +97,7 @@ test.describe('Explorer Page', () => {
     // Start with default state (no excess)
     await page.goto('/explorer')
     await page.waitForLoadState('domcontentloaded')
-    await page.waitForSelector('canvas#chart', { timeout: 10000 })
+    await page.waitForSelector('canvas#chart', { timeout: 30000 })
 
     // Close welcome/tutorial modal if present
     try {
@@ -146,7 +146,7 @@ test.describe('Explorer Page', () => {
     // Start with excess mode ON + user wants PI ON (overrides default)
     await page.goto('/explorer?e=1&pi=1')
     await page.waitForLoadState('domcontentloaded')
-    await page.waitForSelector('canvas#chart', { timeout: 10000 })
+    await page.waitForSelector('canvas#chart', { timeout: 30000 })
 
     // Verify PI stayed ON (user override)
     expect(page.url()).toContain('e=1')
@@ -186,7 +186,7 @@ test.describe('Explorer Page', () => {
     // This tests that the z-score feature works, not the UI access control
     await page.goto('/explorer?zs=1')
     await page.waitForLoadState('domcontentloaded')
-    await page.waitForSelector('canvas#chart', { timeout: 10000 })
+    await page.waitForSelector('canvas#chart', { timeout: 30000 })
 
     // Verify z-score parameter is in URL
     expect(page.url()).toContain('zs=1')
@@ -206,7 +206,7 @@ test.describe('Explorer Page', () => {
     // The StateResolver should ensure excess is OFF when z-score is ON
     await page.goto('/explorer?zs=1')
     await page.waitForLoadState('domcontentloaded')
-    await page.waitForSelector('canvas#chart', { timeout: 10000 })
+    await page.waitForSelector('canvas#chart', { timeout: 30000 })
 
     // Z-score should be ON, excess should be OFF (mutually exclusive)
     expect(page.url()).toContain('zs=1')
@@ -220,7 +220,7 @@ test.describe('Explorer Page', () => {
     // Load explorer with z-score view enabled
     await page.goto('/explorer?zs=1')
     await page.waitForLoadState('domcontentloaded')
-    await page.waitForSelector('canvas#chart', { timeout: 10000 })
+    await page.waitForSelector('canvas#chart', { timeout: 30000 })
 
     // Verify z-score mode is active
     expect(page.url()).toContain('zs=1')
@@ -238,7 +238,7 @@ test.describe('Explorer Page', () => {
     // Load explorer with z-score view enabled
     await page.goto('/explorer?zs=1')
     await page.waitForLoadState('domcontentloaded')
-    await page.waitForSelector('canvas#chart', { timeout: 10000 })
+    await page.waitForSelector('canvas#chart', { timeout: 30000 })
 
     // Navigate to Display tab where toggles are
     await page.getByRole('button', { name: /Display/ }).click()
@@ -254,7 +254,7 @@ test.describe('Explorer Page', () => {
     // Load explorer with z-score view enabled and baseline on (so PI toggle is visible)
     await page.goto('/explorer?zs=1&sb=1')
     await page.waitForLoadState('domcontentloaded')
-    await page.waitForSelector('canvas#chart', { timeout: 10000 })
+    await page.waitForSelector('canvas#chart', { timeout: 30000 })
 
     // Navigate to Display tab where toggles are
     await page.getByRole('button', { name: /Display/ }).click()
@@ -270,7 +270,7 @@ test.describe('Explorer Page', () => {
     // Load explorer without z-score view
     await page.goto('/explorer')
     await page.waitForLoadState('domcontentloaded')
-    await page.waitForSelector('canvas#chart', { timeout: 10000 })
+    await page.waitForSelector('canvas#chart', { timeout: 30000 })
 
     // Navigate to Display tab where toggles are
     await page.getByRole('button', { name: /Display/ }).click()

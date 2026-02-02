@@ -51,6 +51,7 @@
         :is-toggling-public="togglingPublic === chart.id"
         :is-clearing-cache="clearingCache === chart.id"
         @delete="deleteChart"
+        @edit="openEditModal"
         @toggle-featured="handleToggleFeatured"
         @toggle-public="handleTogglePublic"
         @clear-cache="handleClearCache"
@@ -118,6 +119,23 @@
         </div>
       </div>
     </UCard>
+
+    <!-- Edit Chart Modal -->
+    <SaveModal
+      v-model="showEditModal"
+      :saving="isSavingEdit"
+      :name="editName"
+      :description="editDescription"
+      :is-public="editIsPublic"
+      :error="editError"
+      :success="false"
+      hide-button
+      edit-mode
+      @update:name="editName = $event"
+      @update:description="editDescription = $event"
+      @update:is-public="editIsPublic = $event"
+      @update-existing="saveEdit"
+    />
   </div>
 </template>
 
@@ -136,10 +154,10 @@ interface Chart {
   chartConfig: string // Query string (e.g., "c=SWE&c=DEU&ct=yearly")
   thumbnailUrl: string | null
   isFeatured: boolean
-  isPublic: boolean
+  isPublic?: boolean
   viewCount: number
-  createdAt: number
-  updatedAt: number
+  createdAt: number | string | Date
+  updatedAt: number | string | Date
   authorName: string
 }
 
@@ -202,7 +220,7 @@ const filteredCharts = computed(() => {
   } else if (sortBy.value === 'views') {
     result.sort((a, b) => b.viewCount - a.viewCount)
   } else if (sortBy.value === 'newest') {
-    result.sort((a, b) => b.createdAt - a.createdAt)
+    result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   }
 
   return result
@@ -256,4 +274,18 @@ async function handleTogglePublic(chartId: number, newValue: boolean) {
 async function handleClearCache(chartId: number) {
   await clearCacheStatus(chartId)
 }
+
+// Edit chart modal - use shared composable
+const {
+  showEditModal,
+  editName,
+  editDescription,
+  editIsPublic,
+  editError,
+  isSaving: isSavingEdit,
+  openEditModal,
+  saveEdit
+} = useChartEdit({
+  onSuccess: () => refresh()
+})
 </script>
