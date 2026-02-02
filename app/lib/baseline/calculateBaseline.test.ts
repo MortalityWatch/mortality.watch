@@ -59,6 +59,41 @@ describe('calculateBaseline', () => {
       expect(data.le_baseline).toEqual([82, 82, 82, 82, 82, 82])
     })
 
+    it('should work with single-point naive baseline (user selects single date)', async () => {
+      // When user selects a single date in naive mode (e.g., "2018/19"),
+      // both baselineStartIdx and baselineEndIdx point to the same index.
+      // The naive baseline should use that single value.
+      const mockResponse = {
+        y: [80, 81, 82, 82, 82],
+        lower: [null, null, null, 79, 79],
+        upper: [null, null, null, 85, 85]
+      }
+
+      const deps = createMockDeps(mockResponse)
+
+      const data: DatasetEntry = {
+        le: [80, 81, 82, 83, 84]
+      } as unknown as DatasetEntry
+
+      const labels = ['2015', '2016', '2017', '2018', '2019']
+      const keys = ['le', 'le_baseline', 'le_baseline_lower', 'le_baseline_upper'] as (keyof DatasetEntry)[]
+
+      await calculateBaseline(
+        deps,
+        data,
+        labels,
+        2, // baselineStartIdx = same as endIdx (single point)
+        2, // baselineEndIdx = same as startIdx (single point)
+        keys,
+        'naive',
+        'yearly',
+        false
+      )
+
+      // All non-null values should be 82 (the value at the single baseline point)
+      expect(data.le_baseline).toEqual([82, 82, 82, 82, 82])
+    })
+
     it('should preserve null values in naive baseline', async () => {
       // API might return null for some positions
       // Input: [80, 81, 82, 83, 84] with baseline period indices 1-3

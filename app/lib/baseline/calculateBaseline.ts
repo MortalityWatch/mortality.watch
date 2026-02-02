@@ -93,11 +93,15 @@ export const calculateBaseline = async (
   }
 
   // Ensure we have enough data points for meaningful baseline calculation
+  // Naive method only needs 1 data point (the selected date's value)
+  // Other methods need at least 3 points for statistical calculations
   const validDataPoints = bl_data.filter(x => x != null && !isNaN(x as number)).length
-  if (validDataPoints < 3) {
+  const minRequired = method === 'naive' ? 1 : 3
+  if (validDataPoints < minRequired) {
     logger.warn('Insufficient data points for baseline calculation', {
       iso3c: data.iso3c?.[0],
       validDataPoints,
+      minRequired,
       blDataLength: bl_data.length,
       baselineStartIdx,
       baselineEndIdx,

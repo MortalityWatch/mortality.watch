@@ -608,6 +608,34 @@ export function useExplorerDataOrchestration(
         return
       }
 
+      // Two-pass approach for initial load when baseline dates aren't available yet
+      // Pass 1: If baseline range not computed (allChartLabels empty), fetch labels first
+      // Pass 2: Then fetch full data with baseline calculation
+      const needsBaselineDates = !state.baselineDateFrom.value && !state.baselineDateTo.value
+      const baselineRangeNotReady = !baselineRange.value?.from || !baselineRange.value?.to
+
+      if (needsBaselineDates && baselineRangeNotReady) {
+        // Pass 1: Fetch dataset to get labels (no baseline calculation)
+        const preliminary = await dataFetcher.fetchDatasetOnly(
+          state.chartType.value as ChartType,
+          state.countries.value,
+          ageGroupsForFetch.value,
+          helpers.isAsmrType()
+        )
+
+        if (preliminary) {
+          // Update labels so baselineRange computed property can calculate
+          allChartLabels.value = preliminary.allLabels
+          if (state.chartType.value === 'yearly') {
+            allYearlyChartLabels.value = preliminary.allLabels
+          } else {
+            allYearlyChartLabels.value = getUniqueYears(preliminary.allLabels)
+          }
+          // baselineRange.value will now be computed from allChartLabels
+        }
+      }
+
+      // Pass 2 (or only pass if baseline dates were already available): Full fetch with baseline
       const result = await dataFetcher.fetchChartData({
         chartType: state.chartType.value as ChartType,
         countries: state.countries.value,
