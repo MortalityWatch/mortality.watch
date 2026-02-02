@@ -17,6 +17,9 @@ CREATE TABLE IF NOT EXISTS users (
   verification_token_expires INTEGER,
   password_reset_token TEXT,
   password_reset_token_expires INTEGER,
+  pending_email TEXT,
+  pending_email_token TEXT,
+  pending_email_token_expires INTEGER,
   tos_accepted_at INTEGER,
   last_login INTEGER,
   invited_by_code_id INTEGER,
@@ -32,6 +35,7 @@ CREATE INDEX IF NOT EXISTS idx_users_tier ON users (tier);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users (role);
 CREATE INDEX IF NOT EXISTS idx_verification_token ON users (verification_token);
 CREATE INDEX IF NOT EXISTS idx_password_reset_token ON users (password_reset_token);
+CREATE INDEX IF NOT EXISTS idx_pending_email_token ON users (pending_email_token);
 -- OAuth indexes created via db-init.ts migrations
 
 -- Invite codes table
