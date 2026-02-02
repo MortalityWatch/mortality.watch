@@ -80,7 +80,7 @@ export default defineEventHandler(async (event) => {
   const userId = user.id
 
   const body = await readBody(event)
-  const { name, description, chartState, chartType, isPublic, forceNew } = body
+  const { name, description, notes, chartState, chartType, isPublic, forceNew } = body
 
   // Validation
   if (!name || typeof name !== 'string' || name.trim().length === 0) {
@@ -214,6 +214,7 @@ export default defineEventHandler(async (event) => {
       chartId,
       name: name.trim(),
       description: description?.trim() || null,
+      notes: notes?.trim() || null,
       isPublic: isPublic === true,
       isFeatured: false,
       slug,

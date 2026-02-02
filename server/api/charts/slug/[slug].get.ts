@@ -31,6 +31,7 @@ export default defineEventHandler(async (event) => {
         chartId: savedCharts.chartId,
         name: savedCharts.name,
         description: savedCharts.description,
+        notes: savedCharts.notes,
         slug: savedCharts.slug,
         thumbnailUrl: savedCharts.thumbnailUrl,
         isFeatured: savedCharts.isFeatured,
@@ -94,12 +95,16 @@ export default defineEventHandler(async (event) => {
     const chartType = savedChart.chart?.page || 'explorer'
     const config = savedChart.chart?.config || ''
 
+    // Only include notes if the user is the owner (notes are private)
+    const isOwner = user?.id === savedChart.userId
+
     return {
       id: savedChart.id,
       userId: savedChart.userId,
       chartId: savedChart.chartId,
       name: savedChart.name,
       description: savedChart.description,
+      notes: isOwner ? savedChart.notes : null,
       slug: savedChart.slug,
       chartType,
       // Return config as query string - client will use this to redirect

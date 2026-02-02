@@ -69,6 +69,7 @@ export function useSaveChart(options: SaveChartOptions) {
   const savingChart = ref(false)
   const saveChartName = ref('')
   const saveChartDescription = ref('')
+  const saveChartNotes = ref('')
   const saveChartPublic = ref(false)
   const saveError = ref('')
   const saveSuccess = ref(false)
@@ -115,6 +116,7 @@ export function useSaveChart(options: SaveChartOptions) {
       saveChartName.value = generateDefaultTitle ? generateDefaultTitle() : ''
     }
     saveChartDescription.value = generateDefaultDescription ? generateDefaultDescription() : ''
+    saveChartNotes.value = ''
     saveChartPublic.value = false
     saveError.value = ''
     saveSuccess.value = false
@@ -152,6 +154,7 @@ export function useSaveChart(options: SaveChartOptions) {
         body: {
           name: saveChartName.value.trim(),
           description: saveChartDescription.value.trim() || null,
+          notes: saveChartNotes.value.trim() || null,
           chartState: JSON.stringify(stateData),
           chartType,
           isPublic: saveChartPublic.value
@@ -257,6 +260,7 @@ export function useSaveChart(options: SaveChartOptions) {
       const body: Record<string, unknown> = {
         name: saveChartName.value.trim(),
         description: saveChartDescription.value.trim() || null,
+        notes: saveChartNotes.value.trim() || null,
         isPublic: saveChartPublic.value
       }
 
@@ -311,6 +315,7 @@ export function useSaveChart(options: SaveChartOptions) {
         body: {
           name: saveChartName.value.trim(),
           description: saveChartDescription.value.trim() || null,
+          notes: saveChartNotes.value.trim() || null,
           chartState: JSON.stringify(stateData),
           chartType,
           isPublic: saveChartPublic.value,
@@ -346,6 +351,7 @@ export function useSaveChart(options: SaveChartOptions) {
     savingChart,
     saveChartName,
     saveChartDescription,
+    saveChartNotes,
     saveChartPublic,
     saveError,
     saveSuccess,

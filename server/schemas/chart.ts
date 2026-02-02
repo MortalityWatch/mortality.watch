@@ -13,6 +13,7 @@ export const SavedChartSchema = z.object({
   chartId: z.string(), // Reference to charts table (12-char hash)
   name: z.string(),
   description: z.string().nullable(),
+  notes: z.string().nullable(),
   thumbnailUrl: z.string().nullable(),
   isFeatured: z.boolean(),
   isPublic: z.boolean(),
@@ -28,6 +29,7 @@ export const SimpleChartSchema = z.object({
   chartId: z.string(),
   name: z.string(),
   description: z.string().nullable(),
+  notes: z.string().nullable(),
   chartType: ChartTypeSchema,
   chartConfig: z.string(), // Query string config from charts table
   thumbnailUrl: z.string().nullable(),

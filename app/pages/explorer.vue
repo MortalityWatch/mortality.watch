@@ -577,6 +577,7 @@ const {
   savingChart,
   saveChartName,
   saveChartDescription,
+  saveChartNotes,
   saveChartPublic,
   saveError,
   saveSuccess,
@@ -816,6 +817,7 @@ watch(
                 v-model="showSaveModal"
                 v-model:name="saveChartName"
                 v-model:description="saveChartDescription"
+                v-model:notes="saveChartNotes"
                 v-model:is-public="saveChartPublic"
                 :saving="savingChart"
                 :error="saveError"

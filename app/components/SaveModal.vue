@@ -26,6 +26,7 @@ const props = withDefaults(defineProps<{
   saving: boolean
   name: string
   description: string
+  notes: string
   isPublic: boolean
   error: string | null
   success: boolean
@@ -57,6 +58,7 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
   (e: 'update:name', value: string): void
   (e: 'update:description', value: string): void
+  (e: 'update:notes', value: string): void
   (e: 'update:isPublic', value: boolean): void
   (e: 'save'): void
   (e: 'saveAsNew'): void
@@ -78,6 +80,11 @@ const localDescription = computed({
   set: value => emit('update:description', value)
 })
 
+const localNotes = computed({
+  get: () => props.notes,
+  set: value => emit('update:notes', value)
+})
+
 const localPublic = computed({
   get: () => props.isPublic,
   set: value => emit('update:isPublic', value)
@@ -92,6 +99,7 @@ const handleOpenModal = (): void => {
   const defaultDescription = props.generateDefaultDescription ? props.generateDefaultDescription() : ''
   emit('update:name', defaultTitle)
   emit('update:description', defaultDescription)
+  emit('update:notes', '')
   emit('update:isPublic', false)
   localShow.value = true
 }
@@ -221,6 +229,24 @@ function handleUpdateExisting() {
               :rows="3"
               class="w-full"
             />
+          </UFormField>
+
+          <!-- Notes Input -->
+          <UFormField
+            label="Notes (optional)"
+            class="w-full"
+          >
+            <UTextarea
+              v-model="localNotes"
+              placeholder="Add private notes about this chart (only visible to you)"
+              :rows="3"
+              class="w-full"
+            />
+            <template #hint>
+              <span class="text-xs text-gray-500 dark:text-gray-400">
+                Notes are private and only visible to you
+              </span>
+            </template>
           </UFormField>
 
           <!-- Public Toggle -->

@@ -28,6 +28,35 @@
         {{ chart.description }}
       </p>
 
+      <!-- Notes (only shown for owner in my-charts variant) -->
+      <div
+        v-if="variant === 'my-charts' && isOwner"
+        class="flex items-start gap-2"
+      >
+        <div
+          v-if="localNotes"
+          class="flex-1 text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-md p-2 line-clamp-2"
+        >
+          <Icon
+            name="i-lucide-file-text"
+            class="w-3 h-3 inline mr-1"
+          />
+          {{ localNotes }}
+        </div>
+        <UButton
+          color="neutral"
+          variant="ghost"
+          size="xs"
+          @click="showNotesEditModal = true"
+        >
+          <Icon
+            :name="localNotes ? 'i-lucide-pencil' : 'i-lucide-plus'"
+            class="w-3.5 h-3.5"
+          />
+          {{ localNotes ? 'Edit' : 'Add note' }}
+        </UButton>
+      </div>
+
       <!-- Thumbnail - wrapped in ClientOnly to prevent SSR/hydration race with color mode -->
       <div
         class="overflow-hidden rounded-md bg-gray-100 dark:bg-gray-800"
@@ -184,6 +213,15 @@
       </div>
     </template>
   </UCard>
+
+  <!-- Notes Edit Modal -->
+  <ChartsChartNoteEditModal
+    v-if="variant === 'my-charts' && isOwner"
+    v-model="showNotesEditModal"
+    :chart-id="chart.id"
+    :initial-notes="localNotes"
+    @saved="handleNotesUpdated"
+  />
 </template>
 
 <script setup lang="ts">
@@ -193,6 +231,7 @@ interface Chart {
   id: number
   name: string
   description: string | null
+  notes: string | null
   slug: string | null
   chartType: 'explorer' | 'ranking'
   chartConfig: string // Query string (e.g., "c=SWE&c=DEU&ct=yearly")
@@ -228,7 +267,17 @@ const emit = defineEmits<{
   'toggle-featured': [chartId: number, value: boolean]
   'toggle-public': [chartId: number, value: boolean]
   'clear-cache': [chartId: number]
+  'notes-updated': [chartId: number, notes: string | null]
 }>()
+
+// Notes edit modal state
+const showNotesEditModal = ref(false)
+const localNotes = ref(props.chart.notes)
+
+function handleNotesUpdated(notes: string | null) {
+  localNotes.value = notes
+  emit('notes-updated', props.chart.id, notes)
+}
 
 // Show footer if not homepage variant
 const showFooter = computed(() => props.variant !== 'homepage')

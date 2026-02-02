@@ -396,6 +396,7 @@ const {
   savingChart: savingRanking,
   saveChartName: saveRankingName,
   saveChartDescription: saveRankingDescription,
+  saveChartNotes: saveRankingNotes,
   saveChartPublic: saveRankingPublic,
   saveError,
   saveSuccess,
@@ -780,6 +781,7 @@ watch(
                 v-model="showSaveModal"
                 v-model:name="saveRankingName"
                 v-model:description="saveRankingDescription"
+                v-model:notes="saveRankingNotes"
                 v-model:is-public="saveRankingPublic"
                 :saving="savingRanking"
                 :error="saveError"
@@ -850,6 +852,7 @@ watch(
                 v-model="showSaveModal"
                 v-model:name="saveRankingName"
                 v-model:description="saveRankingDescription"
+                v-model:notes="saveRankingNotes"
                 v-model:is-public="saveRankingPublic"
                 :saving="savingRanking"
                 :error="saveError"

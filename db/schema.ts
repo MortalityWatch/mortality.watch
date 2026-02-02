@@ -113,6 +113,7 @@ export const savedCharts = sqliteTable(
       .references(() => charts.id),
     name: text('name').notNull(),
     description: text('description'),
+    notes: text('notes'),
     thumbnailUrl: text('thumbnail_url'),
     isFeatured: integer('is_featured', { mode: 'boolean' })
       .notNull()

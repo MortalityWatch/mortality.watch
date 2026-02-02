@@ -82,6 +82,7 @@ function queryStringToParams(queryString: string): Record<string, string> {
 interface UpdateChartBody {
   name?: string
   description?: string | null
+  notes?: string | null
   isPublic?: boolean
   chartState?: string // JSON string of chart state (optional - for updating config)
   chartType?: 'explorer' | 'ranking'
@@ -152,6 +153,10 @@ export default defineEventHandler(async (event) => {
 
   if (body.description !== undefined) {
     updates.description = body.description?.trim() || null
+  }
+
+  if (body.notes !== undefined) {
+    updates.notes = body.notes?.trim() || null
   }
 
   if (body.isPublic !== undefined) {
