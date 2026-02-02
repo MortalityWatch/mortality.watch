@@ -422,13 +422,14 @@ describe('labels', () => {
     })
 
     describe('life expectancy specifics', () => {
-      it('should include WHO2015 subtitle for life expectancy', () => {
+      it('should NOT include WHO2015 subtitle for life expectancy (LE uses Chiang methodology, not age-standardization)', () => {
         const result = callGetChartLabels({
           type: 'le',
           standardPopulation: 'who'
         })
 
-        expect(result.subtitle).toContain('WHO2015')
+        // LE should not mention WHO2015 - it uses Chiang's abridged life table, not age-standardization
+        expect(result.subtitle).not.toContain('WHO2015')
       })
 
       it('should show change in life expectancy for excess', () => {
