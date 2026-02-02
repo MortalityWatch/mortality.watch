@@ -29,6 +29,7 @@ const props = defineProps<{
   containerSize: string
   hasBeenResized: boolean
   isCustomMode: boolean
+  canResize: boolean
 }>()
 
 // Ref to the actual DOM element for ResizeObserver
@@ -43,14 +44,14 @@ defineExpose({
 <template>
   <UCard
     class="chart-card"
-    :class="{ 'chart-card-resizable': !isMobile(), 'chart-card-resized': props.hasBeenResized, 'chart-card-custom': props.isCustomMode }"
+    :class="{ 'chart-card-resizable': !isMobile(), 'chart-card-resized': props.hasBeenResized, 'chart-card-custom': props.isCustomMode, 'can-resize': props.canResize }"
     :ui="{ body: 'p-0' }"
     data-tour="chart-visualization"
   >
     <div
       ref="chartWrapperElement"
       class="chart-wrapper relative"
-      :class="{ 'resizable': !isMobile(), 'auto-mode': !props.hasBeenResized, 'custom-mode': props.isCustomMode }"
+      :class="{ 'resizable': !isMobile(), 'auto-mode': !props.hasBeenResized, 'custom-mode': props.isCustomMode, 'can-resize': props.canResize }"
     >
       <!-- Glass overlay for loading (only shown after 500ms delay) -->
       <GlassOverlay
@@ -163,9 +164,19 @@ defineExpose({
   max-width: 100%; /* Ensure it doesn't exceed parent */
 }
 
+/* In Auto mode with resize enabled, card follows content size during drag */
+.chart-card.chart-card-resizable:not(.chart-card-resized).can-resize {
+  width: fit-content;
+}
+
 /* Ensure UCard body can shrink */
 .chart-card :deep(.overflow-hidden) {
   min-width: 0;
+}
+
+/* In Custom mode, UCard internal elements must not clip the resize handle */
+.chart-card.chart-card-custom :deep(.overflow-hidden) {
+  overflow: visible !important;
 }
 
 .chart-wrapper {
@@ -187,24 +198,28 @@ defineExpose({
   resize: none; /* No resize handle for presets */
 }
 
-/* Custom mode - allow resizing */
+/* Custom mode - fixed dimensions, no resize by default */
 .chart-wrapper.resizable.custom-mode {
   height: 55vh;
   width: 100%;
-  overflow: auto; /* Enable resize handle without forcing scrollbars */
-  resize: both; /* Show resize handle only in Custom mode */
+  overflow: hidden;
+  resize: none;
 }
 
-/* Hide scrollbars in custom mode - they're not needed, just the resize handle */
-.chart-wrapper.resizable.custom-mode::-webkit-scrollbar {
-  display: none;
-}
-.chart-wrapper.resizable.custom-mode {
+/* Custom mode with resize enabled (Pro users) - allow resizing */
+.chart-wrapper.resizable.custom-mode.can-resize {
+  overflow: auto;
+  resize: both;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE/Edge */
 }
 
-/* Auto mode - responsive with aspect ratio, no resize handle */
+/* Hide scrollbars in custom mode - they're not needed, just the resize handle */
+.chart-wrapper.resizable.custom-mode.can-resize::-webkit-scrollbar {
+  display: none;
+}
+
+/* Auto mode - responsive with aspect ratio, no resize handle by default */
 .chart-wrapper.resizable.auto-mode {
   width: 100%;
   max-width: 100%;
@@ -212,8 +227,21 @@ defineExpose({
   min-width: 0; /* Allow shrinking below default min-width */
   min-height: 0; /* Allow shrinking below default min-height */
   aspect-ratio: 1 / 1; /* Mobile: square for vertical space */
-  overflow: hidden; /* No scrollbars or resize handle in Auto mode */
-  resize: none; /* Hide resize handle in Auto mode */
+  overflow: hidden; /* No resize handle by default */
+  resize: none;
+}
+
+/* Auto mode with resize enabled (Pro users) - show resize handle */
+.chart-wrapper.resizable.auto-mode.can-resize {
+  overflow: auto;
+  resize: both;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+/* Hide scrollbars in auto mode - they're not needed, just the resize handle */
+.chart-wrapper.resizable.auto-mode.can-resize::-webkit-scrollbar {
+  display: none;
 }
 
 /* sm: tablet portrait - slightly wider */

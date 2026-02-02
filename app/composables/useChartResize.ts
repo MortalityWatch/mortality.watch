@@ -16,6 +16,7 @@ export function useChartResize() {
 
   let sizeTimeout: ReturnType<typeof setTimeout> | null = null
   let resizeObserver: ResizeObserver | null = null
+  let modeSwitchTimeout: ReturnType<typeof setTimeout> | null = null
 
   // Check if chart is in Auto (responsive) mode
   const isAutoMode = computed(() => !hasBeenResized.value && !chartWidth.value && !chartHeight.value)
@@ -182,9 +183,22 @@ export function useChartResize() {
           return
         }
 
-        // User dragged the handle - switch to Custom mode
-        hasBeenResized.value = true
-        chartPreset.value = 'Custom'
+        // User is dragging the handle - defer mode switch until drag ends
+        // This prevents losing focus on the resize handle mid-drag
+        if (modeSwitchTimeout) clearTimeout(modeSwitchTimeout)
+        modeSwitchTimeout = setTimeout(() => {
+          hasBeenResized.value = true
+          chartPreset.value = 'Custom'
+        }, 150)
+
+        // Show size label during drag even before mode switch
+        const currentWidth = targetElement?.offsetWidth || 0
+        const currentHeight = targetElement?.offsetHeight || 0
+        const displayWidth = currentWidth - 2
+        const displayHeight = currentHeight - 2
+        containerSize.value = `Custom (${displayWidth}×${displayHeight})`
+        showSizeLabel.value = true
+        return
       }
 
       // In Preset mode (not Auto, not Custom), ignore resize events
@@ -228,6 +242,12 @@ export function useChartResize() {
   onBeforeUnmount(() => {
     if (resizeObserver) {
       resizeObserver.disconnect()
+    }
+    if (sizeTimeout) {
+      clearTimeout(sizeTimeout)
+    }
+    if (modeSwitchTimeout) {
+      clearTimeout(modeSwitchTimeout)
     }
   })
 
