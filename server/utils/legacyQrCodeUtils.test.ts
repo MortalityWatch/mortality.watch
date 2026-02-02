@@ -1,10 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { deflateSync } from 'zlib'
-
-/**
- * Tests for the legacy QR code decompression logic.
- * The middleware handles deflate-compressed, base64-encoded JSON from old QR codes.
- */
+import { isLegacyCompressedQr, decompressLegacyQr } from './legacyQrCodeUtils'
 
 function compressState(state: Record<string, unknown>): string {
   const json = JSON.stringify(state)
@@ -12,38 +8,35 @@ function compressState(state: Record<string, unknown>): string {
   return compressed.toString('base64')
 }
 
-function decompressAndBuildParams(qrParam: string): URLSearchParams | null {
-  try {
-    const decoded = Buffer.from(qrParam, 'base64')
-    const { inflateSync } = require('zlib')
-    const decompressed = inflateSync(decoded)
-    const stateJson = decompressed.toString('utf-8')
-    const state = JSON.parse(stateJson)
+describe('isLegacyCompressedQr', () => {
+  it('should return false for simple toggle values', () => {
+    expect(isLegacyCompressedQr('0')).toBe(false)
+    expect(isLegacyCompressedQr('1')).toBe(false)
+  })
 
-    const params = new URLSearchParams()
-    for (const [key, value] of Object.entries(state)) {
-      if (Array.isArray(value)) {
-        for (const item of value) {
-          params.append(key, String(item))
-        }
-      }
-      else if (value !== null && value !== undefined) {
-        params.append(key, String(value))
-      }
-    }
-    return params
-  }
-  catch {
-    return null
-  }
-}
+  it('should return false for non-string values', () => {
+    expect(isLegacyCompressedQr(null)).toBe(false)
+    expect(isLegacyCompressedQr(undefined)).toBe(false)
+    expect(isLegacyCompressedQr(123)).toBe(false)
+  })
 
-describe('legacy QR code decompression', () => {
+  it('should return false for short strings', () => {
+    expect(isLegacyCompressedQr('abc')).toBe(false)
+    expect(isLegacyCompressedQr('123456789')).toBe(false) // 9 chars
+  })
+
+  it('should return true for longer strings that could be compressed data', () => {
+    expect(isLegacyCompressedQr('1234567890')).toBe(true) // 10 chars
+    expect(isLegacyCompressedQr('eJwlyKsKgEAURdF')).toBe(true)
+  })
+})
+
+describe('decompressLegacyQr', () => {
   it('should decompress a simple state object', () => {
     const state = { c: ['FRA'], e: 1 }
     const compressed = compressState(state)
 
-    const params = decompressAndBuildParams(compressed)
+    const params = decompressLegacyQr(compressed)
 
     expect(params).not.toBeNull()
     expect(params!.get('c')).toBe('FRA')
@@ -54,7 +47,7 @@ describe('legacy QR code decompression', () => {
     const state = { c: ['FRA', 'BEL', 'NLD'] }
     const compressed = compressState(state)
 
-    const params = decompressAndBuildParams(compressed)
+    const params = decompressLegacyQr(compressed)
 
     expect(params).not.toBeNull()
     expect(params!.getAll('c')).toEqual(['FRA', 'BEL', 'NLD'])
@@ -64,7 +57,7 @@ describe('legacy QR code decompression', () => {
     // This is the actual compressed value from the user's example
     const realCompressed = 'eJwlyKsKgEAURdF/2fmEGeNtPkYMg0EcEMTkA2yCNvHfBU0L1s2MjdRdjihCRLSxQpRNQFQhIfLUI2IamMSKebFsGJnLHGL+67w+jh1z4sD88wL94hWw'
 
-    const params = decompressAndBuildParams(realCompressed)
+    const params = decompressLegacyQr(realCompressed)
 
     expect(params).not.toBeNull()
     expect(params!.getAll('c')).toEqual(['FRA', 'BEL', 'NLD', 'CHE', 'DEU', 'AUT', 'LUX'])
@@ -92,7 +85,7 @@ describe('legacy QR code decompression', () => {
     }
     const compressed = compressState(state)
 
-    const params = decompressAndBuildParams(compressed)
+    const params = decompressLegacyQr(compressed)
 
     expect(params).not.toBeNull()
     expect(params!.getAll('c')).toEqual(['USA', 'GBR'])
@@ -109,17 +102,12 @@ describe('legacy QR code decompression', () => {
   })
 
   it('should return null for invalid compressed data', () => {
-    const params = decompressAndBuildParams('not-valid-base64-compressed')
+    const params = decompressLegacyQr('not-valid-base64-compressed')
     expect(params).toBeNull()
   })
 
-  it('should return null for simple toggle values', () => {
-    // These are not legacy compressed values, they're the current qr toggle
-    const params0 = decompressAndBuildParams('0')
-    const params1 = decompressAndBuildParams('1')
-
-    // Short strings that aren't valid compressed data should fail
-    expect(params0).toBeNull()
-    expect(params1).toBeNull()
+  it('should return null for short invalid strings', () => {
+    expect(decompressLegacyQr('0')).toBeNull()
+    expect(decompressLegacyQr('1')).toBeNull()
   })
 })
