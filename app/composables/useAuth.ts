@@ -17,6 +17,7 @@ interface UseAuthReturn {
     firstName?: string
     lastName?: string
     displayName?: string
+    email?: string
     currentPassword?: string
     newPassword?: string
   }) => Promise<void>
@@ -135,6 +136,7 @@ export function useAuth(): UseAuthReturn {
     firstName?: string
     lastName?: string
     displayName?: string
+    email?: string
     currentPassword?: string
     newPassword?: string
   }) {

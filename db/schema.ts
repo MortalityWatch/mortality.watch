@@ -67,6 +67,12 @@ export const users = sqliteTable(
     passwordResetTokenExpires: integer('password_reset_token_expires', {
       mode: 'timestamp'
     }),
+    // Pending email change (for users changing their email)
+    pendingEmail: text('pending_email'),
+    pendingEmailToken: text('pending_email_token'),
+    pendingEmailTokenExpires: integer('pending_email_token_expires', {
+      mode: 'timestamp'
+    }),
     // Social login provider IDs
     googleId: text('google_id').unique(),
     twitterId: text('twitter_id').unique(),
@@ -93,7 +99,10 @@ export const users = sqliteTable(
       table.passwordResetToken
     ),
     googleIdIdx: index('idx_users_google_id').on(table.googleId),
-    twitterIdIdx: index('idx_users_twitter_id').on(table.twitterId)
+    twitterIdIdx: index('idx_users_twitter_id').on(table.twitterId),
+    pendingEmailTokenIdx: index('idx_pending_email_token').on(
+      table.pendingEmailToken
+    )
   })
 )
 

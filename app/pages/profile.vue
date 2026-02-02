@@ -149,7 +149,10 @@ async function exportData() {
       class="space-y-6"
     >
       <!-- Account Info -->
-      <ProfileAccountInfo :user="user" />
+      <ProfileAccountInfo
+        :user="user"
+        @updated="refreshSession"
+      />
 
       <!-- Subscription -->
       <SubscriptionCard />

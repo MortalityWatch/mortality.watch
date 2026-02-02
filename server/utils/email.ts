@@ -88,6 +88,45 @@ export async function sendVerificationEmail(email: string, token: string) {
 }
 
 /**
+ * Send email change verification email
+ */
+export async function sendEmailChangeVerification(newEmail: string, token: string) {
+  const verifyUrl = `${process.env.NUXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/verify-email-change/${token}`
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Verify your new email address</title>
+      </head>
+      <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background-color: #f8f9fa; border-radius: 8px; padding: 30px; margin-bottom: 20px;">
+          <h1 style="color: #1a1a1a; margin: 0 0 20px 0; font-size: 24px;">Verify Your New Email Address</h1>
+          <p style="margin: 0 0 20px 0; color: #666;">You requested to change your email address to this one. Please verify it by clicking the button below.</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${verifyUrl}" style="display: inline-block; background-color: #3b82f6; color: white; text-decoration: none; padding: 12px 30px; border-radius: 6px; font-weight: 600;">Verify New Email</a>
+          </div>
+          <p style="margin: 20px 0 0 0; color: #999; font-size: 14px;">If the button doesn't work, copy and paste this link into your browser:</p>
+          <p style="margin: 5px 0 0 0; color: #666; font-size: 14px; word-break: break-all;">${verifyUrl}</p>
+        </div>
+        <div style="text-align: center; color: #999; font-size: 12px;">
+          <p>This verification link will expire in 24 hours.</p>
+          <p>If you didn't request this email change, you can safely ignore this email.</p>
+        </div>
+      </body>
+    </html>
+  `
+
+  return sendEmail({
+    to: newEmail,
+    subject: 'Verify your new Mortality Watch email address',
+    html
+  })
+}
+
+/**
  * Send password reset email
  */
 export async function sendPasswordResetEmail(email: string, token: string) {
