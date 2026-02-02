@@ -1,15 +1,37 @@
 import { z } from 'zod'
 import { db, users } from '#db'
-import { eq } from 'drizzle-orm'
+import { eq, or } from 'drizzle-orm'
 import { requireAuth, hashUserPassword, generateRandomToken, hashToken } from '../../utils/auth'
 import { ProfileUpdateResponseSchema } from '../../schemas'
 import { sendEmailChangeVerification } from '../../utils/email'
+
+// Rate limiting for email change requests: 3 per hour per user
+const emailChangeRateLimitMap = new Map<number, { count: number; resetAt: number }>()
+const MAX_EMAIL_CHANGES = 3
+const RATE_LIMIT_WINDOW = 60 * 60 * 1000 // 1 hour
+
+function checkEmailChangeRateLimit(userId: number): boolean {
+  const now = Date.now()
+  const record = emailChangeRateLimitMap.get(userId)
+
+  if (!record || now > record.resetAt) {
+    emailChangeRateLimitMap.set(userId, { count: 1, resetAt: now + RATE_LIMIT_WINDOW })
+    return true
+  }
+
+  if (record.count >= MAX_EMAIL_CHANGES) {
+    return false
+  }
+
+  record.count++
+  return true
+}
 
 const updateProfileSchema = z.object({
   firstName: z.string().max(50, 'First name is too long').optional(),
   lastName: z.string().max(50, 'Last name is too long').optional(),
   displayName: z.string().max(50, 'Display name is too long').optional(),
-  email: z.string().email('Invalid email address').optional(),
+  email: z.string().email('Invalid email address').max(255, 'Email is too long').optional(),
   currentPassword: z.string().optional(),
   newPassword: z
     .string()
@@ -99,11 +121,24 @@ export default defineEventHandler(async (event) => {
 
     // Check if email is different from current
     if (normalizedEmail !== currentUser.email.toLowerCase()) {
-      // Check if email is already taken by another user
+      // Check rate limit
+      if (!checkEmailChangeRateLimit(currentUser.id)) {
+        throw createError({
+          statusCode: 429,
+          message: 'Too many email change requests. Please try again in an hour.'
+        })
+      }
+
+      // Check if email is already taken by another user (either as primary or pending)
       const existingUser = await db
         .select()
         .from(users)
-        .where(eq(users.email, normalizedEmail))
+        .where(
+          or(
+            eq(users.email, normalizedEmail),
+            eq(users.pendingEmail, normalizedEmail)
+          )
+        )
         .get()
 
       if (existingUser) {
@@ -173,6 +208,13 @@ export default defineEventHandler(async (event) => {
     .where(eq(users.id, currentUser.id))
     .returning()
     .get()
+
+  if (!updatedUser) {
+    throw createError({
+      statusCode: 500,
+      message: 'Failed to update profile'
+    })
+  }
 
   // Send verification email if email change was requested
   if (pendingEmailChange) {

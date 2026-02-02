@@ -1,5 +1,5 @@
 import { db, users } from '#db'
-import { eq, and, gt } from 'drizzle-orm'
+import { eq, and, gt, or, ne } from 'drizzle-orm'
 import { generateToken, setAuthToken, hashToken } from '../../../utils/auth'
 
 export default defineEventHandler(async (event) => {
@@ -35,10 +35,19 @@ export default defineEventHandler(async (event) => {
   }
 
   // Check if the new email is still available (race condition protection)
+  // Check both primary email and pending email of other users
   const existingUser = await db
     .select()
     .from(users)
-    .where(eq(users.email, user.pendingEmail))
+    .where(
+      and(
+        or(
+          eq(users.email, user.pendingEmail),
+          eq(users.pendingEmail, user.pendingEmail)
+        ),
+        ne(users.id, user.id)
+      )
+    )
     .get()
 
   if (existingUser) {
