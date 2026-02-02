@@ -274,6 +274,11 @@ const emit = defineEmits<{
 const showNotesEditModal = ref(false)
 const localNotes = ref(props.chart.notes)
 
+// Sync localNotes when chart prop changes (e.g., after data refresh)
+watch(() => props.chart.notes, (newNotes) => {
+  localNotes.value = newNotes
+})
+
 function handleNotesUpdated(notes: string | null) {
   localNotes.value = notes
   emit('notes-updated', props.chart.id, notes)

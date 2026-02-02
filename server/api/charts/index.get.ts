@@ -108,13 +108,16 @@ export default defineEventHandler(async (event) => {
 
     const total = totalResult[0]?.count || 0
 
+    // Notes are private - only include when viewing own charts (userId filter)
+    const includeNotes = userId !== undefined
+
     return {
       charts: savedChartResults.map(savedChart => ({
         id: savedChart.id,
         chartId: savedChart.chartId,
         name: savedChart.name,
         description: savedChart.description,
-        notes: savedChart.notes,
+        notes: includeNotes ? savedChart.notes : null,
         slug: savedChart.slug,
         chartType: savedChart.chart?.page || 'explorer',
         chartConfig: savedChart.chart?.config || '',

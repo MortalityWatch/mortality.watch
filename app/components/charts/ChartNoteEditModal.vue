@@ -11,19 +11,15 @@
       <div class="space-y-4">
         <UFormField
           label="Notes"
+          hint="Private notes only visible to you"
           class="w-full"
         >
           <UTextarea
             v-model="localNotes"
-            placeholder="Add private notes about this chart (only visible to you)"
+            placeholder="Add private notes about this chart"
             :rows="5"
             class="w-full"
           />
-          <template #hint>
-            <span class="text-xs text-gray-500 dark:text-gray-400">
-              Notes are private and only visible to you
-            </span>
-          </template>
         </UFormField>
 
         <UAlert
