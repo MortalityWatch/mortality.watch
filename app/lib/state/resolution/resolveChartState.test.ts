@@ -387,9 +387,9 @@ describe('legacy parameter migration', () => {
 
   it('should handle legacy cum parameter (cumulative)', () => {
     // cum is the old name for ce
+    // Note: e=1 enables excess mode where cumulative is allowed
     const state = resolveChartStateForRendering({ c: 'USA', e: '1', cum: '1' }, [])
-    // Note: cumulative is enforced false in mortality view, but the legacy param is parsed
-    expect(state.cumulative).toBe(true) // In excess mode, cumulative can be true
+    expect(state.cumulative).toBe(true)
   })
 
   it('should handle legacy pct parameter (show percentage)', () => {

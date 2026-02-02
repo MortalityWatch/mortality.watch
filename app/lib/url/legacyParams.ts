@@ -117,3 +117,24 @@ export function hasLegacyParams(queryString: string): boolean {
   const params = new URLSearchParams(queryString)
   return Object.keys(LEGACY_PARAM_MAPPINGS).some(legacyKey => params.has(legacyKey))
 }
+
+/**
+ * Build reverse mapping from current URL keys to legacy URL keys.
+ * Used by state resolvers to look up legacy values when current key is not found.
+ *
+ * @example
+ * // LEGACY_PARAM_MAPPINGS = { bdf: 'bf', bdt: 'bt' }
+ * // Returns Map { 'bf' => ['bdf'], 'bt' => ['bdt'] }
+ */
+export function buildLegacyKeyLookup(): Map<string, string[]> {
+  const lookup = new Map<string, string[]>()
+  for (const [legacyKey, currentKey] of Object.entries(LEGACY_PARAM_MAPPINGS)) {
+    const existing = lookup.get(currentKey) || []
+    existing.push(legacyKey)
+    lookup.set(currentKey, existing)
+  }
+  return lookup
+}
+
+// Pre-built lookup for use in hot paths
+export const LEGACY_KEY_LOOKUP = buildLegacyKeyLookup()

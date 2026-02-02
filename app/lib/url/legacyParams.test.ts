@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   LEGACY_PARAM_MAPPINGS,
+  LEGACY_KEY_LOOKUP,
   migrateLegacyParams,
   migrateLegacyQuery,
   hasLegacyParams
@@ -22,6 +23,20 @@ describe('legacyParams', () => {
 
     it('maps pct to p (show percentage)', () => {
       expect(LEGACY_PARAM_MAPPINGS.pct).toBe('p')
+    })
+  })
+
+  describe('LEGACY_KEY_LOOKUP', () => {
+    it('provides reverse mapping from current to legacy keys', () => {
+      expect(LEGACY_KEY_LOOKUP.get('bf')).toContain('bdf')
+      expect(LEGACY_KEY_LOOKUP.get('bt')).toContain('bdt')
+      expect(LEGACY_KEY_LOOKUP.get('ce')).toContain('cum')
+      expect(LEGACY_KEY_LOOKUP.get('p')).toContain('pct')
+    })
+
+    it('returns undefined for non-mapped keys', () => {
+      expect(LEGACY_KEY_LOOKUP.get('c')).toBeUndefined()
+      expect(LEGACY_KEY_LOOKUP.get('t')).toBeUndefined()
     })
   })
 

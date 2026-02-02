@@ -20,7 +20,7 @@ import type { ChartFilterConfig, ChartStateSnapshot } from '@/lib/chart/types'
 import type { Country } from '@/model'
 import { getDefaultSliderStart } from '@/lib/config/constants'
 import { computeDisplayColors } from '@/lib/chart/chartColors'
-import { LEGACY_PARAM_MAPPINGS } from '@/lib/url/legacyParams'
+import { LEGACY_KEY_LOOKUP } from '@/lib/url/legacyParams'
 
 /**
  * Complete resolved state ready for chart rendering
@@ -103,22 +103,6 @@ function decodeUrlParam(
 }
 
 /**
- * Build reverse mapping from current URL keys to legacy URL keys
- */
-function buildLegacyKeyLookup(): Map<string, string[]> {
-  const lookup = new Map<string, string[]>()
-  for (const [legacyKey, currentKey] of Object.entries(LEGACY_PARAM_MAPPINGS)) {
-    const existing = lookup.get(currentKey) || []
-    existing.push(legacyKey)
-    lookup.set(currentKey, existing)
-  }
-  return lookup
-}
-
-// Cache the lookup
-const legacyKeyLookup = buildLegacyKeyLookup()
-
-/**
  * Parse URL query parameters into partial state.
  * Also returns the set of field names that were explicitly provided in URL.
  * Supports legacy parameter names (bdf→bf, cum→ce, etc.) for backwards compatibility.
@@ -135,7 +119,7 @@ function parseQueryParams(
 
     // If current key not found, check for legacy keys
     if (value === undefined) {
-      const legacyKeys = legacyKeyLookup.get(config.key)
+      const legacyKeys = LEGACY_KEY_LOOKUP.get(config.key)
       if (legacyKeys) {
         for (const legacyKey of legacyKeys) {
           const legacyValue = query[legacyKey]
