@@ -94,6 +94,39 @@ describe('calculateBaseline', () => {
       expect(data.le_baseline).toEqual([null, 82, 82, 82, 82])
     })
 
+    it('should not normalize if baselineEndIdx value is null', async () => {
+      // Edge case: if the value at baselineEndIdx is null, don't normalize
+      const mockResponse = {
+        y: [80, 81, null, 83, 84],
+        lower: [null, null, null, 79, 79],
+        upper: [null, null, null, 85, 85]
+      }
+
+      const deps = createMockDeps(mockResponse)
+
+      const data: DatasetEntry = {
+        le: [80, 81, 82, 83, 84]
+      } as unknown as DatasetEntry
+
+      const labels = ['2015', '2016', '2017', '2018', '2019']
+      const keys = ['le', 'le_baseline', 'le_baseline_lower', 'le_baseline_upper'] as (keyof DatasetEntry)[]
+
+      await calculateBaseline(
+        deps,
+        data,
+        labels,
+        0,
+        2, // baselineEndIdx points to null value
+        keys,
+        'naive',
+        'yearly',
+        false
+      )
+
+      // When baselineEndIdx value is null, don't apply normalization - use API response as-is
+      expect(data.le_baseline).toEqual([80, 81, null, 83, 84])
+    })
+
     it('should not modify mean method response', async () => {
       // Mean method should return constant values and not be modified
       const mockResponse = {

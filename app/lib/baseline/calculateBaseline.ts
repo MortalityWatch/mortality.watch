@@ -186,7 +186,7 @@ export const calculateBaseline = async (
     if (method === 'naive') {
       const naiveValue = json.y[baselineEndIdx]
       if (naiveValue != null && typeof naiveValue === 'number') {
-        json.y = (json.y as (number | null)[]).map((v, i) =>
+        json.y = (json.y as (number | null)[]).map(v =>
           v != null ? naiveValue : v
         )
       }
