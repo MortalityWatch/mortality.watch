@@ -79,12 +79,12 @@ useSeoMeta({
           </ULink>
           or reach out on
           <ULink
-            to="https://twitter.com/mortalitywatch"
+            to="https://x.com/mortalitywatch"
             target="_blank"
             active-class="text-primary"
             inactive-class="text-primary hover:text-primary-600 dark:hover:text-primary-400"
           >
-            @MortalityWatch
+            @MortalityWatch on X
           </ULink>.
         </p>
       </UCard>

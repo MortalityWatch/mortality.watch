@@ -218,7 +218,7 @@
           </ULink>
           or reach out on
           <ULink
-            to="https://twitter.com/mortalitywatch"
+            to="https://x.com/mortalitywatch"
             target="_blank"
             active-class="text-primary"
             inactive-class="text-primary hover:text-primary-600 dark:hover:text-primary-400"
@@ -290,12 +290,12 @@ definePageMeta({
 // SEO metadata
 useSeoMeta({
   title: 'About',
-  description: 'Learn about Mortality Watch, a comprehensive web application for visualizing and analyzing global mortality data with a focus on excess mortality during significant health events.',
+  description: 'Mortality Watch is a free, open-source platform for visualizing global mortality data. Explore excess deaths, life expectancy, and age-standardized rates across 300+ regions.',
   ogTitle: 'About - Mortality Watch',
-  ogDescription: 'Comprehensive mortality data visualization and analysis platform with interactive charts and data exploration tools.',
+  ogDescription: 'Free, open-source mortality data visualization with interactive charts and data exploration tools.',
   ogImage: '/og-image.png',
   twitterTitle: 'About - Mortality Watch',
-  twitterDescription: 'Comprehensive mortality data visualization and analysis platform.',
+  twitterDescription: 'Free, open-source mortality data visualization platform.',
   twitterImage: '/og-image.png',
   twitterCard: 'summary_large_image'
 })
