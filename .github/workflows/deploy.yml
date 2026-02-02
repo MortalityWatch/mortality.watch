@@ -28,7 +28,7 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.DOKKU_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -H 207.244.252.203 >> ~/.ssh/known_hosts
+          ssh-keyscan -H 167.86.99.138 >> ~/.ssh/known_hosts
 
       - name: Deploy to Dokku
         run: |
@@ -37,4 +37,4 @@ jobs:
           else
             APP="staging-mortality-watch"
           fi
-          git push dokku@207.244.252.203:$APP HEAD:master --force
+          git push dokku@167.86.99.138:$APP HEAD:master --force
