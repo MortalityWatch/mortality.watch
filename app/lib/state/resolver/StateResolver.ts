@@ -23,6 +23,7 @@ import type { ChartType } from '@/model/period'
 import { getDefaultSliderStart } from '@/lib/config/constants'
 import { logger, formatError } from '@/lib/logger'
 import { valuesEqual } from '@/lib/utils/array'
+import { LEGACY_KEY_LOOKUP } from '@/lib/url/legacyParams'
 
 /**
  * Get defaults for a view, with view-specific fields added
@@ -457,6 +458,7 @@ export class StateResolver {
    * Validate and sanitize URL parameters
    *
    * Handles malformed URLs and old bookmarked URLs gracefully.
+   * Supports legacy parameter names (bdf→bf, cum→ce, etc.) for backwards compatibility.
    * Skips invalid params instead of crashing.
    *
    * @private
@@ -473,7 +475,23 @@ export class StateResolver {
       }
 
       const urlKey = encoder.key as string
-      const urlValue = route.query[urlKey]
+
+      // First try the current key, then fall back to legacy keys
+      let urlValue = route.query[urlKey]
+
+      // If current key not found, check for legacy keys
+      if (urlValue === undefined || urlValue === null) {
+        const legacyKeys = LEGACY_KEY_LOOKUP.get(urlKey)
+        if (legacyKeys) {
+          for (const legacyKey of legacyKeys) {
+            const legacyValue = route.query[legacyKey]
+            if (legacyValue !== undefined && legacyValue !== null) {
+              urlValue = legacyValue
+              break
+            }
+          }
+        }
+      }
 
       if (urlValue !== undefined && urlValue !== null) {
         try {

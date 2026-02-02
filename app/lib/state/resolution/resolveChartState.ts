@@ -20,6 +20,7 @@ import type { ChartFilterConfig, ChartStateSnapshot } from '@/lib/chart/types'
 import type { Country } from '@/model'
 import { getDefaultSliderStart } from '@/lib/config/constants'
 import { computeDisplayColors } from '@/lib/chart/chartColors'
+import { LEGACY_KEY_LOOKUP } from '@/lib/url/legacyParams'
 
 /**
  * Complete resolved state ready for chart rendering
@@ -102,8 +103,9 @@ function decodeUrlParam(
 }
 
 /**
- * Parse URL query parameters into partial state
- * Also returns the set of field names that were explicitly provided in URL
+ * Parse URL query parameters into partial state.
+ * Also returns the set of field names that were explicitly provided in URL.
+ * Supports legacy parameter names (bdf→bf, cum→ce, etc.) for backwards compatibility.
  */
 function parseQueryParams(
   query: Record<string, string | string[] | undefined>
@@ -112,7 +114,23 @@ function parseQueryParams(
   const urlProvidedFields = new Set<string>()
 
   for (const [field, config] of Object.entries(stateFieldEncoders)) {
-    const value = query[config.key]
+    // First try the current key
+    let value = query[config.key]
+
+    // If current key not found, check for legacy keys
+    if (value === undefined) {
+      const legacyKeys = LEGACY_KEY_LOOKUP.get(config.key)
+      if (legacyKeys) {
+        for (const legacyKey of legacyKeys) {
+          const legacyValue = query[legacyKey]
+          if (legacyValue !== undefined) {
+            value = legacyValue
+            break
+          }
+        }
+      }
+    }
+
     if (value !== undefined) {
       state[field] = decodeUrlParam(field, value, config)
       urlProvidedFields.add(field)
