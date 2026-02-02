@@ -375,57 +375,34 @@ async function handleTogglePublic(newValue: boolean) {
   }
 }
 
-// Edit chart modal state
-const showEditModal = ref(false)
-const editName = ref('')
-const editDescription = ref('')
-const editIsPublic = ref(false)
-const editError = ref<string | null>(null)
-const isSaving = ref(false)
+// Edit chart modal - use shared composable
+const {
+  showEditModal,
+  editName,
+  editDescription,
+  editIsPublic,
+  editError,
+  isSaving,
+  openEditModal: openEdit,
+  saveEdit: saveEditComposable
+} = useChartEdit({
+  onSuccess: () => {
+    // Update local chart state after successful save
+    if (chart.value) {
+      chart.value.name = editName.value.trim()
+      chart.value.description = editDescription.value.trim() || null
+      chart.value.isPublic = editIsPublic.value
+    }
+  }
+})
 
 function openEditModal() {
   if (!chart.value) return
-  editName.value = chart.value.name
-  editDescription.value = chart.value.description || ''
-  editIsPublic.value = chart.value.isPublic ?? false
-  editError.value = null
-  showEditModal.value = true
+  openEdit(chart.value)
 }
 
 async function saveEdit() {
-  if (!chart.value) return
-
-  if (!editName.value.trim()) {
-    editError.value = 'Chart name is required'
-    return
-  }
-
-  isSaving.value = true
-  editError.value = null
-
-  try {
-    await $fetch(`/api/charts/${chart.value.id}`, {
-      method: 'PATCH',
-      body: {
-        name: editName.value.trim(),
-        description: editDescription.value.trim() || null,
-        isPublic: editIsPublic.value
-      }
-    })
-
-    // Update local state
-    chart.value.name = editName.value.trim()
-    chart.value.description = editDescription.value.trim() || null
-    chart.value.isPublic = editIsPublic.value
-
-    showEditModal.value = false
-    showToast('Chart updated successfully', 'success')
-  } catch (err) {
-    handleApiError(err, 'update chart', 'saveEdit')
-    editError.value = err instanceof Error ? err.message : 'Failed to update chart'
-  } finally {
-    isSaving.value = false
-  }
+  await saveEditComposable()
 }
 
 // Delete chart

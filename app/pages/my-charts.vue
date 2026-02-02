@@ -275,52 +275,17 @@ async function handleClearCache(chartId: number) {
   await clearCacheStatus(chartId)
 }
 
-// Edit chart modal state
-const showEditModal = ref(false)
-const editingChartId = ref<number | null>(null)
-const editName = ref('')
-const editDescription = ref('')
-const editIsPublic = ref(false)
-const editError = ref<string | null>(null)
-const isSavingEdit = ref(false)
-
-function openEditModal(chart: Chart) {
-  editingChartId.value = chart.id
-  editName.value = chart.name
-  editDescription.value = chart.description || ''
-  editIsPublic.value = chart.isPublic ?? false
-  editError.value = null
-  showEditModal.value = true
-}
-
-async function saveEdit() {
-  if (!editingChartId.value) return
-
-  if (!editName.value.trim()) {
-    editError.value = 'Chart name is required'
-    return
-  }
-
-  isSavingEdit.value = true
-  editError.value = null
-
-  try {
-    await $fetch(`/api/charts/${editingChartId.value}`, {
-      method: 'PATCH',
-      body: {
-        name: editName.value.trim(),
-        description: editDescription.value.trim() || null,
-        isPublic: editIsPublic.value
-      }
-    })
-
-    showEditModal.value = false
-    await refresh()
-  } catch (err) {
-    handleApiError(err, 'update chart', 'saveEdit')
-    editError.value = err instanceof Error ? err.message : 'Failed to update chart'
-  } finally {
-    isSavingEdit.value = false
-  }
-}
+// Edit chart modal - use shared composable
+const {
+  showEditModal,
+  editName,
+  editDescription,
+  editIsPublic,
+  editError,
+  isSaving: isSavingEdit,
+  openEditModal,
+  saveEdit
+} = useChartEdit({
+  onSuccess: () => refresh()
+})
 </script>
