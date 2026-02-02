@@ -263,6 +263,19 @@ async function injectASDDataForSSR(
         record['asd_baseline_lower'] = aligned.lower
         record['asd_baseline_upper'] = aligned.upper
         record['asd_zscore'] = aligned.zscore
+
+        // Calculate excess PI for excess view: asd_excess_lower = asd - lower, asd_excess_upper = asd - upper
+        // This mirrors the calculation in baseline/core.ts for other metrics
+        record['asd_excess_lower'] = aligned.asd.map((asd, i) => {
+          const lower = aligned.lower[i]
+          if (asd === null || lower === null || lower === undefined) return null
+          return asd - lower
+        })
+        record['asd_excess_upper'] = aligned.asd.map((asd, i) => {
+          const upper = aligned.upper[i]
+          if (asd === null || upper === null || upper === undefined) return null
+          return asd - upper
+        })
       }
     }
   }
