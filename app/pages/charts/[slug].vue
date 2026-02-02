@@ -24,9 +24,23 @@
       <div class="mb-8">
         <div class="flex items-start justify-between mb-4">
           <div class="flex-1">
-            <h1 class="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-              {{ chart.name }}
-            </h1>
+            <div class="flex items-center gap-2 mb-2">
+              <h1 class="text-4xl font-bold text-gray-900 dark:text-gray-100">
+                {{ chart.name }}
+              </h1>
+              <UButton
+                v-if="isOwner"
+                color="neutral"
+                variant="ghost"
+                size="sm"
+                @click="openEditModal"
+              >
+                <Icon
+                  name="i-lucide-pencil"
+                  class="w-4 h-4"
+                />
+              </UButton>
+            </div>
             <div class="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
               <span>
                 <Icon
@@ -67,6 +81,81 @@
           {{ chart.description }}
         </p>
       </div>
+
+      <!-- Edit Chart Modal -->
+      <UModal v-model:open="showEditModal">
+        <template #content>
+          <UCard>
+            <template #header>
+              <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold">
+                  Edit Chart
+                </h3>
+                <UButton
+                  color="neutral"
+                  variant="ghost"
+                  size="sm"
+                  @click="showEditModal = false"
+                >
+                  <Icon
+                    name="i-lucide-x"
+                    class="w-4 h-4"
+                  />
+                </UButton>
+              </div>
+            </template>
+
+            <div class="space-y-4">
+              <UFormField
+                label="Name"
+                required
+              >
+                <UInput
+                  v-model="editName"
+                  placeholder="Enter chart name"
+                  :disabled="isSaving"
+                />
+              </UFormField>
+
+              <UFormField label="Description">
+                <UTextarea
+                  v-model="editDescription"
+                  placeholder="Enter chart description (optional)"
+                  :rows="3"
+                  :disabled="isSaving"
+                />
+              </UFormField>
+
+              <UAlert
+                v-if="editError"
+                color="error"
+                variant="subtle"
+                :description="editError"
+              />
+            </div>
+
+            <template #footer>
+              <div class="flex justify-end gap-2">
+                <UButton
+                  color="neutral"
+                  variant="outline"
+                  :disabled="isSaving"
+                  @click="showEditModal = false"
+                >
+                  Cancel
+                </UButton>
+                <UButton
+                  color="primary"
+                  :loading="isSaving"
+                  @click="saveEdit"
+                >
+                  Save Changes
+                </UButton>
+              </div>
+            </template>
+          </UCard>
+        </template>
+      </UModal>
 
       <!-- Chart Visualization -->
       <UCard
@@ -341,6 +430,55 @@ async function handleTogglePublic(newValue: boolean) {
     if (chart.value.isPublic !== undefined) {
       chart.value.isPublic = oldValue
     }
+  }
+}
+
+// Edit chart modal state
+const showEditModal = ref(false)
+const editName = ref('')
+const editDescription = ref('')
+const editError = ref('')
+const isSaving = ref(false)
+
+function openEditModal() {
+  if (!chart.value) return
+  editName.value = chart.value.name
+  editDescription.value = chart.value.description || ''
+  editError.value = ''
+  showEditModal.value = true
+}
+
+async function saveEdit() {
+  if (!chart.value) return
+
+  if (!editName.value.trim()) {
+    editError.value = 'Chart name is required'
+    return
+  }
+
+  isSaving.value = true
+  editError.value = ''
+
+  try {
+    await $fetch(`/api/charts/${chart.value.id}`, {
+      method: 'PATCH',
+      body: {
+        name: editName.value.trim(),
+        description: editDescription.value.trim() || null
+      }
+    })
+
+    // Update local state
+    chart.value.name = editName.value.trim()
+    chart.value.description = editDescription.value.trim() || null
+
+    showEditModal.value = false
+    showToast('Chart updated successfully', 'success')
+  } catch (err) {
+    handleApiError(err, 'update chart', 'saveEdit')
+    editError.value = err instanceof Error ? err.message : 'Failed to update chart'
+  } finally {
+    isSaving.value = false
   }
 }
 
