@@ -32,16 +32,19 @@ function getViewConstraintsForApply(view: ViewType): StateConstraint[] {
  * - Any other context that needs consistent state resolution
  *
  * Constraints are sorted by priority (high to low) and applied in order.
- * URL-provided values are NOT treated as user overrides in SSR context
- * because we want constraints to enforce view requirements.
+ * When urlProvidedFields is provided, constraints with allowUserOverride=true
+ * will not overwrite values explicitly set in the URL. This ensures SSR
+ * respects user preferences while still enforcing hard constraints.
  *
  * @param state - The state object to apply constraints to
  * @param view - The detected view type (mortality, excess, zscore)
+ * @param urlProvidedFields - Optional set of field names that were explicitly provided in URL
  * @returns New state object with constraints applied
  */
 export function applyConstraints(
   state: Record<string, unknown>,
-  view: ViewType
+  view: ViewType,
+  urlProvidedFields?: Set<string>
 ): Record<string, unknown> {
   const newState = { ...state }
 
@@ -65,10 +68,18 @@ export function applyConstraints(
     }
 
     // Apply each field in the constraint
-    // In SSR context, we always apply constraints (no user override concept)
-    // This ensures excess view always has showBaseline=true, etc.
     for (const [field, value] of Object.entries(constraint.apply)) {
-      newState[field] = value
+      // Check if this field was explicitly provided in the URL
+      const isUrlProvided = urlProvidedFields?.has(field) ?? false
+
+      // Apply constraint unless: field was URL-provided AND constraint allows override
+      // This ensures hard constraints (allowUserOverride=false) are always enforced,
+      // while soft constraints (allowUserOverride=true) respect explicit URL values
+      const shouldApply = !(isUrlProvided && constraint.allowUserOverride)
+
+      if (shouldApply) {
+        newState[field] = value
+      }
     }
   }
 
