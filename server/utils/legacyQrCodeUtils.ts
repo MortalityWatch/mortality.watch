@@ -35,15 +35,13 @@ export function decompressLegacyQr(qrParam: string): URLSearchParams | null {
         for (const item of value) {
           params.append(key, String(item))
         }
-      }
-      else if (value !== null && value !== undefined) {
+      } else if (value !== null && value !== undefined) {
         params.append(key, String(value))
       }
     }
 
     return params
-  }
-  catch {
+  } catch {
     return null
   }
 }

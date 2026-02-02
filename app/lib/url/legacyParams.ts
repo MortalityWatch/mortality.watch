@@ -26,7 +26,7 @@ export const LEGACY_PARAM_MAPPINGS: Record<string, string> = {
 
   // Display toggles
   cum: 'ce', // cumulative
-  pct: 'p', // showPercentage
+  pct: 'p' // showPercentage
 
   // Metric type (ranking page only)
   // Note: 'a' → 'm' is handled separately in RankingStateResolver
