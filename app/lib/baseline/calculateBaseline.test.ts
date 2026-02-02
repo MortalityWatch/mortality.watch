@@ -17,7 +17,7 @@ vi.mock('../logger', () => ({
 describe('calculateBaseline', () => {
   const createMockDeps = (response: Record<string, unknown>): BaselineDependencies => ({
     fetchBaseline: vi.fn().mockResolvedValue(JSON.stringify(response)),
-    enqueue: vi.fn().mockImplementation((fn) => fn())
+    enqueue: vi.fn().mockImplementation(fn => fn())
   })
 
   describe('naive method normalization', () => {
