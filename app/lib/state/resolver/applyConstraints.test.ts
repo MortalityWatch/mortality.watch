@@ -277,4 +277,70 @@ describe('applyConstraints', () => {
       expect(result.showBaseline).toBe(false)
     })
   })
+
+  describe('URL-provided fields (allowUserOverride)', () => {
+    it('should respect URL-provided PI=false when baseline is on (allowUserOverride=true)', () => {
+      // When user explicitly sets pi=0 in URL, it should NOT be overwritten
+      // by the baselineOnRestorePI constraint which has allowUserOverride=true
+      const state = {
+        view: 'mortality',
+        showBaseline: true,
+        showPredictionInterval: false // User explicitly set pi=0 in URL
+      }
+      const urlProvidedFields = new Set(['showPredictionInterval'])
+
+      const result = applyConstraints(state, 'mortality', urlProvidedFields)
+
+      // PI should remain false because user explicitly set it
+      expect(result.showPredictionInterval).toBe(false)
+    })
+
+    it('should restore PI=true when baseline is on and PI was NOT URL-provided', () => {
+      // When user did not explicitly set PI, the baselineOnRestorePI
+      // constraint should set it to true (mortality view default)
+      const state = {
+        view: 'mortality',
+        showBaseline: true,
+        showPredictionInterval: false // Not from URL, just a default
+      }
+      // PI was NOT in the URL - empty set or no field
+      const urlProvidedFields = new Set<string>()
+
+      const result = applyConstraints(state, 'mortality', urlProvidedFields)
+
+      // PI should be restored to true by the soft constraint
+      expect(result.showPredictionInterval).toBe(true)
+    })
+
+    it('should enforce hard constraints (allowUserOverride=false) even for URL-provided values', () => {
+      // Hard constraints like population type disabling baseline should still apply
+      const state = {
+        view: 'mortality',
+        type: 'population',
+        showBaseline: true, // User explicitly set in URL
+        showPredictionInterval: true // User explicitly set in URL
+      }
+      const urlProvidedFields = new Set(['showBaseline', 'showPredictionInterval'])
+
+      const result = applyConstraints(state, 'mortality', urlProvidedFields)
+
+      // Hard constraint (allowUserOverride=false) should override user values
+      expect(result.showBaseline).toBe(false)
+      expect(result.showPredictionInterval).toBe(false)
+    })
+
+    it('should work without urlProvidedFields (backward compatibility)', () => {
+      // When urlProvidedFields is not provided, all constraints should apply
+      const state = {
+        view: 'mortality',
+        showBaseline: true,
+        showPredictionInterval: false
+      }
+
+      const result = applyConstraints(state, 'mortality')
+
+      // Without urlProvidedFields, soft constraints apply as before
+      expect(result.showPredictionInterval).toBe(true)
+    })
+  })
 })

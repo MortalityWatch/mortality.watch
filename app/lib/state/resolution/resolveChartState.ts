@@ -103,20 +103,23 @@ function decodeUrlParam(
 
 /**
  * Parse URL query parameters into partial state
+ * Also returns the set of field names that were explicitly provided in URL
  */
 function parseQueryParams(
   query: Record<string, string | string[] | undefined>
-): Record<string, unknown> {
+): { state: Record<string, unknown>, urlProvidedFields: Set<string> } {
   const state: Record<string, unknown> = {}
+  const urlProvidedFields = new Set<string>()
 
   for (const [field, config] of Object.entries(stateFieldEncoders)) {
     const value = query[config.key]
     if (value !== undefined) {
       state[field] = decodeUrlParam(field, value, config)
+      urlProvidedFields.add(field)
     }
   }
 
-  return state
+  return { state, urlProvidedFields }
 }
 
 /**
@@ -147,8 +150,8 @@ export function resolveChartStateForRendering(
   // 2. Get view-specific defaults
   const viewDefaults = getViewDefaults(view)
 
-  // 3. Parse URL parameters
-  const urlState = parseQueryParams(queryParams)
+  // 3. Parse URL parameters (also tracks which fields were explicitly provided)
+  const { state: urlState, urlProvidedFields } = parseQueryParams(queryParams)
 
   // 4. Merge: defaults → URL params → view field
   const mergedState = {
@@ -158,7 +161,9 @@ export function resolveChartStateForRendering(
   }
 
   // 5. Apply constraints (enforce view requirements)
-  const constrainedState = applyConstraints(mergedState, view)
+  // Pass urlProvidedFields so constraints with allowUserOverride=true
+  // respect explicit URL values (e.g., pi=0 should not be overwritten)
+  const constrainedState = applyConstraints(mergedState, view, urlProvidedFields)
 
   // 6. Compute effective date range
   const { effectiveDateFrom, effectiveDateTo } = computeEffectiveDateRange(
