@@ -6,7 +6,7 @@ import { ProfileUpdateResponseSchema } from '../../schemas'
 import { sendEmailChangeVerification } from '../../utils/email'
 
 // Rate limiting for email change requests: 3 per hour per user
-const emailChangeRateLimitMap = new Map<number, { count: number; resetAt: number }>()
+const emailChangeRateLimitMap = new Map<number, { count: number, resetAt: number }>()
 const MAX_EMAIL_CHANGES = 3
 const RATE_LIMIT_WINDOW = 60 * 60 * 1000 // 1 hour
 
@@ -73,7 +73,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Track if we need to send verification email
-  let pendingEmailChange: { email: string; token: string } | null = null
+  let pendingEmailChange: { email: string, token: string } | null = null
 
   // Update firstName if provided
   if (firstName !== undefined) {

@@ -101,7 +101,10 @@ async function saveEmail() {
         </label>
 
         <!-- Editing mode -->
-        <div v-if="isEditingEmail" class="space-y-3">
+        <div
+          v-if="isEditingEmail"
+          class="space-y-3"
+        >
           <UInput
             v-model="newEmail"
             type="email"
@@ -130,11 +133,20 @@ async function saveEmail() {
         </div>
 
         <!-- Display mode -->
-        <div v-else class="flex items-center gap-2 flex-wrap">
-          <p v-if="hasPlaceholderEmail" class="text-base text-gray-500 dark:text-gray-400 italic">
+        <div
+          v-else
+          class="flex items-center gap-2 flex-wrap"
+        >
+          <p
+            v-if="hasPlaceholderEmail"
+            class="text-base text-gray-500 dark:text-gray-400 italic"
+          >
             No email set
           </p>
-          <p v-else class="text-base text-gray-900 dark:text-gray-100">
+          <p
+            v-else
+            class="text-base text-gray-900 dark:text-gray-100"
+          >
             {{ user.email }}
           </p>
           <UBadge
@@ -156,7 +168,10 @@ async function saveEmail() {
         </div>
 
         <!-- Pending email notification -->
-        <div v-if="user.pendingEmail" class="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-sm text-blue-700 dark:text-blue-300">
+        <div
+          v-if="user.pendingEmail"
+          class="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-sm text-blue-700 dark:text-blue-300"
+        >
           Verification pending for: {{ user.pendingEmail }}
         </div>
       </div>
