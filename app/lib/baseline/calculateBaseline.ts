@@ -180,6 +180,18 @@ export const calculateBaseline = async (
       json.zscore = (json.zscore as (string | number)[]).slice(0, dataLength)
     }
 
+    // For naive method, the stats API returns actual values within the baseline period
+    // instead of a constant. Fix this by using the last baseline value for all positions.
+    // The naive baseline should be a horizontal line at the last value of the baseline period.
+    if (method === 'naive') {
+      const naiveValue = json.y[baselineEndIdx]
+      if (naiveValue != null && typeof naiveValue === 'number') {
+        json.y = (json.y as (number | null)[]).map((v, i) =>
+          v != null ? naiveValue : v
+        )
+      }
+    }
+
     // Response is aligned with input - no prefill needed since we send from index 0
     if (keys[1]) data[keys[1]] = json.y as DataVector
     if (keys[2]) data[keys[2]] = json.lower as DataVector
