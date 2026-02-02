@@ -180,6 +180,7 @@ describe('useSaveChart', () => {
         body: {
           name: 'Test Chart',
           description: null,
+          notes: null,
           chartState: JSON.stringify(stateData),
           chartType: 'explorer',
           isPublic: false
