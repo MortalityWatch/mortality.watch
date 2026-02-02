@@ -83,79 +83,21 @@
       </div>
 
       <!-- Edit Chart Modal -->
-      <UModal v-model:open="showEditModal">
-        <template #content>
-          <UCard>
-            <template #header>
-              <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold">
-                  Edit Chart
-                </h3>
-                <UButton
-                  color="neutral"
-                  variant="ghost"
-                  size="sm"
-                  @click="showEditModal = false"
-                >
-                  <Icon
-                    name="i-lucide-x"
-                    class="w-4 h-4"
-                  />
-                </UButton>
-              </div>
-            </template>
-
-            <div class="space-y-4">
-              <UFormField
-                label="Name"
-                required
-              >
-                <UInput
-                  v-model="editName"
-                  placeholder="Enter chart name"
-                  :disabled="isSaving"
-                />
-              </UFormField>
-
-              <UFormField label="Description">
-                <UTextarea
-                  v-model="editDescription"
-                  placeholder="Enter chart description (optional)"
-                  :rows="3"
-                  :disabled="isSaving"
-                />
-              </UFormField>
-
-              <UAlert
-                v-if="editError"
-                color="error"
-                variant="subtle"
-                :description="editError"
-              />
-            </div>
-
-            <template #footer>
-              <div class="flex justify-end gap-2">
-                <UButton
-                  color="neutral"
-                  variant="outline"
-                  :disabled="isSaving"
-                  @click="showEditModal = false"
-                >
-                  Cancel
-                </UButton>
-                <UButton
-                  color="primary"
-                  :loading="isSaving"
-                  @click="saveEdit"
-                >
-                  Save Changes
-                </UButton>
-              </div>
-            </template>
-          </UCard>
-        </template>
-      </UModal>
+      <SaveModal
+        v-model="showEditModal"
+        :saving="isSaving"
+        :name="editName"
+        :description="editDescription"
+        :is-public="editIsPublic"
+        :error="editError"
+        :success="false"
+        hide-button
+        edit-mode
+        @update:name="editName = $event"
+        @update:description="editDescription = $event"
+        @update:is-public="editIsPublic = $event"
+        @update-existing="saveEdit"
+      />
 
       <!-- Chart Visualization -->
       <UCard
@@ -437,14 +379,16 @@ async function handleTogglePublic(newValue: boolean) {
 const showEditModal = ref(false)
 const editName = ref('')
 const editDescription = ref('')
-const editError = ref('')
+const editIsPublic = ref(false)
+const editError = ref<string | null>(null)
 const isSaving = ref(false)
 
 function openEditModal() {
   if (!chart.value) return
   editName.value = chart.value.name
   editDescription.value = chart.value.description || ''
-  editError.value = ''
+  editIsPublic.value = chart.value.isPublic ?? false
+  editError.value = null
   showEditModal.value = true
 }
 
@@ -457,20 +401,22 @@ async function saveEdit() {
   }
 
   isSaving.value = true
-  editError.value = ''
+  editError.value = null
 
   try {
     await $fetch(`/api/charts/${chart.value.id}`, {
       method: 'PATCH',
       body: {
         name: editName.value.trim(),
-        description: editDescription.value.trim() || null
+        description: editDescription.value.trim() || null,
+        isPublic: editIsPublic.value
       }
     })
 
     // Update local state
     chart.value.name = editName.value.trim()
     chart.value.description = editDescription.value.trim() || null
+    chart.value.isPublic = editIsPublic.value
 
     showEditModal.value = false
     showToast('Chart updated successfully', 'success')

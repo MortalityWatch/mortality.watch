@@ -40,6 +40,9 @@ const props = withDefaults(defineProps<{
   isDuplicate?: boolean
   existingChart?: ExistingChart | null
   detectedChart?: DetectedChart | null
+  hideButton?: boolean
+  editMode?: boolean
+  modalTitle?: string
 }>(), {
   type: 'chart',
   generateDefaultTitle: undefined,
@@ -50,7 +53,10 @@ const props = withDefaults(defineProps<{
   isButtonDisabled: false,
   isDuplicate: false,
   existingChart: null,
-  detectedChart: null
+  detectedChart: null,
+  hideButton: false,
+  editMode: false,
+  modalTitle: undefined
 })
 
 const emit = defineEmits<{
@@ -87,14 +93,23 @@ const typeLabel = computed(() => props.type === 'ranking' ? 'Ranking' : 'Chart')
 const typeLabelLower = computed(() => typeLabel.value.toLowerCase())
 
 const handleOpenModal = (): void => {
-  // Generate default title and description if functions provided, otherwise reset to empty
-  const defaultTitle = props.generateDefaultTitle ? props.generateDefaultTitle() : ''
-  const defaultDescription = props.generateDefaultDescription ? props.generateDefaultDescription() : ''
-  emit('update:name', defaultTitle)
-  emit('update:description', defaultDescription)
-  emit('update:isPublic', false)
+  // In edit mode, keep existing values (parent already set them)
+  if (!props.editMode) {
+    // Generate default title and description if functions provided, otherwise reset to empty
+    const defaultTitle = props.generateDefaultTitle ? props.generateDefaultTitle() : ''
+    const defaultDescription = props.generateDefaultDescription ? props.generateDefaultDescription() : ''
+    emit('update:name', defaultTitle)
+    emit('update:description', defaultDescription)
+    emit('update:isPublic', false)
+  }
   localShow.value = true
 }
+
+const computedModalTitle = computed(() => {
+  if (props.modalTitle) return props.modalTitle
+  if (props.editMode) return `Edit ${typeLabel.value}`
+  return `Save ${typeLabel.value}`
+})
 
 // Tracked save handlers
 function handleSave() {
@@ -116,6 +131,7 @@ function handleUpdateExisting() {
 <template>
   <div>
     <button
+      v-if="!hideButton"
       type="button"
       class="chart-option-button"
       :class="{ 'opacity-60': isButtonDisabled }"
@@ -161,7 +177,7 @@ function handleUpdateExisting() {
 
     <UModal
       v-model:open="localShow"
-      :title="`Save ${typeLabel}`"
+      :title="computedModalTitle"
       :close="{
         color: 'neutral',
         variant: 'ghost'
@@ -304,8 +320,18 @@ function handleUpdateExisting() {
             label="Cancel"
             @click="localShow = false"
           />
+          <!-- Edit mode: single update button -->
+          <template v-if="editMode">
+            <UButton
+              color="primary"
+              label="Save Changes"
+              :loading="saving"
+              :disabled="!name.trim()"
+              @click="handleUpdateExisting"
+            />
+          </template>
           <!-- Show two buttons when user has a saved chart (detected or previously saved) -->
-          <template v-if="(detectedChart || (isSaved && isModified)) && !isDuplicate">
+          <template v-else-if="(detectedChart || (isSaved && isModified)) && !isDuplicate">
             <UButton
               color="neutral"
               variant="outline"
