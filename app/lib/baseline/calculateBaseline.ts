@@ -93,11 +93,15 @@ export const calculateBaseline = async (
   }
 
   // Ensure we have enough data points for meaningful baseline calculation
+  // Naive method only needs 1 data point (the selected date's value)
+  // Other methods need at least 3 points for statistical calculations
   const validDataPoints = bl_data.filter(x => x != null && !isNaN(x as number)).length
-  if (validDataPoints < 3) {
+  const minRequired = method === 'naive' ? 1 : 3
+  if (validDataPoints < minRequired) {
     logger.warn('Insufficient data points for baseline calculation', {
       iso3c: data.iso3c?.[0],
       validDataPoints,
+      minRequired,
       blDataLength: bl_data.length,
       baselineStartIdx,
       baselineEndIdx,
@@ -178,6 +182,18 @@ export const calculateBaseline = async (
     )
     if (json.zscore) {
       json.zscore = (json.zscore as (string | number)[]).slice(0, dataLength)
+    }
+
+    // For naive method, the stats API returns actual values within the baseline period
+    // instead of a constant. Fix this by using the last baseline value for all positions.
+    // The naive baseline should be a horizontal line at the last value of the baseline period.
+    if (method === 'naive') {
+      const naiveValue = json.y[baselineEndIdx]
+      if (naiveValue != null && typeof naiveValue === 'number') {
+        json.y = (json.y as (number | null)[]).map(v =>
+          v != null ? naiveValue : v
+        )
+      }
     }
 
     // Response is aligned with input - no prefill needed since we send from index 0
