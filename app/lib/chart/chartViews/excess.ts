@@ -76,7 +76,7 @@ export const EXCESS_VIEW: ChartViewConfig = {
         return ctx.cumulative ? 'Cum. Excess Deaths' : 'Excess Deaths'
       case 'cmr':
       case 'asmr':
-        return ctx.cumulative ? 'Cum. Excess per 100k' : 'Excess Deaths per 100k'
+        return ctx.cumulative ? 'Cum. Excess Deaths per 100k' : 'Excess Deaths per 100k'
       case 'asd':
         return ctx.cumulative ? 'Cum. Excess Deaths' : 'Excess Deaths'
       case 'le':
