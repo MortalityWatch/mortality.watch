@@ -6,6 +6,7 @@ import {
   watch
 } from 'vue'
 import { useChartResize } from '@/composables/useChartResize'
+import { useFeatureAccess } from '@/composables/useFeatureAccess'
 import { useExplorerHelpers } from '@/composables/useExplorerHelpers'
 import { useExplorerState } from '@/composables/useExplorerState'
 import { useDataAvailability } from '@/composables/useDataAvailability'
@@ -35,6 +36,9 @@ import { computeConfigHash, extractUrlParams } from '@/lib/shortUrl/hashConfig'
 // Auth state for conditional features
 const { isAuthenticated } = useAuth()
 const { goToSignup } = useAuthRedirect()
+
+// Feature access for tier-gated features
+const { isPro } = useFeatureAccess()
 
 // Tutorial for first-time users
 const { autoStartTutorial } = useTutorial()
@@ -229,6 +233,13 @@ const handleChartPresetChanged = (v: string) => {
   state.chartPreset.value = v
   applyPresetSize(v)
 }
+
+// Sync chart preset from resize composable to explorer state (for drag-to-resize)
+watch(_chartPreset, (newPreset) => {
+  if (state.chartPreset.value !== newPreset) {
+    state.chartPreset.value = newPreset
+  }
+})
 
 // Generic StateResolver handler for any state change
 // Handles cascading constraints and single-tick state application
@@ -747,6 +758,7 @@ watch(
             :container-size="containerSize"
             :has-been-resized="hasBeenResized"
             :is-custom-mode="isCustomMode"
+            :can-resize="isPro"
           />
           <!-- Data sources display below chart -->
           <DataSourcesDisplay
