@@ -299,6 +299,7 @@ interface FeaturedChart {
   id: number
   name: string
   description: string | null
+  notes: string | null
   slug: string | null
   chartType: 'explorer' | 'ranking'
   chartConfig: string // Query string (e.g., "c=SWE&c=DEU&ct=yearly")
