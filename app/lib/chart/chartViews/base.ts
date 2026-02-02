@@ -62,13 +62,9 @@ export const BASE_VIEW: CompleteChartViewConfig = {
       parts.push(getASMRTitle(ctx.countries, ctx.standardPopulation))
     }
 
-    // Life expectancy note
-    if (ctx.type === 'le') {
-      parts.push('Based on WHO2015 Std. Pop.')
-      // Add seasonal adjustment note for sub-yearly data
-      if (ctx.leAdjusted && isSubYearlyChartType(ctx.chartType)) {
-        parts.push('Seasonally Adjusted (STL)')
-      }
+    // Life expectancy note - seasonal adjustment for sub-yearly data
+    if (ctx.type === 'le' && ctx.leAdjusted && isSubYearlyChartType(ctx.chartType)) {
+      parts.push('Seasonally Adjusted (STL)')
     }
 
     // Baseline description
