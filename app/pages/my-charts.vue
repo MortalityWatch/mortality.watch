@@ -150,7 +150,7 @@ definePageMeta({
 
 useSeoMeta({
   title: 'My Charts',
-  description: 'View, edit, and manage your saved charts and rankings'
+  description: 'View, edit, and manage your saved mortality charts and rankings. Access all your saved visualizations in one place.'
 })
 
 // Import constants

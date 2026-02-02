@@ -8,7 +8,7 @@ definePageMeta({
 
 useSeoMeta({
   title: 'Login',
-  description: 'Login to your account to continue'
+  description: 'Sign in to your Mortality Watch account to access saved charts, custom settings, and Pro features.'
 })
 
 const { signIn } = useAuth()

@@ -197,10 +197,10 @@
             />
             <div>
               <h3 class="font-semibold mb-1">
-                Single Age Group LE
+                Age-Specific Life Expectancy
               </h3>
               <p class="text-sm text-gray-600 dark:text-gray-400">
-                Advanced life expectancy calculations
+                Calculate life expectancy for specific age groups
               </p>
             </div>
           </div>
@@ -212,10 +212,10 @@
             />
             <div>
               <h3 class="font-semibold mb-1">
-                Age Standardized Deaths
+                Age-Standardized Deaths
               </h3>
               <p class="text-sm text-gray-600 dark:text-gray-400">
-                Levitt method for age standardization
+                Compare deaths across regions with different age structures
               </p>
             </div>
           </div>

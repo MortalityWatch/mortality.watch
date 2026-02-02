@@ -8,7 +8,7 @@ definePageMeta({
 
 useSeoMeta({
   title: 'Forgot Password',
-  description: 'Reset your password'
+  description: 'Reset your Mortality Watch account password. Enter your email to receive a password reset link.'
 })
 
 const { forgotPassword } = useAuth()

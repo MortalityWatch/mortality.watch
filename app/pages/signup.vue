@@ -7,8 +7,8 @@ definePageMeta({
 })
 
 useSeoMeta({
-  title: 'Sign up',
-  description: 'Create an account to get started'
+  title: 'Sign Up',
+  description: 'Create a free Mortality Watch account to save charts, export data, and unlock all baseline methods. Start with a 14-day Pro trial.'
 })
 
 const { signUp } = useAuth()

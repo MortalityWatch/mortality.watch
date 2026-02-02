@@ -159,10 +159,10 @@ definePageMeta({
 
 // SEO metadata
 useSeoMeta({
-  title: 'Support Mortality Watch',
-  description: 'Mortality Watch is sustained by Pro subscriptions. Support our work with a one-time donation or upgrade to Pro for advanced features.',
+  title: 'Donate',
+  description: 'Support Mortality Watch with a Pro subscription or one-time donation. Your contribution keeps mortality data free and accessible for researchers worldwide.',
   ogTitle: 'Support Mortality Watch',
-  ogDescription: 'Support mortality data infrastructure and feature development.',
+  ogDescription: 'Support free, open mortality data for researchers worldwide.',
   ogImage: '/og-image.png',
   twitterImage: '/og-image.png',
   twitterCard: 'summary_large_image'
