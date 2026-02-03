@@ -20,7 +20,7 @@ vi.mock('jsonwebtoken', () => ({
     verify: vi.fn((token: string, _secret: string) => {
       if (token.startsWith('jwt_')) {
         const match = token.match(/^jwt_(.+)_(.+)$/)
-        if (match) {
+        if (match?.[1]) {
           return JSON.parse(match[1])
         }
       }
@@ -1089,7 +1089,7 @@ describe('Auth Utilities', () => {
 
       setAuthToken(mockEvent, token)
 
-      const call = mockSetCookie.mock.calls[0]
+      const call = mockSetCookie.mock.calls[0]!
       expect(call[3]).toHaveProperty('httpOnly', true)
     })
 
@@ -1101,7 +1101,7 @@ describe('Auth Utilities', () => {
 
       setAuthToken(mockEvent, token)
 
-      const call = mockSetCookie.mock.calls[0]
+      const call = mockSetCookie.mock.calls[0]!
       expect(call[3]).toHaveProperty('sameSite', 'lax')
     })
 
@@ -1113,7 +1113,7 @@ describe('Auth Utilities', () => {
 
       setAuthToken(mockEvent, token)
 
-      const call = mockSetCookie.mock.calls[0]
+      const call = mockSetCookie.mock.calls[0]!
       expect(call[3]).toHaveProperty('path', '/')
     })
   })
