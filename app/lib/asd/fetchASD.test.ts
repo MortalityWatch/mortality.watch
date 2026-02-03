@@ -47,6 +47,55 @@ describe('alignASDToChartLabels', () => {
     })
   })
 
+  describe('excess calculation', () => {
+    it('should calculate excess as asd - asd_bl', () => {
+      const asdResult = createASDResult()
+      const chartLabels = ['2020', '2021', '2022']
+
+      const result = alignASDToChartLabels(asdResult, chartLabels)
+
+      // excess = asd - asd_bl: [100-95, 110-100, 120-105] = [5, 10, 15]
+      expect(result.excess).toEqual([5, 10, 15])
+    })
+
+    it('should return null for excess when asd is null', () => {
+      const asdResult = createASDResult({
+        asd: [null, 110, 120]
+      })
+      const chartLabels = ['2020', '2021', '2022']
+
+      const result = alignASDToChartLabels(asdResult, chartLabels)
+
+      expect(result.excess[0]).toBeNull()
+      expect(result.excess[1]).toBe(10) // 110 - 100
+      expect(result.excess[2]).toBe(15) // 120 - 105
+    })
+
+    it('should return null for excess when baseline is null', () => {
+      const asdResult = createASDResult({
+        asd_bl: [null, 100, 105]
+      })
+      const chartLabels = ['2020', '2021', '2022']
+
+      const result = alignASDToChartLabels(asdResult, chartLabels)
+
+      expect(result.excess[0]).toBeNull()
+      expect(result.excess[1]).toBe(10) // 110 - 100
+      expect(result.excess[2]).toBe(15) // 120 - 105
+    })
+
+    it('should return null for excess on unaligned labels', () => {
+      const asdResult = createASDResult()
+      const chartLabels = ['2019', '2020', '2021', '2022', '2023']
+
+      const result = alignASDToChartLabels(asdResult, chartLabels)
+
+      expect(result.excess[0]).toBeNull() // 2019
+      expect(result.excess[4]).toBeNull() // 2023
+      expect(result.excess[1]).toBe(5) // 2020: 100 - 95
+    })
+  })
+
   describe('excess PI calculation', () => {
     it('should calculate excess_lower as asd - lower', () => {
       const asdResult = createASDResult()

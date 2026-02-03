@@ -295,6 +295,8 @@ export interface AlignedASDData {
   lower: (number | null)[]
   upper: (number | null)[]
   zscore: (number | null)[]
+  /** Excess deaths: asd - asd_bl (null when baseline not calculated) */
+  excess: (number | null)[]
   /** Excess PI lower bound: asd - lower (null when baseline not calculated) */
   excess_lower: (number | null)[]
   /** Excess PI upper bound: asd - upper (null when baseline not calculated) */
@@ -333,6 +335,14 @@ export function alignASDToChartLabels(
   const lower = alignArray(asdResult.lower)
   const upper = alignArray(asdResult.upper)
 
+  // Calculate excess: asd - baseline
+  // Returns null when: asd is null or baseline is null (pre-baseline period)
+  const excess = asd.map((asdVal, i) => {
+    const blVal = asd_bl[i]
+    if (asdVal === null || blVal === null || blVal === undefined) return null
+    return asdVal - blVal
+  })
+
   // Calculate excess PI: asd - lower/upper
   // This mirrors the calculation in baseline/core.ts for other metrics
   // Returns null when: asd is null, baseline is null (pre-baseline period), or PI bound is null
@@ -356,6 +366,7 @@ export function alignASDToChartLabels(
     lower,
     upper,
     zscore: alignArray(asdResult.zscore),
+    excess,
     excess_lower,
     excess_upper
   }
