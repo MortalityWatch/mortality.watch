@@ -287,25 +287,37 @@ export async function fetchASDForCountry(
 }
 
 /**
- * Align ASD result to chart labels
- *
- * Maps ASD data arrays to match the chart's label array,
- * inserting nulls where ASD data is not available.
- *
- * @param asdResult - ASD calculation result
- * @param chartLabels - Target chart labels to align to
- * @returns Aligned arrays for each metric
+ * Aligned ASD data with all required fields for chart rendering
  */
-export function alignASDToChartLabels(
-  asdResult: ASDResult,
-  chartLabels: string[]
-): {
+export interface AlignedASDData {
   asd: (number | null)[]
   asd_bl: (number | null)[]
   lower: (number | null)[]
   upper: (number | null)[]
   zscore: (number | null)[]
-} {
+  /** Excess deaths: asd - asd_bl (null when baseline not calculated) */
+  excess: (number | null)[]
+  /** Excess PI lower bound: asd - lower (null when baseline not calculated) */
+  excess_lower: (number | null)[]
+  /** Excess PI upper bound: asd - upper (null when baseline not calculated) */
+  excess_upper: (number | null)[]
+}
+
+/**
+ * Align ASD result to chart labels
+ *
+ * Maps ASD data arrays to match the chart's label array,
+ * inserting nulls where ASD data is not available.
+ * Also calculates excess PI bounds for excess view.
+ *
+ * @param asdResult - ASD calculation result
+ * @param chartLabels - Target chart labels to align to
+ * @returns Aligned arrays for each metric including excess PI
+ */
+export function alignASDToChartLabels(
+  asdResult: ASDResult,
+  chartLabels: string[]
+): AlignedASDData {
   // Create lookup from ASD labels to indices
   const asdLabelToIndex = new Map<string, number>()
   asdResult.labels.forEach((label, idx) => asdLabelToIndex.set(label, idx))
@@ -318,11 +330,44 @@ export function alignASDToChartLabels(
     })
   }
 
+  const asd = alignArray(asdResult.asd)
+  const asd_bl = alignArray(asdResult.asd_bl)
+  const lower = alignArray(asdResult.lower)
+  const upper = alignArray(asdResult.upper)
+
+  // Calculate excess: asd - baseline
+  // Returns null when: asd is null or baseline is null (pre-baseline period)
+  const excess = asd.map((asdVal, i) => {
+    const blVal = asd_bl[i]
+    if (asdVal === null || blVal === null || blVal === undefined) return null
+    return asdVal - blVal
+  })
+
+  // Calculate excess PI: asd - lower/upper
+  // This mirrors the calculation in baseline/core.ts for other metrics
+  // Returns null when: asd is null, baseline is null (pre-baseline period), or PI bound is null
+  const excess_lower = asd.map((asdVal, i) => {
+    const blVal = asd_bl[i]
+    const lowerVal = lower[i]
+    if (asdVal === null || blVal === null || lowerVal === null || lowerVal === undefined) return null
+    return asdVal - lowerVal
+  })
+
+  const excess_upper = asd.map((asdVal, i) => {
+    const blVal = asd_bl[i]
+    const upperVal = upper[i]
+    if (asdVal === null || blVal === null || upperVal === null || upperVal === undefined) return null
+    return asdVal - upperVal
+  })
+
   return {
-    asd: alignArray(asdResult.asd),
-    asd_bl: alignArray(asdResult.asd_bl),
-    lower: alignArray(asdResult.lower),
-    upper: alignArray(asdResult.upper),
-    zscore: alignArray(asdResult.zscore)
+    asd,
+    asd_bl,
+    lower,
+    upper,
+    zscore: alignArray(asdResult.zscore),
+    excess,
+    excess_lower,
+    excess_upper
   }
 }

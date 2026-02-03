@@ -263,6 +263,9 @@ async function injectASDDataForSSR(
         record['asd_baseline_lower'] = aligned.lower
         record['asd_baseline_upper'] = aligned.upper
         record['asd_zscore'] = aligned.zscore
+        // Excess PI for excess view (pre-calculated in alignASDToChartLabels)
+        record['asd_excess_lower'] = aligned.excess_lower
+        record['asd_excess_upper'] = aligned.excess_upper
       }
     }
   }

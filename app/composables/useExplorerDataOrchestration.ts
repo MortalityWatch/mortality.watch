@@ -388,6 +388,10 @@ export function useExplorerDataOrchestration(
             record['asd_baseline_lower'] = aligned.lower
             record['asd_baseline_upper'] = aligned.upper
             record['asd_zscore'] = aligned.zscore
+            // Excess value and PI for excess view (pre-calculated in alignASDToChartLabels)
+            record['asd_excess'] = aligned.excess
+            record['asd_excess_lower'] = aligned.excess_lower
+            record['asd_excess_upper'] = aligned.excess_upper
           }
         }
       }
