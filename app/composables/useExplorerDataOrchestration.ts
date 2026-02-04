@@ -640,7 +640,7 @@ export function useExplorerDataOrchestration(
         updateFilteredData().then((filteredData) => {
           chartData.value = filteredData as MortalityChartData
         })
-      }).catch((error: any) => {
+      }).catch((error: unknown) => {
         // Enhanced error logging with context
         console.warn('Baseline loading failed for', {
           countries: context.countries,
@@ -682,7 +682,7 @@ export function useExplorerDataOrchestration(
    */
   async function loadChartDataProgressive(
     config: ChartDataFetchConfig,
-    context: { isInitialLoad: boolean }
+    _context: { isInitialLoad: boolean }
   ) {
     return await dataFetcher.fetchChartDataProgressive(config)
   }
@@ -696,7 +696,7 @@ export function useExplorerDataOrchestration(
    */
   async function loadChartDataTraditional(
     config: ChartDataFetchConfig,
-    context: { isInitialLoad: boolean }
+    _context: { isInitialLoad: boolean }
   ) {
     return await dataFetcher.fetchChartData(config)
   }
@@ -764,10 +764,9 @@ export function useExplorerDataOrchestration(
     // 1. Must be initial load (not an update)
     // 2. Must have baseline method (otherwise no performance benefit)
     // 3. Complex data benefits most from progressive loading
-    const shouldUseProgressive =
-      context.isInitialLoad &&
-      context.hasBaselineMethod &&
-      !context.isBaselineParameterChange
+    const shouldUseProgressive = context.isInitialLoad
+      && context.hasBaselineMethod
+      && !context.isBaselineParameterChange
 
     return shouldUseProgressive ? loadChartDataProgressive : loadChartDataTraditional
   }
