@@ -562,6 +562,10 @@ export function useExplorerDataOrchestration(
       return { datasets: [], labels: [] } as unknown as MortalityChartData
     }
 
+    // Clear short URL cache to ensure QR code reflects current state after view changes
+    // This fixes the issue where cached short URLs contain stale parameters (e.g., missing e=1 for excess view)
+    currentShortUrl.value = null
+
     // Generate short URL with minimal blocking (just hash computation ~1-2ms)
     // Database storage happens in background (fire-and-forget)
     // Use current route.query to ensure QR code reflects current chart state
@@ -593,6 +597,81 @@ export function useExplorerDataOrchestration(
   // =============================================================================
   // LOADING STRATEGY FUNCTIONS
   // =============================================================================
+
+  /**
+   * Create loading context for strategy selection
+   *
+   * Consolidates context creation logic to reduce duplication
+   */
+  function createLoadingContext(isDatasetUpdate: boolean = false) {
+    const isInitialLoad = !chartData.value || Object.keys(allChartData).length === 0
+    const hasBaselineMethod = !!state.baselineMethod.value
+    const isBaselineParameterChange = detectBaselineParameterChange(isInitialLoad, hasBaselineMethod)
+    const dataComplexity = assessDataComplexity()
+
+    return {
+      isInitialLoad,
+      hasBaselineMethod,
+      isBaselineParameterChange,
+      userWantsImmediateFeedback: isDatasetUpdate, // Dataset updates usually want immediate feedback
+      dataComplexity
+    }
+  }
+
+  /**
+   * Handle progressive result with baseline injection
+   *
+   * Extracts shared baseline injection logic to reduce duplication
+   */
+  function handleProgressiveResult(
+    result: ProgressiveChartDataResult,
+    context: { countries: string[], chartType: string }
+  ) {
+    // Phase 1: Assign initial chart data (without baselines)
+    Object.assign(allChartData, result.chartData)
+
+    // Phase 2: Inject baselines in background (if configured)
+    if (state.baselineMethod.value && result.injectBaselines) {
+      result.injectBaselines().then((baselineChartData: AllChartData) => {
+        // Phase 2: Update chart data with baselines
+        Object.assign(allChartData, baselineChartData)
+
+        // Update filtered data to reflect baseline changes
+        updateFilteredData().then((filteredData) => {
+          chartData.value = filteredData as MortalityChartData
+        })
+      }).catch((error: any) => {
+        // Enhanced error logging with context
+        console.warn('Baseline loading failed for', {
+          countries: context.countries,
+          chartType: context.chartType,
+          baselineMethod: state.baselineMethod.value
+        }, error)
+      })
+    }
+  }
+
+  /**
+   * Execute loading strategy with proper error handling
+   *
+   * Consolidates strategy selection and execution logic
+   */
+  async function executeLoadingStrategy(
+    key: keyof CountryData,
+    isDatasetUpdate: boolean = false
+  ): Promise<ChartDataFetchResult | ProgressiveChartDataResult | null> {
+    const context = createLoadingContext(isDatasetUpdate)
+    const loadingStrategy = selectLoadingStrategy(context)
+
+    const fetchConfig = createFetchConfig(key)
+
+    // Override baselineStartIdx for dataset updates
+    if (isDatasetUpdate) {
+      fetchConfig.baselineStartIdx = getStartIndex(allYearlyChartLabels.value || [], state.sliderStart.value)
+    }
+
+    return await loadingStrategy(fetchConfig, context)
+  }
 
   /**
    * Loading Strategy: Progressive loading for initial data downloads
@@ -771,23 +850,8 @@ export function useExplorerDataOrchestration(
         }
       }
 
-      // Smart loading strategy selection based on enhanced context
-      const isInitialLoad = !chartData.value || Object.keys(allChartData).length === 0
-      const hasBaselineMethod = !!state.baselineMethod.value
-      const isBaselineParameterChange = detectBaselineParameterChange(isInitialLoad, hasBaselineMethod)
-      const dataComplexity = assessDataComplexity()
-
-      const context = {
-        isInitialLoad,
-        hasBaselineMethod,
-        isBaselineParameterChange,
-        userWantsImmediateFeedback: false, // Could be enhanced with user preference detection
-        dataComplexity
-      }
-
-      const loadingStrategy = selectLoadingStrategy(context)
-      const fetchConfig = createFetchConfig(key as keyof CountryData)
-      const result = await loadingStrategy(fetchConfig, context)
+      // Execute loading strategy with consolidated logic
+      const result = await executeLoadingStrategy(key as keyof CountryData, false)
 
       if (!result) {
         isUpdating.value = false
@@ -817,26 +881,10 @@ export function useExplorerDataOrchestration(
 
       // Handle result based on loading strategy used
       if ('injectBaselines' in result) {
-        // Progressive loading: Phase 1 - Assign initial chart data (without baselines)
+        // Progressive loading: Use shared baseline injection helper
         const progressiveResult = result as ProgressiveChartDataResult
-        Object.assign(allChartData, progressiveResult.chartData)
-
-        // Phase 2 - Inject baselines in background (improves LCP)
-        if (state.baselineMethod.value && progressiveResult.injectBaselines) {
-          // Don't await this - let it run in background while chart renders
-          progressiveResult.injectBaselines().then((baselineChartData: AllChartData) => {
-            // Phase 2: Update chart data with baselines
-            Object.assign(allChartData, baselineChartData)
-
-            // Update filtered data to reflect baseline changes
-            updateFilteredData().then((filteredData) => {
-              chartData.value = filteredData as MortalityChartData
-            })
-          }).catch((error: any) => {
-            // Log baseline loading errors without blocking the main flow
-            console.warn('Baseline loading failed:', error)
-          })
-        }
+        const context = { countries: state.countries.value, chartType: state.chartType.value as string }
+        handleProgressiveResult(progressiveResult, context)
       } else {
         // Traditional loading: Assign complete chart data (with baselines)
         Object.assign(allChartData, result.chartData)
@@ -858,26 +906,8 @@ export function useExplorerDataOrchestration(
         return
       }
 
-      // Dataset updates (baseline changes): enhanced context for smart strategy selection
-      const isInitialLoad = false
-      const hasBaselineMethod = !!state.baselineMethod.value
-      const isBaselineParameterChange = detectBaselineParameterChange(isInitialLoad, hasBaselineMethod)
-      const dataComplexity = assessDataComplexity()
-
-      const context = {
-        isInitialLoad,
-        hasBaselineMethod,
-        isBaselineParameterChange,
-        userWantsImmediateFeedback: true, // Dataset updates usually want immediate feedback
-        dataComplexity
-      }
-      const loadingStrategy = selectLoadingStrategy(context)
-
-      const fetchConfig = createFetchConfig(key as keyof CountryData)
-      // Override baselineStartIdx for dataset updates
-      fetchConfig.baselineStartIdx = getStartIndex(allYearlyChartLabels.value || [], state.sliderStart.value)
-
-      const result = await loadingStrategy(fetchConfig, context)
+      // Execute loading strategy for dataset updates
+      const result = await executeLoadingStrategy(key as keyof CountryData, true)
 
       if (!result) {
         isUpdating.value = false
@@ -895,24 +925,10 @@ export function useExplorerDataOrchestration(
 
       // Handle result based on loading strategy used
       if ('injectBaselines' in result) {
-        // Progressive loading: Phase 1 - Assign initial chart data (without baselines)
+        // Progressive loading: Use shared baseline injection helper
         const progressiveResult = result as ProgressiveChartDataResult
-        Object.assign(allChartData, progressiveResult.chartData)
-
-        // Phase 2 - Inject baselines in background
-        if (state.baselineMethod.value && progressiveResult.injectBaselines) {
-          progressiveResult.injectBaselines().then((baselineChartData: AllChartData) => {
-            // Phase 2: Update chart data with baselines
-            Object.assign(allChartData, baselineChartData)
-
-            // Update filtered data to reflect baseline changes
-            updateFilteredData().then((filteredData) => {
-              chartData.value = filteredData as MortalityChartData
-            })
-          }).catch((error: any) => {
-            console.warn('Baseline loading failed:', error)
-          })
-        }
+        const context = { countries: state.countries.value, chartType: state.chartType.value as string }
+        handleProgressiveResult(progressiveResult, context)
       } else {
         // Traditional loading: Assign complete chart data (with baselines)
         Object.assign(allChartData, result.chartData)
