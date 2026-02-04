@@ -26,7 +26,7 @@ import { ChartPeriod, type ChartType } from '@/model/period'
 import {
   getStartIndex
 } from '@/lib/data'
-import { useChartDataFetcher } from '@/composables/useChartDataFetcher'
+import { useChartDataFetcher, type ProgressiveChartDataResult, type ChartDataFetchConfig } from '@/composables/useChartDataFetcher'
 import { useASDData } from '@/composables/useASDData'
 import { alignASDToChartLabels } from '@/lib/asd'
 import { metadataService } from '@/services/metadataService'
@@ -562,6 +562,10 @@ export function useExplorerDataOrchestration(
       return { datasets: [], labels: [] } as unknown as MortalityChartData
     }
 
+    // Clear short URL cache to ensure QR code reflects current state after view changes
+    // This fixes the issue where cached short URLs contain stale parameters (e.g., missing e=1 for excess view)
+    currentShortUrl.value = null
+
     // Generate short URL with minimal blocking (just hash computation ~1-2ms)
     // Database storage happens in background (fire-and-forget)
     // Use current route.query to ensure QR code reflects current chart state
@@ -588,6 +592,205 @@ export function useExplorerDataOrchestration(
 
     // Use the new config-based function
     return getFilteredChartDataFromConfig(config, allChartData.labels, allChartData.data)
+  }
+
+  // =============================================================================
+  // LOADING STRATEGY FUNCTIONS
+  // =============================================================================
+
+  /**
+   * Create loading context for strategy selection
+   *
+   * Consolidates context creation logic to reduce duplication
+   */
+  function createLoadingContext(isDatasetUpdate: boolean = false) {
+    const isInitialLoad = !chartData.value || Object.keys(allChartData).length === 0
+    const hasBaselineMethod = !!state.baselineMethod.value
+    const isBaselineParameterChange = detectBaselineParameterChange(isInitialLoad, hasBaselineMethod)
+    const dataComplexity = assessDataComplexity()
+
+    return {
+      isInitialLoad,
+      hasBaselineMethod,
+      isBaselineParameterChange,
+      userWantsImmediateFeedback: isDatasetUpdate, // Dataset updates usually want immediate feedback
+      dataComplexity
+    }
+  }
+
+  /**
+   * Handle progressive result with baseline injection
+   *
+   * Extracts shared baseline injection logic to reduce duplication
+   */
+  function handleProgressiveResult(
+    result: ProgressiveChartDataResult,
+    context: { countries: string[], chartType: string }
+  ) {
+    // Phase 1: Assign initial chart data (without baselines)
+    Object.assign(allChartData, result.chartData)
+
+    // Phase 2: Inject baselines in background (if configured)
+    if (state.baselineMethod.value && result.injectBaselines) {
+      result.injectBaselines().then((baselineChartData: AllChartData) => {
+        // Phase 2: Update chart data with baselines
+        Object.assign(allChartData, baselineChartData)
+
+        // Update filtered data to reflect baseline changes
+        updateFilteredData().then((filteredData) => {
+          chartData.value = filteredData as MortalityChartData
+        })
+      }).catch((error: unknown) => {
+        // Enhanced error logging with context
+        console.warn('Baseline loading failed for', {
+          countries: context.countries,
+          chartType: context.chartType,
+          baselineMethod: state.baselineMethod.value
+        }, error)
+      })
+    }
+  }
+
+  /**
+   * Execute loading strategy with proper error handling
+   *
+   * Consolidates strategy selection and execution logic
+   */
+  async function executeLoadingStrategy(
+    key: keyof CountryData,
+    isDatasetUpdate: boolean = false
+  ): Promise<ChartDataFetchResult | ProgressiveChartDataResult | null> {
+    const context = createLoadingContext(isDatasetUpdate)
+    const loadingStrategy = selectLoadingStrategy(context)
+
+    const fetchConfig = createFetchConfig(key)
+
+    // Override baselineStartIdx for dataset updates
+    if (isDatasetUpdate) {
+      fetchConfig.baselineStartIdx = getStartIndex(allYearlyChartLabels.value || [], state.sliderStart.value)
+    }
+
+    return await loadingStrategy(fetchConfig, context)
+  }
+
+  /**
+   * Loading Strategy: Progressive loading for initial data downloads
+   *
+   * Use progressive loading for better LCP performance when:
+   * - This is an initial data load
+   * - Baseline method is configured
+   */
+  async function loadChartDataProgressive(
+    config: ChartDataFetchConfig,
+    _context: { isInitialLoad: boolean }
+  ) {
+    return await dataFetcher.fetchChartDataProgressive(config)
+  }
+
+  /**
+   * Loading Strategy: Traditional blocking loading
+   *
+   * Use traditional blocking for immediate reactivity when:
+   * - Baseline parameters are changing
+   * - Dataset updates that need immediate recalculation
+   */
+  async function loadChartDataTraditional(
+    config: ChartDataFetchConfig,
+    _context: { isInitialLoad: boolean }
+  ) {
+    return await dataFetcher.fetchChartData(config)
+  }
+
+  /**
+   * Detect if current update is likely due to baseline parameter changes
+   *
+   * Heuristic: If we already have chart data and baseline method hasn't changed,
+   * this is likely a baseline date/parameter adjustment requiring immediate feedback.
+   */
+  function detectBaselineParameterChange(
+    isInitialLoad: boolean,
+    hasBaselineMethod: boolean
+  ): boolean {
+    // If it's an initial load, can't be a parameter change
+    if (isInitialLoad) return false
+
+    // If we have baseline method and existing data, likely a parameter change
+    if (hasBaselineMethod && Object.keys(allChartData).length > 0) {
+      return true
+    }
+
+    return false
+  }
+
+  /**
+   * Assess data complexity for loading strategy decisions
+   *
+   * Higher complexity benefits more from progressive loading.
+   */
+  function assessDataComplexity(): 'low' | 'medium' | 'high' {
+    const countryCount = state.countries.value.length
+    const hasBaselines = !!state.baselineMethod.value
+    const isComplexChart = state.chartType.value === 'monthly' || state.chartType.value === 'weekly'
+
+    if (countryCount >= 5 && hasBaselines && isComplexChart) return 'high'
+    if (countryCount >= 3 && hasBaselines) return 'medium'
+    return 'low'
+  }
+
+  /**
+   * Smart loading strategy selection
+   *
+   * Determines whether to use progressive or traditional loading
+   * based on current context and state.
+   */
+  function selectLoadingStrategy(context: {
+    isInitialLoad: boolean
+    hasBaselineMethod: boolean
+    isBaselineParameterChange?: boolean
+    userWantsImmediateFeedback?: boolean
+    dataComplexity?: 'low' | 'medium' | 'high'
+  }) {
+    // Always use traditional loading for baseline parameter changes (reactivity priority)
+    if (context.isBaselineParameterChange) {
+      return loadChartDataTraditional
+    }
+
+    // Use traditional loading if user expects immediate feedback
+    if (context.userWantsImmediateFeedback) {
+      return loadChartDataTraditional
+    }
+
+    // Progressive loading criteria (performance priority):
+    // 1. Must be initial load (not an update)
+    // 2. Must have baseline method (otherwise no performance benefit)
+    // 3. Complex data benefits most from progressive loading
+    const shouldUseProgressive = context.isInitialLoad
+      && context.hasBaselineMethod
+      && !context.isBaselineParameterChange
+
+    return shouldUseProgressive ? loadChartDataProgressive : loadChartDataTraditional
+  }
+
+  /**
+   * Create chart data fetch configuration from current state
+   *
+   * Extracts common configuration logic to reduce duplication
+   */
+  function createFetchConfig(key: keyof CountryData): ChartDataFetchConfig {
+    return {
+      chartType: state.chartType.value as ChartType,
+      countries: state.countries.value,
+      ageGroups: ageGroupsForFetch.value,
+      dataKey: key,
+      baselineMethod: state.baselineMethod.value,
+      baselineDateFrom: state.baselineDateFrom.value ?? baselineRange.value?.from,
+      baselineDateTo: state.baselineDateTo.value ?? baselineRange.value?.to,
+      baselineStartIdx: undefined,
+      sliderStart: state.sliderStart.value,
+      cumulative: helpers.showCumPi(),
+      baseKeys: helpers.getBaseKeysForFetch(),
+      isAsmr: helpers.isAsmrType()
+    }
   }
 
   /**
@@ -646,28 +849,15 @@ export function useExplorerDataOrchestration(
         }
       }
 
-      // Pass 2 (or only pass if baseline dates were already available): Full fetch with baseline
-      const result = await dataFetcher.fetchChartData({
-        chartType: state.chartType.value as ChartType,
-        countries: state.countries.value,
-        ageGroups: ageGroupsForFetch.value, // Use memoized age groups
-        dataKey: key as keyof CountryData,
-        baselineMethod: state.baselineMethod.value,
-        baselineDateFrom: state.baselineDateFrom.value ?? baselineRange.value?.from,
-        baselineDateTo: state.baselineDateTo.value ?? baselineRange.value?.to,
-        baselineStartIdx: undefined, // Will be calculated from labels
-        sliderStart: state.sliderStart.value, // Layer 2 offset
-        cumulative: helpers.showCumPi(),
-        baseKeys: helpers.getBaseKeysForFetch(),
-        isAsmr: helpers.isAsmrType()
-      })
+      // Execute loading strategy with consolidated logic
+      const result = await executeLoadingStrategy(key as keyof CountryData, false)
 
       if (!result) {
         isUpdating.value = false
         return
       }
 
-      // Update local state
+      // Update local state immediately with phase 1 data
       dataset = result.dataset
       allChartLabels.value = result.allLabels
 
@@ -688,7 +878,16 @@ export function useExplorerDataOrchestration(
         state.baselineDateTo.value = result.baselineDateTo
       }
 
-      Object.assign(allChartData, result.chartData)
+      // Handle result based on loading strategy used
+      if ('injectBaselines' in result) {
+        // Progressive loading: Use shared baseline injection helper
+        const progressiveResult = result as ProgressiveChartDataResult
+        const context = { countries: state.countries.value, chartType: state.chartType.value as string }
+        handleProgressiveResult(progressiveResult, context)
+      } else {
+        // Traditional loading: Assign complete chart data (with baselines)
+        Object.assign(allChartData, result.chartData)
+      }
 
       // Extract source info from dataset for display below chart
       await extractSourcesFromDataset(dataset, state.countries.value)
@@ -706,20 +905,8 @@ export function useExplorerDataOrchestration(
         return
       }
 
-      const result = await dataFetcher.fetchChartData({
-        chartType: state.chartType.value as ChartType,
-        countries: state.countries.value,
-        ageGroups: ageGroupsForFetch.value, // Use memoized age groups
-        dataKey: key as keyof CountryData,
-        baselineMethod: state.baselineMethod.value,
-        baselineDateFrom: state.baselineDateFrom.value ?? baselineRange.value?.from,
-        baselineDateTo: state.baselineDateTo.value ?? baselineRange.value?.to,
-        baselineStartIdx: getStartIndex(allYearlyChartLabels.value || [], state.sliderStart.value),
-        sliderStart: state.sliderStart.value, // Layer 2 offset
-        cumulative: helpers.showCumPi(),
-        baseKeys: helpers.getBaseKeysForFetch(),
-        isAsmr: helpers.isAsmrType()
-      })
+      // Execute loading strategy for dataset updates
+      const result = await executeLoadingStrategy(key as keyof CountryData, true)
 
       if (!result) {
         isUpdating.value = false
@@ -735,7 +922,16 @@ export function useExplorerDataOrchestration(
         state.baselineDateTo.value = result.baselineDateTo
       }
 
-      Object.assign(allChartData, result.chartData)
+      // Handle result based on loading strategy used
+      if ('injectBaselines' in result) {
+        // Progressive loading: Use shared baseline injection helper
+        const progressiveResult = result as ProgressiveChartDataResult
+        const context = { countries: state.countries.value, chartType: state.chartType.value as string }
+        handleProgressiveResult(progressiveResult, context)
+      } else {
+        // Traditional loading: Assign complete chart data (with baselines)
+        Object.assign(allChartData, result.chartData)
+      }
 
       // Extract source info from dataset for display below chart
       await extractSourcesFromDataset(dataset, state.countries.value)

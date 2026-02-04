@@ -8,6 +8,7 @@
  * - updateDataset: Fetch raw mortality data from database
  * - getAllChartLabels: Get date labels for chart type
  * - getAllChartData: Process data with baseline calculations
+ * - fetchChartDataProgressive: Progressive loading with baseline injection
  * - Loading state management
  * - Baseline date validation
  *
@@ -62,6 +63,17 @@ export interface ChartDataFetchResult {
   baselineDateTo: string
 }
 
+// Progressive loading interfaces
+export interface ProgressiveChartDataResult {
+  dataset: DatasetRaw
+  allLabels: string[]
+  chartData: AllChartData
+  baselineDateFrom: string
+  baselineDateTo: string
+  // Baseline injection function for progressive updates
+  injectBaselines: () => Promise<AllChartData>
+}
+
 /**
  * Chart Data Fetcher Composable
  *
@@ -106,6 +118,78 @@ export function useChartDataFetcher() {
   }
 
   /**
+   * Shared helper: Fetch dataset with labels
+   *
+   * Eliminates duplication between fetchChartData and fetchChartDataProgressive
+   */
+  async function fetchDatasetWithLabels(
+    fetchConfig: ChartDataFetchConfig
+  ): Promise<{ dataset: DatasetRaw, allLabels: string[] } | null> {
+    // Step 1: Fetch raw dataset
+    const dataset = await fetchDataset(
+      fetchConfig.chartType,
+      fetchConfig.countries,
+      fetchConfig.ageGroups
+    )
+
+    // Step 2: Get all chart labels from the fetched dataset
+    const allLabels = fetchAllChartLabels(
+      dataset,
+      fetchConfig.isAsmr ?? false,
+      fetchConfig.ageGroups,
+      fetchConfig.countries,
+      fetchConfig.chartType
+    )
+
+    if (!allLabels.length) {
+      return null
+    }
+
+    return { dataset, allLabels }
+  }
+
+  /**
+   * Shared helper: Validate and prepare baseline configuration
+   *
+   * Eliminates duplication between fetchChartData and fetchChartDataProgressive
+   */
+  function validateAndPrepareBaselines(
+    fetchConfig: ChartDataFetchConfig,
+    allLabels: string[]
+  ): { baselineFrom?: string, baselineTo?: string } {
+    if (!fetchConfig.baselineMethod) {
+      return { baselineFrom: undefined, baselineTo: undefined }
+    }
+
+    const validated = validateBaselineDates(
+      allLabels,
+      fetchConfig.chartType,
+      fetchConfig.baselineMethod,
+      fetchConfig.baselineDateFrom,
+      fetchConfig.baselineDateTo
+    )
+
+    return {
+      baselineFrom: validated.from,
+      baselineTo: validated.to
+    }
+  }
+
+  /**
+   * Shared helper: Calculate data start index
+   *
+   * Eliminates duplication between fetchChartData and fetchChartDataProgressive
+   */
+  function calculateDataStartIndex(
+    fetchConfig: ChartDataFetchConfig,
+    allLabels: string[]
+  ): number {
+    return fetchConfig.sliderStart
+      ? getBaselineStartIndex(allLabels, fetchConfig.chartType, fetchConfig.sliderStart)
+      : 0
+  }
+
+  /**
    * Get baseline start index using ChartPeriod
    */
   function getBaselineStartIndex(
@@ -133,50 +217,19 @@ export function useChartDataFetcher() {
     updateProgress.value = 0
 
     try {
-      // Step 1: Fetch raw dataset
-      const dataset = await fetchDataset(
-        fetchConfig.chartType,
-        fetchConfig.countries,
-        fetchConfig.ageGroups
-      )
-
-      // Step 2: Get all chart labels from the fetched dataset
-      // Pass chartType for proper chronological sorting (monthly dates need custom sort)
-      const allLabels = fetchAllChartLabels(
-        dataset,
-        fetchConfig.isAsmr ?? false,
-        fetchConfig.ageGroups,
-        fetchConfig.countries,
-        fetchConfig.chartType
-      )
-
-      if (!allLabels.length) {
+      // Step 1: Fetch dataset with labels (shared helper)
+      const datasetResult = await fetchDatasetWithLabels(fetchConfig)
+      if (!datasetResult) {
         isUpdating.value = false
         return null
       }
+      const { dataset, allLabels } = datasetResult
 
-      // Step 3: Validate baseline dates (only if baseline method is specified)
-      let baselineFrom: string | undefined
-      let baselineTo: string | undefined
+      // Step 2: Validate and prepare baseline configuration (shared helper)
+      const { baselineFrom, baselineTo } = validateAndPrepareBaselines(fetchConfig, allLabels)
 
-      if (fetchConfig.baselineMethod) {
-        const validated = validateBaselineDates(
-          allLabels,
-          fetchConfig.chartType,
-          fetchConfig.baselineMethod,
-          fetchConfig.baselineDateFrom,
-          fetchConfig.baselineDateTo
-        )
-        baselineFrom = validated.from
-        baselineTo = validated.to
-      }
-
-      // Step 4: Calculate data start index from sliderStart (layer 2 offset)
-      // This slices data from sliderStart year, not from the beginning
-      // Slider filtering (layer 3) happens at display time
-      const dataStartIndex = fetchConfig.sliderStart
-        ? getBaselineStartIndex(allLabels, fetchConfig.chartType, fetchConfig.sliderStart)
-        : 0
+      // Step 3: Calculate data start index (shared helper)
+      const dataStartIndex = calculateDataStartIndex(fetchConfig, allLabels)
 
       const chartData = await fetchAllChartData(
         fetchConfig.dataKey,
@@ -249,6 +302,112 @@ export function useChartDataFetcher() {
     }
   }
 
+  /**
+   * Progressive chart data fetcher for improved LCP performance
+   *
+   * Phase 1: Returns chart data immediately with mortality data only (~1s LCP)
+   * Phase 2: Provides baseline injection function to add baselines when ready
+   *
+   * This eliminates the 3.1s LCP caused by blocking on baseline API calls.
+   */
+  async function fetchChartDataProgressive(
+    fetchConfig: ChartDataFetchConfig
+  ): Promise<ProgressiveChartDataResult | null> {
+    isUpdating.value = true
+    updateProgress.value = 0
+
+    try {
+      // Phase 1: Fetch dataset with labels (shared helper)
+      const datasetResult = await fetchDatasetWithLabels(fetchConfig)
+      if (!datasetResult) {
+        isUpdating.value = false
+        return null
+      }
+      const { dataset, allLabels } = datasetResult
+
+      // Calculate data start index (shared helper)
+      const dataStartIndex = calculateDataStartIndex(fetchConfig, allLabels)
+
+      // Create initial chart data WITHOUT baseline calculations
+      // Import the getAllChartData function but skip baseline parameter
+      const { getAllChartData: getAllChartDataInternal } = await import('@/lib/data/aggregations')
+
+      const initialChartDataResult = await getAllChartDataInternal(
+        fetchConfig.dataKey,
+        fetchConfig.chartType,
+        dataset,
+        allLabels,
+        dataStartIndex,
+        fetchConfig.cumulative ?? false,
+        fetchConfig.ageGroups,
+        fetchConfig.countries,
+        undefined, // No baseline method - this prevents baseline calculations
+        undefined, // No baseline from
+        undefined, // No baseline to
+        fetchConfig.baseKeys ?? [],
+        () => {}, // No progress tracking needed for phase 1
+        statsUrl
+      )
+
+      const initialChartData: AllChartData = {
+        data: initialChartDataResult.data,
+        labels: initialChartDataResult.labels,
+        notes: initialChartDataResult.notes
+      }
+
+      // Validate and prepare baseline configuration for later use (shared helper)
+      const { baselineFrom, baselineTo } = validateAndPrepareBaselines(fetchConfig, allLabels)
+
+      // Phase 2: Create baseline injection function for later use
+      const injectBaselines = async (): Promise<AllChartData> => {
+        if (!fetchConfig.baselineMethod || !baselineFrom || !baselineTo) {
+          // No baselines to inject, return current data
+          return initialChartData
+        }
+
+        // Calculate baselines and inject them into the existing chart data
+        const baselineChartDataResult = await getAllChartDataInternal(
+          fetchConfig.dataKey,
+          fetchConfig.chartType,
+          dataset,
+          allLabels,
+          dataStartIndex,
+          fetchConfig.cumulative ?? false,
+          fetchConfig.ageGroups,
+          fetchConfig.countries,
+          fetchConfig.baselineMethod, // Now include baseline method
+          baselineFrom,
+          baselineTo,
+          fetchConfig.baseKeys ?? [],
+          fetchConfig.onProgress ?? ((progress, total) => {
+            updateProgress.value = Math.round((progress / total) * 100)
+          }),
+          statsUrl
+        )
+
+        return {
+          data: baselineChartDataResult.data,
+          labels: baselineChartDataResult.labels,
+          notes: baselineChartDataResult.notes
+        }
+      }
+
+      isUpdating.value = false
+
+      return {
+        dataset,
+        allLabels,
+        chartData: initialChartData,
+        baselineDateFrom: baselineFrom ?? '',
+        baselineDateTo: baselineTo ?? '',
+        injectBaselines
+      }
+    } catch (error) {
+      isUpdating.value = false
+      throw error
+    }
+  }
+
   return {
     // State
     isUpdating,
@@ -256,6 +415,7 @@ export function useChartDataFetcher() {
 
     // Functions
     fetchChartData,
+    fetchChartDataProgressive,
     fetchDatasetOnly,
     validateBaselineDates,
     getBaselineStartIndex
