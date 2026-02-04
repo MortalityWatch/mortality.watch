@@ -28,6 +28,7 @@ import { getKeyForType } from '@/model'
 vi.mock('./useChartDataFetcher', () => ({
   useChartDataFetcher: vi.fn(() => ({
     fetchChartData: vi.fn(),
+    fetchChartDataProgressive: vi.fn(),
     isUpdating: ref(false),
     updateProgress: ref(0)
   }))
