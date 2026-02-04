@@ -37,6 +37,7 @@ import { useDateRangeCalculations } from '@/composables/useDateRangeCalculations
 import { UI_CONFIG } from '@/lib/config/constants'
 import { calculateBaselineRange } from '@/lib/baseline/calculateBaselineRange'
 import { useShortUrl } from '@/composables/useShortUrl'
+import { computeConfigHash, buildShortUrl, extractUrlParams } from '@/lib/shortUrl/hashConfig'
 import {
   resolveChartStateFromSnapshot,
   toChartFilterConfig,
@@ -561,22 +562,42 @@ export function useExplorerDataOrchestration(
       return { datasets: [], labels: [] } as unknown as MortalityChartData
     }
 
-    // Generate short URL in background (non-blocking for LCP)
-    // This computes hash locally (instant) and fires a POST to store mapping in DB
+    // Generate short URL instantly (client-side hash computation)
+    // Database storage happens in background (fire-and-forget)
     // Use current route.query to ensure QR code reflects current chart state
     // Fix for #443: originalQueryParams was only saved on mount and became stale
+    try {
+      // Generate short URL instantly (no await = no blocking!)
+      const { getShortUrl } = useShortUrl()
 
-    // Start with null QR - chart renders immediately
-    currentShortUrl.value = null
+      // Extract params and generate hash instantly
+      const params = extractUrlParams(route.query as Record<string, string | string[] | undefined>)
+      const hash = await computeConfigHash(params)
+      const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://www.mortality.watch'
+      const instantShortUrl = buildShortUrl(hash, siteUrl)
 
-    // Generate QR URL in background (don't block chart rendering)
-    getShortUrl().then(shortUrl => {
-      currentShortUrl.value = shortUrl
-      log.info('QR code URL generated', { shortUrl })
-    }).catch(error => {
-      // Log but don't fail - chart works without QR code
-      log.warn('Failed to generate short URL, chart will render without QR code', { error })
-    })
+      // Set QR URL immediately (no blocking!)
+      currentShortUrl.value = instantShortUrl
+
+      // Store in database in background (fire-and-forget)
+      if (import.meta.client) {
+        const queryParts = Object.entries(params)
+          .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+          .join('&')
+        const page = route.path.includes('/ranking') ? 'ranking' : 'explorer'
+        $fetch('/api/shorten', {
+          method: 'POST',
+          body: { hash, query: queryParts, page }
+        }).catch(() => {
+          // Silently ignore errors - short URL still works if hash exists
+        })
+      }
+
+      log.info('QR code URL generated instantly', { shortUrl: instantShortUrl })
+    } catch (error) {
+      // Log but don't fail - full URL will be used as fallback
+      log.warn('Failed to generate short URL, using full URL', { error })
+    }
 
     // Use provided snapshot or create one from current refs
     const stateSnapshot = snapshot ?? createStateSnapshot()
