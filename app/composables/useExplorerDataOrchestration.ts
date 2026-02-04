@@ -562,22 +562,19 @@ export function useExplorerDataOrchestration(
       return { datasets: [], labels: [] } as unknown as MortalityChartData
     }
 
-    // Generate short URL instantly (client-side hash computation)
+    // Generate short URL with minimal blocking (just hash computation ~1-2ms)
     // Database storage happens in background (fire-and-forget)
     // Use current route.query to ensure QR code reflects current chart state
     // Fix for #443: originalQueryParams was only saved on mount and became stale
     try {
-      // Generate short URL instantly (no await = no blocking!)
-      const { getShortUrl } = useShortUrl()
-
-      // Extract params and generate hash instantly
+      // Extract params and generate hash (fast async crypto operation ~1-2ms)
       const params = extractUrlParams(route.query as Record<string, string | string[] | undefined>)
       const hash = await computeConfigHash(params)
       const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://www.mortality.watch'
-      const instantShortUrl = buildShortUrl(hash, siteUrl)
+      const shortUrl = buildShortUrl(hash, siteUrl)
 
-      // Set QR URL immediately (no blocking!)
-      currentShortUrl.value = instantShortUrl
+      // Set QR URL for chart rendering
+      currentShortUrl.value = shortUrl
 
       // Store in database in background (fire-and-forget)
       if (import.meta.client) {
@@ -593,7 +590,7 @@ export function useExplorerDataOrchestration(
         })
       }
 
-      log.info('QR code URL generated instantly', { shortUrl: instantShortUrl })
+      log.info('QR code URL generated with hash', { shortUrl, hashTime: '~1-2ms' })
     } catch (error) {
       // Log but don't fail - full URL will be used as fallback
       log.warn('Failed to generate short URL, using full URL', { error })
