@@ -18,12 +18,8 @@ export class DataLoader {
    * Get the appropriate URL for data fetching based on environment
    */
   private getUrl(path: string): string {
-    // Check if offline development mode is enabled
-    const config = typeof window !== 'undefined'
-      ? (window as unknown as { nuxtApp?: { $config?: { public?: { useLocalCache?: boolean | string } } } })?.nuxtApp?.$config?.public?.useLocalCache
-      : process.env.USE_LOCAL_CACHE
-
-    const useLocalCache = config === true || config === 'true'
+    // Check if offline development mode is enabled via environment variable
+    const useLocalCache = process.env.USE_LOCAL_CACHE === 'true'
 
     if (useLocalCache) {
       // Offline development: use API proxy for local cache
