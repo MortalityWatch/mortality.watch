@@ -16,6 +16,7 @@
  */
 
 import { computed, reactive, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import type { Ref } from 'vue'
 import type { useExplorerState } from '@/composables/useExplorerState'
 import type { useExplorerHelpers } from '@/composables/useExplorerHelpers'
@@ -36,7 +37,7 @@ import { useDateRangeValidation } from '@/composables/useDateRangeValidation'
 import { useDateRangeCalculations } from '@/composables/useDateRangeCalculations'
 import { UI_CONFIG } from '@/lib/config/constants'
 import { calculateBaselineRange } from '@/lib/baseline/calculateBaselineRange'
-import { useShortUrl } from '@/composables/useShortUrl'
+import { generateShortUrl } from '@/lib/shortUrl/generateShortUrl'
 import {
   resolveChartStateFromSnapshot,
   toChartFilterConfig,
@@ -78,7 +79,7 @@ export function useExplorerDataOrchestration(
   // Short URL handling for QR codes
   // Store original query params to ensure consistent hashing with SSR
   // (URL may be modified by state resolution before short URL is computed)
-  const { getShortUrl } = useShortUrl()
+  const route = useRoute()
   const currentShortUrl = ref<string | null>(null)
   const originalQueryParams = ref<Record<string, string | string[] | undefined> | null>(null)
 
@@ -561,16 +562,22 @@ export function useExplorerDataOrchestration(
       return { datasets: [], labels: [] } as unknown as MortalityChartData
     }
 
-    // Compute short URL first (instant with local hash computation)
-    // This also fires a non-blocking POST to store the mapping in DB
+    // Generate short URL with minimal blocking (just hash computation ~1-2ms)
+    // Database storage happens in background (fire-and-forget)
     // Use current route.query to ensure QR code reflects current chart state
     // Fix for #443: originalQueryParams was only saved on mount and became stale
-    try {
-      const shortUrl = await getShortUrl()
-      currentShortUrl.value = shortUrl
-    } catch (error) {
-      // Log but don't fail - full URL will be used as fallback
-      log.warn('Failed to generate short URL, using full URL', { error })
+
+    // Generate short URL with background database storage
+    const shortUrl = await generateShortUrl({
+      route,
+      onUrlGenerated: (url) => {
+        currentShortUrl.value = url
+      }
+    })
+
+    // Set fallback to null if generation failed (full URL will be used)
+    if (!shortUrl) {
+      currentShortUrl.value = null
     }
 
     // Use provided snapshot or create one from current refs

@@ -38,14 +38,21 @@ export async function fetchWithRetry(
 
       const fetchOptions: RequestInit = {
         method,
-        signal: controller.signal
+        signal: controller.signal,
+        headers: {}
       }
 
       if (body) {
+        // POST request - add content type
         fetchOptions.headers = {
           'Content-Type': 'application/json'
         }
         fetchOptions.body = JSON.stringify(body)
+      } else {
+        // GET request - allow caching for baseline requests
+        fetchOptions.headers = {
+          'Cache-Control': 'public, max-age=3600'
+        }
       }
 
       const response = await fetch(url, fetchOptions)
