@@ -330,8 +330,7 @@ export function useExplorerState() {
       showTitle: showTitle.value,
       showLegend: showLegend.value,
       showXAxisTitle: showXAxisTitle.value,
-      showYAxisTitle: showYAxisTitle.value,
-      chartPreset: chartPreset.value
+      showYAxisTitle: showYAxisTitle.value
     }
   }
 
