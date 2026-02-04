@@ -216,6 +216,22 @@ describe('useExplorerDataOrchestration', () => {
         baselineDateFrom: '2017',
         baselineDateTo: '2019'
       }),
+      fetchChartDataProgressive: vi.fn().mockResolvedValue({
+        dataset: { USA: {} },
+        allLabels: ['2020', '2021', '2022', '2023'],
+        chartData: {
+          labels: ['2020', '2021', '2022', '2023'],
+          data: { all: { USA: { cmr: [100, 110, 120, 130] } } },
+          notes: {}
+        },
+        baselineDateFrom: '2017',
+        baselineDateTo: '2019',
+        injectBaselines: vi.fn().mockResolvedValue({
+          labels: ['2020', '2021', '2022', '2023'],
+          data: { all: { USA: { cmr: [100, 110, 120, 130] } } },
+          notes: {}
+        })
+      }),
       isUpdating: ref(false),
       updateProgress: ref(0)
     }
@@ -491,7 +507,11 @@ describe('useExplorerDataOrchestration', () => {
 
       await orchestration.updateData(true, false)
 
-      expect(mockDataFetcher.fetchChartData).toHaveBeenCalled()
+      // Should call either traditional or progressive loading method based on strategy
+      expect(
+        mockDataFetcher.fetchChartData.mock.calls.length +
+        mockDataFetcher.fetchChartDataProgressive.mock.calls.length
+      ).toBeGreaterThan(0)
     })
 
     it('should update loading state during fetch', async () => {
