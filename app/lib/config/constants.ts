@@ -334,7 +334,7 @@ export const EXTERNAL_SERVICES = {
    * Prevents overwhelming the R stats server when many countries are selected
    * Can be overridden via NUXT_BASELINE_MAX_CONCURRENT_REQUESTS env var
    */
-  BASELINE_MAX_CONCURRENT_REQUESTS: 5,
+  BASELINE_MAX_CONCURRENT_REQUESTS: 10,
 
   /**
    * Timeout for stats API requests in milliseconds
