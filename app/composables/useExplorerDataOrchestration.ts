@@ -37,7 +37,7 @@ import { useDateRangeValidation } from '@/composables/useDateRangeValidation'
 import { useDateRangeCalculations } from '@/composables/useDateRangeCalculations'
 import { UI_CONFIG } from '@/lib/config/constants'
 import { calculateBaselineRange } from '@/lib/baseline/calculateBaselineRange'
-import { computeConfigHash, buildShortUrl, extractUrlParams } from '@/lib/shortUrl/hashConfig'
+import { generateShortUrl } from '@/lib/shortUrl/generateShortUrl'
 import {
   resolveChartStateFromSnapshot,
   toChartFilterConfig,
@@ -567,32 +567,17 @@ export function useExplorerDataOrchestration(
     // Use current route.query to ensure QR code reflects current chart state
     // Fix for #443: originalQueryParams was only saved on mount and became stale
 
-    try {
-      // Extract params and generate hash (fast async crypto operation ~1-2ms)
-      const params = extractUrlParams(route.query as Record<string, string | string[] | undefined>)
-      const hash = await computeConfigHash(params)
-      const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://www.mortality.watch'
-      const shortUrl = buildShortUrl(hash, siteUrl)
-
-      // Set QR URL for chart rendering
-      currentShortUrl.value = shortUrl
-
-      // Store in database in background (fire-and-forget)
-      if (import.meta.client) {
-        const queryParts = Object.entries(params)
-          .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
-          .join('&')
-        const page = route.path.includes('/ranking') ? 'ranking' : 'explorer'
-        $fetch('/api/shorten', {
-          method: 'POST',
-          body: { hash, query: queryParts, page }
-        }).catch(() => {
-          // Silently ignore errors - short URL still works if hash exists
-        })
+    // Generate short URL with background database storage
+    const shortUrl = await generateShortUrl({
+      route,
+      onUrlGenerated: (url) => {
+        currentShortUrl.value = url
       }
-    } catch (error) {
-      // Log but don't fail - full URL will be used as fallback
-      log.warn('Failed to generate short URL, using full URL', { error })
+    })
+
+    // Set fallback to null if generation failed (full URL will be used)
+    if (!shortUrl) {
+      currentShortUrl.value = null
     }
 
     // Use provided snapshot or create one from current refs
