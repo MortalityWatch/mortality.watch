@@ -16,6 +16,7 @@
  */
 
 import { computed, reactive, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import type { Ref } from 'vue'
 import type { useExplorerState } from '@/composables/useExplorerState'
 import type { useExplorerHelpers } from '@/composables/useExplorerHelpers'
@@ -79,6 +80,7 @@ export function useExplorerDataOrchestration(
   // Short URL handling for QR codes
   // Store original query params to ensure consistent hashing with SSR
   // (URL may be modified by state resolution before short URL is computed)
+  const route = useRoute()
   const { getShortUrl } = useShortUrl()
   const currentShortUrl = ref<string | null>(null)
   const originalQueryParams = ref<Record<string, string | string[] | undefined> | null>(null)
