@@ -509,8 +509,8 @@ describe('useExplorerDataOrchestration', () => {
 
       // Should call either traditional or progressive loading method based on strategy
       expect(
-        mockDataFetcher.fetchChartData.mock.calls.length +
-        mockDataFetcher.fetchChartDataProgressive.mock.calls.length
+        mockDataFetcher.fetchChartData.mock.calls.length
+        + mockDataFetcher.fetchChartDataProgressive.mock.calls.length
       ).toBeGreaterThan(0)
     })
 
