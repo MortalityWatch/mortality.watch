@@ -3,8 +3,9 @@
  *
  * Abstraction layer for fetching mortality data.
  * Handles environment-aware data loading:
- * - Client: Uses API route (goes through server proxy with caching)
- * - Server: Direct S3 access (caching handled by API routes)
+ * - Production: Direct S3 access for optimal performance
+ * - Offline dev: Uses API proxy when USE_LOCAL_CACHE=true
+ * - SSR: Direct S3 access (same as production)
  */
 
 import { UI_CONFIG } from './config/constants'
@@ -17,14 +18,20 @@ export class DataLoader {
    * Get the appropriate URL for data fetching based on environment
    */
   private getUrl(path: string): string {
-    // Server-side rendering
-    if (import.meta.server) {
-      // Production SSR: use S3 directly (faster, no extra hop)
-      return `${S3_BASE}/${path}`
+    // Check if offline development mode is enabled
+    const config = typeof window !== 'undefined'
+      ? (window as unknown as { nuxtApp?: { $config?: { public?: { useLocalCache?: boolean | string } } } })?.nuxtApp?.$config?.public?.useLocalCache
+      : process.env.USE_LOCAL_CACHE
+
+    const useLocalCache = config === true || config === 'true'
+
+    if (useLocalCache) {
+      // Offline development: use API proxy for local cache
+      return `/api/data/${path}`
     }
 
-    // Client-side: always use API route (goes through server proxy)
-    return `/api/data/${path}`
+    // Production: direct S3 access (eliminates proxy overhead)
+    return `${S3_BASE}/${path}`
   }
 
   /**
