@@ -542,6 +542,13 @@ export function useExplorerDataOrchestration(
     // Use short URL if available, otherwise fall back to full URL
     const url = currentShortUrl.value || fullUrl
 
+    log.info('🔍 buildFilterConfig called', {
+      currentShortUrl: currentShortUrl.value,
+      fullUrl: fullUrl.length > 100 ? fullUrl.substring(0, 100) + '...' : fullUrl,
+      selectedUrl: url.length > 100 ? url.substring(0, 100) + '...' : url,
+      isUsingShortUrl: !!currentShortUrl.value
+    })
+
     // Convert to ChartFilterConfig using the unified converter
     // Colors are computed internally by toChartFilterConfig
     return toChartFilterConfig(
@@ -566,15 +573,27 @@ export function useExplorerDataOrchestration(
     // Database storage happens in background (fire-and-forget)
     // Use current route.query to ensure QR code reflects current chart state
     // Fix for #443: originalQueryParams was only saved on mount and became stale
+
+    log.info('🔍 Starting short URL generation...', {
+      currentValue: currentShortUrl.value,
+      routeQuery: route.query
+    })
+
     try {
       // Extract params and generate hash (fast async crypto operation ~1-2ms)
       const params = extractUrlParams(route.query as Record<string, string | string[] | undefined>)
+      log.info('🔍 Extracted params:', params)
+
       const hash = await computeConfigHash(params)
+      log.info('🔍 Hash computed:', hash)
+
       const siteUrl = typeof window !== 'undefined' ? window.location.origin : 'https://www.mortality.watch'
       const shortUrl = buildShortUrl(hash, siteUrl)
+      log.info('🔍 Short URL built:', shortUrl)
 
       // Set QR URL for chart rendering
       currentShortUrl.value = shortUrl
+      log.info('🔍 currentShortUrl.value set to:', currentShortUrl.value)
 
       // Store in database in background (fire-and-forget)
       if (import.meta.client) {
@@ -590,10 +609,10 @@ export function useExplorerDataOrchestration(
         })
       }
 
-      log.info('QR code URL generated with hash', { shortUrl, hashTime: '~1-2ms' })
+      log.info('🔍 QR code URL generation complete', { shortUrl })
     } catch (error) {
       // Log but don't fail - full URL will be used as fallback
-      log.warn('Failed to generate short URL, using full URL', { error })
+      log.warn('🔍 Failed to generate short URL, using full URL', { error })
     }
 
     // Use provided snapshot or create one from current refs
