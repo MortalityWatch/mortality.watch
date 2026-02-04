@@ -269,7 +269,6 @@ const options = computed(() => {
         :items="ageGroupOptions"
         placeholder="Select age groups"
         multiple
-        searchable
         size="sm"
         class="flex-1"
         delete-icon="i-lucide-x"
