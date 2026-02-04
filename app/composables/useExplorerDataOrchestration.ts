@@ -561,17 +561,22 @@ export function useExplorerDataOrchestration(
       return { datasets: [], labels: [] } as unknown as MortalityChartData
     }
 
-    // Compute short URL first (instant with local hash computation)
-    // This also fires a non-blocking POST to store the mapping in DB
+    // Generate short URL in background (non-blocking for LCP)
+    // This computes hash locally (instant) and fires a POST to store mapping in DB
     // Use current route.query to ensure QR code reflects current chart state
     // Fix for #443: originalQueryParams was only saved on mount and became stale
-    try {
-      const shortUrl = await getShortUrl()
+
+    // Start with null QR - chart renders immediately
+    currentShortUrl.value = null
+
+    // Generate QR URL in background (don't block chart rendering)
+    getShortUrl().then(shortUrl => {
       currentShortUrl.value = shortUrl
-    } catch (error) {
-      // Log but don't fail - full URL will be used as fallback
-      log.warn('Failed to generate short URL, using full URL', { error })
-    }
+      log.info('QR code URL generated', { shortUrl })
+    }).catch(error => {
+      // Log but don't fail - chart works without QR code
+      log.warn('Failed to generate short URL, chart will render without QR code', { error })
+    })
 
     // Use provided snapshot or create one from current refs
     const stateSnapshot = snapshot ?? createStateSnapshot()
