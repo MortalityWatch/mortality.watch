@@ -135,6 +135,16 @@ const handleCountryChange = (val: SelectValue) => {
   }
 }
 
+const removeCountry = (value: string) => {
+  const filtered = props.countries.filter(c => c !== value)
+  emit('countriesChanged', filtered)
+}
+
+const removeAgeGroup = (value: string) => {
+  const filtered = props.ageGroups.filter(ag => ag !== value)
+  emit('ageGroupsChanged', filtered)
+}
+
 const handleAgeGroupChange = (val: SelectValue) => {
   const ageGroups = extractStringValues(val)
   selectedAgeGroups.value = ageGroups
@@ -180,17 +190,42 @@ const options = computed(() => {
       help-title="Data Availability"
       :help-warning="props.isAsmrType || props.isLifeExpectancyType"
     >
-      <UInputMenu
+      <USelectMenu
         v-model="selectedCountries"
         :items="options"
         multiple
-        searchable
         size="sm"
         class="flex-1"
-        delete-icon="i-lucide-x"
+        clear
         :disabled="props.isUpdating"
+        :ui="{ base: 'h-auto min-h-8 py-1' }"
         @update:model-value="handleCountryChange"
       >
+        <template #default="{ modelValue }">
+          <div
+            v-if="modelValue?.length"
+            class="flex flex-wrap gap-0.5"
+          >
+            <UBadge
+              v-for="item in modelValue"
+              :key="typeof item === 'string' ? item : item.value"
+              size="xs"
+              variant="subtle"
+              color="neutral"
+            >
+              {{ typeof item === 'string' ? item : item.label }}
+              <UIcon
+                name="i-lucide-x"
+                class="ml-0.5 size-3 cursor-pointer opacity-60 hover:opacity-100"
+                @click.stop="removeCountry(typeof item === 'string' ? item : item.value)"
+              />
+            </UBadge>
+          </div>
+          <span
+            v-else
+            class="text-dimmed"
+          >Select jurisdictions</span>
+        </template>
         <template #item-leading="{ item }">
           <UBadge
             v-if="item && typeof item === 'object' && 'chip' in item && item.chip"
@@ -201,7 +236,7 @@ const options = computed(() => {
             {{ (item.chip as { text: string }).text }}
           </UBadge>
         </template>
-      </UInputMenu>
+      </USelectMenu>
       <template #help>
         <div class="space-y-3">
           <!-- Warning for restricted views -->
@@ -264,18 +299,44 @@ const options = computed(() => {
       v-if="!props.isAsmrType && !props.isAsdType && (!props.isLifeExpectancyType || canAdvancedLE)"
       label="Age Groups"
     >
-      <UInputMenu
+      <USelectMenu
         v-model="selectedAgeGroups"
         :items="ageGroupOptions"
         placeholder="Select age groups"
         multiple
-        searchable
         size="sm"
         class="flex-1"
-        delete-icon="i-lucide-x"
+        clear
         :disabled="props.isUpdating"
+        :ui="{ base: 'h-auto min-h-8 py-1' }"
         @update:model-value="handleAgeGroupChange"
-      />
+      >
+        <template #default="{ modelValue }">
+          <div
+            v-if="modelValue?.length"
+            class="flex flex-wrap gap-0.5"
+          >
+            <UBadge
+              v-for="item in modelValue"
+              :key="typeof item === 'string' ? item : item.value"
+              size="xs"
+              variant="subtle"
+              color="neutral"
+            >
+              {{ typeof item === 'string' ? item : item.label }}
+              <UIcon
+                name="i-lucide-x"
+                class="ml-0.5 size-3 cursor-pointer opacity-60 hover:opacity-100"
+                @click.stop="removeAgeGroup(typeof item === 'string' ? item : item.value)"
+              />
+            </UBadge>
+          </div>
+          <span
+            v-else
+            class="text-dimmed"
+          >Select age groups</span>
+        </template>
+      </USelectMenu>
     </UiControlRow>
   </div>
 </template>
