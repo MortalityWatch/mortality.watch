@@ -220,7 +220,10 @@ watch(() => colorMode.value, async () => {
 })
 
 // Setup ResizeObserver to force chart updates when container resizes
-onMounted(() => {
+onMounted(async () => {
+  // Wait for vue-chartjs to finish rendering and container layout to settle
+  await nextTick()
+
   // Get the chart canvas container
   const chartCanvas = document.querySelector('#chart')
   if (!chartCanvas || !chartCanvas.parentElement) {
@@ -231,6 +234,12 @@ onMounted(() => {
 
   // Update initial chart width for auto-hide label logic
   chartWidth.value = parentContainer.offsetWidth || 800
+
+  // Force chart to recalculate size from container (fixes default 300x150 canvas)
+  const activeChart = getActiveChart()
+  if (activeChart?.chart) {
+    activeChart.chart.resize()
+  }
 
   let resizeTimeout: ReturnType<typeof setTimeout> | null = null
   const resizeObserver = new ResizeObserver(() => {
