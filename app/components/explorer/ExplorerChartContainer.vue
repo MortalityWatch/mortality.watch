@@ -164,10 +164,10 @@ defineExpose({
   max-width: 100%; /* Ensure it doesn't exceed parent */
 }
 
-/* In Auto mode with resize enabled, card follows content size during drag */
-.chart-card.chart-card-resizable:not(.chart-card-resized).can-resize {
-  width: fit-content;
-}
+/* In Auto mode with resize enabled, keep width: 100% (NOT fit-content).
+   fit-content creates a circular dependency: card width depends on canvas size,
+   but Chart.js canvas size depends on container width → defaults to 300x150.
+   Once the user drags to resize, .chart-card-resized applies fit-content instead. */
 
 /* Ensure UCard body can shrink */
 .chart-card :deep(.overflow-hidden) {
