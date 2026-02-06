@@ -232,6 +232,14 @@ onMounted(async () => {
 
   const parentContainer = chartCanvas.parentElement
 
+  // Wait for container to have a non-zero width (layout may not have settled
+  // after client-side navigation, e.g. after login redirect)
+  let retries = 0
+  while (parentContainer.offsetWidth === 0 && retries < 10) {
+    await new Promise(resolve => requestAnimationFrame(resolve))
+    retries++
+  }
+
   // Update initial chart width for auto-hide label logic
   chartWidth.value = parentContainer.offsetWidth || 800
 
