@@ -152,11 +152,11 @@ export default defineEventHandler(async (event) => {
         // Step 4.5: Apply steep drop adjustment if enabled
         // This modifies state.dateTo to hide recent incomplete data
         // Only applies when user hasn't explicitly set dateTo
-        const adjustedState = applySteepDropAdjustment(state, allChartData, queryParams)
+        let adjustedState = applySteepDropAdjustment(state, allChartData, queryParams)
 
         // Step 5: Transform data into chart-ready format
         // Use allChartData.labels (sliced from sliderStart) to match baseline data alignment
-        const { chartData, isDeathsType, isLE, isPopulationType } = await transformChartData(
+        let transformed = await transformChartData(
           adjustedState,
           allCountries,
           allChartData.labels,
@@ -166,13 +166,51 @@ export default defineEventHandler(async (event) => {
         )
 
         // Step 5.5: Check if chart data is empty (e.g., LE for countries with incompatible age groups)
-        if (isChartDataEmpty(chartData)) {
+        // Parity safeguard: z-score charts with explicit baseline range can end up empty in SSR
+        // while the explorer falls back to a computed baseline range. If that happens, retry
+        // once without bf/bt so PNG generation degrades gracefully instead of returning 500.
+        if (
+          isChartDataEmpty(transformed.chartData)
+          && adjustedState.isZScore
+          && (queryParams.bf || queryParams.bt)
+        ) {
+          logger.warn('SSR z-score empty chart with explicit baseline range, retrying without bf/bt', {
+            queryParams,
+            chartType: adjustedState.chartType,
+            metric: adjustedState.type,
+            baselineMethod: adjustedState.baselineMethod,
+            baselineFrom: adjustedState.baselineDateFrom,
+            baselineTo: adjustedState.baselineDateTo
+          })
+
+          const fallbackQueryParams = { ...queryParams }
+          delete fallbackQueryParams.bf
+          delete fallbackQueryParams.bt
+          delete fallbackQueryParams.bdf
+          delete fallbackQueryParams.bdt
+
+          const fallbackState = resolveChartStateForRendering(fallbackQueryParams, allLabels)
+          const fallback = await fetchChartData(fallbackState)
+          adjustedState = applySteepDropAdjustment(fallbackState, fallback.allChartData, fallbackQueryParams)
+          transformed = await transformChartData(
+            adjustedState,
+            fallback.allCountries,
+            fallback.allChartData.labels,
+            fallback.allChartData,
+            chartUrl,
+            isAsmrType
+          )
+        }
+
+        if (isChartDataEmpty(transformed.chartData)) {
           const countriesStr = preliminaryState.countries.join(', ')
           throw new Error(
             `No chart data available for ${countriesStr} (${preliminaryState.type}, ${preliminaryState.chartType}). `
             + 'The data may exist but cannot be calculated for this configuration.'
           )
         }
+
+        const { chartData, isDeathsType, isLE, isPopulationType } = transformed
 
         // Debug: Log chart data
         logger.info('SSR Chart Data:', {
