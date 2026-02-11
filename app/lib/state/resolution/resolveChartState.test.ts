@@ -125,6 +125,16 @@ describe('resolveChartStateForRendering', () => {
       const state = resolveChartStateForRendering({ c: 'USA', cs: 'matrix', sb: '1' }, [])
       expect(state.showBaseline).toBe(false)
     })
+
+    it('should enforce yearly chart type for ASD metric', () => {
+      const state = resolveChartStateForRendering({ c: 'SWE', e: '1', t: 'asd', ct: 'weekly' }, [])
+      expect(state.chartType).toBe('yearly')
+    })
+
+    it('should enforce yearly chart type for LE metric', () => {
+      const state = resolveChartStateForRendering({ c: 'SWE', t: 'le', ct: 'monthly' }, [])
+      expect(state.chartType).toBe('yearly')
+    })
   })
 
   describe('date range computation', () => {

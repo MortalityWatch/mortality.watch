@@ -204,6 +204,34 @@ const asmrTypeConstraints: StateConstraint = {
 }
 
 /**
+ * ASD chart type constraints
+ * ASD is only available for yearly aggregations (yearly, midyear, fluseason)
+ */
+const asdChartTypeConstraints: StateConstraint = {
+  when: state => state.type === 'asd' && !['yearly', 'midyear', 'fluseason'].includes(String(state.chartType ?? '')),
+  apply: {
+    chartType: 'yearly'
+  },
+  reason: 'ASD is only available for yearly chart types (yearly, midyear, fluseason)',
+  allowUserOverride: false,
+  priority: 2
+}
+
+/**
+ * LE chart type constraints
+ * LE is only available for yearly (calendar-year) charts
+ */
+const leChartTypeConstraints: StateConstraint = {
+  when: state => state.type === 'le' && String(state.chartType ?? '') !== 'yearly',
+  apply: {
+    chartType: 'yearly'
+  },
+  reason: 'LE is only available for yearly chart type',
+  allowUserOverride: false,
+  priority: 2
+}
+
+/**
  * Matrix chart style constraints
  * Matrix disables several features
  */
@@ -300,6 +328,8 @@ export const STATE_CONSTRAINTS: StateConstraint[] = [
   // Note: Z-score constraints moved to view-based system (views.ts)
   populationTypeConstraints,
   asmrTypeConstraints,
+  asdChartTypeConstraints,
+  leChartTypeConstraints,
   matrixStyleConstraints,
 
   // View synchronization (keep isExcess/isZScore in sync with view field)
