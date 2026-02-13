@@ -46,9 +46,11 @@ export function getBaselineDescription(
   baselineDateTo: string
 ): string {
   const methodNames: Record<string, string> = {
-    mean: 'Mean',
+    mean: 'Average',
     median: 'Median',
-    naive: 'Naive'
+    naive: 'Last Value',
+    lin_reg: 'Linear Regression',
+    exp: 'Exponential Smoothing (ETS)'
   }
 
   const methodName = methodNames[baselineMethod] || baselineMethod
