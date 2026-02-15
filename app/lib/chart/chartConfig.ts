@@ -246,6 +246,24 @@ export const makeBarLineChartConfig = (
   // Increase right padding when data labels are enabled to prevent cutoff
   const rightPadding = data.showLabels ? 20 : 10
 
+  const scales = createScalesConfig(
+    data,
+    isExcess,
+    showPercentage,
+    showDecimals,
+    decimals,
+    isDark,
+    isSSR,
+    isCountType,
+    showXAxisTitle,
+    showYAxisTitle
+  )
+
+  if (isPopulationType && showPercentage) {
+    ;(scales.x as { stacked?: boolean }).stacked = true
+    ;(scales.y as { stacked?: boolean }).stacked = true
+  }
+
   return {
     plugins: [createBackgroundPlugin(isDark)],
     options: {
@@ -279,18 +297,7 @@ export const makeBarLineChartConfig = (
         chartStyle,
         isCountType
       ),
-      scales: createScalesConfig(
-        data,
-        isExcess,
-        showPercentage,
-        showDecimals,
-        decimals,
-        isDark,
-        isSSR,
-        isCountType,
-        showXAxisTitle,
-        showYAxisTitle
-      )
+      scales
     },
     data: {
       datasets: data.datasets as ChartDataset<ChartStyle, (number | null)[]>[],

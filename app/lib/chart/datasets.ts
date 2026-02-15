@@ -146,6 +146,25 @@ export const getDatasets = (
     view: config.display.view ?? 'mortality'
   }
 
+  const isPopulationComposition = config.chart.type === 'population'
+    && config.display.showPercentage
+    && ags.length > 1
+
+  const populationTotalsByCountry = new Map<string, number[]>()
+  if (isPopulationComposition) {
+    for (const iso3c of config.context.countries) {
+      const totals: number[] = []
+      for (const ag of ags) {
+        const series = data[ag]?.[iso3c]?.population as (number | null | undefined)[] | undefined
+        if (!series) continue
+        for (let i = 0; i < series.length; i++) {
+          totals[i] = (totals[i] ?? 0) + (series[i] ?? 0)
+        }
+      }
+      populationTotalsByCountry.set(iso3c, totals)
+    }
+  }
+
   for (const ag of ags) {
     const agData = data[ag]
     if (!agData) continue
@@ -196,17 +215,23 @@ export const getDatasets = (
               .forEach(x => sources.add(x))
           }
         }
-        const transformedData = config.chart.isErrorBarType && config.display.showPredictionInterval
-          ? transformPipeline.transformErrorBarData(
-              transformConfig,
-              dsRecord as Record<string, number[]>,
-              key
-            )
-          : transformPipeline.transformData(
-              transformConfig,
-              dsRecord as Record<string, number[]>,
-              key
-            )
+        const transformedData = isPopulationComposition && key === 'population'
+          ? (dsRecord.population as (number | null | undefined)[]).map((value, idx) => {
+              const total = populationTotalsByCountry.get(iso3c)?.[idx] ?? 0
+              if (value == null || total <= 0) return null
+              return value / total
+            })
+          : (config.chart.isErrorBarType && config.display.showPredictionInterval
+              ? transformPipeline.transformErrorBarData(
+                  transformConfig,
+                  dsRecord as Record<string, number[]>,
+                  key
+                )
+              : transformPipeline.transformData(
+                  transformConfig,
+                  dsRecord as Record<string, number[]>,
+                  key
+                ))
         datasets.push({
           label,
           data: transformedData,
@@ -220,7 +245,8 @@ export const getDatasets = (
               ? 0
               : getPointRadius(config.chart.chartType, key),
           pointBackgroundColor: getPointBackgroundColor(key, color),
-          type: getType(key, config.chart.isBarChartStyle, config.chart.isExcess),
+          type: getType(key, config.chart.isBarChartStyle || isPopulationComposition, config.chart.isExcess),
+          stack: isPopulationComposition ? iso3c : undefined,
           hidden: isPredictionIntervalKey(key) && !config.display.showPredictionInterval
         })
       })

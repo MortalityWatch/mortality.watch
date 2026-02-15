@@ -322,6 +322,37 @@ describe('datasets', () => {
     })
   })
 
+  describe('getDatasets - population composition mode', () => {
+    it('should normalize age-band population to percentage of country total and stack by country', () => {
+      const config = createBaseConfig()
+      config.chart.type = 'population'
+      config.chart.isPopulationType = true
+      config.display.showPercentage = true
+      config.context.countries = ['USA']
+
+      const data: Dataset = {
+        age_0_14: {
+          USA: createMockDatasetEntry({
+            population: [20, 30, 40] as NumberArray
+          })
+        },
+        age_15_64: {
+          USA: createMockDatasetEntry({
+            population: [80, 70, 60] as NumberArray
+          })
+        }
+      }
+
+      const result = getDatasets(config, data)
+      const first = result.datasets[0]
+      const second = result.datasets[1]
+
+      expect(first?.type).toBe('bar')
+      expect(first?.stack).toBe('USA')
+      expect((first?.data[0] as number) + (second?.data[0] as number)).toBeCloseTo(1, 6)
+    })
+  })
+
   describe('getDatasets - cumulative transformation', () => {
     it('should transform data to cumulative when cumulative is true', () => {
       const config = createBaseConfig()
