@@ -259,7 +259,7 @@ export const makeBarLineChartConfig = (
     showYAxisTitle
   )
 
-  const hasStackedDatasets = data.datasets.some(ds => (ds as Record<string, unknown>).stack)
+  const hasStackedDatasets = data.datasets.some(ds => (ds as unknown as Record<string, unknown>).stack)
   if (hasStackedDatasets) {
     ;(scales.x as { stacked?: boolean }).stacked = true
     ;(scales.y as { stacked?: boolean }).stacked = true
