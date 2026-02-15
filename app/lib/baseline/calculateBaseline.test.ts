@@ -236,7 +236,24 @@ describe('calculateBaseline', () => {
       )
 
       expect(data.deaths_zscore).toBeDefined()
-      expect((data.deaths_zscore as (number | null)[])[95]).not.toBe(0)
+
+      const z = (data.deaths_zscore as (number | null)[]).map(v => v ?? 0)
+      const baselineZ = z.slice(0, 104)
+
+      // Centered around zero on baseline period
+      const mean = baselineZ.reduce((a, b) => a + b, 0) / baselineZ.length
+      expect(Math.abs(mean)).toBeLessThan(0.4)
+
+      // Seasonal oscillation largely removed (low correlation with annual sine wave)
+      const sinWave = baselineZ.map((_, i) => Math.sin((2 * Math.PI * i) / 52))
+      const dot = baselineZ.reduce((sum, zi, i) => sum + zi * sinWave[i]!, 0)
+      const zNorm = Math.sqrt(baselineZ.reduce((sum, zi) => sum + zi * zi, 0))
+      const sNorm = Math.sqrt(sinWave.reduce((sum, si) => sum + si * si, 0))
+      const corr = zNorm > 0 && sNorm > 0 ? dot / (zNorm * sNorm) : 0
+      expect(Math.abs(corr)).toBeLessThan(0.25)
+
+      // Injected anomaly remains a clear spike
+      expect(Math.abs(z[95]!)).toBeGreaterThan(2)
     })
 
     it('keeps stats API z-scores for non-periodic chart types', async () => {
