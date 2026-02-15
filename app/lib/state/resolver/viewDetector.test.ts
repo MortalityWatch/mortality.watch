@@ -17,6 +17,10 @@ describe('viewDetector', () => {
       expect(detectView({ e: '1' })).toBe('excess')
     })
 
+    it('detects composition view from comp=1', () => {
+      expect(detectView({ comp: '1' })).toBe('composition')
+    })
+
     it('detects mortality view as default (no params)', () => {
       expect(detectView({})).toBe('mortality')
     })
@@ -27,21 +31,22 @@ describe('viewDetector', () => {
   })
 
   describe('precedence rules', () => {
-    it('zscore takes precedence over excess', () => {
-      expect(detectView({ zs: '1', e: '1' })).toBe('zscore')
+    it('zscore takes precedence over excess/composition', () => {
+      expect(detectView({ zs: '1', e: '1', comp: '1' })).toBe('zscore')
     })
 
     it('zscore takes precedence over explicit view param', () => {
       expect(detectView({ zs: '1', view: 'excess' })).toBe('zscore')
     })
 
-    it('excess takes precedence over explicit view param', () => {
-      expect(detectView({ e: '1', view: 'mortality' })).toBe('excess')
+    it('excess takes precedence over composition and explicit view param', () => {
+      expect(detectView({ e: '1', comp: '1', view: 'mortality' })).toBe('excess')
     })
 
     it('explicit view param works when no shorthand present', () => {
       expect(detectView({ view: 'excess' })).toBe('excess')
       expect(detectView({ view: 'zscore' })).toBe('zscore')
+      expect(detectView({ view: 'composition' })).toBe('composition')
       expect(detectView({ view: 'mortality' })).toBe('mortality')
     })
   })

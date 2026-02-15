@@ -407,6 +407,7 @@ export function generateUrlFromState(
   // View indicators
   if (state.isExcess) params.set('e', '1')
   if (state.isZScore) params.set('zs', '1')
+  if (state.view === 'composition') params.set('comp', '1')
 
   // Optional
   if (state.userColors?.length) params.set('uc', state.userColors.join(','))

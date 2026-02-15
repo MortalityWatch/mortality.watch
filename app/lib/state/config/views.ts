@@ -108,13 +108,6 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
         reason: 'Prediction intervals require baseline',
         allowUserOverride: false,
         priority: 1
-      },
-      {
-        when: s => s.type === 'population' && Array.isArray(s.ageGroups) && s.ageGroups.length > 1,
-        apply: { showPercentage: true, chartStyle: 'bar' },
-        reason: 'Population composition defaults to percentage stacked bars when multiple age bands are selected',
-        allowUserOverride: true,
-        priority: 0
       }
     ],
 
@@ -186,6 +179,61 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
     ],
 
     compatibleMetrics: ['cmr', 'asmr', 'asd', 'deaths'] // no LE, no population
+  },
+
+  /**
+   * Composition View
+   * Age-band composition as percentage of total (stacked bars)
+   */
+  composition: {
+    id: 'composition',
+    label: 'Composition',
+    urlParam: 'comp', // URL: ?comp=1
+
+    ui: {
+      baseline: hidden(),
+      predictionInterval: hidden(),
+      logarithmic: hidden(),
+      maximize: hidden(),
+      labels: toggleable(),
+      cumulative: hidden(),
+      percentage: required(true),
+      showTotal: hidden()
+    },
+
+    defaults: {
+      type: 'population',
+      chartStyle: 'bar',
+      // Resolved to all individual age bands when entering composition view
+      ageGroups: ['all'],
+      showPercentage: true,
+      showBaseline: false,
+      showPredictionInterval: false,
+      showLogarithmic: false,
+      cumulative: false,
+      showTotal: false,
+      maximize: false
+    },
+
+    constraints: [
+      {
+        when: () => true,
+        apply: { showPercentage: true, chartStyle: 'bar' },
+        reason: 'Composition view uses percentage stacked bars',
+        allowUserOverride: false,
+        priority: 2
+      },
+      {
+        when: () => true,
+        apply: { showBaseline: false },
+        reason: 'Composition view has no baseline concept',
+        allowUserOverride: false,
+        priority: 2
+      }
+    ],
+
+    compatibleMetrics: ['deaths', 'population'],
+    compatibleChartStyles: ['bar']
   },
 
   /**

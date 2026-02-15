@@ -314,6 +314,17 @@ const viewSyncMortalityConstraint: StateConstraint = {
   priority: 2
 }
 
+const viewSyncCompositionConstraint: StateConstraint = {
+  when: state => state.view === 'composition',
+  apply: {
+    isExcess: false,
+    isZScore: false
+  },
+  reason: 'Composition view clears excess/zscore flags',
+  allowUserOverride: false,
+  priority: 2
+}
+
 // ============================================================================
 // CONSTRAINT REGISTRY
 // ============================================================================
@@ -336,6 +347,7 @@ export const STATE_CONSTRAINTS: StateConstraint[] = [
   viewSyncExcessConstraint,
   viewSyncZScoreConstraint,
   viewSyncMortalityConstraint,
+  viewSyncCompositionConstraint,
 
   // Priority 1: Normal business rules
   baselineOffConstraints,

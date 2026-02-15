@@ -416,6 +416,20 @@ const handleCountriesChanged = (v: string[]) => handleStateChange({ field: 'coun
 const handleAgeGroupsChanged = (v: string[]) => handleStateChange({ field: 'ageGroups', value: v }, '_ageGroups')
 const handleStandardPopulationChanged = (v: string) => handleStateChange({ field: 'standardPopulation', value: v }, '_standardPopulation')
 
+// Composition view defaults to all individual age bands (exclude aggregate "all")
+watch([() => state.view.value, allAgeGroups], async ([viewType, availableAgeGroups]) => {
+  if (viewType !== 'composition') return
+
+  const individualAgeGroups = (availableAgeGroups || []).filter(ag => ag !== 'all')
+  if (!individualAgeGroups.length) return
+
+  const current = state.ageGroups.value || []
+  const isUnsetOrAggregateOnly = current.length === 0 || (current.length === 1 && current[0] === 'all')
+  if (!isUnsetOrAggregateOnly) return
+
+  await handleStateChange({ field: 'ageGroups', value: individualAgeGroups }, '_ageGroups')
+}, { immediate: true })
+
 // Baseline configuration
 const handleBaselineMethodChanged = (v: string) => handleStateChange({ field: 'baselineMethod', value: v }, '_baselineMethod')
 
