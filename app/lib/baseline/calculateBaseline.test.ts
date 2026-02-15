@@ -197,6 +197,65 @@ describe('calculateBaseline', () => {
     })
   })
 
+  describe('z-score mode behavior', () => {
+    it('uses robust z-scores by default for periodic chart types', async () => {
+      const deps = createMockDeps({
+        y: [100, 100, 100, 100, 100, 100],
+        lower: [null, null, null, null, null, null],
+        upper: [null, null, null, null, null, null],
+        zscore: [0, 0, 0, 0, 0, 0]
+      })
+
+      const data: DatasetEntry = {
+        deaths: [100, 102, 101, 100, 150, 99]
+      } as unknown as DatasetEntry
+
+      await calculateBaseline(
+        deps,
+        data,
+        ['2019 W01', '2019 W02', '2019 W03', '2019 W04', '2019 W05', '2019 W06'],
+        0,
+        4,
+        ['deaths', 'deaths_baseline', 'deaths_baseline_lower', 'deaths_baseline_upper'] as (keyof DatasetEntry)[],
+        'mean',
+        'weekly',
+        false
+      )
+
+      expect(data.deaths_zscore).toBeDefined()
+      expect((data.deaths_zscore as unknown[])[4]).not.toBe(0)
+    })
+
+    it('supports classic mode override for periodic chart types', async () => {
+      const deps = createMockDeps({
+        y: [100, 102, 101, 100, 150, 99],
+        lower: [null, null, null, null, null, null],
+        upper: [null, null, null, null, null, null],
+        zscore: [0, 0.1, -0.2, 0.3, 9.9, -0.1]
+      })
+
+      const data: DatasetEntry = {
+        deaths: [100, 102, 101, 100, 150, 99]
+      } as unknown as DatasetEntry
+
+      await calculateBaseline(
+        deps,
+        data,
+        ['2019 W01', '2019 W02', '2019 W03', '2019 W04', '2019 W05', '2019 W06'],
+        0,
+        4,
+        ['deaths', 'deaths_baseline', 'deaths_baseline_lower', 'deaths_baseline_upper'] as (keyof DatasetEntry)[],
+        'mean',
+        'weekly',
+        false,
+        undefined,
+        'classic'
+      )
+
+      expect(data.deaths_zscore).toEqual([0, 0.1, -0.2, 0.3, 9.9, -0.1])
+    })
+  })
+
   describe('auto method early return', () => {
     it('should return early for auto method without API call', async () => {
       const deps = createMockDeps({})

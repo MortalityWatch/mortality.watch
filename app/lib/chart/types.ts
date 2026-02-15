@@ -82,6 +82,7 @@ export interface ChartStateSnapshot {
   baselineDateTo: string | undefined
   showBaseline: boolean
   baselineMethod: string
+  zScoreMode?: 'auto' | 'classic' | 'robust'
 
   // Display options
   cumulative: boolean
@@ -132,6 +133,7 @@ export interface ChartFilterConfig {
 
   // Baseline (effective values with defaults applied)
   baselineMethod: string
+  zScoreMode?: 'auto' | 'classic' | 'robust'
   baselineDateFrom: string
   baselineDateTo: string
   showBaseline: boolean

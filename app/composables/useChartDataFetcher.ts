@@ -42,6 +42,7 @@ export interface ChartDataFetchConfig {
   baselineDateFrom?: string
   baselineDateTo?: string
   baselineStartIdx?: number
+  zScoreMode?: 'auto' | 'classic' | 'robust'
 
   // Date range - sliderStart defines the "from" offset for allChartData (layer 2)
   sliderStart?: string
@@ -247,7 +248,8 @@ export function useChartDataFetcher() {
         fetchConfig.onProgress ?? ((progress, total) => {
           updateProgress.value = Math.round((progress / total) * 100)
         }),
-        statsUrl
+        statsUrl,
+        fetchConfig.zScoreMode && fetchConfig.zScoreMode !== 'auto' ? fetchConfig.zScoreMode : undefined
       )
 
       isUpdating.value = false
