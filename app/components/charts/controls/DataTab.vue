@@ -62,7 +62,7 @@ const baseViewOptions: ViewOption[] = [
 ]
 
 const visibleViewOptions = computed(() =>
-  baseViewOptions.filter(opt => {
+  baseViewOptions.filter((opt) => {
     if (opt.value === 'composition') return props.isPopulationType
     if (opt.value === 'excess') return !props.isPopulationType
     return true
