@@ -45,6 +45,7 @@ export interface ChartRenderState {
   // Baseline (effective - never undefined when showBaseline is true)
   showBaseline: boolean
   baselineMethod: string
+  zScoreMode?: 'auto' | 'classic' | 'robust'
   baselineDateFrom: string
   baselineDateTo: string
 
@@ -238,6 +239,7 @@ export function resolveChartStateForRendering(
     // Baseline (effective values)
     showBaseline: constrainedState.showBaseline as boolean,
     baselineMethod: constrainedState.baselineMethod as string,
+    zScoreMode: (constrainedState.zScoreMode as 'auto' | 'classic' | 'robust' | undefined) ?? 'auto',
     baselineDateFrom: effectiveBaselineFrom,
     baselineDateTo: effectiveBaselineTo,
 
@@ -332,6 +334,7 @@ export function resolveChartStateFromSnapshot(
     sliderStart: snapshot.sliderStart || getDefaultSliderStart(),
     showBaseline: snapshot.showBaseline,
     baselineMethod: snapshot.baselineMethod,
+    zScoreMode: snapshot.zScoreMode ?? 'auto',
     baselineDateFrom: effectiveBaselineFrom,
     baselineDateTo: effectiveBaselineTo,
     ageGroups: snapshot.ageGroups,
@@ -484,6 +487,7 @@ export function toChartFilterConfig(
 
     // Baseline (already effective values)
     baselineMethod: state.baselineMethod,
+    zScoreMode: state.zScoreMode,
     baselineDateFrom: state.baselineDateFrom,
     baselineDateTo: state.baselineDateTo,
     showBaseline: state.showBaseline,

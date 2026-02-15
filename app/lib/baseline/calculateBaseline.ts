@@ -18,6 +18,56 @@ import { calculateExcess, getSeasonType, labelToXsParam } from './core'
 // Default stats API URL - can be overridden via NUXT_PUBLIC_STATS_URL
 const DEFAULT_STATS_URL = EXTERNAL_SERVICES.STATS_API_URL
 
+const PERIODIC_CHART_TYPES = new Set(['weekly', 'monthly', 'quarterly'])
+
+function median(values: number[]): number {
+  if (values.length === 0) return 0
+  const sorted = [...values].sort((a, b) => a - b)
+  const mid = Math.floor(sorted.length / 2)
+  return sorted.length % 2 === 0
+    ? (sorted[mid - 1]! + sorted[mid]!) / 2
+    : sorted[mid]!
+}
+
+function calculateRobustZScores(
+  observed: (number | null | undefined)[],
+  baseline: (number | null | undefined)[],
+  baselineStartIdx: number,
+  baselineEndIdx: number
+): (number | null)[] {
+  const residuals: number[] = []
+
+  for (let i = baselineStartIdx; i <= baselineEndIdx; i++) {
+    const y = observed[i]
+    const b = baseline[i]
+    if (typeof y === 'number' && typeof b === 'number' && Number.isFinite(y) && Number.isFinite(b)) {
+      residuals.push(y - b)
+    }
+  }
+
+  if (residuals.length < 5) {
+    return observed.map(() => null)
+  }
+
+  const center = median(residuals)
+  const positive = residuals.filter(r => r >= center).map(r => r - center)
+  const negative = residuals.filter(r => r <= center).map(r => center - r)
+
+  const scalePos = Math.max(median(positive), 1e-9) / 0.67448975
+  const scaleNeg = Math.max(median(negative), 1e-9) / 0.67448975
+
+  return observed.map((y, idx) => {
+    const b = baseline[idx]
+    if (typeof y !== 'number' || typeof b !== 'number') return null
+
+    const d = y - b - center
+    const scale = d >= 0 ? scalePos : scaleNeg
+    if (!Number.isFinite(scale) || scale <= 0) return null
+
+    return d / scale
+  })
+}
+
 /**
  * Function type for fetching baseline data from stats API
  */
@@ -63,7 +113,8 @@ export const calculateBaseline = async (
   method: string,
   chartType: string,
   cumulative: boolean,
-  statsUrl?: string
+  statsUrl?: string,
+  zScoreMode?: 'classic' | 'robust'
 ): Promise<void> => {
   if (method === 'auto') return
 
@@ -201,10 +252,23 @@ export const calculateBaseline = async (
     if (keys[2]) data[keys[2]] = json.lower as DataVector
     if (keys[3]) data[keys[3]] = json.upper as DataVector
 
-    // Extract z-scores if available
-    if (json.zscore && keys[0]) {
+    // Extract z-scores (with robust default for periodic series)
+    if (keys[0]) {
       const zscoreKey = `${String(keys[0])}_zscore` as keyof DatasetEntry
-      data[zscoreKey] = json.zscore as DataVector
+      const effectiveZScoreMode = zScoreMode
+        ?? (PERIODIC_CHART_TYPES.has(chartType) ? 'robust' : 'classic')
+
+      if (effectiveZScoreMode === 'robust' && PERIODIC_CHART_TYPES.has(chartType)) {
+        const robust = calculateRobustZScores(
+          all_data as (number | null | undefined)[],
+          json.y as (number | null | undefined)[],
+          baselineStartIdx,
+          baselineEndIdx
+        )
+        data[zscoreKey] = robust as DataVector
+      } else if (json.zscore) {
+        data[zscoreKey] = json.zscore as DataVector
+      }
     }
     // When /cum endpoint succeeds, baseline is cumulative
     // Calculate excess with cumulative baseline handling
@@ -294,7 +358,8 @@ export const calculateBaselines = async (
   chartType: string,
   cumulative: boolean,
   progressCb?: (progress: number, total: number) => void,
-  statsUrl?: string
+  statsUrl?: string,
+  zScoreMode?: 'classic' | 'robust'
 ): Promise<void> => {
   let count = 0
   const total = Object.keys(data || {}).reduce(
@@ -316,7 +381,8 @@ export const calculateBaselines = async (
           method,
           chartType,
           cumulative,
-          statsUrl
+          statsUrl,
+          zScoreMode
         ).then(() => {
           if (!progressCb) return
           count++
