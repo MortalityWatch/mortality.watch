@@ -146,7 +146,38 @@ export const getDatasets = (
     view: config.display.view ?? 'mortality'
   }
 
-  for (const ag of ags) {
+  const isPopulationComposition = config.chart.type === 'population'
+    && config.display.showPercentage
+    && ags.length > 1
+
+  const ageBandsToPlot = isPopulationComposition
+    ? ags.filter(ag => ag !== 'all')
+    : ags
+
+  const populationTotalsByCountry = new Map<string, number[]>()
+  if (isPopulationComposition) {
+    for (const iso3c of config.context.countries) {
+      const totalsFromAll = data.all?.[iso3c]?.population as (number | null | undefined)[] | undefined
+      if (totalsFromAll && totalsFromAll.length > 0) {
+        populationTotalsByCountry.set(iso3c, totalsFromAll.map(v => v ?? 0))
+        continue
+      }
+
+      // Fallback when aggregate "all" is unavailable: sum all available age-band series
+      const totals: number[] = []
+      for (const [ageBand, ageBandData] of Object.entries(data)) {
+        if (ageBand === 'all') continue
+        const series = ageBandData?.[iso3c]?.population as (number | null | undefined)[] | undefined
+        if (!series) continue
+        for (let i = 0; i < series.length; i++) {
+          totals[i] = (totals[i] ?? 0) + (series[i] ?? 0)
+        }
+      }
+      populationTotalsByCountry.set(iso3c, totals)
+    }
+  }
+
+  for (const ag of ageBandsToPlot) {
     const agData = data[ag]
     if (!agData) continue
     // Iterate countries in order specified by config.context.countries
@@ -179,7 +210,7 @@ export const getDatasets = (
           return
         const fillTarget = getFillTarget(key, keys, keyIndex)
         const color: string = config.visual.colors[countryIndex] ?? '#000000'
-        const ag_str = ags.length === 1 ? '' : ` [${getCamelCase(ag)}]`
+        const ag_str = ageBandsToPlot.length === 1 ? '' : ` [${getCamelCase(ag)}]`
         const label = getLabel(
           key,
           config.chart.isMatrixChartStyle || datasets.length === 0 || config.context.countries.length > 1
@@ -196,17 +227,23 @@ export const getDatasets = (
               .forEach(x => sources.add(x))
           }
         }
-        const transformedData = config.chart.isErrorBarType && config.display.showPredictionInterval
-          ? transformPipeline.transformErrorBarData(
-              transformConfig,
-              dsRecord as Record<string, number[]>,
-              key
-            )
-          : transformPipeline.transformData(
-              transformConfig,
-              dsRecord as Record<string, number[]>,
-              key
-            )
+        const transformedData = isPopulationComposition && key === 'population'
+          ? (dsRecord.population as (number | null | undefined)[]).map((value, idx) => {
+              const total = populationTotalsByCountry.get(iso3c)?.[idx] ?? 0
+              if (value == null || total <= 0) return null
+              return value / total
+            })
+          : (config.chart.isErrorBarType && config.display.showPredictionInterval
+              ? transformPipeline.transformErrorBarData(
+                  transformConfig,
+                  dsRecord as Record<string, number[]>,
+                  key
+                )
+              : transformPipeline.transformData(
+                  transformConfig,
+                  dsRecord as Record<string, number[]>,
+                  key
+                ))
         datasets.push({
           label,
           data: transformedData,
@@ -220,7 +257,8 @@ export const getDatasets = (
               ? 0
               : getPointRadius(config.chart.chartType, key),
           pointBackgroundColor: getPointBackgroundColor(key, color),
-          type: getType(key, config.chart.isBarChartStyle, config.chart.isExcess),
+          type: getType(key, config.chart.isBarChartStyle || isPopulationComposition, config.chart.isExcess),
+          stack: isPopulationComposition ? iso3c : undefined,
           hidden: isPredictionIntervalKey(key) && !config.display.showPredictionInterval
         })
       })

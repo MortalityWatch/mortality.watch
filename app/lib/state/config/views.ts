@@ -48,7 +48,10 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       maximize: toggleable(),
       labels: toggleable(),
       cumulative: hidden(),
-      percentage: hidden(),
+      percentage: conditional({
+        field: 'type',
+        is: 'population'
+      }),
       showTotal: hidden()
     },
 
@@ -74,6 +77,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       // Display options
       showBaseline: true,
       baselineMethod: 'mean',
+      zScoreMode: 'auto' as 'auto' | 'classic' | 'robust',
       showPredictionInterval: true,
       cumulative: false,
       showTotal: false,
@@ -105,6 +109,13 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
         reason: 'Prediction intervals require baseline',
         allowUserOverride: false,
         priority: 1
+      },
+      {
+        when: s => s.type === 'population' && Array.isArray(s.ageGroups) && s.ageGroups.length > 1,
+        apply: { showPercentage: true, chartStyle: 'bar' },
+        reason: 'Population composition defaults to percentage stacked bars when multiple age bands are selected',
+        allowUserOverride: true,
+        priority: 0
       }
     ],
 
