@@ -10,7 +10,7 @@ import type { StateConstraint } from './types'
 /**
  * View Type identifiers
  */
-export type ViewType = 'mortality' | 'excess' | 'zscore'
+export type ViewType = 'mortality' | 'excess' | 'zscore' | 'composition'
 
 /**
  * Chart style types
@@ -28,6 +28,7 @@ export type MetricType = 'cmr' | 'asmr' | 'asd' | 'le' | 'deaths' | 'population'
 export type UICondition
   = | { field: 'chartStyle', is: ChartStyle }
     | { field: 'chartStyle', isNot: ChartStyle }
+    | { field: 'type', is: MetricType }
     | { field: 'showBaseline', is: boolean }
     | { field: 'cumulative', is: boolean }
     | { and: UICondition[] }

@@ -14,10 +14,11 @@ describe('View Configurations', () => {
       expect(VIEWS.mortality).toBeDefined()
       expect(VIEWS.excess).toBeDefined()
       expect(VIEWS.zscore).toBeDefined()
+      expect(VIEWS.composition).toBeDefined()
     })
 
     it('all views have required properties', () => {
-      const viewTypes: ViewType[] = ['mortality', 'excess', 'zscore']
+      const viewTypes: ViewType[] = ['mortality', 'excess', 'zscore', 'composition']
 
       viewTypes.forEach((viewType) => {
         const config = VIEWS[viewType]
@@ -53,9 +54,9 @@ describe('View Configurations', () => {
 
       expect(config.ui.maximize.visibility.type).toBe('visible')
 
-      // Excess-specific options should be hidden
+      // Excess-specific options should be hidden in mortality view
       expect(config.ui.cumulative.visibility.type).toBe('hidden')
-      expect(config.ui.percentage.visibility.type).toBe('hidden')
+      expect(config.ui.percentage.visibility.type).toBe('conditional')
       expect(config.ui.showTotal.visibility.type).toBe('hidden')
     })
 
@@ -70,6 +71,13 @@ describe('View Configurations', () => {
 
     it('supports all metrics', () => {
       expect(config.compatibleMetrics).toEqual(['cmr', 'asmr', 'asd', 'le', 'deaths'])
+    })
+
+    it('does not auto-force percentage/bar composition in mortality view', () => {
+      const compositionConstraint = config.constraints.find(
+        c => c.apply.showPercentage === true && c.apply.chartStyle === 'bar'
+      )
+      expect(compositionConstraint).toBeUndefined()
     })
   })
 
@@ -211,6 +219,54 @@ describe('View Configurations', () => {
       expect(cumulativeConstraint).toBeDefined()
       expect(cumulativeConstraint?.allowUserOverride).toBe(false)
       expect(cumulativeConstraint?.priority).toBe(2)
+    })
+  })
+
+  describe('Composition View', () => {
+    const config = VIEWS.composition
+
+    it('has correct basic config', () => {
+      expect(config.id).toBe('composition')
+      expect(config.label).toBe('Composition')
+      expect(config.urlParam).toBe('comp')
+    })
+
+    it('has composition-focused UI rules', () => {
+      expect(config.ui.baseline.visibility.type).toBe('hidden')
+      expect(config.ui.predictionInterval.visibility.type).toBe('hidden')
+      expect(config.ui.logarithmic.visibility.type).toBe('hidden')
+      expect(config.ui.maximize.visibility.type).toBe('hidden')
+      expect(config.ui.cumulative.visibility.type).toBe('hidden')
+      expect(config.ui.showTotal.visibility.type).toBe('hidden')
+      expect(config.ui.labels.visibility.type).toBe('visible')
+      expect(config.ui.percentage.visibility.type).toBe('visible')
+      if (config.ui.percentage.visibility.type === 'visible') {
+        expect(config.ui.percentage.visibility.toggleable).toBe(false)
+      }
+    })
+
+    it('has correct defaults', () => {
+      expect(config.defaults.type).toBe('population')
+      expect(config.defaults.chartStyle).toBe('bar')
+      expect(config.defaults.showPercentage).toBe(true)
+      expect(config.defaults.showBaseline).toBe(false)
+    })
+
+    it('restricts metrics to count-based composition metrics', () => {
+      expect(config.compatibleMetrics).toEqual(['deaths', 'population'])
+    })
+
+    it('forces percentage bars and no baseline via hard constraints', () => {
+      const percentageConstraint = config.constraints.find(
+        c => c.apply.showPercentage === true && c.apply.chartStyle === 'bar'
+      )
+      const baselineConstraint = config.constraints.find(
+        c => c.apply.showBaseline === false
+      )
+      expect(percentageConstraint?.allowUserOverride).toBe(false)
+      expect(percentageConstraint?.priority).toBe(2)
+      expect(baselineConstraint?.allowUserOverride).toBe(false)
+      expect(baselineConstraint?.priority).toBe(2)
     })
   })
 

@@ -46,7 +46,8 @@ function mergeWithBase(viewConfig: ChartViewConfig): CompleteChartViewConfig {
 export const CHART_VIEWS: Record<ViewType, CompleteChartViewConfig> = {
   mortality: mergeWithBase(MORTALITY_VIEW),
   excess: mergeWithBase(EXCESS_VIEW),
-  zscore: mergeWithBase(ZSCORE_VIEW)
+  zscore: mergeWithBase(ZSCORE_VIEW),
+  composition: mergeWithBase(MORTALITY_VIEW)
 }
 
 /**

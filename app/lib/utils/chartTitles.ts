@@ -73,7 +73,9 @@ function formatDateRange(dateFrom: string | undefined, dateTo: string | undefine
  * Get readable metric name from type value with view mode
  * Note: ASD is a metric type, not a view. Handle it specially.
  */
-function getMetricName(type: string, view?: 'mortality' | 'excess' | 'zscore'): string {
+type ExplorerView = 'mortality' | 'excess' | 'zscore' | 'composition'
+
+function getMetricName(type: string, view?: ExplorerView): string {
   const typeConfig = types.find(t => t.value === type)
   if (!typeConfig) return type
 
@@ -181,7 +183,7 @@ export function generateExplorerTitle(params: {
   ageGroups?: string[]
   dateFrom?: string
   dateTo?: string
-  view?: 'mortality' | 'excess' | 'zscore'
+  view?: ExplorerView
 }): string {
   const {
     countries,
@@ -197,7 +199,7 @@ export function generateExplorerTitle(params: {
   const parts: string[] = []
 
   // Determine view mode if not explicitly provided
-  const effectiveView = view || (isExcess ? 'excess' : 'mortality') as 'mortality' | 'excess' | 'zscore'
+  const effectiveView = view || (isExcess ? 'excess' : 'mortality') as ExplorerView
 
   // Metric name
   parts.push(getMetricName(type, effectiveView))
@@ -252,12 +254,14 @@ function formatFullDate(date: string | undefined): string {
 /**
  * Get view mode description
  */
-function getViewDescription(view: 'mortality' | 'excess' | 'zscore'): string {
+function getViewDescription(view: ExplorerView): string {
   switch (view) {
     case 'zscore':
       return 'Z-Score view shows how many standard deviations the current value is from the baseline mean.'
     case 'excess':
       return 'Excess view shows the difference between observed and expected (baseline) values.'
+    case 'composition':
+      return 'Composition view shows age-band shares as percentages of the total.'
     default:
       return ''
   }
@@ -292,7 +296,7 @@ export function generateExplorerDescription(params: {
   ageGroups?: string[]
   dateFrom?: string
   dateTo?: string
-  view?: 'mortality' | 'excess' | 'zscore'
+  view?: ExplorerView
   chartType?: string
   showBaseline?: boolean
   baselineMethod?: string
@@ -324,7 +328,7 @@ export function generateExplorerDescription(params: {
   const parts: string[] = []
 
   // Determine effective view
-  const effectiveView = view || (isExcess ? 'excess' : 'mortality') as 'mortality' | 'excess' | 'zscore'
+  const effectiveView = view || (isExcess ? 'excess' : 'mortality') as ExplorerView
 
   // Get metric info
   const typeConfig = types.find(t => t.value === type)

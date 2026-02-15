@@ -119,8 +119,9 @@ export function getLabelText(
 ) {
   let result = label
   const prefix = label.length ? ': ' : ''
-  const forcePlusSign = isExcess && !short
-  const plusSign = forcePlusSign ? '' : '+'
+  // Only deviation-style views should show explicit '+' for positive percentages.
+  // Composition and raw percentage displays should not.
+  const plusSign = isExcess ? '+' : ''
 
   if (isPercentage) {
     const yText = asPercentage(

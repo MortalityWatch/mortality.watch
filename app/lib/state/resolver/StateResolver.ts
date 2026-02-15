@@ -601,6 +601,8 @@ export class StateResolver {
       query.e = '1'
     } else if (view === 'zscore') {
       query.zs = '1'
+    } else if (view === 'composition') {
+      query.comp = '1'
     }
 
     // Get view defaults
@@ -695,6 +697,8 @@ export class StateResolver {
       newQuery.e = '1'
     } else if (view === 'zscore') {
       newQuery.zs = '1'
+    } else if (view === 'composition') {
+      newQuery.comp = '1'
     }
     // mortality view has no special parameter (it's the default)
 

@@ -42,7 +42,7 @@ const typesWithLabels = computed(() => types.map(t => ({
 })))
 const standardPopulationsWithLabels = standardPopulations.map(t => ({ ...t, label: t.name }))
 
-// View options for radio group - Z-Score handled separately with FeatureGate
+// View options for radio group - filtered by metric type
 const baseViewOptions: ViewOption[] = [
   {
     label: 'Raw Values',
@@ -53,8 +53,21 @@ const baseViewOptions: ViewOption[] = [
     label: 'Excess',
     value: 'excess',
     description: 'Difference from expected baseline (observed - expected)'
+  },
+  {
+    label: 'Composition',
+    value: 'composition',
+    description: 'Age-band parts-of-whole composition (stacked % bars)'
   }
 ]
+
+const visibleViewOptions = computed(() =>
+  baseViewOptions.filter((opt) => {
+    if (opt.value === 'composition') return props.isPopulationType
+    if (opt.value === 'excess') return !props.isPopulationType
+    return true
+  })
+)
 
 const zscoreOption: ViewOption = {
   label: 'Z-Score',
@@ -116,21 +129,20 @@ const viewModel = computed({
         class="divide-y divide-gray-200 dark:divide-gray-800 rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden"
         data-testid="view-selector"
       >
-        <!-- Raw Values and Excess options -->
+        <!-- View options filtered by metric type -->
         <template
-          v-for="option in baseViewOptions"
+          v-for="option in visibleViewOptions"
           :key="option.value"
         >
           <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events, vuejs-accessibility/no-static-element-interactions -->
           <div
             class="flex items-start gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-            :class="{ 'bg-primary-50 dark:bg-primary-900/20': viewModel === option.value, 'opacity-50 pointer-events-none': props.isPopulationType }"
-            @click="!props.isPopulationType && (viewModel = option.value as ViewType)"
+            :class="{ 'bg-primary-50 dark:bg-primary-900/20': viewModel === option.value }"
+            @click="viewModel = option.value as ViewType"
           >
             <URadio
               v-model="viewModel"
               :value="option.value"
-              :disabled="props.isPopulationType"
               color="primary"
             />
             <div class="flex-1 min-w-0">
@@ -144,18 +156,20 @@ const viewModel = computed({
           </div>
         </template>
 
-        <!-- Z-Score option with FeatureGate -->
-        <FeatureGate feature="Z_SCORES">
+        <!-- Z-Score option with FeatureGate (hidden for population metric) -->
+        <FeatureGate
+          v-if="!props.isPopulationType"
+          feature="Z_SCORES"
+        >
           <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events, vuejs-accessibility/no-static-element-interactions -->
           <div
             class="flex items-start gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-            :class="{ 'bg-primary-50 dark:bg-primary-900/20': viewModel === 'zscore', 'opacity-50 pointer-events-none': props.isPopulationType }"
-            @click="!props.isPopulationType && (viewModel = 'zscore')"
+            :class="{ 'bg-primary-50 dark:bg-primary-900/20': viewModel === 'zscore' }"
+            @click="viewModel = 'zscore'"
           >
             <URadio
               v-model="viewModel"
               value="zscore"
-              :disabled="props.isPopulationType"
               color="primary"
             />
             <div class="flex-1 min-w-0">
