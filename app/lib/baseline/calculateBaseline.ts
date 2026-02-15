@@ -18,117 +18,6 @@ import { calculateExcess, getSeasonType, labelToXsParam } from './core'
 // Default stats API URL - can be overridden via NUXT_PUBLIC_STATS_URL
 const DEFAULT_STATS_URL = EXTERNAL_SERVICES.STATS_API_URL
 
-const PERIODIC_STL_PERIODS: Record<string, number> = {
-  weekly: 52,
-  monthly: 12,
-  quarterly: 4
-}
-
-function isFiniteNumber(value: unknown): value is number {
-  return typeof value === 'number' && Number.isFinite(value)
-}
-
-function interpolateSeries(values: (number | null | undefined)[]): number[] {
-  const result = values.map(v => (isFiniteNumber(v) ? v : NaN))
-  const n = result.length
-
-  // Forward fill leading NaNs with first known value
-  let firstKnown = -1
-  for (let i = 0; i < n; i++) {
-    if (!Number.isNaN(result[i]!)) {
-      firstKnown = i
-      break
-    }
-  }
-  if (firstKnown === -1) return new Array(n).fill(0)
-  for (let i = 0; i < firstKnown; i++) result[i] = result[firstKnown]!
-
-  // Linear interpolation for internal NaN runs
-  let lastKnown = firstKnown
-  for (let i = firstKnown + 1; i < n; i++) {
-    if (!Number.isNaN(result[i]!)) {
-      const startVal = result[lastKnown]!
-      const endVal = result[i]!
-      const gap = i - lastKnown
-      for (let j = 1; j < gap; j++) {
-        result[lastKnown + j] = startVal + ((endVal - startVal) * j) / gap
-      }
-      lastKnown = i
-    }
-  }
-
-  // Backward fill trailing NaNs with last known value
-  for (let i = lastKnown + 1; i < n; i++) result[i] = result[lastKnown]!
-
-  return result
-}
-
-function centeredMovingAverage(series: number[], window: number): number[] {
-  const n = series.length
-  const w = window % 2 === 0 ? window + 1 : window
-  const half = Math.floor(w / 2)
-  const out = new Array<number>(n)
-
-  for (let i = 0; i < n; i++) {
-    const start = Math.max(0, i - half)
-    const end = Math.min(n - 1, i + half)
-    let sum = 0
-    let count = 0
-    for (let j = start; j <= end; j++) {
-      sum += series[j]!
-      count++
-    }
-    out[i] = count > 0 ? sum / count : 0
-  }
-
-  return out
-}
-
-function calculateStlResidualZScores(
-  observed: (number | null | undefined)[],
-  period: number,
-  baselineStartIdx: number,
-  baselineEndIdx: number
-): (number | null)[] {
-  if (observed.length < period * 2) return observed.map(() => null)
-
-  const y = interpolateSeries(observed)
-  const trendWindow = Math.max(period * 3, 3)
-  const trend = centeredMovingAverage(y, trendWindow)
-
-  const seasonalSums = new Array(period).fill(0)
-  const seasonalCounts = new Array(period).fill(0)
-  for (let i = 0; i < y.length; i++) {
-    const k = i % period
-    seasonalSums[k] += y[i]! - trend[i]!
-    seasonalCounts[k] += 1
-  }
-
-  const seasonalPattern = seasonalSums.map((sum, i) =>
-    seasonalCounts[i]! > 0 ? sum / seasonalCounts[i]! : 0
-  )
-  const seasonalMean = seasonalPattern.reduce((a, b) => a + b, 0) / seasonalPattern.length
-  for (let i = 0; i < seasonalPattern.length; i++) {
-    seasonalPattern[i] = seasonalPattern[i]! - seasonalMean
-  }
-
-  const remainder = y.map((v, i) => v - trend[i]! - seasonalPattern[i % period]!)
-
-  const baselineResiduals: number[] = []
-  for (let i = baselineStartIdx; i <= baselineEndIdx; i++) {
-    if (Number.isFinite(remainder[i]!)) baselineResiduals.push(remainder[i]!)
-  }
-
-  if (baselineResiduals.length < 3) return observed.map(() => null)
-
-  const mean = baselineResiduals.reduce((a, b) => a + b, 0) / baselineResiduals.length
-  const variance = baselineResiduals.reduce((sum, r) => sum + (r - mean) ** 2, 0) / (baselineResiduals.length - 1)
-  const sd = Math.sqrt(variance)
-  if (!Number.isFinite(sd) || sd <= 0) return observed.map(() => null)
-
-  return observed.map((orig, i) => (isFiniteNumber(orig) ? remainder[i]! / sd : null))
-}
-
 /**
  * Function type for fetching baseline data from stats API
  */
@@ -312,22 +201,10 @@ export const calculateBaseline = async (
     if (keys[2]) data[keys[2]] = json.lower as DataVector
     if (keys[3]) data[keys[3]] = json.upper as DataVector
 
-    // Extract z-scores
-    if (keys[0]) {
+    // Extract z-scores from stats API (periodic STL behavior is provided upstream in stats API)
+    if (keys[0] && json.zscore) {
       const zscoreKey = `${String(keys[0])}_zscore` as keyof DatasetEntry
-      const period = PERIODIC_STL_PERIODS[chartType]
-
-      if (period) {
-        const stlZScores = calculateStlResidualZScores(
-          all_data as (number | null | undefined)[],
-          period,
-          baselineStartIdx,
-          baselineEndIdx
-        )
-        data[zscoreKey] = stlZScores as DataVector
-      } else if (json.zscore) {
-        data[zscoreKey] = json.zscore as DataVector
-      }
+      data[zscoreKey] = json.zscore as DataVector
     }
     // When /cum endpoint succeeds, baseline is cumulative
     // Calculate excess with cumulative baseline handling

@@ -198,29 +198,19 @@ describe('calculateBaseline', () => {
   })
 
   describe('z-score behavior', () => {
-    it('uses STL residual z-scores for periodic chart types', async () => {
-      const weeklyLabels = Array.from({ length: 120 }, (_, i) => {
-        const week = String((i % 52) + 1).padStart(2, '0')
-        const year = 2018 + Math.floor(i / 52)
-        return `${year} W${week}`
-      })
-
-      const signal = weeklyLabels.map((_, i) => {
-        const seasonal = 8 * Math.sin((2 * Math.PI * i) / 52)
-        const trend = 0.15 * i
-        const shock = i === 95 ? 30 : 0
-        return 100 + trend + seasonal + shock
-      })
+    it('uses stats API z-scores for periodic chart types', async () => {
+      const weeklyLabels = Array.from({ length: 8 }, (_, i) => `2019 W${String(i + 1).padStart(2, '0')}`)
+      const apiZscores = [0.1, -0.2, 0.05, 2.8, -0.1, 0.3, 0.0, -0.4]
 
       const deps = createMockDeps({
-        y: signal,
-        lower: signal.map(() => null),
-        upper: signal.map(() => null),
-        zscore: signal.map(() => 0)
+        y: weeklyLabels.map(() => 100),
+        lower: weeklyLabels.map(() => null),
+        upper: weeklyLabels.map(() => null),
+        zscore: apiZscores
       })
 
       const data: DatasetEntry = {
-        deaths: signal
+        deaths: weeklyLabels.map(() => 100)
       } as unknown as DatasetEntry
 
       await calculateBaseline(
@@ -228,32 +218,14 @@ describe('calculateBaseline', () => {
         data,
         weeklyLabels,
         0,
-        103,
+        5,
         ['deaths', 'deaths_baseline', 'deaths_baseline_lower', 'deaths_baseline_upper'] as (keyof DatasetEntry)[],
         'mean',
         'weekly',
         false
       )
 
-      expect(data.deaths_zscore).toBeDefined()
-
-      const z = (data.deaths_zscore as (number | null)[]).map(v => v ?? 0)
-      const baselineZ = z.slice(0, 104)
-
-      // Centered around zero on baseline period
-      const mean = baselineZ.reduce((a, b) => a + b, 0) / baselineZ.length
-      expect(Math.abs(mean)).toBeLessThan(0.4)
-
-      // Seasonal oscillation largely removed (low correlation with annual sine wave)
-      const sinWave = baselineZ.map((_, i) => Math.sin((2 * Math.PI * i) / 52))
-      const dot = baselineZ.reduce((sum, zi, i) => sum + zi * sinWave[i]!, 0)
-      const zNorm = Math.sqrt(baselineZ.reduce((sum, zi) => sum + zi * zi, 0))
-      const sNorm = Math.sqrt(sinWave.reduce((sum, si) => sum + si * si, 0))
-      const corr = zNorm > 0 && sNorm > 0 ? dot / (zNorm * sNorm) : 0
-      expect(Math.abs(corr)).toBeLessThan(0.25)
-
-      // Injected anomaly remains a clear spike
-      expect(Math.abs(z[95]!)).toBeGreaterThan(2)
+      expect(data.deaths_zscore).toEqual(apiZscores)
     })
 
     it('keeps stats API z-scores for non-periodic chart types', async () => {
