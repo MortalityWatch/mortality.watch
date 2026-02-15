@@ -227,8 +227,8 @@ describe('useChartDataFetcher', () => {
       let progressCallback: ((progress: number, total: number) => void) | undefined
 
       vi.mocked(fetchAllChartData).mockImplementation(async (...args: any[]) => {
-        // Progress callback is second to last arg (last is statsUrl)
-        progressCallback = args[args.length - 2] as (progress: number, total: number) => void
+        // Signature: ... keys, progressCb, statsUrl, calculateBaselines?, zScoreMode?
+        progressCallback = args[12] as (progress: number, total: number) => void
         if (progressCallback) {
           progressCallback(50, 100)
         }
@@ -252,8 +252,8 @@ describe('useChartDataFetcher', () => {
       let progressCallback: ((progress: number, total: number) => void) | undefined
 
       vi.mocked(fetchAllChartData).mockImplementation(async (...args: any[]) => {
-        // Progress callback is second to last arg (last is statsUrl)
-        progressCallback = args[args.length - 2] as (progress: number, total: number) => void
+        // Signature: ... keys, progressCb, statsUrl, calculateBaselines?, zScoreMode?
+        progressCallback = args[12] as (progress: number, total: number) => void
         if (progressCallback) {
           progressCallback(75, 100)
         }
@@ -611,7 +611,9 @@ describe('useChartDataFetcher', () => {
         '2019',
         [],
         expect.any(Function),
-        'https://stats.mortality.watch/'
+        'https://stats.mortality.watch/',
+        undefined,
+        undefined
       )
     })
 
@@ -643,7 +645,9 @@ describe('useChartDataFetcher', () => {
         '2019',
         [],
         expect.any(Function),
-        'https://stats.mortality.watch/'
+        'https://stats.mortality.watch/',
+        undefined,
+        undefined
       )
     })
 

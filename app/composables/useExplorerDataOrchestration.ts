@@ -785,7 +785,7 @@ export function useExplorerDataOrchestration(
       baselineMethod: state.baselineMethod.value,
       baselineDateFrom: state.baselineDateFrom.value ?? baselineRange.value?.from,
       baselineDateTo: state.baselineDateTo.value ?? baselineRange.value?.to,
-      zScoreMode: route.query.zsm === 'classic' || route.query.zsm === 'robust'
+      zScoreMode: route?.query?.zsm === 'classic' || route?.query?.zsm === 'robust'
         ? route.query.zsm
         : 'auto',
       baselineStartIdx: undefined,
