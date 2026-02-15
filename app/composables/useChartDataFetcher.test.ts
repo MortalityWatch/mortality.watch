@@ -227,7 +227,7 @@ describe('useChartDataFetcher', () => {
       let progressCallback: ((progress: number, total: number) => void) | undefined
 
       vi.mocked(fetchAllChartData).mockImplementation(async (...args: any[]) => {
-        // Signature: ... keys, progressCb, statsUrl, calculateBaselines?, zScoreMode?
+        // Signature: ... keys, progressCb, statsUrl, calculateBaselines?
         progressCallback = args[12] as (progress: number, total: number) => void
         if (progressCallback) {
           progressCallback(50, 100)
@@ -252,7 +252,7 @@ describe('useChartDataFetcher', () => {
       let progressCallback: ((progress: number, total: number) => void) | undefined
 
       vi.mocked(fetchAllChartData).mockImplementation(async (...args: any[]) => {
-        // Signature: ... keys, progressCb, statsUrl, calculateBaselines?, zScoreMode?
+        // Signature: ... keys, progressCb, statsUrl, calculateBaselines?
         progressCallback = args[12] as (progress: number, total: number) => void
         if (progressCallback) {
           progressCallback(75, 100)
@@ -602,7 +602,7 @@ describe('useChartDataFetcher', () => {
         'yearly',
         mockDataset,
         mockLabels,
-        expect.any(Number),
+        0,
         true,
         ['all'],
         ['USA'],
@@ -612,7 +612,6 @@ describe('useChartDataFetcher', () => {
         [],
         expect.any(Function),
         'https://stats.mortality.watch/',
-        undefined,
         undefined
       )
     })
@@ -646,7 +645,6 @@ describe('useChartDataFetcher', () => {
         [],
         expect.any(Function),
         'https://stats.mortality.watch/',
-        undefined,
         undefined
       )
     })

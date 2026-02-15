@@ -42,7 +42,6 @@ export const calculateBaselines = async (
   cumulative: boolean,
   progressCb?: (progress: number, total: number) => void,
   statsUrl?: string,
-  zScoreMode?: 'classic' | 'robust'
 ): Promise<void> => {
   return sharedCalculateBaselines(
     serverDeps,
@@ -56,6 +55,5 @@ export const calculateBaselines = async (
     cumulative,
     progressCb,
     statsUrl,
-    zScoreMode
   )
 }

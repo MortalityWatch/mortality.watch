@@ -58,7 +58,6 @@ export interface ChartDataParams {
   baselineDateFrom?: string
   baselineDateTo?: string
   keys?: (keyof NumberEntryFields)[]
-  zScoreMode?: 'classic' | 'robust'
 }
 
 /**
@@ -326,7 +325,6 @@ export class DataLoaderService {
       baselineDateFrom,
       baselineDateTo,
       keys,
-      zScoreMode
     } = params
 
     // Use shared function with server-side baseline calculator injected
@@ -346,7 +344,6 @@ export class DataLoaderService {
       undefined, // progressCb - not used on server
       undefined, // statsUrl - uses default
       calculateBaselines, // Server-side baseline calculator
-      zScoreMode
     )
   }
 

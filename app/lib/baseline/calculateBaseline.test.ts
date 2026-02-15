@@ -197,25 +197,38 @@ describe('calculateBaseline', () => {
     })
   })
 
-  describe('z-score mode behavior', () => {
-    it('uses robust z-scores by default for periodic chart types', async () => {
+  describe('z-score behavior', () => {
+    it('uses STL residual z-scores for periodic chart types', async () => {
+      const weeklyLabels = Array.from({ length: 120 }, (_, i) => {
+        const week = String((i % 52) + 1).padStart(2, '0')
+        const year = 2018 + Math.floor(i / 52)
+        return `${year} W${week}`
+      })
+
+      const signal = weeklyLabels.map((_, i) => {
+        const seasonal = 8 * Math.sin((2 * Math.PI * i) / 52)
+        const trend = 0.15 * i
+        const shock = i === 95 ? 30 : 0
+        return 100 + trend + seasonal + shock
+      })
+
       const deps = createMockDeps({
-        y: [100, 100, 100, 100, 100, 100],
-        lower: [null, null, null, null, null, null],
-        upper: [null, null, null, null, null, null],
-        zscore: [0, 0, 0, 0, 0, 0]
+        y: signal,
+        lower: signal.map(() => null),
+        upper: signal.map(() => null),
+        zscore: signal.map(() => 0)
       })
 
       const data: DatasetEntry = {
-        deaths: [100, 102, 101, 100, 150, 99]
+        deaths: signal
       } as unknown as DatasetEntry
 
       await calculateBaseline(
         deps,
         data,
-        ['2019 W01', '2019 W02', '2019 W03', '2019 W04', '2019 W05', '2019 W06'],
+        weeklyLabels,
         0,
-        4,
+        103,
         ['deaths', 'deaths_baseline', 'deaths_baseline_lower', 'deaths_baseline_upper'] as (keyof DatasetEntry)[],
         'mean',
         'weekly',
@@ -223,10 +236,10 @@ describe('calculateBaseline', () => {
       )
 
       expect(data.deaths_zscore).toBeDefined()
-      expect((data.deaths_zscore as unknown[])[4]).not.toBe(0)
+      expect((data.deaths_zscore as (number | null)[])[95]).not.toBe(0)
     })
 
-    it('supports classic mode override for periodic chart types', async () => {
+    it('keeps stats API z-scores for non-periodic chart types', async () => {
       const deps = createMockDeps({
         y: [100, 102, 101, 100, 150, 99],
         lower: [null, null, null, null, null, null],
@@ -241,15 +254,13 @@ describe('calculateBaseline', () => {
       await calculateBaseline(
         deps,
         data,
-        ['2019 W01', '2019 W02', '2019 W03', '2019 W04', '2019 W05', '2019 W06'],
+        ['2014', '2015', '2016', '2017', '2018', '2019'],
         0,
         4,
         ['deaths', 'deaths_baseline', 'deaths_baseline_lower', 'deaths_baseline_upper'] as (keyof DatasetEntry)[],
         'mean',
-        'weekly',
-        false,
-        undefined,
-        'classic'
+        'yearly',
+        false
       )
 
       expect(data.deaths_zscore).toEqual([0, 0.1, -0.2, 0.3, 9.9, -0.1])

@@ -384,7 +384,6 @@ export async function fetchChartData(state: ChartRenderState) {
     baselineDateFrom: state.baselineDateFrom,
     baselineDateTo: state.baselineDateTo,
     keys: baseKeys,
-    zScoreMode: state.zScoreMode && state.zScoreMode !== 'auto' ? state.zScoreMode : undefined
   })
 
   // Inject ASD data if type is 'asd'

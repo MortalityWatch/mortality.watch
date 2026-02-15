@@ -45,7 +45,6 @@ export const stateFieldEncoders = {
   ageGroups: { key: 'ag', decode: decodeArray },
   showBaseline: { key: 'sb', encode: encodeBool, decode: decodeBool },
   baselineMethod: { key: 'bm' },
-  zScoreMode: { key: 'zsm' },
   cumulative: { key: 'ce', encode: encodeBool, decode: decodeBool },
   showTotal: { key: 'st', encode: encodeBool, decode: decodeBool },
   maximize: { key: 'm', encode: encodeBool, decode: decodeBool },

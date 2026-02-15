@@ -30,7 +30,6 @@ export type BaselineCalculatorFn = (
   cumulative: boolean,
   progressCb?: (progress: number, total: number) => void,
   statsUrl?: string,
-  zScoreMode?: 'classic' | 'robust'
 ) => Promise<void>
 
 /**
@@ -60,7 +59,6 @@ export const getAllChartData = async (
   progressCb?: (progress: number, total: number) => void,
   statsUrl?: string,
   calculateBaselines: BaselineCalculatorFn = clientCalculateBaselines,
-  zScoreMode?: 'classic' | 'robust'
 ): Promise<AllChartData> => {
   const data: Dataset = {}
   const ageGroups = ageGroupFilter ?? Object.keys(rawData || {})
@@ -195,7 +193,6 @@ export const getAllChartData = async (
       cumulative,
       progressCb,
       statsUrl,
-      zScoreMode
     )
   }
 
