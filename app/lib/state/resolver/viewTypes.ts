@@ -28,6 +28,7 @@ export type MetricType = 'cmr' | 'asmr' | 'asd' | 'le' | 'deaths' | 'population'
 export type UICondition
   = | { field: 'chartStyle', is: ChartStyle }
     | { field: 'chartStyle', isNot: ChartStyle }
+    | { field: 'type', is: MetricType }
     | { field: 'showBaseline', is: boolean }
     | { field: 'cumulative', is: boolean }
     | { and: UICondition[] }

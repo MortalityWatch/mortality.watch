@@ -326,7 +326,6 @@ describe('datasets', () => {
     it('should normalize age-band population to percentage of country total and stack by country', () => {
       const config = createBaseConfig()
       config.chart.type = 'population'
-      config.chart.isPopulationType = true
       config.display.showPercentage = true
       config.context.countries = ['USA']
 

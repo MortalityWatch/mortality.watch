@@ -77,7 +77,6 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       // Display options
       showBaseline: true,
       baselineMethod: 'mean',
-      zScoreMode: 'auto' as 'auto' | 'classic' | 'robust',
       showPredictionInterval: true,
       cumulative: false,
       showTotal: false,
