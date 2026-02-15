@@ -249,6 +249,7 @@ export function useChartDataFetcher() {
           updateProgress.value = Math.round((progress / total) * 100)
         }),
         statsUrl,
+        undefined,
         fetchConfig.zScoreMode && fetchConfig.zScoreMode !== 'auto' ? fetchConfig.zScoreMode : undefined
       )
 
