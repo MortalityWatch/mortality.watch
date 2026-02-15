@@ -331,6 +331,11 @@ describe('datasets', () => {
       config.context.countries = ['USA']
 
       const data: Dataset = {
+        all: {
+          USA: createMockDatasetEntry({
+            population: [200, 200, 200] as NumberArray
+          })
+        },
         age_0_14: {
           USA: createMockDatasetEntry({
             population: [20, 30, 40] as NumberArray
@@ -349,7 +354,7 @@ describe('datasets', () => {
 
       expect(first?.type).toBe('bar')
       expect(first?.stack).toBe('USA')
-      expect((first?.data[0] as number) + (second?.data[0] as number)).toBeCloseTo(1, 6)
+      expect((first?.data[0] as number) + (second?.data[0] as number)).toBeCloseTo(0.5, 6)
     })
   })
 

@@ -150,12 +150,24 @@ export const getDatasets = (
     && config.display.showPercentage
     && ags.length > 1
 
+  const ageBandsToPlot = isPopulationComposition
+    ? ags.filter(ag => ag !== 'all')
+    : ags
+
   const populationTotalsByCountry = new Map<string, number[]>()
   if (isPopulationComposition) {
     for (const iso3c of config.context.countries) {
+      const totalsFromAll = data.all?.[iso3c]?.population as (number | null | undefined)[] | undefined
+      if (totalsFromAll && totalsFromAll.length > 0) {
+        populationTotalsByCountry.set(iso3c, totalsFromAll.map(v => v ?? 0))
+        continue
+      }
+
+      // Fallback when aggregate "all" is unavailable: sum all available age-band series
       const totals: number[] = []
-      for (const ag of ags) {
-        const series = data[ag]?.[iso3c]?.population as (number | null | undefined)[] | undefined
+      for (const [ageBand, ageBandData] of Object.entries(data)) {
+        if (ageBand === 'all') continue
+        const series = ageBandData?.[iso3c]?.population as (number | null | undefined)[] | undefined
         if (!series) continue
         for (let i = 0; i < series.length; i++) {
           totals[i] = (totals[i] ?? 0) + (series[i] ?? 0)
@@ -165,7 +177,7 @@ export const getDatasets = (
     }
   }
 
-  for (const ag of ags) {
+  for (const ag of ageBandsToPlot) {
     const agData = data[ag]
     if (!agData) continue
     // Iterate countries in order specified by config.context.countries
@@ -198,7 +210,7 @@ export const getDatasets = (
           return
         const fillTarget = getFillTarget(key, keys, keyIndex)
         const color: string = config.visual.colors[countryIndex] ?? '#000000'
-        const ag_str = ags.length === 1 ? '' : ` [${getCamelCase(ag)}]`
+        const ag_str = ageBandsToPlot.length === 1 ? '' : ` [${getCamelCase(ag)}]`
         const label = getLabel(
           key,
           config.chart.isMatrixChartStyle || datasets.length === 0 || config.context.countries.length > 1
