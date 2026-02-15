@@ -32,6 +32,7 @@ import ChartActions from '@/components/charts/ChartActions.vue'
 import SaveModal from '@/components/SaveModal.vue'
 import { generateExplorerTitle, generateExplorerDescription } from '@/lib/utils/chartTitles'
 import { computeConfigHash, extractUrlParams } from '@/lib/shortUrl/hashConfig'
+import { selectMutuallyExclusiveAgeGroups } from '@/services/metadataService'
 
 // Auth state for conditional features
 const { isAuthenticated } = useAuth()
@@ -423,11 +424,14 @@ watch([() => state.view.value, allAgeGroups], async ([viewType, availableAgeGrou
   const individualAgeGroups = (availableAgeGroups || []).filter(ag => ag !== 'all')
   if (!individualAgeGroups.length) return
 
+  const compositionSet = selectMutuallyExclusiveAgeGroups(individualAgeGroups, 'composition-view')
+  if (!compositionSet.length) return
+
   const current = state.ageGroups.value || []
   const isUnsetOrAggregateOnly = current.length === 0 || (current.length === 1 && current[0] === 'all')
   if (!isUnsetOrAggregateOnly) return
 
-  await handleStateChange({ field: 'ageGroups', value: individualAgeGroups }, '_ageGroups')
+  await handleStateChange({ field: 'ageGroups', value: compositionSet }, '_ageGroups')
 }, { immediate: true })
 
 // Baseline configuration

@@ -525,7 +525,7 @@ function rangesOverlap(
  * @param ageGroups - Array of age group strings (e.g., "0-9", "10-19", "80+")
  * @param context - Optional context for logging (e.g., "USA", "multi-country common")
  */
-function selectMutuallyExclusiveAgeGroups(ageGroups: string[], context?: string): string[] {
+export function selectMutuallyExclusiveAgeGroups(ageGroups: string[], context?: string): string[] {
   // Parse all age groups
   const parsed: Array<{ name: string, range: { min: number, max: number } }> = []
   for (const ag of ageGroups) {

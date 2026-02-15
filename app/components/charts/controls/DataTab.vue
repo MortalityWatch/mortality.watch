@@ -53,8 +53,18 @@ const baseViewOptions: ViewOption[] = [
     label: 'Excess',
     value: 'excess',
     description: 'Difference from expected baseline (observed - expected)'
+  },
+  {
+    label: 'Composition',
+    value: 'composition',
+    description: 'Age-band parts-of-whole composition (stacked % bars)'
   }
 ]
+
+function isViewDisabled(view: string): boolean {
+  // Population does not support excess/z-score, but should allow raw/composition
+  return props.isPopulationType && view === 'excess'
+}
 
 const zscoreOption: ViewOption = {
   label: 'Z-Score',
@@ -124,13 +134,13 @@ const viewModel = computed({
           <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events, vuejs-accessibility/no-static-element-interactions -->
           <div
             class="flex items-start gap-3 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-            :class="{ 'bg-primary-50 dark:bg-primary-900/20': viewModel === option.value, 'opacity-50 pointer-events-none': props.isPopulationType }"
-            @click="!props.isPopulationType && (viewModel = option.value as ViewType)"
+            :class="{ 'bg-primary-50 dark:bg-primary-900/20': viewModel === option.value, 'opacity-50 pointer-events-none': isViewDisabled(option.value) }"
+            @click="!isViewDisabled(option.value) && (viewModel = option.value as ViewType)"
           >
             <URadio
               v-model="viewModel"
               :value="option.value"
-              :disabled="props.isPopulationType"
+              :disabled="isViewDisabled(option.value)"
               color="primary"
             />
             <div class="flex-1 min-w-0">
