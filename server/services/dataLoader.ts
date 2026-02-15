@@ -324,7 +324,7 @@ export class DataLoaderService {
       baselineMethod,
       baselineDateFrom,
       baselineDateTo,
-      keys,
+      keys
     } = params
 
     // Use shared function with server-side baseline calculator injected
@@ -343,7 +343,7 @@ export class DataLoaderService {
       keys,
       undefined, // progressCb - not used on server
       undefined, // statsUrl - uses default
-      calculateBaselines, // Server-side baseline calculator
+      calculateBaselines // Server-side baseline calculator
     )
   }
 

@@ -41,7 +41,7 @@ export const calculateBaselines = async (
   chartType: string,
   cumulative: boolean,
   progressCb?: (progress: number, total: number) => void,
-  statsUrl?: string,
+  statsUrl?: string
 ): Promise<void> => {
   return sharedCalculateBaselines(
     serverDeps,
@@ -54,6 +54,6 @@ export const calculateBaselines = async (
     chartType,
     cumulative,
     progressCb,
-    statsUrl,
+    statsUrl
   )
 }

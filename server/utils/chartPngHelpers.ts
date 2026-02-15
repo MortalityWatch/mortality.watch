@@ -383,7 +383,7 @@ export async function fetchChartData(state: ChartRenderState) {
     baselineMethod: state.baselineMethod,
     baselineDateFrom: state.baselineDateFrom,
     baselineDateTo: state.baselineDateTo,
-    keys: baseKeys,
+    keys: baseKeys
   })
 
   // Inject ASD data if type is 'asd'

@@ -29,7 +29,7 @@ export type BaselineCalculatorFn = (
   chartType: string,
   cumulative: boolean,
   progressCb?: (progress: number, total: number) => void,
-  statsUrl?: string,
+  statsUrl?: string
 ) => Promise<void>
 
 /**
@@ -58,7 +58,7 @@ export const getAllChartData = async (
   keys?: (keyof NumberEntryFields)[],
   progressCb?: (progress: number, total: number) => void,
   statsUrl?: string,
-  calculateBaselines: BaselineCalculatorFn = clientCalculateBaselines,
+  calculateBaselines: BaselineCalculatorFn = clientCalculateBaselines
 ): Promise<AllChartData> => {
   const data: Dataset = {}
   const ageGroups = ageGroupFilter ?? Object.keys(rawData || {})
@@ -192,7 +192,7 @@ export const getAllChartData = async (
       chartType,
       cumulative,
       progressCb,
-      statsUrl,
+      statsUrl
     )
   }
 

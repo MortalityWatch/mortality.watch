@@ -248,7 +248,7 @@ export function useChartDataFetcher() {
           updateProgress.value = Math.round((progress / total) * 100)
         }),
         statsUrl,
-        undefined,
+        undefined
       )
 
       isUpdating.value = false
