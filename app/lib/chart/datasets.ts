@@ -148,6 +148,7 @@ export const getDatasets = (
 
   const isPopulationComposition = config.chart.type === 'population'
     && config.display.showPercentage
+    && config.display.view === 'composition'
     && ags.length > 1
 
   const ageBandsToPlot = isPopulationComposition

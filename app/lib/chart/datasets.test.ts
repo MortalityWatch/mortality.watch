@@ -327,6 +327,7 @@ describe('datasets', () => {
       const config = createBaseConfig()
       config.chart.type = 'population'
       config.display.showPercentage = true
+      config.display.view = 'composition'
       config.context.countries = ['USA']
 
       const data: Dataset = {

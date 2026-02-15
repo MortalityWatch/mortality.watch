@@ -259,7 +259,8 @@ export const makeBarLineChartConfig = (
     showYAxisTitle
   )
 
-  if (isPopulationType && showPercentage) {
+  const hasStackedDatasets = data.datasets.some(ds => (ds as Record<string, unknown>).stack)
+  if (hasStackedDatasets) {
     ;(scales.x as { stacked?: boolean }).stacked = true
     ;(scales.y as { stacked?: boolean }).stacked = true
   }
