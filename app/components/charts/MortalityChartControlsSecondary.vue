@@ -10,6 +10,7 @@ import { useChartUIState } from '@/composables/useChartUIState'
 import { isMobile } from '@/utils'
 import type { ChartStyle } from '@/lib/chart/chartTypes'
 import type { ViewType } from '@/lib/state'
+import { VIEWS } from '@/lib/state/config/views'
 
 // Feature access for tier-based features
 const { can } = useFeatureAccess()
@@ -111,8 +112,14 @@ const chartUIState = useChartUIState(
 )
 
 // Options imported from @/model
-// Add 'label' property for USelect compatibility
-const chartStylesWithLabels = chartStyles.map(t => ({ ...t, label: t.name }))
+// Add 'label' property for USelect compatibility and filter by current view compatibility
+const chartStylesWithLabels = computed(() => {
+  const allowed = VIEWS[props.view]?.compatibleChartStyles
+  const filtered = allowed?.length
+    ? chartStyles.filter(style => allowed.includes(style.value as 'line' | 'bar' | 'matrix'))
+    : chartStyles
+  return filtered.map(t => ({ ...t, label: t.name }))
+})
 
 // Feature gate: Show all baseline methods but disable advanced ones for non-registered users
 const baselineMethodsWithLabels = computed(() => {

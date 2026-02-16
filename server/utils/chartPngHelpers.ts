@@ -45,19 +45,22 @@ export function getClientIp(event: H3Event): string {
 
 /**
  * Parse query parameters from request
- * Handles URL encoding: converts + signs to spaces (form-encoded compatibility)
+ *
+ * IMPORTANT: do NOT coerce '+' to spaces here.
+ * Age groups like "80+" are valid values and must remain intact.
+ * H3/URL parsing has already decoded query parameters appropriately.
+ *
  * @param query - Raw query parameters
- * @returns Parsed query parameters with + decoded as spaces
+ * @returns Parsed query parameters
  */
 export function parseQueryParams(query: Record<string, unknown>): Record<string, string | string[]> {
   const result: Record<string, string | string[]> = {}
 
   for (const [key, value] of Object.entries(query)) {
     if (typeof value === 'string') {
-      // Decode + as space for form-encoded URL compatibility
-      result[key] = value.replace(/\+/g, ' ')
+      result[key] = value
     } else if (Array.isArray(value)) {
-      result[key] = value.map(v => typeof v === 'string' ? v.replace(/\+/g, ' ') : String(v))
+      result[key] = value.map(v => typeof v === 'string' ? v : String(v))
     } else if (value !== null && value !== undefined) {
       result[key] = String(value)
     }
