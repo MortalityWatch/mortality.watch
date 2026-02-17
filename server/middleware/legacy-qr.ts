@@ -14,8 +14,8 @@ import { isLegacyCompressedQr, decompressLegacyQr } from '../utils/legacyQrCodeU
 export default defineEventHandler((event) => {
   const url = getRequestURL(event)
 
-  // Only handle root path or /explorer requests with a qr parameter
-  if (url.pathname !== '/' && url.pathname !== '/explorer') {
+  // Only handle root path, /explorer, or /chart/ requests with a qr parameter
+  if (url.pathname !== '/' && url.pathname !== '/explorer' && url.pathname !== '/chart/' && url.pathname !== '/chart') {
     return
   }
 
