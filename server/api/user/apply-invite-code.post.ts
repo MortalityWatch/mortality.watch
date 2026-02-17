@@ -1,6 +1,8 @@
 import { ApplyInviteCodeSchema } from '../../schemas'
 import { applyInviteCodeToUser } from '../../utils/inviteCode'
 import { requireAuth } from '../../utils/auth'
+import { db, users } from '#db'
+import { eq } from 'drizzle-orm'
 
 /**
  * API endpoint for retroactive invite code application
@@ -30,8 +32,23 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // Return fresh user data so UI can reflect tier immediately without relying on session refresh
+  const updatedUser = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, user.id))
+    .get()
+
+  const safeUser = updatedUser
+    ? (() => {
+        const { passwordHash: _passwordHash, ...rest } = updatedUser
+        return rest
+      })()
+    : user
+
   return {
     success: true,
-    message: applyResult.message
+    message: applyResult.message,
+    user: safeUser
   }
 })

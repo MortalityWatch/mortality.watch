@@ -44,7 +44,7 @@ async function applyInviteCode() {
 
   applying.value = true
   try {
-    const result = await $fetch<{ success: boolean, message: string }>('/api/user/apply-invite-code', {
+    const result = await $fetch<{ success: boolean, message: string, user?: typeof user.value }>('/api/user/apply-invite-code', {
       method: 'POST',
       body: { code: inviteCode.value.trim() }
     })
@@ -56,8 +56,13 @@ async function applyInviteCode() {
         color: 'success'
       })
 
-      // Refresh user session to get updated tier
-      await refreshSession()
+      // Optimistically update local user tier immediately when API returns refreshed user
+      if (result.user) {
+        user.value = result.user
+      } else {
+        // Fallback to session refresh
+        await refreshSession()
+      }
 
       // Clear the form
       inviteCode.value = ''
