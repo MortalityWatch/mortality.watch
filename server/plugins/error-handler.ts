@@ -1,4 +1,5 @@
 import { logger } from '../utils/logger'
+import { errorTracker } from '../utils/errorTracking'
 
 interface ErrorWithStatus extends Error {
   statusCode?: number
@@ -10,6 +11,16 @@ export default defineNitroPlugin((nitroApp) => {
     logger.error('Server error', error, {
       url: event?.path,
       statusCode: error.statusCode
+    })
+
+    errorTracker.captureError(error, {
+      tags: {
+        scope: 'nitro-error-hook'
+      },
+      extra: {
+        url: event?.path,
+        statusCode: error.statusCode || error.status || 500
+      }
     })
   })
 
