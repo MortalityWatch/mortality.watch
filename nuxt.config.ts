@@ -36,9 +36,14 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     // Server-side only config (not exposed to client)
-    // Reuse JWT_SECRET for nuxt-auth-utils session encryption
+    // nuxt-auth-utils requires a non-empty session password.
+    // Prefer dedicated NUXT_SESSION_PASSWORD, fallback to JWT_SECRET for backward compatibility.
     session: {
-      password: process.env.JWT_SECRET || ''
+      password: process.env.NUXT_SESSION_PASSWORD
+        || process.env.JWT_SECRET
+        || (process.env.NODE_ENV === 'development'
+          ? 'development-session-password-change-in-production-32chars'
+          : '')
     },
     mortalityDataS3Base: process.env.MORTALITY_DATA_S3_BASE || 'https://s3.mortality.watch/data/mortality',
     mortalityDataCacheDir: process.env.MORTALITY_DATA_CACHE_DIR || '.data/cache/mortality',
