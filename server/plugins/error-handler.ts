@@ -8,9 +8,22 @@ interface ErrorWithStatus extends Error {
 
 export default defineNitroPlugin((nitroApp) => {
   nitroApp.hooks.hook('error', (error: ErrorWithStatus, { event }) => {
+    const statusCode = error.statusCode || error.status || 500
+    const isNotFound = statusCode === 404 || error.message?.startsWith('Page not found:')
+
+    // Bot scans and random probes generate large 404 noise; keep them out of error tracking.
+    if (isNotFound) {
+      logger.warn('Ignoring expected not-found error', {
+        url: event?.path,
+        statusCode,
+        message: error.message
+      })
+      return
+    }
+
     logger.error('Server error', error, {
       url: event?.path,
-      statusCode: error.statusCode
+      statusCode
     })
 
     errorTracker.captureError(error, {
@@ -19,7 +32,7 @@ export default defineNitroPlugin((nitroApp) => {
       },
       extra: {
         url: event?.path,
-        statusCode: error.statusCode || error.status || 500
+        statusCode
       }
     })
   })

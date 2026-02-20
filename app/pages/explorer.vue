@@ -33,6 +33,7 @@ import SaveModal from '@/components/SaveModal.vue'
 import { generateExplorerTitle, generateExplorerDescription } from '@/lib/utils/chartTitles'
 import { computeConfigHash, extractUrlParams } from '@/lib/shortUrl/hashConfig'
 import { selectMutuallyExclusiveAgeGroups } from '@/services/metadataService'
+import { decodeChartState, type ChartState } from '@/lib/chartState'
 
 // Auth state for conditional features
 const { isAuthenticated } = useAuth()
@@ -52,14 +53,24 @@ const state = useExplorerState()
 useDataAvailability(state)
 
 // Dynamic OG images based on current chart state
-const chartState = computed(() => ({
-  countries: state.countries.value,
-  type: state.type.value,
-  chartType: state.chartType.value,
-  isExcess: state.isExcess.value,
-  ageGroups: state.ageGroups.value,
-  chartStyle: state.chartStyle.value
-}))
+const currentRoute = useRoute()
+const chartState = computed<Partial<ChartState>>(() => {
+  const normalizedQuery: Record<string, string | string[]> = {}
+
+  for (const [key, value] of Object.entries(currentRoute.query)) {
+    if (value === undefined || value === null) continue
+    if (Array.isArray(value)) {
+      const filtered = value.filter((item): item is string => typeof item === 'string')
+      if (filtered.length > 0) {
+        normalizedQuery[key] = filtered
+      }
+      continue
+    }
+    normalizedQuery[key] = value
+  }
+
+  return decodeChartState(normalizedQuery)
+})
 const { ogImageUrl, ogTitle, ogDescription } = useChartOgImage(chartState)
 
 useSeoMeta({
