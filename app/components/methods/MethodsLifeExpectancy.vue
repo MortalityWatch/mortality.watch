@@ -34,31 +34,22 @@
       </div>
       <div class="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg mt-3 space-y-3">
         <h4 class="font-semibold text-gray-800 dark:text-gray-200">
-          Sub-yearly Life Expectancy: Raw vs Seasonally Adjusted
+          Sub-yearly Life Expectancy: Raw vs Adjusted
         </h4>
         <p class="text-gray-700 dark:text-gray-300">
           For weekly, monthly, and quarterly data, Pro users can toggle between two display modes:
         </p>
         <ul class="list-disc pl-6 space-y-2 text-gray-700 dark:text-gray-300">
           <li>
-            <strong>Raw Values:</strong> The directly calculated LE values. These show
-            apparent "seasonal" variation (e.g., lower values in winter), but this is
-            a <em>calculation artifact</em> from short-term mortality fluctuations—not
-            real LE changes. A person's expected lifespan doesn't actually vary week
+            <strong>Raw Values:</strong> The directly calculated LE values. At sub-yearly resolution, these can show apparent short-term swings driven by calculation artifacts from transient mortality fluctuations and coarse age-bin structure, not true week-to-week changes in expected lifespan. A person's expected lifespan doesn't actually vary week
             to week.
           </li>
           <li>
-            <strong>Seasonally Adjusted (STL):</strong> We apply STL decomposition
-            (Seasonal and Trend decomposition using Loess) and remove only the
-            <em>seasonal</em> component, keeping both trend and remainder. This
-            eliminates the artificial seasonal pattern while preserving the true
-            underlying life expectancy signal and any real short-term variations.
+            <strong>Adjusted (STL + Bin Correction):</strong> We apply STL decomposition (Seasonal and Trend decomposition using Loess) and remove the seasonal component while preserving trend and remainder, then apply a small age-bin correction calibrated against single-age reference life tables. This reduces discretization bias and better reflects underlying life expectancy.
           </li>
         </ul>
         <p class="text-sm text-gray-600 dark:text-gray-400 italic">
-          The adjusted values are displayed by default and are recommended for most
-          analyses. Raw values are useful for understanding the calculation artifacts
-          or for research purposes.
+          Adjusted values are displayed by default and are recommended for most analyses. Raw values remain useful for inspecting calculation artifacts or method comparisons.
         </p>
       </div>
       <p class="text-sm text-gray-600 dark:text-gray-400 italic mt-3">
