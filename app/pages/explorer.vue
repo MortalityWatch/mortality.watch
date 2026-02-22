@@ -293,6 +293,9 @@ const handleStateChange = async (
   // 3. Apply directly to refs (single tick, no reactive cascade)
   state.applyResolvedState(resolved)
 
+  // 3b. Sync userOverrides from resolved state (resolveChange may clear date overrides on chartType change)
+  state.setUserOverrides(resolved.userOverrides)
+
   // 4. Sync URL for persistence/sharing
   // Set flag to prevent useBrowserNavigation from triggering duplicate update
   startInternalUrlUpdate()
