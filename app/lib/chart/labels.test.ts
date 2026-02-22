@@ -337,6 +337,16 @@ describe('labels', () => {
 
         expect(result.ytitle).toBe('People')
       })
+
+      it('should set ytitle to % of Population when showPercentage is true for population', () => {
+        const result = getChartLabels(
+          ['USA'], 'who', ['75-84'], false, false, 'population',
+          false, false, 'lin_reg', '2015', '2019', false, 'yearly',
+          'mortality', undefined, true
+        )
+
+        expect(result.ytitle).toBe('% of Population')
+      })
     })
 
     describe('mobile formatting', () => {

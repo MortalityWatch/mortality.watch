@@ -146,8 +146,13 @@ export const getDatasets = (
     view: config.display.view ?? 'mortality'
   }
 
-  const isPopulationComposition = config.chart.type === 'population'
+  // Population percentage: normalize population counts to fractions of total
+  // Works in any view (composition, mortality, etc.) whenever showPercentage is enabled
+  const isPopulationPercentage = config.chart.type === 'population'
     && config.display.showPercentage
+
+  // Composition-specific: filter out 'all' aggregate and stack by country
+  const isPopulationComposition = isPopulationPercentage
     && config.display.view === 'composition'
     && ags.length > 1
 
@@ -156,7 +161,7 @@ export const getDatasets = (
     : ags
 
   const populationTotalsByCountry = new Map<string, number[]>()
-  if (isPopulationComposition) {
+  if (isPopulationPercentage) {
     for (const iso3c of config.context.countries) {
       const totalsFromAll = data.all?.[iso3c]?.population as (number | null | undefined)[] | undefined
       if (totalsFromAll && totalsFromAll.length > 0) {
@@ -228,7 +233,7 @@ export const getDatasets = (
               .forEach(x => sources.add(x))
           }
         }
-        const transformedData = isPopulationComposition && key === 'population'
+        const transformedData = isPopulationPercentage && key === 'population'
           ? (dsRecord.population as (number | null | undefined)[]).map((value, idx) => {
               const total = populationTotalsByCountry.get(iso3c)?.[idx] ?? 0
               if (value == null || total <= 0) return null

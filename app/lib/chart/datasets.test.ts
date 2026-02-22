@@ -358,6 +358,68 @@ describe('datasets', () => {
     })
   })
 
+  describe('getDatasets - population percentage in mortality view', () => {
+    it('should normalize population to fractions of total in mortality view when showPercentage is true', () => {
+      const config = createBaseConfig()
+      config.chart.type = 'population'
+      config.display.showPercentage = true
+      config.display.view = 'mortality'
+      config.context.countries = ['USA']
+
+      const data: Dataset = {
+        all: {
+          USA: createMockDatasetEntry({
+            population: [5000000, 5000000, 5000000] as NumberArray
+          })
+        },
+        '75-84': {
+          USA: createMockDatasetEntry({
+            population: [500000, 600000, 700000] as NumberArray
+          })
+        }
+      }
+
+      const result = getDatasets(config, data)
+
+      // Find the datasets with population data (non-empty labels)
+      const populationDatasets = result.datasets.filter(ds => ds.label && ds.label.length > 0)
+      expect(populationDatasets.length).toBeGreaterThan(0)
+
+      // Values should be fractions (0-1), not raw counts (millions)
+      for (const ds of populationDatasets) {
+        for (const val of ds.data) {
+          if (typeof val === 'number' && val !== null) {
+            expect(val).toBeLessThanOrEqual(1)
+            expect(val).toBeGreaterThanOrEqual(0)
+          }
+        }
+      }
+    })
+
+    it('should show raw counts when showPercentage is false for population', () => {
+      const config = createBaseConfig()
+      config.chart.type = 'population'
+      config.display.showPercentage = false
+      config.display.view = 'mortality'
+      config.context.countries = ['USA']
+
+      const data: Dataset = {
+        '75-84': {
+          USA: createMockDatasetEntry({
+            population: [500000, 600000, 700000] as NumberArray
+          })
+        }
+      }
+
+      const result = getDatasets(config, data)
+
+      const mainDataset = result.datasets.find(ds => ds.label && ds.label.length > 0)
+      expect(mainDataset).toBeDefined()
+      // Raw counts should be preserved (not normalized)
+      expect(mainDataset!.data[0]).toBe(500000)
+    })
+  })
+
   describe('getDatasets - cumulative transformation', () => {
     it('should transform data to cumulative when cumulative is true', () => {
       const config = createBaseConfig()
