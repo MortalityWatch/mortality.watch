@@ -169,6 +169,7 @@ describe('useExplorerDataOrchestration', () => {
       showTotal: ref(false),
       showPredictionInterval: ref(true),
       showPercentage: ref(false),
+      percentageDenominator: ref('total'),
       maximize: ref(false),
       showLabels: ref(true),
       showLogarithmic: ref(false),

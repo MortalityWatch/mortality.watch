@@ -17,6 +17,10 @@ const props = defineProps<{
   showPredictionIntervalOptionDisabled: boolean
   showMaximizeOptionDisabled: boolean
   showTotalOptionDisabled: boolean
+  showPercentageOptionDisabled: boolean
+  // Denominator mode for percentage calculations
+  percentageDenominator: string
+  showPercentageDenominatorOption: boolean
   // Visibility flags
   showPredictionIntervalOption: boolean
   showMaximizeOption: boolean
@@ -36,6 +40,7 @@ const emit = defineEmits<{
   'update:maximize': [value: boolean]
   'update:showLogarithmic': [value: boolean]
   'update:showPercentage': [value: boolean]
+  'update:percentageDenominator': [value: string]
   'update:cumulative': [value: boolean]
   'update:showTotal': [value: boolean]
   'update:leAdjusted': [value: boolean]
@@ -68,6 +73,16 @@ const showPercentageModel = computed({
   get: () => props.showPercentage,
   set: v => emit('update:showPercentage', v)
 })
+
+const percentageDenominatorModel = computed({
+  get: () => props.percentageDenominator,
+  set: v => emit('update:percentageDenominator', v)
+})
+
+const denominatorOptions = [
+  { label: '% of total population', value: 'total' },
+  { label: '% of selected age groups', value: 'selected' }
+]
 
 const cumulativeModel = computed({
   get: () => props.cumulative,
@@ -118,7 +133,24 @@ const chartPresetModel = computed({
           v-if="props.showPercentageOption"
           v-model="showPercentageModel"
           label="Percentage"
+          :disabled="props.showPercentageOptionDisabled"
+          help-content="Percentage mode is required in this view and cannot be changed."
         />
+
+        <!-- Denominator selector for composition view percentage calculations -->
+        <UiControlRow
+          v-if="props.showPercentageDenominatorOption"
+          label="Denominator"
+          help-content="Controls the denominator for percentage calculations. 'Total population' uses all age groups; 'Selected age groups' uses only the displayed groups."
+        >
+          <USelect
+            v-model="percentageDenominatorModel"
+            :items="denominatorOptions"
+            value-key="value"
+            size="sm"
+            class="flex-1"
+          />
+        </UiControlRow>
 
         <UiSwitchRow
           v-if="props.showCumulativeOption"

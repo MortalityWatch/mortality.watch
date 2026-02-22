@@ -155,19 +155,27 @@ export const getDatasets = (
     ? ags.filter(ag => ag !== 'all')
     : ags
 
+  const useSelectedDenominator = config.display.percentageDenominator === 'selected'
+
   const populationTotalsByCountry = new Map<string, number[]>()
   if (isPopulationComposition) {
     for (const iso3c of config.context.countries) {
-      const totalsFromAll = data.all?.[iso3c]?.population as (number | null | undefined)[] | undefined
-      if (totalsFromAll && totalsFromAll.length > 0) {
-        populationTotalsByCountry.set(iso3c, totalsFromAll.map(v => v ?? 0))
-        continue
+      // When denominator is 'total', prefer the 'all' aggregate (total population)
+      // When denominator is 'selected', always sum only the plotted age bands
+      if (!useSelectedDenominator) {
+        const totalsFromAll = data.all?.[iso3c]?.population as (number | null | undefined)[] | undefined
+        if (totalsFromAll && totalsFromAll.length > 0) {
+          populationTotalsByCountry.set(iso3c, totalsFromAll.map(v => v ?? 0))
+          continue
+        }
       }
 
-      // Fallback when aggregate "all" is unavailable: sum all available age-band series
+      // Sum age-band series (either as fallback for 'total' or as primary for 'selected')
       const totals: number[] = []
       for (const [ageBand, ageBandData] of Object.entries(data)) {
         if (ageBand === 'all') continue
+        // For 'selected' denominator, only include the plotted age bands
+        if (useSelectedDenominator && !ageBandsToPlot.includes(ageBand)) continue
         const series = ageBandData?.[iso3c]?.population as (number | null | undefined)[] | undefined
         if (!series) continue
         for (let i = 0; i < series.length; i++) {

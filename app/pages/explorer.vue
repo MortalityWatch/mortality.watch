@@ -468,6 +468,7 @@ const handleShowLogarithmicChanged = (v: boolean) => handleUIStateChange({ field
 
 // Excess mode options
 const handleShowPercentageChanged = (v: boolean) => handleStateChange({ field: 'showPercentage', value: v }, '_showPercentage')
+const handlePercentageDenominatorChanged = (v: string) => handleStateChange({ field: 'percentageDenominator', value: v }, '_percentageDenominator')
 const handleCumulativeChanged = (v: boolean) => handleStateChange({ field: 'cumulative', value: v }, '_cumulative')
 const handleShowTotalChanged = (v: boolean) => handleStateChange({ field: 'showTotal', value: v }, '_showTotal')
 
@@ -821,6 +822,7 @@ watch(
             @maximize-changed="handleMaximizeChanged"
             @show-logarithmic-changed="handleShowLogarithmicChanged"
             @show-percentage-changed="handleShowPercentageChanged"
+            @percentage-denominator-changed="handlePercentageDenominatorChanged"
             @cumulative-changed="handleCumulativeChanged"
             @show-total-changed="handleShowTotalChanged"
             @le-adjusted-changed="handleLeAdjustedChanged"

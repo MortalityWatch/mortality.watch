@@ -143,6 +143,7 @@ export const getFilteredChartDataFromConfig = (
   const transformConfig: DataTransformationConfig = {
     display: {
       showPercentage: config.showPercentage,
+      percentageDenominator: config.percentageDenominator,
       cumulative: config.cumulative,
       showTotal: config.showTotal,
       showCumPi: config.showCumPi,
@@ -256,6 +257,7 @@ export const getFilteredChartData = async (
     showTotal,
     showPredictionInterval,
     showPercentage,
+    percentageDenominator: 'total', // Legacy function defaults to total
     showCumPi,
     maximize,
     showLabels,

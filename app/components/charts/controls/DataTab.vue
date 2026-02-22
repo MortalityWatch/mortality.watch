@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { types, standardPopulations } from '@/model'
+import { types, chartTypes, standardPopulations } from '@/model'
 import PeriodOfTimePicker from '@/components/shared/PeriodOfTimePicker.vue'
 import type { ViewType } from '@/lib/state'
+
+/** Yearly-aggregation chart types (no weekly/monthly/quarterly) */
+const YEARLY_CHART_TYPES = new Set(['yearly', 'midyear', 'fluseason'])
 
 interface ViewOption {
   label: string
@@ -93,6 +96,19 @@ const selectedStandardPopulationModel = computed({
 const viewModel = computed({
   get: () => props.view,
   set: v => emit('update:view', v as ViewType)
+})
+
+// Filter period items by metric type constraints:
+// - LE only supports yearly (calendar-year)
+// - ASD only supports yearly aggregation types (yearly, midyear, fluseason)
+const filteredChartTypes = computed(() => {
+  if (props.selectedType === 'le') {
+    return chartTypes.filter(ct => ct.value === 'yearly')
+  }
+  if (props.selectedType === 'asd') {
+    return chartTypes.filter(ct => YEARLY_CHART_TYPES.has(ct.value))
+  }
+  return chartTypes
 })
 </script>
 
@@ -189,6 +205,7 @@ const viewModel = computed({
     <PeriodOfTimePicker
       v-model="selectedChartTypeModel"
       :is-updating="props.isUpdating"
+      :items="filteredChartTypes"
     />
 
     <UiControlRow

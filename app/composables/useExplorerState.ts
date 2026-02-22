@@ -107,6 +107,7 @@ export function useExplorerState() {
   const showPredictionInterval = ref<boolean>(getDefault('showPredictionInterval', true))
   const showLabels = ref<boolean>(getDefault('showLabels', true))
   const showPercentage = ref<boolean>(getDefault('showPercentage', false))
+  const percentageDenominator = ref<string>(getDefault('percentageDenominator', 'total'))
   const showLogarithmic = ref<boolean>(getDefault('showLogarithmic', false))
   const leAdjusted = ref<boolean>(getDefault('leAdjusted', true)) // Seasonal adjustment for LE (default: ON)
 
@@ -311,6 +312,7 @@ export function useExplorerState() {
       showPredictionInterval: showPredictionInterval.value,
       cumulative: cumulative.value,
       showPercentage: showPercentage.value,
+      percentageDenominator: percentageDenominator.value,
       showTotal: showTotal.value,
       maximize: maximize.value,
       showLogarithmic: showLogarithmic.value,
@@ -381,6 +383,7 @@ export function useExplorerState() {
       { field: 'showPredictionInterval', ref: showPredictionInterval as Ref<unknown> },
       { field: 'cumulative', ref: cumulative as Ref<unknown> },
       { field: 'showPercentage', ref: showPercentage as Ref<unknown> },
+      { field: 'percentageDenominator', ref: percentageDenominator as Ref<unknown> },
       { field: 'showTotal', ref: showTotal as Ref<unknown> },
       { field: 'maximize', ref: maximize as Ref<unknown> },
       { field: 'showLogarithmic', ref: showLogarithmic as Ref<unknown> },
@@ -446,6 +449,7 @@ export function useExplorerState() {
     showPredictionInterval,
     showLabels,
     showPercentage,
+    percentageDenominator,
     showLogarithmic,
     leAdjusted,
 

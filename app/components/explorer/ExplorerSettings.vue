@@ -30,6 +30,7 @@ const emit = defineEmits<{
   maximizeChanged: [value: boolean]
   showLogarithmicChanged: [value: boolean]
   showPercentageChanged: [value: boolean]
+  percentageDenominatorChanged: [value: string]
   cumulativeChanged: [value: boolean]
   showTotalChanged: [value: boolean]
   leAdjustedChanged: [value: boolean]
@@ -55,6 +56,7 @@ const emit = defineEmits<{
 const showLogarithmicOption = computed(() => props.state.ui.value.logarithmic?.visible ?? false)
 const showMaximizeOption = computed(() => props.state.ui.value.maximize?.visible ?? false)
 const showPercentageOption = computed(() => props.state.ui.value.percentage?.visible ?? false)
+const showPercentageOptionDisabled = computed(() => props.state.ui.value.percentage?.disabled ?? false)
 const showCumulativeOption = computed(() => props.state.ui.value.cumulative?.visible ?? false)
 const showTotalOption = computed(() => props.state.ui.value.showTotal?.visible ?? false)
 const showPredictionIntervalOption = computed(() => props.state.ui.value.predictionInterval?.visible ?? false)
@@ -123,6 +125,8 @@ const baselineSliderValue = computed(() => {
       :maximize="props.state.maximize.value"
       :show-logarithmic="props.state.showLogarithmic.value"
       :show-percentage="props.state.showPercentage.value || false"
+      :percentage-denominator="props.state.percentageDenominator.value"
+      :show-percentage-denominator-option="props.state.view.value === 'composition'"
       :cumulative="props.state.cumulative.value"
       :show-total="props.state.showTotal.value"
       :le-adjusted="props.state.leAdjusted.value"
@@ -130,6 +134,7 @@ const baselineSliderValue = computed(() => {
       :show-maximize-option="showMaximizeOption"
       :show-maximize-option-disabled="props.showMaximizeOptionDisabled"
       :show-percentage-option="showPercentageOption"
+      :show-percentage-option-disabled="showPercentageOptionDisabled"
       :show-cumulative-option="showCumulativeOption"
       :show-total-option="showTotalOption"
       :show-total-option-disabled="props.showTotalOptionDisabled"
@@ -160,6 +165,7 @@ const baselineSliderValue = computed(() => {
       @maximize-changed="emit('maximizeChanged', $event)"
       @show-logarithmic-changed="emit('showLogarithmicChanged', $event)"
       @show-percentage-changed="emit('showPercentageChanged', $event)"
+      @percentage-denominator-changed="emit('percentageDenominatorChanged', $event)"
       @cumulative-changed="emit('cumulativeChanged', $event)"
       @show-total-changed="emit('showTotalChanged', $event)"
       @le-adjusted-changed="emit('leAdjustedChanged', $event)"

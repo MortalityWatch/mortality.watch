@@ -260,6 +260,7 @@ describe('StateResolver', () => {
         showPredictionInterval: true,
         showLabels: true,
         showPercentage: false,
+        percentageDenominator: 'total',
         showLogarithmic: false,
         leAdjusted: true,
         userColors: ['#ff0000', '#00ff00'],

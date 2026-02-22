@@ -48,10 +48,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       maximize: toggleable(),
       labels: toggleable(),
       cumulative: hidden(),
-      percentage: conditional({
-        field: 'type',
-        is: 'population'
-      }),
+      percentage: hidden(),
       showTotal: hidden()
     },
 
@@ -81,6 +78,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       cumulative: false,
       showTotal: false,
       showPercentage: false,
+      percentageDenominator: 'total',
       showLogarithmic: false,
       leAdjusted: true, // Seasonal adjustment for LE (default: ON)
       maximize: false,
@@ -207,6 +205,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       // Resolved to all individual age bands when entering composition view
       ageGroups: ['all'],
       showPercentage: true,
+      percentageDenominator: 'total',
       showBaseline: false,
       showPredictionInterval: false,
       showLogarithmic: false,

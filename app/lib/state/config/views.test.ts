@@ -56,7 +56,7 @@ describe('View Configurations', () => {
 
       // Excess-specific options should be hidden in mortality view
       expect(config.ui.cumulative.visibility.type).toBe('hidden')
-      expect(config.ui.percentage.visibility.type).toBe('conditional')
+      expect(config.ui.percentage.visibility.type).toBe('hidden')
       expect(config.ui.showTotal.visibility.type).toBe('hidden')
     })
 

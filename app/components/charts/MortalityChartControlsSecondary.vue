@@ -36,6 +36,8 @@ const props = defineProps<{
   maximize: boolean
   showLogarithmic: boolean
   showPercentage?: boolean
+  percentageDenominator: string
+  showPercentageDenominatorOption: boolean
   cumulative: boolean
   showTotal: boolean
   showLogarithmicOption: boolean
@@ -47,6 +49,7 @@ const props = defineProps<{
   showTotalOptionDisabled: boolean
   showPredictionIntervalOption: boolean
   showPredictionIntervalOptionDisabled: boolean
+  showPercentageOptionDisabled: boolean
   isMatrixChartStyle: boolean
   colors: string[]
   sliderStart: string
@@ -78,6 +81,7 @@ const emit = defineEmits<{
   maximizeChanged: [value: boolean]
   showLogarithmicChanged: [value: boolean]
   showPercentageChanged: [value: boolean]
+  percentageDenominatorChanged: [value: string]
   cumulativeChanged: [value: boolean]
   showTotalChanged: [value: boolean]
   leAdjustedChanged: [value: boolean]
@@ -195,6 +199,11 @@ const showLogarithmic = computed({
 const showPercentage = computed({
   get: () => props.showPercentage || false,
   set: (v: boolean) => emit('showPercentageChanged', v)
+})
+
+const percentageDenominator = computed({
+  get: () => props.percentageDenominator,
+  set: (v: string) => emit('percentageDenominatorChanged', v)
 })
 
 const cumulative = computed({
@@ -375,10 +384,13 @@ const activeTab = ref('data')
         :show-prediction-interval-option-disabled="props.showPredictionIntervalOptionDisabled"
         :show-maximize-option-disabled="props.showMaximizeOptionDisabled"
         :show-total-option-disabled="props.showTotalOptionDisabled"
+        :show-percentage-option-disabled="props.showPercentageOptionDisabled"
         :show-prediction-interval-option="props.showPredictionIntervalOption"
         :show-maximize-option="props.showMaximizeOption"
         :show-logarithmic-option="props.showLogarithmicOption"
         :show-percentage-option="props.showPercentageOption"
+        :percentage-denominator="props.percentageDenominator"
+        :show-percentage-denominator-option="props.showPercentageDenominatorOption"
         :show-cumulative-option="props.showCumulativeOption"
         :show-total-option="props.showTotalOption"
         :show-le-adjusted-option="props.showLeAdjustedOption"
@@ -389,6 +401,7 @@ const activeTab = ref('data')
         @update:maximize="maximize = $event"
         @update:show-logarithmic="showLogarithmic = $event"
         @update:show-percentage="showPercentage = $event"
+        @update:percentage-denominator="percentageDenominator = $event"
         @update:cumulative="cumulative = $event"
         @update:show-total="showTotal = $event"
         @update:le-adjusted="leAdjusted = $event"
