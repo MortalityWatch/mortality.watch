@@ -22,6 +22,7 @@ const props = defineProps<{
   showMaximizeOption: boolean
   showLogarithmicOption: boolean
   showPercentageOption: boolean
+  showPercentageOptionDisabled: boolean
   showCumulativeOption: boolean
   showTotalOption: boolean
   showLeAdjustedOption: boolean // Show when: type=le AND sub-yearly AND Pro
@@ -118,6 +119,8 @@ const chartPresetModel = computed({
           v-if="props.showPercentageOption"
           v-model="showPercentageModel"
           label="Percentage"
+          :disabled="props.showPercentageOptionDisabled"
+          :help-content="props.showPercentageOptionDisabled ? 'Percentage mode is required for this view and cannot be changed.' : undefined"
         />
 
         <UiSwitchRow
