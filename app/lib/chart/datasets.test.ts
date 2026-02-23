@@ -367,7 +367,7 @@ describe('datasets', () => {
       config.context.countries = ['USA']
 
       const data: Dataset = {
-        all: {
+        'all': {
           USA: createMockDatasetEntry({
             population: [5000000, 5000000, 5000000] as NumberArray
           })
