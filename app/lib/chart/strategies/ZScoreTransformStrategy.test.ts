@@ -59,4 +59,100 @@ describe('ZScoreTransformStrategy', () => {
       expect(result).toBe('asmr_custom_zscore')
     })
   })
+
+  describe('getBaselineKey', () => {
+    it('should return baseline key for deaths (non-ASMR)', () => {
+      expect(strategy.getBaselineKey(false, 'deaths')).toBe('deaths_baseline')
+    })
+
+    it('should return baseline key for le_adj', () => {
+      expect(strategy.getBaselineKey(false, 'le_adj')).toBe('le_adj_baseline')
+    })
+
+    it('should return baseline key for asmr_who (ASMR)', () => {
+      expect(strategy.getBaselineKey(true, 'asmr_who')).toBe('asmr_who_baseline')
+    })
+  })
+
+  describe('getZScoreData', () => {
+    it('should return pre-calculated z-scores for standard method', () => {
+      const data = {
+        deaths: [100, 200, 300],
+        deaths_zscore: [0.5, 1.2, -0.3],
+        deaths_baseline: [150, 150, 150]
+      }
+      const result = strategy.getZScoreData('standard', data, false, 'deaths', 4)
+      expect(result).toEqual([0.5, 1.2, -0.3])
+    })
+
+    it('should return pre-calculated z-scores for ASMR standard method', () => {
+      const data = {
+        asmr_who: [50, 60, 70],
+        asmr_who_zscore: [1.0, 2.0, 3.0],
+        asmr_who_baseline: [55, 55, 55]
+      }
+      const result = strategy.getZScoreData('standard', data, true, 'asmr_who', 4)
+      expect(result).toEqual([1.0, 2.0, 3.0])
+    })
+
+    it('should fall back to standard z-scores when observed data is empty', () => {
+      const data = {
+        deaths: [] as number[],
+        deaths_zscore: [0.5, 1.2],
+        deaths_baseline: [150, 150]
+      }
+      const result = strategy.getZScoreData('variance_stabilized', data, false, 'deaths', 4)
+      expect(result).toEqual([0.5, 1.2])
+    })
+
+    it('should fall back to standard z-scores when baseline is empty', () => {
+      const data = {
+        deaths: [100, 200],
+        deaths_zscore: [0.5, 1.2],
+        deaths_baseline: [] as number[]
+      }
+      const result = strategy.getZScoreData('variance_stabilized', data, false, 'deaths', 4)
+      expect(result).toEqual([0.5, 1.2])
+    })
+
+    it('should fall back to standard z-scores for insufficient data', () => {
+      const data = {
+        deaths: [100, 200, 300],
+        deaths_zscore: [0.5, 1.2, -0.3],
+        deaths_baseline: [150, 150, 150]
+      }
+      // period=4, only 3 data points → falls back
+      const result = strategy.getZScoreData('variance_stabilized', data, false, 'deaths', 4)
+      expect(result).toEqual([0.5, 1.2, -0.3])
+    })
+
+    it('should compute variance-stabilized z-scores for sufficient positive data', () => {
+      // Generate enough data: 4 complete groups of period 4 = 16 data points
+      // Use clearly different observed vs baseline to ensure z-score variation
+      const observed: number[] = []
+      const baseline: number[] = []
+      for (let i = 0; i < 16; i++) {
+        observed.push(200 + 50 * Math.sin(i * 0.5))
+        baseline.push(100 + 5 * Math.sin(i * 0.5))
+      }
+      const data: Record<string, number[]> = {
+        deaths: observed,
+        deaths_zscore: new Array(16).fill(0), // fallback
+        deaths_baseline: baseline
+      }
+      const result = strategy.getZScoreData('variance_stabilized', data, false, 'deaths', 4)
+      expect(result.length).toBe(16)
+      // All values should be finite
+      result.forEach(v => expect(isFinite(v)).toBe(true))
+    })
+
+    it('should return empty array when no z-score data exists for standard method', () => {
+      const data = {
+        deaths: [100, 200],
+        deaths_baseline: [150, 150]
+      }
+      const result = strategy.getZScoreData('standard', data, false, 'deaths', 4)
+      expect(result).toEqual([])
+    })
+  })
 })

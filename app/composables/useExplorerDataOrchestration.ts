@@ -522,6 +522,7 @@ export function useExplorerDataOrchestration(
     showPercentage: state.showPercentage.value,
     showLogarithmic: state.showLogarithmic.value,
     leAdjusted: state.leAdjusted.value,
+    zscoreMethod: state.zscoreMethod.value,
     userColors: state.userColors.value,
     decimals: state.decimals.value
   })

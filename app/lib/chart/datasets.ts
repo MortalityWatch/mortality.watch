@@ -143,7 +143,9 @@ export const getDatasets = (
     showCumPi: config.display.showCumPi,
     isAsmrType: config.chart.isAsmrType,
     isASD: config.chart.isASD,
-    view: config.display.view ?? 'mortality'
+    view: config.display.view ?? 'mortality',
+    zscoreMethod: config.display.zscoreMethod,
+    chartType: config.chart.chartType
   }
 
   const isPopulationComposition = config.chart.type === 'population'

@@ -60,6 +60,7 @@ const props = defineProps<{
   showYAxisTitle: boolean
   decimals: string
   leAdjusted: boolean
+  zscoreMethod: string
   showLeAdjustedOption: boolean
 }>()
 
@@ -81,6 +82,7 @@ const emit = defineEmits<{
   cumulativeChanged: [value: boolean]
   showTotalChanged: [value: boolean]
   leAdjustedChanged: [value: boolean]
+  zscoreMethodChanged: [value: string]
   userColorsChanged: [value: string[]]
   sliderStartChanged: [value: string]
   chartPresetChanged: [value: string]
@@ -165,6 +167,11 @@ const selectedBaselineMethod = computed({
 const view = computed({
   get: () => props.view,
   set: (v: ViewType) => emit('viewChanged', v)
+})
+
+const zscoreMethod = computed({
+  get: () => props.zscoreMethod,
+  set: (v: string) => emit('zscoreMethodChanged', v)
 })
 
 const showBaseline = computed({
@@ -349,6 +356,7 @@ const activeTab = ref('data')
         :selected-type="selectedType"
         :selected-chart-type="selectedChartType"
         :selected-standard-population="selectedStandardPopulation"
+        :selected-zscore-method="zscoreMethod"
         :view="props.view"
         :is-updating="props.isUpdating"
         :is-population-type="props.isPopulationType"
@@ -356,6 +364,7 @@ const activeTab = ref('data')
         @update:selected-type="selectedType = $event"
         @update:selected-chart-type="selectedChartType = $event"
         @update:selected-standard-population="selectedStandardPopulation = $event"
+        @update:selected-zscore-method="zscoreMethod = $event"
         @update:view="view = $event"
       />
 
