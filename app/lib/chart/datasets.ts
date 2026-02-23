@@ -138,6 +138,7 @@ export const getDatasets = (
   // Create transformation config for pipeline
   const transformConfig = {
     showPercentage: config.display.showPercentage,
+    percentageDenominator: config.display.percentageDenominator ?? 'total',
     cumulative: config.display.cumulative,
     showTotal: config.display.showTotal,
     showCumPi: config.display.showCumPi,

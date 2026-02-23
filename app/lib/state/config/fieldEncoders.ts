@@ -51,6 +51,7 @@ export const stateFieldEncoders = {
   showPredictionInterval: { key: 'pi', encode: encodeBool, decode: decodeBool },
   showLabels: { key: 'sl', encode: encodeBool, decode: decodeBool },
   showPercentage: { key: 'p', encode: encodeBool, decode: decodeBool },
+  percentageDenominator: { key: 'pd' },
   showLogarithmic: { key: 'lg', encode: encodeBool, decode: decodeBool },
   leAdjusted: { key: 'la', encode: encodeBool, decode: decodeBool },
   userColors: { key: 'uc', decode: decodeArray },

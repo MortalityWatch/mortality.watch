@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+const DENOMINATOR_OPTIONS = [
+  { label: '% of total population', value: 'total' },
+  { label: '% of selected age groups', value: 'selected' }
+]
+
 const props = defineProps<{
   // Boolean switches
   showBaseline: boolean
@@ -8,6 +13,7 @@ const props = defineProps<{
   maximize: boolean
   showLogarithmic: boolean
   showPercentage: boolean
+  percentageDenominator: string
   cumulative: boolean
   showTotal: boolean
   leAdjusted: boolean
@@ -22,6 +28,7 @@ const props = defineProps<{
   showMaximizeOption: boolean
   showLogarithmicOption: boolean
   showPercentageOption: boolean
+  showDenominatorModeOption: boolean
   showCumulativeOption: boolean
   showTotalOption: boolean
   showLeAdjustedOption: boolean // Show when: type=le AND sub-yearly AND Pro
@@ -36,6 +43,7 @@ const emit = defineEmits<{
   'update:maximize': [value: boolean]
   'update:showLogarithmic': [value: boolean]
   'update:showPercentage': [value: boolean]
+  'update:percentageDenominator': [value: string]
   'update:cumulative': [value: boolean]
   'update:showTotal': [value: boolean]
   'update:leAdjusted': [value: boolean]
@@ -67,6 +75,11 @@ const showLogarithmicModel = computed({
 const showPercentageModel = computed({
   get: () => props.showPercentage,
   set: v => emit('update:showPercentage', v)
+})
+
+const percentageDenominatorModel = computed({
+  get: () => props.percentageDenominator,
+  set: v => emit('update:percentageDenominator', v)
 })
 
 const cumulativeModel = computed({
@@ -119,6 +132,22 @@ const chartPresetModel = computed({
           v-model="showPercentageModel"
           label="Percentage"
         />
+
+        <!-- Denominator Mode Selector -->
+        <UiControlRow
+          v-if="props.showDenominatorModeOption"
+          label="Denominator"
+        >
+          <USelect
+            v-model="percentageDenominatorModel"
+            :items="DENOMINATOR_OPTIONS"
+            value-key="value"
+            size="sm"
+          />
+          <template #help>
+            Controls whether percentages are calculated relative to the total population or only the selected age groups.
+          </template>
+        </UiControlRow>
 
         <UiSwitchRow
           v-if="props.showCumulativeOption"

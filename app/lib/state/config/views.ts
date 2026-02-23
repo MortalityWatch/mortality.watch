@@ -52,6 +52,12 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
         field: 'type',
         is: 'population'
       }),
+      denominatorMode: conditional({
+        and: [
+          { field: 'type', is: 'population' },
+          { field: 'showPercentage', is: true }
+        ]
+      }),
       showTotal: hidden()
     },
 
@@ -81,6 +87,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       cumulative: false,
       showTotal: false,
       showPercentage: false,
+      percentageDenominator: 'total',
       showLogarithmic: false,
       leAdjusted: true, // Seasonal adjustment for LE (default: ON)
       maximize: false,
@@ -134,6 +141,10 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       labels: toggleable(),
       cumulative: toggleable(),
       percentage: toggleable(),
+      denominatorMode: conditional({
+        field: 'showPercentage',
+        is: true
+      }),
       showTotal: conditional({
         and: [
           { field: 'chartStyle', is: 'bar' },
@@ -198,6 +209,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       labels: toggleable(),
       cumulative: hidden(),
       percentage: required(true),
+      denominatorMode: hidden(),
       showTotal: hidden()
     },
 
@@ -256,6 +268,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       labels: toggleable(),
       cumulative: hidden(), // Not available in z-score view
       percentage: hidden(),
+      denominatorMode: hidden(),
       showTotal: hidden()
     },
 

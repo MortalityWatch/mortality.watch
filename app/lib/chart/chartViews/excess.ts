@@ -64,6 +64,11 @@ export const EXCESS_VIEW: ChartViewConfig = {
       parts.push('95% Prediction Interval')
     }
 
+    // Denominator mode for percentage display
+    if (ctx.percentageDenominator === 'selected') {
+      parts.push('% of selected age groups')
+    }
+
     return parts.filter(Boolean).join(' · ') || null
   },
 

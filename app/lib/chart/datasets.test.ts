@@ -33,6 +33,7 @@ describe('datasets', () => {
   const createBaseConfig = (): DataTransformationConfig => ({
     display: {
       showPercentage: false,
+      percentageDenominator: 'total',
       cumulative: false,
       showTotal: false,
       showCumPi: false,

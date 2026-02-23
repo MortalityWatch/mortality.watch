@@ -788,6 +788,7 @@ export class StateResolver {
       showPredictionInterval: (resolvedState.showPredictionInterval ?? current.showPredictionInterval ?? true) as boolean,
       showLabels: (resolvedState.showLabels ?? current.showLabels ?? true) as boolean,
       showPercentage: (resolvedState.showPercentage ?? current.showPercentage ?? false) as boolean,
+      percentageDenominator: (resolvedState.percentageDenominator ?? current.percentageDenominator ?? 'total') as string,
       showLogarithmic: (resolvedState.showLogarithmic ?? current.showLogarithmic ?? false) as boolean,
       leAdjusted: (resolvedState.leAdjusted ?? current.leAdjusted ?? true) as boolean,
       userColors: (resolvedState.userColors ?? current.userColors) as string[] | undefined,
