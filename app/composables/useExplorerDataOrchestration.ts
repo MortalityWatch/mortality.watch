@@ -562,6 +562,12 @@ export function useExplorerDataOrchestration(
       return { datasets: [], labels: [] } as unknown as MortalityChartData
     }
 
+    // Capture snapshot BEFORE any async operations to prevent stale state.
+    // If we create the snapshot after an await, other state changes may have
+    // been applied to refs in the meantime, causing a mismatch between the
+    // snapshot (new state) and allChartData (old data). (#508)
+    const stateSnapshot = snapshot ?? createStateSnapshot()
+
     // Clear short URL cache to ensure QR code reflects current state after view changes
     // This fixes the issue where cached short URLs contain stale parameters (e.g., missing e=1 for excess view)
     currentShortUrl.value = null
@@ -583,9 +589,6 @@ export function useExplorerDataOrchestration(
     if (!shortUrl) {
       currentShortUrl.value = null
     }
-
-    // Use provided snapshot or create one from current refs
-    const stateSnapshot = snapshot ?? createStateSnapshot()
 
     // Build filter config from snapshot (uses currentShortUrl)
     const config = buildFilterConfig(stateSnapshot)

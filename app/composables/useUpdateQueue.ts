@@ -12,6 +12,8 @@
 
 import { ref, computed } from 'vue'
 import {
+  getFieldUpdateType,
+  type FieldUpdateType,
   requiresDataDownload,
   requiresDatasetUpdate,
   requiresFilterUpdate
@@ -60,16 +62,41 @@ export function useUpdateQueue(options: UpdateQueueOptions) {
   }
 
   /**
+   * Priority ranking for update types.
+   * Higher number = more expensive operation that subsumes cheaper ones.
+   */
+  const UPDATE_TYPE_PRIORITY: Record<FieldUpdateType, number> = {
+    none: 0,
+    filter: 1,
+    update: 2,
+    download: 3
+  }
+
+  /**
    * Queue an update request.
    * If an update is already in progress, the new request is queued.
-   * Only the most recent pending request is kept (latest wins).
+   * When merging pending requests, the one requiring the most expensive
+   * data operation wins. This prevents a cheap filter-only change from
+   * overwriting a pending dataset recalculation. (#508)
    *
    * @param key - The field change key (e.g., '_countries', 'dateRange')
    */
   const queueUpdate = async (key: string) => {
-    // If already updating, queue this update
+    // If already updating, queue this update (most expensive wins)
     if (isCurrentlyUpdating.value) {
-      pendingUpdateKey.value = key
+      if (pendingUpdateKey.value) {
+        const currentState = getCurrentState?.()
+        const pendingType = getFieldUpdateType(pendingUpdateKey.value, currentState)
+        const newType = getFieldUpdateType(key, currentState)
+        const pendingPriority = UPDATE_TYPE_PRIORITY[pendingType] ?? 0
+        const newPriority = UPDATE_TYPE_PRIORITY[newType] ?? 0
+        // Keep the key that requires the most expensive operation
+        if (newPriority > pendingPriority) {
+          pendingUpdateKey.value = key
+        }
+      } else {
+        pendingUpdateKey.value = key
+      }
       return
     }
 

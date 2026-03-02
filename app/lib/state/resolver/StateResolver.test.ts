@@ -389,4 +389,140 @@ describe('StateResolver', () => {
       expect(resolved.state.showPercentage).toBe(true) // excess default
     })
   })
+
+  // ============================================================================
+  // CHART STYLE + METHOD TRANSITION TESTS (#508)
+  // ============================================================================
+
+  describe('chart style + method transitions (#508)', () => {
+    const baseState = {
+      view: 'mortality',
+      countries: ['USA', 'SWE'],
+      type: 'cmr',
+      chartType: 'yearly',
+      chartStyle: 'bar',
+      ageGroups: ['all'],
+      standardPopulation: 'who',
+      showBaseline: true,
+      baselineMethod: 'lin_reg',
+      showPredictionInterval: true,
+      showPercentage: false,
+      cumulative: false,
+      showTotal: false,
+      maximize: false,
+      showLogarithmic: false,
+      showLabels: true,
+      isExcess: false,
+      isZScore: false
+    }
+
+    it('should preserve baselineMethod when switching chartStyle from bar to line', () => {
+      const userOverrides = new Set(['baselineMethod'])
+      const resolved = StateResolver.resolveChange(
+        { field: 'chartStyle', value: 'line', source: 'user' },
+        { ...baseState },
+        userOverrides
+      )
+
+      expect(resolved.state.chartStyle).toBe('line')
+      expect(resolved.state.baselineMethod).toBe('lin_reg')
+    })
+
+    it('should preserve chartStyle when switching baselineMethod', () => {
+      const userOverrides = new Set(['chartStyle'])
+      const resolved = StateResolver.resolveChange(
+        { field: 'baselineMethod', value: 'mean', source: 'user' },
+        { ...baseState },
+        userOverrides
+      )
+
+      expect(resolved.state.baselineMethod).toBe('mean')
+      expect(resolved.state.chartStyle).toBe('bar')
+    })
+
+    it('should produce deterministic state for sequential style then method changes', () => {
+      const userOverrides = new Set<string>()
+
+      // First change: bar → line
+      const afterStyle = StateResolver.resolveChange(
+        { field: 'chartStyle', value: 'line', source: 'user' },
+        { ...baseState },
+        userOverrides
+      )
+
+      // Second change: lin_reg → mean (on top of the style-changed state)
+      const afterMethod = StateResolver.resolveChange(
+        { field: 'baselineMethod', value: 'mean', source: 'user' },
+        afterStyle.state,
+        afterStyle.userOverrides
+      )
+
+      expect(afterMethod.state.chartStyle).toBe('line')
+      expect(afterMethod.state.baselineMethod).toBe('mean')
+    })
+
+    it('should produce same result regardless of change order', () => {
+      const userOverrides = new Set<string>()
+
+      // Order A: style first, then method
+      const a1 = StateResolver.resolveChange(
+        { field: 'chartStyle', value: 'line', source: 'user' },
+        { ...baseState },
+        new Set(userOverrides)
+      )
+      const orderA = StateResolver.resolveChange(
+        { field: 'baselineMethod', value: 'mean', source: 'user' },
+        a1.state,
+        a1.userOverrides
+      )
+
+      // Order B: method first, then style
+      const b1 = StateResolver.resolveChange(
+        { field: 'baselineMethod', value: 'mean', source: 'user' },
+        { ...baseState },
+        new Set(userOverrides)
+      )
+      const orderB = StateResolver.resolveChange(
+        { field: 'chartStyle', value: 'line', source: 'user' },
+        b1.state,
+        b1.userOverrides
+      )
+
+      // Both orders should produce the same final state
+      expect(orderA.state.chartStyle).toBe(orderB.state.chartStyle)
+      expect(orderA.state.baselineMethod).toBe(orderB.state.baselineMethod)
+      expect(orderA.state.showBaseline).toBe(orderB.state.showBaseline)
+      expect(orderA.state.showPredictionInterval).toBe(orderB.state.showPredictionInterval)
+    })
+
+    it('should not leak stale state across view changes with method set', () => {
+      const stateWithMethod = {
+        ...baseState,
+        baselineMethod: 'lin_reg',
+        chartStyle: 'bar'
+      }
+      const userOverrides = new Set(['baselineMethod'])
+
+      // Switch to excess view
+      const excessResolved = StateResolver.resolveViewChange(
+        'excess',
+        stateWithMethod,
+        userOverrides
+      )
+
+      // baselineMethod should be preserved (user override), chartStyle should be view default
+      expect(excessResolved.state.baselineMethod).toBe('lin_reg')
+      expect(excessResolved.state.chartStyle).toBe('bar') // excess default
+
+      // Switch back to mortality
+      const mortalityResolved = StateResolver.resolveViewChange(
+        'mortality',
+        excessResolved.state,
+        excessResolved.userOverrides
+      )
+
+      // baselineMethod should still be preserved
+      expect(mortalityResolved.state.baselineMethod).toBe('lin_reg')
+    })
+  })
 })
