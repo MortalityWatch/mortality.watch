@@ -4,6 +4,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { computeUIState } from './uiStateComputer'
+import { VIEWS } from '../config/views'
 import type { ViewConfig, UIElement } from './viewTypes'
 
 // Helper to create a minimal valid ViewConfig for testing
@@ -135,6 +136,18 @@ describe('uiStateComputer', () => {
       // Neither condition met
       const resultLine = computeUIState(viewConfig, { chartStyle: 'line' })
       expect(resultLine.percentage).toEqual({ visible: false, disabled: true })
+    })
+
+    it('marks percentage as visible but disabled in composition view (issue #497)', () => {
+      const result = computeUIState(VIEWS.composition, {})
+
+      expect(result.percentage).toEqual({ visible: true, disabled: true })
+    })
+
+    it('marks percentage as visible and editable in excess view', () => {
+      const result = computeUIState(VIEWS.excess, {})
+
+      expect(result.percentage).toEqual({ visible: true, disabled: false })
     })
 
     it('handles multiple UI fields', () => {

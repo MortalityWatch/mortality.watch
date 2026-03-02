@@ -55,6 +55,7 @@ const emit = defineEmits<{
 const showLogarithmicOption = computed(() => props.state.ui.value.logarithmic?.visible ?? false)
 const showMaximizeOption = computed(() => props.state.ui.value.maximize?.visible ?? false)
 const showPercentageOption = computed(() => props.state.ui.value.percentage?.visible ?? false)
+const showPercentageOptionDisabled = computed(() => props.state.ui.value.percentage?.disabled ?? false)
 const showCumulativeOption = computed(() => props.state.ui.value.cumulative?.visible ?? false)
 const showTotalOption = computed(() => props.state.ui.value.showTotal?.visible ?? false)
 const showPredictionIntervalOption = computed(() => props.state.ui.value.predictionInterval?.visible ?? false)
@@ -130,6 +131,7 @@ const baselineSliderValue = computed(() => {
       :show-maximize-option="showMaximizeOption"
       :show-maximize-option-disabled="props.showMaximizeOptionDisabled"
       :show-percentage-option="showPercentageOption"
+      :show-percentage-option-disabled="showPercentageOptionDisabled"
       :show-cumulative-option="showCumulativeOption"
       :show-total-option="showTotalOption"
       :show-total-option-disabled="props.showTotalOptionDisabled"

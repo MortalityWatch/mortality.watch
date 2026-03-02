@@ -42,6 +42,7 @@ const props = defineProps<{
   showMaximizeOption: boolean
   showMaximizeOptionDisabled: boolean
   showPercentageOption: boolean
+  showPercentageOptionDisabled: boolean
   showCumulativeOption: boolean
   showTotalOption: boolean
   showTotalOptionDisabled: boolean
@@ -379,6 +380,7 @@ const activeTab = ref('data')
         :show-maximize-option="props.showMaximizeOption"
         :show-logarithmic-option="props.showLogarithmicOption"
         :show-percentage-option="props.showPercentageOption"
+        :show-percentage-option-disabled="props.showPercentageOptionDisabled"
         :show-cumulative-option="props.showCumulativeOption"
         :show-total-option="props.showTotalOption"
         :show-le-adjusted-option="props.showLeAdjustedOption"
