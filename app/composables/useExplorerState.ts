@@ -99,6 +99,7 @@ export function useExplorerState() {
   const baselineDateTo = ref<string | undefined>(mortalityDefaults.baselineDateTo)
   const showBaseline = ref<boolean>(getDefault('showBaseline', true))
   const baselineMethod = ref<string>(getDefault('baselineMethod', 'mean'))
+  const zscoreMethod = ref<string>(getDefault('zscoreMethod', 'variance_stabilized'))
 
   // Display Options
   const cumulative = ref<boolean>(getDefault('cumulative', false))
@@ -317,6 +318,7 @@ export function useExplorerState() {
       showLabels: showLabels.value,
       leAdjusted: leAdjusted.value,
       baselineMethod: baselineMethod.value,
+      zscoreMethod: zscoreMethod.value,
       baselineDateFrom: baselineDateFrom.value,
       baselineDateTo: baselineDateTo.value,
       dateFrom: dateFrom.value,
@@ -387,6 +389,7 @@ export function useExplorerState() {
       { field: 'showLabels', ref: showLabels as Ref<unknown> },
       { field: 'leAdjusted', ref: leAdjusted as Ref<unknown> },
       { field: 'baselineMethod', ref: baselineMethod as Ref<unknown> },
+      { field: 'zscoreMethod', ref: zscoreMethod as Ref<unknown> },
       { field: 'sliderStart', ref: sliderStart as Ref<unknown> },
       { field: 'decimals', ref: decimals as Ref<unknown> },
       { field: 'showLogo', ref: showLogo as Ref<unknown> },
@@ -438,6 +441,7 @@ export function useExplorerState() {
     baselineDateTo,
     showBaseline,
     baselineMethod,
+    zscoreMethod,
 
     // Display options
     cumulative,

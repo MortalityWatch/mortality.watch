@@ -121,6 +121,7 @@ export interface ExplorerStateValues {
   chartPreset: string
   darkMode: boolean
   hideSteepDrop: boolean
+  zscoreMethod?: string
   zScoreThreshold?: number
   significanceLevel?: number
 }

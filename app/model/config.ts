@@ -62,6 +62,14 @@ export const baselineMethods: ListType[] = [
   { name: 'Exponential Smoothing (ETS)', value: 'exp' }
 ]
 
+export const zscoreMethods: ListType[] = [
+  { name: 'Variance-stabilized z-score', value: 'variance_stabilized' },
+  { name: 'Standard z-score', value: 'standard' }
+]
+
+export const zscoreMethodItems = zscoreMethods
+  .map(x => ({ label: x.name, name: x.name, value: x.value }))
+
 export const decimalPrecisions: ListType[] = [
   { name: 'Auto', value: 'auto' },
   { name: '0', value: '0' },

@@ -12,6 +12,7 @@ import {
 import { getCamelCase } from '@/utils'
 import { isBl, isPredictionIntervalKey } from './predicates'
 import { DataTransformationPipeline } from './strategies/DataTransformationPipeline'
+import type { ZScoreMethod } from './strategies/ZScoreTransformStrategy'
 import { DATA_CONFIG } from '@/lib/config/constants'
 
 const SUBREGION_SEPERATOR = DATA_CONFIG.SUBREGION_SEPARATOR
@@ -135,6 +136,12 @@ export const getDatasets = (
   const sources = new Set<string>()
   const ags = Object.keys(data)
 
+  const isValidZScoreMethod = config.display.zscoreMethod === 'standard' || config.display.zscoreMethod === 'variance_stabilized'
+
+  const zscoreMethod: ZScoreMethod | undefined = isValidZScoreMethod
+    ? (config.display.zscoreMethod as ZScoreMethod)
+    : undefined
+
   // Create transformation config for pipeline
   const transformConfig = {
     showPercentage: config.display.showPercentage,
@@ -143,7 +150,9 @@ export const getDatasets = (
     showCumPi: config.display.showCumPi,
     isAsmrType: config.chart.isAsmrType,
     isASD: config.chart.isASD,
-    view: config.display.view ?? 'mortality'
+    view: config.display.view ?? 'mortality',
+    zscoreMethod,
+    chartType: config.chart.chartType
   }
 
   const isPopulationComposition = config.chart.type === 'population'

@@ -474,6 +474,9 @@ const handleShowTotalChanged = (v: boolean) => handleStateChange({ field: 'showT
 // Life expectancy seasonal adjustment
 const handleLeAdjustedChanged = (v: boolean) => handleStateChange({ field: 'leAdjusted', value: v }, '_leAdjusted')
 
+// Z-score method
+const handleZscoreMethodChanged = (v: string) => handleStateChange({ field: 'zscoreMethod', value: v }, '_zscoreMethod')
+
 // Colors
 const handleUserColorsChanged = (v: string[] | undefined) => handleStateChange({ field: 'userColors', value: v }, '_userColors')
 
@@ -824,6 +827,7 @@ watch(
             @cumulative-changed="handleCumulativeChanged"
             @show-total-changed="handleShowTotalChanged"
             @le-adjusted-changed="handleLeAdjustedChanged"
+            @zscore-method-changed="handleZscoreMethodChanged"
             @slider-start-changed="handleSliderStartChanged"
             @user-colors-changed="handleUserColorsChanged"
             @chart-preset-changed="handleChartPresetChanged"

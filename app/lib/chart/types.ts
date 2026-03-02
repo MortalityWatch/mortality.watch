@@ -20,6 +20,7 @@ export interface DataTransformationConfig {
     showPredictionInterval: boolean
     view: string
     leAdjusted: boolean
+    zscoreMethod?: string
   }
 
   /** Chart configuration */
@@ -92,6 +93,7 @@ export interface ChartStateSnapshot {
   showPercentage: boolean
   showLogarithmic: boolean
   leAdjusted: boolean // LE seasonal adjustment
+  zscoreMethod?: string // Z-score calculation method
 
   // Chart appearance
   userColors: string[] | undefined
@@ -146,6 +148,7 @@ export interface ChartFilterConfig {
   showLabels: boolean
   showLogarithmic: boolean
   leAdjusted: boolean // LE seasonal adjustment
+  zscoreMethod?: string // Z-score calculation method
 
   // Visual
   colors: string[]
