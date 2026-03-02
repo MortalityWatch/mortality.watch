@@ -191,8 +191,7 @@
               Life Expectancy Tracking
             </h3>
             <p class="text-gray-600 dark:text-gray-400 text-sm">
-              Period life expectancy at birth and by age, with seasonal
-              adjustments for accurate weekly and monthly trends
+              Period life expectancy at birth and by age, with adjusted (STL + bin-correction) values for more reliable weekly and monthly trends
             </p>
           </div>
           <div class="text-center">
