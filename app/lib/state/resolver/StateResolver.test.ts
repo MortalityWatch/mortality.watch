@@ -292,6 +292,158 @@ describe('StateResolver', () => {
     })
   })
 
+  describe('resolveChange - chartType switch clears dates (#498)', () => {
+    it('should clear date fields when chartType changes from yearly to fluseason', () => {
+      const currentState = {
+        view: 'mortality',
+        countries: ['USA'],
+        type: 'asmr',
+        chartType: 'yearly',
+        chartStyle: 'line',
+        dateFrom: '2015',
+        dateTo: '2024',
+        baselineDateFrom: '2017',
+        baselineDateTo: '2019',
+        showBaseline: true,
+        showPredictionInterval: true,
+        ageGroups: ['all']
+      }
+      const userOverrides = new Set(['chartType', 'dateFrom', 'dateTo', 'baselineDateFrom', 'baselineDateTo'])
+
+      const resolved = StateResolver.resolveChange(
+        { field: 'chartType', value: 'fluseason', source: 'user' },
+        currentState,
+        userOverrides
+      )
+
+      // Date fields should be cleared (old yearly format invalid for fluseason)
+      expect(resolved.state.dateFrom).toBeUndefined()
+      expect(resolved.state.dateTo).toBeUndefined()
+      expect(resolved.state.baselineDateFrom).toBeUndefined()
+      expect(resolved.state.baselineDateTo).toBeUndefined()
+      // chartType should be updated
+      expect(resolved.state.chartType).toBe('fluseason')
+      // Date fields should be removed from user overrides
+      expect(resolved.userOverrides.has('dateFrom')).toBe(false)
+      expect(resolved.userOverrides.has('dateTo')).toBe(false)
+      expect(resolved.userOverrides.has('baselineDateFrom')).toBe(false)
+      expect(resolved.userOverrides.has('baselineDateTo')).toBe(false)
+    })
+
+    it('should clear date fields when chartType changes from fluseason to yearly', () => {
+      const currentState = {
+        view: 'mortality',
+        countries: ['USA'],
+        type: 'asmr',
+        chartType: 'fluseason',
+        chartStyle: 'line',
+        dateFrom: '2014/15',
+        dateTo: '2023/24',
+        showBaseline: true,
+        showPredictionInterval: true,
+        ageGroups: ['all']
+      }
+      const userOverrides = new Set(['dateFrom', 'dateTo'])
+
+      const resolved = StateResolver.resolveChange(
+        { field: 'chartType', value: 'yearly', source: 'user' },
+        currentState,
+        userOverrides
+      )
+
+      expect(resolved.state.dateFrom).toBeUndefined()
+      expect(resolved.state.dateTo).toBeUndefined()
+      expect(resolved.state.chartType).toBe('yearly')
+      expect(resolved.userOverrides.has('dateFrom')).toBe(false)
+      expect(resolved.userOverrides.has('dateTo')).toBe(false)
+    })
+
+    it('should NOT clear dates when chartType does not change', () => {
+      const currentState = {
+        view: 'mortality',
+        countries: ['USA'],
+        type: 'asmr',
+        chartType: 'fluseason',
+        chartStyle: 'line',
+        dateFrom: '2014/15',
+        dateTo: '2023/24',
+        showBaseline: true,
+        showPredictionInterval: true,
+        ageGroups: ['all']
+      }
+      const userOverrides = new Set(['dateFrom', 'dateTo'])
+
+      // Change a non-chartType field
+      const resolved = StateResolver.resolveChange(
+        { field: 'type', value: 'deaths', source: 'user' },
+        currentState,
+        userOverrides
+      )
+
+      expect(resolved.state.dateFrom).toBe('2014/15')
+      expect(resolved.state.dateTo).toBe('2023/24')
+      expect(resolved.userOverrides.has('dateFrom')).toBe(true)
+      expect(resolved.userOverrides.has('dateTo')).toBe(true)
+    })
+
+    it('should handle undefined dates when chartType changes', () => {
+      const currentState = {
+        view: 'mortality',
+        countries: ['USA'],
+        type: 'asmr',
+        chartType: 'yearly',
+        chartStyle: 'line',
+        dateFrom: undefined,
+        dateTo: undefined,
+        showBaseline: true,
+        showPredictionInterval: true,
+        ageGroups: ['all']
+      }
+      const userOverrides = new Set<string>()
+
+      const resolved = StateResolver.resolveChange(
+        { field: 'chartType', value: 'fluseason', source: 'user' },
+        currentState,
+        userOverrides
+      )
+
+      // Dates were already undefined, should still be undefined
+      expect(resolved.state.dateFrom).toBeUndefined()
+      expect(resolved.state.dateTo).toBeUndefined()
+      expect(resolved.state.chartType).toBe('fluseason')
+    })
+
+    it('should log date clearing as constraint changes', () => {
+      const currentState = {
+        view: 'mortality',
+        countries: ['USA'],
+        type: 'asmr',
+        chartType: 'yearly',
+        chartStyle: 'line',
+        dateFrom: '2015',
+        dateTo: '2024',
+        showBaseline: true,
+        showPredictionInterval: true,
+        ageGroups: ['all']
+      }
+      const userOverrides = new Set(['dateFrom', 'dateTo'])
+
+      const resolved = StateResolver.resolveChange(
+        { field: 'chartType', value: 'fluseason', source: 'user' },
+        currentState,
+        userOverrides
+      )
+
+      // Should have logged the date clearing
+      const dateFromChange = resolved.log.changes.find(
+        c => c.field === 'dateFrom' && c.priority === 'constraint'
+      )
+      expect(dateFromChange).toBeDefined()
+      expect(dateFromChange!.oldValue).toBe('2015')
+      expect(dateFromChange!.newValue).toBeUndefined()
+    })
+  })
+
   describe('resolveViewChange', () => {
     it('should preserve user-set dates when switching to excess view', () => {
       const currentState = {
