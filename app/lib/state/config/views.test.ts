@@ -270,6 +270,36 @@ describe('View Configurations', () => {
     })
   })
 
+  describe('Denominator Mode', () => {
+    it('mortality view has denominatorMode conditional on population + showPercentage', () => {
+      const config = VIEWS.mortality
+      expect(config.ui.denominatorMode).toBeDefined()
+      expect(config.ui.denominatorMode!.visibility.type).toBe('conditional')
+    })
+
+    it('excess view has denominatorMode conditional on showPercentage', () => {
+      const config = VIEWS.excess
+      expect(config.ui.denominatorMode).toBeDefined()
+      expect(config.ui.denominatorMode!.visibility.type).toBe('conditional')
+    })
+
+    it('composition view hides denominatorMode', () => {
+      const config = VIEWS.composition
+      expect(config.ui.denominatorMode).toBeDefined()
+      expect(config.ui.denominatorMode!.visibility.type).toBe('hidden')
+    })
+
+    it('zscore view hides denominatorMode', () => {
+      const config = VIEWS.zscore
+      expect(config.ui.denominatorMode).toBeDefined()
+      expect(config.ui.denominatorMode!.visibility.type).toBe('hidden')
+    })
+
+    it('mortality defaults include percentageDenominator=total', () => {
+      expect(VIEWS.mortality.defaults.percentageDenominator).toBe('total')
+    })
+  })
+
   describe('View Compatibility', () => {
     it('each view has unique URL param', () => {
       const urlParams = Object.values(VIEWS)

@@ -520,6 +520,7 @@ export function useExplorerDataOrchestration(
     showPredictionInterval: state.showPredictionInterval.value,
     showLabels: state.showLabels.value,
     showPercentage: state.showPercentage.value,
+    percentageDenominator: state.percentageDenominator.value,
     showLogarithmic: state.showLogarithmic.value,
     leAdjusted: state.leAdjusted.value,
     userColors: state.userColors.value,

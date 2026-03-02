@@ -29,6 +29,9 @@ export interface ChartContext {
   baselineDateFrom: string
   baselineDateTo: string
 
+  // Denominator mode for percentages
+  percentageDenominator?: string
+
   // View
   view: ViewType
 }

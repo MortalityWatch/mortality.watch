@@ -394,4 +394,22 @@ describe('Field Update Strategy', () => {
       expect(requiresFilterUpdate('maximize')).toBe(false)
     })
   })
+
+  describe('percentageDenominator field', () => {
+    it('should be a filter update type', () => {
+      expect(getFieldUpdateType('percentageDenominator')).toBe('filter')
+    })
+
+    it('should require filter update', () => {
+      expect(requiresFilterUpdate('percentageDenominator')).toBe(true)
+    })
+
+    it('should not require data download', () => {
+      expect(requiresDataDownload('percentageDenominator')).toBe(false)
+    })
+
+    it('should not require dataset update', () => {
+      expect(requiresDatasetUpdate('percentageDenominator')).toBe(false)
+    })
+  })
 })
