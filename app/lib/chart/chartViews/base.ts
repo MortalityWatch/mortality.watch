@@ -87,7 +87,7 @@ export const BASE_VIEW: CompleteChartViewConfig = {
   yAxisLabel: (ctx) => {
     switch (ctx.type) {
       case 'population':
-        return 'People'
+        return ctx.showPercentage ? '% of Population' : 'People'
       case 'deaths':
         return ctx.cumulative ? 'Cumulative Deaths' : 'Deaths'
       case 'cmr':

@@ -234,7 +234,8 @@ export const makeBarLineChartConfig = (
     showQrCode = true
   }
 
-  const isCountType = isDeathsType || isPopulationType
+  // Population in percentage mode shows fractions (0–1), not raw counts
+  const isCountType = isDeathsType || (isPopulationType && !showPercentage)
   const showDecimals = !isCountType
 
   // Determine effective legend visibility (respects autoHideLegend for single-series charts)

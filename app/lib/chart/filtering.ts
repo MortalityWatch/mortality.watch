@@ -119,7 +119,8 @@ export const getFilteredChartDataFromConfig = (
     config.showTotal,
     config.chartType,
     config.view,
-    config.leAdjusted
+    config.leAdjusted,
+    config.showPercentage
   )
 
   const filteredData = getFilteredLabelAndData(
