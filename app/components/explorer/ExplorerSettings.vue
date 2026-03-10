@@ -60,12 +60,9 @@ const showCumulativeOption = computed(() => props.state.ui.value.cumulative?.vis
 const showTotalOption = computed(() => props.state.ui.value.showTotal?.visible ?? false)
 const showPredictionIntervalOption = computed(() => props.state.ui.value.predictionInterval?.visible ?? false)
 
-// Feature access for LE seasonal adjustment
-const { can } = useFeatureAccess()
-
-// Show LE Adjusted toggle when: type=le AND sub-yearly AND Pro user
+// Show LE Adjusted toggle when: type=le AND sub-yearly
 const showLeAdjustedOption = computed(() =>
-  props.state.type.value === 'le' && isSubYearlyChartType(props.state.chartType.value) && can('ADVANCED_LE')
+  props.state.type.value === 'le' && isSubYearlyChartType(props.state.chartType.value)
 )
 
 // Computed values derived from state
