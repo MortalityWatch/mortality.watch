@@ -67,13 +67,43 @@ export const calculateBaseline = async (
 ): Promise<void> => {
   if (method === 'auto') return
 
-  const n = labels.length
   const firstKey = keys[0]
+  if (!firstKey) return
 
-  // Use full data array - labels and data should be aligned
-  // Baseline is calculated on full dataset; slider filtering happens at display time
-  const all_data = firstKey ? (data[firstKey]?.slice(0, n) || []) : []
-  const bl_data = all_data.slice(baselineStartIdx, baselineEndIdx + 1)
+  // Use full data array - labels and data should be aligned.
+  // We trim leading/trailing missing values before calling stats API because
+  // long null prefixes can distort regression output in the external service.
+  const allData = (data[firstKey]?.slice(0, labels.length) || []) as (number | null | undefined)[]
+
+  const isValidNumber = (v: number | null | undefined): v is number =>
+    v != null && !isNaN(v)
+
+  const firstDataIdx = allData.findIndex(isValidNumber)
+  if (firstDataIdx === -1) return
+
+  let lastDataIdx = allData.length - 1
+  while (lastDataIdx >= 0 && !isValidNumber(allData[lastDataIdx])) {
+    lastDataIdx--
+  }
+  if (lastDataIdx < firstDataIdx) return
+
+  const effectiveBaselineStartIdx = Math.max(baselineStartIdx, firstDataIdx)
+  const effectiveBaselineEndIdx = Math.min(baselineEndIdx, lastDataIdx)
+  if (effectiveBaselineStartIdx > effectiveBaselineEndIdx) {
+    logger.warn('Baseline range has no overlap with available data', {
+      baselineStartIdx,
+      baselineEndIdx,
+      effectiveBaselineStartIdx,
+      effectiveBaselineEndIdx,
+      firstDataIdx,
+      lastDataIdx,
+      chartType
+    })
+    return
+  }
+
+  const seriesData = allData.slice(firstDataIdx, lastDataIdx + 1)
+  const bl_data = allData.slice(effectiveBaselineStartIdx, effectiveBaselineEndIdx + 1)
   const trend = method === 'lin_reg' // Only linear regression uses trend mode (t=1)
   const s = getSeasonType(chartType)
 
@@ -84,6 +114,8 @@ export const calculateBaseline = async (
     logger.warn('Invalid baseline indices', {
       baselineStartIdx,
       baselineEndIdx,
+      effectiveBaselineStartIdx,
+      effectiveBaselineEndIdx,
       chartType,
       labelsLength: labels.length,
       firstLabel: labels[0],
@@ -111,7 +143,7 @@ export const calculateBaseline = async (
   }
 
   // Validate baseline period length to prevent server timeouts
-  const baselinePeriodLength = baselineEndIdx - baselineStartIdx + 1
+  const baselinePeriodLength = effectiveBaselineEndIdx - effectiveBaselineStartIdx + 1
   const maxPeriod = getMaxBaselinePeriod(chartType)
   if (baselinePeriodLength > maxPeriod) {
     logger.warn('Baseline period too large, using fallback calculation', {
@@ -120,10 +152,10 @@ export const calculateBaseline = async (
       maxPeriod,
       chartType
     })
-    applyMeanFallback(data, keys, all_data, bl_data, baselineEndIdx)
+    applyMeanFallback(data, keys, allData, bl_data, effectiveBaselineEndIdx)
     // IMPORTANT: Fallback baseline is NOT cumulative - it's just repeated mean values
     // So we must NOT cumulate observed values when calculating excess
-    if (firstKey) calculateExcess(data, firstKey, false, baselineStartIdx)
+    calculateExcess(data, firstKey, false, effectiveBaselineStartIdx)
     return
   }
 
@@ -132,16 +164,16 @@ export const calculateBaseline = async (
 
     // Round numbers to avoid floating point precision issues (e.g., 82.15455999999999 -> 82.1546)
     // Send as array in POST body to avoid URL length limits with large datasets
-    const yData = (all_data as (string | number)[])
+    const yData = (seriesData as (string | number)[])
       .map(v => typeof v === 'number' ? Number(v.toFixed(BASELINE_DATA_PRECISION)) : v)
 
     // bs/be are 1-indexed for R
-    const bs = baselineStartIdx + 1
-    const be = baselineEndIdx + 1
+    const bs = effectiveBaselineStartIdx - firstDataIdx + 1
+    const be = effectiveBaselineEndIdx - firstDataIdx + 1
 
     // Get the starting time period for proper seasonal alignment
     // The xs parameter tells the server what calendar period the first data point represents
-    const startLabel = labels[0]
+    const startLabel = labels[firstDataIdx]
     const xs = startLabel ? labelToXsParam(startLabel, chartType) : null
 
     // Use POST with JSON body to avoid URL length limits
@@ -172,7 +204,7 @@ export const calculateBaseline = async (
     const json = JSON.parse(text)
 
     // Update NA/null to undefined and trim to match input data length
-    const dataLength = all_data.length
+    const dataLength = seriesData.length
     json.y = (json.y as (string | number)[]).slice(0, dataLength)
     json.lower = (json.lower as (string | number | null)[]).slice(0, dataLength).map((x: string | number | null) =>
       x === 'NA' || x === null ? undefined : x
@@ -188,7 +220,7 @@ export const calculateBaseline = async (
     // instead of a constant. Fix this by using the last baseline value for all positions.
     // The naive baseline should be a horizontal line at the last value of the baseline period.
     if (method === 'naive') {
-      const naiveValue = json.y[baselineEndIdx]
+      const naiveValue = json.y[be - 1]
       if (naiveValue != null && typeof naiveValue === 'number') {
         json.y = (json.y as (number | null)[]).map(v =>
           v != null ? naiveValue : v
@@ -196,20 +228,34 @@ export const calculateBaseline = async (
       }
     }
 
-    // Response is aligned with input - no prefill needed since we send from index 0
-    if (keys[1]) data[keys[1]] = json.y as DataVector
-    if (keys[2]) data[keys[2]] = json.lower as DataVector
-    if (keys[3]) data[keys[3]] = json.upper as DataVector
+    // Re-align baseline arrays back to full label length.
+    if (keys[1]) {
+      const aligned = new Array(allData.length).fill(null)
+      for (let i = 0; i < dataLength; i++) aligned[firstDataIdx + i] = json.y[i]
+      data[keys[1]] = aligned as DataVector
+    }
+    if (keys[2]) {
+      const aligned = new Array(allData.length).fill(undefined)
+      for (let i = 0; i < dataLength; i++) aligned[firstDataIdx + i] = json.lower[i]
+      data[keys[2]] = aligned as DataVector
+    }
+    if (keys[3]) {
+      const aligned = new Array(allData.length).fill(undefined)
+      for (let i = 0; i < dataLength; i++) aligned[firstDataIdx + i] = json.upper[i]
+      data[keys[3]] = aligned as DataVector
+    }
 
     // Extract z-scores if available
     if (json.zscore && keys[0]) {
       const zscoreKey = `${String(keys[0])}_zscore` as keyof DatasetEntry
-      data[zscoreKey] = json.zscore as DataVector
+      const aligned = new Array(allData.length).fill(undefined)
+      for (let i = 0; i < dataLength; i++) aligned[firstDataIdx + i] = json.zscore[i]
+      data[zscoreKey] = aligned as DataVector
     }
     // When /cum endpoint succeeds, baseline is cumulative
     // Calculate excess with cumulative baseline handling
     const isBaselineCumulative = cumulative && s === 1
-    if (firstKey) calculateExcess(data, firstKey, isBaselineCumulative, baselineStartIdx)
+    calculateExcess(data, firstKey, isBaselineCumulative, effectiveBaselineStartIdx)
   } catch (error) {
     logger.error('Baseline calculation failed, using simple mean fallback', error, {
       iso3c: data.iso3c?.[0],
@@ -217,15 +263,17 @@ export const calculateBaseline = async (
       method,
       baselineStartIdx,
       baselineEndIdx,
+      effectiveBaselineStartIdx,
+      effectiveBaselineEndIdx,
       blDataLength: bl_data.length,
       validDataPoints
     })
 
-    applyMeanFallback(data, keys, all_data, bl_data, baselineEndIdx)
+    applyMeanFallback(data, keys, allData, bl_data, effectiveBaselineEndIdx)
 
     // IMPORTANT: Fallback baseline is NOT cumulative - it's just repeated mean values
     // So we must NOT cumulate observed values when calculating excess
-    if (firstKey) calculateExcess(data, firstKey, false, baselineStartIdx)
+    calculateExcess(data, firstKey, false, effectiveBaselineStartIdx)
   }
 }
 
