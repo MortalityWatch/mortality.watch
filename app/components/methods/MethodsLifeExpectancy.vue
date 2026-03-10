@@ -37,7 +37,7 @@
           Sub-yearly Life Expectancy: Raw vs Seasonally Adjusted
         </h4>
         <p class="text-gray-700 dark:text-gray-300">
-          For weekly, monthly, and quarterly data, Pro users can toggle between two display modes:
+          For weekly, monthly, and quarterly data, users can toggle between two display modes:
         </p>
         <ul class="list-disc pl-6 space-y-2 text-gray-700 dark:text-gray-300">
           <li>
