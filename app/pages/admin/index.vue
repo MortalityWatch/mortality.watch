@@ -15,7 +15,6 @@ const config = useRuntimeConfig()
 const { data: statsData } = await useFetch<{
   totalUsers: number
   signupsThisWeek: number
-  proSubscribers: number
   savedCharts: number
 }>('/api/admin/stats')
 
@@ -31,12 +30,6 @@ const stats = computed(() => [
     value: String(statsData.value?.signupsThisWeek || 0),
     icon: 'i-lucide-user-plus',
     color: 'success' as const
-  },
-  {
-    label: 'Paying Subscribers',
-    value: String(statsData.value?.proSubscribers || 0),
-    icon: 'i-lucide-crown',
-    color: 'warning' as const
   },
   {
     label: 'Saved Charts',
@@ -85,7 +78,7 @@ const quickActions = [
     </div>
 
     <!-- Stats Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
       <UCard
         v-for="stat in stats"
         :key="stat.label"
