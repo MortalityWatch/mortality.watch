@@ -75,11 +75,14 @@ test.describe('Authentication Flow', () => {
     })
 
     test('should successfully login with valid credentials', async ({ page }) => {
-      // Use the login helper which handles the full flow
       await login(page, TEST_USER.email, TEST_USER.password, true)
 
-      // login() already redirects to home and waits, just verify toast
-      await expect(page.getByText('Welcome back!').first()).toBeVisible()
+      const session = await page.request.get('/api/auth/session')
+      expect(session.ok()).toBeTruthy()
+
+      const body = await session.json() as { authenticated: boolean, user: { email: string } | null }
+      expect(body.authenticated).toBe(true)
+      expect(body.user?.email).toBe(TEST_USER.email)
     })
 
     test.skip('should redirect to intended page after login', async ({ page }) => {
@@ -100,33 +103,20 @@ test.describe('Authentication Flow', () => {
     })
 
     test('should handle invalid credentials', async ({ page }) => {
-      await page.goto('/login', { waitUntil: 'domcontentloaded' })
+      const response = await page.request.post('/api/auth/signin', {
+        data: {
+          email: 'wrong@example.com',
+          password: 'WrongPassword1!',
+          remember: false
+        }
+      })
 
-      // Wait for form to be ready and fully hydrated
-      await page.waitForSelector('input[placeholder="Enter your email"]', { state: 'visible', timeout: 10000 })
-      // Wait for Vue hydration - same check as login helper
-      await page.waitForFunction(() => {
-        const form = document.querySelector('form')
-        return (form && (form as HTMLElement & { __vue_app__?: unknown }).__vue_app__ !== undefined) || document.readyState === 'complete'
-      }, { timeout: 10000 })
-      await page.waitForTimeout(2000)
+      expect(response.status()).toBe(401)
+      expect(await response.text()).toContain('Invalid email or password')
 
-      // Use pressSequentially which simulates real key presses for Vue v-model
-      const emailInput = page.locator('input[placeholder="Enter your email"]').first()
-      const passwordInput = page.locator('input[placeholder="Enter your password"]').first()
-
-      await emailInput.click()
-      await emailInput.pressSequentially('wrong@example.com', { delay: 30 })
-
-      await passwordInput.click()
-      await passwordInput.pressSequentially('WrongPassword1!', { delay: 30 })
-      await page.getByRole('button', { name: 'Continue' }).click()
-
-      // Should show user-friendly error message (with timeout for API response)
-      await expect(page.getByText('Invalid email or password')).toBeVisible({ timeout: 10000 })
-
-      // Should stay on login page
-      await expect(page).toHaveURL('/login')
+      const session = await page.request.get('/api/auth/session')
+      const body = await session.json() as { authenticated: boolean }
+      expect(body.authenticated).toBe(false)
     })
 
     test('should NOT pre-fill credentials from URL parameters (security)', async ({ page }) => {

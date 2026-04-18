@@ -1,9 +1,37 @@
+import type { Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
 import { login } from './helpers/auth'
+
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('mortality-watch-tutorial-explorer-completed', 'true')
+  })
+})
+
+async function clearSavedCharts(page: Page) {
+  const sessionResponse = await page.request.get('/api/auth/session')
+  const session = await sessionResponse.json() as { user: { id: number } | null }
+
+  if (!session.user) {
+    throw new Error('Expected authenticated session before clearing saved charts')
+  }
+
+  const chartsResponse = await page.request.get(`/api/charts?userId=${session.user.id}&limit=100`)
+  const chartsData = await chartsResponse.json() as { charts: Array<{ id: number }> }
+
+  for (const chart of chartsData.charts) {
+    const deleteResponse = await page.request.delete(`/api/charts/${chart.id}`)
+
+    if (!deleteResponse.ok()) {
+      throw new Error(`Failed to delete saved chart ${chart.id}: ${await deleteResponse.text()}`)
+    }
+  }
+}
 
 test('save modal opens and closes on cancel', async ({ page }) => {
   // Login first
   await login(page)
+  await clearSavedCharts(page)
 
   // Navigate to Explorer
   await page.goto('/explorer')

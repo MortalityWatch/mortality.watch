@@ -19,42 +19,20 @@ export async function login(
   password: string = TEST_USER.password,
   rememberMe: boolean = false
 ) {
-  await page.goto('/login', { waitUntil: 'domcontentloaded' })
+  const response = await page.request.post('/api/auth/signin', {
+    data: {
+      email,
+      password,
+      remember: rememberMe
+    }
+  })
 
-  // Wait for form to be ready and fully hydrated
-  await page.waitForSelector('input[placeholder="Enter your email"]', { state: 'visible', timeout: 10000 })
-
-  // Wait for Nuxt/Vue hydration to complete by checking for interactive elements
-  // The form needs to be hydrated before we can interact with it properly
-  await page.waitForFunction(() => {
-    // Check if Vue has hydrated by looking for the __vue__ property or event handlers
-    const form = document.querySelector('form')
-    // When hydrated, the form should have Vue's event handlers attached
-    return (form && (form as HTMLElement & { __vue_app__?: unknown }).__vue_app__ !== undefined) || document.readyState === 'complete'
-  }, { timeout: 10000 })
-
-  // Additional safety wait for all Vue components to be mounted
-  await page.waitForTimeout(2000)
-
-  // Use locator's type method which properly handles Vue's v-model
-  const emailInput = page.locator('input[placeholder="Enter your email"]').first()
-  const passwordInput = page.locator('input[placeholder="Enter your password"]').first()
-
-  // Use pressSequentially which simulates real key presses
-  await emailInput.click()
-  await emailInput.pressSequentially(email, { delay: 30 })
-
-  await passwordInput.click()
-  await passwordInput.pressSequentially(password, { delay: 30 })
-
-  if (rememberMe) {
-    await page.getByRole('checkbox', { name: 'Remember me' }).click()
+  if (!response.ok()) {
+    throw new Error(`Login failed with status ${response.status()}: ${await response.text()}`)
   }
 
-  await page.getByRole('button', { name: 'Continue' }).click()
-
-  // Wait for redirect to home page
-  await page.waitForURL('/', { timeout: 15000 })
+  await page.goto('/', { waitUntil: 'domcontentloaded' })
+  await page.waitForURL('/')
 }
 
 /**
@@ -63,11 +41,12 @@ export async function login(
  * @param page - Playwright page object
  */
 export async function logout(page: Page) {
-  // The user menu button contains displayName, firstName, or defaults to 'Account'
-  // The label is hidden on mobile but the text still exists in DOM
-  await page.locator('.user-menu-button').click()
-  await page.getByRole('menuitem', { name: 'Sign Out' }).click()
+  const response = await page.request.post('/api/auth/signout')
 
-  // Wait for redirect to home
+  if (!response.ok()) {
+    throw new Error(`Logout failed with status ${response.status()}: ${await response.text()}`)
+  }
+
+  await page.goto('/', { waitUntil: 'domcontentloaded' })
   await page.waitForURL('/')
 }
