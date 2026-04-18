@@ -60,12 +60,9 @@ export function getUpgradeMessage(
     return 'Sign up for a free account to unlock this feature'
   }
 
-  // Need Pro subscription (Tier 2)
+  // Pro-gated features are now unlocked by registration
   if (requiredTier === TIERS.PRO) {
-    if (userTier === TIERS.PUBLIC) {
-      return 'Sign up for free and upgrade to Pro to unlock this feature'
-    }
-    return 'Upgrade to Pro to unlock this feature'
+    return 'Sign up for a free account to unlock this feature'
   }
 
   return 'This feature requires an upgrade'
@@ -86,7 +83,7 @@ export function getUpgradeUrl(
     }
 
     if (requiredTier === TIERS.PRO) {
-      return userTier === TIERS.PUBLIC ? '/signup' : '/subscribe'
+      return '/signup'
     }
   }
 
@@ -95,7 +92,7 @@ export function getUpgradeUrl(
     return '/signup'
   }
 
-  return '/subscribe'
+  return '/signup'
 }
 
 /**
@@ -113,12 +110,12 @@ export function getUpgradeCTA(
     }
 
     if (requiredTier === TIERS.PRO) {
-      return userTier === TIERS.PUBLIC ? 'Sign Up & Upgrade' : 'Upgrade to Pro'
+      return 'Sign Up Free'
     }
   }
 
   // Default CTA
-  return userTier === TIERS.PUBLIC ? 'Sign Up Free' : 'Upgrade to Pro'
+  return 'Sign Up Free'
 }
 
 /**

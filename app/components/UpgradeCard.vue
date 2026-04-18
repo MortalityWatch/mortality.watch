@@ -1,7 +1,6 @@
 <template>
   <UCard class="max-w-5xl mx-auto">
     <div class="text-center py-8 px-4">
-      <!-- Tier 0: Anonymous/Public Users -->
       <div v-if="!user">
         <div class="mb-6">
           <Icon
@@ -9,14 +8,13 @@
             class="w-16 h-16 mx-auto text-primary-600 dark:text-primary-400 mb-4"
           />
           <h2 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-            Sign Up FREE to Unlock More Features
+            Sign Up Free for Full Access
           </h2>
           <p class="text-lg text-gray-600 dark:text-gray-400 mb-6">
-            Create a free account and get instant access to powerful tools
+            Create an account to unlock every charting, export, and analysis feature.
           </p>
         </div>
 
-        <!-- Free Features Grid -->
         <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8 text-left">
           <div class="flex gap-3">
             <Icon
@@ -28,88 +26,42 @@
                 Save Charts
               </h3>
               <p class="text-sm text-gray-600 dark:text-gray-400">
-                Save your custom charts to "My Charts" for quick access
+                Keep your chart setups and rankings in your account.
               </p>
             </div>
           </div>
 
           <div class="flex gap-3">
             <Icon
-              name="i-lucide-palette"
+              name="i-lucide-image-off"
               class="w-6 h-6 text-primary-600 dark:text-primary-400 shrink-0"
             />
             <div>
               <h3 class="font-semibold mb-1">
-                Custom Colors
+                Clean Exports
               </h3>
               <p class="text-sm text-gray-600 dark:text-gray-400">
-                Personalize your visualizations with custom color schemes
+                Remove watermarks and QR codes from your charts.
               </p>
             </div>
           </div>
 
           <div class="flex gap-3">
             <Icon
-              name="i-lucide-chart-line"
+              name="i-lucide-calculator"
               class="w-6 h-6 text-primary-600 dark:text-primary-400 shrink-0"
             />
             <div>
               <h3 class="font-semibold mb-1">
-                All Baseline Methods
+                Advanced Analytics
               </h3>
               <p class="text-sm text-gray-600 dark:text-gray-400">
-                Access all statistical models for baseline calculations
-              </p>
-            </div>
-          </div>
-
-          <div class="flex gap-3">
-            <Icon
-              name="i-lucide-file-spreadsheet"
-              class="w-6 h-6 text-primary-600 dark:text-primary-400 shrink-0"
-            />
-            <div>
-              <h3 class="font-semibold mb-1">
-                Export Data
-              </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400">
-                Download chart data as CSV and JSON
-              </p>
-            </div>
-          </div>
-
-          <div class="flex gap-3">
-            <Icon
-              name="i-lucide-calendar"
-              class="w-6 h-6 text-primary-600 dark:text-primary-400 shrink-0"
-            />
-            <div>
-              <h3 class="font-semibold mb-1">
-                Extended Time Periods
-              </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400">
-                Access full historical data ranges
-              </p>
-            </div>
-          </div>
-
-          <div class="flex gap-3">
-            <Icon
-              name="i-lucide-share-2"
-              class="w-6 h-6 text-primary-600 dark:text-primary-400 shrink-0"
-            />
-            <div>
-              <h3 class="font-semibold mb-1">
-                Share Charts
-              </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400">
-                Publish and share your visualizations
+                Use ASD, z-scores, and the full analysis toolset.
               </p>
             </div>
           </div>
         </div>
 
-        <!-- CTA -->
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
           <UButton
             :to="signupUrl"
@@ -128,7 +80,7 @@
             variant="ghost"
             size="xl"
           >
-            View All Features
+            View Full Access
             <Icon
               name="i-lucide-arrow-right"
               class="w-5 h-5"
@@ -137,164 +89,32 @@
         </div>
       </div>
 
-      <!-- Tier 1: Free Users -->
-      <div v-else-if="user.tier === 1">
+      <div v-else>
         <div class="mb-6">
           <Icon
-            name="i-lucide-zap"
-            class="w-16 h-16 mx-auto text-amber-600 dark:text-amber-400 mb-4"
+            name="i-lucide-badge-check"
+            class="w-16 h-16 mx-auto text-emerald-500 mb-4"
           />
           <h2 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-            Upgrade to Pro
-          </h2>
-          <p class="text-lg text-gray-600 dark:text-gray-400 mb-2">
-            Unlock advanced analytics and premium features
-          </p>
-          <div class="text-2xl font-bold text-primary-600 dark:text-primary-400">
-            $9.99/month or $99/year
-          </div>
-          <p class="text-sm text-gray-500 dark:text-gray-500">
-            Save $20 with annual billing
-          </p>
-        </div>
-
-        <!-- Pro Features Grid -->
-        <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8 text-left">
-          <div class="flex gap-3">
-            <Icon
-              name="i-lucide-image-off"
-              class="w-6 h-6 text-amber-600 dark:text-amber-400 shrink-0"
-            />
-            <div>
-              <h3 class="font-semibold mb-1">
-                No Watermarks
-              </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400">
-                Clean charts without branding for publications
-              </p>
-            </div>
-          </div>
-
-          <div class="flex gap-3">
-            <Icon
-              name="i-lucide-scan-line"
-              class="w-6 h-6 text-amber-600 dark:text-amber-400 shrink-0"
-            />
-            <div>
-              <h3 class="font-semibold mb-1">
-                No QR Codes
-              </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400">
-                Professional charts without QR code overlays
-              </p>
-            </div>
-          </div>
-
-          <div class="flex gap-3">
-            <Icon
-              name="i-lucide-activity"
-              class="w-6 h-6 text-amber-600 dark:text-amber-400 shrink-0"
-            />
-            <div>
-              <h3 class="font-semibold mb-1">
-                Age-Specific Life Expectancy
-              </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400">
-                Calculate life expectancy for specific age groups
-              </p>
-            </div>
-          </div>
-
-          <div class="flex gap-3">
-            <Icon
-              name="i-lucide-trending-up"
-              class="w-6 h-6 text-amber-600 dark:text-amber-400 shrink-0"
-            />
-            <div>
-              <h3 class="font-semibold mb-1">
-                Age-Standardized Deaths
-              </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400">
-                Compare deaths across regions with different age structures
-              </p>
-            </div>
-          </div>
-
-          <div class="flex gap-3">
-            <Icon
-              name="i-lucide-calculator"
-              class="w-6 h-6 text-amber-600 dark:text-amber-400 shrink-0"
-            />
-            <div>
-              <h3 class="font-semibold mb-1">
-                Z-Score Calculations
-              </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400">
-                Statistical significance testing
-              </p>
-            </div>
-          </div>
-
-          <div class="flex gap-3">
-            <Icon
-              name="i-lucide-headphones"
-              class="w-6 h-6 text-amber-600 dark:text-amber-400 shrink-0"
-            />
-            <div>
-              <h3 class="font-semibold mb-1">
-                Priority Support
-              </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400">
-                Get help faster with priority email support
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- CTA -->
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <UButton
-            to="/subscribe"
-            color="primary"
-            size="xl"
-          >
-            <Icon
-              name="i-lucide-crown"
-              class="w-5 h-5"
-            />
-            Upgrade to Pro
-          </UButton>
-          <UButton
-            to="/features"
-            color="neutral"
-            variant="ghost"
-            size="xl"
-          >
-            Compare Plans
-            <Icon
-              name="i-lucide-arrow-right"
-              class="w-5 h-5"
-            />
-          </UButton>
-        </div>
-      </div>
-
-      <!-- Tier 2: Pro Users (Already subscribed - thank you message) -->
-      <div v-else-if="user.tier === 2">
-        <div class="mb-6">
-          <Icon
-            name="i-lucide-crown"
-            class="w-16 h-16 mx-auto text-amber-500 mb-4"
-          />
-          <h2 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-            Thank You for Being a Pro Member!
+            Full Access Enabled
           </h2>
           <p class="text-lg text-gray-600 dark:text-gray-400">
-            You have access to all premium features
+            Your account already includes the complete Mortality Watch feature set.
           </p>
         </div>
 
         <div class="flex items-center justify-center gap-4">
+          <UButton
+            to="/explorer"
+            color="primary"
+            size="lg"
+          >
+            <Icon
+              name="i-lucide-line-chart"
+              class="w-5 h-5"
+            />
+            Open Explorer
+          </UButton>
           <UButton
             to="/profile"
             color="neutral"
@@ -305,7 +125,7 @@
               name="i-lucide-user"
               class="w-5 h-5"
             />
-            Manage Subscription
+            Open Profile
           </UButton>
         </div>
       </div>
@@ -314,7 +134,6 @@
 </template>
 
 <script setup lang="ts">
-// Get user from auth composable
 const { user } = useAuth()
 const { signupUrl } = useAuthRedirect()
 </script>

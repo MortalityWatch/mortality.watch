@@ -33,11 +33,20 @@ export function useAuth(): UseAuthReturn {
   const user = useState<AuthUser | null>('auth_user', () => null)
   const loading = ref(false)
 
+  const normalizeUser = (authUser: AuthUser | null): AuthUser | null => {
+    if (!authUser) return null
+
+    return {
+      ...authUser,
+      tier: 2
+    }
+  }
+
   const isAuthenticated = computed(() => !!user.value)
   const isAdmin = computed(() => user.value?.role === 'admin')
   const tier = computed<0 | 1 | 2>(() => {
     if (!user.value) return 0
-    return user.value.tier as 0 | 1 | 2
+    return 2
   })
 
   /**
@@ -53,7 +62,7 @@ export function useAuth(): UseAuthReturn {
           body: { email, password, remember }
         }
       )
-      user.value = response.user
+      user.value = normalizeUser(response.user)
     } finally {
       loading.value = false
     }
@@ -72,7 +81,7 @@ export function useAuth(): UseAuthReturn {
           body: { email, password, firstName, lastName, tosAccepted, inviteCode }
         }
       )
-      user.value = response.user
+      user.value = normalizeUser(response.user)
     } finally {
       loading.value = false
     }
@@ -149,7 +158,7 @@ export function useAuth(): UseAuthReturn {
           body: data
         }
       )
-      user.value = response.user
+      user.value = normalizeUser(response.user)
     } finally {
       loading.value = false
     }
@@ -200,7 +209,7 @@ export function useAuth(): UseAuthReturn {
         user: AuthUser | null
         authenticated: boolean
       }>('/api/auth/session')
-      user.value = response?.user || null
+      user.value = normalizeUser(response?.user || null)
     } catch {
       // Session check failed, user is not authenticated
       user.value = null

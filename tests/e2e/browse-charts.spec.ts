@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 
 test.describe('Global Chart History Page (Pro Feature)', () => {
   // Note: This page requires Pro access. Without authentication,
-  // users are redirected to /signup (for public users) or /subscribe (for registered users).
+  // users are redirected to /signup.
 
   test('should redirect unauthenticated users to signup page', async ({ page }) => {
     await page.goto('/charts/browse')
@@ -25,7 +25,7 @@ test.describe('Global Chart History Page (Pro Feature)', () => {
     await page.waitForLoadState('domcontentloaded')
 
     // The Global Chart History card should show a "Sign Up" badge for public users
-    // (FeatureBadge shows "Sign Up" for public users, "Upgrade" for registered users)
+    // because a free account now unlocks Pro-gated features.
     const signUpBadge = page.locator('text=Sign Up').first()
     await expect(signUpBadge).toBeVisible()
   })
