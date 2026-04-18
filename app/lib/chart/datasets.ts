@@ -63,8 +63,18 @@ const getPointRadius = (chartType: string, key: string) => {
 }
 
 const getType = (key: string, isBarChartStyle: boolean, isExcess: boolean) => {
+  // Error-bar controller is its own controller, so it has to be set explicitly
+  // (Chart.js has no "error bar" fallback on a Bar chart).
   if (isBarChartStyle && isExcess) return 'barWithErrorBars'
-  else return isBarChartStyle && !key.includes('_baseline') ? 'bar' : 'line'
+  // Baselines in a bar chart render as line overlays — a genuine mixed chart.
+  if (isBarChartStyle && key.includes('_baseline')) return 'line'
+  // Everything else inherits the chart-level controller. Leaving this
+  // undefined avoids stale `type: 'bar'` lingering on datasets after the
+  // user switches chart style from bar to line — Chart.js does not
+  // re-initialize a per-dataset controller on .update(), so a stale
+  // dataset.type would keep the old series rendering as bars inside the
+  // new line chart. (#514)
+  return undefined
 }
 
 const getSource = (ds: Record<string, unknown[]>, key: string) => {
