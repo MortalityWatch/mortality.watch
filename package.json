@@ -92,7 +92,7 @@
     "@vue/test-utils": "^2.4.6",
     "axe-core": "^4.11.3",
     "drizzle-kit": "^0.31.10",
-    "eslint": "^9.39.2",
+    "eslint": "^10.2.1",
     "eslint-plugin-vuejs-accessibility": "^2.5.0",
     "husky": "^9.1.7",
     "jsdom": "^28.0.0",
