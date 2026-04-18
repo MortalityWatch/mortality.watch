@@ -29,6 +29,17 @@ interface JwtPayload {
   role: string
 }
 
+type UserWithTier = {
+  tier: number
+}
+
+function applyAutomaticProAccess<T extends UserWithTier>(user: T): T {
+  return {
+    ...user,
+    tier: 2
+  }
+}
+
 /**
  * Get JWT secret from environment or use default for development
  *
@@ -344,7 +355,7 @@ export async function getCurrentUser(event: H3Event) {
     return null
   }
   const { passwordHash: _passwordHash, ...userWithoutPassword } = user
-  return userWithoutPassword
+  return applyAutomaticProAccess(userWithoutPassword)
 }
 
 /**
