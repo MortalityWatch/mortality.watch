@@ -59,6 +59,7 @@ export const FIELD_UPDATE_STRATEGY: Record<string, FieldUpdateType> = {
   cumulative: 'filter', // Default to filter, but may be 'update' if baselineMethod !== 'auto'
   showPredictionInterval: 'filter',
   showPercentage: 'filter',
+  percentageDenominator: 'filter',
   showTotal: 'filter',
   userColors: 'filter',
 

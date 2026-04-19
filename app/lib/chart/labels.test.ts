@@ -54,6 +54,8 @@ describe('labels', () => {
       chartType: string
       view: string
       leAdjusted: boolean
+      showPercentage: boolean
+      percentageDenominator: string
     }> = {}) => {
       const defaults = {
         countries: ['USA'],
@@ -70,7 +72,9 @@ describe('labels', () => {
         showTotal: false,
         chartType: 'weekly',
         view: undefined as string | undefined,
-        leAdjusted: undefined as boolean | undefined
+        leAdjusted: undefined as boolean | undefined,
+        showPercentage: undefined as boolean | undefined,
+        percentageDenominator: undefined as string | undefined
       }
       const params = { ...defaults, ...overrides }
       return getChartLabels(
@@ -88,7 +92,9 @@ describe('labels', () => {
         params.showTotal,
         params.chartType,
         params.view,
-        params.leAdjusted
+        params.leAdjusted,
+        params.showPercentage,
+        params.percentageDenominator
       )
     }
 
@@ -529,6 +535,43 @@ describe('labels', () => {
         })
 
         expect(result.subtitle).not.toContain('Seasonally Adjusted')
+      })
+    })
+
+    describe('denominator mode in subtitle', () => {
+      it('should show "% of selected age groups" in composition view when selected', () => {
+        const result = callGetChartLabels({
+          view: 'composition',
+          percentageDenominator: 'selected'
+        })
+
+        expect(result.subtitle).toContain('% of selected age groups')
+      })
+
+      it('should not show denominator info when percentageDenominator is total', () => {
+        const result = callGetChartLabels({
+          view: 'composition',
+          percentageDenominator: 'total'
+        })
+
+        expect(result.subtitle).not.toContain('% of selected age groups')
+      })
+
+      it('should not show denominator info when percentageDenominator is undefined', () => {
+        const result = callGetChartLabels({})
+
+        expect(result.subtitle).not.toContain('% of selected age groups')
+      })
+
+      it('should not show outside composition view, even if pd=selected leaks via URL', () => {
+        const result = callGetChartLabels({
+          isExcess: true,
+          view: 'excess',
+          showBaseline: true,
+          percentageDenominator: 'selected'
+        })
+
+        expect(result.subtitle).not.toContain('% of selected age groups')
       })
     })
   })

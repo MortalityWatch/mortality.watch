@@ -309,5 +309,25 @@ describe('explorerSchema', () => {
       const result = explorerStateSchema.safeParse(state)
       expect(result.success).toBe(false)
     })
+
+    it('should accept valid percentageDenominator values', () => {
+      const state = { ...createValidState(), percentageDenominator: 'total' as const }
+      expect(explorerStateSchema.safeParse(state).success).toBe(true)
+
+      const state2 = { ...createValidState(), percentageDenominator: 'selected' as const }
+      expect(explorerStateSchema.safeParse(state2).success).toBe(true)
+    })
+
+    it('should reject invalid percentageDenominator', () => {
+      const state = { ...createValidState(), percentageDenominator: 'invalid' }
+      const result = explorerStateSchema.safeParse(state)
+      expect(result.success).toBe(false)
+    })
+
+    it('should accept state without percentageDenominator (optional)', () => {
+      const state = createValidState()
+      const result = explorerStateSchema.safeParse(state)
+      expect(result.success).toBe(true)
+    })
   })
 })

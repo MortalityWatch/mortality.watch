@@ -57,6 +57,7 @@ export interface ChartRenderState {
   showPredictionInterval: boolean
   showLabels: boolean
   showPercentage: boolean
+  percentageDenominator: string
   showLogarithmic: boolean
   leAdjusted: boolean // LE seasonal adjustment
 
@@ -250,6 +251,7 @@ export function resolveChartStateForRendering(
     showPredictionInterval: constrainedState.showPredictionInterval as boolean,
     showLabels: constrainedState.showLabels as boolean,
     showPercentage: (constrainedState.showPercentage as boolean) ?? false,
+    percentageDenominator: (constrainedState.percentageDenominator as string) || 'total',
     showLogarithmic: constrainedState.showLogarithmic as boolean,
     leAdjusted: (constrainedState.leAdjusted as boolean) ?? true,
 
@@ -342,6 +344,7 @@ export function resolveChartStateFromSnapshot(
     showPredictionInterval: snapshot.showPredictionInterval,
     showLabels: snapshot.showLabels,
     showPercentage: snapshot.showPercentage ?? false,
+    percentageDenominator: snapshot.percentageDenominator || 'total',
     showLogarithmic: snapshot.showLogarithmic,
     leAdjusted: snapshot.leAdjusted ?? true,
     userColors: snapshot.userColors,
@@ -402,6 +405,7 @@ export function generateUrlFromState(
   if (state.showPredictionInterval) params.set('pi', '1')
   if (state.showLabels) params.set('sl', '1')
   if (state.showPercentage) params.set('p', '1')
+  if (state.percentageDenominator && state.percentageDenominator !== 'total') params.set('pd', state.percentageDenominator)
   if (state.showLogarithmic) params.set('lg', '1')
 
   // View indicators
@@ -494,6 +498,7 @@ export function toChartFilterConfig(
     showTotal: state.showTotal,
     showPredictionInterval: state.showPredictionInterval,
     showPercentage: state.showPercentage,
+    percentageDenominator: state.percentageDenominator || 'total',
     showCumPi,
     maximize: state.maximize,
     showLabels: state.showLabels,

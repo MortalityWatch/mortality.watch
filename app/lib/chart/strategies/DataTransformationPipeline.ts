@@ -12,6 +12,7 @@ import { ASDTransformStrategy } from './ASDTransformStrategy'
 
 interface TransformConfig {
   showPercentage: boolean
+  percentageDenominator?: string
   cumulative: boolean
   showTotal: boolean
   showCumPi: boolean

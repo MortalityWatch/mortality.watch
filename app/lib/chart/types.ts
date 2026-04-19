@@ -13,6 +13,7 @@ export interface DataTransformationConfig {
   /** Display options */
   display: {
     showPercentage: boolean
+    percentageDenominator: string
     cumulative: boolean
     showTotal: boolean
     showCumPi: boolean
@@ -90,6 +91,7 @@ export interface ChartStateSnapshot {
   showPredictionInterval: boolean
   showLabels: boolean
   showPercentage: boolean
+  percentageDenominator: string
   showLogarithmic: boolean
   leAdjusted: boolean // LE seasonal adjustment
 
@@ -141,6 +143,7 @@ export interface ChartFilterConfig {
   showTotal: boolean
   showPredictionInterval: boolean
   showPercentage: boolean
+  percentageDenominator: string
   showCumPi: boolean
   maximize: boolean
   showLabels: boolean

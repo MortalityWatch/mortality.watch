@@ -36,6 +36,7 @@ const props = defineProps<{
   maximize: boolean
   showLogarithmic: boolean
   showPercentage?: boolean
+  percentageDenominator?: string
   cumulative: boolean
   showTotal: boolean
   showLogarithmicOption: boolean
@@ -43,6 +44,7 @@ const props = defineProps<{
   showMaximizeOptionDisabled: boolean
   showPercentageOption: boolean
   showPercentageOptionDisabled: boolean
+  showDenominatorModeOption?: boolean
   showCumulativeOption: boolean
   showTotalOption: boolean
   showTotalOptionDisabled: boolean
@@ -79,6 +81,7 @@ const emit = defineEmits<{
   maximizeChanged: [value: boolean]
   showLogarithmicChanged: [value: boolean]
   showPercentageChanged: [value: boolean]
+  percentageDenominatorChanged: [value: string]
   cumulativeChanged: [value: boolean]
   showTotalChanged: [value: boolean]
   leAdjustedChanged: [value: boolean]
@@ -196,6 +199,11 @@ const showLogarithmic = computed({
 const showPercentage = computed({
   get: () => props.showPercentage || false,
   set: (v: boolean) => emit('showPercentageChanged', v)
+})
+
+const percentageDenominator = computed({
+  get: () => props.percentageDenominator || 'total',
+  set: (v: string) => emit('percentageDenominatorChanged', v)
 })
 
 const cumulative = computed({
@@ -368,6 +376,7 @@ const activeTab = ref('data')
         :maximize="props.maximize"
         :show-logarithmic="props.showLogarithmic"
         :show-percentage="props.showPercentage || false"
+        :percentage-denominator="props.percentageDenominator || 'total'"
         :cumulative="props.cumulative"
         :show-total="props.showTotal"
         :le-adjusted="props.leAdjusted"
@@ -381,6 +390,7 @@ const activeTab = ref('data')
         :show-logarithmic-option="props.showLogarithmicOption"
         :show-percentage-option="props.showPercentageOption"
         :show-percentage-option-disabled="props.showPercentageOptionDisabled"
+        :show-denominator-mode-option="props.showDenominatorModeOption || false"
         :show-cumulative-option="props.showCumulativeOption"
         :show-total-option="props.showTotalOption"
         :show-le-adjusted-option="props.showLeAdjustedOption"
@@ -391,6 +401,7 @@ const activeTab = ref('data')
         @update:maximize="maximize = $event"
         @update:show-logarithmic="showLogarithmic = $event"
         @update:show-percentage="showPercentage = $event"
+        @update:percentage-denominator="percentageDenominator = $event"
         @update:cumulative="cumulative = $event"
         @update:show-total="showTotal = $event"
         @update:le-adjusted="leAdjusted = $event"

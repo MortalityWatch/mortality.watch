@@ -120,7 +120,8 @@ export const getFilteredChartDataFromConfig = (
     config.chartType,
     config.view,
     config.leAdjusted,
-    config.showPercentage
+    config.showPercentage,
+    config.percentageDenominator
   )
 
   const filteredData = getFilteredLabelAndData(
@@ -144,6 +145,7 @@ export const getFilteredChartDataFromConfig = (
   const transformConfig: DataTransformationConfig = {
     display: {
       showPercentage: config.showPercentage,
+      percentageDenominator: config.percentageDenominator ?? 'total',
       cumulative: config.cumulative,
       showTotal: config.showTotal,
       showCumPi: config.showCumPi,
@@ -257,6 +259,7 @@ export const getFilteredChartData = async (
     showTotal,
     showPredictionInterval,
     showPercentage,
+    percentageDenominator: 'total',
     showCumPi,
     maximize,
     showLabels,
