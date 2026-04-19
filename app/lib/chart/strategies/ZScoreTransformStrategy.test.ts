@@ -127,23 +127,43 @@ describe('ZScoreTransformStrategy', () => {
     })
 
     it('should compute variance-stabilized z-scores for sufficient positive data', () => {
-      // Generate enough data: 4 complete groups of period 4 = 16 data points
-      // Use clearly different observed vs baseline to ensure z-score variation
+      // 5y weekly series with a 50% spike at index 250.
+      // Spike z-score must be on the order of standard residual z (~5+),
+      // not the order-of-magnitude smaller value the original buggy
+      // implementation produced (~2).
+      const N = 260
       const observed: number[] = []
       const baseline: number[] = []
-      for (let i = 0; i < 16; i++) {
-        observed.push(200 + 50 * Math.sin(i * 0.5))
-        baseline.push(100 + 5 * Math.sin(i * 0.5))
+      let s = 42
+      const rand = () => {
+        s = (s * 1664525 + 1013904223) % 4294967296
+        return s / 4294967296
       }
+      for (let i = 0; i < N; i++) {
+        const seasonal = 1000 + 200 * Math.sin((2 * Math.PI * i) / 52)
+        baseline.push(seasonal)
+        observed.push(seasonal + (rand() - 0.5) * 200)
+      }
+      observed[250] = baseline[250]! * 1.5
+
       const data: Record<string, number[]> = {
         deaths: observed,
-        deaths_zscore: new Array(16).fill(0), // fallback
+        deaths_zscore: new Array(N).fill(0),
         deaths_baseline: baseline
       }
-      const result = strategy.getZScoreData('variance_stabilized', data, false, 'deaths', 4)
-      expect(result.length).toBe(16)
-      // All values should be finite
-      result.forEach(v => expect(isFinite(v)).toBe(true))
+      const result = strategy.getZScoreData('variance_stabilized', data, false, 'deaths', 52)
+      expect(result.length).toBe(N)
+      expect(Math.abs(result[250]!)).toBeGreaterThan(4)
+    })
+
+    it('should fall back to standard for null period (yearly data)', () => {
+      const data = {
+        deaths: [100, 200, 300, 400],
+        deaths_zscore: [0.5, 1.2, -0.3, 0.1],
+        deaths_baseline: [150, 150, 150, 150]
+      }
+      const result = strategy.getZScoreData('variance_stabilized', data, false, 'deaths', null)
+      expect(result).toEqual([0.5, 1.2, -0.3, 0.1])
     })
 
     it('should return empty array when no z-score data exists for standard method', () => {

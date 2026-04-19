@@ -253,7 +253,7 @@ export function resolveChartStateForRendering(
     showPercentage: (constrainedState.showPercentage as boolean) ?? false,
     showLogarithmic: constrainedState.showLogarithmic as boolean,
     leAdjusted: (constrainedState.leAdjusted as boolean) ?? true,
-    zscoreMethod: (constrainedState.zscoreMethod as string) || 'variance_stabilized',
+    zscoreMethod: (constrainedState.zscoreMethod as string) || 'standard',
 
     // Optional
     userColors: constrainedState.userColors as string[] | undefined,

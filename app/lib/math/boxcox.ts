@@ -93,17 +93,18 @@ export function guerreroLambda(
   // Grid search for lambda that minimizes CV of ratios
   const steps = 200
   const [lMin, lMax] = lambdaRange
-  let bestLambda = 1
+  let bestLambda: number | null = null
   let bestCV = Infinity
 
   for (let i = 0; i <= steps; i++) {
     const lambda = lMin + (lMax - lMin) * (i / steps)
 
     // Compute ratios: sd_h / mean_h^(1-lambda)
+    // Use exp/log form to reduce overflow risk for very large counts
     const ratios: number[] = []
     let allValid = true
     for (let g = 0; g < nGroups; g++) {
-      const r = sds[g]! / Math.pow(means[g]!, 1 - lambda)
+      const r = sds[g]! / Math.exp((1 - lambda) * Math.log(means[g]!))
       if (!isFinite(r)) {
         allValid = false
         break
@@ -124,6 +125,8 @@ export function guerreroLambda(
     }
   }
 
+  if (bestLambda === null || !isFinite(bestCV)) return null
+
   // Round to 2 decimal places for cleaner output
   return Math.round(bestLambda * 100) / 100
 }
@@ -131,67 +134,100 @@ export function guerreroLambda(
 /**
  * Compute variance-stabilized z-scores using Box-Cox transformation.
  *
- * 1. Estimate lambda via Guerrero method on the baseline period
- * 2. Box-Cox transform all data using estimated lambda
- * 3. Compute mean and sd from the transformed baseline period
- * 4. Z-score = (BC(y) - mean(BC(baseline))) / sd(BC(baseline))
+ * 1. Estimate lambda via Guerrero on the baseline (fitted) series — never on
+ *    `observed`, which contains the anomalies the method is meant to detect.
+ * 2. Box-Cox transform both observed and baseline with that lambda.
+ * 3. Form per-time-point residuals r_t = BC(observed_t) - BC(baseline_t).
+ * 4. Estimate residual sd robustly via MAD (median absolute deviation), so
+ *    spikes in `observed` do not inflate the denominator. This approximates
+ *    the "sd over the baseline window" the standard residual z-score uses,
+ *    without requiring callers to plumb the baseline window indices through.
+ * 5. z_t = r_t / sd_robust.
  *
- * Falls back to standard z-scores if:
- * - Data contains non-positive values
- * - Lambda estimation fails
- * - Transformed baseline has zero variance
+ * Falls back to null (caller uses standard z-score) if:
+ * - period is null/<2 (no seasonality, e.g. yearly data)
+ * - too many non-positive values
+ * - lambda estimation fails
+ * - residual sd is degenerate
  *
  * @param observed - Full observed data array
- * @param baseline - Full baseline array (same length as observed)
- * @param period - Seasonal period for Guerrero estimation
+ * @param baseline - Full baseline (fitted) array (same length as observed)
+ * @param period - Seasonal period for Guerrero estimation, or null for none
  * @param isDev - Whether to log debug info
  * @returns Z-score array, or null if fallback to standard is needed
  */
 export function varianceStabilizedZScores(
   observed: (number | null | undefined)[],
   baseline: (number | null | undefined)[],
-  period: number,
+  period: number | null,
   isDev: boolean = false
 ): number[] | null {
-  // Check that we have enough positive data for Box-Cox
+  if (period == null || period < 2) {
+    if (isDev) log.debug('No seasonal period — falling back to standard z-score')
+    return null
+  }
+
+  if (observed.length === 0 || baseline.length === 0) return null
+  if (observed.length !== baseline.length) {
+    log.warn('observed and baseline length mismatch — falling back to standard z-score')
+    return null
+  }
+
   const positiveCount = observed.filter(v => v != null && isFinite(v as number) && (v as number) > 0).length
   if (positiveCount < observed.length * 0.5) {
     if (isDev) log.debug('Too many non-positive values for Box-Cox, falling back to standard z-score')
     return null
   }
 
-  // Estimate lambda from observed data
-  const lambda = guerreroLambda(observed, period)
+  // Estimate lambda on the baseline (fitted) series — not on observed.
+  // Falls back to estimating on the positive subset of observed only if the
+  // baseline doesn't yield a usable estimate (e.g. baseline missing/short).
+  let lambda = guerreroLambda(baseline, period)
   if (lambda === null) {
-    if (isDev) log.debug('Guerrero lambda estimation failed, falling back to standard z-score')
+    log.warn('Guerrero lambda estimation on baseline failed, retrying on observed')
+    lambda = guerreroLambda(observed, period)
+  }
+  if (lambda === null) {
+    log.warn('Guerrero lambda estimation failed, falling back to standard z-score')
     return null
   }
 
   if (isDev) log.debug(`Guerrero lambda: ${lambda}`)
 
-  // Transform observed and baseline
   const bcObserved = boxcoxTransformArray(observed, lambda)
   const bcBaseline = boxcoxTransformArray(baseline, lambda)
 
-  // Compute mean and sd from transformed baseline (non-NaN values only)
-  const validBl = bcBaseline.filter(v => isFinite(v))
-  if (validBl.length < 3) {
-    if (isDev) log.debug('Insufficient valid transformed baseline values')
+  // Per-time-point residuals in transformed space
+  const residuals: number[] = []
+  for (let i = 0; i < bcObserved.length; i++) {
+    const o = bcObserved[i]!
+    const b = bcBaseline[i]!
+    if (isFinite(o) && isFinite(b)) residuals.push(o - b)
+  }
+
+  if (residuals.length < 3) {
+    if (isDev) log.debug('Insufficient valid residuals after Box-Cox')
     return null
   }
 
-  const blMean = validBl.reduce((s, v) => s + v, 0) / validBl.length
-  const blVar = validBl.reduce((s, v) => s + (v - blMean) ** 2, 0) / validBl.length
-  const blSd = Math.sqrt(blVar)
+  // Robust residual sd via MAD: 1.4826 * median(|r - median(r)|).
+  // MAD is resistant to the very anomalies (covid-style spikes) that the
+  // z-score is designed to flag, so it approximates "sd over the baseline
+  // window" without needing the caller to pass window indices.
+  const sorted = [...residuals].sort((a, b) => a - b)
+  const median = sorted[Math.floor(sorted.length / 2)]!
+  const absDev = residuals.map(r => Math.abs(r - median)).sort((a, b) => a - b)
+  const mad = absDev[Math.floor(absDev.length / 2)]!
+  const sdRobust = 1.4826 * mad
 
-  if (blSd < 1e-10) {
-    if (isDev) log.debug('Near-zero baseline standard deviation after Box-Cox')
+  if (!isFinite(sdRobust) || sdRobust < 1e-10) {
+    if (isDev) log.debug('Near-zero robust residual sd after Box-Cox')
     return null
   }
 
-  // Compute z-scores
-  return bcObserved.map((v) => {
-    if (!isFinite(v)) return NaN
-    return (v - blMean) / blSd
+  return bcObserved.map((v, i) => {
+    const b = bcBaseline[i]!
+    if (!isFinite(v) || !isFinite(b)) return NaN
+    return (v - b) / sdRobust
   })
 }

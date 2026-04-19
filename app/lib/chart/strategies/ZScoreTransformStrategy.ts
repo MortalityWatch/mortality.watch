@@ -68,7 +68,7 @@ export class ZScoreTransformStrategy {
     data: Record<string, number[]>,
     isAsmr: boolean,
     key: string,
-    period: number,
+    period: number | null,
     isDev: boolean = false
   ): number[] {
     const standardKey = this.getZScoreKey(isAsmr, key)

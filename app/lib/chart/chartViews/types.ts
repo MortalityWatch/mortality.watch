@@ -31,6 +31,9 @@ export interface ChartContext {
 
   // View
   view: ViewType
+
+  // Z-score method (only meaningful when view === 'zscore')
+  zscoreMethod?: string
 }
 
 /**

@@ -34,7 +34,8 @@ export const getChartLabels = (
   showTotal: boolean,
   chartType: string,
   view?: string,
-  leAdjusted?: boolean
+  leAdjusted?: boolean,
+  zscoreMethod?: string
 ): ChartLabels => {
   // Derive view from parameters if not explicitly provided
   // This maintains backward compatibility with isExcess parameter
@@ -59,7 +60,8 @@ export const getChartLabels = (
     baselineMethod,
     baselineDateFrom,
     baselineDateTo,
-    view: derivedView
+    view: derivedView,
+    zscoreMethod
   }
 
   // Get chart view configuration

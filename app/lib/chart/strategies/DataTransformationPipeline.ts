@@ -92,7 +92,7 @@ export class DataTransformationPipeline {
     // Z-scores take priority over other transformations
     // Only apply to main data, not baseline/PI keys
     if (config.view === 'zscore' && !key.includes('baseline') && !key.includes('_lower') && !key.includes('_upper') && !key.includes('excess')) {
-      const method = config.zscoreMethod ?? 'variance_stabilized'
+      const method = config.zscoreMethod ?? 'standard'
       const period = getSeasonalPeriod(config.chartType ?? '')
       const isDev = import.meta.dev ?? false
       return this.zscoreStrategy.getZScoreData(method, data, config.isAsmrType, key, period, isDev)

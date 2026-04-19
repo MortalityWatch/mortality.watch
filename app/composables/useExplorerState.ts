@@ -99,7 +99,7 @@ export function useExplorerState() {
   const baselineDateTo = ref<string | undefined>(mortalityDefaults.baselineDateTo)
   const showBaseline = ref<boolean>(getDefault('showBaseline', true))
   const baselineMethod = ref<string>(getDefault('baselineMethod', 'mean'))
-  const zscoreMethod = ref<string>(getDefault('zscoreMethod', 'variance_stabilized'))
+  const zscoreMethod = ref<string>(getDefault('zscoreMethod', 'standard'))
 
   // Display Options
   const cumulative = ref<boolean>(getDefault('cumulative', false))

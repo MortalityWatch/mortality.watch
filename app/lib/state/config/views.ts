@@ -264,7 +264,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       showBaseline: true, // Required for z-score calculation (but hidden in UI)
       showPredictionInterval: false,
       showLogarithmic: false,
-      zscoreMethod: 'variance_stabilized' // Box-Cox variance-stabilized z-score by default
+      zscoreMethod: 'standard' // Pre-calculated R-API z-score; variance-stabilized is opt-in
     },
 
     constraints: [

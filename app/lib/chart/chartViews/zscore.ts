@@ -29,6 +29,13 @@ export const ZSCORE_VIEW: ChartViewConfig = {
     // Main z-score description
     parts.push('Statistical deviations from baseline mean · Values beyond ±2 are significant')
 
+    // Method indicator — two methods produce different y-axis scales
+    parts.push(
+      ctx.zscoreMethod === 'variance_stabilized'
+        ? 'Method: Variance-stabilized (Box-Cox)'
+        : 'Method: Standard'
+    )
+
     // Baseline description
     parts.push(getBaselineDescription(ctx.baselineMethod, ctx.baselineDateFrom, ctx.baselineDateTo))
 
@@ -38,7 +45,10 @@ export const ZSCORE_VIEW: ChartViewConfig = {
   /**
    * Override: Z-Score specific Y-axis label
    */
-  yAxisLabel: 'Z-Score (Standard Deviations)',
+  yAxisLabel: (ctx: ChartContext) =>
+    ctx.zscoreMethod === 'variance_stabilized'
+      ? 'Z-Score (Standard Deviations, variance-stabilized)'
+      : 'Z-Score (Standard Deviations)',
 
   /**
    * Override: Z-Score reference lines (sigma lines)
