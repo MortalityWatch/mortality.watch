@@ -148,7 +148,7 @@ const chartPresetModel = computed({
           v-if="props.showLeAdjustedOption"
           v-model="leAdjustedModel"
           label="Adjusted"
-          help-content="Seasonal adjustment removes calculation artifacts from short-term mortality fluctuations. Raw values may show apparent 'seasonality' that doesn't reflect real life expectancy changes."
+          help-content="Adjusted LE applies seasonal STL smoothing plus a bin-structure correction. Raw values may show short-term artifacts that do not reflect underlying life expectancy."
         />
       </div>
     </div>
