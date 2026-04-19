@@ -271,20 +271,20 @@ describe('View Configurations', () => {
   })
 
   describe('Denominator Mode', () => {
-    it('mortality view has denominatorMode conditional on population + showPercentage', () => {
+    it('composition view shows denominatorMode (only view that honors it)', () => {
+      const config = VIEWS.composition
+      expect(config.ui.denominatorMode).toBeDefined()
+      expect(config.ui.denominatorMode!.visibility.type).toBe('visible')
+    })
+
+    it('mortality view hides denominatorMode (no path that honors it)', () => {
       const config = VIEWS.mortality
       expect(config.ui.denominatorMode).toBeDefined()
-      expect(config.ui.denominatorMode!.visibility.type).toBe('conditional')
+      expect(config.ui.denominatorMode!.visibility.type).toBe('hidden')
     })
 
-    it('excess view has denominatorMode conditional on showPercentage', () => {
+    it('excess view hides denominatorMode (excess % is value/baseline, not age-group sum)', () => {
       const config = VIEWS.excess
-      expect(config.ui.denominatorMode).toBeDefined()
-      expect(config.ui.denominatorMode!.visibility.type).toBe('conditional')
-    })
-
-    it('composition view hides denominatorMode', () => {
-      const config = VIEWS.composition
       expect(config.ui.denominatorMode).toBeDefined()
       expect(config.ui.denominatorMode!.visibility.type).toBe('hidden')
     })

@@ -357,6 +357,56 @@ describe('datasets', () => {
       expect(first?.stack).toBe('USA')
       expect((first?.data[0] as number) + (second?.data[0] as number)).toBeCloseTo(0.5, 6)
     })
+
+    it('should produce different values for total vs selected denominator modes', () => {
+      const buildConfig = (denominator: string): DataTransformationConfig => {
+        const config = createBaseConfig()
+        config.chart.type = 'population'
+        config.display.showPercentage = true
+        config.display.view = 'composition'
+        config.display.percentageDenominator = denominator
+        config.chart.isBarChartStyle = true
+        config.context.countries = ['USA']
+        return config
+      }
+
+      // 'all' (200) is greater than the sum of the two selected bands (20+80=100)
+      // so total mode and selected mode must produce different ratios.
+      const data: Dataset = {
+        all: {
+          USA: createMockDatasetEntry({
+            population: [200, 200, 200] as NumberArray
+          })
+        },
+        age_0_14: {
+          USA: createMockDatasetEntry({
+            population: [20, 30, 40] as NumberArray
+          })
+        },
+        age_15_64: {
+          USA: createMockDatasetEntry({
+            population: [80, 70, 60] as NumberArray
+          })
+        }
+      }
+
+      const totalResult = getDatasets(buildConfig('total'), data)
+      const selectedResult = getDatasets(buildConfig('selected'), data)
+
+      // total mode: 20/200=0.10, 80/200=0.40 (sums to 0.5, since 'all'=200)
+      expect(totalResult.datasets[0]?.data[0] as number).toBeCloseTo(0.10, 6)
+      expect(totalResult.datasets[1]?.data[0] as number).toBeCloseTo(0.40, 6)
+
+      // selected mode: 20/100=0.20, 80/100=0.80 (sums to 1.0)
+      expect(selectedResult.datasets[0]?.data[0] as number).toBeCloseTo(0.20, 6)
+      expect(selectedResult.datasets[1]?.data[0] as number).toBeCloseTo(0.80, 6)
+
+      const totalSum = (totalResult.datasets[0]?.data[0] as number)
+        + (totalResult.datasets[1]?.data[0] as number)
+      const selectedSum = (selectedResult.datasets[0]?.data[0] as number)
+        + (selectedResult.datasets[1]?.data[0] as number)
+      expect(totalSum).not.toBeCloseTo(selectedSum, 6)
+    })
   })
 
   describe('getDatasets - cumulative transformation', () => {

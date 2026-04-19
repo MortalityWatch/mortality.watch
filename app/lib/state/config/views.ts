@@ -52,12 +52,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
         field: 'type',
         is: 'population'
       }),
-      denominatorMode: conditional({
-        and: [
-          { field: 'type', is: 'population' },
-          { field: 'showPercentage', is: true }
-        ]
-      }),
+      denominatorMode: hidden(),
       showTotal: hidden()
     },
 
@@ -141,10 +136,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       labels: toggleable(),
       cumulative: toggleable(),
       percentage: toggleable(),
-      denominatorMode: conditional({
-        field: 'showPercentage',
-        is: true
-      }),
+      denominatorMode: hidden(),
       showTotal: conditional({
         and: [
           { field: 'chartStyle', is: 'bar' },
@@ -209,7 +201,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       labels: toggleable(),
       cumulative: hidden(),
       percentage: required(true),
-      denominatorMode: hidden(),
+      denominatorMode: toggleable(),
       showTotal: hidden()
     },
 
