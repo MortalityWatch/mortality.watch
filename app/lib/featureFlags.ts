@@ -55,13 +55,8 @@ export function getUpgradeMessage(
     return ''
   }
 
-  // Need to register (Tier 1)
+  // Need to register
   if (requiredTier === TIERS.REGISTERED) {
-    return 'Sign up for a free account to unlock this feature'
-  }
-
-  // Pro-gated features are now unlocked by registration
-  if (requiredTier === TIERS.PRO) {
     return 'Sign up for a free account to unlock this feature'
   }
 
@@ -79,10 +74,6 @@ export function getUpgradeUrl(
     const requiredTier = FEATURES[feature].tier
 
     if (requiredTier === TIERS.REGISTERED && userTier === TIERS.PUBLIC) {
-      return '/signup'
-    }
-
-    if (requiredTier === TIERS.PRO) {
       return '/signup'
     }
   }
@@ -106,10 +97,6 @@ export function getUpgradeCTA(
     const requiredTier = FEATURES[feature].tier
 
     if (requiredTier === TIERS.REGISTERED && userTier === TIERS.PUBLIC) {
-      return 'Sign Up Free'
-    }
-
-    if (requiredTier === TIERS.PRO) {
       return 'Sign Up Free'
     }
   }
