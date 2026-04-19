@@ -220,4 +220,48 @@ describe('calculateBaseline', () => {
       expect(deps.fetchBaseline).not.toHaveBeenCalled()
     })
   })
+
+  describe('series trimming for stats API', () => {
+    it('should trim leading nulls, shift bs/be/xs, and re-align output', async () => {
+      const mockResponse = {
+        y: [80.5, 80.6, 80.7, 80.8],
+        lower: [null, 79.9, 80.0, 80.1],
+        upper: [null, 81.3, 81.4, 81.5],
+        zscore: [0.1, 0.2, 0.3, 0.4]
+      }
+
+      const deps = createMockDeps(mockResponse)
+
+      const data: DatasetEntry = {
+        le: [null, null, 80.1, 80.4, 80.9, 81.2]
+      } as unknown as DatasetEntry
+
+      const labels = ['2006', '2007', '2008', '2009', '2010', '2011']
+      const keys = ['le', 'le_baseline', 'le_baseline_lower', 'le_baseline_upper'] as (keyof DatasetEntry)[]
+
+      await calculateBaseline(
+        deps,
+        data,
+        labels,
+        1, // 2007 (null in source, should clamp to first real point)
+        4, // 2010
+        keys,
+        'lin_reg',
+        'yearly',
+        false
+      )
+
+      expect(deps.fetchBaseline).toHaveBeenCalledTimes(1)
+      const fetchBody = (deps.fetchBaseline as ReturnType<typeof vi.fn>).mock.calls[0]?.[1] as Record<string, unknown>
+      expect(fetchBody.y).toEqual([80.1, 80.4, 80.9, 81.2])
+      expect(fetchBody.bs).toBe(1) // first real point after trimming
+      expect(fetchBody.be).toBe(3) // 2010 within trimmed series
+      expect(fetchBody.xs).toBe('2008')
+
+      expect(data.le_baseline).toEqual([null, null, 80.5, 80.6, 80.7, 80.8])
+      expect(data.le_baseline_lower).toEqual([undefined, undefined, undefined, 79.9, 80.0, 80.1])
+      expect(data.le_baseline_upper).toEqual([undefined, undefined, undefined, 81.3, 81.4, 81.5])
+      expect(data.le_zscore).toEqual([undefined, undefined, 0.1, 0.2, 0.3, 0.4])
+    })
+  })
 })

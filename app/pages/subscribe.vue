@@ -4,11 +4,10 @@ const { isAuthenticated } = useAuth()
 // Use onMounted to ensure client-side execution with proper auth state
 onMounted(() => {
   if (!isAuthenticated.value) {
-    // Not logged in -> redirect to signup
+    // Public users only need to register now
     navigateTo('/signup')
   } else {
-    // Logged in -> redirect to profile (where SubscriptionCard handles subscription)
-    navigateTo('/profile')
+    navigateTo('/explorer')
   }
 })
 </script>

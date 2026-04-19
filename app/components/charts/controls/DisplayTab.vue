@@ -28,6 +28,7 @@ const props = defineProps<{
   showMaximizeOption: boolean
   showLogarithmicOption: boolean
   showPercentageOption: boolean
+  showPercentageOptionDisabled: boolean
   showDenominatorModeOption: boolean
   showCumulativeOption: boolean
   showTotalOption: boolean
@@ -131,6 +132,8 @@ const chartPresetModel = computed({
           v-if="props.showPercentageOption"
           v-model="showPercentageModel"
           label="Percentage"
+          :disabled="props.showPercentageOptionDisabled"
+          :help-content="props.showPercentageOptionDisabled ? 'Percentage mode is required for this view and cannot be changed.' : undefined"
         />
 
         <!-- Denominator Mode Selector -->
@@ -174,7 +177,7 @@ const chartPresetModel = computed({
           v-if="props.showLeAdjustedOption"
           v-model="leAdjustedModel"
           label="Adjusted"
-          help-content="Seasonal adjustment removes calculation artifacts from short-term mortality fluctuations. Raw values may show apparent 'seasonality' that doesn't reflect real life expectancy changes."
+          help-content="Adjusted LE applies seasonal STL smoothing plus a bin-structure correction. Raw values may show short-term artifacts that do not reflect underlying life expectancy."
         />
       </div>
     </div>

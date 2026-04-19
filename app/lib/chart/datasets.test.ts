@@ -353,7 +353,10 @@ describe('datasets', () => {
       const first = result.datasets[0]
       const second = result.datasets[1]
 
-      expect(first?.type).toBe('bar')
+      // Composition view forces chartStyle='bar' at the chart level, so
+      // main datasets leave `type` undefined and inherit the Bar controller.
+      // Stacking is controlled via the `stack` field, not per-dataset type.
+      expect(first?.type).toBeUndefined()
       expect(first?.stack).toBe('USA')
       expect((first?.data[0] as number) + (second?.data[0] as number)).toBeCloseTo(0.5, 6)
     })
@@ -406,6 +409,68 @@ describe('datasets', () => {
       const selectedSum = (selectedResult.datasets[0]?.data[0] as number)
         + (selectedResult.datasets[1]?.data[0] as number)
       expect(totalSum).not.toBeCloseTo(selectedSum, 6)
+    })
+  })
+
+  describe('getDatasets - population percentage in mortality view', () => {
+    it('should normalize population to fractions of total in mortality view when showPercentage is true', () => {
+      const config = createBaseConfig()
+      config.chart.type = 'population'
+      config.display.showPercentage = true
+      config.display.view = 'mortality'
+      config.context.countries = ['USA']
+
+      const data: Dataset = {
+        'all': {
+          USA: createMockDatasetEntry({
+            population: [5000000, 5000000, 5000000] as NumberArray
+          })
+        },
+        '75-84': {
+          USA: createMockDatasetEntry({
+            population: [500000, 600000, 700000] as NumberArray
+          })
+        }
+      }
+
+      const result = getDatasets(config, data)
+
+      // Find the datasets with population data (non-empty labels)
+      const populationDatasets = result.datasets.filter(ds => ds.label && ds.label.length > 0)
+      expect(populationDatasets.length).toBeGreaterThan(0)
+
+      // Values should be fractions (0-1), not raw counts (millions)
+      for (const ds of populationDatasets) {
+        for (const val of ds.data) {
+          if (typeof val === 'number' && val !== null) {
+            expect(val).toBeLessThanOrEqual(1)
+            expect(val).toBeGreaterThanOrEqual(0)
+          }
+        }
+      }
+    })
+
+    it('should show raw counts when showPercentage is false for population', () => {
+      const config = createBaseConfig()
+      config.chart.type = 'population'
+      config.display.showPercentage = false
+      config.display.view = 'mortality'
+      config.context.countries = ['USA']
+
+      const data: Dataset = {
+        '75-84': {
+          USA: createMockDatasetEntry({
+            population: [500000, 600000, 700000] as NumberArray
+          })
+        }
+      }
+
+      const result = getDatasets(config, data)
+
+      const mainDataset = result.datasets.find(ds => ds.label && ds.label.length > 0)
+      expect(mainDataset).toBeDefined()
+      // Raw counts should be preserved (not normalized)
+      expect(mainDataset!.data[0]).toBe(500000)
     })
   })
 
@@ -474,7 +539,11 @@ describe('datasets', () => {
   })
 
   describe('getDatasets - chart styles', () => {
-    it('should set type to bar for bar chart style', () => {
+    // #514: Main datasets leave `type` undefined so Chart.js uses the
+    // chart-level controller. This prevents a stale `type: 'bar'` from
+    // persisting on existing datasets after the user switches chart style
+    // to line — Chart.js does not re-init controllers per dataset on update.
+    it('should leave type undefined for main datasets in bar chart style', () => {
       const config = createBaseConfig()
       config.chart.isBarChartStyle = true
 
@@ -483,10 +552,10 @@ describe('datasets', () => {
       const result = getDatasets(config, data)
 
       const mainDataset = result.datasets.find(ds => ds.label && ds.label.length > 0)
-      expect(mainDataset?.type).toBe('bar')
+      expect(mainDataset?.type).toBeUndefined()
     })
 
-    it('should set type to line for line chart style', () => {
+    it('should leave type undefined for main datasets in line chart style', () => {
       const config = createBaseConfig()
       config.chart.isBarChartStyle = false
 
@@ -495,13 +564,14 @@ describe('datasets', () => {
       const result = getDatasets(config, data)
 
       const mainDataset = result.datasets.find(ds => ds.label && ds.label.length > 0)
-      expect(mainDataset?.type).toBe('line')
+      expect(mainDataset?.type).toBeUndefined()
     })
 
-    it('should set type to barWithErrorBars for error bar style with excess', () => {
+    it('should set type to barWithErrorBars for excess + bar style when PI is shown', () => {
       const config = createBaseConfig()
       config.chart.isBarChartStyle = true
       config.chart.isExcess = true
+      config.display.showPredictionInterval = true
 
       const data = createBasicDataset()
 
@@ -509,6 +579,48 @@ describe('datasets', () => {
 
       const mainDataset = result.datasets.find(ds => ds.label && ds.label.length > 0)
       expect(mainDataset?.type).toBe('barWithErrorBars')
+    })
+
+    it('should leave type undefined for excess + bar style when PI is NOT shown', () => {
+      // Regression #514: when isErrorBarType is true but showPredictionInterval
+      // is false, transformed data is a plain number array (with possible
+      // null gaps). Setting type='barWithErrorBars' would make the controller
+      // dereference `.yMin` on those nulls and crash the entire chart.
+      const config = createBaseConfig()
+      config.chart.isBarChartStyle = true
+      config.chart.isExcess = true
+      config.chart.isErrorBarType = true
+      config.display.showPredictionInterval = false
+
+      const data = createBasicDataset()
+
+      const result = getDatasets(config, data)
+
+      const mainDataset = result.datasets.find(ds => ds.label && ds.label.length > 0)
+      expect(mainDataset?.type).toBeUndefined()
+    })
+
+    it('should set type to line for baseline datasets inside a bar chart', () => {
+      const config = createBaseConfig()
+      config.chart.isBarChartStyle = true
+      config.display.showBaseline = true
+
+      const data: Dataset = {
+        all: {
+          USA: createMockDatasetEntry({
+            deaths_baseline: [95, 190, 285] as NumberArray
+          })
+        }
+      }
+
+      const result = getDatasets(config, data)
+
+      const baseline = result.datasets.find(ds =>
+        (ds as unknown as Record<string, unknown>).label === ''
+      )
+      // Baselines carry an empty label; their type should be 'line' so they
+      // render as a line overlay in a bar chart (mixed chart mode).
+      expect(baseline?.type).toBe('line')
     })
   })
 

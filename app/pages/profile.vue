@@ -6,43 +6,18 @@ definePageMeta({
 
 useSeoMeta({
   title: 'Profile',
-  description: 'Manage your Mortality Watch account settings, personal information, and subscription.',
+  description: 'Manage your Mortality Watch account settings and personal information.',
   ogTitle: 'Profile - Mortality Watch',
   robots: 'noindex, nofollow'
 })
 
 const { user, updateProfile, refreshSession } = useAuth()
 const toast = useToast()
-const route = useRoute()
 const { withRetry, handleError } = useErrorRecovery()
 
 const savingProfile = ref(false)
 const savingPassword = ref(false)
 const exportingData = ref(false)
-
-// Show success message after checkout
-onMounted(async () => {
-  if (route.query.success === 'true') {
-    // Refresh user session to get updated tier from database
-    await refreshSession()
-
-    toast.add({
-      title: 'Subscription activated!',
-      description: 'Your payment was successful. Welcome to Pro! 🎉',
-      color: 'success'
-    })
-    // Clean up the URL without triggering Vue Router navigation/middleware
-    window.history.replaceState({}, '', '/profile')
-  } else if (route.query.canceled === 'true') {
-    toast.add({
-      title: 'Checkout canceled',
-      description: 'You can subscribe anytime from your profile.',
-      color: 'info'
-    })
-    // Clean up the URL without triggering Vue Router navigation/middleware
-    window.history.replaceState({}, '', '/profile')
-  }
-})
 
 async function saveProfile(profile: { firstName: string, lastName: string, displayName: string }) {
   savingProfile.value = true
@@ -153,12 +128,6 @@ async function exportData() {
         :user="user"
         @updated="refreshSession"
       />
-
-      <!-- Subscription -->
-      <SubscriptionCard />
-
-      <!-- Invite Code (only shown if not Pro) -->
-      <InviteCodeCard />
 
       <!-- Personal Information -->
       <ProfilePersonalInfo

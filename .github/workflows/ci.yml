@@ -14,16 +14,21 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node }}
+
       - name: Cache node_modules
         id: cache-node-modules
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: node_modules
           key: ${{ runner.os }}-bun-node-modules-${{ hashFiles('**/bun.lock') }}
@@ -35,7 +40,7 @@ jobs:
         run: bunx nuxt prepare
 
       - name: Cache ESLint
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: .eslintcache
           key: ${{ runner.os }}-eslint-${{ hashFiles('**/bun.lock', 'eslint.config.*', '.eslintrc.*') }}
@@ -58,16 +63,21 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
       - name: Cache node_modules
         id: cache-node-modules
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: node_modules
           key: ${{ runner.os }}-bun-node-modules-${{ hashFiles('**/bun.lock') }}
@@ -76,7 +86,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Cache Nuxt Build
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             .nuxt
@@ -87,7 +97,7 @@ jobs:
             ${{ runner.os }}-nuxt-
 
       - name: Cache Playwright Browsers
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
@@ -114,10 +124,9 @@ jobs:
         timeout-minutes: 10
 
       - name: Upload Playwright Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
           name: playwright-report-${{ matrix.shard }}
           path: playwright-report/
           retention-days: 30
-

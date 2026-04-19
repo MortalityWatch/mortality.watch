@@ -46,7 +46,7 @@ function handleExportData(): void {
                 Download a copy of all your personal data in JSON format (GDPR Article 15).
               </p>
               <p>
-                This includes your profile, saved charts, and subscription history.
+                This includes your profile and saved charts.
               </p>
             </div>
           </div>

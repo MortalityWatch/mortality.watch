@@ -3,11 +3,11 @@
     <div class="max-w-3xl mx-auto">
       <PageHeader
         title="Support Mortality Watch"
-        description="Mortality Watch is sustained by Pro subscriptions. If you'd like to support our work beyond upgrading to Pro, we gratefully accept donations."
+        description="Mortality Watch is sustained by community support. If you'd like to support our work, we gratefully accept donations."
         max-width="md"
       />
 
-      <!-- Primary CTA: Upgrade to Pro -->
+      <!-- Primary CTA -->
       <div class="flex flex-col sm:flex-row gap-4 justify-center mb-8">
         <UButton
           to="/features"
@@ -18,14 +18,14 @@
             name="i-lucide-crown"
             class="w-5 h-5"
           />
-          View Features & Pricing
+          View Features
         </UButton>
         <UButton
-          to="/subscribe"
+          to="/signup"
           variant="outline"
           size="xl"
         >
-          Upgrade to Pro
+          Create Free Account
           <Icon
             name="i-lucide-arrow-right"
             class="w-5 h-5"
@@ -160,7 +160,7 @@ definePageMeta({
 // SEO metadata
 useSeoMeta({
   title: 'Donate',
-  description: 'Support Mortality Watch with a Pro subscription or one-time donation. Your contribution keeps mortality data free and accessible for researchers worldwide.',
+  description: 'Support Mortality Watch with a one-time donation. Your contribution keeps mortality data free and accessible for researchers worldwide.',
   ogTitle: 'Support Mortality Watch',
   ogDescription: 'Support free, open mortality data for researchers worldwide.',
   ogImage: '/og-image.png',

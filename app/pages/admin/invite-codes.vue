@@ -15,7 +15,6 @@ interface InviteCode {
   maxUses: number
   currentUses: number
   expiresAt: Date | null
-  grantsProUntil: Date | null
   notes: string | null
   isActive: boolean
   createdAt: Date
@@ -35,7 +34,6 @@ const newCode = ref({
   code: '',
   maxUses: 1,
   expiresAt: '',
-  grantsProMonths: 6,
   notes: ''
 })
 
@@ -88,8 +86,7 @@ async function createInviteCode() {
       method: 'POST',
       body: {
         code: newCode.value.code.trim().toUpperCase(),
-        maxUses: newCode.value.maxUses,
-        grantsProMonths: newCode.value.grantsProMonths
+        maxUses: newCode.value.maxUses
       }
     })
 
@@ -105,7 +102,6 @@ async function createInviteCode() {
       code: '',
       maxUses: 1,
       expiresAt: '',
-      grantsProMonths: 6,
       notes: ''
     }
     showCreateModal.value = false
@@ -225,12 +221,6 @@ async function copyCode(code: string) {
   }
 }
 
-// Format date
-function formatDate(date: Date | null) {
-  if (!date) return 'Never'
-  return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
-}
-
 // Compute code status
 function getCodeStatus(code: InviteCode) {
   if (!code.isActive) return 'Inactive'
@@ -322,9 +312,6 @@ onMounted(() => {
               <div>
                 <span class="font-medium">Uses:</span> {{ code.currentUses }} / {{ code.maxUses }}
               </div>
-              <div>
-                <span class="font-medium">Pro Until:</span> {{ formatDate(code.grantsProUntil) }}
-              </div>
             </div>
           </div>
 
@@ -398,18 +385,6 @@ onMounted(() => {
               v-model.number="newCode.maxUses"
               type="number"
               min="1"
-            />
-          </UFormField>
-
-          <UFormField
-            label="Pro Access Duration"
-            help="How long users get Pro access (in months)"
-          >
-            <UInput
-              v-model.number="newCode.grantsProMonths"
-              type="number"
-              min="1"
-              max="24"
             />
           </UFormField>
         </div>

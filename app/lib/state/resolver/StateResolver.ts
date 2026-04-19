@@ -242,6 +242,29 @@ export class StateResolver {
       reason: `User ${change.source} action`
     })
 
+    // 1b. When chartType changes, clear date fields that may be in the old format.
+    // Date labels differ between period types (e.g., yearly='2015' vs fluseason='2014/15'),
+    // so stale dates would be invalid for the new chartType and cause broken filtering/URLs.
+    // Clearing them lets the chart use computed defaults from the new labels.
+    if (change.field === 'chartType' && currentState.chartType !== change.value) {
+      const dateFields = ['dateFrom', 'dateTo', 'baselineDateFrom', 'baselineDateTo']
+      for (const field of dateFields) {
+        if (state[field] !== undefined) {
+          const fieldUrlKey = stateFieldEncoders[field as keyof typeof stateFieldEncoders]?.key || field
+          log.changes.push({
+            field,
+            urlKey: fieldUrlKey,
+            oldValue: state[field],
+            newValue: undefined,
+            priority: 'constraint',
+            reason: `Cleared: chartType changed from ${String(currentState.chartType)} to ${String(change.value)}`
+          })
+          state[field] = undefined
+        }
+        userOverrides.delete(field)
+      }
+    }
+
     // 2. Apply constraints
     const constrainedState = this.applyConstraints(state, userOverrides, log)
 

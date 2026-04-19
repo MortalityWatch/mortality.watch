@@ -131,9 +131,9 @@ describe('resolveChartStateForRendering', () => {
       expect(state.chartType).toBe('yearly')
     })
 
-    it('should enforce yearly chart type for LE metric', () => {
+    it('should preserve sub-yearly chart type for LE metric', () => {
       const state = resolveChartStateForRendering({ c: 'SWE', t: 'le', ct: 'monthly' }, [])
-      expect(state.chartType).toBe('yearly')
+      expect(state.chartType).toBe('monthly')
     })
   })
 

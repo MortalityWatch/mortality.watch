@@ -219,20 +219,6 @@ const asdChartTypeConstraints: StateConstraint = {
 }
 
 /**
- * LE chart type constraints
- * LE is only available for yearly (calendar-year) charts
- */
-const leChartTypeConstraints: StateConstraint = {
-  when: state => state.type === 'le' && String(state.chartType ?? '') !== 'yearly',
-  apply: {
-    chartType: 'yearly'
-  },
-  reason: 'LE is only available for yearly chart type',
-  allowUserOverride: false,
-  priority: 2
-}
-
-/**
  * Matrix chart style constraints
  * Matrix disables several features
  */
@@ -341,7 +327,6 @@ export const STATE_CONSTRAINTS: StateConstraint[] = [
   populationTypeConstraints,
   asmrTypeConstraints,
   asdChartTypeConstraints,
-  leChartTypeConstraints,
   matrixStyleConstraints,
 
   // View synchronization (keep isExcess/isZScore in sync with view field)
