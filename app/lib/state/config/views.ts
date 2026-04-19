@@ -263,7 +263,8 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       chartStyle: 'line', // Line chart is default for z-scores
       showBaseline: true, // Required for z-score calculation (but hidden in UI)
       showPredictionInterval: false,
-      showLogarithmic: false
+      showLogarithmic: false,
+      zscoreMethod: 'standard' // Pre-calculated R-API z-score; variance-stabilized is opt-in
     },
 
     constraints: [

@@ -54,6 +54,11 @@ export const BaselineMethodEnum = z.enum([
   'exp'
 ])
 
+export const ZScoreMethodEnum = z.enum([
+  'standard',
+  'variance_stabilized'
+])
+
 export const ChartStyleEnum = z.enum([
   'line',
   'bar',
@@ -73,6 +78,7 @@ export type ChartType = z.infer<typeof ChartTypeEnum>
 export type MetricType = z.infer<typeof MetricTypeEnum>
 export type StandardPopulation = z.infer<typeof StandardPopulationEnum>
 export type BaselineMethod = z.infer<typeof BaselineMethodEnum>
+export type ZScoreMethod = z.infer<typeof ZScoreMethodEnum>
 export type ChartStyle = z.infer<typeof ChartStyleEnum>
 export type DecimalPrecision = z.infer<typeof DecimalPrecisionEnum>
 

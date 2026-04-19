@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { types, standardPopulations } from '@/model'
+import { types, standardPopulations, zscoreMethodItems } from '@/model'
 import PeriodOfTimePicker from '@/components/shared/PeriodOfTimePicker.vue'
 import type { ViewType } from '@/lib/state'
 
@@ -17,6 +17,7 @@ const props = defineProps<{
   selectedType: string
   selectedChartType: string
   selectedStandardPopulation: string
+  selectedZscoreMethod: string
   view: ViewType
   isUpdating: boolean
   isPopulationType: boolean
@@ -27,6 +28,7 @@ const emit = defineEmits<{
   'update:selectedType': [value: string]
   'update:selectedChartType': [value: string]
   'update:selectedStandardPopulation': [value: string]
+  'update:selectedZscoreMethod': [value: string]
   'update:view': [value: ViewType]
 }>()
 
@@ -88,6 +90,11 @@ const selectedChartTypeModel = computed({
 const selectedStandardPopulationModel = computed({
   get: () => props.selectedStandardPopulation,
   set: v => emit('update:selectedStandardPopulation', v)
+})
+
+const zscoreMethodModel = computed({
+  get: () => props.selectedZscoreMethod,
+  set: v => emit('update:selectedZscoreMethod', v)
 })
 
 const viewModel = computed({
@@ -179,6 +186,21 @@ const viewModel = computed({
               </div>
               <div class="text-xs text-gray-500 dark:text-gray-400">
                 {{ zscoreOption.description }}
+              </div>
+              <!-- Z-Score method selector (visible when z-score view is active) -->
+              <div
+                v-if="viewModel === 'zscore'"
+                class="mt-2"
+                @click.stop
+              >
+                <USelect
+                  v-model="zscoreMethodModel"
+                  :items="zscoreMethodItems"
+                  value-key="value"
+                  :disabled="props.isUpdating"
+                  size="xs"
+                  class="w-full"
+                />
               </div>
             </div>
           </div>

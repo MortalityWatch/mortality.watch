@@ -54,6 +54,7 @@ export const FIELD_UPDATE_STRATEGY: Record<string, FieldUpdateType> = {
   dateTo: 'filter',
   chartStyle: 'filter',
   view: 'filter',
+  zscoreMethod: 'filter', // Z-score method change only needs chart re-render (client-side computation)
   isExcess: 'filter',
   showBaseline: 'filter',
   cumulative: 'filter', // Default to filter, but may be 'update' if baselineMethod !== 'auto'

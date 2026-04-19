@@ -120,7 +120,8 @@ export const getFilteredChartDataFromConfig = (
     config.chartType,
     config.view,
     config.leAdjusted,
-    config.showPercentage
+    config.showPercentage,
+    config.zscoreMethod
   )
 
   const filteredData = getFilteredLabelAndData(
@@ -150,7 +151,8 @@ export const getFilteredChartDataFromConfig = (
       showBaseline: config.showBaseline,
       showPredictionInterval: config.showPredictionInterval,
       view: config.view,
-      leAdjusted: config.leAdjusted
+      leAdjusted: config.leAdjusted,
+      zscoreMethod: config.zscoreMethod
     },
     chart: {
       type: config.type,

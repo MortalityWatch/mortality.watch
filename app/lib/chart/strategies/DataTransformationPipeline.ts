@@ -7,8 +7,9 @@ import type { ChartErrorDataPoint } from '../chartTypes'
 import { PercentageTransformStrategy } from './PercentageTransformStrategy'
 import { CumulativeTransformStrategy } from './CumulativeTransformStrategy'
 import { TotalTransformStrategy } from './TotalTransformStrategy'
-import { ZScoreTransformStrategy } from './ZScoreTransformStrategy'
+import { ZScoreTransformStrategy, type ZScoreMethod } from './ZScoreTransformStrategy'
 import { ASDTransformStrategy } from './ASDTransformStrategy'
+import { getSeasonalPeriod } from './seasonalPeriod'
 
 interface TransformConfig {
   showPercentage: boolean
@@ -18,6 +19,8 @@ interface TransformConfig {
   isAsmrType: boolean
   isASD?: boolean
   view?: string
+  zscoreMethod?: ZScoreMethod
+  chartType?: string
 }
 
 /**
@@ -87,12 +90,12 @@ export class DataTransformationPipeline {
     const dataRow = data[key] ?? []
 
     // Z-scores take priority over other transformations
-    // Z-scores are pre-calculated by the R stats API and stored as <metric>_zscore
     // Only apply to main data, not baseline/PI keys
     if (config.view === 'zscore' && !key.includes('baseline') && !key.includes('_lower') && !key.includes('_upper') && !key.includes('excess')) {
-      const zscoreKey = this.zscoreStrategy.getZScoreKey(config.isAsmrType, key)
-      const zscoreData = data[zscoreKey] ?? []
-      return zscoreData
+      const method = config.zscoreMethod ?? 'standard'
+      const period = getSeasonalPeriod(config.chartType ?? '')
+      const isDev = import.meta.dev ?? false
+      return this.zscoreStrategy.getZScoreData(method, data, config.isAsmrType, key, period, isDev)
     }
 
     // ASD metric: Use pre-calculated ASD data from R stats API

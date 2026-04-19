@@ -59,6 +59,7 @@ export interface ChartRenderState {
   showPercentage: boolean
   showLogarithmic: boolean
   leAdjusted: boolean // LE seasonal adjustment
+  zscoreMethod?: string // Z-score calculation method
 
   // Optional
   userColors?: string[]
@@ -252,6 +253,7 @@ export function resolveChartStateForRendering(
     showPercentage: (constrainedState.showPercentage as boolean) ?? false,
     showLogarithmic: constrainedState.showLogarithmic as boolean,
     leAdjusted: (constrainedState.leAdjusted as boolean) ?? true,
+    zscoreMethod: (constrainedState.zscoreMethod as string) || 'standard',
 
     // Optional
     userColors: constrainedState.userColors as string[] | undefined,
@@ -344,6 +346,7 @@ export function resolveChartStateFromSnapshot(
     showPercentage: snapshot.showPercentage ?? false,
     showLogarithmic: snapshot.showLogarithmic,
     leAdjusted: snapshot.leAdjusted ?? true,
+    zscoreMethod: snapshot.zscoreMethod,
     userColors: snapshot.userColors,
     decimals: snapshot.decimals || 'auto',
     // These fields aren't in ChartStateSnapshot - use defaults
@@ -499,6 +502,7 @@ export function toChartFilterConfig(
     showLabels: state.showLabels,
     showLogarithmic: state.showLogarithmic,
     leAdjusted: state.leAdjusted,
+    zscoreMethod: state.zscoreMethod,
 
     // Visual
     colors,

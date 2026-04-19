@@ -173,6 +173,7 @@ describe('useExplorerDataOrchestration', () => {
       showLabels: ref(true),
       showLogarithmic: ref(false),
       leAdjusted: ref(true),
+      zscoreMethod: ref('variance_stabilized'),
       dateFrom: ref('2020'),
       dateTo: ref('2023'),
       sliderStart: ref('2010'),

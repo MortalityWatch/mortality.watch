@@ -33,6 +33,7 @@ const emit = defineEmits<{
   cumulativeChanged: [value: boolean]
   showTotalChanged: [value: boolean]
   leAdjustedChanged: [value: boolean]
+  zscoreMethodChanged: [value: string]
   sliderStartChanged: [value: string]
   userColorsChanged: [value: string[]]
   chartPresetChanged: [value: string]
@@ -124,6 +125,7 @@ const baselineSliderValue = computed(() => {
       :cumulative="props.state.cumulative.value"
       :show-total="props.state.showTotal.value"
       :le-adjusted="props.state.leAdjusted.value"
+      :zscore-method="props.state.zscoreMethod.value"
       :show-logarithmic-option="showLogarithmicOption"
       :show-maximize-option="showMaximizeOption"
       :show-maximize-option-disabled="props.showMaximizeOptionDisabled"
@@ -162,6 +164,7 @@ const baselineSliderValue = computed(() => {
       @cumulative-changed="emit('cumulativeChanged', $event)"
       @show-total-changed="emit('showTotalChanged', $event)"
       @le-adjusted-changed="emit('leAdjustedChanged', $event)"
+      @zscore-method-changed="emit('zscoreMethodChanged', $event)"
       @slider-start-changed="emit('sliderStartChanged', $event)"
       @user-colors-changed="emit('userColorsChanged', $event)"
       @chart-preset-changed="emit('chartPresetChanged', $event)"
