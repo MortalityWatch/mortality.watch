@@ -14,10 +14,37 @@ import { getAgeGroupSuffix, getBaselineDescription } from './helpers'
  */
 export const ZSCORE_VIEW: ChartViewConfig = {
   /**
-   * Override: Z-Score specific title
+   * Override: Z-Score specific title — includes the active metric
+   * (Deaths / CMR / ASMR / ASD / LE / Population) so exports and
+   * shared screenshots remain unambiguous.
    */
   getTitleParts: (ctx: ChartContext) => {
-    return ['Z-Score Analysis', getAgeGroupSuffix(ctx.ageGroups)]
+    const parts: string[] = ['Z-Score']
+
+    switch (ctx.type) {
+      case 'population':
+        parts.push(`Population${getAgeGroupSuffix(ctx.ageGroups)}`)
+        break
+      case 'deaths':
+        parts.push(`Deaths${getAgeGroupSuffix(ctx.ageGroups)}`)
+        break
+      case 'cmr':
+        parts.push('Crude', `Mortality Rate${getAgeGroupSuffix(ctx.ageGroups)}`)
+        break
+      case 'asmr':
+        parts.push('Age-Standardized', 'Mortality Rate')
+        break
+      case 'asd':
+        parts.push('Age-Standardized', 'Deaths')
+        break
+      case 'le':
+        parts.push('Life Expectancy')
+        break
+      default:
+        parts.push(`Analysis${getAgeGroupSuffix(ctx.ageGroups)}`)
+    }
+
+    return parts
   },
 
   /**

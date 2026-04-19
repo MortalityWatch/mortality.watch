@@ -152,6 +152,35 @@ describe('labels', () => {
 
         expect(result.title.join(' ')).not.toContain('[')
       })
+
+      it('should include metric in z-score title for life expectancy', () => {
+        const result = callGetChartLabels({ type: 'le', view: 'zscore' })
+
+        const title = result.title.join(' ')
+        expect(title).toContain('Z-Score')
+        expect(title).toContain('Life Expectancy')
+      })
+
+      it('should include metric in z-score title for ASMR', () => {
+        const result = callGetChartLabels({ type: 'asmr', view: 'zscore' })
+
+        const title = result.title.join(' ')
+        expect(title).toContain('Z-Score')
+        expect(title).toContain('Age-Standardized')
+      })
+
+      it('should include metric in z-score title for CMR with age group', () => {
+        const result = callGetChartLabels({
+          type: 'cmr',
+          view: 'zscore',
+          ageGroups: ['65-74']
+        })
+
+        const title = result.title.join(' ')
+        expect(title).toContain('Z-Score')
+        expect(title).toContain('Mortality Rate')
+        expect(title).toContain('[65-74]')
+      })
     })
 
     describe('subtitle generation', () => {
@@ -336,6 +365,16 @@ describe('labels', () => {
         const result = callGetChartLabels({ type: 'population' })
 
         expect(result.ytitle).toBe('People')
+      })
+
+      it('should set ytitle to % of Population when showPercentage is true for population', () => {
+        const result = getChartLabels(
+          ['USA'], 'who', ['75-84'], false, false, 'population',
+          false, false, 'lin_reg', '2015', '2019', false, 'yearly',
+          'mortality', undefined, true
+        )
+
+        expect(result.ytitle).toBe('% of Population')
       })
     })
 

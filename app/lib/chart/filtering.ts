@@ -120,6 +120,7 @@ export const getFilteredChartDataFromConfig = (
     config.chartType,
     config.view,
     config.leAdjusted,
+    config.showPercentage,
     config.zscoreMethod
   )
 

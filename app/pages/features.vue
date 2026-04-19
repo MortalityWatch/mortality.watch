@@ -1,23 +1,19 @@
 <template>
   <UContainer>
-    <!-- Header -->
     <div class="text-center mb-12 mt-8">
       <h1 class="text-5xl font-bold text-gray-900 dark:text-gray-100 mb-4">
-        Features & Plans
+        Features & Access
       </h1>
       <p class="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
-        Powerful mortality data analysis for everyone. Sign up for {{ freeTrialDays }} days of Pro features free.
+        Mortality Watch now has two access levels: guest access for everyone, and full access with a free account.
       </p>
     </div>
 
-    <!-- Pricing Plans -->
     <UPricingPlans class="mb-12">
-      <!-- Public Tier -->
       <UPricingPlan
         title="Guest"
         description="Explore without registration"
-        price="$0"
-        :badge="tier === 0 ? { label: 'Current Plan', color: 'neutral' } : undefined"
+        :badge="tier === 0 ? { label: 'Current Access', color: 'neutral' } : undefined"
         :features="[
           'View mortality charts',
           'Basic controls and filters',
@@ -29,53 +25,26 @@
         class="border-2 border-gray-900 dark:border-gray-100"
       />
 
-      <!-- Free Tier -->
       <UPricingPlan
-        title="Free"
-        description="All essentials, forever free"
-        price="$0"
-        :badge="freeTierBadge"
+        title="Registered"
+        description="Full feature access with a free account"
+        :badge="isAuthenticated ? { label: 'Current Access', color: 'primary' } : { label: 'Free Account', color: 'primary' }"
         :features="[
-          { title: 'All Guest features, plus:' },
-          { title: 'Save charts', icon: 'i-lucide-save' },
-          { title: 'Custom colors', icon: 'i-lucide-palette' },
-          { title: 'All baseline methods', icon: 'i-lucide-chart-line' },
-          { title: 'Export data', icon: 'i-lucide-file-spreadsheet' },
-          { title: 'Full date range', icon: 'i-lucide-calendar' },
-          { title: 'Share charts', icon: 'i-lucide-share-2' }
+          { title: 'Everything in Guest, plus:' },
+          { title: 'Save charts and rankings', icon: 'i-lucide-save' },
+          { title: 'Custom colors and chart sizing', icon: 'i-lucide-palette' },
+          { title: 'All baseline methods and extended date ranges', icon: 'i-lucide-chart-line' },
+          { title: 'Data export and global chart history', icon: 'i-lucide-file-spreadsheet' },
+          { title: 'Watermark-free and QR-free charts', icon: 'i-lucide-image-off' },
+          { title: 'Advanced metrics including ASD and z-scores', icon: 'i-lucide-calculator' }
         ]"
-        :button="tier >= 1
-          ? { label: 'Start Exploring', to: '/explorer', color: 'neutral' }
+        :button="isAuthenticated
+          ? { label: 'Open Explorer', to: '/explorer', color: 'neutral' }
           : { label: 'Sign Up Free', to: '/signup', color: 'primary' }"
         class="border-2 border-blue-500 dark:border-blue-400"
       />
-
-      <!-- Pro Tier -->
-      <UPricingPlan
-        title="Pro"
-        description="Professional features"
-        price="$9.99"
-        billing-cycle="/month"
-        tagline="or $99/year"
-        :badge="tier === 2 ? { label: 'Current Plan', color: 'primary' } : undefined"
-        :features="[
-          { title: 'All Free features, plus:' },
-          { title: 'No watermarks', icon: 'i-lucide-image-off' },
-          { title: 'No QR codes', icon: 'i-lucide-scan-line' },
-          { title: 'Global chart history', icon: 'i-lucide-library' },
-          { title: 'Age-specific life expectancy', icon: 'i-lucide-activity' },
-          { title: 'Age-standardized deaths', icon: 'i-lucide-trending-up' },
-          { title: 'Z-score calculations', icon: 'i-lucide-calculator' },
-          { title: 'Priority support', icon: 'i-lucide-headphones' }
-        ]"
-        :button="tier === 2
-          ? { label: 'Start Exploring', to: '/explorer', color: 'neutral' }
-          : { label: 'Upgrade to Pro', to: '/subscribe', color: 'primary', class: 'bg-purple-600 hover:bg-purple-700 text-white dark:bg-purple-500 dark:hover:bg-purple-600' }"
-        class="border-2 border-purple-500 dark:border-purple-400"
-      />
     </UPricingPlans>
 
-    <!-- FAQ Section -->
     <div class="max-w-3xl mx-auto mb-12">
       <h2 class="text-3xl font-bold text-center mb-8">
         Frequently Asked Questions
@@ -85,66 +54,49 @@
         <UCard>
           <template #header>
             <h3 class="font-semibold">
-              Can I upgrade or downgrade anytime?
+              What do I get when I register?
             </h3>
           </template>
           <p class="text-sm text-gray-600 dark:text-gray-400">
-            Yes! You can upgrade to Pro anytime. If you downgrade, you'll retain Pro features
-            until the end of your current billing period.
+            Registered users get the full Mortality Watch feature set, including saved charts, exports, advanced analytics, and clean chart output.
           </p>
         </UCard>
 
         <UCard>
           <template #header>
             <h3 class="font-semibold">
-              What payment methods do you accept?
+              Do I need to pay to remove watermarks or unlock advanced analysis?
             </h3>
           </template>
           <p class="text-sm text-gray-600 dark:text-gray-400">
-            We accept all major credit cards (Visa, Mastercard, American Express) through
-            our secure payment processor, Stripe.
+            No. If you have an account, you get those features automatically.
           </p>
         </UCard>
 
         <UCard>
           <template #header>
             <h3 class="font-semibold">
-              Is there a refund policy?
+              What can guests do without registering?
             </h3>
           </template>
           <p class="text-sm text-gray-600 dark:text-gray-400">
-            Yes, we offer a 30-day money-back guarantee. If you're not satisfied with Pro,
-            contact us within 30 days for a full refund.
+            Guests can browse charts, use the core explorer, and share links. Registration is only needed for saved work and the advanced feature set.
           </p>
         </UCard>
 
         <UCard>
           <template #header>
             <h3 class="font-semibold">
-              Do you offer discounts for students or researchers?
+              Is account registration still free?
             </h3>
           </template>
           <p class="text-sm text-gray-600 dark:text-gray-400">
-            Yes! Please contact us at {{ supportEmail }} with proof of your academic
-            affiliation for special pricing.
-          </p>
-        </UCard>
-
-        <UCard>
-          <template #header>
-            <h3 class="font-semibold">
-              What happens to my saved charts if I cancel Pro?
-            </h3>
-          </template>
-          <p class="text-sm text-gray-600 dark:text-gray-400">
-            Your saved charts remain accessible. However, Pro-exclusive features (like
-            watermark-free exports) will no longer be available.
+            Yes. Registration is free.
           </p>
         </UCard>
       </div>
     </div>
 
-    <!-- CTA Section -->
     <div class="text-center mb-12">
       <p class="text-lg text-gray-600 dark:text-gray-400 mb-4">
         Have questions? We're here to help.
@@ -162,43 +114,22 @@
 </template>
 
 <script setup lang="ts">
-// Auth composable for user tier detection
 const { tier, isAuthenticated } = useAuth()
 const { trackSubscriptionView } = useAnalytics()
-const config = useRuntimeConfig()
-const supportEmail = config.public.supportEmail
-const freeTrialDays = config.public.freeTrialDays
 
-// Badge for free tier based on auth state
-const freeTierBadge = computed(() => {
-  if (!isAuthenticated.value) {
-    return { label: `${freeTrialDays}-day Pro trial included`, color: 'primary' as const, icon: 'i-lucide-sparkles' }
-  }
-  if (tier.value === 1) {
-    return { label: 'Current Plan', color: 'primary' as const }
-  }
-  if (tier.value >= 2) {
-    return { label: 'Active', color: 'primary' as const }
-  }
-  return undefined
-})
-
-// Track features page view as subscription view
 onMounted(() => {
   trackSubscriptionView()
 })
 
-// Page meta
 definePageMeta({
   title: 'Features'
 })
 
-// SEO metadata
 useSeoMeta({
-  title: 'Features & Pricing',
-  description: 'Explore Mortality Watch features across all tiers. Free registration includes chart saving, custom colors, and data exports. Upgrade to Pro for advanced analytics at $9.99/month.',
-  ogTitle: 'Mortality Watch Features & Pricing',
-  ogDescription: 'Free registration with powerful features. Upgrade to Pro for advanced mortality analysis tools.',
+  title: 'Features & Access',
+  description: 'Explore Mortality Watch guest and registered access. Creating a free account unlocks the full feature set.',
+  ogTitle: 'Mortality Watch Features & Access',
+  ogDescription: 'Guest access is open to everyone. Free registration unlocks the full feature set.',
   ogImage: '/og-image.png',
   twitterImage: '/og-image.png',
   twitterCard: 'summary_large_image'

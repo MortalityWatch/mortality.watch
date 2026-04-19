@@ -11,6 +11,12 @@ import { test, expect } from '@playwright/test'
  * 5. Mutual exclusivity constraints
  */
 test.describe('Explorer View Modes', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('mortality-watch-tutorial-explorer-completed', 'true')
+    })
+  })
+
   // Helper to wait for chart to be ready
   async function waitForChart(page: ReturnType<typeof test['info']>['page']) {
     await page.waitForLoadState('domcontentloaded')

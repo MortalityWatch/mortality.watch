@@ -128,6 +128,10 @@ export default defineNuxtConfig({
     }
   },
 
+  ogImage: {
+    zeroRuntime: true
+  },
+
   // Umami Analytics configuration
   umami: {
     id: process.env.NUXT_UMAMI_ID || '',

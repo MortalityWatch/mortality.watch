@@ -403,25 +403,13 @@ export function useExplorerChartActions(
     }
   }
 
-  // Helper: Filter out datasets that are purely visualization helpers
+  // Helper: Filter out datasets that are purely visualization helpers.
+  // Unlabeled datasets are baselines, prediction intervals, and other
+  // Chart.js overlays — they shouldn't be exported. User-visible series
+  // always carry a non-empty label from getLabel().
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function filterMeaningfulDatasets(datasets: any[]) {
-    return datasets.filter((ds) => {
-      // Keep if it has a label
-      if (ds.label && ds.label.trim() !== '') return true
-
-      // Skip if it's a Chart.js internal dataset (error bars, etc.)
-      if (ds.type === 'line' && !ds.label) return false
-
-      // Keep if it has actual data points
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const hasData = ds.data && Array.isArray(ds.data) && ds.data.some((d: any) => {
-        if (typeof d === 'number') return !isNaN(d) && d !== null
-        if (d && typeof d === 'object' && 'y' in d) return !isNaN((d as { y: number }).y)
-        return false
-      })
-      return hasData
-    })
+    return datasets.filter(ds => ds.label && ds.label.trim() !== '')
   }
 
   // Helper: Trigger file download

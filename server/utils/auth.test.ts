@@ -413,7 +413,7 @@ describe('Auth Utilities', () => {
       expect(user).toEqual({
         id: 1,
         email: 'test@example.com',
-        tier: 1,
+        tier: 2,
         role: 'user',
         firstName: 'Test',
         lastName: 'User'
@@ -459,7 +459,7 @@ describe('Auth Utilities', () => {
       expect(user).toEqual({
         id: 1,
         email: 'test@example.com',
-        tier: 1,
+        tier: 2,
         role: 'user'
       })
     })
@@ -604,7 +604,7 @@ describe('Auth Utilities', () => {
       expect(user).toEqual({
         id: 1,
         email: 'test@example.com',
-        tier: 1,
+        tier: 2,
         role: 'user'
       })
     })
@@ -807,7 +807,7 @@ describe('Auth Utilities', () => {
       const mockEvent = {} as H3Event
       const user = await requireTier(mockEvent, 1)
 
-      expect(user.tier).toBe(1)
+      expect(user.tier).toBe(2)
     })
 
     it('should return user when tier is higher than required (tier 1 required, user has tier 2)', async () => {
@@ -846,7 +846,7 @@ describe('Auth Utilities', () => {
       expect(user.tier).toBe(2)
     })
 
-    it('should throw 403 error when tier is insufficient', async () => {
+    it('should return user when tier 2 is required because authenticated users are automatic Pro', async () => {
       const { requireTier } = await import('./auth')
 
       const payload = {
@@ -878,15 +878,8 @@ describe('Auth Utilities', () => {
 
       const mockEvent = {} as H3Event
 
-      await expect(requireTier(mockEvent, 2)).rejects.toEqual({
-        statusCode: 403,
-        message: 'Forbidden - tier 2 access required'
-      })
-
-      expect(mockCreateError).toHaveBeenCalledWith({
-        statusCode: 403,
-        message: 'Forbidden - tier 2 access required'
-      })
+      const user = await requireTier(mockEvent, 2)
+      expect(user.tier).toBe(2)
     })
 
     it('should work with tier 0', async () => {
@@ -922,7 +915,7 @@ describe('Auth Utilities', () => {
       const mockEvent = {} as H3Event
       const user = await requireTier(mockEvent, 0)
 
-      expect(user.tier).toBe(1)
+      expect(user.tier).toBe(2)
     })
 
     it('should throw 401 error when not authenticated', async () => {
@@ -1331,7 +1324,7 @@ describe('Auth Utilities', () => {
       expect(user).toEqual({
         id: 1,
         email: 'test@example.com',
-        tier: 1,
+        tier: 2,
         role: 'user'
       })
     })

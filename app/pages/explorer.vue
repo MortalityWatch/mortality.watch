@@ -50,7 +50,7 @@ const state = useExplorerState()
 
 // Data availability checks with auto-correction
 // Composable runs watchers for auto-correction (side effects)
-useDataAvailability(state)
+const dataAvailability = useDataAvailability(state)
 
 // Dynamic OG images based on current chart state
 const currentRoute = useRoute()
@@ -144,16 +144,12 @@ const { displayColors } = useExplorerColors(
 // Bootstrap data - loaded here and passed to data orchestration composable
 const allCountries = ref<Record<string, Country>>({})
 const isDataLoaded = ref(false)
-const allAgeGroups = computed(() => {
-  const result = new Set<string>()
-  state.countries.value.forEach((countryCode: string) => {
-    const country = allCountries.value[countryCode]
-    if (country) {
-      country.age_groups().forEach((ag: string) => result.add(ag))
-    }
-  })
-  return Array.from(result)
-})
+// Age groups exposed in the selector are filtered by the active chart type,
+// because a country can have different age-group sets per resolution
+// (e.g. USA monthly has 0-9, 10-19… but weekly has 0-24, 25-44…). Showing
+// the union across resolutions previously let users pick groups that have
+// no data file for the current chart type.
+const allAgeGroups = computed(() => dataAvailability.availableAgeGroups.value)
 
 // Data orchestration composable
 const dataOrchestration = useExplorerDataOrchestration(
@@ -292,6 +288,9 @@ const handleStateChange = async (
 
   // 3. Apply directly to refs (single tick, no reactive cascade)
   state.applyResolvedState(resolved)
+
+  // 3b. Sync userOverrides from resolved state (resolveChange may clear date overrides on chartType change)
+  state.setUserOverrides(resolved.userOverrides)
 
   // 4. Sync URL for persistence/sharing
   // Set flag to prevent useBrowserNavigation from triggering duplicate update

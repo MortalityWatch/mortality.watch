@@ -56,16 +56,14 @@ const emit = defineEmits<{
 const showLogarithmicOption = computed(() => props.state.ui.value.logarithmic?.visible ?? false)
 const showMaximizeOption = computed(() => props.state.ui.value.maximize?.visible ?? false)
 const showPercentageOption = computed(() => props.state.ui.value.percentage?.visible ?? false)
+const showPercentageOptionDisabled = computed(() => props.state.ui.value.percentage?.disabled ?? false)
 const showCumulativeOption = computed(() => props.state.ui.value.cumulative?.visible ?? false)
 const showTotalOption = computed(() => props.state.ui.value.showTotal?.visible ?? false)
 const showPredictionIntervalOption = computed(() => props.state.ui.value.predictionInterval?.visible ?? false)
 
-// Feature access for LE seasonal adjustment
-const { can } = useFeatureAccess()
-
-// Show LE Adjusted toggle when: type=le AND sub-yearly AND Pro user
+// Show LE Adjusted toggle when: type=le AND sub-yearly
 const showLeAdjustedOption = computed(() =>
-  props.state.type.value === 'le' && isSubYearlyChartType(props.state.chartType.value) && can('ADVANCED_LE')
+  props.state.type.value === 'le' && isSubYearlyChartType(props.state.chartType.value)
 )
 
 // Computed values derived from state
@@ -132,6 +130,7 @@ const baselineSliderValue = computed(() => {
       :show-maximize-option="showMaximizeOption"
       :show-maximize-option-disabled="props.showMaximizeOptionDisabled"
       :show-percentage-option="showPercentageOption"
+      :show-percentage-option-disabled="showPercentageOptionDisabled"
       :show-cumulative-option="showCumulativeOption"
       :show-total-option="showTotalOption"
       :show-total-option-disabled="props.showTotalOptionDisabled"

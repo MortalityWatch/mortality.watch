@@ -11,6 +11,14 @@ export function useStripe() {
   const config = useRuntimeConfig()
   let stripePromise: Promise<Stripe | null> | null = null
 
+  type CheckoutSessionResponse = {
+    url?: string
+  }
+
+  type PortalSessionResponse = {
+    url: string
+  }
+
   /**
    * Get Stripe instance (singleton)
    */
@@ -36,7 +44,7 @@ export function useStripe() {
     const cancelUrl = options?.cancelUrl || `${baseUrl}/profile?canceled=true`
 
     try {
-      const response = await $fetch('/api/stripe/create-checkout-session', {
+      const response = await $fetch<CheckoutSessionResponse>('/api/stripe/create-checkout-session', {
         method: 'POST',
         body: {
           plan,
@@ -65,7 +73,7 @@ export function useStripe() {
     const url = returnUrl || `${baseUrl}/profile`
 
     try {
-      const response = await $fetch('/api/stripe/create-portal-session', {
+      const response = await $fetch<PortalSessionResponse>('/api/stripe/create-portal-session', {
         method: 'POST',
         body: {
           returnUrl: url

@@ -35,6 +35,7 @@ export const getChartLabels = (
   chartType: string,
   view?: string,
   leAdjusted?: boolean,
+  showPercentage?: boolean,
   zscoreMethod?: string
 ): ChartLabels => {
   // Derive view from parameters if not explicitly provided
@@ -54,6 +55,7 @@ export const getChartLabels = (
     cumulative,
     showBaseline,
     showPredictionInterval,
+    showPercentage: showPercentage ?? false,
     showTotal,
     chartType,
     leAdjusted,

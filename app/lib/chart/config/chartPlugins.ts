@@ -313,6 +313,7 @@ export function createPluginsConfig(
     cumulative: false,
     showBaseline: false,
     showPredictionInterval: false,
+    showPercentage: false,
     showTotal: false,
     chartType: '',
     baselineMethod: '',
