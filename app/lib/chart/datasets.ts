@@ -62,12 +62,21 @@ const getPointRadius = (chartType: string, key: string) => {
   return 3
 }
 
-const getType = (key: string, isBarChartStyle: boolean, isExcess: boolean) => {
-  // Error-bar controller is its own controller, so it has to be set explicitly
-  // (Chart.js has no "error bar" fallback on a Bar chart).
-  if (isBarChartStyle && isExcess) return 'barWithErrorBars'
+const getType = (
+  key: string,
+  isBarChartStyle: boolean,
+  isExcess: boolean,
+  showPredictionInterval: boolean
+) => {
   // Baselines in a bar chart render as line overlays — a genuine mixed chart.
   if (isBarChartStyle && key.includes('_baseline')) return 'line'
+  // Error-bar controller is its own controller, so it has to be set
+  // explicitly. Only set it when PI is actually shown — otherwise the data
+  // is a plain number array and the controller crashes on null gaps with
+  // "can't access property 'yMin', data[index] is null".
+  if (isBarChartStyle && isExcess && showPredictionInterval) {
+    return 'barWithErrorBars'
+  }
   // Everything else inherits the chart-level controller. Leaving this
   // undefined avoids stale `type: 'bar'` lingering on datasets after the
   // user switches chart style from bar to line — Chart.js does not
@@ -273,7 +282,12 @@ export const getDatasets = (
               ? 0
               : getPointRadius(config.chart.chartType, key),
           pointBackgroundColor: getPointBackgroundColor(key, color),
-          type: getType(key, config.chart.isBarChartStyle || isPopulationComposition, config.chart.isExcess),
+          type: getType(
+            key,
+            config.chart.isBarChartStyle || isPopulationComposition,
+            config.chart.isExcess,
+            config.display.showPredictionInterval
+          ),
           stack: isPopulationComposition ? iso3c : undefined,
           hidden: isPredictionIntervalKey(key) && !config.display.showPredictionInterval
         })

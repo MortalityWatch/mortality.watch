@@ -516,10 +516,11 @@ describe('datasets', () => {
       expect(mainDataset?.type).toBeUndefined()
     })
 
-    it('should set type to barWithErrorBars for error bar style with excess', () => {
+    it('should set type to barWithErrorBars for excess + bar style when PI is shown', () => {
       const config = createBaseConfig()
       config.chart.isBarChartStyle = true
       config.chart.isExcess = true
+      config.display.showPredictionInterval = true
 
       const data = createBasicDataset()
 
@@ -527,6 +528,25 @@ describe('datasets', () => {
 
       const mainDataset = result.datasets.find(ds => ds.label && ds.label.length > 0)
       expect(mainDataset?.type).toBe('barWithErrorBars')
+    })
+
+    it('should leave type undefined for excess + bar style when PI is NOT shown', () => {
+      // Regression #514: when isErrorBarType is true but showPredictionInterval
+      // is false, transformed data is a plain number array (with possible
+      // null gaps). Setting type='barWithErrorBars' would make the controller
+      // dereference `.yMin` on those nulls and crash the entire chart.
+      const config = createBaseConfig()
+      config.chart.isBarChartStyle = true
+      config.chart.isExcess = true
+      config.chart.isErrorBarType = true
+      config.display.showPredictionInterval = false
+
+      const data = createBasicDataset()
+
+      const result = getDatasets(config, data)
+
+      const mainDataset = result.datasets.find(ds => ds.label && ds.label.length > 0)
+      expect(mainDataset?.type).toBeUndefined()
     })
 
     it('should set type to line for baseline datasets inside a bar chart', () => {
