@@ -30,7 +30,6 @@ export type UICondition
     | { field: 'chartStyle', isNot: ChartStyle }
     | { field: 'type', is: MetricType }
     | { field: 'showBaseline', is: boolean }
-    | { field: 'showPercentage', is: boolean }
     | { field: 'cumulative', is: boolean }
     | { and: UICondition[] }
     | { or: UICondition[] }

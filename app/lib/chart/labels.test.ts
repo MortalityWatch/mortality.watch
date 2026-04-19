@@ -539,8 +539,9 @@ describe('labels', () => {
     })
 
     describe('denominator mode in subtitle', () => {
-      it('should show "% of selected age groups" when percentageDenominator is selected', () => {
+      it('should show "% of selected age groups" in composition view when selected', () => {
         const result = callGetChartLabels({
+          view: 'composition',
           percentageDenominator: 'selected'
         })
 
@@ -549,6 +550,7 @@ describe('labels', () => {
 
       it('should not show denominator info when percentageDenominator is total', () => {
         const result = callGetChartLabels({
+          view: 'composition',
           percentageDenominator: 'total'
         })
 
@@ -561,7 +563,7 @@ describe('labels', () => {
         expect(result.subtitle).not.toContain('% of selected age groups')
       })
 
-      it('should show in excess view subtitle', () => {
+      it('should not show outside composition view, even if pd=selected leaks via URL', () => {
         const result = callGetChartLabels({
           isExcess: true,
           view: 'excess',
@@ -569,7 +571,7 @@ describe('labels', () => {
           percentageDenominator: 'selected'
         })
 
-        expect(result.subtitle).toContain('% of selected age groups')
+        expect(result.subtitle).not.toContain('% of selected age groups')
       })
     })
   })

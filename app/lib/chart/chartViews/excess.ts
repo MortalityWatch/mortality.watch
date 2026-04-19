@@ -64,8 +64,8 @@ export const EXCESS_VIEW: ChartViewConfig = {
       parts.push('95% Prediction Interval')
     }
 
-    // Denominator mode for percentage display
-    if (ctx.percentageDenominator === 'selected') {
+    // Denominator mode for percentage display — only honored in composition view
+    if (ctx.view === 'composition' && ctx.percentageDenominator === 'selected') {
       parts.push('% of selected age groups')
     }
 

@@ -180,7 +180,11 @@ export const getDatasets = (
     ? ags.filter(ag => ag !== 'all')
     : ags
 
-  const useSelectedDenominator = transformConfig.percentageDenominator === 'selected'
+  // The selector only changes math in composition view — outside it, the
+  // selected-denominator branch would double-count the 'all' aggregate row
+  // (which is part of `ageBandsToPlot` when not in composition).
+  const useSelectedDenominator = isPopulationComposition
+    && transformConfig.percentageDenominator === 'selected'
 
   const populationTotalsByCountry = new Map<string, number[]>()
   if (isPopulationPercentage) {
