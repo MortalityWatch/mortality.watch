@@ -30,14 +30,14 @@ const emit = defineEmits<{
   'update:view': [value: ViewType]
 }>()
 
-// Gate ASD metric for Pro users
+// Gate ASD metric — requires a registered account
 const hasASDAccess = can('AGE_STANDARDIZED')
 
 // Add 'label' property for USelect compatibility
-// Also mark ASD as disabled if user doesn't have Pro access
+// Mark ASD as disabled and surface the gate when the user is anonymous
 const typesWithLabels = computed(() => types.map(t => ({
   ...t,
-  label: t.value === 'asd' && !hasASDAccess ? `${t.name} (Pro)` : t.name,
+  label: t.value === 'asd' && !hasASDAccess ? `${t.name} (Sign up)` : t.name,
   disabled: t.value === 'asd' && !hasASDAccess
 })))
 const standardPopulationsWithLabels = standardPopulations.map(t => ({ ...t, label: t.name }))

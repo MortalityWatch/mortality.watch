@@ -39,7 +39,7 @@
         v-for="metric in metrics"
         :key="metric"
       >
-        <!-- Pro-gated metric (ASD) -->
+        <!-- Registration-gated metric (ASD) -->
         <NuxtLink
           v-if="isProMetric(metric)"
           :to="can('AGE_STANDARDIZED') ? `/discover/metric/${metric}` : getFeatureUpgradeUrl('AGE_STANDARDIZED')"
@@ -159,7 +159,7 @@ import { metricInfo } from '@/lib/discover/constants'
 
 const { can, getFeatureUpgradeUrl } = useFeatureAccess()
 
-// Check if metric is Pro-gated
+// Check if metric requires a registered account (ASD = AGE_STANDARDIZED)
 function isProMetric(metric: Metric): boolean {
   return metric === 'asd'
 }
