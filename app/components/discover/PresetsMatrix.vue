@@ -258,19 +258,18 @@ const gridColsClass = computed(() => {
   }
 })
 
-// Check if a view is a Pro feature
-function isProFeature(view: View): boolean {
+// Check if a view requires a registered account
+function isGatedFeature(view: View): boolean {
   return view === 'zscore'
 }
 
-// Get the feature key for a Pro feature
 function getFeatureKey() {
   return 'Z_SCORES' as const
 }
 
 // Check if view is locked for current user
 function isLocked(view: View): boolean {
-  return isProFeature(view) && !can(getFeatureKey())
+  return isGatedFeature(view) && !can(getFeatureKey())
 }
 
 // Get the view to show for a metric

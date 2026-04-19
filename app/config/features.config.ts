@@ -32,10 +32,13 @@ export const TIER_INFO = {
     price: 'Free',
     signupRequired: true
   },
+  // Retained as an alias for backward compatibility with the Stripe webhook
+  // and admin scripts that still reference the constant. No live feature is
+  // gated to this tier — all formerly Pro features now require REGISTERED.
   [TIERS.PRO]: {
-    name: 'Pro',
-    description: 'Premium subscription with advanced features',
-    price: '$9.99/month',
+    name: 'Free',
+    description: 'Free account with extended features',
+    price: 'Free',
     signupRequired: true
   }
 } as const
@@ -136,116 +139,117 @@ export const FEATURES = {
   },
 
   // ==========================================
-  // TIER 2 (PRO - PAID) - Advanced features
+  // Formerly TIER 2 (PRO - PAID) - now bundled
+  // into REGISTERED since payments were disabled
   // ==========================================
 
   CUSTOM_CHART_SIZE: {
-    tier: TIERS.PRO,
+    tier: TIERS.REGISTERED,
     name: 'Custom Chart Size',
     description: 'Customize chart dimensions and aspect ratios',
     category: 'customization'
   },
 
   CUSTOM_DECIMALS: {
-    tier: TIERS.PRO,
+    tier: TIERS.REGISTERED,
     name: 'Custom Number Precision',
     description: 'Control decimal places in chart values',
     category: 'customization'
   },
 
   HIDE_WATERMARK: {
-    tier: TIERS.PRO,
+    tier: TIERS.REGISTERED,
     name: 'Hide Watermark',
     description: 'Remove site watermark from charts',
     category: 'branding'
   },
 
   HIDE_QR: {
-    tier: TIERS.PRO,
+    tier: TIERS.REGISTERED,
     name: 'Hide QR Code',
     description: 'Remove QR code from charts',
     category: 'branding'
   },
 
   SHOW_CAPTION: {
-    tier: TIERS.PRO,
+    tier: TIERS.REGISTERED,
     name: 'Show Caption',
     description: 'Display chart caption with metadata',
     category: 'branding'
   },
 
   HIDE_TITLE: {
-    tier: TIERS.PRO,
+    tier: TIERS.REGISTERED,
     name: 'Hide Title',
     description: 'Hide chart title',
     category: 'branding'
   },
 
   HIDE_LEGEND: {
-    tier: TIERS.PRO,
+    tier: TIERS.REGISTERED,
     name: 'Hide Legend',
     description: 'Hide chart legend',
     category: 'branding'
   },
 
   HIDE_X_AXIS_TITLE: {
-    tier: TIERS.PRO,
+    tier: TIERS.REGISTERED,
     name: 'Hide X-Axis Title',
     description: 'Hide x-axis title label',
     category: 'branding'
   },
 
   HIDE_Y_AXIS_TITLE: {
-    tier: TIERS.PRO,
+    tier: TIERS.REGISTERED,
     name: 'Hide Y-Axis Title',
     description: 'Hide y-axis title label',
     category: 'branding'
   },
 
   ADVANCED_LE: {
-    tier: TIERS.PRO,
+    tier: TIERS.REGISTERED,
     name: 'Advanced Life Expectancy',
     description: 'Single age group LE calculations',
     category: 'analysis'
   },
 
   Z_SCORES: {
-    tier: TIERS.PRO,
+    tier: TIERS.REGISTERED,
     name: 'Z-Scores',
     description: 'Statistical z-score calculations',
     category: 'analysis'
   },
 
   SORT_BY_VALUE: {
-    tier: TIERS.PRO,
+    tier: TIERS.REGISTERED,
     name: 'Sort by Value',
     description: 'Reorder chart series by latest data value',
     category: 'analysis'
   },
 
   AGE_STANDARDIZED: {
-    tier: TIERS.PRO,
+    tier: TIERS.REGISTERED,
     name: 'Age Standardized Deaths',
     description: 'Age-standardized death rates (Levitt method)',
     category: 'analysis'
   },
 
   BROWSE_ALL_CHARTS: {
-    tier: TIERS.PRO,
+    tier: TIERS.REGISTERED,
     name: 'Global Chart History',
     description: 'Browse all chart variants ever created on the platform',
     category: 'core'
   },
 
   PRIORITY_SUPPORT: {
-    tier: TIERS.PRO,
+    tier: TIERS.REGISTERED,
     name: 'Priority Support',
     description: 'Priority customer support',
     category: 'support'
   },
 
   API_ACCESS: {
-    tier: TIERS.PRO,
+    tier: TIERS.REGISTERED,
     name: 'API Access',
     description: 'REST API access (coming soon)',
     category: 'api'

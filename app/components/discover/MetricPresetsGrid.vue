@@ -49,20 +49,18 @@ const props = defineProps<Props>()
 const colorMode = useColorMode()
 const { can, getFeatureUpgradeUrl } = useFeatureAccess()
 
-// Check if a view is a Pro feature
-function isProFeature(view: View): boolean {
+// Check if a view requires a registered account
+function isGatedFeature(view: View): boolean {
   return view === 'zscore'
 }
 
-// Get the feature key for a Pro feature (only called for pro views)
 function getFeatureKey(): FeatureKey {
-  // zscore is the only pro feature view
   return 'Z_SCORES'
 }
 
 // Check if view is locked for current user
 function isLocked(view: View): boolean {
-  return isProFeature(view) && !can(getFeatureKey())
+  return isGatedFeature(view) && !can(getFeatureKey())
 }
 
 // Get available views for a metric (Population only has 'normal')
