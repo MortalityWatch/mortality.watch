@@ -28,6 +28,7 @@ import ExplorerDataSelection from '@/components/explorer/ExplorerDataSelection.v
 import ExplorerChartContainer from '@/components/explorer/ExplorerChartContainer.vue'
 import ExplorerSettings from '@/components/explorer/ExplorerSettings.vue'
 import DataSourcesDisplay from '@/components/explorer/DataSourcesDisplay.vue'
+import LeUnavailableNotice from '@/components/explorer/LeUnavailableNotice.vue'
 import ChartActions from '@/components/charts/ChartActions.vue'
 import SaveModal from '@/components/SaveModal.vue'
 import { generateExplorerTitle, generateExplorerDescription } from '@/lib/utils/chartTitles'
@@ -787,6 +788,12 @@ watch(
             :has-been-resized="hasBeenResized"
             :is-custom-mode="isCustomMode"
             :can-resize="isPro"
+          />
+          <!-- LE unavailability notice (only when LE selected and pipeline reports a reason) -->
+          <LeUnavailableNotice
+            :is-life-expectancy-type="isLifeExpectancyType()"
+            :reasons="dataOrchestration.leUnavailableReasons.value"
+            :all-countries="allCountries"
           />
           <!-- Data sources display below chart -->
           <DataSourcesDisplay
