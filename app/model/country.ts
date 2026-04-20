@@ -26,6 +26,14 @@ export interface CountryDataRaw {
   cmr: string
   le?: string // Direct LE value from CSV (used for age-stratified data)
   le_adj?: string // Seasonally adjusted LE (only for sub-yearly data)
+  /**
+   * Optional reason string explaining why LE could not be computed for this
+   * jurisdiction. Present (and non-empty) only on LE-bearing rows where the
+   * data pipeline could not produce LE — e.g. "first_age_group_too_broad"
+   * for jurisdictions whose source publishes only a coarse first age band.
+   * Absent / empty when LE is computable.
+   */
+  le_unavailable_reason?: string
   asmr_who: string
   asmr_esp: string
   asmr_usa: string
@@ -202,6 +210,13 @@ export class CountryData {
   le_adj_excess: number | undefined
   le_adj_excess_lower: number | undefined
   le_adj_excess_upper: number | undefined
+  /**
+   * Reason why LE is unavailable for this jurisdiction (e.g.
+   * "first_age_group_too_broad"). Undefined when LE is computable, or for
+   * non-LE-bearing rows. Mapped to a human-readable string for display via
+   * `describeLeUnavailableReason`.
+   */
+  le_unavailable_reason: string | undefined
   deaths_zscore: number | undefined
   cmr_zscore: number | undefined
   asmr_who_zscore: number | undefined
@@ -277,5 +292,10 @@ export class CountryData {
     this.le_adj_excess = undefined
     this.le_adj_excess_lower = undefined
     this.le_adj_excess_upper = undefined
+    // LE unavailability reason from the data pipeline (NA/empty when LE is computable)
+    this.le_unavailable_reason
+      = obj.le_unavailable_reason && obj.le_unavailable_reason !== ''
+        ? obj.le_unavailable_reason
+        : undefined
   }
 }
