@@ -93,7 +93,7 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command: isCI
-      ? 'bun run preview -- --host 127.0.0.1 --port 3000'
+      ? 'node .output/server/index.mjs'
       : 'bun run dev -- --host 127.0.0.1 --port 3000',
     port: 3000,
     reuseExistingServer: !process.env.CI,
@@ -101,7 +101,9 @@ export default defineConfig({
     stdout: 'pipe', // Show server output in test logs
     stderr: 'pipe', // Show server errors in test logs
     env: {
-      JWT_SECRET: 'test-secret-for-e2e-only-do-not-use-in-production'
+      HOST: '127.0.0.1',
+      JWT_SECRET: 'test-secret-for-e2e-only-do-not-use-in-production',
+      PORT: '3000'
     }
   }
 })
