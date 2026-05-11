@@ -1,4 +1,5 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import { defineNuxtConfig } from 'nuxt/config'
 import { fileURLToPath } from 'node:url'
 
 const hasUmamiId = (process.env.NUXT_UMAMI_ID || '').length > 0
@@ -28,7 +29,7 @@ export default defineNuxtConfig({
 
   vue: {
     compilerOptions: {
-      isCustomElement: tag => tag === 'stripe-buy-button'
+      isCustomElement: (tag: string) => tag === 'stripe-buy-button'
     }
   },
 
