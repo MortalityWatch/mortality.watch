@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
+const isCI = !!process.env.CI
+
 /**
  * See https://playwright.dev/docs/test-configuration
  */
@@ -90,7 +92,9 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'bun run dev -- --host 127.0.0.1 --port 3000',
+    command: isCI
+      ? 'bun run preview -- --host 127.0.0.1 --port 3000'
+      : 'bun run dev -- --host 127.0.0.1 --port 3000',
     port: 3000,
     reuseExistingServer: !process.env.CI,
     timeout: 90 * 1000, // Allow extra time for first dev boot in CI
