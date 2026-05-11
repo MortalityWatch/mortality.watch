@@ -1,13 +1,12 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
-import { defineNuxtConfig } from 'nuxt/config'
 import { fileURLToPath } from 'node:url'
+import type { NuxtConfig } from 'nuxt/schema'
 
 const hasUmamiId = (process.env.NUXT_UMAMI_ID || '').length > 0
 const umamiId = hasUmamiId
   ? process.env.NUXT_UMAMI_ID || ''
   : '00000000-0000-0000-0000-000000000000'
 
-export default defineNuxtConfig({
+export default {
   modules: [
     '@nuxt/eslint',
     '@nuxt/image',
@@ -167,4 +166,4 @@ export default defineNuxtConfig({
     ignoreLocalhost: true,
     enabled: hasUmamiId
   }
-})
+} satisfies NuxtConfig
