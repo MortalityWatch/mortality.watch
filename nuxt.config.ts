@@ -26,27 +26,6 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/main.css'],
 
-  vite: {
-    optimizeDeps: {
-      include: [
-        '@vue/devtools-core',
-        '@vue/devtools-kit',
-        '@vueform/slider',
-        'chart.js',
-        'chartjs-chart-error-bars',
-        'chartjs-chart-matrix',
-        'chartjs-plugin-annotation',
-        'chroma-js',
-        'driver.js',
-        'i18n-iso-countries',
-        'papaparse',
-        'qrcode',
-        'vue-chartjs',
-        'zod'
-      ]
-    }
-  },
-
   vue: {
     compilerOptions: {
       isCustomElement: tag => tag === 'stripe-buy-button'
@@ -142,6 +121,27 @@ export default defineNuxtConfig({
           ].join('; ')
         }
       }
+    }
+  },
+
+  vite: {
+    optimizeDeps: {
+      include: [
+        '@vue/devtools-core',
+        '@vue/devtools-kit',
+        '@vueform/slider',
+        'chart.js',
+        'chartjs-chart-error-bars',
+        'chartjs-chart-matrix',
+        'chartjs-plugin-annotation',
+        'chroma-js',
+        'driver.js',
+        'i18n-iso-countries',
+        'papaparse',
+        'qrcode',
+        'vue-chartjs',
+        'zod'
+      ]
     }
   },
 
