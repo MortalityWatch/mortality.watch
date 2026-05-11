@@ -1,6 +1,11 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import { fileURLToPath } from 'node:url'
 
+const hasUmamiId = (process.env.NUXT_UMAMI_ID || '').length > 0
+const umamiId = hasUmamiId
+  ? process.env.NUXT_UMAMI_ID || ''
+  : '00000000-0000-0000-0000-000000000000'
+
 export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
@@ -20,6 +25,27 @@ export default defineNuxtConfig({
   },
 
   css: ['~/assets/css/main.css'],
+
+  vite: {
+    optimizeDeps: {
+      include: [
+        '@vue/devtools-core',
+        '@vue/devtools-kit',
+        '@vueform/slider',
+        'chart.js',
+        'chartjs-chart-error-bars',
+        'chartjs-chart-matrix',
+        'chartjs-plugin-annotation',
+        'chroma-js',
+        'driver.js',
+        'i18n-iso-countries',
+        'papaparse',
+        'qrcode',
+        'vue-chartjs',
+        'zod'
+      ]
+    }
+  },
 
   vue: {
     compilerOptions: {
@@ -134,10 +160,10 @@ export default defineNuxtConfig({
 
   // Umami Analytics configuration
   umami: {
-    id: process.env.NUXT_UMAMI_ID || '',
+    id: umamiId,
     host: process.env.NUXT_UMAMI_HOST || 'https://ua.e7ad.cc',
     autoTrack: true,
     ignoreLocalhost: true,
-    enabled: !!process.env.NUXT_UMAMI_ID
+    enabled: hasUmamiId
   }
 })

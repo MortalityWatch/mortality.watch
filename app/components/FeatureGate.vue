@@ -9,7 +9,7 @@
       class="flex flex-col items-center gap-4 p-6 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900"
     >
       <UIcon
-        name="i-heroicons-lock-closed"
+        name="i-lucide-lock"
         class="text-gray-400 dark:text-gray-500 size-5"
       />
       <p class="text-sm text-gray-600 dark:text-gray-400">
@@ -54,7 +54,7 @@
             <div class="absolute inset-0 bg-gray-900/5 dark:bg-gray-100/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
               <div class="flex flex-col items-center gap-1">
                 <UIcon
-                  name="i-heroicons-lock-closed"
+                  name="i-lucide-lock"
                   class="text-gray-400 dark:text-gray-500 size-5"
                 />
                 <span class="text-xs font-medium text-gray-600 dark:text-gray-400">

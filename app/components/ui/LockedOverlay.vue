@@ -5,7 +5,7 @@
   >
     <div class="flex flex-col items-center gap-1">
       <UIcon
-        name="i-heroicons-lock-closed"
+        name="i-lucide-lock"
         class="text-gray-500 dark:text-gray-400 size-5"
       />
       <span class="text-xs font-medium text-gray-600 dark:text-gray-400">

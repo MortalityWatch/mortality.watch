@@ -82,7 +82,7 @@ const selectedValue = computed({
     >
       <p class="text-xs text-blue-700 dark:text-blue-300">
         <UIcon
-          name="i-heroicons-information-circle"
+          name="i-lucide-info"
           class="inline-block mr-1 size-3"
         />
         Register for free to unlock advanced baseline methods.

@@ -34,7 +34,7 @@
       class="absolute inset-0 flex items-center justify-center bg-gray-900/20 dark:bg-gray-900/40"
     >
       <UIcon
-        name="i-heroicons-lock-closed"
+        name="i-lucide-lock"
         class="text-white size-8 drop-shadow-lg"
       />
     </div>
