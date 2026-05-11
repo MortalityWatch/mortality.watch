@@ -91,7 +91,7 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command: 'bun run dev -- --host 127.0.0.1 --port 3000',
-    url: 'http://127.0.0.1:3000/api/ready',
+    port: 3000,
     reuseExistingServer: !process.env.CI,
     timeout: 90 * 1000, // Allow extra time for first dev boot in CI
     stdout: 'pipe', // Show server output in test logs
