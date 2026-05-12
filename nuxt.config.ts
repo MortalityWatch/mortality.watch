@@ -1,7 +1,12 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
 import { fileURLToPath } from 'node:url'
+import type { NuxtConfig } from 'nuxt/schema'
 
-export default defineNuxtConfig({
+const hasUmamiId = (process.env.NUXT_UMAMI_ID || '').length > 0
+const umamiId = hasUmamiId
+  ? process.env.NUXT_UMAMI_ID || ''
+  : '00000000-0000-0000-0000-000000000000'
+
+export default {
   modules: [
     '@nuxt/eslint',
     '@nuxt/image',
@@ -23,7 +28,7 @@ export default defineNuxtConfig({
 
   vue: {
     compilerOptions: {
-      isCustomElement: tag => tag === 'stripe-buy-button'
+      isCustomElement: (tag: string) => tag === 'stripe-buy-button'
     }
   },
 
@@ -119,6 +124,27 @@ export default defineNuxtConfig({
     }
   },
 
+  vite: {
+    optimizeDeps: {
+      include: [
+        '@vue/devtools-core',
+        '@vue/devtools-kit',
+        '@vueform/slider',
+        'chart.js',
+        'chartjs-chart-error-bars',
+        'chartjs-chart-matrix',
+        'chartjs-plugin-annotation',
+        'chroma-js',
+        'driver.js',
+        'i18n-iso-countries',
+        'papaparse',
+        'qrcode',
+        'vue-chartjs',
+        'zod'
+      ]
+    }
+  },
+
   eslint: {
     config: {
       stylistic: {
@@ -134,10 +160,10 @@ export default defineNuxtConfig({
 
   // Umami Analytics configuration
   umami: {
-    id: process.env.NUXT_UMAMI_ID || '',
+    id: umamiId,
     host: process.env.NUXT_UMAMI_HOST || 'https://ua.e7ad.cc',
     autoTrack: true,
     ignoreLocalhost: true,
-    enabled: !!process.env.NUXT_UMAMI_ID
+    enabled: hasUmamiId
   }
-})
+} satisfies NuxtConfig

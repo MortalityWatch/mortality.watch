@@ -264,6 +264,32 @@ describe('model', () => {
         expect(data.cmr).toBe(0)
         expect(data.asmr_who).toBe(0)
       })
+
+      it('should round-trip le_unavailable_reason from the raw row', () => {
+        // Companion to MortalityWatch/data#15: parser must carry through the
+        // optional le_unavailable_reason column emitted by the data pipeline.
+        const raw: CountryDataRaw = {
+          ...mockCountryDataRaw,
+          iso3c: 'DEU-BB',
+          le_unavailable_reason: 'first_age_group_too_broad'
+        }
+
+        const data = new CountryData(raw, 'all', 'yearly')
+
+        expect(data.le_unavailable_reason).toBe('first_age_group_too_broad')
+      })
+
+      it('should treat empty / missing le_unavailable_reason as undefined', () => {
+        const dataMissing = new CountryData(mockCountryDataRaw, 'all', 'weekly')
+        expect(dataMissing.le_unavailable_reason).toBeUndefined()
+
+        const dataEmpty = new CountryData(
+          { ...mockCountryDataRaw, le_unavailable_reason: '' },
+          'all',
+          'weekly'
+        )
+        expect(dataEmpty.le_unavailable_reason).toBeUndefined()
+      })
     })
   })
 })

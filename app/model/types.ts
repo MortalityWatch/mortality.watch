@@ -17,6 +17,12 @@ export type StringEntryFields = {
   type: StringArray
   source: StringArray
   source_asmr: StringArray
+  /**
+   * Per-row reason explaining why LE could not be computed (e.g.
+   * "first_age_group_too_broad"). Empty/undefined when LE is computable.
+   * Surfaced in the UI via `describeLeUnavailableReason`.
+   */
+  le_unavailable_reason: StringArray
 }
 
 export const stringKeys = [
@@ -25,7 +31,8 @@ export const stringKeys = [
   'date',
   'type',
   'source',
-  'source_asmr'
+  'source_asmr',
+  'le_unavailable_reason'
 ] as const
 
 /**

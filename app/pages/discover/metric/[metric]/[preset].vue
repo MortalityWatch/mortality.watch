@@ -72,7 +72,7 @@
       class="text-center py-12"
     >
       <UIcon
-        name="i-heroicons-exclamation-triangle"
+        name="i-lucide-triangle-alert"
         class="text-red-500 size-12 mx-auto mb-4"
       />
       <p class="text-gray-600 dark:text-gray-400 mb-4">

@@ -17,7 +17,7 @@
       </p>
 
       <UAlert
-        icon="i-heroicons-exclamation-triangle"
+        icon="i-lucide-triangle-alert"
         color="warning"
         title="Important Caveat"
         description="Excess mortality estimates depend heavily on the baseline model chosen. Different baselines can produce substantially different results. These are model-based projections, not observed data."

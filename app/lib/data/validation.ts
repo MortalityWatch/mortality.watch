@@ -75,6 +75,9 @@ const CountryDataRawSchema = z.object({
   cmr: z.string(),
   le: z.string().optional(), // Life expectancy (direct value from age-stratified files)
   le_adj: z.string().optional(), // Seasonally adjusted life expectancy (only for sub-yearly data)
+  // Reason string explaining why LE could not be computed for this row
+  // (e.g. "first_age_group_too_broad"). Absent / empty when LE is computable.
+  le_unavailable_reason: z.string().optional(),
   asmr_who: z.string().optional(),
   asmr_esp: z.string().optional(),
   asmr_usa: z.string().optional(),

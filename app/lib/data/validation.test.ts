@@ -483,6 +483,34 @@ USA,330000000,2020-01-01,monthly,cdc,who,50000,15.123456,10.987654,10.5,10.5,10.
         expect(data.cmr).toBe('15.123456')
         expect(data.asmr_who).toBe('10.987654')
       })
+
+      it('should pass through le_unavailable_reason from LE-bearing rows', async () => {
+        // Companion to MortalityWatch/data#15: the data pipeline emits this
+        // optional column on LE-bearing rows when LE cannot be computed.
+        const csv = `iso3c,population,date,type,source,deaths,cmr,le,le_unavailable_reason
+DEU-BB,2500000,2020-01-01,yearly,destatis,28000,11.2,,first_age_group_too_broad`
+
+        const result = await validateMortalityData(csv, 'DEU-BB', 'yearly', 'all')
+
+        expect(result.success).toBe(true)
+        expect(result.data).toHaveLength(1)
+        const row = result.data![0]!
+        expect(row.le_unavailable_reason).toBe('first_age_group_too_broad')
+        expect(row.le).toBe('') // empty when LE is unavailable
+      })
+
+      it('should treat missing le_unavailable_reason as undefined (graceful default)', async () => {
+        // Until the data PR merges + cron republishes, the column won't appear
+        // in published CSVs at all. Validation must continue to succeed.
+        const csv = `iso3c,population,date,type,source,source_asmr,deaths,cmr,asmr_who,asmr_esp,asmr_usa,asmr_country
+USA,330000000,2020-01-01,monthly,cdc,who,50000,15.15,10.5,10.5,10.5,10.5`
+
+        const result = await validateMortalityData(csv, 'USA', 'monthly', 'all')
+
+        expect(result.success).toBe(true)
+        expect(result.data).toHaveLength(1)
+        expect(result.data![0]!.le_unavailable_reason).toBeUndefined()
+      })
     })
   })
 

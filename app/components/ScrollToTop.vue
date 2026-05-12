@@ -43,7 +43,7 @@ onUnmounted(() => {
       class="fixed bottom-8 right-8 z-50"
     >
       <UButton
-        icon="i-heroicons-arrow-up"
+        icon="i-lucide-arrow-up"
         size="lg"
         color="primary"
         variant="solid"
