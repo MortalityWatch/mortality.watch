@@ -3,9 +3,9 @@ import type { Country } from '@/model'
 import { computed, toRaw } from 'vue'
 import { showToast } from '../../toast'
 
-// Feature access for LE single age groups (Pro feature)
+// Feature access for LE single age groups (registered users only)
 const { can } = useFeatureAccess()
-const canAdvancedLE = can('ADVANCED_LE')
+const canAdvancedLE = computed(() => can('ADVANCED_LE'))
 
 const props = defineProps<{
   allCountries: Record<string, Country>

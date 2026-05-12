@@ -33,6 +33,7 @@ import ChartActions from '@/components/charts/ChartActions.vue'
 import SaveModal from '@/components/SaveModal.vue'
 import { generateExplorerTitle, generateExplorerDescription } from '@/lib/utils/chartTitles'
 import { computeConfigHash, extractUrlParams } from '@/lib/shortUrl/hashConfig'
+import { shouldNormalizeLeAgeGroups } from '@/lib/state/normalizeLeAgeGroups'
 import { selectMutuallyExclusiveAgeGroups } from '@/services/metadataService'
 import { decodeChartState, type ChartState } from '@/lib/chartState'
 
@@ -41,7 +42,8 @@ const { isAuthenticated } = useAuth()
 const { goToSignup } = useAuthRedirect()
 
 // Feature access for tier-gated features
-const { isPro } = useFeatureAccess()
+const { isPro, can } = useFeatureAccess()
+const canAdvancedLE = computed(() => can('ADVANCED_LE'))
 
 // Tutorial for first-time users
 const { autoStartTutorial } = useTutorial()
@@ -427,6 +429,13 @@ const handleChartStyleChanged = (v: string) => handleStateChange({ field: 'chart
 const handleCountriesChanged = (v: string[]) => handleStateChange({ field: 'countries', value: v }, '_countries')
 const handleAgeGroupsChanged = (v: string[]) => handleStateChange({ field: 'ageGroups', value: v }, '_ageGroups')
 const handleStandardPopulationChanged = (v: string) => handleStateChange({ field: 'standardPopulation', value: v }, '_standardPopulation')
+
+// Logged-out users cannot edit LE age groups, so normalize stale selections
+// from URLs or metric switching back to all-ages LE.
+watch([() => state.type.value, () => state.ageGroups.value, canAdvancedLE], async ([type, ageGroups, hasAdvancedLEAccess]) => {
+  if (!shouldNormalizeLeAgeGroups(type, hasAdvancedLEAccess, ageGroups || [])) return
+  await handleStateChange({ field: 'ageGroups', value: ['all'] }, '_ageGroups')
+}, { immediate: true })
 
 // Composition view defaults to all individual age bands (exclude aggregate "all")
 watch([() => state.view.value, allAgeGroups], async ([viewType, availableAgeGroups]) => {
