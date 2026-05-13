@@ -609,6 +609,9 @@ describe('useChartDataFetcher', () => {
         'mean',
         '2017',
         '2019',
+        'standard',
+        'auto',
+        undefined,
         [],
         expect.any(Function),
         'https://stats.mortality.watch/'
@@ -641,6 +644,9 @@ describe('useChartDataFetcher', () => {
         'mean',
         '2017',
         '2019',
+        'standard',
+        'auto',
+        undefined,
         [],
         expect.any(Function),
         'https://stats.mortality.watch/'
