@@ -163,6 +163,9 @@ describe('useExplorerDataOrchestration', () => {
       baselineMethod: ref('mean'),
       baselineDateFrom: ref('2017'),
       baselineDateTo: ref('2019'),
+      zscoreMethod: ref('standard'),
+      zscoreLambdaMode: ref('auto'),
+      zscoreLambda: ref(undefined),
       isExcess: ref(false),
       isZScore: ref(false),
       cumulative: ref(false),
@@ -801,17 +804,21 @@ describe('useExplorerDataOrchestration', () => {
 
       await orchestration.updateFilteredData()
 
-      // getFilteredChartDataFromConfig is called with (config, labels, data)
+      // getFilteredChartDataFromConfig is called with (config, labels, data, notes)
       expect(getFilteredChartDataFromConfig).toHaveBeenCalledWith(
         expect.objectContaining({
           countries: mockState.countries.value,
           standardPopulation: mockState.standardPopulation.value,
           view: 'mortality',
           isBarChartStyle: false,
-          isMatrixChartStyle: false
+          isMatrixChartStyle: false,
+          zscoreMethod: 'standard',
+          zscoreLambdaMode: 'auto',
+          zscoreLambda: ''
         }),
         orchestration.allChartData.labels,
-        orchestration.allChartData.data
+        orchestration.allChartData.data,
+        expect.anything()
       )
     })
   })
