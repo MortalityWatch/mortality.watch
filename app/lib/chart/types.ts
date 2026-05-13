@@ -2,9 +2,8 @@
  * Type definitions for chart data transformation
  */
 
-import type { Country } from '@/model'
+import type { Country, BaselineSeriesMetadata } from '@/model'
 import type { ChartType } from '@/model/period'
-import type { BaselineSeriesMetadata } from '@/model'
 
 /**
  * Configuration for data transformation pipeline
