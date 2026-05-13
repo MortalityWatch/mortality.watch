@@ -152,6 +152,33 @@ describe('datasets', () => {
       expect(result.datasets[0]?.data).toEqual([80.2, 80.5, null, null])
       expect(result.datasets[1]?.data).toEqual([null, null, 82.9, 83.3])
     })
+
+    it('should keep life expectancy lines connected across overlapping source transitions', () => {
+      const config = createBaseConfig()
+      config.chart.type = 'le'
+      config.chart.chartType = 'yearly'
+
+      const data: Dataset = {
+        all: {
+          USA: createMockDatasetEntry({
+            date: ['2011', '2012', '2013', '2014'],
+            source: [
+              'mortality_org',
+              'mortality_org, eurostat',
+              'eurostat',
+              'eurostat'
+            ],
+            le: [80.2, 80.5, 82.9, 83.3] as NumberArray
+          })
+        }
+      }
+
+      const result = getDatasets(config, data)
+
+      expect(result.datasets).toHaveLength(1)
+      expect(result.datasets[0]?.label).toContain('United States')
+      expect(result.datasets[0]?.data).toEqual([80.2, 80.5, 82.9, 83.3])
+    })
   })
 
   describe('getDatasets - multiple countries', () => {
