@@ -253,15 +253,15 @@ export function useExplorerDataOrchestration(
     const needsAgeGroups = metricType === 'asmr' || metricType === 'le'
     const chartType = state.chartType.value as ChartType
 
-    let metadataLoaded = false
+    let metadataLoadPromise: Promise<void> | null = null
     const getSourceAgeGroups = async (country: string) => {
       if (!needsAgeGroups) return new Map<string, string[]>()
 
       try {
-        if (!metadataLoaded) {
-          await metadataService.load()
-          metadataLoaded = true
+        if (!metadataLoadPromise) {
+          metadataLoadPromise = metadataService.load()
         }
+        await metadataLoadPromise
 
         return metadataService.getSourcesWithAgeGroups(country, chartType)
       } catch {
