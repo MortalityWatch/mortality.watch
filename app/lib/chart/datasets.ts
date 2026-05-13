@@ -151,6 +151,7 @@ const splitSeriesBySourceTransitions = (
   for (let i = 1; i < normalizedSources.length; i++) {
     const previous = normalizedSources[i - 1]
     const current = normalizedSources[i]
+    if (previous === undefined || current === undefined) continue
     if (shouldSplitAtSourceTransition(previous, current)) {
       transitionIndexes.push(i)
     }
