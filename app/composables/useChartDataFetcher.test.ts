@@ -672,5 +672,75 @@ describe('useChartDataFetcher', () => {
         'lin_reg'
       )
     })
+
+    it('should pass sanitized manual lambda to chart data fetching', async () => {
+      const fetcher = useChartDataFetcher()
+
+      await fetcher.fetchChartData({
+        chartType: 'yearly' as ChartType,
+        countries: ['USA'],
+        ageGroups: ['all'],
+        dataKey: 'cmr' as keyof CountryData,
+        baselineMethod: 'mean',
+        zscoreMethod: 'variance_stabilized',
+        zscoreLambdaMode: 'manual',
+        zscoreLambda: ' 1.5 '
+      })
+
+      expect(fetchAllChartData).toHaveBeenCalledWith(
+        'cmr',
+        'yearly',
+        mockDataset,
+        mockLabels,
+        0,
+        false,
+        ['all'],
+        ['USA'],
+        'mean',
+        '2017',
+        '2019',
+        'variance_stabilized',
+        'manual',
+        '1.5',
+        [],
+        expect.any(Function),
+        'https://stats.mortality.watch/'
+      )
+    })
+
+    it('should drop invalid manual lambda before chart data fetching', async () => {
+      const fetcher = useChartDataFetcher()
+
+      await fetcher.fetchChartData({
+        chartType: 'yearly' as ChartType,
+        countries: ['USA'],
+        ageGroups: ['all'],
+        dataKey: 'cmr' as keyof CountryData,
+        baselineMethod: 'mean',
+        zscoreMethod: 'variance_stabilized',
+        zscoreLambdaMode: 'manual',
+        zscoreLambda: '9'
+      })
+
+      expect(fetchAllChartData).toHaveBeenCalledWith(
+        'cmr',
+        'yearly',
+        mockDataset,
+        mockLabels,
+        0,
+        false,
+        ['all'],
+        ['USA'],
+        'mean',
+        '2017',
+        '2019',
+        'variance_stabilized',
+        'manual',
+        undefined,
+        [],
+        expect.any(Function),
+        'https://stats.mortality.watch/'
+      )
+    })
   })
 })

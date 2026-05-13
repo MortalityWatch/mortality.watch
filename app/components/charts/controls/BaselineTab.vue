@@ -31,6 +31,21 @@ const showZScoreControls = computed(() => props.view === 'zscore')
 const isManualLambda = computed(() =>
   props.zscoreMethod === 'variance_stabilized' && props.zscoreLambdaMode === 'manual'
 )
+
+function updateManualLambda(value: string | number | null | undefined) {
+  const normalized = String(value ?? '').trim()
+  if (normalized === '') {
+    emit('update:zscoreLambda', '')
+    return
+  }
+
+  const lambda = Number(normalized)
+  if (!Number.isFinite(lambda) || lambda < -5 || lambda > 5) {
+    return
+  }
+
+  emit('update:zscoreLambda', String(lambda))
+}
 </script>
 
 <template>
@@ -92,7 +107,7 @@ const isManualLambda = computed(() =>
           max="5"
           class="flex-1"
           :disabled="props.isUpdating"
-          @update:model-value="emit('update:zscoreLambda', String($event ?? ''))"
+          @update:model-value="updateManualLambda"
         />
         <template #help>
           <div class="text-xs text-gray-700 dark:text-gray-300">

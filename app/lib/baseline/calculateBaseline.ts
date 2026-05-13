@@ -58,6 +58,10 @@ export interface BaselineDependencies {
  * @param chartType - Chart type
  * @param cumulative - Whether cumulative mode is enabled
  * @param statsUrl - Optional stats API URL (defaults to https://stats.mortality.watch/)
+ * @param zscoreMethod - Z-score calculation method sent to stats
+ * @param zscoreLambdaMode - Lambda selection mode: auto or manual
+ * @param zscoreLambda - Manual lambda value, when lambda mode is manual
+ * @param metadataCollector - Optional per-series metadata sink for tooltips/subtitles
  */
 export const calculateBaseline = async (
   deps: BaselineDependencies,
@@ -236,11 +240,19 @@ export const calculateBaseline = async (
       json.zscore = (json.zscore as (string | number)[]).slice(0, dataLength)
     }
 
-    if (metadataCollector && typeof firstKey === 'string') {
-      metadataCollector[getBaselineMetadataKey(ageGroup, iso3c, firstKey)] = {
-        zscore_method: json.zscore_method === 'variance_stabilized' ? 'variance_stabilized' : 'standard',
-        lambda_mode: json.lambda_mode ?? null,
-        lambda: typeof json.lambda === 'number' ? json.lambda : null
+    if (metadataCollector) {
+      if (typeof firstKey === 'string') {
+        metadataCollector[getBaselineMetadataKey(ageGroup, iso3c, firstKey)] = {
+          zscore_method: json.zscore_method === 'variance_stabilized' ? 'variance_stabilized' : 'standard',
+          lambda_mode: json.lambda_mode ?? null,
+          lambda: typeof json.lambda === 'number' && Number.isFinite(json.lambda) ? json.lambda : null
+        }
+      } else {
+        logger.warn('Cannot collect baseline metadata: first key is not a string', {
+          ageGroup,
+          iso3c,
+          firstKey
+        })
       }
     }
 
@@ -290,6 +302,9 @@ export const calculateBaseline = async (
       ageGroup,
       chartType,
       method,
+      zscoreMethod,
+      zscoreLambdaMode,
+      zscoreLambda,
       baselineStartIdx,
       baselineEndIdx,
       effectiveBaselineStartIdx,
