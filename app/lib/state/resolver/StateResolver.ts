@@ -45,8 +45,37 @@ function getViewDefaults(view: ViewType): Record<string, unknown> {
   }
 }
 
+const VIEW_OWNED_FIELDS_ON_SWITCH = new Set(['chartStyle', 'maximize'])
+
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class StateResolver {
+  private static clearDateFieldsForChartTypeChange(
+    state: Record<string, unknown>,
+    userOverrides: Set<string>,
+    log: StateResolutionLog,
+    oldChartType: unknown,
+    newChartType: unknown
+  ): void {
+    if (oldChartType === newChartType) return
+
+    const dateFields = ['dateFrom', 'dateTo', 'baselineDateFrom', 'baselineDateTo']
+    for (const field of dateFields) {
+      if (state[field] !== undefined) {
+        const fieldUrlKey = stateFieldEncoders[field as keyof typeof stateFieldEncoders]?.key || field
+        log.changes.push({
+          field,
+          urlKey: fieldUrlKey,
+          oldValue: state[field],
+          newValue: undefined,
+          priority: 'constraint',
+          reason: `Cleared: chartType changed from ${String(oldChartType)} to ${String(newChartType)}`
+        })
+        state[field] = undefined
+      }
+      userOverrides.delete(field)
+    }
+  }
+
   /**
    * Resolve initial state from URL parameters + defaults
    *
@@ -163,7 +192,15 @@ export class StateResolver {
     }
 
     // 5. Apply constraints (including view-specific constraints)
+    const chartTypeBeforeConstraints = state.chartType
     const constrainedState = this.applyConstraints(state, userOverrides, log)
+    this.clearDateFieldsForChartTypeChange(
+      constrainedState,
+      userOverrides,
+      log,
+      chartTypeBeforeConstraints,
+      constrainedState.chartType
+    )
 
     log.after = { ...constrainedState }
 
@@ -267,6 +304,13 @@ export class StateResolver {
 
     // 2. Apply constraints
     const constrainedState = this.applyConstraints(state, userOverrides, log)
+    this.clearDateFieldsForChartTypeChange(
+      constrainedState,
+      userOverrides,
+      log,
+      currentState.chartType,
+      constrainedState.chartType
+    )
 
     log.after = { ...constrainedState }
 
@@ -358,12 +402,11 @@ export class StateResolver {
     })
 
     // 2. Apply view defaults
-    // When switching views, chartStyle should always use the new view's default
-    // because chartStyle is set BY the view, not by explicit user action
+    // Some display fields are owned by the active view and should reset on view switch
+    // instead of staying sticky from the previous view's user overrides.
     const actualViewConfig = VIEWS[actualView]
     for (const [field, value] of Object.entries(actualViewConfig.defaults || {})) {
-      // Special case: chartStyle is always set by view defaults, not user override
-      const shouldApply = field === 'chartStyle' || !userOverrides.has(field)
+      const shouldApply = VIEW_OWNED_FIELDS_ON_SWITCH.has(field) || !userOverrides.has(field)
 
       if (shouldApply) {
         const oldValue = state[field]
@@ -381,9 +424,9 @@ export class StateResolver {
           })
         }
 
-        // Remove chartStyle from userOverrides since it's controlled by view
-        if (field === 'chartStyle') {
-          userOverrides.delete('chartStyle')
+        // Remove view-owned fields from userOverrides since the target view controls them.
+        if (VIEW_OWNED_FIELDS_ON_SWITCH.has(field)) {
+          userOverrides.delete(field)
         }
       }
     }
