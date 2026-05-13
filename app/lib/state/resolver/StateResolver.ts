@@ -312,6 +312,27 @@ export class StateResolver {
       constrainedState.chartType
     )
 
+    // 2b. If constraints changed chartType, clear date fields that may now be invalid.
+    // This covers metric-driven chartType normalization, not just direct chartType edits.
+    if (currentState.chartType !== constrainedState.chartType) {
+      const dateFields = ['dateFrom', 'dateTo', 'baselineDateFrom', 'baselineDateTo']
+      for (const field of dateFields) {
+        if (constrainedState[field] !== undefined) {
+          const fieldUrlKey = stateFieldEncoders[field as keyof typeof stateFieldEncoders]?.key || field
+          log.changes.push({
+            field,
+            urlKey: fieldUrlKey,
+            oldValue: constrainedState[field],
+            newValue: undefined,
+            priority: 'constraint',
+            reason: `Cleared: chartType changed from ${String(currentState.chartType)} to ${String(constrainedState.chartType)}`
+          })
+          constrainedState[field] = undefined
+        }
+        userOverrides.delete(field)
+      }
+    }
+
     log.after = { ...constrainedState }
 
     // 3. Compute UI state from view configuration
@@ -848,6 +869,9 @@ export class StateResolver {
       baselineDateTo: (resolvedState.baselineDateTo ?? current.baselineDateTo) as string | undefined,
       showBaseline: (resolvedState.showBaseline ?? current.showBaseline ?? true) as boolean,
       baselineMethod: (resolvedState.baselineMethod ?? current.baselineMethod ?? 'mean') as string,
+      zscoreMethod: (resolvedState.zscoreMethod ?? current.zscoreMethod ?? 'standard') as string,
+      zscoreLambdaMode: (resolvedState.zscoreLambdaMode ?? current.zscoreLambdaMode ?? 'auto') as string,
+      zscoreLambda: (resolvedState.zscoreLambda ?? current.zscoreLambda) as string | undefined,
       cumulative: (resolvedState.cumulative ?? current.cumulative ?? false) as boolean,
       showTotal: (resolvedState.showTotal ?? current.showTotal ?? false) as boolean,
       maximize: (resolvedState.maximize ?? current.maximize ?? false) as boolean,

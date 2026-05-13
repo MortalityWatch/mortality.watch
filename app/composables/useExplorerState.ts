@@ -10,6 +10,8 @@ import {
   type ChartStyle as ChartStyleSchema,
   type StandardPopulation as StandardPopulationSchema,
   type BaselineMethod as BaselineMethodSchema,
+  type ZScoreMethod as ZScoreMethodSchema,
+  type ZScoreLambdaMode as ZScoreLambdaModeSchema,
   type DecimalPrecision as DecimalPrecisionSchema
 } from '@/model/explorerSchema'
 import {
@@ -99,6 +101,9 @@ export function useExplorerState() {
   const baselineDateTo = ref<string | undefined>(mortalityDefaults.baselineDateTo)
   const showBaseline = ref<boolean>(getDefault('showBaseline', true))
   const baselineMethod = ref<string>(getDefault('baselineMethod', 'mean'))
+  const zscoreMethod = ref<string>(getDefault('zscoreMethod', 'standard'))
+  const zscoreLambdaMode = ref<string>(getDefault('zscoreLambdaMode', 'auto'))
+  const zscoreLambda = ref<string | undefined>(mortalityDefaults.zscoreLambda)
 
   // Display Options
   const cumulative = ref<boolean>(getDefault('cumulative', false))
@@ -167,6 +172,9 @@ export function useExplorerState() {
     baselineMethod: baselineMethod.value as BaselineMethodSchema,
     baselineDateFrom: baselineDateFrom.value,
     baselineDateTo: baselineDateTo.value,
+    zscoreMethod: zscoreMethod.value as ZScoreMethodSchema,
+    zscoreLambdaMode: zscoreLambdaMode.value as ZScoreLambdaModeSchema,
+    zscoreLambda: zscoreLambda.value,
     cumulative: cumulative.value,
     showPredictionInterval: showPredictionInterval.value,
     showTotal: showTotal.value,
@@ -319,6 +327,9 @@ export function useExplorerState() {
       baselineMethod: baselineMethod.value,
       baselineDateFrom: baselineDateFrom.value,
       baselineDateTo: baselineDateTo.value,
+      zscoreMethod: zscoreMethod.value,
+      zscoreLambdaMode: zscoreLambdaMode.value,
+      zscoreLambda: zscoreLambda.value,
       dateFrom: dateFrom.value,
       dateTo: dateTo.value,
       sliderStart: sliderStart.value,
@@ -387,6 +398,8 @@ export function useExplorerState() {
       { field: 'showLabels', ref: showLabels as Ref<unknown> },
       { field: 'leAdjusted', ref: leAdjusted as Ref<unknown> },
       { field: 'baselineMethod', ref: baselineMethod as Ref<unknown> },
+      { field: 'zscoreMethod', ref: zscoreMethod as Ref<unknown> },
+      { field: 'zscoreLambdaMode', ref: zscoreLambdaMode as Ref<unknown> },
       { field: 'sliderStart', ref: sliderStart as Ref<unknown> },
       { field: 'decimals', ref: decimals as Ref<unknown> },
       { field: 'showLogo', ref: showLogo as Ref<unknown> },
@@ -401,6 +414,7 @@ export function useExplorerState() {
       { field: 'dateTo', ref: dateTo as Ref<unknown>, optional: true },
       { field: 'baselineDateFrom', ref: baselineDateFrom as Ref<unknown>, optional: true },
       { field: 'baselineDateTo', ref: baselineDateTo as Ref<unknown>, optional: true },
+      { field: 'zscoreLambda', ref: zscoreLambda as Ref<unknown>, optional: true },
       { field: 'userColors', ref: userColors as Ref<unknown>, optional: true }
     ]
 
@@ -438,6 +452,9 @@ export function useExplorerState() {
     baselineDateTo,
     showBaseline,
     baselineMethod,
+    zscoreMethod,
+    zscoreLambdaMode,
+    zscoreLambda,
 
     // Display options
     cumulative,

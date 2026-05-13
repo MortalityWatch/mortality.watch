@@ -54,7 +54,18 @@ export const ZSCORE_VIEW: ChartViewConfig = {
     const parts: string[] = []
 
     // Main z-score description
-    parts.push('Statistical deviations from baseline mean · Values beyond ±2 are significant')
+    const methodLabel = ctx.zscoreMethod === 'variance_stabilized'
+      ? 'Variance-stabilized z-score'
+      : 'Standard z-score'
+    const lambdaLabel = ctx.zscoreMethod === 'variance_stabilized'
+      ? (ctx.zscoreLambdaMode === 'manual'
+          ? `manual λ=${ctx.zscoreLambda || 'required'}`
+          : 'auto λ (Guerrero)')
+      : null
+    parts.push(
+      [methodLabel, lambdaLabel].filter(Boolean).join(' · ')
+      + ' · Values beyond ±2 are significant'
+    )
 
     // Baseline description
     parts.push(getBaselineDescription(ctx.baselineMethod, ctx.baselineDateFrom, ctx.baselineDateTo))

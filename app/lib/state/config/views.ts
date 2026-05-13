@@ -73,6 +73,9 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       sliderStart: getDefaultSliderStart(),
       baselineDateFrom: undefined as string | undefined,
       baselineDateTo: undefined as string | undefined,
+      zscoreMethod: 'standard',
+      zscoreLambdaMode: 'auto',
+      zscoreLambda: undefined as string | undefined,
 
       // Display options
       showBaseline: true,
@@ -263,7 +266,10 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       chartStyle: 'line', // Line chart is default for z-scores
       showBaseline: true, // Required for z-score calculation (but hidden in UI)
       showPredictionInterval: false,
-      showLogarithmic: false
+      showLogarithmic: false,
+      zscoreMethod: 'standard',
+      zscoreLambdaMode: 'auto',
+      zscoreLambda: undefined as string | undefined
     },
 
     constraints: [

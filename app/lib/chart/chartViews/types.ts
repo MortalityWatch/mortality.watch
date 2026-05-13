@@ -29,6 +29,9 @@ export interface ChartContext {
   baselineMethod: string
   baselineDateFrom: string
   baselineDateTo: string
+  zscoreMethod?: string
+  zscoreLambdaMode?: string
+  zscoreLambda?: string
 
   // View
   view: ViewType

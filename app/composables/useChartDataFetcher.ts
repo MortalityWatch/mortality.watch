@@ -42,6 +42,9 @@ export interface ChartDataFetchConfig {
   baselineDateFrom?: string
   baselineDateTo?: string
   baselineStartIdx?: number
+  zscoreMethod?: string
+  zscoreLambdaMode?: string
+  zscoreLambda?: string
 
   // Date range - sliderStart defines the "from" offset for allChartData (layer 2)
   sliderStart?: string
@@ -87,6 +90,26 @@ export function useChartDataFetcher() {
   // Loading state
   const isUpdating = ref(false)
   const updateProgress = ref(0)
+
+  function sanitizeZScoreLambda(
+    zscoreMethod?: string,
+    zscoreLambdaMode?: string,
+    zscoreLambda?: string
+  ): string | undefined {
+    if (zscoreMethod !== 'variance_stabilized' || zscoreLambdaMode !== 'manual') {
+      return undefined
+    }
+    if (!zscoreLambda || zscoreLambda.trim() === '') {
+      return undefined
+    }
+
+    const lambda = Number(zscoreLambda)
+    if (!Number.isFinite(lambda) || lambda < -5 || lambda > 5) {
+      return undefined
+    }
+
+    return String(lambda)
+  }
 
   /**
    * Validate and fix baseline dates
@@ -230,6 +253,13 @@ export function useChartDataFetcher() {
 
       // Step 3: Calculate data start index (shared helper)
       const dataStartIndex = calculateDataStartIndex(fetchConfig, allLabels)
+      const zscoreMethod = fetchConfig.zscoreMethod ?? 'standard'
+      const zscoreLambdaMode = fetchConfig.zscoreLambdaMode ?? 'auto'
+      const zscoreLambda = sanitizeZScoreLambda(
+        zscoreMethod,
+        zscoreLambdaMode,
+        fetchConfig.zscoreLambda
+      )
 
       const chartData = await fetchAllChartData(
         fetchConfig.dataKey,
@@ -243,6 +273,9 @@ export function useChartDataFetcher() {
         fetchConfig.baselineMethod,
         baselineFrom,
         baselineTo,
+        zscoreMethod,
+        zscoreLambdaMode,
+        zscoreLambda,
         fetchConfig.baseKeys ?? [],
         fetchConfig.onProgress ?? ((progress, total) => {
           updateProgress.value = Math.round((progress / total) * 100)
@@ -327,6 +360,13 @@ export function useChartDataFetcher() {
 
       // Calculate data start index (shared helper)
       const dataStartIndex = calculateDataStartIndex(fetchConfig, allLabels)
+      const zscoreMethod = fetchConfig.zscoreMethod ?? 'standard'
+      const zscoreLambdaMode = fetchConfig.zscoreLambdaMode ?? 'auto'
+      const zscoreLambda = sanitizeZScoreLambda(
+        zscoreMethod,
+        zscoreLambdaMode,
+        fetchConfig.zscoreLambda
+      )
 
       // Create initial chart data WITHOUT baseline calculations
       // Import the getAllChartData function but skip baseline parameter
@@ -344,6 +384,9 @@ export function useChartDataFetcher() {
         undefined, // No baseline method - this prevents baseline calculations
         undefined, // No baseline from
         undefined, // No baseline to
+        zscoreMethod,
+        zscoreLambdaMode,
+        zscoreLambda,
         fetchConfig.baseKeys ?? [],
         () => {}, // No progress tracking needed for phase 1
         statsUrl
@@ -378,6 +421,9 @@ export function useChartDataFetcher() {
           fetchConfig.baselineMethod, // Now include baseline method
           baselineFrom,
           baselineTo,
+          zscoreMethod,
+          zscoreLambdaMode,
+          zscoreLambda,
           fetchConfig.baseKeys ?? [],
           fetchConfig.onProgress ?? ((progress, total) => {
             updateProgress.value = Math.round((progress / total) * 100)

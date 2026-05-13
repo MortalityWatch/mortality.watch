@@ -140,10 +140,23 @@ export const datasetEntryKeys = [...stringKeys, ...numberKeys] as const
 export type DatasetEntry = StringEntryFields & NumberEntryFields
 export type Dataset = Record<string, Record<string, DatasetEntry>>
 
+export interface BaselineSeriesMetadata {
+  zscore_method: 'standard' | 'variance_stabilized'
+  lambda_mode: 'auto' | 'manual' | null
+  lambda: number | null
+}
+
+export const getBaselineMetadataKey = (
+  ageGroup: string,
+  iso3c: string,
+  metricKey: string
+) => `${ageGroup}:${iso3c}:${metricKey}`
+
 export interface Notes {
   noData?: Record<string, Set<string>>
   noAsmr?: Set<string>
   disaggregatedData?: Record<string, number[]>
   noDataForRange?: string[]
   partialDataForRange?: string[]
+  baselineMetadata?: Record<string, BaselineSeriesMetadata>
 }

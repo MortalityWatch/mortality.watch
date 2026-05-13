@@ -584,6 +584,9 @@ export function useExplorerDataOrchestration(
     baselineDateTo: state.baselineDateTo.value,
     showBaseline: state.showBaseline.value,
     baselineMethod: state.baselineMethod.value,
+    zscoreMethod: state.zscoreMethod.value,
+    zscoreLambdaMode: state.zscoreLambdaMode.value,
+    zscoreLambda: state.zscoreLambda.value,
     cumulative: state.cumulative.value,
     showTotal: state.showTotal.value,
     maximize: state.maximize.value,
@@ -664,7 +667,7 @@ export function useExplorerDataOrchestration(
     const config = buildFilterConfig(stateSnapshot)
 
     // Use the new config-based function
-    return getFilteredChartDataFromConfig(config, allChartData.labels, allChartData.data)
+    return getFilteredChartDataFromConfig(config, allChartData.labels, allChartData.data, allChartData.notes)
   }
 
   // =============================================================================
@@ -718,7 +721,10 @@ export function useExplorerDataOrchestration(
         console.warn('Baseline loading failed for', {
           countries: context.countries,
           chartType: context.chartType,
-          baselineMethod: state.baselineMethod.value
+          baselineMethod: state.baselineMethod.value,
+          zscoreMethod: state.zscoreMethod.value,
+          zscoreLambdaMode: state.zscoreLambdaMode.value,
+          zscoreLambda: state.zscoreLambda.value
         }, error)
       })
     }
@@ -858,6 +864,9 @@ export function useExplorerDataOrchestration(
       baselineMethod: state.baselineMethod.value,
       baselineDateFrom: state.baselineDateFrom.value ?? baselineRange.value?.from,
       baselineDateTo: state.baselineDateTo.value ?? baselineRange.value?.to,
+      zscoreMethod: state.zscoreMethod.value,
+      zscoreLambdaMode: state.zscoreLambdaMode.value,
+      zscoreLambda: state.zscoreLambda.value,
       baselineStartIdx: undefined,
       sliderStart: state.sliderStart.value,
       cumulative: helpers.showCumPi(),

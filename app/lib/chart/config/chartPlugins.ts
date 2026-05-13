@@ -319,6 +319,9 @@ export function createPluginsConfig(
     baselineMethod: '',
     baselineDateFrom: '',
     baselineDateTo: '',
+    zscoreMethod: 'standard',
+    zscoreLambdaMode: 'auto',
+    zscoreLambda: '',
     view: (view as ViewType) || 'mortality'
   }
 

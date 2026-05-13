@@ -97,8 +97,11 @@ export interface ExplorerStateValues {
   showPredictionInterval: boolean
   showBaseline: boolean
   baselineMethod: string
-  baselineDateFrom: string
-  baselineDateTo: string
+  baselineDateFrom: string | undefined
+  baselineDateTo: string | undefined
+  zscoreMethod: string
+  zscoreLambdaMode: string
+  zscoreLambda: string | undefined
   cumulative: boolean
   showPercentage: boolean
   showTotal: boolean
@@ -114,10 +117,10 @@ export interface ExplorerStateValues {
   showXAxisTitle: boolean
   showYAxisTitle: boolean
   decimals: string
-  dateFrom: string
-  dateTo: string
+  dateFrom: string | undefined
+  dateTo: string | undefined
   sliderStart: string
-  userColors: string[]
+  userColors: string[] | undefined
   chartPreset: string
   darkMode: boolean
   hideSteepDrop: boolean

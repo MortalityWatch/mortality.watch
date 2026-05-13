@@ -2,7 +2,7 @@
  * Type definitions for chart data transformation
  */
 
-import type { Country } from '@/model'
+import type { Country, BaselineSeriesMetadata } from '@/model'
 import type { ChartType } from '@/model/period'
 
 /**
@@ -44,6 +44,7 @@ export interface DataTransformationConfig {
   context: {
     countries: string[]
     allCountries: Record<string, Country>
+    baselineMetadata?: Record<string, BaselineSeriesMetadata>
   }
 }
 
@@ -82,6 +83,9 @@ export interface ChartStateSnapshot {
   baselineDateTo: string | undefined
   showBaseline: boolean
   baselineMethod: string
+  zscoreMethod: string
+  zscoreLambdaMode: string
+  zscoreLambda: string | undefined
 
   // Display options
   cumulative: boolean
@@ -134,6 +138,9 @@ export interface ChartFilterConfig {
   baselineMethod: string
   baselineDateFrom: string
   baselineDateTo: string
+  zscoreMethod: string
+  zscoreLambdaMode: string
+  zscoreLambda: string
   showBaseline: boolean
 
   // Display options

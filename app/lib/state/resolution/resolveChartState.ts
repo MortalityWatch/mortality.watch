@@ -47,6 +47,9 @@ export interface ChartRenderState {
   baselineMethod: string
   baselineDateFrom: string
   baselineDateTo: string
+  zscoreMethod: string
+  zscoreLambdaMode: string
+  zscoreLambda: string
 
   // Display options
   ageGroups: string[]
@@ -240,6 +243,9 @@ export function resolveChartStateForRendering(
     baselineMethod: constrainedState.baselineMethod as string,
     baselineDateFrom: effectiveBaselineFrom,
     baselineDateTo: effectiveBaselineTo,
+    zscoreMethod: (constrainedState.zscoreMethod as string) || 'standard',
+    zscoreLambdaMode: (constrainedState.zscoreLambdaMode as string) || 'auto',
+    zscoreLambda: (constrainedState.zscoreLambda as string) || '',
 
     // Display options
     ageGroups: constrainedState.ageGroups as string[],
@@ -334,6 +340,9 @@ export function resolveChartStateFromSnapshot(
     baselineMethod: snapshot.baselineMethod,
     baselineDateFrom: effectiveBaselineFrom,
     baselineDateTo: effectiveBaselineTo,
+    zscoreMethod: snapshot.zscoreMethod || 'standard',
+    zscoreLambdaMode: snapshot.zscoreLambdaMode || 'auto',
+    zscoreLambda: snapshot.zscoreLambda || '',
     ageGroups: snapshot.ageGroups,
     standardPopulation: snapshot.standardPopulation,
     cumulative: snapshot.cumulative,
@@ -392,6 +401,9 @@ export function generateUrlFromState(
   params.set('bm', state.baselineMethod)
   if (state.baselineDateFrom) params.set('bf', state.baselineDateFrom)
   if (state.baselineDateTo) params.set('bt', state.baselineDateTo)
+  if (state.zscoreMethod && state.zscoreMethod !== 'standard') params.set('zsm', state.zscoreMethod)
+  if (state.zscoreLambdaMode && state.zscoreLambdaMode !== 'auto') params.set('zlm', state.zscoreLambdaMode)
+  if (state.zscoreLambda) params.set('zl', state.zscoreLambda)
 
   // Display options
   if (state.ageGroups.length && state.ageGroups[0] !== 'all') params.set('ag', state.ageGroups.join(','))
@@ -487,6 +499,9 @@ export function toChartFilterConfig(
     baselineMethod: state.baselineMethod,
     baselineDateFrom: state.baselineDateFrom,
     baselineDateTo: state.baselineDateTo,
+    zscoreMethod: state.zscoreMethod,
+    zscoreLambdaMode: state.zscoreLambdaMode,
+    zscoreLambda: state.zscoreLambda,
     showBaseline: state.showBaseline,
 
     // Display options

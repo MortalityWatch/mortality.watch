@@ -456,6 +456,9 @@ watch([() => state.view.value, allAgeGroups], async ([viewType, availableAgeGrou
 
 // Baseline configuration
 const handleBaselineMethodChanged = (v: string) => handleStateChange({ field: 'baselineMethod', value: v }, '_baselineMethod')
+const handleZScoreMethodChanged = (v: string) => handleStateChange({ field: 'zscoreMethod', value: v }, '_zscoreMethod')
+const handleZScoreLambdaModeChanged = (v: string) => handleStateChange({ field: 'zscoreLambdaMode', value: v }, '_zscoreLambdaMode')
+const handleZScoreLambdaChanged = (v: string) => handleStateChange({ field: 'zscoreLambda', value: v }, '_zscoreLambda')
 
 // Display options - these update UI only, no data reload needed
 // Some require direct chartData update since they affect rendering without data reload
@@ -505,7 +508,7 @@ const handleDecimalsChanged = (v: string) => handleUIStateChange({ field: 'decim
 useBrowserNavigation({
   queryParams: [
     'c', 't', 'ct', 'e', 'cs', 'df', 'dt', 'ss', 'bf', 'bt',
-    'sp', 'ag', 'sb', 'bm', 'ce', 'st', 'pi', 'p', 'lg'
+    'sp', 'ag', 'sb', 'bm', 'zsm', 'zlm', 'zl', 'ce', 'st', 'pi', 'p', 'lg'
   ],
   onNavigate: async () => {
     if (isInternalUrlUpdate.value) {
@@ -830,6 +833,9 @@ watch(
             @view-changed="handleViewChanged"
             @show-baseline-changed="handleBaselineChanged"
             @baseline-method-changed="handleBaselineMethodChanged"
+            @zscore-method-changed="handleZScoreMethodChanged"
+            @zscore-lambda-mode-changed="handleZScoreLambdaModeChanged"
+            @zscore-lambda-changed="handleZScoreLambdaChanged"
             @baseline-slider-value-changed="baselineSliderChanged"
             @show-prediction-interval-changed="handlePredictionIntervalChanged"
             @show-labels-changed="handleShowLabelsChanged"

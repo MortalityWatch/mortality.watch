@@ -9,11 +9,17 @@
 import type {
   Dataset,
   DatasetEntry,
-  DataVector
+  DataVector,
+  BaselineSeriesMetadata
 } from '@/model'
-import { EXTERNAL_SERVICES, BASELINE_DATA_PRECISION, getMaxBaselinePeriod } from '../config/constants'
+import {
+  EXTERNAL_SERVICES,
+  BASELINE_DATA_PRECISION,
+  getMaxBaselinePeriod
+} from '../config/constants'
 import { logger } from '../logger'
 import { calculateExcess, getSeasonType, labelToXsParam } from './core'
+import { getBaselineMetadataKey } from '@/model'
 
 // Default stats API URL - can be overridden via NUXT_PUBLIC_STATS_URL
 const DEFAULT_STATS_URL = EXTERNAL_SERVICES.STATS_API_URL
@@ -52,6 +58,10 @@ export interface BaselineDependencies {
  * @param chartType - Chart type
  * @param cumulative - Whether cumulative mode is enabled
  * @param statsUrl - Optional stats API URL (defaults to https://stats.mortality.watch/)
+ * @param zscoreMethod - Z-score calculation method sent to stats
+ * @param zscoreLambdaMode - Lambda selection mode: auto or manual
+ * @param zscoreLambda - Manual lambda value, when lambda mode is manual
+ * @param metadataCollector - Optional per-series metadata sink for tooltips/subtitles
  */
 export const calculateBaseline = async (
   deps: BaselineDependencies,
@@ -63,7 +73,13 @@ export const calculateBaseline = async (
   method: string,
   chartType: string,
   cumulative: boolean,
-  statsUrl?: string
+  statsUrl?: string,
+  zscoreMethod: string = 'standard',
+  zscoreLambdaMode: string = 'auto',
+  zscoreLambda?: string,
+  metadataCollector?: Record<string, BaselineSeriesMetadata>,
+  ageGroup: string = 'all',
+  iso3c: string = 'unknown'
 ): Promise<void> => {
   if (method === 'auto') return
 
@@ -185,7 +201,8 @@ export const calculateBaseline = async (
       y: yData,
       bs,
       be,
-      t: trend ? 1 : 0
+      t: trend ? 1 : 0,
+      zscore_method: zscoreMethod
     }
 
     // Add non-cumulative specific params
@@ -197,6 +214,13 @@ export const calculateBaseline = async (
     // Add optional xs parameter for seasonal alignment
     if (xs) {
       body.xs = xs
+    }
+
+    if (zscoreMethod === 'variance_stabilized') {
+      body.lambda_mode = zscoreLambdaMode
+      if (zscoreLambdaMode === 'manual' && zscoreLambda) {
+        body.lambda = Number(zscoreLambda)
+      }
     }
 
     // Use injected fetch function with queue
@@ -214,6 +238,22 @@ export const calculateBaseline = async (
     )
     if (json.zscore) {
       json.zscore = (json.zscore as (string | number)[]).slice(0, dataLength)
+    }
+
+    if (metadataCollector) {
+      if (typeof firstKey === 'string') {
+        metadataCollector[getBaselineMetadataKey(ageGroup, iso3c, firstKey)] = {
+          zscore_method: json.zscore_method === 'variance_stabilized' ? 'variance_stabilized' : 'standard',
+          lambda_mode: json.lambda_mode ?? null,
+          lambda: typeof json.lambda === 'number' && Number.isFinite(json.lambda) ? json.lambda : null
+        }
+      } else {
+        logger.warn('Cannot collect baseline metadata: first key is not a string', {
+          ageGroup,
+          iso3c,
+          firstKey
+        })
+      }
     }
 
     // For naive method, the stats API returns actual values within the baseline period
@@ -258,9 +298,13 @@ export const calculateBaseline = async (
     calculateExcess(data, firstKey, isBaselineCumulative, effectiveBaselineStartIdx)
   } catch (error) {
     logger.error('Baseline calculation failed, using simple mean fallback', error, {
-      iso3c: data.iso3c?.[0],
+      iso3c,
+      ageGroup,
       chartType,
       method,
+      zscoreMethod,
+      zscoreLambdaMode,
+      zscoreLambda,
       baselineStartIdx,
       baselineEndIdx,
       effectiveBaselineStartIdx,
@@ -342,7 +386,11 @@ export const calculateBaselines = async (
   chartType: string,
   cumulative: boolean,
   progressCb?: (progress: number, total: number) => void,
-  statsUrl?: string
+  statsUrl?: string,
+  zscoreMethod: string = 'standard',
+  zscoreLambdaMode: string = 'auto',
+  zscoreLambda?: string,
+  metadataCollector?: Record<string, BaselineSeriesMetadata>
 ): Promise<void> => {
   let count = 0
   const total = Object.keys(data || {}).reduce(
@@ -364,7 +412,13 @@ export const calculateBaselines = async (
           method,
           chartType,
           cumulative,
-          statsUrl
+          statsUrl,
+          zscoreMethod,
+          zscoreLambdaMode,
+          zscoreLambda,
+          metadataCollector,
+          ag,
+          iso
         ).then(() => {
           if (!progressCb) return
           count++

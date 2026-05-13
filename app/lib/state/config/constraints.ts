@@ -43,6 +43,9 @@ export const FIELD_UPDATE_STRATEGY: Record<string, FieldUpdateType> = {
 
   // Update: Requires recalculating baseline/dataset
   baselineMethod: 'update',
+  zscoreMethod: 'update',
+  zscoreLambdaMode: 'update',
+  zscoreLambda: 'update',
   standardPopulation: 'update',
   baselineDateFrom: 'update',
   baselineDateTo: 'update',
