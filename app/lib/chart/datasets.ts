@@ -114,6 +114,30 @@ const normalizeSourceSeries = (
   return null
 }
 
+const tokenizeSources = (value: string): Set<string> => {
+  return new Set(
+    value
+      .split(',')
+      .map(part => part.trim())
+      .filter(Boolean)
+  )
+}
+
+const shouldSplitAtSourceTransition = (previous: string, current: string): boolean => {
+  if (!previous || !current || previous === current) return false
+
+  const previousSources = tokenizeSources(previous)
+  const currentSources = tokenizeSources(current)
+
+  if (previousSources.size === 0 || currentSources.size === 0) return false
+
+  for (const source of previousSources) {
+    if (currentSources.has(source)) return false
+  }
+
+  return true
+}
+
 const splitSeriesBySourceTransitions = (
   dataPoints: DefaultDataPoint<ChartType>,
   sourceValues: unknown[]
@@ -127,7 +151,8 @@ const splitSeriesBySourceTransitions = (
   for (let i = 1; i < normalizedSources.length; i++) {
     const previous = normalizedSources[i - 1]
     const current = normalizedSources[i]
-    if (previous && current && previous !== current) {
+    if (previous === undefined || current === undefined) continue
+    if (shouldSplitAtSourceTransition(previous, current)) {
       transitionIndexes.push(i)
     }
   }
