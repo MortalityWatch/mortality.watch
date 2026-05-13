@@ -29,6 +29,10 @@ function getSourceValue(row: CountryData, metricType: string): string | undefine
     return row.source_asmr || row.source || undefined
   }
 
+  if (metricType === 'le') {
+    return row.source_le || row.source || undefined
+  }
+
   return row.source || undefined
 }
 

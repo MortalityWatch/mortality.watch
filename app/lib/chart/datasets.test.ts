@@ -138,7 +138,8 @@ describe('datasets', () => {
         all: {
           USA: createMockDatasetEntry({
             date: ['2011', '2012', '2013', '2014'],
-            source: ['mortality_org', 'mortality_org', 'eurostat', 'eurostat'],
+            source: ['deaths_source', 'deaths_source', 'deaths_source', 'deaths_source'],
+            source_le: ['mortality_org', 'mortality_org', 'eurostat', 'eurostat'],
             le: [80.2, 80.5, 82.9, 83.3] as NumberArray
           })
         }

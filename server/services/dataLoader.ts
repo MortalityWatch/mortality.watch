@@ -479,8 +479,8 @@ export class DataLoaderService {
         }
         // Fields that should remain as strings even if they look numeric
         // 'type' contains comma-separated resolution codes like "1, 2, 3"
-        // 'source' and 'source_asmr' are source names
-        const stringFields = ['type', 'source', 'source_asmr', 'iso3c', 'date']
+        // Source fields must remain strings even when they look non-numeric.
+        const stringFields = ['type', 'source', 'source_asmr', 'source_le', 'iso3c', 'date']
         if (stringFields.includes(header)) {
           obj[header] = value
         } else {

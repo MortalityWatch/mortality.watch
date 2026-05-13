@@ -8,23 +8,25 @@ import {
 function makeRow(
   date: string,
   source: string,
-  sourceAsmr: string = ''
+  sourceAsmr: string = '',
+  sourceLe?: string
 ): CountryData {
   return {
     date,
     source,
-    source_asmr: sourceAsmr
+    source_asmr: sourceAsmr,
+    source_le: sourceLe
   } as CountryData
 }
 
 describe('sourceInfo helpers', () => {
   it('extracts stitched source segments for life expectancy within the selected range', () => {
     const rows = [
-      makeRow('2000', 'mortality_org'),
-      makeRow('2001', 'mortality_org'),
-      makeRow('2012', 'mortality_org'),
-      makeRow('2013', 'eurostat'),
-      makeRow('2025', 'eurostat')
+      makeRow('2000', 'deaths_source_a', '', 'mortality_org'),
+      makeRow('2001', 'deaths_source_a', '', 'mortality_org'),
+      makeRow('2012', 'deaths_source_b', '', 'mortality_org'),
+      makeRow('2013', 'deaths_source_b', '', 'eurostat'),
+      makeRow('2025', 'deaths_source_b', '', 'eurostat')
     ]
 
     const info = extractCountrySourceInfoFromSeries(
@@ -71,6 +73,30 @@ describe('sourceInfo helpers', () => {
         source: 'who',
         from: '2020',
         to: '2021',
+        ageGroups: undefined
+      }
+    ])
+  })
+
+  it('prefers source_le over source for life expectancy provenance', () => {
+    const rows = [
+      makeRow('2012', 'deaths_source', '', 'mortality_org'),
+      makeRow('2013', 'deaths_source', '', 'eurostat')
+    ]
+
+    const info = extractCountrySourceInfoFromSeries(rows, 'le')
+
+    expect(info?.segments).toEqual([
+      {
+        source: 'mortality_org',
+        from: '2012',
+        to: '2012',
+        ageGroups: undefined
+      },
+      {
+        source: 'eurostat',
+        from: '2013',
+        to: '2013',
         ageGroups: undefined
       }
     ])

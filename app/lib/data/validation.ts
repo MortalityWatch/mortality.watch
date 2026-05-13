@@ -55,6 +55,7 @@ const CountryRawSchema = z.object({
  * @property {string} type - Data type indicator
  * @property {string} source - Primary data source identifier
  * @property {string} [source_asmr] - ASMR data source identifier (optional, not in age-group files)
+ * @property {string} [source_le] - Life expectancy data source identifier
  * @property {string} deaths - Total deaths count (as string)
  * @property {string} cmr - Crude mortality rate (as string)
  * @property {string} [asmr_who] - Age-standardized mortality rate (WHO standard, optional)
@@ -71,6 +72,7 @@ const CountryDataRawSchema = z.object({
   type: z.string(),
   source: z.string(),
   source_asmr: z.string().optional(),
+  source_le: z.string().optional(),
   deaths: z.string(),
   cmr: z.string(),
   le: z.string().optional(), // Life expectancy (direct value from age-stratified files)

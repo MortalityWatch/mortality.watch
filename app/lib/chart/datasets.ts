@@ -153,6 +153,8 @@ const splitSeriesBySourceTransitions = (
 const getSource = (ds: Record<string, unknown[]>, key: string) => {
   if (key.startsWith('asmr') && ds['source_asmr']) {
     return ds.source_asmr
+  } else if ((key === 'le' || key === 'le_adj') && ds['source_le']) {
+    return ds.source_le
   } else {
     return ds.source
   }
@@ -336,7 +338,7 @@ export const getDatasets = (
         const segmentedSeries = shouldSegmentLifeExpectancySeries(config, key)
           ? splitSeriesBySourceTransitions(
               transformedData,
-              (dsRecord.source as unknown[]) ?? []
+              (getSource(dsRecord, key) as unknown[]) ?? []
             )
           : [transformedData]
 

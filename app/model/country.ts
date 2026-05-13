@@ -22,6 +22,7 @@ export interface CountryDataRaw {
   type: string
   source: string
   source_asmr: string
+  source_le?: string
   deaths: string
   cmr: string
   le?: string // Direct LE value from CSV (used for age-stratified data)
@@ -154,6 +155,7 @@ export class CountryData {
   type: string
   source: string
   source_asmr: string
+  source_le: string | undefined
   deaths: number | undefined
   deaths_baseline: number | undefined
   deaths_baseline_lower: number | undefined
@@ -233,6 +235,7 @@ export class CountryData {
     this.type = obj.type
     this.source = obj.source
     this.source_asmr = obj.source_asmr
+    this.source_le = obj.source_le
     this.deaths = obj.deaths === '' ? undefined : parseInt(obj.deaths)
     this.deaths_baseline = undefined
     this.deaths_baseline_lower = undefined
