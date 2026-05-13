@@ -54,6 +54,16 @@ export const BaselineMethodEnum = z.enum([
   'exp'
 ])
 
+export const ZScoreMethodEnum = z.enum([
+  'standard',
+  'variance_stabilized'
+])
+
+export const ZScoreLambdaModeEnum = z.enum([
+  'auto',
+  'manual'
+])
+
 export const ChartStyleEnum = z.enum([
   'line',
   'bar',
@@ -73,6 +83,8 @@ export type ChartType = z.infer<typeof ChartTypeEnum>
 export type MetricType = z.infer<typeof MetricTypeEnum>
 export type StandardPopulation = z.infer<typeof StandardPopulationEnum>
 export type BaselineMethod = z.infer<typeof BaselineMethodEnum>
+export type ZScoreMethod = z.infer<typeof ZScoreMethodEnum>
+export type ZScoreLambdaMode = z.infer<typeof ZScoreLambdaModeEnum>
 export type ChartStyle = z.infer<typeof ChartStyleEnum>
 export type DecimalPrecision = z.infer<typeof DecimalPrecisionEnum>
 
@@ -107,6 +119,9 @@ const explorerStateBaseSchema = z.object({
   baselineMethod: BaselineMethodEnum,
   baselineDateFrom: z.string().optional(),
   baselineDateTo: z.string().optional(),
+  zscoreMethod: ZScoreMethodEnum.optional(),
+  zscoreLambdaMode: ZScoreLambdaModeEnum.optional(),
+  zscoreLambda: z.string().optional(),
 
   // Display options
   cumulative: z.boolean(),
@@ -233,6 +248,25 @@ export const explorerStateSchema = explorerStateBaseSchema.superRefine(
     }
 
     // NOTE: Separation of concerns for validation:
+
+    if (data.zscoreMethod === 'variance_stabilized' && data.zscoreLambdaMode === 'manual') {
+      if (!data.zscoreLambda || data.zscoreLambda.trim() === '') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Manual lambda is required for variance-stabilized z-scores',
+          path: ['zscoreLambda']
+        })
+      } else {
+        const lambda = Number(data.zscoreLambda)
+        if (!Number.isFinite(lambda) || lambda < -5 || lambda > 5) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Manual lambda must be a number between -5 and 5',
+            path: ['zscoreLambda']
+          })
+        }
+      }
+    }
     //
     // Zod Schema (this file):
     // - Data-level validation (types, formats, required fields)

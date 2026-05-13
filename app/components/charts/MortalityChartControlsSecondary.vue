@@ -28,6 +28,9 @@ const props = defineProps<{
   isPopulationType: boolean
   view: ViewType
   baselineMethod: string
+  zscoreMethod: string
+  zscoreLambdaMode: string
+  zscoreLambda?: string
   baselineSliderValue: string[]
   showBaseline: boolean
   showPredictionInterval: boolean
@@ -73,6 +76,9 @@ const emit = defineEmits<{
   viewChanged: [value: ViewType]
   showBaselineChanged: [value: boolean]
   baselineMethodChanged: [value: string]
+  zscoreMethodChanged: [value: string]
+  zscoreLambdaModeChanged: [value: string]
+  zscoreLambdaChanged: [value: string]
   baselineSliderValueChanged: [value: string[]]
   showPredictionIntervalChanged: [value: boolean]
   showLabelsChanged: [value: boolean]
@@ -166,6 +172,21 @@ const selectedBaselineMethod = computed({
 const view = computed({
   get: () => props.view,
   set: (v: ViewType) => emit('viewChanged', v)
+})
+
+const selectedZScoreMethod = computed({
+  get: () => props.zscoreMethod,
+  set: (v: string) => emit('zscoreMethodChanged', v)
+})
+
+const selectedZScoreLambdaMode = computed({
+  get: () => props.zscoreLambdaMode,
+  set: (v: string) => emit('zscoreLambdaModeChanged', v)
+})
+
+const selectedZScoreLambda = computed({
+  get: () => props.zscoreLambda ?? '',
+  set: (v: string) => emit('zscoreLambdaChanged', v)
 })
 
 const showBaseline = computed({
@@ -403,11 +424,18 @@ const activeTab = ref('data')
         :selected-baseline-method="selectedBaselineMethod"
         :baseline-methods-with-labels="baselineMethodsWithLabels"
         :baseline-method="props.baselineMethod"
+        :view="props.view"
+        :zscore-method="selectedZScoreMethod"
+        :zscore-lambda-mode="selectedZScoreLambdaMode"
+        :zscore-lambda="selectedZScoreLambda"
         :baseline-slider-value="props.baselineSliderValue"
         :labels="props.labels"
         :chart-type="props.chartType"
         :is-updating="props.isUpdating"
         @update:selected-baseline-method="selectedBaselineMethod = $event"
+        @update:zscore-method="selectedZScoreMethod = $event"
+        @update:zscore-lambda-mode="selectedZScoreLambdaMode = $event"
+        @update:zscore-lambda="selectedZScoreLambda = $event"
         @baseline-slider-changed="baselineSliderChanged"
       />
 

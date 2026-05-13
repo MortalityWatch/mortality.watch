@@ -9,7 +9,8 @@ import {
   type DatasetEntry,
   datasetEntryKeys,
   type FilteredChartData,
-  type DataVector
+  type DataVector,
+  type Notes
 } from '@/model'
 import { ChartPeriod, type ChartType } from '@/model/period'
 import type { MortalityChartData } from './chartTypes'
@@ -102,7 +103,8 @@ const getLabels = (dateFrom: string, dateTo: string): string[] => [
 export const getFilteredChartDataFromConfig = (
   config: ChartFilterConfig,
   allLabels: string[],
-  allChartData: Dataset
+  allChartData: Dataset,
+  notes?: Notes
 ): MortalityChartData => {
   const chartLabels = getChartLabels(
     config.countries,
@@ -120,7 +122,10 @@ export const getFilteredChartDataFromConfig = (
     config.chartType,
     config.view,
     config.leAdjusted,
-    config.showPercentage
+    config.showPercentage,
+    config.zscoreMethod,
+    config.zscoreLambdaMode,
+    config.zscoreLambda
   )
 
   const filteredData = getFilteredLabelAndData(
@@ -168,7 +173,8 @@ export const getFilteredChartDataFromConfig = (
     },
     context: {
       countries: config.countries,
-      allCountries: config.allCountries
+      allCountries: config.allCountries,
+      baselineMetadata: notes?.baselineMetadata
     }
   }
 
@@ -252,6 +258,9 @@ export const getFilteredChartData = async (
     baselineMethod,
     baselineDateFrom,
     baselineDateTo,
+    zscoreMethod: 'standard',
+    zscoreLambdaMode: 'auto',
+    zscoreLambda: '',
     showBaseline,
     cumulative,
     showTotal,

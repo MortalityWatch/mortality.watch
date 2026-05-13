@@ -57,6 +57,9 @@ export interface ChartDataParams {
   baselineMethod?: string
   baselineDateFrom?: string
   baselineDateTo?: string
+  zscoreMethod?: string
+  zscoreLambdaMode?: string
+  zscoreLambda?: string
   keys?: (keyof NumberEntryFields)[]
 }
 
@@ -324,6 +327,9 @@ export class DataLoaderService {
       baselineMethod,
       baselineDateFrom,
       baselineDateTo,
+      zscoreMethod,
+      zscoreLambdaMode,
+      zscoreLambda,
       keys
     } = params
 
@@ -340,6 +346,9 @@ export class DataLoaderService {
       baselineMethod,
       baselineDateFrom,
       baselineDateTo,
+      zscoreMethod ?? 'standard',
+      zscoreLambdaMode ?? 'auto',
+      zscoreLambda,
       keys,
       undefined, // progressCb - not used on server
       undefined, // statsUrl - uses default

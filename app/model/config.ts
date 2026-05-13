@@ -3,6 +3,7 @@
  */
 
 export type ListType = { name: string, value: string }
+export type NullableListType = ListType & { disabled?: boolean }
 
 export const types: ListType[] = [
   { name: 'Life Expectancy (LE)', value: 'le' },
@@ -70,6 +71,16 @@ export const decimalPrecisions: ListType[] = [
   { name: '3', value: '3' }
 ]
 
+export const zscoreMethods: ListType[] = [
+  { name: 'Standard', value: 'standard' },
+  { name: 'Variance-Stabilized', value: 'variance_stabilized' }
+]
+
+export const zscoreLambdaModes: ListType[] = [
+  { name: 'Auto (Guerrero)', value: 'auto' },
+  { name: 'Manual Lambda', value: 'manual' }
+]
+
 // Transformed arrays for UI components (with label property for USelectMenu)
 export const standardPopulationItems = standardPopulations
   .filter(x => x.value !== 'country')
@@ -79,6 +90,12 @@ export const baselineMethodItems = baselineMethods
   .map(x => ({ label: x.name, name: x.name, value: x.value }))
 
 export const decimalPrecisionItems = decimalPrecisions
+  .map(x => ({ label: x.name, name: x.name, value: x.value }))
+
+export const zscoreMethodItems = zscoreMethods
+  .map(x => ({ label: x.name, name: x.name, value: x.value }))
+
+export const zscoreLambdaModeItems = zscoreLambdaModes
   .map(x => ({ label: x.name, name: x.name, value: x.value }))
 
 export const settingsModel = {

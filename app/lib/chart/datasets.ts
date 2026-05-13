@@ -7,7 +7,9 @@ import type { DataTransformationConfig } from './types'
 import {
   getKeyForType,
   type DatasetReturn,
-  type Dataset
+  type Dataset,
+  getBaselineMetadataKey,
+  type ZScoreDatasetMeta
 } from '@/model'
 import { getCamelCase } from '@/utils'
 import { isBl, isPredictionIntervalKey } from './predicates'
@@ -289,8 +291,15 @@ export const getDatasets = (
             config.display.showPredictionInterval
           ),
           stack: isPopulationComposition ? iso3c : undefined,
-          hidden: isPredictionIntervalKey(key) && !config.display.showPredictionInterval
-        })
+          hidden: isPredictionIntervalKey(key) && !config.display.showPredictionInterval,
+          zscoreMeta: config.display.view === 'zscore' && label
+            ? {
+                series: config.context.baselineMetadata?.[
+                  getBaselineMetadataKey(ag, iso3c, key)
+                ]
+              }
+            : undefined
+        } as ChartDataset<ChartType, DefaultDataPoint<ChartType>> & ZScoreDatasetMeta)
       })
       countryIndex++
     }

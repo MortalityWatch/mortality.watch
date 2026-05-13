@@ -24,6 +24,9 @@ const emit = defineEmits<{
   viewChanged: [value: ViewType]
   showBaselineChanged: [value: boolean]
   baselineMethodChanged: [value: string]
+  zscoreMethodChanged: [value: string]
+  zscoreLambdaModeChanged: [value: string]
+  zscoreLambdaChanged: [value: string]
   baselineSliderValueChanged: [value: string[]]
   showPredictionIntervalChanged: [value: boolean]
   showLabelsChanged: [value: boolean]
@@ -112,6 +115,9 @@ const baselineSliderValue = computed(() => {
       :is-population-type="isPopulationType"
       :view="props.state.view.value"
       :baseline-method="props.state.baselineMethod.value"
+      :zscore-method="props.state.zscoreMethod.value"
+      :zscore-lambda-mode="props.state.zscoreLambdaMode.value"
+      :zscore-lambda="props.state.zscoreLambda.value"
       :baseline-slider-value="baselineSliderValue"
       :show-baseline="props.state.showBaseline.value"
       :slider-start="props.state.sliderStart.value"
@@ -153,6 +159,9 @@ const baselineSliderValue = computed(() => {
       @view-changed="emit('viewChanged', $event)"
       @show-baseline-changed="emit('showBaselineChanged', $event)"
       @baseline-method-changed="emit('baselineMethodChanged', $event)"
+      @zscore-method-changed="emit('zscoreMethodChanged', $event)"
+      @zscore-lambda-mode-changed="emit('zscoreLambdaModeChanged', $event)"
+      @zscore-lambda-changed="emit('zscoreLambdaChanged', $event)"
       @baseline-slider-value-changed="emit('baselineSliderValueChanged', $event)"
       @show-prediction-interval-changed="emit('showPredictionIntervalChanged', $event)"
       @show-labels-changed="emit('showLabelsChanged', $event)"

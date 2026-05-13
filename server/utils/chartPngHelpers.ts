@@ -386,6 +386,9 @@ export async function fetchChartData(state: ChartRenderState) {
     baselineMethod: state.baselineMethod,
     baselineDateFrom: state.baselineDateFrom,
     baselineDateTo: state.baselineDateTo,
+    zscoreMethod: state.zscoreMethod,
+    zscoreLambdaMode: state.zscoreLambdaMode,
+    zscoreLambda: state.zscoreLambda,
     keys: baseKeys
   })
 
@@ -423,7 +426,7 @@ export async function transformChartData(
   const config = toChartFilterConfig(state, allCountries, chartUrl)
 
   // Use getFilteredChartDataFromConfig - same function as client
-  const chartData = getFilteredChartDataFromConfig(config, allLabels, allChartData.data)
+  const chartData = getFilteredChartDataFromConfig(config, allLabels, allChartData.data, allChartData.notes)
 
   // Derive return flags from config (already computed in toChartFilterConfig)
   const isDeathsType = config.isDeathsType

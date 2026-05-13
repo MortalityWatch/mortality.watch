@@ -6,7 +6,8 @@ import type {
   NumberEntryFields,
   AllChartData,
   NumberArray,
-  StringArray
+  StringArray,
+  BaselineSeriesMetadata
 } from '@/model'
 import { stringKeys, numberKeys } from '@/model'
 import { ChartPeriod, type ChartType } from '@/model/period'
@@ -29,7 +30,11 @@ export type BaselineCalculatorFn = (
   chartType: string,
   cumulative: boolean,
   progressCb?: (progress: number, total: number) => void,
-  statsUrl?: string
+  statsUrl?: string,
+  zscoreMethod?: string,
+  zscoreLambdaMode?: string,
+  zscoreLambda?: string,
+  metadataCollector?: Record<string, BaselineSeriesMetadata>
 ) => Promise<void>
 
 /**
@@ -55,6 +60,9 @@ export const getAllChartData = async (
   baselineMethod?: string,
   baselineDateFrom?: string,
   baselineDateTo?: string,
+  zscoreMethod: string = 'standard',
+  zscoreLambdaMode: string = 'auto',
+  zscoreLambda?: string,
   keys?: (keyof NumberEntryFields)[],
   progressCb?: (progress: number, total: number) => void,
   statsUrl?: string,
@@ -65,6 +73,7 @@ export const getAllChartData = async (
   const countryCodes = countryCodeFilter ?? Object.keys(rawData?.all || {})
   const noData: Record<string, Set<string>> = {}
   const noAsmr: Set<string> = new Set<string>()
+  const baselineMetadata: Record<string, BaselineSeriesMetadata> = {}
 
   // Get Country data and labels
   for (const ag of ageGroups) {
@@ -192,9 +201,13 @@ export const getAllChartData = async (
       chartType,
       cumulative,
       progressCb,
-      statsUrl
+      statsUrl,
+      zscoreMethod,
+      zscoreLambdaMode,
+      zscoreLambda,
+      baselineMetadata
     )
   }
 
-  return { data, labels, notes: { noData, noAsmr } }
+  return { data, labels, notes: { noData, noAsmr, baselineMetadata } }
 }

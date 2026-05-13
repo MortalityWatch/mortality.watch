@@ -45,6 +45,8 @@ function getViewDefaults(view: ViewType): Record<string, unknown> {
   }
 }
 
+const VIEW_OWNED_FIELDS_ON_SWITCH = new Set(['chartStyle', 'maximize'])
+
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class StateResolver {
   /**
@@ -268,6 +270,27 @@ export class StateResolver {
     // 2. Apply constraints
     const constrainedState = this.applyConstraints(state, userOverrides, log)
 
+    // 2b. If constraints changed chartType, clear date fields that may now be invalid.
+    // This covers metric-driven chartType normalization, not just direct chartType edits.
+    if (currentState.chartType !== constrainedState.chartType) {
+      const dateFields = ['dateFrom', 'dateTo', 'baselineDateFrom', 'baselineDateTo']
+      for (const field of dateFields) {
+        if (constrainedState[field] !== undefined) {
+          const fieldUrlKey = stateFieldEncoders[field as keyof typeof stateFieldEncoders]?.key || field
+          log.changes.push({
+            field,
+            urlKey: fieldUrlKey,
+            oldValue: constrainedState[field],
+            newValue: undefined,
+            priority: 'constraint',
+            reason: `Cleared: chartType changed from ${String(currentState.chartType)} to ${String(constrainedState.chartType)}`
+          })
+          constrainedState[field] = undefined
+        }
+        userOverrides.delete(field)
+      }
+    }
+
     log.after = { ...constrainedState }
 
     // 3. Compute UI state from view configuration
@@ -358,12 +381,11 @@ export class StateResolver {
     })
 
     // 2. Apply view defaults
-    // When switching views, chartStyle should always use the new view's default
-    // because chartStyle is set BY the view, not by explicit user action
+    // Some display fields are owned by the active view and should reset on view switch
+    // instead of staying sticky from the previous view's user overrides.
     const actualViewConfig = VIEWS[actualView]
     for (const [field, value] of Object.entries(actualViewConfig.defaults || {})) {
-      // Special case: chartStyle is always set by view defaults, not user override
-      const shouldApply = field === 'chartStyle' || !userOverrides.has(field)
+      const shouldApply = VIEW_OWNED_FIELDS_ON_SWITCH.has(field) || !userOverrides.has(field)
 
       if (shouldApply) {
         const oldValue = state[field]
@@ -381,9 +403,9 @@ export class StateResolver {
           })
         }
 
-        // Remove chartStyle from userOverrides since it's controlled by view
-        if (field === 'chartStyle') {
-          userOverrides.delete('chartStyle')
+        // Remove view-owned fields from userOverrides since the target view controls them.
+        if (VIEW_OWNED_FIELDS_ON_SWITCH.has(field)) {
+          userOverrides.delete(field)
         }
       }
     }
@@ -805,6 +827,9 @@ export class StateResolver {
       baselineDateTo: (resolvedState.baselineDateTo ?? current.baselineDateTo) as string | undefined,
       showBaseline: (resolvedState.showBaseline ?? current.showBaseline ?? true) as boolean,
       baselineMethod: (resolvedState.baselineMethod ?? current.baselineMethod ?? 'mean') as string,
+      zscoreMethod: (resolvedState.zscoreMethod ?? current.zscoreMethod ?? 'standard') as string,
+      zscoreLambdaMode: (resolvedState.zscoreLambdaMode ?? current.zscoreLambdaMode ?? 'auto') as string,
+      zscoreLambda: (resolvedState.zscoreLambda ?? current.zscoreLambda) as string | undefined,
       cumulative: (resolvedState.cumulative ?? current.cumulative ?? false) as boolean,
       showTotal: (resolvedState.showTotal ?? current.showTotal ?? false) as boolean,
       maximize: (resolvedState.maximize ?? current.maximize ?? false) as boolean,

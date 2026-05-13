@@ -7,6 +7,7 @@
 import type { TooltipItem } from 'chart.js'
 import type { ChartErrorDataPoint } from '../chartTypes'
 import { getLabelText } from './chartLabels'
+import type { ZScoreDatasetMeta } from '@/model'
 
 /**
  * Create tooltip callbacks configuration
@@ -52,6 +53,21 @@ export function createTooltipCallbacks(
         decimals
       )
       return label
+    },
+    afterLabel: (context: TooltipItem<'line' | 'bar'>) => {
+      const meta = (context.dataset as unknown as ZScoreDatasetMeta).zscoreMeta?.series
+      if (!meta) return []
+
+      if (meta.zscore_method === 'variance_stabilized') {
+        const lambdaText = meta.lambda == null ? 'n/a' : meta.lambda.toFixed(3)
+        const modeText = meta.lambda_mode === 'manual' ? 'manual' : 'auto'
+        return [
+          'Variance-stabilized z-score',
+          `Lambda (${modeText}): ${lambdaText}`
+        ]
+      }
+
+      return ['Standard z-score']
     }
   }
 }

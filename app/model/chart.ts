@@ -9,7 +9,7 @@ import type {
   ChartType,
   DefaultDataPoint
 } from 'chart.js'
-import type { Dataset, Notes } from './types'
+import type { Dataset, Notes, BaselineSeriesMetadata } from './types'
 
 export interface ChartDataRaw {
   data: Record<string, Record<string, Record<string, (number | string)[]>>>
@@ -35,6 +35,12 @@ export type DatasetReturn = {
   sources: string[]
 }
 
+export interface ZScoreDatasetMeta {
+  zscoreMeta?: {
+    series?: BaselineSeriesMetadata
+  }
+}
+
 export type ChartJSConfig<
   TType extends ChartType,
   TData = unknown,
@@ -47,9 +53,5 @@ export type ChartJSConfig<
 export type AllChartData = {
   data: Dataset
   labels: string[]
-  notes: {
-    noData: Record<string, Set<string>> | undefined
-    noAsmr: Set<string> | undefined
-    disaggregatedData?: Record<string, number[]>
-  }
+  notes: Notes
 }

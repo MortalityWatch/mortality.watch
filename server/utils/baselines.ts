@@ -8,7 +8,8 @@
 
 import type {
   Dataset,
-  DatasetEntry
+  DatasetEntry,
+  BaselineSeriesMetadata
 } from '../../app/model'
 import { fetchBaselineWithCircuitBreaker } from './baselineApi'
 import { serverBaselineQueue } from './baselineQueue'
@@ -41,7 +42,11 @@ export const calculateBaselines = async (
   chartType: string,
   cumulative: boolean,
   progressCb?: (progress: number, total: number) => void,
-  statsUrl?: string
+  statsUrl?: string,
+  zscoreMethod: string = 'standard',
+  zscoreLambdaMode: string = 'auto',
+  zscoreLambda?: string,
+  metadataCollector?: Record<string, BaselineSeriesMetadata>
 ): Promise<void> => {
   return sharedCalculateBaselines(
     serverDeps,
@@ -54,6 +59,10 @@ export const calculateBaselines = async (
     chartType,
     cumulative,
     progressCb,
-    statsUrl
+    statsUrl,
+    zscoreMethod,
+    zscoreLambdaMode,
+    zscoreLambda,
+    metadataCollector
   )
 }

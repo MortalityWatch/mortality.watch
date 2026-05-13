@@ -42,6 +42,9 @@ export interface ChartDataFetchConfig {
   baselineDateFrom?: string
   baselineDateTo?: string
   baselineStartIdx?: number
+  zscoreMethod?: string
+  zscoreLambdaMode?: string
+  zscoreLambda?: string
 
   // Date range - sliderStart defines the "from" offset for allChartData (layer 2)
   sliderStart?: string
@@ -243,6 +246,9 @@ export function useChartDataFetcher() {
         fetchConfig.baselineMethod,
         baselineFrom,
         baselineTo,
+        fetchConfig.zscoreMethod ?? 'standard',
+        fetchConfig.zscoreLambdaMode ?? 'auto',
+        fetchConfig.zscoreLambda,
         fetchConfig.baseKeys ?? [],
         fetchConfig.onProgress ?? ((progress, total) => {
           updateProgress.value = Math.round((progress / total) * 100)
@@ -344,6 +350,9 @@ export function useChartDataFetcher() {
         undefined, // No baseline method - this prevents baseline calculations
         undefined, // No baseline from
         undefined, // No baseline to
+        fetchConfig.zscoreMethod ?? 'standard',
+        fetchConfig.zscoreLambdaMode ?? 'auto',
+        fetchConfig.zscoreLambda,
         fetchConfig.baseKeys ?? [],
         () => {}, // No progress tracking needed for phase 1
         statsUrl
@@ -378,6 +387,9 @@ export function useChartDataFetcher() {
           fetchConfig.baselineMethod, // Now include baseline method
           baselineFrom,
           baselineTo,
+          fetchConfig.zscoreMethod ?? 'standard',
+          fetchConfig.zscoreLambdaMode ?? 'auto',
+          fetchConfig.zscoreLambda,
           fetchConfig.baseKeys ?? [],
           fetchConfig.onProgress ?? ((progress, total) => {
             updateProgress.value = Math.round((progress / total) * 100)
