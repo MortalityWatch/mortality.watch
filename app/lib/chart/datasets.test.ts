@@ -128,6 +128,30 @@ describe('datasets', () => {
 
       expect(result.sources).toContain('Source 1')
     })
+
+    it('should split life expectancy line datasets at source transitions', () => {
+      const config = createBaseConfig()
+      config.chart.type = 'le'
+      config.chart.chartType = 'yearly'
+
+      const data: Dataset = {
+        all: {
+          USA: createMockDatasetEntry({
+            date: ['2011', '2012', '2013', '2014'],
+            source: ['mortality_org', 'mortality_org', 'eurostat', 'eurostat'],
+            le: [80.2, 80.5, 82.9, 83.3] as NumberArray
+          })
+        }
+      }
+
+      const result = getDatasets(config, data)
+
+      expect(result.datasets).toHaveLength(2)
+      expect(result.datasets[0]?.label).toContain('United States')
+      expect(result.datasets[1]?.label).toBe('')
+      expect(result.datasets[0]?.data).toEqual([80.2, 80.5, null, null])
+      expect(result.datasets[1]?.data).toEqual([null, null, 82.9, 83.3])
+    })
   })
 
   describe('getDatasets - multiple countries', () => {

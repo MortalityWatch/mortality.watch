@@ -264,4 +264,77 @@ describe('calculateBaseline', () => {
       expect(data.le_zscore).toEqual([undefined, undefined, 0.1, 0.2, 0.3, 0.4])
     })
   })
+
+  describe('variance-stabilized lambda mode request shaping', () => {
+    it('omits lambda fields for auto mode', async () => {
+      const mockResponse = {
+        y: [81, 81, 81, 81],
+        lower: [null, null, null, 79],
+        upper: [null, null, null, 83],
+        zscore: [0, 0.5, 1, 1.5]
+      }
+
+      const deps = createMockDeps(mockResponse)
+
+      const data: DatasetEntry = {
+        le: [80, 81, 82, 83]
+      } as unknown as DatasetEntry
+
+      await calculateBaseline(
+        deps,
+        data,
+        ['2017', '2018', '2019', '2020'],
+        0,
+        2,
+        ['le', 'le_baseline', 'le_baseline_lower', 'le_baseline_upper'] as (keyof DatasetEntry)[],
+        'mean',
+        'yearly',
+        false,
+        undefined,
+        'variance_stabilized',
+        'auto',
+        '1'
+      )
+
+      const fetchBody = (deps.fetchBaseline as ReturnType<typeof vi.fn>).mock.calls[0]?.[1] as Record<string, unknown>
+      expect(fetchBody.zscore_method).toBe('variance_stabilized')
+      expect(fetchBody).not.toHaveProperty('lambda_mode')
+      expect(fetchBody).not.toHaveProperty('lambda')
+    })
+
+    it('includes lambda fields for manual mode', async () => {
+      const mockResponse = {
+        y: [81, 81, 81, 81],
+        lower: [null, null, null, 79],
+        upper: [null, null, null, 83],
+        zscore: [0, 0.5, 1, 1.5]
+      }
+
+      const deps = createMockDeps(mockResponse)
+
+      const data: DatasetEntry = {
+        le: [80, 81, 82, 83]
+      } as unknown as DatasetEntry
+
+      await calculateBaseline(
+        deps,
+        data,
+        ['2017', '2018', '2019', '2020'],
+        0,
+        2,
+        ['le', 'le_baseline', 'le_baseline_lower', 'le_baseline_upper'] as (keyof DatasetEntry)[],
+        'mean',
+        'yearly',
+        false,
+        undefined,
+        'variance_stabilized',
+        'manual',
+        '1'
+      )
+
+      const fetchBody = (deps.fetchBaseline as ReturnType<typeof vi.fn>).mock.calls[0]?.[1] as Record<string, unknown>
+      expect(fetchBody.lambda_mode).toBe('manual')
+      expect(fetchBody.lambda).toBe(1)
+    })
+  })
 })
