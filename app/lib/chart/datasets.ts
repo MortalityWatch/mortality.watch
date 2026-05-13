@@ -88,6 +88,68 @@ const getType = (
   return undefined
 }
 
+const shouldSegmentLifeExpectancySeries = (
+  config: DataTransformationConfig,
+  key: string
+) => {
+  return !config.chart.isBarChartStyle
+    && !config.chart.isMatrixChartStyle
+    && config.display.view === 'mortality'
+    && (key === 'le' || key === 'le_adj')
+}
+
+const normalizeSourceSeries = (
+  sourceValues: unknown[],
+  expectedLength: number
+): string[] | null => {
+  if (sourceValues.length === expectedLength) {
+    return sourceValues.map(value => typeof value === 'string' ? value : '')
+  }
+
+  if (sourceValues.length === 1) {
+    const value = typeof sourceValues[0] === 'string' ? sourceValues[0] : ''
+    return new Array(expectedLength).fill(value)
+  }
+
+  return null
+}
+
+const splitSeriesBySourceTransitions = (
+  dataPoints: DefaultDataPoint<ChartType>,
+  sourceValues: unknown[]
+): DefaultDataPoint<ChartType>[] => {
+  if (!Array.isArray(dataPoints) || dataPoints.length <= 1) return [dataPoints]
+
+  const normalizedSources = normalizeSourceSeries(sourceValues, dataPoints.length)
+  if (!normalizedSources) return [dataPoints]
+
+  const transitionIndexes: number[] = []
+  for (let i = 1; i < normalizedSources.length; i++) {
+    const previous = normalizedSources[i - 1]
+    const current = normalizedSources[i]
+    if (previous && current && previous !== current) {
+      transitionIndexes.push(i)
+    }
+  }
+
+  if (transitionIndexes.length === 0) return [dataPoints]
+
+  const segments: DefaultDataPoint<ChartType>[] = []
+  let segmentStart = 0
+  const boundaries = [...transitionIndexes, dataPoints.length]
+
+  for (const segmentEnd of boundaries) {
+    const segment = new Array(dataPoints.length).fill(null)
+    for (let i = segmentStart; i < segmentEnd; i++) {
+      segment[i] = dataPoints[i]
+    }
+    segments.push(segment as DefaultDataPoint<ChartType>)
+    segmentStart = segmentEnd
+  }
+
+  return segments
+}
+
 const getSource = (ds: Record<string, unknown[]>, key: string) => {
   if (key.startsWith('asmr') && ds['source_asmr']) {
     return ds.source_asmr
@@ -271,35 +333,44 @@ export const getDatasets = (
                   dsRecord as Record<string, number[]>,
                   key
                 ))
-        datasets.push({
-          label,
-          data: transformedData,
-          borderColor: config.visual.colors[countryIndex],
-          backgroundColor: getBackgroundColor(key, color),
-          fill: fillTarget,
-          borderWidth: getBorderWidth(key, config.chart.isBarChartStyle),
-          borderDash: getBorderDash(key),
-          pointRadius:
-            config.context.countries.length * ags.length > 5
-              ? 0
-              : getPointRadius(config.chart.chartType, key),
-          pointBackgroundColor: getPointBackgroundColor(key, color),
-          type: getType(
-            key,
-            config.chart.isBarChartStyle || isPopulationComposition,
-            config.chart.isExcess,
-            config.display.showPredictionInterval
-          ),
-          stack: isPopulationComposition ? iso3c : undefined,
-          hidden: isPredictionIntervalKey(key) && !config.display.showPredictionInterval,
-          zscoreMeta: config.display.view === 'zscore' && label
-            ? {
-                series: config.context.baselineMetadata?.[
-                  getBaselineMetadataKey(ag, iso3c, key)
-                ]
-              }
-            : undefined
-        } as ChartDataset<ChartType, DefaultDataPoint<ChartType>> & ZScoreDatasetMeta)
+        const segmentedSeries = shouldSegmentLifeExpectancySeries(config, key)
+          ? splitSeriesBySourceTransitions(
+              transformedData,
+              (dsRecord.source as unknown[]) ?? []
+            )
+          : [transformedData]
+
+        segmentedSeries.forEach((segmentData, segmentIndex) => {
+          datasets.push({
+            label: segmentIndex === 0 ? label : '',
+            data: segmentData,
+            borderColor: config.visual.colors[countryIndex],
+            backgroundColor: getBackgroundColor(key, color),
+            fill: fillTarget,
+            borderWidth: getBorderWidth(key, config.chart.isBarChartStyle),
+            borderDash: getBorderDash(key),
+            pointRadius:
+              config.context.countries.length * ags.length > 5
+                ? 0
+                : getPointRadius(config.chart.chartType, key),
+            pointBackgroundColor: getPointBackgroundColor(key, color),
+            type: getType(
+              key,
+              config.chart.isBarChartStyle || isPopulationComposition,
+              config.chart.isExcess,
+              config.display.showPredictionInterval
+            ),
+            stack: isPopulationComposition ? iso3c : undefined,
+            hidden: isPredictionIntervalKey(key) && !config.display.showPredictionInterval,
+            zscoreMeta: config.display.view === 'zscore' && label
+              ? {
+                  series: config.context.baselineMetadata?.[
+                    getBaselineMetadataKey(ag, iso3c, key)
+                  ]
+                }
+              : undefined
+          } as ChartDataset<ChartType, DefaultDataPoint<ChartType>> & ZScoreDatasetMeta)
+        })
       })
       countryIndex++
     }

@@ -45,16 +45,10 @@ import {
 } from '@/lib/state/resolution'
 import { logger } from '@/lib/logger'
 import { getUniqueYears } from '@/lib/utils/dates'
-
-/**
- * Source information for a country's data
- */
-export interface CountrySourceInfo {
-  /** Data source name (e.g., "eurostat", "cdc", "un") */
-  source: string
-  /** Age groups used for age-stratified calculations (ASD, ASMR, LE) */
-  ageGroups?: string[]
-}
+import {
+  extractSourceInfoFromDataset,
+  type CountrySourceInfo
+} from '@/lib/explorer/sourceInfo'
 
 /**
  * Map of country ISO3C code → raw `le_unavailable_reason` string from the
@@ -248,76 +242,41 @@ export function useExplorerDataOrchestration(
    *
    * Also fetches age groups from metadata for age-stratified metrics (ASMR, LE).
    */
-  const extractSourcesFromDataset = async (datasetToExtract: DatasetRaw, countries: string[]) => {
+  const extractSourcesFromDataset = async (
+    datasetToExtract: DatasetRaw,
+    countries: string[],
+    selectedLabels?: string[]
+  ) => {
     // Don't overwrite ASD source info
     if (state.type.value === 'asd') return
-
-    const sources = new Map<string, CountrySourceInfo>()
     const metricType = state.type.value
-    const isAsmrMetric = metricType === 'asmr'
-    const isLeMetric = metricType === 'le'
+    const needsAgeGroups = metricType === 'asmr' || metricType === 'le'
     const chartType = state.chartType.value as ChartType
 
-    // For age-stratified metrics, get age groups from metadata
-    const needsAgeGroups = isAsmrMetric || isLeMetric
+    let metadataLoadPromise: Promise<void> | null = null
+    const getSourceAgeGroups = async (country: string) => {
+      if (!needsAgeGroups) return new Map<string, string[]>()
 
-    // Pre-fetch source -> age groups mapping for all countries if needed
-    const sourceAgeGroupsMap = new Map<string, Map<string, string[]>>()
-    if (needsAgeGroups) {
       try {
-        // Ensure metadata is loaded before accessing
-        await metadataService.load()
-        for (const country of countries) {
-          sourceAgeGroupsMap.set(country, metadataService.getSourcesWithAgeGroups(country, chartType))
+        if (!metadataLoadPromise) {
+          metadataLoadPromise = metadataService.load()
         }
+        await metadataLoadPromise
+
+        return metadataService.getSourcesWithAgeGroups(country, chartType)
       } catch {
         log.warn('Could not load metadata for age groups')
+        return new Map<string, string[]>()
       }
     }
 
-    for (const country of countries) {
-      // Look through age groups to find data for this country
-      for (const ageGroup of Object.keys(datasetToExtract)) {
-        const countryData = datasetToExtract[ageGroup]?.[country]
-        if (countryData && countryData.length > 0) {
-          // Get source from the most recent data row
-          // Use source_asmr for ASMR metrics, otherwise use source
-          for (let i = countryData.length - 1; i >= 0; i--) {
-            const row = countryData[i]
-            if (row) {
-              const sourceValue = isAsmrMetric ? (row.source_asmr || row.source) : row.source
-              if (sourceValue) {
-                const sourceInfo: CountrySourceInfo = { source: sourceValue }
-
-                // Get age groups for the specific source used
-                if (needsAgeGroups) {
-                  const countrySourcesMap = sourceAgeGroupsMap.get(country)
-                  let ageGroups = countrySourcesMap?.get(sourceValue)
-
-                  // Fallback: if source not found in map, try getBestSourceForCountry
-                  if (!ageGroups || ageGroups.length === 0) {
-                    const bestSource = metadataService.getBestSourceForCountry(country, chartType)
-                    if (bestSource?.ageGroups) {
-                      ageGroups = bestSource.ageGroups
-                    }
-                  }
-
-                  if (ageGroups && ageGroups.length > 0) {
-                    sourceInfo.ageGroups = ageGroups
-                  }
-                }
-
-                sources.set(country, sourceInfo)
-                break
-              }
-            }
-          }
-          if (sources.has(country)) break
-        }
-      }
-    }
-
-    dataSourceInfo.value = sources
+    dataSourceInfo.value = await extractSourceInfoFromDataset(
+      datasetToExtract,
+      countries,
+      metricType,
+      selectedLabels,
+      needsAgeGroups ? getSourceAgeGroups : undefined
+    )
   }
 
   /**
@@ -415,7 +374,19 @@ export function useExplorerDataOrchestration(
         const { source, ageGroups } = sourceInfo
 
         // Track source info for display below chart
-        asdSourceInfo.set(country, { source, ageGroups })
+        asdSourceInfo.set(country, {
+          source,
+          ageGroups,
+          segments: [
+            {
+              source,
+              from: 'Available range',
+              to: 'Available range',
+              ageGroups
+            }
+          ],
+          breakpointWarnings: []
+        })
 
         const result = await asdDataComposable.fetchASDForCountry(
           country,
@@ -971,9 +942,6 @@ export function useExplorerDataOrchestration(
         Object.assign(allChartData, result.chartData)
       }
 
-      // Extract source info from dataset for display below chart
-      await extractSourcesFromDataset(dataset, state.countries.value)
-
       // Surface any LE-unavailability reasons from the loaded rows (no-op
       // unless the LE metric is selected and rows carry the column).
       extractLeUnavailableReasons(dataset, state.countries.value)
@@ -1019,9 +987,6 @@ export function useExplorerDataOrchestration(
         Object.assign(allChartData, result.chartData)
       }
 
-      // Extract source info from dataset for display below chart
-      await extractSourcesFromDataset(dataset, state.countries.value)
-
       // Surface any LE-unavailability reasons from the loaded rows (no-op
       // unless the LE metric is selected and rows carry the column).
       extractLeUnavailableReasons(dataset, state.countries.value)
@@ -1035,6 +1000,15 @@ export function useExplorerDataOrchestration(
     // Pass snapshot if provided for consistent rendering during view transitions
     const filteredData = await updateFilteredData(snapshot)
     chartData.value = filteredData as MortalityChartData
+
+    // Extract source info for the rendered label range after chart filtering is applied.
+    if (dataset) {
+      await extractSourcesFromDataset(
+        dataset,
+        state.countries.value,
+        filteredData.labels
+      )
+    }
 
     configureOptions()
 

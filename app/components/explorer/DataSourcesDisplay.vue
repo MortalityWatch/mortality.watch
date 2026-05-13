@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { CountrySourceInfo } from '@/composables/useExplorerDataOrchestration'
 import type { Country } from '@/model'
+import type { CountrySourceInfo, SourceSegment } from '@/lib/explorer/sourceInfo'
 
 const props = defineProps<{
   /** Map of country ISO3C code to source info */
@@ -36,18 +36,27 @@ const getCountryName = (iso3c: string): string => {
   return props.allCountries[iso3c]?.jurisdiction || iso3c
 }
 
-/**
- * Format age groups for display
- */
 const formatAgeGroups = (ageGroups: string[]): string => {
-  if (!ageGroups || ageGroups.length === 0) return ''
-  // Sort numerically by first number in range
-  const sorted = [...ageGroups].sort((a, b) => {
+  return [...ageGroups].sort((a, b) => {
     const numA = parseInt(a.split('-')[0] || a.replace('+', '')) || 0
     const numB = parseInt(b.split('-')[0] || b.replace('+', '')) || 0
     return numA - numB
-  })
-  return sorted.join(', ')
+  }).join(', ')
+}
+
+const formatSegmentDateRange = (segment: SourceSegment): string => {
+  if (segment.from === segment.to) return segment.from
+  return `${segment.from}-${segment.to}`
+}
+
+const formatSegment = (segment: SourceSegment): string => {
+  const parts = [`${formatSourceName(segment.source)} (${formatSegmentDateRange(segment)}`]
+
+  if (showAgeGroupsInline.value && segment.ageGroups && segment.ageGroups.length > 0) {
+    parts.push(formatAgeGroups(segment.ageGroups).replace(/, /g, '/'))
+  }
+
+  return `${parts.join(', ')})`
 }
 
 /**
@@ -76,12 +85,24 @@ const isSingleSource = computed(() => {
   return groupedBySource.value.size === 1
 })
 
+const hasSegmentedSources = computed(() => {
+  return [...props.sourceInfo.values()].some(info => info.segments.length > 1)
+})
+
+const showAgeGroupsInline = computed(() => {
+  return !!props.showAgeGroups
+})
+
 /**
  * Get the first source info for single-source display
  */
 const firstSourceInfo = computed(() => {
   const values = [...props.sourceInfo.values()]
   return values[0]
+})
+
+const countryEntries = computed(() => {
+  return [...props.sourceInfo.entries()]
 })
 </script>
 
@@ -97,7 +118,7 @@ const firstSourceInfo = computed(() => {
       </div>
 
       <!-- Source info -->
-      <template v-if="isSingleSource && firstSourceInfo">
+      <template v-if="!hasSegmentedSources && isSingleSource && firstSourceInfo">
         <!-- Single source for all countries -->
         <div>
           {{ formatSourceName(firstSourceInfo.source) }}
@@ -111,7 +132,7 @@ const firstSourceInfo = computed(() => {
         </div>
       </template>
 
-      <template v-else>
+      <template v-else-if="!hasSegmentedSources">
         <!-- Multiple sources - list by source -->
         <div class="space-y-1">
           <div
@@ -127,6 +148,27 @@ const firstSourceInfo = computed(() => {
               class="ml-2 text-gray-400 dark:text-gray-500"
             >
               Age stratification: {{ formatAgeGroups(group.ageGroups) }}
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <template v-else>
+        <div class="space-y-1">
+          <div
+            v-for="[iso3c, info] in countryEntries"
+            :key="iso3c"
+          >
+            <div>
+              <span class="font-medium">{{ getCountryName(iso3c) }}:</span>
+              {{ info.segments.map(formatSegment).join('; ') }}
+            </div>
+            <div
+              v-for="warning in info.breakpointWarnings"
+              :key="warning"
+              class="ml-2 text-amber-700 dark:text-amber-400"
+            >
+              {{ warning }}
             </div>
           </div>
         </div>

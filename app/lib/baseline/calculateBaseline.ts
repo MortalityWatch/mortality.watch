@@ -217,8 +217,11 @@ export const calculateBaseline = async (
     }
 
     if (zscoreMethod === 'variance_stabilized') {
-      body.lambda_mode = zscoreLambdaMode
+      // The stats API treats an omitted lambda mode as automatic selection.
+      // Sending lambda_mode='auto' currently 400s unless a numeric lambda is
+      // also provided, so only send these fields for explicit manual mode.
       if (zscoreLambdaMode === 'manual' && zscoreLambda) {
+        body.lambda_mode = 'manual'
         body.lambda = Number(zscoreLambda)
       }
     }
