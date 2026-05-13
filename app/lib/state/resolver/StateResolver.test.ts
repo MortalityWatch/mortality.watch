@@ -171,6 +171,29 @@ describe('StateResolver', () => {
       const chartStyleChange = resolved.log.changes.find(c => c.field === 'chartStyle')
       expect(chartStyleChange).toBeUndefined()
     })
+
+    it('should clear stale dates when LE age-specific URL constraints rewrite chartType', () => {
+      const route = createMockRoute({
+        t: 'le',
+        ct: 'weekly',
+        ag: ['40-49', '50-59'],
+        df: '2020 W01',
+        dt: '2024 W52',
+        bf: '2015 W01',
+        bt: '2019 W52'
+      })
+      const resolved = StateResolver.resolveInitial(route)
+
+      expect(resolved.state.type).toBe('le')
+      expect(resolved.state.chartType).toBe('yearly')
+      expect(resolved.state.ageGroups).toEqual(['40-49', '50-59'])
+      expect(resolved.state.dateFrom).toBeUndefined()
+      expect(resolved.state.dateTo).toBeUndefined()
+      expect(resolved.state.baselineDateFrom).toBeUndefined()
+      expect(resolved.state.baselineDateTo).toBeUndefined()
+      expect(resolved.userOverrides.has('dateFrom')).toBe(false)
+      expect(resolved.userOverrides.has('dateTo')).toBe(false)
+    })
   })
 
   describe('createSnapshot', () => {
@@ -539,6 +562,88 @@ describe('StateResolver', () => {
       // Non-overridden fields should get excess view defaults
       expect(resolved.state.chartStyle).toBe('bar') // excess default
       expect(resolved.state.showPercentage).toBe(true) // excess default
+    })
+
+    it('should reset maximize to mortality default when leaving excess view', () => {
+      const currentState = {
+        view: 'excess',
+        countries: ['USA'],
+        type: 'asmr',
+        chartType: 'fluseason',
+        chartStyle: 'bar',
+        maximize: true,
+        cumulative: false,
+        showBaseline: true,
+        showPredictionInterval: false,
+        showPercentage: true,
+        isExcess: true,
+        ageGroups: ['all']
+      }
+      const userOverrides = new Set(['maximize'])
+
+      const resolved = StateResolver.resolveViewChange('mortality', currentState, userOverrides)
+
+      expect(resolved.state.view).toBe('mortality')
+      expect(resolved.state.chartStyle).toBe('line')
+      expect(resolved.state.maximize).toBe(false)
+      expect(resolved.userOverrides.has('maximize')).toBe(false)
+    })
+  })
+
+  describe('resolveChange - metric driven chartType normalization', () => {
+    it('should force yearly chart type for age-specific LE and clear stale dates', () => {
+      const currentState = {
+        view: 'mortality',
+        countries: ['DEU'],
+        type: 'cmr',
+        chartType: 'weekly',
+        ageGroups: ['40-49', '50-59'],
+        dateFrom: '2020 W01',
+        dateTo: '2024 W52',
+        baselineDateFrom: '2015 W01',
+        baselineDateTo: '2019 W52',
+        showBaseline: false,
+        showPredictionInterval: false
+      }
+      const userOverrides = new Set(['ageGroups', 'dateFrom', 'dateTo', 'baselineDateFrom', 'baselineDateTo'])
+
+      const resolved = StateResolver.resolveChange(
+        { field: 'type', value: 'le', source: 'user' },
+        currentState,
+        userOverrides
+      )
+
+      expect(resolved.state.type).toBe('le')
+      expect(resolved.state.chartType).toBe('yearly')
+      expect(resolved.state.ageGroups).toEqual(['40-49', '50-59'])
+      expect(resolved.state.dateFrom).toBeUndefined()
+      expect(resolved.state.dateTo).toBeUndefined()
+      expect(resolved.state.baselineDateFrom).toBeUndefined()
+      expect(resolved.state.baselineDateTo).toBeUndefined()
+      expect(resolved.userOverrides.has('dateFrom')).toBe(false)
+      expect(resolved.userOverrides.has('dateTo')).toBe(false)
+    })
+
+    it('should preserve sub-yearly chart type for all-ages LE', () => {
+      const currentState = {
+        view: 'mortality',
+        countries: ['DEU'],
+        type: 'cmr',
+        chartType: 'weekly',
+        ageGroups: ['all'],
+        showBaseline: false,
+        showPredictionInterval: false
+      }
+
+      const resolved = StateResolver.resolveChange(
+        { field: 'type', value: 'le', source: 'user' },
+        currentState,
+        new Set()
+      )
+
+      expect(resolved.state.type).toBe('le')
+      expect(resolved.state.chartType).toBe('weekly')
+      expect(resolved.state.ageGroups).toEqual(['all'])
     })
   })
 

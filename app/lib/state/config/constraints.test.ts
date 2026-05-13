@@ -151,6 +151,35 @@ describe('StateResolver Constraints', () => {
       // not enforced by constraints
       expect(constraint).toBeUndefined()
     })
+
+    it('should force yearly chart type for age-specific LE on sub-yearly charts', () => {
+      const state = {
+        type: 'le',
+        chartType: 'weekly',
+        ageGroups: ['40-49', '50-59']
+      }
+      const constraint = STATE_CONSTRAINTS.find(
+        c => c.when(state) && c.apply.chartType === 'yearly'
+      )
+
+      expect(constraint).toBeDefined()
+      expect(constraint?.reason).toContain('Age-specific life expectancy')
+      expect(constraint?.allowUserOverride).toBe(false)
+      expect(constraint?.priority).toBe(2)
+    })
+
+    it('should preserve sub-yearly chart type for all-ages LE', () => {
+      const state = {
+        type: 'le',
+        chartType: 'weekly',
+        ageGroups: ['all']
+      }
+      const constraint = STATE_CONSTRAINTS.find(
+        c => c.when(state) && c.apply.chartType === 'yearly'
+      )
+
+      expect(constraint).toBeUndefined()
+    })
   })
 
   describe('Matrix Chart Style Constraints', () => {

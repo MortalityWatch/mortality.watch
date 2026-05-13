@@ -218,6 +218,27 @@ const asdChartTypeConstraints: StateConstraint = {
 }
 
 /**
+ * Age-specific LE constraints
+ * Remaining life expectancy at specific ages requires yearly-style periods.
+ * Keep sub-yearly LE available for the aggregate "all ages" view.
+ */
+const leSpecificAgeChartTypeConstraints: StateConstraint = {
+  when: (state) => {
+    if (state.type !== 'le') return false
+    const ageGroups = Array.isArray(state.ageGroups) ? state.ageGroups : []
+    const hasSpecificAgeGroups = ageGroups.length > 0 && !ageGroups.includes('all')
+    return hasSpecificAgeGroups
+      && !['yearly', 'midyear', 'fluseason'].includes(String(state.chartType ?? ''))
+  },
+  apply: {
+    chartType: 'yearly'
+  },
+  reason: 'Age-specific life expectancy is only available for yearly chart types',
+  allowUserOverride: false,
+  priority: 2
+}
+
+/**
  * Matrix chart style constraints
  * Matrix disables several features
  */
@@ -326,6 +347,7 @@ export const STATE_CONSTRAINTS: StateConstraint[] = [
   populationTypeConstraints,
   asmrTypeConstraints,
   asdChartTypeConstraints,
+  leSpecificAgeChartTypeConstraints,
   matrixStyleConstraints,
 
   // View synchronization (keep isExcess/isZScore in sync with view field)
