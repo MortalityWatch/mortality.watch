@@ -1,5 +1,5 @@
-import { db, users, subscriptions, webhookEvents } from '../db'
-import { eq, desc } from 'drizzle-orm'
+import { db, users, subscriptions } from '../db'
+import { eq } from 'drizzle-orm'
 
 /**
  * Check subscription status for a user
@@ -42,31 +42,8 @@ console.log('\n=== Subscription ===')
 if (subscription) {
   console.log(`Status: ${subscription.status}`)
   console.log(`Plan: ${subscription.plan}`)
-  console.log(`Stripe Customer ID: ${subscription.stripeCustomerId}`)
-  console.log(`Stripe Subscription ID: ${subscription.stripeSubscriptionId}`)
   console.log(`Current Period End: ${subscription.currentPeriodEnd}`)
   console.log(`Cancel At Period End: ${subscription.cancelAtPeriodEnd}`)
 } else {
   console.log('❌ No subscription found for this user')
-}
-
-// Check recent webhook events
-console.log('\n=== Recent Webhook Events (last 10) ===')
-const events = await db
-  .select()
-  .from(webhookEvents)
-  .orderBy(desc(webhookEvents.createdAt))
-  .limit(10)
-  .all()
-
-if (events.length === 0) {
-  console.log('❌ No webhook events found')
-} else {
-  for (const event of events) {
-    const status = event.processed ? '✅' : event.processingError ? '❌' : '⏳'
-    console.log(`${status} ${event.eventType} - ${event.stripeEventId} (${event.createdAt})`)
-    if (event.processingError) {
-      console.log(`   Error: ${event.processingError}`)
-    }
-  }
 }

@@ -13,6 +13,7 @@
 
 import { readFileSync, existsSync } from 'fs'
 import { join } from 'path'
+import Papa from 'papaparse'
 import type {
   CountryRaw,
   CountryDataRaw,
@@ -460,39 +461,30 @@ export class DataLoaderService {
    * Parse CSV text into array of objects
    */
   private parseCSV(csvText: string): Record<string, unknown>[] {
-    const lines = csvText.trim().split('\n')
-    if (lines.length === 0) return []
+    const parsed = Papa.parse(csvText, {
+      header: true,
+      skipEmptyLines: true
+    }) as { data: Record<string, string>[], errors: unknown[] }
 
-    // Strip quotes from headers
-    const headers = lines[0]!.split(',').map(h => h.trim().replace(/^"|"$/g, ''))
-    const results: Record<string, unknown>[] = []
-
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i]!.split(',')
-      const obj: Record<string, unknown> = {}
-
-      headers.forEach((header, index) => {
-        let value = values[index]?.trim()
-        // Strip quotes from string values
-        if (value?.startsWith('"') && value?.endsWith('"')) {
-          value = value.slice(1, -1)
-        }
-        // Fields that should remain as strings even if they look numeric
-        // 'type' contains comma-separated resolution codes like "1, 2, 3"
-        // 'source' and 'source_asmr' are source names
-        const stringFields = ['type', 'source', 'source_asmr', 'iso3c', 'date']
-        if (stringFields.includes(header)) {
-          obj[header] = value
-        } else {
-          // Try to parse as number, otherwise keep as string
-          obj[header] = value && !isNaN(Number(value)) ? Number(value) : value
-        }
-      })
-
-      results.push(obj)
+    if (parsed.errors.length > 0) {
+      console.warn('CSV parse warnings:', parsed.errors)
     }
 
-    return results
+    const stringFields = new Set(['type', 'source', 'source_asmr', 'iso3c', 'date', 'le_unavailable_reason'])
+
+    return parsed.data.map((row) => {
+      const obj: Record<string, unknown> = {}
+
+      for (const [header, value] of Object.entries(row)) {
+        if (stringFields.has(header)) {
+          obj[header] = value
+        } else {
+          obj[header] = value !== '' && !isNaN(Number(value)) ? Number(value) : value
+        }
+      }
+
+      return obj
+    })
   }
 
   /**

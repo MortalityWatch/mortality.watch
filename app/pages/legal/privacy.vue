@@ -53,7 +53,7 @@
               <li><strong>Account Information:</strong> Email address, username, and password (encrypted)</li>
               <li><strong>Profile Information:</strong> Optional profile details you choose to provide</li>
               <li><strong>Saved Charts:</strong> Charts and visualizations you create and save to your account</li>
-              <li><strong>Payment Information:</strong> When you subscribe to Pro, payment information is collected and processed by Stripe (see Section 4)</li>
+              <li><strong>Donation Information:</strong> When you make a donation, payment information is collected and processed by Stripe (see Section 4)</li>
             </ul>
 
             <p class="mt-4">
@@ -90,10 +90,10 @@
               We use the information we collect to:
             </p>
             <ul class="list-disc pl-6 space-y-2">
-              <li><strong>Provide the Service:</strong> Create and manage your account, save and retrieve your charts, process subscriptions</li>
+              <li><strong>Provide the Service:</strong> Create and manage your account, save and retrieve your charts</li>
               <li><strong>Improve the Service:</strong> Analyze usage patterns, identify bugs, develop new features</li>
               <li><strong>Communicate with You:</strong> Send account-related emails (verification, password resets), respond to support requests, send service announcements</li>
-              <li><strong>Process Payments:</strong> Handle Pro subscriptions and refunds via Stripe</li>
+              <li><strong>Process Donations:</strong> Handle voluntary donations and related payment support via Stripe</li>
               <li><strong>Security and Fraud Prevention:</strong> Protect against unauthorized access, abuse, and fraud</li>
               <li><strong>Legal Compliance:</strong> Comply with legal obligations and enforce our Terms of Service</li>
               <li><strong>Marketing:</strong> With your consent, send newsletters or promotional materials (you may opt out at any time)</li>
@@ -117,19 +117,18 @@
             </p>
 
             <p class="mt-4">
-              <strong>4.1 Stripe (Payment Processing):</strong>
+              <strong>4.1 Stripe (Donation Processing):</strong>
             </p>
             <p>
-              When you subscribe to Pro, your payment information (credit card details) is collected
-              and processed by
+              When you make a donation, your payment information is collected and processed by
               <ULink
                 to="https://stripe.com"
                 target="_blank"
                 class="text-primary hover:underline"
               >
                 Stripe
-              </ULink>, our payment processor. We do not store your full credit card information on
-              our servers. Stripe's privacy policy is available at
+              </ULink>. We do not store your full credit card information on our servers.
+              Stripe's privacy policy is available at
               <ULink
                 to="https://stripe.com/privacy"
                 target="_blank"
@@ -151,7 +150,7 @@
               >
                 Resend
               </ULink>
-              to send transactional emails (account verification, password resets, subscription
+              to send transactional emails (account verification, password resets,
               notifications). Resend processes your email address for this purpose. Resend's privacy
               policy is available at
               <ULink

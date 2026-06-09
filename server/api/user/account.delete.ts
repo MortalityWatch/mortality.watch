@@ -53,8 +53,8 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  // GDPR Compliance: Anonymize subscription data instead of deleting
-  // (required for legal/financial records per Stripe requirements)
+  // GDPR Compliance: mark local access/trial records inactive instead of deleting
+  // so account history remains consistent.
   const userSubscription = await db
     .select()
     .from(subscriptions)
@@ -62,8 +62,7 @@ export default defineEventHandler(async (event) => {
     .get()
 
   if (userSubscription) {
-    // Keep subscription record but mark as deleted
-    // Stripe customer ID is preserved for payment history compliance
+    // Keep the local access record but mark it inactive.
     await db
       .update(subscriptions)
       .set({

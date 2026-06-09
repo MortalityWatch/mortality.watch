@@ -36,11 +36,11 @@ const subscriptionCounts = await db
   .groupBy(subscriptions.status)
   .all()
 
-// Count paid vs trial subscriptions
-const paidSubscribers = await db
+// Count active vs trial subscriptions
+const activeSubscriptions = await db
   .select({ count: sql<number>`count(*)` })
   .from(subscriptions)
-  .where(sql`${subscriptions.status} = 'active' AND ${subscriptions.stripeSubscriptionId} IS NOT NULL`)
+  .where(eq(subscriptions.status, 'active'))
   .get()
 
 const trialUsers = await db
@@ -70,8 +70,8 @@ for (const sub of subscriptionCounts) {
   console.log(`   ${(sub.status || 'none').padEnd(12)} ${sub.count}`)
 }
 
-console.log('\n💰 Breakdown:')
-console.log(`   Paid subscribers:  ${paidSubscribers?.count || 0}`)
+console.log('\n🎫 Breakdown:')
+console.log(`   Active access:     ${activeSubscriptions?.count || 0}`)
 console.log(`   Active trials:     ${trialUsers?.count || 0}`)
 
 console.log('\n👑 Users by Role:')

@@ -56,7 +56,7 @@ const seoDescription = computed(() => {
   const tabDescriptions: Record<string, string> = {
     terms: 'Terms of Service for Mortality Watch, a data visualization platform for analyzing global mortality statistics.',
     privacy: 'Privacy Policy for Mortality Watch. Learn how we collect, use, and protect your personal information in compliance with GDPR and CCPA.',
-    refund: 'Refund Policy for Mortality Watch Pro subscriptions. Learn about our 30-day refund window and how to request a refund.'
+    refund: 'Donation refund policy for Mortality Watch. Learn how to contact us about donation payment issues.'
   }
   return tabDescriptions[activeTab.value] || 'Legal information for Mortality Watch including Terms of Service, Privacy Policy, and Refund Policy.'
 })

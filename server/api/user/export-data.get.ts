@@ -59,8 +59,6 @@ export default defineEventHandler(async (event) => {
   const subscription = await db
     .select({
       id: subscriptions.id,
-      stripeCustomerId: subscriptions.stripeCustomerId,
-      stripeSubscriptionId: subscriptions.stripeSubscriptionId,
       status: subscriptions.status,
       plan: subscriptions.plan,
       planPriceId: subscriptions.planPriceId,
