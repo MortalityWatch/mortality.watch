@@ -147,7 +147,7 @@ export const savedCharts = sqliteTable(
 )
 
 /**
- * Subscriptions table - stores Stripe subscription data
+ * Subscriptions table - stores local access and trial data
  */
 export const subscriptions = sqliteTable(
   'subscriptions',
@@ -204,7 +204,7 @@ export const subscriptions = sqliteTable(
 )
 
 /**
- * Webhook events table - logs Stripe webhook events for debugging
+ * Legacy webhook events table - retained for historical data
  */
 export const webhookEvents = sqliteTable(
   'webhook_events',

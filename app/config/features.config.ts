@@ -32,8 +32,8 @@ export const TIER_INFO = {
     price: 'Free',
     signupRequired: true
   },
-  // Retained as an alias for backward compatibility with the Stripe webhook
-  // and admin scripts that still reference the constant. No live feature is
+  // Retained as an alias for backward compatibility with admin scripts and
+  // existing users that still reference the constant. No live feature is
   // gated to this tier — all formerly Pro features now require REGISTERED.
   [TIERS.PRO]: {
     name: 'Free',

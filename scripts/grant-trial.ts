@@ -47,8 +47,8 @@ const existingSubscription = await db
   .where(eq(subscriptions.userId, user.id))
   .get()
 
-if (existingSubscription?.status === 'active' && existingSubscription.stripeSubscriptionId) {
-  console.error(`❌ ${email} already has an active paid subscription`)
+if (existingSubscription?.status === 'active') {
+  console.error(`❌ ${email} already has active Pro access`)
   process.exit(1)
 }
 

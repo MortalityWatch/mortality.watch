@@ -88,35 +88,22 @@ const supportEmail = config.public.supportEmail
     <UCard>
       <template #header>
         <h2 class="text-2xl font-semibold">
-          4. Pro Subscription Terms
+          4. Donations
         </h2>
       </template>
       <div class="space-y-4">
         <p>
-          <strong>4.1 Subscription Plans:</strong> Mortality Watch offers a Pro subscription
-          plan that provides access to premium features. Subscription pricing and features are
-          described on our Features page.
+          <strong>4.1 Voluntary Support:</strong> Mortality Watch may accept optional donations
+          to support infrastructure, development, and public data access. Donations do not
+          purchase a subscription or paid account tier.
         </p>
         <p>
-          <strong>4.2 Payment:</strong> By subscribing to Pro, you agree to pay all applicable
-          subscription fees. We use Stripe for payment processing. Your payment information is
-          processed securely by Stripe and is not stored on our servers.
+          <strong>4.2 Payment Processing:</strong> Donation payments may be processed by third-party
+          payment processors. Your full payment card details are not stored on our servers.
         </p>
         <p>
-          <strong>4.3 Billing Cycle:</strong> Pro subscriptions are billed on a recurring basis
-          (monthly or annual, depending on your selected plan). You will be charged automatically
-          at the beginning of each billing cycle unless you cancel your subscription.
-        </p>
-        <p>
-          <strong>4.4 Cancellation:</strong> You may cancel your Pro subscription at any time
-          through your profile settings. Cancellation will take effect at the end of your current
-          billing period. No refunds will be issued for partial billing periods, except as described
-          in our Refund Policy.
-        </p>
-        <p>
-          <strong>4.5 Price Changes:</strong> We reserve the right to change subscription pricing.
-          We will provide at least 30 days' notice of any price increases. If you do not agree to
-          the new pricing, you may cancel your subscription.
+          <strong>4.3 Refunds:</strong> Donations are generally non-refundable, except for mistakes,
+          duplicate payments, or other payment errors reviewed under our Refund Policy.
         </p>
       </div>
     </UCard>

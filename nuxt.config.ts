@@ -59,7 +59,6 @@ export default {
       devCountries: process.env.NUXT_PUBLIC_DEV_COUNTRIES || '',
       dataCachePath: '.data/cache/mortality',
       siteUrl: process.env.NUXT_PUBLIC_SITE_URL || 'https://www.mortality.watch',
-      stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY || '',
       statsUrl: process.env.NUXT_PUBLIC_STATS_URL || 'https://stats.mortality.watch/',
       supportEmail: process.env.SUPPORT_EMAIL || 'mortalitywatch@proton.me',
       bitcoinAddress: process.env.NUXT_PUBLIC_BITCOIN_ADDRESS || '',
