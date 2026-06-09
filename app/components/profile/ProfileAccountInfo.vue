@@ -73,6 +73,14 @@ async function saveEmail() {
     isSubmitting.value = false
   }
 }
+
+function handleEmailKeyup(event: KeyboardEvent) {
+  if (event.key === 'Enter') {
+    saveEmail()
+  } else if (event.key === 'Escape') {
+    cancelEditingEmail()
+  }
+}
 </script>
 
 <template>
@@ -110,8 +118,7 @@ async function saveEmail() {
             type="email"
             placeholder="Enter new email address"
             :disabled="isSubmitting"
-            @keyup.enter="saveEmail"
-            @keyup.escape="cancelEditingEmail"
+            @keyup="handleEmailKeyup"
           />
           <div class="flex gap-2">
             <UButton
