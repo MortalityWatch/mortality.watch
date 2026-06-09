@@ -14,10 +14,12 @@ import {
   applySteepDropAdjustment,
   isChartDataEmpty
 } from '../utils/chartPngHelpers'
-import { dataLoader } from '../services/dataLoader'
+import { loadInitialChartDataForRendering } from '../utils/chartInitialData'
 import { renderChart } from '../utils/chartRenderer'
 import { setServerDarkMode } from '../../app/composables/useTheme'
 import { getOrCreateShortUrl } from '../utils/urlShortener'
+
+const CHART_RENDER_CACHE_VERSION = 'ssr-chart-type-fallback-v1'
 
 /**
  * Server-side chart PNG rendering endpoint
@@ -71,7 +73,15 @@ export default defineEventHandler(async (event) => {
     const zoom = getZoomLevel(query as Record<string, unknown>)
 
     // Generate cache key from query parameters (including width/height, dark mode, dp, and zoom)
-    const cacheKey = generateCacheKey({ ...queryParams, width, height, dm: darkMode ? '1' : '0', dp: devicePixelRatio, z: zoom })
+    const cacheKey = generateCacheKey({
+      ...queryParams,
+      width,
+      height,
+      dm: darkMode ? '1' : '0',
+      dp: devicePixelRatio,
+      z: zoom,
+      rv: CHART_RENDER_CACHE_VERSION
+    })
 
     // Allow bypassing cache with ?nocache=1 (useful for development)
     const noCache = queryParams.nocache === '1' || queryParams.nocache === 'true'
@@ -89,46 +99,33 @@ export default defineEventHandler(async (event) => {
     // Queue the chart rendering to limit concurrency
     const buffer = await chartRenderQueue.enqueue(async () => {
       try {
-        // Step 1: Do preliminary state resolution to get data loading params
-        // We need allLabels to compute effective date range, but we need
-        // countries/chartType/ageGroups to load data first
-        const preliminaryState = resolveChartStateForRendering(queryParams, [])
-
-        // Step 2: Load data to get allLabels
-        const rawData = await dataLoader.loadMortalityData({
-          chartType: preliminaryState.chartType,
-          countries: preliminaryState.countries,
-          ageGroups: preliminaryState.ageGroups
-        })
-
-        const isAsmrType = preliminaryState.type.startsWith('asmr')
-        const allLabels = dataLoader.getAllChartLabels(
-          rawData,
-          isAsmrType,
-          preliminaryState.ageGroups,
-          preliminaryState.countries,
-          preliminaryState.chartType
-        )
-
-        // Validate that we have data to render
-        if (allLabels.length === 0) {
-          const countriesStr = preliminaryState.countries.join(', ')
-          throw new Error(
-            `No data available for ${countriesStr} (${preliminaryState.chartType}). `
-            + 'The requested data may not exist or failed to load.'
-          )
-        }
+        // Step 1/2: Resolve enough state to load data labels.
+        // Implicit chart types can fall back to a compatible aggregation when
+        // the explorer default is unavailable for the selected countries.
+        const {
+          queryParams: renderQueryParams,
+          preliminaryState,
+          allLabels,
+          isAsmrType
+        } = await loadInitialChartDataForRendering(queryParams)
 
         // Step 3: Now resolve full state with allLabels
         // This applies constraints AND computes effective date ranges
-        const state = resolveChartStateForRendering(queryParams, allLabels)
+        const state = resolveChartStateForRendering(renderQueryParams, allLabels)
 
         // Build explorer URL from request query params (same params, just /explorer instead of /chart.png)
         // Use request origin so short URL matches client (important for visual parity tests)
         // Filter out PNG-specific params (width, height, dm) that don't apply to explorer
         const requestUrl = getRequestURL(event)
         const siteUrl = requestUrl.origin
-        const explorerParams = new URLSearchParams(requestUrl.search)
+        const explorerParams = new URLSearchParams()
+        for (const [key, value] of Object.entries(renderQueryParams)) {
+          if (Array.isArray(value)) {
+            value.forEach(v => explorerParams.append(key, v))
+          } else {
+            explorerParams.set(key, value)
+          }
+        }
         explorerParams.delete('width')
         explorerParams.delete('height')
         explorerParams.delete('dm') // Dark mode is PNG-specific
