@@ -59,7 +59,7 @@
     "@vueform/slider": "^2.1.10",
     "@vueuse/nuxt": "^14.3.0",
     "bcryptjs": "^3.0.3",
-    "better-sqlite3": "^12.10.0",
+    "better-sqlite3": "^13.0.1",
     "canvas": "^3.2.3",
     "chart.js": "^4.5.1",
     "chartjs-chart-error-bars": "^4.4.5",
