@@ -134,7 +134,9 @@ const explorerStateBaseSchema = z.object({
   leAdjusted: z.boolean().optional(), // LE seasonal adjustment (Pro feature)
 
   // Chart appearance
-  decimals: DecimalPrecisionEnum
+  decimals: DecimalPrecisionEnum,
+
+  comparisonYearsBack: z.string().optional()
 })
 
 // ============================================================================

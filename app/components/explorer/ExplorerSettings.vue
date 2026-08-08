@@ -21,6 +21,7 @@ const emit = defineEmits<{
   chartTypeChanged: [value: string]
   chartStyleChanged: [value: string]
   standardPopulationChanged: [value: string]
+  comparisonYearsBackChanged: [value: string]
   viewChanged: [value: ViewType]
   showBaselineChanged: [value: boolean]
   baselineMethodChanged: [value: string]
@@ -111,6 +112,7 @@ const baselineSliderValue = computed(() => {
       :chart-type="props.state.chartType.value"
       :chart-style="props.state.chartStyle.value"
       :standard-population="props.state.standardPopulation.value"
+      :comparison-years-back="props.state.comparisonYearsBack.value"
       :is-updating="false"
       :is-population-type="isPopulationType"
       :view="props.state.view.value"
@@ -156,6 +158,7 @@ const baselineSliderValue = computed(() => {
       @chart-type-changed="emit('chartTypeChanged', $event)"
       @chart-style-changed="emit('chartStyleChanged', $event)"
       @standard-population-changed="emit('standardPopulationChanged', $event)"
+      @comparison-years-back-changed="emit('comparisonYearsBackChanged', $event)"
       @view-changed="emit('viewChanged', $event)"
       @show-baseline-changed="emit('showBaselineChanged', $event)"
       @baseline-method-changed="emit('baselineMethodChanged', $event)"

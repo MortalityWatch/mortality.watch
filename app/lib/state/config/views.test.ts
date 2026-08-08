@@ -15,10 +15,11 @@ describe('View Configurations', () => {
       expect(VIEWS.excess).toBeDefined()
       expect(VIEWS.zscore).toBeDefined()
       expect(VIEWS.composition).toBeDefined()
+      expect(VIEWS.samePeriod).toBeDefined()
     })
 
     it('all views have required properties', () => {
-      const viewTypes: ViewType[] = ['mortality', 'excess', 'zscore', 'composition']
+      const viewTypes: ViewType[] = ['mortality', 'excess', 'zscore', 'composition', 'samePeriod']
 
       viewTypes.forEach((viewType) => {
         const config = VIEWS[viewType]

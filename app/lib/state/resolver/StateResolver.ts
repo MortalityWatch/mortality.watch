@@ -155,15 +155,15 @@ export class StateResolver {
     }
 
     // 4. Validate view compatibility with chart type
-    // If z-score view was requested but chart type is not yearly, fall back to mortality view
-    if (state.view === 'zscore') {
+    if (state.view !== 'mortality') {
       const chartType = state.chartType as string
       const compatibleTypes = viewConfig.compatibleChartTypes || []
       const isCompatible = compatibleTypes.length === 0 || compatibleTypes.includes(chartType)
 
       if (!isCompatible) {
-        logger.warn(`Z-score view not compatible with chart type ${chartType}, falling back to mortality view`)
+        logger.warn(`${viewConfig.label} view not compatible with chart type ${chartType}, falling back to mortality view`)
         const oldView = state.view
+        const oldViewUrlParam = viewConfig.urlParam ?? 'view'
         state.view = 'mortality'
         view = 'mortality'
         viewConfig = VIEWS.mortality
@@ -175,15 +175,15 @@ export class StateResolver {
           oldValue: oldView,
           newValue: 'mortality',
           priority: 'constraint',
-          reason: `Z-score view requires yearly chart type (yearly, fluseason, or midyear), got ${chartType}`
+          reason: `${String(oldView)} view is not compatible with chart type ${chartType}`
         })
 
         metadata.view = {
           value: 'mortality',
           priority: 'constraint',
-          reason: `Z-score view not compatible with ${chartType}`,
+          reason: `${String(oldView)} view not compatible with ${chartType}`,
           changed: true,
-          urlKey: 'zs'
+          urlKey: oldViewUrlParam
         }
 
         // Remove view from user overrides since it was constrained
@@ -786,6 +786,8 @@ export class StateResolver {
       newQuery.zs = '1'
     } else if (view === 'composition') {
       newQuery.comp = '1'
+    } else if (view === 'samePeriod') {
+      newQuery.spc = '1'
     }
     // mortality view has no special parameter (it's the default)
 
@@ -881,7 +883,8 @@ export class StateResolver {
       showLogarithmic: (resolvedState.showLogarithmic ?? current.showLogarithmic ?? false) as boolean,
       leAdjusted: (resolvedState.leAdjusted ?? current.leAdjusted ?? true) as boolean,
       userColors: (resolvedState.userColors ?? current.userColors) as string[] | undefined,
-      decimals: (resolvedState.decimals ?? current.decimals ?? 'auto') as string
+      decimals: (resolvedState.decimals ?? current.decimals ?? 'auto') as string,
+      comparisonYearsBack: String(resolvedState.comparisonYearsBack ?? current.comparisonYearsBack ?? '5')
     }
   }
 }

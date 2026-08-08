@@ -240,6 +240,76 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
   },
 
   /**
+   * Same Period View
+   * Compares selected weeks/months/quarters against matching periods in prior years
+   */
+  samePeriod: {
+    id: 'samePeriod',
+    label: 'Same Period',
+    urlParam: 'spc', // URL: ?spc=1
+
+    ui: {
+      baseline: hidden(),
+      predictionInterval: hidden(),
+      logarithmic: toggleable(),
+      maximize: conditional({
+        field: 'chartStyle',
+        is: 'bar'
+      }),
+      labels: toggleable(),
+      cumulative: hidden(),
+      percentage: hidden(),
+      showTotal: hidden()
+    },
+
+    defaults: {
+      chartType: 'weekly',
+      chartStyle: 'line',
+      comparisonYearsBack: '5',
+      showBaseline: false,
+      showPredictionInterval: false,
+      cumulative: false,
+      showTotal: false,
+      showPercentage: false,
+      maximize: false
+    },
+
+    constraints: [
+      {
+        when: () => true,
+        apply: {
+          showBaseline: false,
+          showPredictionInterval: false,
+          cumulative: false,
+          showTotal: false,
+          showPercentage: false
+        },
+        reason: 'Same-period comparison disables baseline, PI, cumulative, total, and percentage modes',
+        allowUserOverride: false,
+        priority: 2
+      },
+      {
+        when: s => !['weekly', 'monthly', 'quarterly'].includes(String(s.chartType ?? '')),
+        apply: { chartType: 'weekly' },
+        reason: 'Same-period comparison is available for weekly, monthly, and quarterly charts',
+        allowUserOverride: false,
+        priority: 2
+      },
+      {
+        when: s => s.chartStyle === 'matrix',
+        apply: { chartStyle: 'line' },
+        reason: 'Matrix chart style not supported in same-period comparison',
+        allowUserOverride: false,
+        priority: 2
+      }
+    ],
+
+    compatibleMetrics: ['cmr', 'asmr', 'asd', 'le', 'deaths', 'population'],
+    compatibleChartStyles: ['line', 'bar'],
+    compatibleChartTypes: ['weekly', 'monthly', 'quarterly']
+  },
+
+  /**
    * Z-Score View
    * Statistical z-score analysis showing standard deviations from baseline
    */

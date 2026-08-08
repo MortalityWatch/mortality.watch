@@ -32,6 +32,7 @@ export interface ChartContext {
   zscoreMethod?: string
   zscoreLambdaMode?: string
   zscoreLambda?: string
+  comparisonYearsBack?: string
 
   // View
   view: ViewType

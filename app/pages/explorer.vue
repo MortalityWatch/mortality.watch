@@ -424,6 +424,7 @@ const handlePredictionIntervalChanged = (v: boolean) => handleStateChange({ fiel
 const handleTypeChanged = (v: string) => handleStateChange({ field: 'type', value: v }, '_type')
 const handleChartTypeChanged = (v: string) => handleStateChange({ field: 'chartType', value: v }, '_chartType')
 const handleChartStyleChanged = (v: string) => handleStateChange({ field: 'chartStyle', value: v }, '_chartStyle')
+const handleComparisonYearsBackChanged = (v: string) => handleStateChange({ field: 'comparisonYearsBack', value: v }, '_comparisonYearsBack')
 
 // Data selection
 const handleCountriesChanged = (v: string[]) => handleStateChange({ field: 'countries', value: v }, '_countries')
@@ -508,7 +509,7 @@ const handleDecimalsChanged = (v: string) => handleUIStateChange({ field: 'decim
 useBrowserNavigation({
   queryParams: [
     'c', 't', 'ct', 'e', 'cs', 'df', 'dt', 'ss', 'bf', 'bt',
-    'sp', 'ag', 'sb', 'bm', 'zsm', 'zlm', 'zl', 'ce', 'st', 'pi', 'p', 'lg'
+    'sp', 'ag', 'sb', 'bm', 'zsm', 'zlm', 'zl', 'ce', 'st', 'pi', 'p', 'lg', 'spc', 'cyb'
   ],
   onNavigate: async () => {
     if (isInternalUrlUpdate.value) {
@@ -830,6 +831,7 @@ watch(
             @chart-type-changed="handleChartTypeChanged"
             @chart-style-changed="handleChartStyleChanged"
             @standard-population-changed="handleStandardPopulationChanged"
+            @comparison-years-back-changed="handleComparisonYearsBackChanged"
             @view-changed="handleViewChanged"
             @show-baseline-changed="handleBaselineChanged"
             @baseline-method-changed="handleBaselineMethodChanged"

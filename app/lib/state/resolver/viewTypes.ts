@@ -10,7 +10,7 @@ import type { StateConstraint } from './types'
 /**
  * View Type identifiers
  */
-export type ViewType = 'mortality' | 'excess' | 'zscore' | 'composition'
+export type ViewType = 'mortality' | 'excess' | 'zscore' | 'composition' | 'samePeriod'
 
 /**
  * Chart style types
@@ -124,6 +124,7 @@ export interface ExplorerStateValues {
   chartPreset: string
   darkMode: boolean
   hideSteepDrop: boolean
+  comparisonYearsBack: string
   zScoreThreshold?: number
   significanceLevel?: number
 }

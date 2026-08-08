@@ -14,6 +14,7 @@
 import { detectView, getViewDefaults, applyConstraints } from '../resolver'
 import type { ViewType } from '../resolver/viewTypes'
 import { stateFieldEncoders, Defaults } from '../config'
+import { VIEWS } from '../config/views'
 import { computeEffectiveDateRange } from './effectiveDefaults'
 import { calculateBaselineRange } from '@/lib/baseline/calculateBaselineRange'
 import type { ChartFilterConfig, ChartStateSnapshot } from '@/lib/chart/types'
@@ -75,6 +76,7 @@ export interface ChartRenderState {
   showYAxisTitle: boolean
   darkMode: boolean
   hideSteepDrop: boolean
+  comparisonYearsBack: string
 }
 
 /**
@@ -166,7 +168,7 @@ export function resolveChartStateForRendering(
   allLabels: string[]
 ): ChartRenderState {
   // 1. Detect view from URL params
-  const view = detectView(queryParams as Record<string, unknown>) as ViewType
+  let view = detectView(queryParams as Record<string, unknown>) as ViewType
 
   // 2. Get view-specific defaults
   const viewDefaults = getViewDefaults(view)
@@ -175,10 +177,22 @@ export function resolveChartStateForRendering(
   const { state: urlState, urlProvidedFields } = parseQueryParams(queryParams)
 
   // 4. Merge: defaults → URL params → view field
-  const mergedState = {
+  const mergedState: Record<string, unknown> = {
     ...viewDefaults,
     ...urlState,
     view
+  }
+
+  const compatibleChartTypes = view === 'mortality'
+    ? []
+    : (VIEWS[view]?.compatibleChartTypes ?? [])
+  if (compatibleChartTypes.length > 0 && !compatibleChartTypes.includes(String(mergedState.chartType ?? ''))) {
+    view = 'mortality'
+    Object.assign(mergedState, {
+      ...getViewDefaults(view),
+      ...urlState,
+      view
+    })
   }
 
   // 5. Apply constraints (enforce view requirements)
@@ -270,7 +284,8 @@ export function resolveChartStateForRendering(
     showXAxisTitle: (constrainedState.showXAxisTitle as boolean) ?? true,
     showYAxisTitle: (constrainedState.showYAxisTitle as boolean) ?? true,
     darkMode: (constrainedState.darkMode as boolean) ?? false,
-    hideSteepDrop: (constrainedState.hideSteepDrop as boolean) ?? false
+    hideSteepDrop: (constrainedState.hideSteepDrop as boolean) ?? false,
+    comparisonYearsBack: String(constrainedState.comparisonYearsBack ?? '5')
   }
 }
 
@@ -365,7 +380,8 @@ export function resolveChartStateFromSnapshot(
     showXAxisTitle: true,
     showYAxisTitle: true,
     darkMode: false,
-    hideSteepDrop: false
+    hideSteepDrop: false,
+    comparisonYearsBack: snapshot.comparisonYearsBack || '5'
   }
 }
 
@@ -420,6 +436,8 @@ export function generateUrlFromState(
   if (state.isExcess) params.set('e', '1')
   if (state.isZScore) params.set('zs', '1')
   if (state.view === 'composition') params.set('comp', '1')
+  if (state.view === 'samePeriod') params.set('spc', '1')
+  if (state.view === 'samePeriod') params.set('cyb', state.comparisonYearsBack)
 
   // Optional
   if (state.userColors?.length) params.set('uc', state.userColors.join(','))
@@ -514,6 +532,7 @@ export function toChartFilterConfig(
     showLabels: state.showLabels,
     showLogarithmic: state.showLogarithmic,
     leAdjusted: state.leAdjusted,
+    comparisonYearsBack: state.comparisonYearsBack,
 
     // Visual
     colors,
