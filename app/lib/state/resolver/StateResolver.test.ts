@@ -289,7 +289,8 @@ describe('StateResolver', () => {
         showLogarithmic: false,
         leAdjusted: true,
         userColors: ['#ff0000', '#00ff00'],
-        decimals: 'auto'
+        decimals: 'auto',
+        comparisonYearsBack: '5'
       }
 
       const snapshot = StateResolver.createSnapshot(resolvedState)

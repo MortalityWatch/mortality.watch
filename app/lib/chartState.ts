@@ -36,6 +36,7 @@ export interface ChartState {
   userColors?: string[]
   decimals?: string
   darkMode?: boolean
+  comparisonYearsBack?: string
 }
 
 /**
@@ -85,11 +86,11 @@ export function decodeChartState(query: Record<string, string | string[]>): Char
   let view = detectView(query as Record<string, unknown>) as ViewType
 
   // 1.5. Validate view compatibility with chart type
-  // If z-score view was requested but chart type is not compatible, fall back to mortality view
+  // If a view was requested but chart type is not compatible, fall back to mortality view
   // This mirrors the logic in StateResolver.resolveInitial()
   const chartType = (state.chartType as string | undefined) ?? Defaults.chartType
-  if (view === 'zscore' && !isChartTypeCompatible(chartType as string, view)) {
-    logger.warn(`Z-score view not compatible with chart type ${chartType}, falling back to mortality view (SSR)`)
+  if (view !== 'mortality' && !isChartTypeCompatible(chartType as string, view)) {
+    logger.warn(`${view} view not compatible with chart type ${chartType}, falling back to mortality view (SSR)`)
     view = 'mortality'
   }
 

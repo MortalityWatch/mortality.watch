@@ -17,6 +17,7 @@ import type { MortalityChartData } from './chartTypes'
 import type { DataTransformationConfig, ChartFilterConfig } from './types'
 import { getDatasets } from './datasets'
 import { getChartLabels } from './labels'
+import { buildSamePeriodComparisonData } from './samePeriodComparison'
 
 /**
  * Check if a value is valid (non-null, non-undefined, non-NaN, non-empty)
@@ -125,17 +126,28 @@ export const getFilteredChartDataFromConfig = (
     config.showPercentage,
     config.zscoreMethod,
     config.zscoreLambdaMode,
-    config.zscoreLambda
+    config.zscoreLambda,
+    config.comparisonYearsBack
   )
 
-  const filteredData = getFilteredLabelAndData(
-    allLabels,
-    config.dateFrom,
-    config.dateTo,
-    getChartTypeOrdinal(config.chartType),
-    config.chartType as ChartType,
-    allChartData
-  )
+  const samePeriodData = config.view === 'samePeriod'
+    ? buildSamePeriodComparisonData(config, allLabels, allChartData)
+    : null
+
+  const filteredData = samePeriodData
+    ? {
+        labels: samePeriodData.labels,
+        data: samePeriodData.data,
+        notes: { disaggregatedData: {}, noDataForRange: [] }
+      }
+    : getFilteredLabelAndData(
+        allLabels,
+        config.dateFrom,
+        config.dateTo,
+        getChartTypeOrdinal(config.chartType),
+        config.chartType as ChartType,
+        allChartData
+      )
 
   // Include all countries with data - don't exclude based on partial/incomplete data
   // Users can see from the chart if data is incomplete
@@ -172,8 +184,8 @@ export const getFilteredChartDataFromConfig = (
       colors: config.colors
     },
     context: {
-      countries: config.countries,
-      allCountries: config.allCountries,
+      countries: samePeriodData?.countries ?? config.countries,
+      allCountries: samePeriodData?.allCountries ?? config.allCountries,
       baselineMetadata: notes?.baselineMetadata
     }
   }

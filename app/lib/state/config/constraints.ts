@@ -57,6 +57,7 @@ export const FIELD_UPDATE_STRATEGY: Record<string, FieldUpdateType> = {
   dateTo: 'filter',
   chartStyle: 'filter',
   view: 'filter',
+  comparisonYearsBack: 'filter',
   isExcess: 'filter',
   showBaseline: 'filter',
   cumulative: 'filter', // Default to filter, but may be 'update' if baselineMethod !== 'auto'
@@ -211,7 +212,10 @@ const asmrTypeConstraints: StateConstraint = {
  * ASD is only available for yearly aggregations (yearly, midyear, fluseason)
  */
 const asdChartTypeConstraints: StateConstraint = {
-  when: state => state.type === 'asd' && !['yearly', 'midyear', 'fluseason'].includes(String(state.chartType ?? '')),
+  when: state =>
+    state.type === 'asd'
+    && state.view !== 'samePeriod'
+    && !['yearly', 'midyear', 'fluseason'].includes(String(state.chartType ?? '')),
   apply: {
     chartType: 'yearly'
   },
@@ -335,6 +339,17 @@ const viewSyncCompositionConstraint: StateConstraint = {
   priority: 2
 }
 
+const viewSyncSamePeriodConstraint: StateConstraint = {
+  when: state => state.view === 'samePeriod',
+  apply: {
+    isExcess: false,
+    isZScore: false
+  },
+  reason: 'Same Period view clears excess/zscore flags',
+  allowUserOverride: false,
+  priority: 2
+}
+
 // ============================================================================
 // CONSTRAINT REGISTRY
 // ============================================================================
@@ -358,6 +373,7 @@ export const STATE_CONSTRAINTS: StateConstraint[] = [
   viewSyncZScoreConstraint,
   viewSyncMortalityConstraint,
   viewSyncCompositionConstraint,
+  viewSyncSamePeriodConstraint,
 
   // Priority 1: Normal business rules
   baselineOffConstraints,

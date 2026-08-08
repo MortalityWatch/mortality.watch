@@ -17,6 +17,7 @@ const props = defineProps<{
   selectedType: string
   selectedChartType: string
   selectedStandardPopulation: string
+  comparisonYearsBack: string
   view: ViewType
   isUpdating: boolean
   isPopulationType: boolean
@@ -27,6 +28,7 @@ const emit = defineEmits<{
   'update:selectedType': [value: string]
   'update:selectedChartType': [value: string]
   'update:selectedStandardPopulation': [value: string]
+  'update:comparisonYearsBack': [value: string]
   'update:view': [value: ViewType]
 }>()
 
@@ -58,6 +60,11 @@ const baseViewOptions: ViewOption[] = [
     label: 'Composition',
     value: 'composition',
     description: 'Age-band parts-of-whole composition (stacked % bars)'
+  },
+  {
+    label: 'Same Period',
+    value: 'samePeriod',
+    description: 'Compare selected periods against prior years'
   }
 ]
 
@@ -65,6 +72,9 @@ const visibleViewOptions = computed(() =>
   baseViewOptions.filter((opt) => {
     if (opt.value === 'composition') return props.isPopulationType
     if (opt.value === 'excess') return !props.isPopulationType
+    if (opt.value === 'samePeriod') {
+      return ['weekly', 'monthly', 'quarterly'].includes(props.selectedChartType)
+    }
     return true
   })
 )
@@ -93,6 +103,16 @@ const selectedStandardPopulationModel = computed({
 const viewModel = computed({
   get: () => props.view,
   set: v => emit('update:view', v as ViewType)
+})
+
+const comparisonYearsBackModel = computed({
+  get: () => props.comparisonYearsBack,
+  set: v => emit('update:comparisonYearsBack', v)
+})
+
+const comparisonYearsBackOptions = Array.from({ length: 10 }, (_, index) => {
+  const value = String(index + 1)
+  return { label: value, value }
 })
 </script>
 
@@ -190,6 +210,21 @@ const viewModel = computed({
       v-model="selectedChartTypeModel"
       :is-updating="props.isUpdating"
     />
+
+    <UiControlRow
+      v-if="props.view === 'samePeriod'"
+      label="Years Back"
+      help-content="Number of previous years to compare with the selected source year."
+    >
+      <USelect
+        v-model="comparisonYearsBackModel"
+        :items="comparisonYearsBackOptions"
+        value-key="value"
+        :disabled="props.isUpdating"
+        size="sm"
+        class="flex-1"
+      />
+    </UiControlRow>
 
     <UiControlRow
       v-if="props.showStandardPopulation"

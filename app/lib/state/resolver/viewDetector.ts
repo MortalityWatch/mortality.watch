@@ -13,7 +13,8 @@ import type { ViewType } from './viewTypes'
  * 1. zs=1 → 'zscore'
  * 2. e=1 → 'excess'
  * 3. comp=1 → 'composition'
- * 4. view=xxx → if valid view name
+ * 4. spc=1 → 'samePeriod'
+ * 5. view=xxx → if valid view name
  * 5. Default → 'mortality'
  *
  * Note: ASD is a metric type (t=asd), not a view
@@ -37,7 +38,12 @@ export function detectView(params: Record<string, unknown>): ViewType {
     return 'composition'
   }
 
-  // Priority 3.5: Backward compat with old isExcess param
+  // Priority 3.5: Same-period comparison
+  if (params.spc === '1') {
+    return 'samePeriod'
+  }
+
+  // Priority 3.75: Backward compat with old isExcess param
   if (params.isExcess === 'true') {
     return 'excess'
   }
@@ -55,5 +61,5 @@ export function detectView(params: Record<string, unknown>): ViewType {
  * Check if a string is a valid view type
  */
 function isValidView(view: string): boolean {
-  return ['mortality', 'excess', 'zscore', 'composition'].includes(view)
+  return ['mortality', 'excess', 'zscore', 'composition', 'samePeriod'].includes(view)
 }
