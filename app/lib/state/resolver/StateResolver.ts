@@ -97,7 +97,7 @@ export class StateResolver {
 
     // 1. Detect view from URL params FIRST (e=1 → excess, zs=1 → zscore)
     const requestedView = detectView(route.query)
-    let view = requestedView
+    const view = requestedView
     let viewConfig = VIEWS[view as ViewType] || VIEWS.mortality
 
     // 2. Start with view-specific defaults (includes all fields)
@@ -165,7 +165,6 @@ export class StateResolver {
         const oldView = state.view
         const oldViewUrlParam = viewConfig.urlParam ?? 'view'
         state.view = 'mortality'
-        view = 'mortality'
         viewConfig = VIEWS.mortality
 
         // Update log and metadata
