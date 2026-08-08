@@ -36,6 +36,7 @@ import { computeConfigHash, extractUrlParams } from '@/lib/shortUrl/hashConfig'
 import { shouldNormalizeLeAgeGroups } from '@/lib/state/normalizeLeAgeGroups'
 import { selectMutuallyExclusiveAgeGroups } from '@/services/metadataService'
 import { decodeChartState, type ChartState } from '@/lib/chartState'
+import { computeEffectiveDateRange } from '@/lib/state/resolution/effectiveDefaults'
 
 // Auth state for conditional features
 const { isAuthenticated } = useAuth()
@@ -141,7 +142,9 @@ const { displayColors } = useExplorerColors(
   state.countries,
   state.userColors,
   colorMode,
-  state.ageGroups
+  state.ageGroups,
+  state.view,
+  state.comparisonYearsBack
 )
 
 // Bootstrap data - loaded here and passed to data orchestration composable
@@ -207,6 +210,24 @@ const baselineSliderChanged = (val: string[]) => handleStateChange([
 // Labels for the date range slider - full range from sliderStart to end
 // The sliderValue (dateFrom/dateTo) determines which portion is selected
 const labels = computed(() => dataOrchestration.visibleLabels.value || [])
+
+const normalizeSamePeriodDates = (resolvedState: Record<string, unknown>) => {
+  if (resolvedState.view !== 'samePeriod') return
+
+  const { effectiveDateFrom, effectiveDateTo } = computeEffectiveDateRange(
+    dataOrchestration.allChartLabels.value,
+    resolvedState.chartType as string,
+    resolvedState.sliderStart as string | undefined,
+    resolvedState.dateFrom as string | undefined,
+    resolvedState.dateTo as string | undefined,
+    { view: 'samePeriod' }
+  )
+
+  if (effectiveDateFrom && effectiveDateTo) {
+    resolvedState.dateFrom = effectiveDateFrom
+    resolvedState.dateTo = effectiveDateTo
+  }
+}
 
 // Make Chart resizeable - use composable
 const {
@@ -288,6 +309,8 @@ const handleStateChange = async (
       state.getUserOverrides()
     )
   }
+
+  normalizeSamePeriodDates(resolved.state)
 
   // 3. Apply directly to refs (single tick, no reactive cascade)
   state.applyResolvedState(resolved)
@@ -390,6 +413,8 @@ const handleViewChanged = async (newView: ViewType) => {
       }
     }
   }
+
+  normalizeSamePeriodDates(resolved.state)
 
   // 3. Create a state snapshot from the resolved state BEFORE applying to refs
   // This ensures chart data is generated with consistent state values
@@ -764,6 +789,7 @@ watch(
         :slider-start="state.sliderStart.value"
         :all-yearly-chart-labels-unique="dataOrchestration.allYearlyChartLabelsUnique.value"
         :chart-type="state.chartType.value as ChartType"
+        :view="state.view.value"
         @countries-changed="handleCountriesChanged"
         @age-groups-changed="handleAgeGroupsChanged"
         @slider-start-changed="handleSliderStartChanged"

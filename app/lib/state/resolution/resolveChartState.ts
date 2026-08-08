@@ -206,7 +206,8 @@ export function resolveChartStateForRendering(
     constrainedState.chartType as string,
     constrainedState.sliderStart as string | undefined,
     constrainedState.dateFrom as string | undefined,
-    constrainedState.dateTo as string | undefined
+    constrainedState.dateTo as string | undefined,
+    { view }
   )
 
   // 7. Compute effective baseline range using the same logic as frontend
@@ -317,7 +318,8 @@ export function resolveChartStateFromSnapshot(
     snapshot.chartType as string,
     snapshot.sliderStart,
     snapshot.dateFrom,
-    snapshot.dateTo
+    snapshot.dateTo,
+    { view: snapshot.view }
   )
 
   // Compute effective baseline range
@@ -483,7 +485,11 @@ export function toChartFilterConfig(
 
   // Compute colors internally - ensures SSR and client use identical logic
   const ageGroups = isAsmrType ? ['all'] : state.ageGroups
-  const numSeries = state.countries.length * ageGroups.length
+  const yearsBack = Number.parseInt(state.comparisonYearsBack || '5', 10)
+  const comparisonMultiplier = state.view === 'samePeriod'
+    ? Math.min(10, Math.max(1, Number.isFinite(yearsBack) ? yearsBack : 5)) + 1
+    : 1
+  const numSeries = state.countries.length * ageGroups.length * comparisonMultiplier
   const colors = computeDisplayColors(numSeries, state.userColors, state.darkMode)
 
   return {
