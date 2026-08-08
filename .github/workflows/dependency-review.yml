@@ -10,7 +10,7 @@ permissions:
 jobs:
   dependency-review:
     name: dependency-review
-    if: ${{ !github.event.repository.private || vars.ENABLE_DEPENDENCY_REVIEW == 'true' }}
+    if: ${{ vars.ENABLE_DEPENDENCY_REVIEW == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
