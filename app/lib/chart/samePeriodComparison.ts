@@ -20,6 +20,12 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 
 const padWeek = (week: number) => String(week).padStart(2, '0')
 
+const hasIsoWeek53 = (year: number): boolean => {
+  const jan1 = new Date(Date.UTC(year, 0, 1)).getUTCDay()
+  const dec31 = new Date(Date.UTC(year, 11, 31)).getUTCDay()
+  return jan1 === 4 || dec31 === 4
+}
+
 export const isSamePeriodChartType = (chartType: string): chartType is SamePeriodChartType =>
   chartType === 'weekly' || chartType === 'monthly' || chartType === 'quarterly'
 
@@ -78,6 +84,19 @@ export function getPeriodComparisonLabels(
     if (chartType === 'quarterly') labels.push(`Q${ordinal}`)
   }
   return labels
+}
+
+export function getFullSamePeriodLabels(chartType: SamePeriodChartType, year: number): string[] {
+  if (chartType === 'monthly') {
+    return MONTHS.map(month => `${year} ${month}`)
+  }
+
+  if (chartType === 'quarterly') {
+    return [1, 2, 3, 4].map(quarter => `${year} Q${quarter}`)
+  }
+
+  const weeksInYear = hasIsoWeek53(year) ? 53 : 52
+  return Array.from({ length: weeksInYear }, (_, index) => `${year} W${padWeek(index + 1)}`)
 }
 
 function sourceLabelForYear(year: number, period: string, chartType: SamePeriodChartType): string {
@@ -168,9 +187,12 @@ export function buildSamePeriodComparisonData(
 
     for (const year of comparisonYears) {
       const syntheticIso3c = `${iso3c}__${year}`
+      const jurisdiction = config.countries.length === 1
+        ? String(year)
+        : `${country.jurisdiction} ${year}`
       allCountries[syntheticIso3c] = Object.assign(Object.create(Object.getPrototypeOf(country)) as Country, country, {
         iso3c: syntheticIso3c,
-        jurisdiction: `${country.jurisdiction} ${year}`
+        jurisdiction
       })
     }
   }

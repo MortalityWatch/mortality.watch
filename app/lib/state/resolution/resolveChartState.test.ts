@@ -163,6 +163,19 @@ describe('resolveChartStateForRendering', () => {
       expect(state.dateTo).toBe('2024 Dec')
     })
 
+    it('should default same-period monthly charts to the full latest anchor year when data is partial', () => {
+      const partialMonthlyLabels = [
+        ...generateLabels('monthly', 2024, 2025),
+        '2026 Jan', '2026 Feb', '2026 Mar', '2026 Apr', '2026 May', '2026 Jun'
+      ]
+
+      const state = resolveChartStateForRendering({ c: 'USA', ct: 'monthly', spc: '1' }, partialMonthlyLabels)
+
+      expect(state.view).toBe('samePeriod')
+      expect(state.dateFrom).toBe('2026 Jan')
+      expect(state.dateTo).toBe('2026 Dec')
+    })
+
     it('should normalize same-period cross-year monthly ranges to one anchor year', () => {
       const state = resolveChartStateForRendering(
         { c: 'USA', ct: 'monthly', spc: '1', df: '2016 Jun', dt: '2024 May' },

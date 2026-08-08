@@ -5,6 +5,7 @@ import MortalityChartControlsPrimary from '@/components/charts/MortalityChartCon
 import DateSlider from '@/components/charts/DateSlider.vue'
 import DateRangePicker from '@/components/shared/DateRangePicker.vue'
 import { specialColor } from '@/lib/chart/chartColors'
+import { getFullSamePeriodLabels, isSamePeriodChartType } from '@/lib/chart/samePeriodComparison'
 
 const props = defineProps<{
   allCountries: Record<string, Country>
@@ -55,8 +56,9 @@ const samePeriodAnchorYear = computed(() => {
 
 const samePeriodLabels = computed(() => {
   const anchorYear = samePeriodAnchorYear.value
-  const labels = props.labels.filter(label => labelYear(label) === anchorYear)
-  return labels.length > 0 ? labels : props.labels
+  const year = Number(anchorYear)
+  if (!isSamePeriodChartType(props.chartType) || !Number.isFinite(year)) return props.labels
+  return getFullSamePeriodLabels(props.chartType, year)
 })
 
 const samePeriodSliderValue = computed(() => {
@@ -72,7 +74,10 @@ const samePeriodSliderValue = computed(() => {
 })
 
 const updateSamePeriodAnchorYear = (year: string) => {
-  const labels = props.labels.filter(label => labelYear(label) === year)
+  const parsedYear = Number(year)
+  const labels = isSamePeriodChartType(props.chartType) && Number.isFinite(parsedYear)
+    ? getFullSamePeriodLabels(props.chartType, parsedYear)
+    : []
   if (labels.length === 0) return
   emit('dateSliderChanged', [labels[0]!, labels[labels.length - 1]!])
 }

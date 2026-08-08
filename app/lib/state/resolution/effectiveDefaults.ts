@@ -10,43 +10,14 @@
  */
 
 import { ChartPeriod, type ChartType } from '@/model/period'
+import {
+  getFullSamePeriodLabels,
+  isSamePeriodChartType,
+  parsePeriodLabel
+} from '@/lib/chart/samePeriodComparison'
 
 interface EffectiveDateRangeOptions {
   view?: string
-}
-
-interface PeriodToken {
-  year: number
-  ordinal: number
-}
-
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-
-function parsePeriodToken(label: string, chartType: string): PeriodToken | null {
-  if (chartType === 'weekly') {
-    const match = label.match(/^(\d{4})[ -]W(\d{2})$/)
-    if (!match) return null
-    return { year: Number(match[1]), ordinal: Number(match[2]) }
-  }
-
-  if (chartType === 'monthly') {
-    const named = label.match(/^(\d{4}) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)$/)
-    if (named) {
-      return { year: Number(named[1]), ordinal: MONTHS.indexOf(named[2] ?? '') + 1 }
-    }
-
-    const numeric = label.match(/^(\d{4})-(\d{2})$/)
-    if (!numeric) return null
-    return { year: Number(numeric[1]), ordinal: Number(numeric[2]) }
-  }
-
-  if (chartType === 'quarterly') {
-    const match = label.match(/^(\d{4}) Q([1-4])$/)
-    if (!match) return null
-    return { year: Number(match[1]), ordinal: Number(match[2]) }
-  }
-
-  return null
 }
 
 function computeSamePeriodDateRange(
@@ -56,19 +27,23 @@ function computeSamePeriodDateRange(
   dateTo: string | undefined
 ): { effectiveDateFrom: string, effectiveDateTo: string } {
   const parsedLabels = visibleLabels
-    .map(label => ({ label, token: parsePeriodToken(label, chartType) }))
-    .filter((item): item is { label: string, token: PeriodToken } => item.token !== null)
+    .map(label => ({ label, token: parsePeriodLabel(label, chartType) }))
+    .filter((item): item is { label: string, token: NonNullable<ReturnType<typeof parsePeriodLabel>> } => item.token !== null)
 
   if (parsedLabels.length === 0) {
     return { effectiveDateFrom: '', effectiveDateTo: '' }
   }
 
-  const from = dateFrom ? parsePeriodToken(dateFrom, chartType) : null
-  const to = dateTo ? parsePeriodToken(dateTo, chartType) : null
+  if (!isSamePeriodChartType(chartType)) {
+    return { effectiveDateFrom: '', effectiveDateTo: '' }
+  }
+
+  const from = dateFrom ? parsePeriodLabel(dateFrom, chartType) : null
+  const to = dateTo ? parsePeriodLabel(dateTo, chartType) : null
 
   const anchorYear = to?.year ?? from?.year ?? parsedLabels[parsedLabels.length - 1]!.token.year
-  const anchorLabels = parsedLabels.filter(item => item.token.year === anchorYear)
-  const labelsForYear = anchorLabels.length > 0 ? anchorLabels : parsedLabels
+  const labelsForYear = getFullSamePeriodLabels(chartType, anchorYear)
+    .map(label => ({ label, token: parsePeriodLabel(label, chartType)! }))
   const labelByOrdinal = new Map(labelsForYear.map(item => [item.token.ordinal, item.label]))
 
   if (from && to && from.year === to.year && from.ordinal <= to.ordinal) {
@@ -165,7 +140,7 @@ export function computeEffectiveDateRange(
 
   if (
     options.view === 'samePeriod'
-    && (chartType === 'weekly' || chartType === 'monthly' || chartType === 'quarterly')
+    && isSamePeriodChartType(chartType)
   ) {
     return computeSamePeriodDateRange(visibleLabels, chartType, dateFrom, dateTo)
   }

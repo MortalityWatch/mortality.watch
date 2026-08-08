@@ -12,6 +12,7 @@ test.describe('Explorer Same Period', () => {
     await waitForChart(page)
 
     await expect(page.getByText('Anchor', { exact: true })).toBeVisible()
+    await expect(page.getByText(/2026 Jan - 2026 Dec/)).toBeVisible()
     await expect(page.locator('canvas#chart')).toBeVisible()
 
     const hasRenderedPixels = await page.locator('canvas#chart').evaluate((canvas) => {
