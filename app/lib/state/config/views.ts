@@ -252,10 +252,7 @@ export const VIEWS: Record<ViewType, ViewConfig> = {
       baseline: hidden(),
       predictionInterval: hidden(),
       logarithmic: toggleable(),
-      maximize: conditional({
-        field: 'chartStyle',
-        is: 'bar'
-      }),
+      maximize: toggleable(),
       labels: toggleable(),
       cumulative: hidden(),
       percentage: hidden(),

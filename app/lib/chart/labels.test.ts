@@ -185,7 +185,7 @@ describe('labels', () => {
           allCountries: { USA: { iso3c: 'USA', jurisdiction: 'United States' } as never }
         })
 
-        expect(result.title.join(' ')).toBe('Weekly ASMR in United States by Same Week Across Years')
+        expect(result.title.join(' ')).toBe('United States Weekly ASMR by Year')
       })
 
       it('should not include countries in same-period title when multiple countries are selected', () => {
@@ -200,7 +200,7 @@ describe('labels', () => {
         })
 
         const title = result.title.join(' ')
-        expect(title).toBe('Weekly ASMR by Same Week Across Years')
+        expect(title).toBe('Weekly ASMR by Year')
         expect(title).not.toContain('United States')
         expect(title).not.toContain('Sweden')
       })

@@ -223,6 +223,18 @@ describe('View Configurations', () => {
     })
   })
 
+  describe('Same Period View', () => {
+    const config = VIEWS.samePeriod
+
+    it('shows maximize for supported line and bar chart styles', () => {
+      expect(config.compatibleChartStyles).toEqual(['line', 'bar'])
+      expect(config.ui.maximize.visibility.type).toBe('visible')
+      if (config.ui.maximize.visibility.type === 'visible') {
+        expect(config.ui.maximize.visibility.toggleable).toBe(true)
+      }
+    })
+  })
+
   describe('Composition View', () => {
     const config = VIEWS.composition
 

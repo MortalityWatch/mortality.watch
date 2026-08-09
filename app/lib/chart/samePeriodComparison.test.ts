@@ -120,10 +120,35 @@ describe('samePeriodComparison', () => {
 
     expect(result.labels).toEqual(['W10', 'W11', 'W12'])
     expect(result.countries).toEqual(['USA__2022', 'USA__2023', 'USA__2024'])
-    expect(result.allCountries.USA__2024?.jurisdiction).toBe('USA 2024')
+    expect(result.allCountries.USA__2024?.jurisdiction).toBe('2024')
     expect(result.data.all?.USA__2022?.deaths).toEqual([10, 11, 12])
     expect(result.data.all?.USA__2023?.deaths).toEqual([20, 21, 22])
     expect(result.data.all?.USA__2024?.deaths).toEqual([30, 31, 32])
+  })
+
+  it('uses year-only labels for single-country same-period comparisons', () => {
+    const labels = ['2024-01', '2023-01']
+    const data: Dataset = {
+      all: {
+        DEU: entry('DEU', 'all', labels, [30, 40])
+      }
+    }
+
+    const result = buildSamePeriodComparisonData(
+      config({
+        chartType: 'monthly',
+        dateFrom: '2024 Jan',
+        dateTo: '2024 Jan',
+        comparisonYearsBack: '1',
+        countries: ['DEU'],
+        allCountries: { DEU: country('DEU', 'Germany') }
+      }),
+      labels,
+      data
+    )
+
+    expect(result.allCountries.DEU__2023?.jurisdiction).toBe('2023')
+    expect(result.allCountries.DEU__2024?.jurisdiction).toBe('2024')
   })
 
   it('keeps jurisdiction names in multi-country labels', () => {

@@ -174,6 +174,7 @@ export function buildSamePeriodComparisonData(
     if (token) sourceIndexByPeriod.set(periodKey(token.year, token.period), index)
   })
   const yearsBack = clampYearsBack(config.comparisonYearsBack)
+  const hasMultipleOriginalCountries = config.countries.length > 1
   const comparisonYears = Array.from(
     { length: yearsBack + 1 },
     (_, index) => from.year - yearsBack + index
@@ -190,7 +191,9 @@ export function buildSamePeriodComparisonData(
 
     for (const year of comparisonYears) {
       const syntheticIso3c = `${iso3c}__${year}`
-      const jurisdiction = `${country.jurisdiction} ${year}`
+      const jurisdiction = hasMultipleOriginalCountries
+        ? `${country.jurisdiction} ${year}`
+        : String(year)
       allCountries[syntheticIso3c] = Object.assign(Object.create(Object.getPrototypeOf(country)) as Country, country, {
         iso3c: syntheticIso3c,
         jurisdiction

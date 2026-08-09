@@ -2,10 +2,10 @@ import type { ChartContext, ChartViewConfig } from './types'
 import { getAgeGroupSuffix } from './helpers'
 
 const periodLabel = (chartType: string): string => {
-  if (chartType === 'weekly') return 'Same Week Across Years'
-  if (chartType === 'monthly') return 'Same Month Across Years'
-  if (chartType === 'quarterly') return 'Same Quarter Across Years'
-  return 'Same Period Across Years'
+  if (chartType === 'weekly') return 'Weekly'
+  if (chartType === 'monthly') return 'Monthly'
+  if (chartType === 'quarterly') return 'Quarterly'
+  return 'Same Period'
 }
 
 const yearsBack = (value: string | undefined): number => {
@@ -25,9 +25,10 @@ export const SAME_PERIOD_VIEW: ChartViewConfig = {
   getTitleParts: (ctx) => {
     const parts: string[] = []
 
-    if (ctx.chartType === 'weekly') parts.push('Weekly')
-    if (ctx.chartType === 'monthly') parts.push('Monthly')
-    if (ctx.chartType === 'quarterly') parts.push('Quarterly')
+    const country = singleCountryTitle(ctx)
+    if (country) parts.push(country)
+
+    parts.push(periodLabel(ctx.chartType))
 
     switch (ctx.type) {
       case 'population':
@@ -50,10 +51,7 @@ export const SAME_PERIOD_VIEW: ChartViewConfig = {
         break
     }
 
-    const country = singleCountryTitle(ctx)
-    if (country) parts.push('in', country)
-
-    parts.push('by', periodLabel(ctx.chartType))
+    parts.push('by Year')
     return parts
   },
 
