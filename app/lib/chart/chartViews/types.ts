@@ -5,6 +5,7 @@
  */
 
 import type { ViewType } from '../../state'
+import type { Country } from '@/model'
 
 /**
  * Chart state passed to title/subtitle generators
@@ -12,6 +13,7 @@ import type { ViewType } from '../../state'
 export interface ChartContext {
   // Data selection
   countries: string[]
+  allCountries?: Record<string, Country>
   type: string // 'deaths', 'cmr', 'asmr', etc.
   ageGroups: string[]
   standardPopulation: string

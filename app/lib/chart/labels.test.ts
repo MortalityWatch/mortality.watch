@@ -54,6 +54,7 @@ describe('labels', () => {
       chartType: string
       view: string
       leAdjusted: boolean
+      allCountries: Parameters<typeof getChartLabels>[20]
     }> = {}) => {
       const defaults = {
         countries: ['USA'],
@@ -70,7 +71,8 @@ describe('labels', () => {
         showTotal: false,
         chartType: 'weekly',
         view: undefined as string | undefined,
-        leAdjusted: undefined as boolean | undefined
+        leAdjusted: undefined as boolean | undefined,
+        allCountries: undefined as Parameters<typeof getChartLabels>[20]
       }
       const params = { ...defaults, ...overrides }
       return getChartLabels(
@@ -88,7 +90,13 @@ describe('labels', () => {
         params.showTotal,
         params.chartType,
         params.view,
-        params.leAdjusted
+        params.leAdjusted,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        params.allCountries
       )
     }
 
@@ -167,6 +175,34 @@ describe('labels', () => {
         const title = result.title.join(' ')
         expect(title).toContain('Z-Score')
         expect(title).toContain('Age-Standardized')
+      })
+
+      it('should include country in same-period title when one country is selected', () => {
+        const result = callGetChartLabels({
+          type: 'asmr',
+          view: 'samePeriod',
+          countries: ['USA'],
+          allCountries: { USA: { iso3c: 'USA', jurisdiction: 'United States' } as never }
+        })
+
+        expect(result.title.join(' ')).toBe('Weekly ASMR in United States by Same Week Across Years')
+      })
+
+      it('should not include countries in same-period title when multiple countries are selected', () => {
+        const result = callGetChartLabels({
+          type: 'asmr',
+          view: 'samePeriod',
+          countries: ['USA', 'SWE'],
+          allCountries: {
+            USA: { iso3c: 'USA', jurisdiction: 'United States' } as never,
+            SWE: { iso3c: 'SWE', jurisdiction: 'Sweden' } as never
+          }
+        })
+
+        const title = result.title.join(' ')
+        expect(title).toBe('Weekly ASMR by Same Week Across Years')
+        expect(title).not.toContain('United States')
+        expect(title).not.toContain('Sweden')
       })
 
       it('should include metric in z-score title for CMR with age group', () => {

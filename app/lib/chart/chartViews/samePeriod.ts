@@ -1,4 +1,4 @@
-import type { ChartViewConfig } from './types'
+import type { ChartContext, ChartViewConfig } from './types'
 import { getAgeGroupSuffix } from './helpers'
 
 const periodLabel = (chartType: string): string => {
@@ -12,6 +12,13 @@ const yearsBack = (value: string | undefined): number => {
   const parsed = Number.parseInt(value ?? '5', 10)
   if (!Number.isFinite(parsed)) return 5
   return Math.min(10, Math.max(1, parsed))
+}
+
+const singleCountryTitle = (ctx: ChartContext): string | null => {
+  if (ctx.countries.length !== 1) return null
+  const iso3c = ctx.countries[0]
+  if (!iso3c) return null
+  return ctx.allCountries?.[iso3c]?.jurisdiction ?? iso3c
 }
 
 export const SAME_PERIOD_VIEW: ChartViewConfig = {
@@ -42,6 +49,9 @@ export const SAME_PERIOD_VIEW: ChartViewConfig = {
         parts.push('Life Expectancy')
         break
     }
+
+    const country = singleCountryTitle(ctx)
+    if (country) parts.push('in', country)
 
     parts.push('by', periodLabel(ctx.chartType))
     return parts

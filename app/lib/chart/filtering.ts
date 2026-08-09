@@ -127,7 +127,8 @@ export const getFilteredChartDataFromConfig = (
     config.zscoreMethod,
     config.zscoreLambdaMode,
     config.zscoreLambda,
-    config.comparisonYearsBack
+    config.comparisonYearsBack,
+    config.allCountries
   )
 
   const samePeriodData = config.view === 'samePeriod'

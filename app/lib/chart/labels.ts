@@ -2,7 +2,7 @@
  * Chart label builders
  */
 
-import { baselineMethods, type ChartLabels } from '@/model'
+import { baselineMethods, type ChartLabels, type Country } from '@/model'
 import { isMobile } from '@/utils'
 import { getChartView, type ChartContext } from './chartViews/index'
 import type { ViewType } from '../state'
@@ -39,7 +39,8 @@ export const getChartLabels = (
   zscoreMethod?: string,
   zscoreLambdaMode?: string,
   zscoreLambda?: string,
-  comparisonYearsBack?: string
+  comparisonYearsBack?: string,
+  allCountries?: Record<string, Country>
 ): ChartLabels => {
   // Derive view from parameters if not explicitly provided
   // This maintains backward compatibility with isExcess parameter
@@ -52,6 +53,7 @@ export const getChartLabels = (
   // Build chart context for view-based configuration
   const ctx: ChartContext = {
     countries,
+    allCountries,
     type,
     ageGroups,
     standardPopulation,
