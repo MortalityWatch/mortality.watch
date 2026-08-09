@@ -190,9 +190,7 @@ export function buildSamePeriodComparisonData(
 
     for (const year of comparisonYears) {
       const syntheticIso3c = `${iso3c}__${year}`
-      const jurisdiction = config.countries.length === 1
-        ? String(year)
-        : `${country.jurisdiction} ${year}`
+      const jurisdiction = `${country.jurisdiction} ${year}`
       allCountries[syntheticIso3c] = Object.assign(Object.create(Object.getPrototypeOf(country)) as Country, country, {
         iso3c: syntheticIso3c,
         jurisdiction
