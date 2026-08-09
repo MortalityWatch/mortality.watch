@@ -45,7 +45,19 @@ function getViewDefaults(view: ViewType): Record<string, unknown> {
   }
 }
 
-const VIEW_OWNED_FIELDS_ON_SWITCH = new Set(['chartStyle', 'maximize'])
+const VIEW_OWNED_FIELDS_ON_SWITCH = new Set(['maximize'])
+
+function shouldApplyViewDefault(
+  field: string,
+  state: Record<string, unknown>,
+  userOverrides: Set<string>
+): boolean {
+  if (field === 'maximize' && userOverrides.has(field) && state.chartStyle === 'bar') {
+    return false
+  }
+
+  return VIEW_OWNED_FIELDS_ON_SWITCH.has(field) || !userOverrides.has(field)
+}
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class StateResolver {
@@ -426,7 +438,7 @@ export class StateResolver {
     // instead of staying sticky from the previous view's user overrides.
     const actualViewConfig = VIEWS[actualView]
     for (const [field, value] of Object.entries(actualViewConfig.defaults || {})) {
-      const shouldApply = VIEW_OWNED_FIELDS_ON_SWITCH.has(field) || !userOverrides.has(field)
+      const shouldApply = shouldApplyViewDefault(field, state, userOverrides)
 
       if (shouldApply) {
         const oldValue = state[field]

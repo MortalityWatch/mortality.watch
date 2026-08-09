@@ -1,6 +1,12 @@
 import { test, expect, type Page } from '@playwright/test'
 
 test.describe('Explorer Same Period', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('mortality-watch-tutorial-explorer-completed', 'true')
+    })
+  })
+
   async function waitForChart(page: Page) {
     await page.waitForLoadState('domcontentloaded')
     await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {})
@@ -31,5 +37,29 @@ test.describe('Explorer Same Period', () => {
       return false
     })
     expect(hasRenderedPixels).toBe(true)
+  })
+
+  test('preserves single-month bar comparison when switching analysis modes away and back', async ({ page }) => {
+    await page.goto('/explorer?spc=1&c=DEU&ct=monthly&cs=bar&df=2026+Jun&dt=2026+Jun&m=1')
+    await waitForChart(page)
+
+    await expect(page.getByText(/2026 Jun - 2026 Jun/)).toBeVisible()
+    expect(new URL(page.url()).searchParams.get('cs')).toBe('bar')
+    expect(new URL(page.url()).searchParams.get('m')).toBe('1')
+
+    await page.getByText('Raw Values', { exact: true }).click()
+    await expect(page.getByText('From', { exact: true })).toBeVisible()
+
+    await page.getByText('Same Period', { exact: true }).click()
+    await expect(page.getByText('Anchor', { exact: true })).toBeVisible()
+    await expect(page.getByText(/2026 Jun - 2026 Jun/)).toBeVisible()
+
+    const params = new URL(page.url()).searchParams
+    expect(params.get('spc')).toBe('1')
+    expect(params.get('cs')).toBe('bar')
+    expect(params.get('m')).toBe('1')
+    expect(params.get('df')).toBe('2026 Jun')
+    expect(params.get('dt')).toBe('2026 Jun')
+    await expect(page.locator('canvas#chart')).toBeVisible()
   })
 })

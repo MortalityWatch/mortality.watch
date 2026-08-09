@@ -568,7 +568,7 @@ describe('StateResolver', () => {
       expect(resolved.state.showPercentage).toBe(true) // excess default
     })
 
-    it('should reset maximize to mortality default when leaving excess view', () => {
+    it('should reset maximize to mortality default when leaving excess view and chart style resets to line', () => {
       const currentState = {
         view: 'excess',
         countries: ['USA'],
@@ -591,6 +591,40 @@ describe('StateResolver', () => {
       expect(resolved.state.chartStyle).toBe('line')
       expect(resolved.state.maximize).toBe(false)
       expect(resolved.userOverrides.has('maximize')).toBe(false)
+    })
+
+    it('should preserve explicit same-period bar and maximize settings across analysis mode round trips', () => {
+      const samePeriodState = {
+        view: 'samePeriod',
+        countries: ['DEU'],
+        type: 'asmr',
+        chartType: 'monthly',
+        chartStyle: 'bar',
+        dateFrom: '2026 Jun',
+        dateTo: '2026 Jun',
+        showBaseline: false,
+        showPredictionInterval: false,
+        showPercentage: false,
+        cumulative: false,
+        showTotal: false,
+        maximize: true,
+        isExcess: false,
+        isZScore: false,
+        ageGroups: ['all'],
+        comparisonYearsBack: '5'
+      }
+      const userOverrides = new Set(['countries', 'chartType', 'chartStyle', 'dateFrom', 'dateTo', 'maximize', 'view'])
+
+      const rawValues = StateResolver.resolveViewChange('mortality', samePeriodState, userOverrides)
+      const samePeriodAgain = StateResolver.resolveViewChange('samePeriod', rawValues.state, rawValues.userOverrides)
+
+      expect(rawValues.state.chartStyle).toBe('bar')
+      expect(rawValues.state.maximize).toBe(true)
+      expect(samePeriodAgain.state.view).toBe('samePeriod')
+      expect(samePeriodAgain.state.chartStyle).toBe('bar')
+      expect(samePeriodAgain.state.maximize).toBe(true)
+      expect(samePeriodAgain.state.dateFrom).toBe('2026 Jun')
+      expect(samePeriodAgain.state.dateTo).toBe('2026 Jun')
     })
   })
 
