@@ -226,11 +226,14 @@ describe('View Configurations', () => {
   describe('Same Period View', () => {
     const config = VIEWS.samePeriod
 
-    it('shows maximize for supported line and bar chart styles', () => {
+    it('has maximize conditional on bar chart', () => {
       expect(config.compatibleChartStyles).toEqual(['line', 'bar'])
-      expect(config.ui.maximize.visibility.type).toBe('visible')
-      if (config.ui.maximize.visibility.type === 'visible') {
-        expect(config.ui.maximize.visibility.toggleable).toBe(true)
+      expect(config.ui.maximize.visibility.type).toBe('conditional')
+      if (config.ui.maximize.visibility.type === 'conditional') {
+        expect(config.ui.maximize.visibility.when).toMatchObject({
+          field: 'chartStyle',
+          is: 'bar'
+        })
       }
     })
   })

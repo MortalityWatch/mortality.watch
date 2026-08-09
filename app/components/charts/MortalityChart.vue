@@ -113,6 +113,19 @@ const effectiveShowLabels = computed(() => {
   return shouldShowLabels(dataPointCount, chartWidth.value, userPreference)
 })
 
+const chartAriaLabel = computed(() => {
+  const title = Array.isArray(props.data.title) ? props.data.title.join(' ') : props.data.title
+  const series = props.data.datasets
+    .map(dataset => String(dataset.label ?? ''))
+    .filter(Boolean)
+    .join(', ')
+
+  return [
+    title,
+    series ? `Series: ${series}` : undefined
+  ].filter(Boolean).join('. ')
+})
+
 // Make configs reactive so they update when props OR theme changes
 const lineConfig = computed(() => {
   // Pass isDark to config so text colors update with theme
@@ -282,6 +295,8 @@ onMounted(async () => {
     v-if="props.chartStyle === 'line' && lineConfig?.data"
     id="chart"
     ref="lineChart"
+    role="img"
+    :aria-label="chartAriaLabel"
     :data="lineConfig.data"
     :options="lineConfig.options"
   />
@@ -289,6 +304,8 @@ onMounted(async () => {
     v-else-if="props.chartStyle === 'bar' && barConfig?.data"
     id="chart"
     ref="barChart"
+    role="img"
+    :aria-label="chartAriaLabel"
     :data="barConfig.data"
     :options="barConfig.options"
   />
@@ -296,6 +313,8 @@ onMounted(async () => {
     v-else-if="props.chartStyle === 'matrix' && matrixConfig?.data"
     id="chart"
     ref="matrixChart"
+    role="img"
+    :aria-label="chartAriaLabel"
     :data="matrixConfig.data"
     :options="matrixConfig.options"
   />
