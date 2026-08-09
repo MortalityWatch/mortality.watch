@@ -119,11 +119,11 @@ describe('samePeriodComparison', () => {
     const result = buildSamePeriodComparisonData(config(), labels, data)
 
     expect(result.labels).toEqual(['W10', 'W11', 'W12'])
-    expect(result.countries).toEqual(['USA__2024', 'USA__2023', 'USA__2022'])
+    expect(result.countries).toEqual(['USA__2022', 'USA__2023', 'USA__2024'])
     expect(result.allCountries.USA__2024?.jurisdiction).toBe('2024')
-    expect(result.data.all?.USA__2024?.deaths).toEqual([30, 31, 32])
-    expect(result.data.all?.USA__2023?.deaths).toEqual([20, 21, 22])
     expect(result.data.all?.USA__2022?.deaths).toEqual([10, 11, 12])
+    expect(result.data.all?.USA__2023?.deaths).toEqual([20, 21, 22])
+    expect(result.data.all?.USA__2024?.deaths).toEqual([30, 31, 32])
   })
 
   it('keeps jurisdiction names in multi-country labels', () => {
@@ -167,7 +167,7 @@ describe('samePeriodComparison', () => {
     )
 
     expect(result.labels).toEqual(['W52', 'W53'])
-    expect(result.data.all?.USA__2024?.deaths).toEqual([52, 53])
     expect(result.data.all?.USA__2023?.deaths).toEqual([152, null])
+    expect(result.data.all?.USA__2024?.deaths).toEqual([52, 53])
   })
 })

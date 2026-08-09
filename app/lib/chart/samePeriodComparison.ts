@@ -174,7 +174,10 @@ export function buildSamePeriodComparisonData(
     if (token) sourceIndexByPeriod.set(periodKey(token.year, token.period), index)
   })
   const yearsBack = clampYearsBack(config.comparisonYearsBack)
-  const comparisonYears = Array.from({ length: yearsBack + 1 }, (_, index) => from.year - index)
+  const comparisonYears = Array.from(
+    { length: yearsBack + 1 },
+    (_, index) => from.year - yearsBack + index
+  )
   const countries = config.countries.flatMap(iso3c =>
     comparisonYears.map(year => `${iso3c}__${year}`)
   )
