@@ -114,6 +114,7 @@ export function useExplorerState() {
   const showPercentage = ref<boolean>(getDefault('showPercentage', false))
   const showLogarithmic = ref<boolean>(getDefault('showLogarithmic', false))
   const leAdjusted = ref<boolean>(getDefault('leAdjusted', true)) // Seasonal adjustment for LE (default: ON)
+  const comparisonYearsBack = ref<string>(getDefault('comparisonYearsBack', '5'))
 
   // Chart Appearance
   const userColors = ref<string[] | undefined>(mortalityDefaults.userColors)
@@ -182,7 +183,8 @@ export function useExplorerState() {
     maximize: maximize.value,
     showLabels: showLabels.value,
     showLogarithmic: showLogarithmic.value,
-    decimals: decimals.value as DecimalPrecisionSchema
+    decimals: decimals.value as DecimalPrecisionSchema,
+    comparisonYearsBack: comparisonYearsBack.value
   }))
 
   const validationResult = computed(() =>
@@ -341,7 +343,8 @@ export function useExplorerState() {
       showTitle: showTitle.value,
       showLegend: showLegend.value,
       showXAxisTitle: showXAxisTitle.value,
-      showYAxisTitle: showYAxisTitle.value
+      showYAxisTitle: showYAxisTitle.value,
+      comparisonYearsBack: comparisonYearsBack.value
     }
   }
 
@@ -409,6 +412,7 @@ export function useExplorerState() {
       { field: 'showLegend', ref: showLegend as Ref<unknown> },
       { field: 'showXAxisTitle', ref: showXAxisTitle as Ref<unknown> },
       { field: 'showYAxisTitle', ref: showYAxisTitle as Ref<unknown> },
+      { field: 'comparisonYearsBack', ref: comparisonYearsBack as Ref<unknown> },
       // Optional fields (can be undefined)
       { field: 'dateFrom', ref: dateFrom as Ref<unknown>, optional: true },
       { field: 'dateTo', ref: dateTo as Ref<unknown>, optional: true },
@@ -465,6 +469,7 @@ export function useExplorerState() {
     showPercentage,
     showLogarithmic,
     leAdjusted,
+    comparisonYearsBack,
 
     // Chart appearance
     userColors,

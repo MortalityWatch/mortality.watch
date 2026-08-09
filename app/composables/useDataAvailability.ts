@@ -117,6 +117,7 @@ export function useDataAvailability(
     ([range, from, to]) => {
       if (isLoading.value) return
       if (!range) return
+      if (state.view.value === 'samePeriod') return
 
       let changed = false
       if (from && from < range.minDate) {

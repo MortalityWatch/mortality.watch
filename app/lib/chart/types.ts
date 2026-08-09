@@ -96,6 +96,7 @@ export interface ChartStateSnapshot {
   showPercentage: boolean
   showLogarithmic: boolean
   leAdjusted: boolean // LE seasonal adjustment
+  comparisonYearsBack: string
 
   // Chart appearance
   userColors: string[] | undefined
@@ -153,6 +154,7 @@ export interface ChartFilterConfig {
   showLabels: boolean
   showLogarithmic: boolean
   leAdjusted: boolean // LE seasonal adjustment
+  comparisonYearsBack?: string
 
   // Visual
   colors: string[]

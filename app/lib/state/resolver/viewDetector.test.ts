@@ -21,6 +21,10 @@ describe('viewDetector', () => {
       expect(detectView({ comp: '1' })).toBe('composition')
     })
 
+    it('detects same-period view from spc=1', () => {
+      expect(detectView({ spc: '1' })).toBe('samePeriod')
+    })
+
     it('detects mortality view as default (no params)', () => {
       expect(detectView({})).toBe('mortality')
     })
@@ -47,6 +51,7 @@ describe('viewDetector', () => {
       expect(detectView({ view: 'excess' })).toBe('excess')
       expect(detectView({ view: 'zscore' })).toBe('zscore')
       expect(detectView({ view: 'composition' })).toBe('composition')
+      expect(detectView({ view: 'samePeriod' })).toBe('samePeriod')
       expect(detectView({ view: 'mortality' })).toBe('mortality')
     })
   })

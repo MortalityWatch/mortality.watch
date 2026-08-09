@@ -10,6 +10,56 @@
  */
 
 import { ChartPeriod, type ChartType } from '@/model/period'
+import {
+  getFullSamePeriodLabels,
+  isSamePeriodChartType,
+  parsePeriodLabel
+} from '@/lib/chart/samePeriodComparison'
+
+interface EffectiveDateRangeOptions {
+  view?: string
+}
+
+function computeSamePeriodDateRange(
+  visibleLabels: string[],
+  chartType: string,
+  dateFrom: string | undefined,
+  dateTo: string | undefined
+): { effectiveDateFrom: string, effectiveDateTo: string } {
+  const parsedLabels = visibleLabels
+    .map(label => ({ label, token: parsePeriodLabel(label, chartType) }))
+    .filter((item): item is { label: string, token: NonNullable<ReturnType<typeof parsePeriodLabel>> } => item.token !== null)
+
+  if (parsedLabels.length === 0) {
+    return { effectiveDateFrom: '', effectiveDateTo: '' }
+  }
+
+  if (!isSamePeriodChartType(chartType)) {
+    return { effectiveDateFrom: '', effectiveDateTo: '' }
+  }
+
+  const from = dateFrom ? parsePeriodLabel(dateFrom, chartType) : null
+  const to = dateTo ? parsePeriodLabel(dateTo, chartType) : null
+
+  const anchorYear = to?.year ?? from?.year ?? parsedLabels[parsedLabels.length - 1]!.token.year
+  const labelsForYear = getFullSamePeriodLabels(chartType, anchorYear)
+    .map(label => ({ label, token: parsePeriodLabel(label, chartType)! }))
+  const labelByOrdinal = new Map(labelsForYear.map(item => [item.token.ordinal, item.label]))
+
+  if (from && to && from.year === to.year && from.ordinal <= to.ordinal) {
+    return {
+      effectiveDateFrom: labelByOrdinal.get(from.ordinal) ?? dateFrom ?? labelsForYear[0]!.label,
+      effectiveDateTo: labelByOrdinal.get(to.ordinal) ?? dateTo ?? labelsForYear[labelsForYear.length - 1]!.label
+    }
+  }
+
+  return {
+    effectiveDateFrom: labelsForYear[0]!.label,
+    effectiveDateTo: to && to.year === anchorYear
+      ? labelByOrdinal.get(to.ordinal) ?? labelsForYear[labelsForYear.length - 1]!.label
+      : labelsForYear[labelsForYear.length - 1]!.label
+  }
+}
 
 /**
  * Calculate default periods count based on chart type
@@ -74,7 +124,8 @@ export function computeEffectiveDateRange(
   chartType: string,
   sliderStart: string | undefined,
   dateFrom: string | undefined,
-  dateTo: string | undefined
+  dateTo: string | undefined,
+  options: EffectiveDateRangeOptions = {}
 ): { effectiveDateFrom: string, effectiveDateTo: string } {
   if (allLabels.length === 0) {
     return { effectiveDateFrom: '', effectiveDateTo: '' }
@@ -85,6 +136,13 @@ export function computeEffectiveDateRange(
 
   if (visibleLabels.length === 0) {
     return { effectiveDateFrom: '', effectiveDateTo: '' }
+  }
+
+  if (
+    options.view === 'samePeriod'
+    && isSamePeriodChartType(chartType)
+  ) {
+    return computeSamePeriodDateRange(visibleLabels, chartType, dateFrom, dateTo)
   }
 
   // 2. Compute effective date range

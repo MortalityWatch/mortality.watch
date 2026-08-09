@@ -567,7 +567,8 @@ export function useExplorerDataOrchestration(
     showLogarithmic: state.showLogarithmic.value,
     leAdjusted: state.leAdjusted.value,
     userColors: state.userColors.value,
-    decimals: state.decimals.value
+    decimals: state.decimals.value,
+    comparisonYearsBack: state.comparisonYearsBack?.value ?? '5'
   })
 
   /**

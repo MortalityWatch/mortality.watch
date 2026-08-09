@@ -14,6 +14,7 @@
 import { detectView, getViewDefaults, applyConstraints } from '../resolver'
 import type { ViewType } from '../resolver/viewTypes'
 import { stateFieldEncoders, Defaults } from '../config'
+import { VIEWS } from '../config/views'
 import { computeEffectiveDateRange } from './effectiveDefaults'
 import { calculateBaselineRange } from '@/lib/baseline/calculateBaselineRange'
 import type { ChartFilterConfig, ChartStateSnapshot } from '@/lib/chart/types'
@@ -75,6 +76,7 @@ export interface ChartRenderState {
   showYAxisTitle: boolean
   darkMode: boolean
   hideSteepDrop: boolean
+  comparisonYearsBack: string
 }
 
 /**
@@ -166,7 +168,7 @@ export function resolveChartStateForRendering(
   allLabels: string[]
 ): ChartRenderState {
   // 1. Detect view from URL params
-  const view = detectView(queryParams as Record<string, unknown>) as ViewType
+  let view = detectView(queryParams as Record<string, unknown>) as ViewType
 
   // 2. Get view-specific defaults
   const viewDefaults = getViewDefaults(view)
@@ -175,10 +177,22 @@ export function resolveChartStateForRendering(
   const { state: urlState, urlProvidedFields } = parseQueryParams(queryParams)
 
   // 4. Merge: defaults → URL params → view field
-  const mergedState = {
+  const mergedState: Record<string, unknown> = {
     ...viewDefaults,
     ...urlState,
     view
+  }
+
+  const compatibleChartTypes = view === 'mortality'
+    ? []
+    : (VIEWS[view]?.compatibleChartTypes ?? [])
+  if (compatibleChartTypes.length > 0 && !compatibleChartTypes.includes(String(mergedState.chartType ?? ''))) {
+    view = 'mortality'
+    Object.assign(mergedState, {
+      ...getViewDefaults(view),
+      ...urlState,
+      view
+    })
   }
 
   // 5. Apply constraints (enforce view requirements)
@@ -192,7 +206,8 @@ export function resolveChartStateForRendering(
     constrainedState.chartType as string,
     constrainedState.sliderStart as string | undefined,
     constrainedState.dateFrom as string | undefined,
-    constrainedState.dateTo as string | undefined
+    constrainedState.dateTo as string | undefined,
+    { view }
   )
 
   // 7. Compute effective baseline range using the same logic as frontend
@@ -270,7 +285,8 @@ export function resolveChartStateForRendering(
     showXAxisTitle: (constrainedState.showXAxisTitle as boolean) ?? true,
     showYAxisTitle: (constrainedState.showYAxisTitle as boolean) ?? true,
     darkMode: (constrainedState.darkMode as boolean) ?? false,
-    hideSteepDrop: (constrainedState.hideSteepDrop as boolean) ?? false
+    hideSteepDrop: (constrainedState.hideSteepDrop as boolean) ?? false,
+    comparisonYearsBack: String(constrainedState.comparisonYearsBack ?? '5')
   }
 }
 
@@ -302,7 +318,8 @@ export function resolveChartStateFromSnapshot(
     snapshot.chartType as string,
     snapshot.sliderStart,
     snapshot.dateFrom,
-    snapshot.dateTo
+    snapshot.dateTo,
+    { view: snapshot.view }
   )
 
   // Compute effective baseline range
@@ -365,7 +382,8 @@ export function resolveChartStateFromSnapshot(
     showXAxisTitle: true,
     showYAxisTitle: true,
     darkMode: false,
-    hideSteepDrop: false
+    hideSteepDrop: false,
+    comparisonYearsBack: snapshot.comparisonYearsBack || '5'
   }
 }
 
@@ -420,6 +438,8 @@ export function generateUrlFromState(
   if (state.isExcess) params.set('e', '1')
   if (state.isZScore) params.set('zs', '1')
   if (state.view === 'composition') params.set('comp', '1')
+  if (state.view === 'samePeriod') params.set('spc', '1')
+  if (state.view === 'samePeriod') params.set('cyb', state.comparisonYearsBack)
 
   // Optional
   if (state.userColors?.length) params.set('uc', state.userColors.join(','))
@@ -465,7 +485,11 @@ export function toChartFilterConfig(
 
   // Compute colors internally - ensures SSR and client use identical logic
   const ageGroups = isAsmrType ? ['all'] : state.ageGroups
-  const numSeries = state.countries.length * ageGroups.length
+  const yearsBack = Number.parseInt(state.comparisonYearsBack || '5', 10)
+  const comparisonMultiplier = state.view === 'samePeriod'
+    ? Math.min(10, Math.max(1, Number.isFinite(yearsBack) ? yearsBack : 5)) + 1
+    : 1
+  const numSeries = state.countries.length * ageGroups.length * comparisonMultiplier
   const colors = computeDisplayColors(numSeries, state.userColors, state.darkMode)
 
   return {
@@ -514,6 +538,7 @@ export function toChartFilterConfig(
     showLabels: state.showLabels,
     showLogarithmic: state.showLogarithmic,
     leAdjusted: state.leAdjusted,
+    comparisonYearsBack: state.comparisonYearsBack,
 
     // Visual
     colors,

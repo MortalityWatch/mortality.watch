@@ -24,6 +24,7 @@ const props = defineProps<{
   chartType: string
   chartStyle: string
   standardPopulation: string
+  comparisonYearsBack: string
   isUpdating: boolean
   isPopulationType: boolean
   view: ViewType
@@ -73,6 +74,7 @@ const emit = defineEmits<{
   chartTypeChanged: [value: string]
   chartStyleChanged: [value: string]
   standardPopulationChanged: [value: string]
+  comparisonYearsBackChanged: [value: string]
   viewChanged: [value: ViewType]
   showBaselineChanged: [value: boolean]
   baselineMethodChanged: [value: string]
@@ -104,6 +106,7 @@ const emit = defineEmits<{
 // Compute view flags for chartUIState and UI logic
 const isExcess = computed(() => props.view === 'excess')
 const isZScore = computed(() => props.view === 'zscore')
+const isSamePeriod = computed(() => props.view === 'samePeriod')
 
 // Initialize chart UI state configuration
 const chartUIState = useChartUIState(
@@ -162,6 +165,11 @@ const selectedChartStyle = computed({
 const selectedStandardPopulation = computed({
   get: () => props.standardPopulation,
   set: (v: string) => emit('standardPopulationChanged', v)
+})
+
+const comparisonYearsBack = computed({
+  get: () => props.comparisonYearsBack,
+  set: (v: string) => emit('comparisonYearsBackChanged', v)
 })
 
 const selectedBaselineMethod = computed({
@@ -291,7 +299,7 @@ const baselineSliderChanged = (values: string[]) => {
 }
 // Baseline option: disabled in zscore view (baseline is implicit in z-score calculation)
 const showBaselineOption = computed(() =>
-  chartUIState.showBaselineOption.value && !isZScore.value
+  chartUIState.showBaselineOption.value && !isZScore.value && !isSamePeriod.value
 )
 
 // Chart presets for dropdown
@@ -371,6 +379,7 @@ const activeTab = ref('data')
         :selected-type="selectedType"
         :selected-chart-type="selectedChartType"
         :selected-standard-population="selectedStandardPopulation"
+        :comparison-years-back="comparisonYearsBack"
         :view="props.view"
         :is-updating="props.isUpdating"
         :is-population-type="props.isPopulationType"
@@ -378,6 +387,7 @@ const activeTab = ref('data')
         @update:selected-type="selectedType = $event"
         @update:selected-chart-type="selectedChartType = $event"
         @update:selected-standard-population="selectedStandardPopulation = $event"
+        @update:comparison-years-back="comparisonYearsBack = $event"
         @update:view="view = $event"
       />
 

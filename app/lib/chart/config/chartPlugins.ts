@@ -159,6 +159,38 @@ interface LineAnnotation {
 
 type ChartAnnotation = BoxAnnotation | LineAnnotation
 
+const TITLE_SAFE_LINE_CHARS_WITH_OVERLAYS = 42
+const TITLE_SAFE_LINE_CHARS = 72
+
+export function wrapTitleText(
+  title: string | string[],
+  maxLineLength: number
+): string | string[] {
+  const lines = Array.isArray(title) ? title : [title]
+  const wrapped = lines.flatMap((line) => {
+    if (line.length <= maxLineLength) return [line]
+
+    const words = line.split(' ')
+    const result: string[] = []
+    let current = ''
+
+    for (const word of words) {
+      const next = current ? `${current} ${word}` : word
+      if (next.length <= maxLineLength) {
+        current = next
+      } else {
+        if (current) result.push(current)
+        current = word
+      }
+    }
+
+    if (current) result.push(current)
+    return result
+  })
+
+  return Array.isArray(title) || wrapped.length > 1 ? wrapped : wrapped[0] ?? ''
+}
+
 /**
  * Convert reference line configs from chart views to Chart.js annotations
  * Handles both lines and box (shaded area) annotations
@@ -252,10 +284,14 @@ export function createPluginsConfig(
   chartStyle?: 'bar' | 'line' | 'matrix',
   isCountType: boolean = false
 ) {
+  const maxTitleLineLength = showLogo || showQrCode
+    ? TITLE_SAFE_LINE_CHARS_WITH_OVERLAYS
+    : TITLE_SAFE_LINE_CHARS
+
   const basePlugins = {
     title: {
       display: showTitle,
-      text: data.title,
+      text: wrapTitleText(data.title, maxTitleLineLength),
       color: textColor(isDark),
       font: getTitleFont()
     },

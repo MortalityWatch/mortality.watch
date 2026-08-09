@@ -11,7 +11,8 @@ import {
   createTooltipCallbacks,
   createDatalabelsConfig,
   createPluginsConfig,
-  createScalesConfig
+  createScalesConfig,
+  wrapTitleText
 } from './config'
 import { makeBarLineChartConfig } from './chartConfig'
 import type { ChartErrorDataPoint, MortalityChartData } from './chartTypes'
@@ -406,6 +407,28 @@ describe('chartConfigHelpers', () => {
 
       expect(config.title.text).toBe('Test Chart')
       expect(config.title.display).toBe(true)
+    })
+
+    it('should wrap long titles when logo or QR overlays are visible', () => {
+      const config = createPluginsConfig(
+        {
+          ...mockData,
+          title: 'Weekly ASMR in Germany by Same Week Across Years'
+        },
+        false,
+        false,
+        false,
+        true,
+        'auto',
+        true,
+        true
+      )
+
+      expect(config.title.text).toEqual(['Weekly ASMR in Germany by Same Week Across', 'Years'])
+    })
+
+    it('should preserve short title strings without wrapping', () => {
+      expect(wrapTitleText('Germany Weekly ASMR by Year', 42)).toBe('Germany Weekly ASMR by Year')
     })
 
     it('should configure subtitle with data.subtitle', () => {

@@ -10,6 +10,7 @@ export {
   createBackgroundPlugin,
   createOnResizeHandler,
   createDatalabelsConfig,
-  createPluginsConfig
+  createPluginsConfig,
+  wrapTitleText
 } from './chartPlugins'
 export { createScalesConfig } from './chartScales'

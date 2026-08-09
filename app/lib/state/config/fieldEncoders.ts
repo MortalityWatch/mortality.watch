@@ -66,5 +66,6 @@ export const stateFieldEncoders = {
   showXAxisTitle: { key: 'sxa', encode: encodeBool, decode: decodeBool },
   showYAxisTitle: { key: 'sya', encode: encodeBool, decode: decodeBool },
   darkMode: { key: 'dm', encode: encodeBool, decode: decodeBool },
-  hideSteepDrop: { key: 'hsd', encode: encodeBool, decode: decodeBool }
+  hideSteepDrop: { key: 'hsd', encode: encodeBool, decode: decodeBool },
+  comparisonYearsBack: { key: 'cyb' }
 }

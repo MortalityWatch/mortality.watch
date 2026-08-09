@@ -20,6 +20,7 @@ import { BASE_VIEW } from './base'
 import { MORTALITY_VIEW } from './mortality'
 import { EXCESS_VIEW } from './excess'
 import { ZSCORE_VIEW } from './zscore'
+import { SAME_PERIOD_VIEW } from './samePeriod'
 
 // Re-export types for external use
 export type { ChartContext, ReferenceLineConfig, ChartViewConfig, CompleteChartViewConfig } from './types'
@@ -47,7 +48,8 @@ export const CHART_VIEWS: Record<ViewType, CompleteChartViewConfig> = {
   mortality: mergeWithBase(MORTALITY_VIEW),
   excess: mergeWithBase(EXCESS_VIEW),
   zscore: mergeWithBase(ZSCORE_VIEW),
-  composition: mergeWithBase(MORTALITY_VIEW)
+  composition: mergeWithBase(MORTALITY_VIEW),
+  samePeriod: mergeWithBase(SAME_PERIOD_VIEW)
 }
 
 /**

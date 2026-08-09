@@ -2,7 +2,7 @@
  * Chart label builders
  */
 
-import { baselineMethods, type ChartLabels } from '@/model'
+import { baselineMethods, type ChartLabels, type Country } from '@/model'
 import { isMobile } from '@/utils'
 import { getChartView, type ChartContext } from './chartViews/index'
 import type { ViewType } from '../state'
@@ -38,7 +38,9 @@ export const getChartLabels = (
   showPercentage?: boolean,
   zscoreMethod?: string,
   zscoreLambdaMode?: string,
-  zscoreLambda?: string
+  zscoreLambda?: string,
+  comparisonYearsBack?: string,
+  allCountries?: Record<string, Country>
 ): ChartLabels => {
   // Derive view from parameters if not explicitly provided
   // This maintains backward compatibility with isExcess parameter
@@ -51,6 +53,7 @@ export const getChartLabels = (
   // Build chart context for view-based configuration
   const ctx: ChartContext = {
     countries,
+    allCountries,
     type,
     ageGroups,
     standardPopulation,
@@ -67,6 +70,7 @@ export const getChartLabels = (
     zscoreMethod,
     zscoreLambdaMode,
     zscoreLambda,
+    comparisonYearsBack,
     view: derivedView
   }
 
@@ -91,6 +95,10 @@ export const getChartLabels = (
     // Cumulative Total
     xtitle = ''
   } else {
+    const viewXAxisLabel = typeof chartView.xAxisLabel === 'function'
+      ? chartView.xAxisLabel(ctx)
+      : chartView.xAxisLabel
+
     // Chart type specific X-axis labels and subtitle additions
     switch (chartType) {
       case 'weekly_104w_sma':
@@ -126,13 +134,13 @@ export const getChartLabels = (
         xtitle = 'Year'
         break
       case 'weekly':
-        xtitle = 'Week of Year'
+        xtitle = viewXAxisLabel || 'Week of Year'
         break
       case 'monthly':
-        xtitle = 'Month of Year'
+        xtitle = viewXAxisLabel || 'Month of Year'
         break
       case 'quarterly':
-        xtitle = 'Quarter of Year'
+        xtitle = viewXAxisLabel || 'Quarter of Year'
         break
       case 'yearly':
         subtitle = [subtitle].filter(x => x).join(' · ')

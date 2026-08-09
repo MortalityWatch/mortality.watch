@@ -15,10 +15,11 @@ describe('View Configurations', () => {
       expect(VIEWS.excess).toBeDefined()
       expect(VIEWS.zscore).toBeDefined()
       expect(VIEWS.composition).toBeDefined()
+      expect(VIEWS.samePeriod).toBeDefined()
     })
 
     it('all views have required properties', () => {
-      const viewTypes: ViewType[] = ['mortality', 'excess', 'zscore', 'composition']
+      const viewTypes: ViewType[] = ['mortality', 'excess', 'zscore', 'composition', 'samePeriod']
 
       viewTypes.forEach((viewType) => {
         const config = VIEWS[viewType]
@@ -219,6 +220,18 @@ describe('View Configurations', () => {
       expect(cumulativeConstraint).toBeDefined()
       expect(cumulativeConstraint?.allowUserOverride).toBe(false)
       expect(cumulativeConstraint?.priority).toBe(2)
+    })
+  })
+
+  describe('Same Period View', () => {
+    const config = VIEWS.samePeriod
+
+    it('shows maximize for supported line and bar chart styles', () => {
+      expect(config.compatibleChartStyles).toEqual(['line', 'bar'])
+      expect(config.ui.maximize.visibility.type).toBe('visible')
+      if (config.ui.maximize.visibility.type === 'visible') {
+        expect(config.ui.maximize.visibility.toggleable).toBe(true)
+      }
     })
   })
 
