@@ -49,9 +49,6 @@ definePageMeta({
 const { isAuthenticated } = useAuth()
 const { goToSignup } = useAuthRedirect()
 
-// Tutorial for first-time users
-const { autoStartTutorial } = useTutorial()
-
 // Set page meta (note: ranking page is CSR-only, so OG tags won't be seen by crawlers)
 // Static fallback values are used since dynamic state isn't available during SSR
 const rankingTitle = 'Excess Mortality Ranking'
@@ -343,11 +340,7 @@ const displaySettings = computed(() => ({
 // Only load data on client-side after mount
 onMounted(() => {
   hasLoaded.value = true
-  // Auto-start tutorial for first-time users (skip if skipTutorial query param is present)
   const route = useRoute()
-  if (!route.query.skipTutorial) {
-    autoStartTutorial('ranking')
-  }
 
   // Track this ranking config view (fire-and-forget)
   // This ensures ranking configs show up in "all charts" and track views
