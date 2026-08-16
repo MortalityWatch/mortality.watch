@@ -13,7 +13,6 @@ import { useDataAvailability } from '@/composables/useDataAvailability'
 import { useExplorerDataOrchestration } from '@/composables/useExplorerDataOrchestration'
 import { useExplorerColors } from '@/composables/useExplorerColors'
 import { useExplorerChartActions } from '@/composables/useExplorerChartActions'
-import { useTutorial } from '@/composables/useTutorial'
 import { useBrowserNavigation } from '@/composables/useBrowserNavigation'
 import { useUpdateQueue } from '@/composables/useUpdateQueue'
 import type {
@@ -45,9 +44,6 @@ const { goToSignup } = useAuthRedirect()
 // Feature access for tier-gated features
 const { isPro, can } = useFeatureAccess()
 const canAdvancedLE = computed(() => can('ADVANCED_LE'))
-
-// Tutorial for first-time users
-const { autoStartTutorial } = useTutorial()
 
 // Centralized state management with validation
 const state = useExplorerState()
@@ -626,11 +622,6 @@ onMounted(async () => {
     }).catch(() => {
       // Hash computation failed - ignore
     })
-  }
-
-  // Auto-start tutorial for first-time users (skip if skipTutorial query param is present)
-  if (!route.query.skipTutorial) {
-    autoStartTutorial()
   }
 })
 
