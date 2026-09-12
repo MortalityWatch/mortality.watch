@@ -90,7 +90,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/papaparse": "^5.5.2",
     "@types/pngjs": "^6.0.5",
-    "@vitest/coverage-v8": "^4.1.8",
+    "@vitest/coverage-v8": "^5.0.0",
     "@vitest/ui": "^4.1.8",
     "@vue/test-utils": "^2.4.11",
     "axe-core": "^4.12.0",
