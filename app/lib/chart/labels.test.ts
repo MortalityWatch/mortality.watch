@@ -2,10 +2,20 @@
  * Tests for Chart Label Builders
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { getChartLabels, blDescription } from './labels'
 
+const isMobileMock = vi.hoisted(() => vi.fn(() => false))
+
+vi.mock('~/utils', () => ({
+  isMobile: isMobileMock
+}))
+
 describe('labels', () => {
+  beforeEach(() => {
+    isMobileMock.mockReturnValue(false)
+  })
+
   describe('blDescription', () => {
     it('should format naive baseline description', () => {
       const result = blDescription('naive', '2015', '2019')
@@ -416,14 +426,7 @@ describe('labels', () => {
 
     describe('mobile formatting', () => {
       beforeEach(() => {
-        // Mock isMobile to return true
-        vi.mock('~/utils', () => ({
-          isMobile: vi.fn(() => true)
-        }))
-      })
-
-      afterEach(() => {
-        vi.clearAllMocks()
+        isMobileMock.mockReturnValue(true)
       })
 
       it('should return array title for mobile', () => {
@@ -435,14 +438,7 @@ describe('labels', () => {
 
     describe('desktop formatting', () => {
       beforeEach(() => {
-        // Mock isMobile to return false
-        vi.mock('~/utils', () => ({
-          isMobile: vi.fn(() => false)
-        }))
-      })
-
-      afterEach(() => {
-        vi.clearAllMocks()
+        isMobileMock.mockReturnValue(false)
       })
 
       it('should return single string title for desktop', () => {
