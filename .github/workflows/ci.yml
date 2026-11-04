@@ -92,12 +92,18 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-ubuntu-24.04-nuxt-
 
+      - name: Resolve Playwright version
+        id: playwright-version
+        run: |
+          playwright_version=$(bun -p "require('@playwright/test/package.json').version")
+          echo "version=$playwright_version" >> "$GITHUB_OUTPUT"
+
       - name: Cache Playwright Browsers
         uses: actions/cache@v6
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-ubuntu-24.04-playwright-${{ hashFiles('**/bun.lock') }}
+          key: ${{ runner.os }}-ubuntu-24.04-playwright-${{ steps.playwright-version.outputs.version }}
 
       - name: Install Playwright Browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
