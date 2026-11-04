@@ -5,6 +5,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { getChartLabels, blDescription } from './labels'
 
+const mocks = vi.hoisted(() => ({
+  isMobile: vi.fn(() => false)
+}))
+
+vi.mock('~/utils', () => ({
+  isMobile: mocks.isMobile
+}))
+
 describe('labels', () => {
   describe('blDescription', () => {
     it('should format naive baseline description', () => {
@@ -416,10 +424,7 @@ describe('labels', () => {
 
     describe('mobile formatting', () => {
       beforeEach(() => {
-        // Mock isMobile to return true
-        vi.mock('~/utils', () => ({
-          isMobile: vi.fn(() => true)
-        }))
+        mocks.isMobile.mockReturnValue(true)
       })
 
       afterEach(() => {
@@ -435,10 +440,7 @@ describe('labels', () => {
 
     describe('desktop formatting', () => {
       beforeEach(() => {
-        // Mock isMobile to return false
-        vi.mock('~/utils', () => ({
-          isMobile: vi.fn(() => false)
-        }))
+        mocks.isMobile.mockReturnValue(false)
       })
 
       afterEach(() => {
