@@ -1,6 +1,8 @@
-name: ci
+name: Code Quality
 
-on: push
+on:
+  push:
+  pull_request:
 
 jobs:
   # Run checks (lint + typecheck + test) in parallel with build
@@ -61,6 +63,133 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      # BEGIN managed source file limit
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 26
+      - name: Enforce 1,000 lines per source file
+        shell: bash
+        working-directory: ${{ github.workspace }}
+        run: |
+          node --input-type=module <<'QUALITY_FILE_LINES'
+          // @ts-check
+          import { execFileSync } from "node:child_process";
+          import { readFile } from "node:fs/promises";
+          import { join } from "node:path";
+          import { devNull } from "node:os";
+
+          export const MAX_FILE_LINES = 1_000;
+          const SOURCE_FILE = /\.(?:[cm]?[jt]s|[jt]sx|vue|svelte|astro|rs)$/i;
+
+          /** @param {string} content */
+          export function countLines(content) {
+            if (!content) return 0;
+            const lines = content.split(/\r\n|\n|\r/);
+            return lines.length - (lines.at(-1) === "" ? 1 : 0);
+          }
+
+          /** Qt Linguist uses .ts for XML translation catalogs, not TypeScript.
+           * Require the XML declaration, TS document root and complete closing root.
+           * @param {string} path
+           * @param {string} content
+           */
+          export function isQtTranslation(path, content) {
+            return /\.ts$/i.test(path)
+              && /^\s*<\?xml\b[^>]*\?>\s*(?:<!DOCTYPE\s+TS\b[^>]*>\s*)?<TS\b[^>]*\bversion\s*=/.test(content.replace(/^\uFEFF/, ""))
+              && /<\/TS>\s*$/.test(content);
+          }
+
+          /** @param {string} repoPath */
+          export async function checkFileLines(repoPath) {
+            const output = execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard", "-z"], {
+              cwd: repoPath,
+              encoding: "utf8",
+              timeout: 15_000,
+              maxBuffer: 10 * 1024 * 1024,
+            });
+            const paths = [...new Set(output.split("\0").filter((path) => SOURCE_FILE.test(path)))].sort();
+            const attributes = paths.length ? execFileSync("git", ["-c", `core.attributesFile=${devNull}`, "check-attr", "--cached", "-z", "--stdin", "linguist-vendored", "linguist-generated"], {
+              cwd: repoPath, input: paths.join("\0") + "\0", encoding: "utf8", timeout: 15_000, maxBuffer: 10 * 1024 * 1024
+            }).split("\0") : [];
+            const excludedByAttribute = new Map();
+            for (let index = 0; index + 2 < attributes.length; index += 3) {
+              if (["set", "true"].includes(attributes[index + 2] ?? "")) excludedByAttribute.set(attributes[index], attributes[index + 1]);
+            }
+            /** @type {Array<{ path: string; reason: string }>} */
+            const excludedFiles = [];
+            /** @type {Array<{ path: string; lines: number; reason?: string }>} */
+            const violations = [];
+            /** @type {Array<{ path: string; lines: number; maximum: number; issue: string }>} */
+            const exceptions = [];
+            let checkedFiles = 0;
+
+            for (const path of paths) {
+              const attribute = excludedByAttribute.get(path);
+              if (attribute) {
+                excludedFiles.push({ path, reason: attribute });
+                continue;
+              }
+              let content;
+              try {
+                content = await readFile(join(repoPath, path), "utf8");
+              } catch (error) {
+                // Git's index can still include a file deleted in the working tree.
+                if (/** @type {NodeJS.ErrnoException} */ (error).code === "ENOENT") continue;
+                throw error;
+              }
+              if (isQtTranslation(path, content)) {
+                excludedFiles.push({ path, reason: "qt-translation" });
+                continue;
+              }
+              checkedFiles += 1;
+              const lines = countLines(content);
+              // Only a whole comment on the first line (after an optional shebang) is accepted.
+              const header = content.replace(/^\uFEFF/, "").split(/\r\n|\n|\r/);
+              const firstLine = header[header[0]?.startsWith("#!") ? 1 : 0] ?? "";
+              const marker = firstLine.match(/^(?:\/\/ (file-lines-exception: .+)|<!-- (file-lines-exception: .+) -->)$/);
+              const exception = (marker?.[1] ?? marker?.[2] ?? "").match(/^file-lines-exception: max=([1-9]\d*) issue=(https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/issues\/[1-9]\d*)$/);
+              if (/^(?:\/\/|<!--)\s*file-lines-exception:/.test(firstLine)) {
+                const maximum = Number(exception?.[1]);
+                if (!exception || !Number.isSafeInteger(maximum) || maximum <= MAX_FILE_LINES) {
+                  violations.push({ path, lines, reason: "Invalid file-lines-exception: require max > 1000 and a GitHub issue URL." });
+                } else if (lines <= MAX_FILE_LINES) {
+                  violations.push({ path, lines, reason: "Remove the stale file-lines-exception; this file now meets the 1000-line limit." });
+                } else if (lines > maximum) {
+                  violations.push({ path, lines, reason: `Exceeds the exception maximum of ${maximum} lines (${exception[2]}). Split the file; do not raise the cap.` });
+                } else {
+                  exceptions.push({ path, lines, maximum, issue: exception[2] ?? "" });
+                }
+              } else if (lines > MAX_FILE_LINES) violations.push({ path, lines });
+            }
+
+            return { checkedFiles, violations, exceptions, excludedFiles };
+          }
+
+          /** @param {string} repoPath */
+          export async function runFileLineCheck(repoPath) {
+            try {
+              const { checkedFiles, violations, exceptions, excludedFiles } = await checkFileLines(repoPath);
+              for (const { path, lines, maximum, issue } of exceptions) {
+                console.log(`${path}: tracked exception ${lines}/${maximum} lines (${issue}).`);
+              }
+              for (const { path, lines, reason } of violations) {
+                console.error(reason ? `${path}: ${lines} lines. ${reason}` : `${path}: ${lines} lines exceeds the ${MAX_FILE_LINES}-line maximum. Split the file by responsibility.`);
+              }
+              if (violations.length) {
+                process.exitCode = 1;
+              } else {
+                if (excludedFiles.length) console.log(`Excluded ${excludedFiles.length} translation or explicitly attributed third-party/generated files.`);
+                console.log(`File line limit passed: ${checkedFiles} source files checked (maximum ${MAX_FILE_LINES} lines each).`);
+              }
+            } catch (error) {
+              console.error(`File line check failed: ${error instanceof Error ? error.message : String(error)}`);
+              process.exitCode = 1;
+            }
+          }
+          await runFileLineCheck(process.cwd());
+          QUALITY_FILE_LINES
+      # END managed source file limit
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
