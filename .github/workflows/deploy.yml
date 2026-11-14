@@ -2,7 +2,7 @@ name: deploy
 
 on:
   workflow_run:
-    workflows: ['ci']
+    workflows: ['Code Quality']
     types: [completed]
   workflow_dispatch:
 
