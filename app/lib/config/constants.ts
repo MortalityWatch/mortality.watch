@@ -392,13 +392,6 @@ export const UI_CONFIG = {
   PAGINATION_OPTIONS: [10, 25, 50, 100] as const,
 
   /**
-   * Maximum number of countries that can be viewed in explorer
-   * Prevents performance issues with too many simultaneous selections
-   * Used in useRankingData composable for "View in Explorer" links
-   */
-  MAX_EXPLORER_COUNTRIES: 20,
-
-  /**
    * Maximum length for chart titles (characters)
    * Ensures titles display properly without overflow
    */

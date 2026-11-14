@@ -5,16 +5,20 @@
  * Displays the page title and description for the ranking page.
  */
 import { computed } from 'vue'
+import { getJurisdictionNoun } from '@/lib/utils/jurisdictionLabels'
 
 interface Props {
   displayMode?: 'absolute' | 'relative'
+  jurisdictionType?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  displayMode: 'relative'
+  displayMode: 'relative',
+  jurisdictionType: 'countries'
 })
 
 const isAbsolute = computed(() => props.displayMode === 'absolute')
+const rowNounSingular = computed(() => getJurisdictionNoun(props.jurisdictionType))
 
 const pageTitle = computed(() =>
   isAbsolute.value ? 'Mortality Ranking' : 'Excess Mortality Ranking'
@@ -34,7 +38,7 @@ const description = computed(() =>
   >
     <p>{{ description }}</p>
     <p>
-      Click on a country name to jump directly to the
+      Click on a {{ rowNounSingular }} name to jump directly to the
       <NuxtLink
         to="/explorer"
         class="text-primary hover:underline"

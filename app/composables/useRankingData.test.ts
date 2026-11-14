@@ -602,15 +602,17 @@ describe('useRankingData', () => {
       expect(link).toContain('c=USA,GBR')
     })
 
-    it('should limit to 20 countries', () => {
+    it('should include every country in the link', () => {
       const ranking = useRankingData(mockState, mockMetaData, ref('2020'))
 
       const manyCodes = Array.from({ length: 50 }, (_, i) => `C${i}`)
       const link = ranking.explorerLink(manyCodes)
 
-      // Count occurrences of 'c=' in link
-      const count = (link.match(/c=/g) || []).length
-      expect(count).toBeLessThanOrEqual(20)
+      // vue-router serializes array query params comma-separated (c=C0,C1,...)
+      const params = new URLSearchParams(link.split('?')[1] ?? '')
+      const codes = (params.get('c') ?? '').split(',').filter(Boolean)
+      expect(codes).toHaveLength(50)
+      expect(codes).toEqual(manyCodes)
     })
 
     it('should include current state parameters', () => {

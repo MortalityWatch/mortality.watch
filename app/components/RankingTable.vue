@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { abbrev, asPercentage, isMobile, roundToStr } from '@/utils'
 import { createRankingColorScale } from '@/lib/chart/chartColors'
 import { useTheme } from '@/composables/useTheme'
+import { getJurisdictionNounPlural } from '@/lib/utils/jurisdictionLabels'
 import type {
   TableData,
   TableDisplay,
@@ -17,6 +18,8 @@ interface Props {
   sort: TableSort
   pagination: TablePagination
   loading: TableLoading
+  /** Selected jurisdiction type, used to label rows (countries/states/...) */
+  jurisdictionType?: string
 }
 
 interface Emits {
@@ -39,6 +42,9 @@ const decimalPlaces = computed(() => {
 // isExcess = relative mode (showing excess from baseline)
 // Consistent with explorer pattern where e=0 means absolute, e=1/absent means excess
 const isExcess = computed(() => props.display.displayMode === 'relative')
+
+// Row noun ("countries", "states", ...) so the footer adapts to the selection
+const rowNoun = computed(() => getJurisdictionNounPlural(props.jurisdictionType || 'countries'))
 
 // Extract all numeric values from the dataset for color scale calibration
 const allValues = computed(() => {
@@ -197,6 +203,7 @@ const selectedItemsPerPage = computed(() =>
                 <a
                   :href="(row.href as string)"
                   class="text-primary hover:underline"
+                  :title="`View ${row.country} in Explorer`"
                 >
                   {{ isMobile() ? abbrev(row.country as string) : row.country }}
                 </a>
@@ -270,7 +277,7 @@ const selectedItemsPerPage = computed(() =>
         <div class="text-sm text-gray-600 dark:text-gray-400">
           Showing {{ (pagination.currentPage - 1) * pagination.itemsPerPage + 1 }} to
           {{ Math.min(pagination.currentPage * pagination.itemsPerPage, data.sortedResult?.length || 0) }} of
-          {{ data.sortedResult?.length || 0 }} countries
+          {{ data.sortedResult?.length || 0 }} {{ rowNoun }}
         </div>
         <div class="flex items-center gap-2">
           <label class="text-sm text-gray-600 dark:text-gray-400">Per page:</label>
