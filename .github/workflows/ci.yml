@@ -245,6 +245,8 @@ jobs:
           bunx tsx scripts/seed-test-user.ts
 
       - name: Build for E2E tests
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
         run: bun run build
         timeout-minutes: 5
 

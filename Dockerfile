@@ -51,7 +51,7 @@ ARG NUXT_UMAMI_HOST
 ENV NODE_ENV=production
 ENV NUXT_UMAMI_ID=$NUXT_UMAMI_ID
 ENV NUXT_UMAMI_HOST=$NUXT_UMAMI_HOST
-RUN CI=true bun run build
+RUN NODE_OPTIONS=--max-old-space-size=4096 CI=true bun run build
 
 # Set environment to production
 ENV NODE_ENV=production
