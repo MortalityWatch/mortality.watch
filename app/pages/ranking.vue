@@ -643,7 +643,10 @@ watch(
 
 <template>
   <div class="container mx-auto px-4 py-8">
-    <RankingHeader :display-mode="displayMode" />
+    <RankingHeader
+      :display-mode="displayMode"
+      :jurisdiction-type="jurisdictionType"
+    />
 
     <div class="flex flex-col gap-6 mx-auto">
       <LoadingSpinner
@@ -701,6 +704,7 @@ watch(
                 totalPages
               }"
               :loading="{ isUpdating, hasLoaded, progress: updateProgress, initialLoadDone }"
+              :jurisdiction-type="jurisdictionType"
               @toggle-sort="toggleSort"
               @update:current-page="(val) => currentPage = val"
               @update:items-per-page="(val) => itemsPerPage = val"

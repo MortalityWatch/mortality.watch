@@ -25,7 +25,7 @@ import { useChartDataFetcher } from '@/composables/useChartDataFetcher'
 import { useDateRangeCalculations } from '@/composables/useDateRangeCalculations'
 import { useDateRangeValidation } from '@/composables/useDateRangeValidation'
 import { calculateBaselineRange } from '@/lib/baseline/calculateBaselineRange'
-import { DATA_CONFIG, UI_CONFIG } from '@/lib/config/constants'
+import { DATA_CONFIG } from '@/lib/config/constants'
 import { getUniqueYears } from '@/lib/utils/dates'
 
 const RANKING_START_YEAR = DATA_CONFIG.RANKING_START_YEAR
@@ -196,21 +196,21 @@ export function useRankingData(
 
   /**
    * Create explorer link for a country or countries
-   * Limits to 20 countries to avoid URL/API limitations
+   * Includes every visible jurisdiction (no cap): the codes are short (3-6 chars)
+   * and even the largest selection stays well within practical URL limits (~8 KB),
+   * so truncating would silently drop jurisdictions from the explorer chart.
    *
    * Note: Uses Vue Router's query object format which will automatically
    * serialize arrays as repeated query parameters (c=USA&c=SWE)
    */
   const explorerLink = (countryCodes?: string[]): string => {
     const codes = countryCodes || Array.from(visibleCountryCodes.value)
-    // Limit countries to avoid overwhelming the API
-    const limitedCodes = codes.slice(0, UI_CONFIG.MAX_EXPLORER_COUNTRIES)
 
     const router = useRouter()
     const route = router.resolve({
       path: '/explorer',
       query: {
-        c: limitedCodes, // Array will be serialized as c=USA&c=SWE
+        c: codes, // Array will be serialized as c=USA&c=SWE
         ct: state.periodOfTime.value || 'yearly',
         df: state.dateFrom.value,
         dt: state.dateTo.value,
